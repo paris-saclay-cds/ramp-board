@@ -3,7 +3,8 @@ from scipy import io
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.cross_validation import StratifiedShuffleSplit
-from generic import train_model
+from generic import train_model, root_path, n_CV, test_size, random_state
+
 import glob
 
 data = io.loadmat('dataMarathon.mat')
@@ -15,12 +16,9 @@ Z = df.values
 y = Z[:, 0]
 X = Z[:, 1:]
 
-model_path = "/Users/kegl/Research/Samples/HealthcareBootcamp/Submission/Models/*"
-n_CV=100
-test_size=0.5
-random_state=57
+#model_path = root_path + "/Submission/Models/*"
+#m_paths = glob.glob(model_path)
+#print m_paths
 skf = StratifiedShuffleSplit(y, n_iter=n_CV, test_size=test_size, random_state=random_state)
-m_paths = glob.glob(model_path)
-print m_paths
-m_path = "/Users/kegl/Research/Samples/HealthcareBootcamp/Submission/Models/Kegl10"
+m_path = root_path + "/Submission/Models/Kegl1"
 train_model(m_path, X, y, skf)
