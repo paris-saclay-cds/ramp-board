@@ -142,12 +142,13 @@ def leaderboard_classical(m_paths):
     return leaderboard
 
 def combine_models(y_preds, y_ranks, indexes):
-    """Combines the predictions y_preds[indexes] by majority voting. In 
-    case of ties, makes a random prediction.
+    """Combines the predictions y_preds[indexes] by "rank"
+    voting. I'll detail it once you verify that it makes sense (see my mail)
 
     Parameters
     ----------
     y_preds : array-like, shape = [k_models, n_instances], binary
+    y_ranks : array-like, shape = [k_models, n_instances], permutation of [0,...,n_instances]
     indexes : array-like, shape = [max k_models], a set of indices of 
         models to combine
     Returns
@@ -161,12 +162,6 @@ def combine_models(y_preds, y_ranks, indexes):
     sum_y_ranks = y_ranks[indexes].sum(axis=0) + k #sum of ranks \in [1,n]
     com_y_pred = np.zeros(n, dtype=int)
     com_y_pred[np.greater(sum_y_ranks, n_ones)] = 1
-    # Random prediction in case of ties. Makes the leaderboard slightly random,
-    # and the prediction non-associative. I don't like it. The proper thing would 
-    # be to ask them to output predict_proba or even rank order according to
-    # predict_proba, and then calibrate it at the backend. Alex: in the WE you can
-    # give it a try?
-    #com_y_pred[np.equal(2 * sum_y_pred, k)] = np.random.choice(2)
     return com_y_pred
 
 def leaderboard_combination(gt_path, m_paths):
@@ -213,19 +208,17 @@ def leaderboard_combination(gt_path, m_paths):
         -------
         best_indexes : array-like, shape = [max k_models], a list of indices. If 
         no model imporving the input combination, the input index set is returned. 
-        otherwise the best model is added to the set. We could also retunr the 
+        otherwise the best model is added to the set. We could also return the 
         combined prediction (for efficiency, so the combination would not have to 
-        be done each time; right now the algo is quadratic), but with the random 
-        tie breaking and non-associativity that would generate a lot of randomness.
-        Revisit if we fix the tie-breaking.
+        be done each time; right now the algo is quadratic), but first I don't think
+        any meaningful rules will be associative, in which case we should redo the
+        combination from scratch each time the set changes.
         """
         eps = 0.01/len(y_preds)
         y_pred = combine_models(y_preds, y_ranks, best_indexes)
         best_index = -1
         # Combination with replacement, what Caruana suggests. Basically, if a model
-        # added several times, it's upweighted. Because of the random tie breaking, 
-        # sometimes models are added back because of random fluctuations (again, 
-        # non-associativity), which is destorting the leaderboard.
+        # added several times, it's upweighted.
         for i in range(len(y_preds)):
             com_y_pred = combine_models(y_preds, y_ranks, np.append(best_indexes, i))
             #print score(y_pred, y_test), score(com_y_pred, y_test)
