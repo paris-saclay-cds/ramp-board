@@ -16,9 +16,11 @@ Z = df.values
 y = Z[:, 0]
 X = Z[:, 1:]
 
-#model_path = root_path + "/Submission/Models/*"
-#m_paths = glob.glob(model_path)
-#print m_paths
 skf = StratifiedShuffleSplit(y, n_iter=n_CV, test_size=test_size, random_state=random_state)
-m_path = root_path + "/Submission/Models/Kegl1"
-train_model(m_path, X, y, skf)
+model_path = root_path + "/Submission/Models/*"
+m_paths = glob.glob(model_path)
+for m_path in m_paths:
+	print m_paths
+	train_model(m_path, X, y, skf)
+#m_path = root_path + "/Submission/Models/Kegl1"
+#train_model(m_path, X, y, skf)

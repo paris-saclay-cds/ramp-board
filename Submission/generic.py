@@ -2,11 +2,14 @@ import hashlib, imp, glob, csv
 from sklearn.metrics import accuracy_score
 import numpy as np
 import pandas as pd
+import multiprocessing
+from functools import partial
 
 root_path = "/Users/kegl/Research/Samples/HealthcareBootcamp/health_bootcamp"
 n_CV = 100
 test_size = 0.5
 random_state = 57
+n_processes = 3
 
 def setup(gt_path, y, skf):
     """Setting up the GroundTruth subdir, saving y_test for each fold in skf. File
@@ -19,17 +22,43 @@ def setup(gt_path, y, skf):
         the label vector
     """
     print gt_path
-    hasher = hashlib.md5()
     scores = []
     for train_is, test_is in skf:
+        hasher = hashlib.md5()
         hasher.update(test_is)
         h_str = hasher.hexdigest()
         f_name_pred = gt_path + "/pred_" + h_str + ".csv"
         print f_name_pred
         np.savetxt(f_name_pred, y[test_is], delimiter="\n", fmt='%d')
 
+def save_scores(skf_is, m_path, X, y, f_name_score):
+    hasher = hashlib.md5()
+    train_is, test_is = skf_is
+    hasher.update(test_is)
+    h_str = hasher.hexdigest()
+    f_name_pred = m_path + "/pred_" + h_str + ".csv"
+    X_train = X[train_is]
+    y_train = y[train_is]
+    X_test = X[test_is]
+    y_test = y[test_is]
+    model = imp.load_source('model',m_path + "/model.py")
+    y_pred, y_score = model.model(X_train, y_train, X_test)
+    # y_rank[i] is the the rank of the ith element of y_score
+    y_rank = y_score[:,1].argsort().argsort()
+    output = np.transpose(np.array([y_pred, y_rank]))
+    np.savetxt(f_name_pred, output, fmt='%d,%d')
+    acc = accuracy_score(y_test, y_pred)
+    score = str(1 - acc)
+    #scores.append([h_str, len(test_is), score]) # error
+    csv.writer(open(f_name_score, "a")).writerow([h_str, len(test_is), score])
+    print f_name_pred, acc
+
+
 def train_model(m_path, X, y, skf):
-    """Training a model on all folds and saving the predictions. m_path/model.py 
+    """Training a model on all folds and saving the predictions and rank order. The latter we can
+    use for computing ROC or cutting ties.
+
+    m_path/model.py 
     should contain the model function, for example
 
     def model(X_train, y_train, X_test):
@@ -38,11 +67,13 @@ def train_model(m_path, X, y, skf):
                          n_estimators=20))])
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
-    return y_pred
+    y_score = clf.predict_proba(X_test)
+    return y_pred, y_score
 
-    File names are pred_<hash of the test index vector>.csv. A score.csv file is also
+    File names are pred_<hash of the np.array(test index vector)>.csv. A score.csv file is also
     saved with k_model lines of header
     <hash of the test index vector>, <number of test instances>, <error>
+    evaluations are parallel, so the order in score.csv is undefined.
 
     Parameters
     ----------
@@ -52,27 +83,17 @@ def train_model(m_path, X, y, skf):
         the label vector
     skf : array-like, shape = [N_folds], a cross_validation object
     """
+
     print m_path
     model = imp.load_source('model',m_path + "/model.py")
-    hasher = hashlib.md5()
     f_name_score = m_path + "/score.csv"
     scores = []
-    for train_is, test_is in skf:
-        hasher.update(test_is)
-        h_str = hasher.hexdigest()
-        f_name_pred = m_path + "/pred_" + h_str + ".csv"
-        print f_name_pred
-        X_train = X[train_is]
-        y_train = y[train_is]
-        X_test = X[test_is]
-        y_test = y[test_is]
-        y_pred = model.model(X_train, y_train, X_test)
-        np.savetxt(f_name_pred, y_pred, delimiter="\n", fmt='%d')
-        acc = accuracy_score(y_test, y_pred)
-        score = str(1 - acc)
-        scores.append([h_str, len(test_is), score]) # error
-        csv.writer(open(f_name_score, "w")).writerows(scores)
-        print acc
+    f = open(f_name_score, "w")
+    f.close()
+    partial_save_scores = partial(save_scores, m_path=m_path, X=X, y=y, f_name_score=f_name_score)
+    pool = multiprocessing.Pool(processes=n_processes)
+    pool.map(partial_save_scores, skf)
+    pool.close()
 
 def leaderboard_classical(m_paths):
     """Output classical leaderboard (sorted in increasing order by score).
@@ -120,6 +141,34 @@ def leaderboard_classical(m_paths):
     leaderboard['error'] = mean_scores[ordering]
     return leaderboard
 
+def combine_models(y_preds, y_ranks, indexes):
+    """Combines the predictions y_preds[indexes] by majority voting. In 
+    case of ties, makes a random prediction.
+
+    Parameters
+    ----------
+    y_preds : array-like, shape = [k_models, n_instances], binary
+    indexes : array-like, shape = [max k_models], a set of indices of 
+        models to combine
+    Returns
+    -------
+    com_y_pred : array-like, shape = [n_instances], a list of (combined) 
+        binary predictions.
+    """
+    k = len(indexes)
+    n = len(y_preds[0])
+    n_ones = n * k - y_preds[indexes].sum() # number of zeros
+    sum_y_ranks = y_ranks[indexes].sum(axis=0) + k #sum of ranks \in [1,n]
+    com_y_pred = np.zeros(n, dtype=int)
+    com_y_pred[np.greater(sum_y_ranks, n_ones)] = 1
+    # Random prediction in case of ties. Makes the leaderboard slightly random,
+    # and the prediction non-associative. I don't like it. The proper thing would 
+    # be to ask them to output predict_proba or even rank order according to
+    # predict_proba, and then calibrate it at the backend. Alex: in the WE you can
+    # give it a try?
+    #com_y_pred[np.equal(2 * sum_y_pred, k)] = np.random.choice(2)
+    return com_y_pred
+
 def leaderboard_combination(gt_path, m_paths):
     """Output combined leaderboard (sorted in decreasing order by score). We use
     Caruana's greedy combination
@@ -152,33 +201,7 @@ def leaderboard_combination(gt_path, m_paths):
     def score(y_pred, y_test):
         return 1 - accuracy_score(y_pred, y_test)
 
-    def combine(y_preds, indexes):
-        """Combines the predictions y_preds[indexes] by majority voting. In 
-        case of ties, makes a random prediction.
-
-        Parameters
-        ----------
-        y_preds : array-like, shape = [k_models, n_instances], binary
-        indexes : array-like, shape = [max k_models], a set of indices of 
-            models to combine
-        Returns
-        -------
-        com_y_pred : array-like, shape = [n_instances], a list of (combined) 
-            binary predictions.
-        """
-        k = len(indexes)
-        sum_y_pred = y_preds[indexes].sum(axis=0)
-        com_y_pred = np.zeros(len(y_pred), dtype=int)
-        com_y_pred[np.greater(2 * sum_y_pred, k)] = 1
-        # Random prediction in case of ties. Makes the leaderboard slightly random,
-        # and the prediction non-associative. I don't like it. The proper thing would 
-        # be to ask them to output predict_proba or even rank order according to
-        # predict_proba, and then calibrate it at the backend. Alex: in the WE you can
-        # give it a try?
-        com_y_pred[np.equal(2 * sum_y_pred, k)] = np.random.choice(2)
-        return com_y_pred
-
-    def best_combine(y_preds, best_indexes):
+    def best_combine(y_preds, y_ranks, best_indexes):
         """Finds the model that minimizes the score if added to y_preds[indexes].
 
         Parameters
@@ -197,14 +220,14 @@ def leaderboard_combination(gt_path, m_paths):
         Revisit if we fix the tie-breaking.
         """
         eps = 0.01/len(y_preds)
-        y_pred = combine(y_preds, best_indexes)
+        y_pred = combine_models(y_preds, y_ranks, best_indexes)
         best_index = -1
         # Combination with replacement, what Caruana suggests. Basically, if a model
         # added several times, it's upweighted. Because of the random tie breaking, 
         # sometimes models are added back because of random fluctuations (again, 
         # non-associativity), which is destorting the leaderboard.
         for i in range(len(y_preds)):
-            com_y_pred = combine(y_preds, np.append(best_indexes, i))
+            com_y_pred = combine_models(y_preds, y_ranks, np.append(best_indexes, i))
             #print score(y_pred, y_test), score(com_y_pred, y_test)
             if score(y_pred, y_test) > score(com_y_pred, y_test) + eps:
                 y_pred = com_y_pred
@@ -220,16 +243,20 @@ def leaderboard_combination(gt_path, m_paths):
     # get model file names
     m_names = np.array([m_path.split("/")[-1] for m_path in m_paths])
     counts = np.zeros(len(m_paths), dtype=int)
-    for pr_name in pr_names[:]:
+    for pr_name in pr_names:
         # probab;y an overshoot to use dataframes here, but slightly simpler code
         # to be simplified perhaps
         y_preds = pd.DataFrame()
-        y_test = pd.read_csv(gt_path + '/' + pr_name).values.flatten()
+        y_ranks = pd.DataFrame()
+        y_test = pd.read_csv(gt_path + '/' + pr_name, names=['pred']).values.flatten()
         for m_path, m_name in zip(m_paths, m_names):
-            y_pred = pd.read_csv(m_path + '/' + pr_name)
-            y_preds[m_name] = y_pred
+            #print m_path + '/' + pr_name
+            inp = pd.read_csv(m_path + '/' + pr_name,names=['pred', 'rank'])
+            y_preds[m_name] = inp['pred']
+            y_ranks[m_name] = inp['rank']
         # y_preds: k vectors of length n
         y_preds = np.transpose(y_preds.values)
+        y_ranks = np.transpose(y_ranks.values)
         scores = [score(y_pred, y_test) for y_pred in y_preds]
         #print scores
         best_indexes = np.array([np.argmin(scores)])
@@ -237,7 +264,7 @@ def leaderboard_combination(gt_path, m_paths):
         improvement = True
         while improvement:
             old_best_indexes = best_indexes
-            best_indexes = best_combine(y_preds, best_indexes)
+            best_indexes = best_combine(y_preds, y_ranks, best_indexes)
             improvement = len(best_indexes) != len(old_best_indexes)
             #print best_indexes
         counts[best_indexes] += 1

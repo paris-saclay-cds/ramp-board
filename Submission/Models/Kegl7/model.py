@@ -11,4 +11,5 @@ def model(X_train, y_train, X_test):
 	clf = GradientBoostingClassifier(n_estimators=1000, max_depth=5, max_features=20)
 	clf.fit(X_train, y_train)
 	y_pred = clf.predict(X_test)
-	return y_pred
+	y_score = clf.predict_proba(X_test)
+	return y_pred, y_score
