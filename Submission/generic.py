@@ -2,16 +2,23 @@ import hashlib, imp, glob, csv
 from sklearn.metrics import accuracy_score
 import numpy as np
 import pandas as pd
+from scipy import io
 import multiprocessing
 from functools import partial
+from config import root_path, n_CV, test_size, n_processes, random_state
 
-root_path = "/Users/kegl/Research/Samples/HealthcareBootcamp/health_bootcamp"
-n_CV = 100
-test_size = 0.5
-random_state = 57
-n_processes = 3
+def read_data():
+    data = io.loadmat('dataMarathon.mat')
+    Z = np.c_[data['data_target'].astype(np.int), data['X']]
+    label_col = u'TARGET'
+    columns = [label_col] + [d[0] for d in data['header'].ravel()]
+    df = pd.DataFrame(Z, columns=columns)
+    Z = df.values
+    y = Z[:, 0]
+    X = Z[:, 1:]
+    return X, y
 
-def setup(gt_path, y, skf):
+def setup_ground_truth(gt_path, y, skf):
     """Setting up the GroundTruth subdir, saving y_test for each fold in skf. File
     names are pred_<hash of the test index vector>.csv.
 

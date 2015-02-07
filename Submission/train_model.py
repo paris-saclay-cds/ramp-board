@@ -1,26 +1,22 @@
-import numpy as np
-from scipy import io
-import matplotlib.pyplot as plt
+import os
 import pandas as pd
 from sklearn.cross_validation import StratifiedShuffleSplit
-from generic import train_model, root_path, n_CV, test_size, random_state
+from generic import train_model, read_data
+from config import root_path, n_CV, test_size, random_state
+from last_trained_timestamp import last_trained_timestamp
 
-import glob
-
-data = io.loadmat('dataMarathon.mat')
-Z = np.c_[data['data_target'].astype(np.int), data['X']]
-label_col = u'TARGET'
-columns = [label_col] + [d[0] for d in data['header'].ravel()]
-df = pd.DataFrame(Z, columns=columns)
-Z = df.values
-y = Z[:, 0]
-X = Z[:, 1:]
-
+X, y = read_data()
 skf = StratifiedShuffleSplit(y, n_iter=n_CV, test_size=test_size, random_state=random_state)
-model_path = root_path + "/Submission/Models/*"
-m_paths = glob.glob(model_path)
-for m_path in m_paths:
+
+models = pd.read_csv("submissions.csv")
+models_to_train = models[models['timestamp'] > last_trained_timestamp]
+if len(models_to_train) > 0:
+	last_trained_timestamp = max(models_to_train['timestamp'])
+	print last_trained_timestamp
+	with open('last_trained_timestamp.py', 'w') as f:
+		f.write('last_trained_timestamp = ' + str(last_trained_timestamp))
+	m_paths = [os.path.join(root_path, 'Submission', 'Models', path) for path in models_to_train['path']]
 	print m_paths
-	train_model(m_path, X, y, skf)
-#m_path = root_path + "/Submission/Models/Kegl1"
-#train_model(m_path, X, y, skf)
+	for m_path in m_paths:
+		print m_paths
+		train_model(m_path, X, y, skf)

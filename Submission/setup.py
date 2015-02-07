@@ -1,20 +1,13 @@
+import os
 import numpy as np
-from scipy import io
-import matplotlib.pyplot as plt
-import pandas as pd
 from sklearn.cross_validation import StratifiedShuffleSplit
-from generic import setup, root_path, n_CV, test_size, random_state
+from generic import setup_ground_truth, read_data
+from config import root_path, n_CV, test_size, random_state
 import glob
 
-data = io.loadmat('dataMarathon.mat')
-Z = np.c_[data['data_target'].astype(np.int), data['X']]
-label_col = u'TARGET'
-columns = [label_col] + [d[0] for d in data['header'].ravel()]
-df = pd.DataFrame(Z, columns=columns)
-Z = df.values
-y = Z[:, 0]
-X = Z[:, 1:]
-
-gt_path = root_path + "/Submission/GroundTruth"
+gt_path = os.path.join(root_path, 'Submission', 'GroundTruth')
+X, y = read_data()
 skf = StratifiedShuffleSplit(y, n_iter=n_CV, test_size=test_size, random_state=random_state)
-setup(gt_path, y, skf)
+setup_ground_truth(gt_path, y, skf)
+with open('last_trained_timestamp.py', 'w') as f:
+	f.write('last_trained_timestamp = 0')
