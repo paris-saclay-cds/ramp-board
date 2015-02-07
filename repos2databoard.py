@@ -45,7 +45,8 @@ for rp in repo_paths:
             model_path = os.path.join(model_path, 'model.py')
             with open(model_path, 'w') as f:
                 f.write(file_content)
-            tags_info.append([team_name, tag_name, c.committed_date, model_path])
+            relative_model_path = os.path.join(team_name, tag_name)
+            tags_info.append([team_name, tag_name, c.committed_date, relative_model_path])
     else:
         print('No tag found for %s' % team_name)
 
@@ -54,7 +55,7 @@ if len(tags_info) > 0:
     df = pd.DataFrame(np.array(tags_info), columns=columns)
     print df
 
-    print('Writting submission.csv file')
+    print('Writing submission.csv file')
     df.to_csv('submissions.csv', index=False)
 else:
     print('No submission found')
