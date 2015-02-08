@@ -56,5 +56,6 @@ if __name__ == "__main__":
                        'Operating System :: Unix',
                        'Operating System :: MacOS'],
           platforms='any',
-          packages=['databoard', 'databoard.tests'],
+          # packages=['databoard', 'databoard.tests'],
+          packages=['databoard'],
           )
