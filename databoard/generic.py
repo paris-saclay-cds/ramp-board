@@ -6,7 +6,6 @@ import pandas as pd
 from scipy import io
 import multiprocessing
 from functools import partial
-
 from config_databoard import root_path, n_CV, test_size, n_processes, random_state
 
 def read_data():
@@ -56,11 +55,7 @@ def save_scores(skf_is, m_path, X, y, f_name_score):
     y_rank = y_score[:,1].argsort().argsort()
     output = np.transpose(np.array([y_pred, y_rank]))
     np.savetxt(f_name_pred, output, fmt='%d,%d')
-    acc = accuracy_score(y_test, y_pred)
-    score = str(1 - acc)
-    #scores.append([h_str, len(test_is), score]) # error
-    csv.writer(open(f_name_score, "a")).writerow([h_str, len(test_is), score])
-    print f_name_pred, acc
+    print f_name_pred
 
 
 def train_model(m_path, X, y, skf):
@@ -104,10 +99,13 @@ def train_model(m_path, X, y, skf):
     pool.map(partial_save_scores, skf)
     pool.close()
 
+def score(y_pred, y_test):
+    return 1 - accuracy_score(y_pred, y_test)
+
 def leaderboard_to_html(leaderboard):
     return leaderboard.to_html()
 
-def leaderboard_classical(models):
+def leaderboard_classical(gt_path, models):
     """Output classical leaderboard (sorted in increasing order by score).
 
     Parameters
@@ -137,18 +135,39 @@ def leaderboard_classical(models):
 
     """
     
-    mean_scores = []
-    m_paths = [os.path.join(root_path, 'Submission', 'Models', path) for path in models['path']]
-    for m_path in m_paths:
-        #print m_path
-        scores = pd.read_csv(m_path + "/score.csv", names=["h_str", "n", "score"])
-        mean_scores = np.append(mean_scores, scores['score'].mean())
-    #print mean_scores[0]
-    ordering = mean_scores.argsort() # error: increasing order
-    #print mean_scores[ordering]
+    
+    m_paths = [os.path.join(root_path, 'models', path) for path in models['path']]
+    pr_paths = glob.glob(gt_path + "/pred_*")
+    pr_names = np.array([pr_path.split('/')[-1] for pr_path in pr_paths])
+    mean_scores = np.zeros(len(m_paths))
+    # get model file names
+    for pr_name in pr_names:
+        y_preds = pd.DataFrame()
+        y_ranks = pd.DataFrame()
+        y_test = pd.read_csv(gt_path + '/' + pr_name, names=['pred']).values.flatten()
+        for m_path in models['path']:
+            pr_path = os.path.join(root_path, 'models', m_path, pr_name)
+            #print pr_path
+            inp = pd.read_csv(pr_path, names=['pred', 'rank'])
+            y_preds[m_path] = inp['pred'] # use m_path as db key
+            y_ranks[m_path] = inp['rank']
+        # y_preds: k vectors of length n
+        y_preds = np.transpose(y_preds.values)
+        y_ranks = np.transpose(y_ranks.values)
+        scores = [score(y_pred, y_test) for y_pred in y_preds]
+        #print scores
+        mean_scores += scores
+    mean_scores /= len(pr_names)
+    scoring_higher_the_better = False
+    if scoring_higher_the_better:
+        ordering = (-mean_scores).argsort() # decreasing order
+    else:
+        ordering = mean_scores.argsort() # increasing order
+    print ordering
+#    print mean_scores[ordering]
     leaderboard = models.copy()
     leaderboard['score'] = mean_scores[ordering.argsort()] # argsort of argsort gives rank of entry
-    return leaderboard.sort(columns=['score'],  ascending=True)
+    return leaderboard.sort(columns=['score'],  ascending=not scoring_higher_the_better)
 
 def combine_models(y_preds, y_ranks, indexes):
     """Combines the predictions y_preds[indexes] by "rank"
@@ -202,8 +221,6 @@ def leaderboard_combination(models, gt_path):
         9   Kegl3      3
 
     """
-    def score(y_pred, y_test):
-        return 1 - accuracy_score(y_pred, y_test)
 
     def best_combine(y_preds, y_ranks, best_indexes):
         """Finds the model that minimizes the score if added to y_preds[indexes].
