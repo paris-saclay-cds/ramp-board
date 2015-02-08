@@ -26,7 +26,7 @@ def list_submodules():
 
 @app.route("/leaderboad/1")
 def show_leaderboard_1():
-    submissions_path = os.path.join(root_path, 'Submission', 'trained_submissions.csv')
+    submissions_path = os.path.join(root_path, 'trained_submissions.csv')
     trained_models = pd.read_csv(submissions_path)
     l1 = leaderboard_classical(trained_models)
 
@@ -35,19 +35,19 @@ def show_leaderboard_1():
 
 @app.route("/leaderboad/2")
 def show_leaderboard_2():
-    submissions_path = os.path.join(root_path, 'Submission', 'trained_submissions.csv')
+    submissions_path = os.path.join(root_path, 'trained_submissions.csv')
     trained_models = pd.read_csv(submissions_path)
 
-    gt_path = os.path.join(root_path, 'Submission', 'GroundTruth')
+    gt_path = os.path.join(root_path, 'ground_truth')
 
     l2 = leaderboard_combination(trained_models, gt_path)
     return leaderboard_to_html(l2)
 
 @app.route("/leaderboad/")
 def show_leaderboard():
-    submissions_path = os.path.join(root_path, 'Submission', 'trained_submissions.csv')
+    submissions_path = os.path.join(root_path, 'trained_submissions.csv')
     trained_models = pd.read_csv(submissions_path)
-    gt_path = os.path.join(root_path, 'Submission', 'GroundTruth')
+    gt_path = os.path.join(root_path, 'ground_truth')
 
     l1 = leaderboard_classical(trained_models)
     l2 = leaderboard_combination(trained_models, gt_path)

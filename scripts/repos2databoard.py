@@ -13,7 +13,7 @@ from config_databoard import repos_path, root_path
 base_path = repos_path
 repo_paths = sorted(glob.glob(os.path.join(base_path, '*')))
 
-submissions_path = os.path.join(root_path, 'databoard', 'Models')
+submissions_path = os.path.join(root_path, 'models')
 
 if not os.path.exists(submissions_path):
     os.mkdir(submissions_path)
