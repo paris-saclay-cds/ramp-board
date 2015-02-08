@@ -2,7 +2,7 @@ local helpers = {}
 
 function helpers.get_data_and_column_names(data_filename)
     X, column_names = csv2tensor.load(data_filename, {exclude='labels'})
-    y, _ = csv2tensor.load(data_filename, {include='labels'})
+    y, dummy = csv2tensor.load(data_filename, {include='labels'})
     return({X=X, y=y, column_names=column_names})
 end
 
