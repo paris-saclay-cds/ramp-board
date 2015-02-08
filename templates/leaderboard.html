@@ -6,14 +6,11 @@
     </head>
     <body style="margin:50">
         <h1>Leaderboards</h1>
-        {{leaderboard_1}}
-        <br>
-        {{leaderboard_2}}
         <div class="ui grid">
-            <div class="columns">{{leaderboard_1}}</div> <br/>
-            <div class="columns">{{leaderboard_2}}</div>
+            <div class="columns">{{leaderboard_1|safe}}</div> <br/>
+            <div class="columns">{{leaderboard_2|safe}}</div>
         </div>
-        
+
 <!--         <div className="ui page grid">
             <h1>Teams list</h1>
             {% for sm in submodules %}

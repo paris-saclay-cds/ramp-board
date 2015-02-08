@@ -1,19 +1,22 @@
 #!/usr/bin/env python2
 
-import pandas as pd
 import os.path
+import pandas as pd
+
 from git import Repo, Submodule
 from flask import Flask, request, redirect, url_for, render_template
-from Submission.config import root_path, repos_path
-from Submission.generic import leaderboard_classical, leaderboard_combination, leaderboard_to_html
+
+from databoard.generic import leaderboard_classical, leaderboard_combination
+
+from config_databoard import root_path, repos_path
 
 app = Flask(__name__)
 
-# team_repos = os.path.join(root_path, 'TeamsRepos')
-team_repos = repos_path
+repo = Repo(repos_path)
 
-repo = Repo(team_repos)
+gt_path = os.path.join(root_path, 'ground_truth')
 
+@app.route("/")
 @app.route("/register/")
 @app.route("/list/")
 def list_submodules():
@@ -24,36 +27,20 @@ def list_submodules():
         html_list = "<ul>"
         return render_template('list.html', submodules=repo.submodules)
 
-@app.route("/leaderboad/1")
+
+@app.route("/leaderboard/")
 def show_leaderboard_1():
     submissions_path = os.path.join(root_path, 'trained_submissions.csv')
     trained_models = pd.read_csv(submissions_path)
-    l1 = leaderboard_classical(trained_models)
+    l1 = leaderboard_classical(gt_path, trained_models)
+    html1 = l1.to_html()
 
-    print leaderboard_to_html(l1)
-    return leaderboard_to_html(l1)
+    l2 = leaderboard_combination(gt_path, trained_models)
+    html2 = l2.to_html()
+    return render_template('leaderboard.html', leaderboard_1=html1,
+                           leaderboard_2=html2)
 
-@app.route("/leaderboad/2")
-def show_leaderboard_2():
-    submissions_path = os.path.join(root_path, 'trained_submissions.csv')
-    trained_models = pd.read_csv(submissions_path)
 
-    gt_path = os.path.join(root_path, 'ground_truth')
-
-    l2 = leaderboard_combination(trained_models, gt_path)
-    return leaderboard_to_html(l2)
-
-@app.route("/leaderboad/")
-def show_leaderboard():
-    submissions_path = os.path.join(root_path, 'trained_submissions.csv')
-    trained_models = pd.read_csv(submissions_path)
-    gt_path = os.path.join(root_path, 'ground_truth')
-
-    l1 = leaderboard_classical(trained_models)
-    l2 = leaderboard_combination(trained_models, gt_path)
-
-    return render_template('leaderboard.html', leaderboard_1=l1, leaderboard_2=l2)
-    
 @app.route("/add/", methods=["GET", "POST"])
 def add_submodule():
     if request.method == "POST":
@@ -76,6 +63,8 @@ def add_submodule():
                    """
         return sub_form
 
+
 if __name__ == "__main__":
     # app.run(debug=True, port=8080)
-    app.run(debug=False, port=8080, host='0.0.0.0')
+    # app.run(debug=True, port=8080, host='0.0.0.0')
+    app.run(debug=True, port=8080, host='127.0.0.1')

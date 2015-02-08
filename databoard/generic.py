@@ -102,8 +102,8 @@ def train_model(m_path, X, y, skf):
 def score(y_pred, y_test):
     return 1 - accuracy_score(y_pred, y_test)
 
-def leaderboard_to_html(leaderboard):
-    return leaderboard.to_html()
+# def leaderboard_to_html(leaderboard):
+#     return leaderboard.to_html()
 
 def leaderboard_classical(gt_path, models):
     """Output classical leaderboard (sorted in increasing order by score).
