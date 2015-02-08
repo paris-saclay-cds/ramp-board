@@ -6,13 +6,14 @@ import os
 import time
 import git
 import numpy as np
-import pandas as pd
+import pandas as pd 
 
-base_path = '/mnt/datacamp/leaderboard/TeamsRepos/'
+from Submission.config import root_path
+
+base_path = os.path.join(root_path, 'TeamsRepos')
 repo_paths = sorted(glob.glob(os.path.join(base_path, '*')))
 
-submissions_path = "/mnt/datacamp/databoard/Submission/Models"
-# submissions_path = os.path.join('/mnt', 'submissions')
+submissions_path = os.path.join(root_path, 'Submission', 'Models')
 
 if not os.path.exists(submissions_path):
     os.mkdir(submissions_path)
