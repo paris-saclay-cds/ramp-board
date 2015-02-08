@@ -19,7 +19,6 @@ pd.set_option('display.max_colwidth', -1)
 
 def local_to_URL(path):
     server_name = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(serve_port)
-    server_name = 'http://localhost:8080'
     filename = server_name + '/models/' + path
     link = '<a href="{0}">Show the code</a>'.format(filename)
     return link
