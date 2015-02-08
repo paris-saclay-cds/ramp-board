@@ -4,7 +4,7 @@ import os.path
 import pandas as pd
 
 from git import Repo, Submodule
-from flask import Flask, request, redirect, url_for, render_template
+from flask import Flask, request, redirect, url_for, render_template, send_from_directory
 
 from databoard.generic import leaderboard_classical, leaderboard_combination
 
@@ -40,6 +40,13 @@ def show_leaderboard_1():
     return render_template('leaderboard.html', leaderboard_1=html1,
                            leaderboard_2=html2)
 
+@app.route('/models/<path:team>/<path:tag>')
+def download_model(team, tag):
+    directory = os.path.join(root_path, "models", team, tag)
+    return send_from_directory(directory,
+                               'model.py',
+                               as_attachment=True)
+
 
 @app.route("/add/", methods=["GET", "POST"])
 def add_submodule():
@@ -66,5 +73,5 @@ def add_submodule():
 
 if __name__ == "__main__":
     # app.run(debug=True, port=8080)
-    # app.run(debug=True, port=8080, host='0.0.0.0')
-    app.run(debug=True, port=8080, host='127.0.0.1')
+    app.run(debug=True, port=8080, host='0.0.0.0')
+    # app.run(debug=True, port=8080, host='127.0.0.1')
