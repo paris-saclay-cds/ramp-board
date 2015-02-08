@@ -6,7 +6,8 @@ import pandas as pd
 from scipy import io
 import multiprocessing
 from functools import partial
-from config import root_path, n_CV, test_size, n_processes, random_state
+
+from config_databoard import root_path, n_CV, test_size, n_processes, random_state
 
 def read_data():
     data = io.loadmat('dataMarathon.mat')

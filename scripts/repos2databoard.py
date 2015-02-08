@@ -8,12 +8,12 @@ import git
 import numpy as np
 import pandas as pd 
 
-from Submission.config import repos_path
+from config_databoard import repos_path, root_path
 
 base_path = repos_path
 repo_paths = sorted(glob.glob(os.path.join(base_path, '*')))
 
-submissions_path = os.path.join(root_path, 'Submission', 'Models')
+submissions_path = os.path.join(root_path, 'databoard', 'Models')
 
 if not os.path.exists(submissions_path):
     os.mkdir(submissions_path)
@@ -57,7 +57,7 @@ if len(tags_info) > 0:
     print df
 
     print('Writing submission.csv file')
-    df.to_csv('Submission/submissions.csv', index=False)
+    df.to_csv('submissions.csv', index=False)
 else:
     print('No submission found')
 

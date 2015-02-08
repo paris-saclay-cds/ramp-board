@@ -1,5 +1,5 @@
-from generic import combine_models
 import numpy as np
+from databoard.generic import combine_models
 
 y_preds = np.array([[1,1], 
 	                [0,0]])
