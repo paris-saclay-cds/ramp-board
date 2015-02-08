@@ -9,14 +9,9 @@ from functools import partial
 from config_databoard import root_path, n_CV, test_size, n_processes, random_state
 
 def read_data():
-    data = io.loadmat('dataMarathon.mat')
-    Z = np.c_[data['data_target'].astype(np.int), data['X']]
-    label_col = u'TARGET'
-    columns = [label_col] + [d[0] for d in data['header'].ravel()]
-    df = pd.DataFrame(Z, columns=columns)
-    Z = df.values
-    y = Z[:, 0]
-    X = Z[:, 1:]
+    df = pd.read_csv('train.csv')
+    y = df['TARGET'].values
+    X = df.drop('TARGET', axis=1).values
     return X, y
 
 def setup_ground_truth(gt_path, y, skf):
