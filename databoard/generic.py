@@ -191,7 +191,7 @@ def combine_models(y_preds, y_ranks, indexes):
     com_y_pred[np.greater(sum_y_ranks, n_ones)] = 1
     return com_y_pred
 
-def leaderboard_combination(models, gt_path):
+def leaderboard_combination(gt_path, models):
     """Output combined leaderboard (sorted in decreasing order by score). We use
     Caruana's greedy combination
     http://www.cs.cornell.edu/~caruana/ctp/ct.papers/caruana.icml04.icdm06long.pdf
