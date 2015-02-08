@@ -46,7 +46,8 @@ def show_leaderboard_1():
                        index=False, 
                        max_cols=None, 
                        max_rows=None,
-                       justify='left')
+                       justify='left',
+                       classes=['ui', 'blue', 'table'])
 
     l2 = leaderboard_combination(gt_path, trained_models)
     l2.path = l2.path.map(local_to_URL)
@@ -54,7 +55,8 @@ def show_leaderboard_1():
                        index=False, 
                        max_cols=None, 
                        max_rows=None,
-                       justify='left')
+                       justify='left',
+                       classes=['ui', 'blue', 'table'])
 
     return render_template('leaderboard.html', leaderboard_1=html1,
                            leaderboard_2=html2)
@@ -92,5 +94,5 @@ def add_submodule():
 
 if __name__ == "__main__":
     # app.run(debug=True, port=8080)
-    app.run(debug=True, port=serve_port, host='0.0.0.0')
+    app.run(debug=False, port=serve_port, host='0.0.0.0')
     # app.run(debug=True, port=8080, host='127.0.0.1')

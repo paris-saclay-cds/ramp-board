@@ -6,9 +6,13 @@
     </head>
     <body style="margin:50">
         <h1>Leaderboards</h1>
-        <div class="ui grid">
-            <div class="columns">{{leaderboard_1|safe}}</div> <br/>
-            <div class="columns">{{leaderboard_2|safe}}</div>
+        <div class="ui two column grid">
+            <div class="row">
+                <div class="column four"><h2>Best models</h2></div>
+                <div class="column four"><h2>Most contributive models</h2></div>
+            </div>
+            <div class="column four">{{leaderboard_1|safe}}</div>
+            <div class="column four">{{leaderboard_2|safe}}</div>
         </div>
 
 <!--         <div className="ui page grid">
