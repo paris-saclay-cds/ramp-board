@@ -11,3 +11,5 @@ skf = StratifiedShuffleSplit(y, n_iter=n_CV, test_size=test_size, random_state=r
 setup_ground_truth(gt_path, y, skf)
 with open('last_trained_timestamp.py', 'w') as f:
 	f.write('last_trained_timestamp = 0')
+with open('trained_submissions.csv', 'w') as f:
+	f.write('team,model,path\n')

@@ -15,8 +15,9 @@ if len(models_to_train) > 0:
 	print last_trained_timestamp
 	with open('last_trained_timestamp.py', 'w') as f:
 		f.write('last_trained_timestamp = ' + str(last_trained_timestamp))
-	m_paths = [os.path.join(root_path, 'Submission', 'Models', path) for path in models_to_train['path']]
-	print m_paths
-	for m_path in m_paths:
-		print m_paths
+	for team, model, path in zip(models_to_train['team'], models_to_train['model'], models_to_train['path']):
+		m_path = os.path.join(root_path, 'Submission', 'Models', path)
+		print m_path
 		train_model(m_path, X, y, skf)
+		with open('trained_submissions.csv', 'a') as f:
+			f.write(team + "," + model + "," + path + "\n")	
