@@ -137,13 +137,12 @@ def leaderboard_classical(models):
     """
     
     mean_scores = []
-    m_names = []
     m_paths = [os.path.join(root_path, 'Submission', 'Models', path) for path in models['path']]
     for m_path in m_paths:
-        print m_path
+        #print m_path
         scores = pd.read_csv(m_path + "/score.csv", names=["h_str", "n", "score"])
         mean_scores = np.append(mean_scores, scores['score'].mean())
-    print mean_scores[0]
+    #print mean_scores[0]
     ordering = mean_scores.argsort() # error: increasing order
     #print mean_scores[ordering]
     leaderboard = models.copy()
@@ -173,7 +172,7 @@ def combine_models(y_preds, y_ranks, indexes):
     com_y_pred[np.greater(sum_y_ranks, n_ones)] = 1
     return com_y_pred
 
-def leaderboard_combination(gt_path, m_paths):
+def leaderboard_combination(models, gt_path):
     """Output combined leaderboard (sorted in decreasing order by score). We use
     Caruana's greedy combination
     http://www.cs.cornell.edu/~caruana/ctp/ct.papers/caruana.icml04.icdm06long.pdf
@@ -240,22 +239,22 @@ def leaderboard_combination(gt_path, m_paths):
             return best_indexes
 
     # get prediction file names
-    pr_paths = glob.glob(m_paths[0] + "/pred_*")
+    pr_paths = glob.glob(gt_path + "/pred_*")[:n_CV]
     pr_names = np.array([pr_path.split('/')[-1] for pr_path in pr_paths])
     # get model file names
-    m_names = np.array([m_path.split("/")[-1] for m_path in m_paths])
-    counts = np.zeros(len(m_paths), dtype=int)
+    counts = np.zeros(len(models), dtype=int)
     for pr_name in pr_names:
         # probab;y an overshoot to use dataframes here, but slightly simpler code
         # to be simplified perhaps
         y_preds = pd.DataFrame()
         y_ranks = pd.DataFrame()
         y_test = pd.read_csv(gt_path + '/' + pr_name, names=['pred']).values.flatten()
-        for m_path, m_name in zip(m_paths, m_names):
-            #print m_path + '/' + pr_name
-            inp = pd.read_csv(m_path + '/' + pr_name,names=['pred', 'rank'])
-            y_preds[m_name] = inp['pred']
-            y_ranks[m_name] = inp['rank']
+        for m_path in models['path']:
+            pr_path = os.path.join(root_path, 'Submission', 'Models', m_path, pr_name)
+            print pr_path
+            inp = pd.read_csv(pr_path, names=['pred', 'rank'])
+            y_preds[m_path] = inp['pred'] # use m_path as db key
+            y_ranks[m_path] = inp['rank']
         # y_preds: k vectors of length n
         y_preds = np.transpose(y_preds.values)
         y_ranks = np.transpose(y_ranks.values)
@@ -273,9 +272,7 @@ def leaderboard_combination(gt_path, m_paths):
         #print counts
     ordering = (-counts).argsort() # count: decreasing order
     #print ordering
-    leaderboard = pd.DataFrame()
-    leaderboard['model'] = m_names[ordering]
-    leaderboard['count'] = counts[ordering]
-    return leaderboard
-
+    leaderboard = models.copy()
+    leaderboard['score'] = counts[ordering.argsort()] # argsort of argsort gives rank of entry
+    return leaderboard.sort(columns=['score'],  ascending=False)
  
