@@ -8,7 +8,11 @@ from databoard.generic import setup_ground_truth, read_data
 from config_databoard import root_path, n_CV, test_size, random_state
 
 # cleanup prediction files
-fnames = glob.glob('ground_truth/pred_*')
+fnames = []
+if os.path.exists('ground_truth'):
+    fnames = glob.glob('ground_truth/pred_*')
+else:
+    os.mkdir('ground_truth')
 fnames += glob.glob('models/*/pred_*')
 fnames += glob.glob('models/*/*/pred_*')
 for fname in fnames:
