@@ -1,0 +1,33 @@
+<html>
+    <head>
+        <script type="text/javascript" src="//code.jquery.com/jquery-1.10.0.min.js"></script>
+        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/1.8.1/semantic.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/1.8.1/semantic.min.css">
+    </head>
+    <body style="margin:50">
+        <h1>Leaderboards</h1>
+        {{leaderboard_1}}
+        <br>
+        {{leaderboard_2}}
+        <div class="ui grid">
+            <div class="columns">{{leaderboard_1}}</div> <br/>
+            <div class="columns">{{leaderboard_2}}</div>
+        </div>
+        
+<!--         <div className="ui page grid">
+            <h1>Teams list</h1>
+            {% for sm in submodules %}
+            <div className="four wide column">
+                <div class="ui card">
+                    <div class="content">
+                        <div class="header">{{sm.name}}</div>
+                        <div class="meta">
+                            <span>{{sm.parent_commit.author}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div> -->
+    </body>
+</html>
