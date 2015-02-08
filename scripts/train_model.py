@@ -20,7 +20,7 @@ if len(models_to_train) > 0:
     for team, model, path in zip(models_to_train['team'],
                                  models_to_train['model'],
                                  models_to_train['path']):
-        m_path = os.path.join(root_path, 'databoard', 'Models', path)
+        m_path = os.path.join(root_path, 'models', path)
         print m_path
         train_model(m_path, X, y, skf)
         with open('trained_submissions.csv', 'a') as f:
