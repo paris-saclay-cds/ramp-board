@@ -135,7 +135,6 @@ def leaderboard_classical(gt_path, models):
 
     """
     
-    
     m_paths = [os.path.join(root_path, 'models', path) for path in models['path']]
     pr_paths = glob.glob(gt_path + "/pred_*")
     pr_names = np.array([pr_path.split('/')[-1] for pr_path in pr_paths])
@@ -257,7 +256,7 @@ def leaderboard_combination(models, gt_path):
             return best_indexes
 
     # get prediction file names
-    pr_paths = glob.glob(gt_path + "/pred_*")[:n_CV]
+    pr_paths = glob.glob(gt_path + "/pred_*")
     pr_names = np.array([pr_path.split('/')[-1] for pr_path in pr_paths])
     # get model file names
     counts = np.zeros(len(models), dtype=int)
@@ -268,7 +267,7 @@ def leaderboard_combination(models, gt_path):
         y_ranks = pd.DataFrame()
         y_test = pd.read_csv(gt_path + '/' + pr_name, names=['pred']).values.flatten()
         for m_path in models['path']:
-            pr_path = os.path.join(root_path, 'Submission', 'Models', m_path, pr_name)
+            pr_path = os.path.join(root_path, 'models', m_path, pr_name)
             print pr_path
             inp = pd.read_csv(pr_path, names=['pred', 'rank'])
             y_preds[m_path] = inp['pred'] # use m_path as db key
