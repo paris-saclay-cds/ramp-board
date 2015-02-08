@@ -1,21 +1,30 @@
 #!/usr/bin/env python2
-from flask import Flask, request, redirect, url_for
-from git import Repo, Submodule
+
+import pandas as pd
 import os.path
+from git import Repo, Submodule
+from flask import Flask, request, redirect, url_for, render_template
+from Submission.generic import leaderboard_classical, leaderboard_to_html
 
 app = Flask(__name__)
-repo = Repo('repo')
+repo = Repo('TeamsRepos')
 
+@app.route("/register/")
 @app.route("/list/")
 def list_submodules():
     if len(repo.submodules) == 0:
-        return "No submodule found"
+        return render_template('list.html', submodules=repo.submodules)
+        # return "No submodule found"
     else:
         html_list = "<ul>"
-        for submodule in repo.submodules:
-            html_list += "<li>{} - {}</li>".format(submodule.path, submodule.head)
-        html_list += "</ul>"
-        return html_list
+        return render_template('list.html', submodules=repo.submodules)
+
+@app.route("/leaderboad/")
+def show_leaderboard():
+    trained_models = pd.read_csv("Submission/trained_submissions.csv")
+    print trained_models
+    l1 = leaderboard_classical(trained_models)
+    return leaderboard_to_html(l1)
 
 @app.route("/add/", methods=["GET", "POST"])
 def add_submodule():
@@ -40,5 +49,5 @@ def add_submodule():
         return sub_form
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False, port=8080)#, host='0.0.0.0')
     print list_submodules()

@@ -1,0 +1,42 @@
+<html>
+    <head>
+        <script type="text/javascript" src="//code.jquery.com/jquery-1.10.0.min.js"></script>
+        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/1.8.1/semantic.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/1.8.1/semantic.min.css">
+    </head>
+    <body style="margin:50">
+        <form class="ui form" method="post" action="/add/">
+            <h1>Registration</h1>
+            <div class="two fields">
+                <div class="field">
+                    <label>Team name</label>
+                    <div class="ui input">
+                        <input type="text" placeholder="Repository name" name="name">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Link to your GIT repository</label>
+                    <div class="ui input">
+                        <input type="text" placeholder="/path/to/repo" name="url">
+                    </div>
+                </div>
+                <input type="submit" value="Add" class="ui submit button">
+            </div>
+        </form>
+        <div className="ui page grid">
+            <h1>Teams list</h1>
+            {% for sm in submodules %}
+            <div className="four wide column">
+                <div class="ui card">
+                    <div class="content">
+                        <div class="header">{{sm.name}}</div>
+                        <div class="meta">
+                            <span>{{sm.parent_commit.author}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </body>
+</html>
