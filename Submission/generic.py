@@ -1,3 +1,4 @@
+import os
 import hashlib, imp, glob, csv
 from sklearn.metrics import accuracy_score
 import numpy as np
@@ -102,7 +103,10 @@ def train_model(m_path, X, y, skf):
     pool.map(partial_save_scores, skf)
     pool.close()
 
-def leaderboard_classical(m_paths):
+def leaderboard_to_html(leaderboard):
+    return leaderboard.to_html()
+
+def leaderboard_classical(models):
     """Output classical leaderboard (sorted in increasing order by score).
 
     Parameters
@@ -131,22 +135,20 @@ def leaderboard_classical(m_paths):
         9   Kegl3  0.251158
 
     """
+    
     mean_scores = []
     m_names = []
+    m_paths = [os.path.join(root_path, 'Submission', 'Models', path) for path in models['path']]
     for m_path in m_paths:
-        #print m_path
-        m_name = m_path.split("/")[-1]
-        #print m_name
+        print m_path
         scores = pd.read_csv(m_path + "/score.csv", names=["h_str", "n", "score"])
         mean_scores = np.append(mean_scores, scores['score'].mean())
-        m_names = np.append(m_names, m_name)
-    #print mean_scores[0]
+    print mean_scores[0]
     ordering = mean_scores.argsort() # error: increasing order
     #print mean_scores[ordering]
-    leaderboard = pd.DataFrame()
-    leaderboard['model'] = m_names[ordering]
-    leaderboard['error'] = mean_scores[ordering]
-    return leaderboard
+    leaderboard = models.copy()
+    leaderboard['score'] = mean_scores[ordering.argsort()] # argsort of argsort gives rank of entry
+    return leaderboard.sort(columns=['score'],  ascending=True)
 
 def combine_models(y_preds, y_ranks, indexes):
     """Combines the predictions y_preds[indexes] by "rank"
