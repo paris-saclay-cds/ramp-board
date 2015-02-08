@@ -8,12 +8,10 @@ import git
 import numpy as np
 import pandas as pd 
 
-from Submission.config import repos_path
+from Submission.config import repos_path, submissions_path
 
 base_path = repos_path
 repo_paths = sorted(glob.glob(os.path.join(base_path, '*')))
-
-submissions_path = os.path.join(root_path, 'Submission', 'Models')
 
 if not os.path.exists(submissions_path):
     os.mkdir(submissions_path)
