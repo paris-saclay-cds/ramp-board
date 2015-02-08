@@ -9,14 +9,15 @@ trained_models = pd.read_csv("trained_submissions.csv")
 print trained_models
 
 gt_path = os.path.join(root_path, 'ground_truth')
+print gt_path
 
 l1 = leaderboard_classical(gt_path, trained_models)
 print l1
-#l1_html = leaderboard_to_html(l1)
-#print l1_html
+l1_html = leaderboard_to_html(l1)
+print l1_html
 
 
 l2 = leaderboard_combination(gt_path, trained_models)
 print l2
-#l2_html = leaderboard_to_html(l2)
-#print l2_html
+l2_html = leaderboard_to_html(l2)
+print l2_html

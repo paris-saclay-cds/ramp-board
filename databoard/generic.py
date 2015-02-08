@@ -1,6 +1,6 @@
 import os
 import hashlib, imp, glob, csv
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, roc_curve, auc
 import numpy as np
 import pandas as pd
 from scipy import io
@@ -100,10 +100,10 @@ def train_model(m_path, X, y, skf):
     pool.close()
 
 def score(y_pred, y_test):
-    return 1 - accuracy_score(y_pred, y_test)
-
-# def leaderboard_to_html(leaderboard):
-#     return leaderboard.to_html()
+    #return 1 - accuracy_score(y_pred, y_test)
+    #return accuracy_score(y_pred, y_test)
+    fpr, tpr, _ = roc_curve(y_test, y_pred)
+    return auc(fpr, tpr)
 
 def leaderboard_classical(gt_path, models):
     """Output classical leaderboard (sorted in increasing order by score).
@@ -153,20 +153,15 @@ def leaderboard_classical(gt_path, models):
         # y_preds: k vectors of length n
         y_preds = np.transpose(y_preds.values)
         y_ranks = np.transpose(y_ranks.values)
-        scores = [score(y_pred, y_test) for y_pred in y_preds]
+        #scores = [score(y_pred, y_test) for y_pred in y_preds]
+        scores = [score(y_rank, y_test) for y_rank in y_ranks]
         #print scores
         mean_scores += scores
     mean_scores /= len(pr_names)
-    scoring_higher_the_better = False
-    if scoring_higher_the_better:
-        ordering = (-mean_scores).argsort() # decreasing order
-    else:
-        ordering = mean_scores.argsort() # increasing order
-    print ordering
-#    print mean_scores[ordering]
+    scoring_higher_the_better = True
     leaderboard = models.copy()
-    leaderboard['score'] = mean_scores[ordering.argsort()] # argsort of argsort gives rank of entry
-    return leaderboard.sort(columns=['score'],  ascending=not scoring_higher_the_better)
+    leaderboard['score'] = mean_scores # argsort of argsort gives rank of entry
+    return leaderboard.sort(columns=['score'], ascending=not scoring_higher_the_better)
 
 def combine_models(y_preds, y_ranks, indexes):
     """Combines the predictions y_preds[indexes] by "rank"
@@ -190,6 +185,28 @@ def combine_models(y_preds, y_ranks, indexes):
     com_y_pred = np.zeros(n, dtype=int)
     com_y_pred[np.greater(sum_y_ranks, n_ones)] = 1
     return com_y_pred
+
+def combine_models_using_ranks(y_preds, y_ranks, indexes):
+    """Combines the predictions y_preds[indexes] by "rank"
+    voting. I'll detail it once you verify that it makes sense (see my mail)
+
+    Parameters
+    ----------
+    y_preds : array-like, shape = [k_models, n_instances], binary
+    y_ranks : array-like, shape = [k_models, n_instances], permutation of [0,...,n_instances]
+    indexes : array-like, shape = [max k_models], a set of indices of 
+        models to combine
+    Returns
+    -------
+    com_y_pred : array-like, shape = [n_instances], a list of (combined) 
+        binary predictions.
+    """
+    k = len(indexes)
+    n = len(y_preds[0])
+    n_ones = n * k - y_preds[indexes].sum() # number of zeros
+    sum_y_ranks = y_ranks[indexes].sum(axis=0) + k #sum of ranks \in [1,n]
+    com_y_ranks = sum_y_ranks.argsort()
+    return com_y_ranks
 
 def leaderboard_combination(gt_path, models):
     """Output combined leaderboard (sorted in decreasing order by score). We use
@@ -240,23 +257,27 @@ def leaderboard_combination(gt_path, models):
         combination from scratch each time the set changes.
         """
         eps = 0.01/len(y_preds)
-        y_pred = combine_models(y_preds, y_ranks, best_indexes)
+        #y_pred = combine_models(y_preds, y_ranks, best_indexes)
+        y_pred = combine_models_using_ranks(y_preds, y_ranks, best_indexes)
         best_index = -1
         # Combination with replacement, what Caruana suggests. Basically, if a model
         # added several times, it's upweighted.
         for i in range(len(y_preds)):
-            com_y_pred = combine_models(y_preds, y_ranks, np.append(best_indexes, i))
+            #com_y_pred = combine_models(y_preds, y_ranks, np.append(best_indexes, i))
+            com_y_pred = combine_models_using_ranks(y_preds, y_ranks, np.append(best_indexes, i))
             #print score(y_pred, y_test), score(com_y_pred, y_test)
-            if score(y_pred, y_test) > score(com_y_pred, y_test) + eps:
+            #if score(y_pred, y_test) > score(com_y_pred, y_test) + eps:
+            if score(y_pred, y_test) < score(com_y_pred, y_test) - eps:
                 y_pred = com_y_pred
                 best_index = i
+            #print score(y_pred, y_test), score(com_y_pred, y_test)
         if best_index > -1:
             return np.append(best_indexes, best_index)
         else:
             return best_indexes
 
     # get prediction file names
-    pr_paths = glob.glob(gt_path + "/pred_*")
+    pr_paths = glob.glob(os.path.join(gt_path, 'pred_*'))
     pr_names = np.array([pr_path.split('/')[-1] for pr_path in pr_paths])
     # get model file names
     counts = np.zeros(len(models), dtype=int)
@@ -268,16 +289,18 @@ def leaderboard_combination(gt_path, models):
         y_test = pd.read_csv(gt_path + '/' + pr_name, names=['pred']).values.flatten()
         for m_path in models['path']:
             pr_path = os.path.join(root_path, 'models', m_path, pr_name)
-            print pr_path
+            #print pr_path
             inp = pd.read_csv(pr_path, names=['pred', 'rank'])
             y_preds[m_path] = inp['pred'] # use m_path as db key
             y_ranks[m_path] = inp['rank']
         # y_preds: k vectors of length n
         y_preds = np.transpose(y_preds.values)
         y_ranks = np.transpose(y_ranks.values)
-        scores = [score(y_pred, y_test) for y_pred in y_preds]
+        #scores = [score(y_pred, y_test) for y_pred in y_preds]
+        scores = [score(y_rank, y_test) for y_rank in y_ranks]
         #print scores
-        best_indexes = np.array([np.argmin(scores)])
+        #best_indexes = np.array([np.argmin(scores)])
+        best_indexes = np.array([np.argmax(scores)])
         #print best_indexes
         improvement = True
         while improvement:
@@ -287,9 +310,7 @@ def leaderboard_combination(gt_path, models):
             #print best_indexes
         counts[best_indexes] += 1
         #print counts
-    ordering = (-counts).argsort() # count: decreasing order
-    #print ordering
     leaderboard = models.copy()
-    leaderboard['score'] = counts[ordering.argsort()] # argsort of argsort gives rank of entry
+    leaderboard['score'] = counts # argsort of argsort gives rank of entry
     return leaderboard.sort(columns=['score'],  ascending=False)
  

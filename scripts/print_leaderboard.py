@@ -9,6 +9,7 @@ trained_models = pd.read_csv("trained_submissions.csv")
 print trained_models
 
 gt_path = os.path.join(root_path, 'ground_truth')
+print gt_path
 
 l1 = leaderboard_classical(gt_path, trained_models)
 print l1
