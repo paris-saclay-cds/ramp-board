@@ -22,6 +22,10 @@ if len(models_to_train) > 0:
                                  models_to_train['path']):
         m_path = os.path.join(root_path, 'models', path)
         print m_path
-        train_model(m_path, X, y, skf)
-        with open('trained_submissions.csv', 'a') as f:
-            f.write(team + "," + model + "," + path + "\n")
+
+        try:
+            train_model(m_path, X, y, skf)
+            with open('trained_submissions.csv', 'a') as f:
+                f.write(team + "," + model + "," + path + "\n")
+        except:
+            print "ERROR: Model not trained."
