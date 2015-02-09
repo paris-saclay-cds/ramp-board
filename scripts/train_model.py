@@ -17,8 +17,9 @@ if len(models_to_train) > 0:
     print last_trained_timestamp
     with open('last_trained_timestamp.py', 'w') as f:
         f.write('last_trained_timestamp = ' + str(last_trained_timestamp))
-    for team, model, path in zip(models_to_train['team'],
+    for team, model, timestamp, path, in zip(models_to_train['team'],
                                  models_to_train['model'],
+                                 models_to_train['timestamp'],
                                  models_to_train['path']):
         m_path = os.path.join(root_path, 'models', path)
         print m_path
@@ -26,6 +27,6 @@ if len(models_to_train) > 0:
         try:
             train_model(m_path, X, y, skf)
             with open('trained_submissions.csv', 'a') as f:
-                f.write(team + "," + model + "," + path + "\n")
+                f.write(team + "," + model + "," + str(timestamp) + "," + path + "\n")
         except:
             print "ERROR (non fatal): Model not trained."

@@ -129,7 +129,8 @@ def leaderboard_classical(gt_path, models):
         9   Kegl3  0.251158
 
     """
-    
+    models = models.sort(columns='timestamp')
+    print models    
     m_paths = [os.path.join(root_path, 'models', path) for path in models['path']]
     pr_paths = glob.glob(gt_path + "/pred_*")
     pr_names = np.array([pr_path.split('/')[-1] for pr_path in pr_paths])
@@ -271,6 +272,8 @@ def leaderboard_combination(gt_path, models):
         else:
             return best_indexes
 
+    models = models.sort(columns='timestamp')
+    print models
     # get prediction file names
     pr_paths = glob.glob(os.path.join(gt_path, 'pred_*'))
     pr_names = np.array([pr_path.split('/')[-1] for pr_path in pr_paths])
