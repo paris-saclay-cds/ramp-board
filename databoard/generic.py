@@ -136,18 +136,18 @@ def leaderboard_classical(gt_path, models):
     mean_scores = np.zeros(len(m_paths))
     # get model file names
     for pr_name in pr_names:
-        y_preds = pd.DataFrame()
-        y_ranks = pd.DataFrame()
+        y_preds = []
+        y_ranks = []
         y_test = pd.read_csv(gt_path + '/' + pr_name, names=['pred']).values.flatten()
         for m_path in models['path']:
             pr_path = os.path.join(root_path, 'models', m_path, pr_name)
             #print pr_path
             inp = pd.read_csv(pr_path, names=['pred', 'rank'])
-            y_preds[m_path] = inp['pred'] # use m_path as db key
-            y_ranks[m_path] = inp['rank']
+            y_preds.append(inp['pred'].values) # use m_path as db key
+            y_ranks.append(inp['rank'].values)
         # y_preds: k vectors of length n
-        y_preds = np.transpose(y_preds.values)
-        y_ranks = np.transpose(y_ranks.values)
+        y_preds = np.array(y_preds)
+        y_ranks = np.array(y_ranks)
         #scores = [score(y_pred, y_test) for y_pred in y_preds]
         scores = [score(y_rank, y_test) for y_rank in y_ranks]
         #print scores
