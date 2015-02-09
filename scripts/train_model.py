@@ -28,5 +28,6 @@ if len(models_to_train) > 0:
             train_model(m_path, X, y, skf)
             with open('trained_submissions.csv', 'a') as f:
                 f.write(team + "," + model + "," + str(timestamp) + "," + path + "\n")
-        except:
+        except Exception, e:
+            print e
             print "ERROR (non fatal): Model not trained."
