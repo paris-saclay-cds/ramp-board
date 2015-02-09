@@ -3,7 +3,6 @@
 
 import glob
 import os
-import time
 import git
 import numpy as np
 import pandas as pd 
@@ -21,16 +20,17 @@ if not os.path.exists(submissions_path):
 tags_info = []
 
 for rp in repo_paths:
+    print rp
+
     if not os.path.isdir(rp):
         continue
 
-    team_name = os.path.basename(rp)
-    repo = git.Repo(rp)
-    o = repo.remotes.origin
-    o.pull()
-    print rp
-
     try:
+        team_name = os.path.basename(rp)
+        repo = git.Repo(rp)
+        o = repo.remotes.origin
+        o.pull()
+
         if len(repo.tags) > 0:
             for t in repo.tags:
                 tag_name = t.name
