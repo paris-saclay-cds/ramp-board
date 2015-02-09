@@ -11,5 +11,5 @@ trained_models = pd.read_csv(submissions_path)
 l1 = leaderboard_classical(gt_path, trained_models)
 l2 = leaderboard_combination(gt_path, trained_models)
 
-l1.to_csv("leaderboard1.csv")
-l2.to_csv("leaderboard2.csv")
+l1.to_csv("leaderboard1.csv", index=False)
+l2.to_csv("leaderboard2.csv", index=False)
