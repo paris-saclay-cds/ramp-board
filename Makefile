@@ -1,6 +1,6 @@
 PYTHON ?= python
 
-all: train
+all: fetch train leaderboard
 
 setup:
 	$(PYTHON) scripts/setup_databoard.py
@@ -13,6 +13,9 @@ train:
 
 server:
 	$(PYTHON) server.py
+
+leaderboard:
+	$(PYTHON) scripts/make_leaderboards.py
 
 clean-pyc:
 	find . -name "*.pyc" | xargs rm -f

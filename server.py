@@ -5,7 +5,6 @@ import os.path
 import pandas as pd
 from git import Repo, Submodule
 from flask import Flask, request, redirect, url_for, render_template, send_from_directory
-from databoard.generic import leaderboard_classical, leaderboard_combination
 from config_databoard import root_path, repos_path
 
 app = Flask(__name__)
@@ -37,22 +36,20 @@ def list_submodules():
 
 @app.route("/leaderboard/")
 def show_leaderboard_1():
-    submissions_path = os.path.join(root_path, 'trained_submissions.csv')
-    trained_models = pd.read_csv(submissions_path)
-    l1 = leaderboard_classical(gt_path, trained_models)
+    l1 = pd.read_csv("leaderboard1.csv")
+    l2 = pd.read_csv("leaderboard1.csv")
     l1.path = l1.path.map(local_to_URL)
-    html1 = l1.to_html(escape=False, 
-                       index=False, 
-                       max_cols=None, 
+    html1 = l1.to_html(escape=False,
+                       index=False,
+                       max_cols=None,
                        max_rows=None,
                        justify='left',
                        classes=['ui', 'blue', 'table'])
 
-    l2 = leaderboard_combination(gt_path, trained_models)
     l2.path = l2.path.map(local_to_URL)
-    html2 = l2.to_html(escape=False, 
-                       index=False, 
-                       max_cols=None, 
+    html2 = l2.to_html(escape=False,
+                       index=False,
+                       max_cols=None,
                        max_rows=None,
                        justify='left',
                        classes=['ui', 'blue', 'table'])
