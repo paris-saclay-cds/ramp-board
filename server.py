@@ -37,7 +37,7 @@ def list_submodules():
 @app.route("/leaderboard/")
 def show_leaderboard_1():
     l1 = pd.read_csv("leaderboard1.csv")
-    l2 = pd.read_csv("leaderboard1.csv")
+    l2 = pd.read_csv("leaderboard2.csv")
     l1.path = l1.path.map(local_to_URL)
     html1 = l1.to_html(escape=False,
                        index=False,
