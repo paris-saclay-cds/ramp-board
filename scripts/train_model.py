@@ -28,4 +28,4 @@ if len(models_to_train) > 0:
             with open('trained_submissions.csv', 'a') as f:
                 f.write(team + "," + model + "," + path + "\n")
         except:
-            print "ERROR: Model not trained."
+            print "ERROR (non fatal): Model not trained."
