@@ -1,6 +1,7 @@
 import numpy as np
-from numpy.testing import assert_array_equal
+
 from generic import combine_models
+from numpy.testing import assert_array_equal
 
 
 def test_combine_models():

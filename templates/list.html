@@ -30,11 +30,11 @@
             <h1>Teams list</h1>
             {% for sm in submodules %}
             <div className="four wide column">
-                <div class="ui card">
+                <div class="ui fluid card">
                     <div class="content">
                         <div class="header">{{sm.name}}</div>
                         <div class="meta">
-                            <span>{{sm.parent_commit.author}}</span>
+                            <span>{{sm.url}}</span>
                         </div>
                     </div>
                 </div>

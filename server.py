@@ -1,20 +1,30 @@
 #!/usr/bin/env python2
 
-import socket
 import os.path
 import pandas as pd
+
 from git import Repo, Submodule
-from flask import Flask, request, redirect, url_for, render_template, send_from_directory
-from config_databoard import root_path, repos_path
+from config_databoard import (
+    root_path, 
+    repos_path, 
+    serve_port,
+    server_name,
+    debug_mode,
+)
+from flask import (
+    Flask, 
+    request, 
+    redirect, 
+    url_for, 
+    render_template, 
+    send_from_directory,
+)
+
+
+pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 app = Flask(__name__)
 repo = Repo(repos_path)
-
-serve_port = 8080
-gt_path = os.path.join(root_path, 'ground_truth')
-
-# to_html tends to truncate the output
-pd.set_option('display.max_colwidth', -1)
 
 
 def model_local_to_url(path):
@@ -31,12 +41,8 @@ def error_local_to_url(path):
 
 @app.route("/")
 @app.route("/register/")
-@app.route("/list/")
 def list_submodules():
-    if len(repo.submodules) == 0:
-        return render_template('list.html', submodules=repo.submodules)
-    else:
-        return render_template('list.html', submodules=repo.submodules)
+    return render_template('list.html', submodules=repo.submodules)
 
 
 @app.route("/leaderboard/")
@@ -63,7 +69,8 @@ def show_leaderboard_1():
     html2 = l2.to_html(**html_params)
     failed_html = failed.to_html(**html_params)
 
-    return render_template('leaderboard.html', leaderboard_1=html1,
+    return render_template('leaderboard.html', 
+                           leaderboard_1=html1,
                            leaderboard_2=html2,
                            failed_models=failed_html)
 
@@ -73,7 +80,7 @@ def download_model(team, tag):
     directory = os.path.join(root_path, "models", team, tag)
     return send_from_directory(directory,
                                'model.py',
-                               mimetype='text/x-script.phyton')
+                               mimetype='text/x-script.python')
 
 
 @app.route('/models/<path:team>/<path:tag>/error')
@@ -81,10 +88,10 @@ def download_error(team, tag):
     directory = os.path.join(root_path, "models", team, tag)
     return send_from_directory(directory,
                                'error.txt',
-                               mimetype='text/x-script.phyton')
+                               mimetype='text/x-script.python')
 
 
-@app.route("/add/", methods=["GET", "POST"])
+@app.route("/add/", methods=("POST",))
 def add_submodule():
     if request.method == "POST":
         Submodule.add(
@@ -94,23 +101,7 @@ def add_submodule():
                 url = request.form["url"],
             )
         return redirect(url_for('list_submodules'))
-    else:
-        sub_form = """
-                    <form method="post">
-                        <label>name</label>
-                        <input type="text" name="name"/>
-                        <label>git repository</label>
-                        <input type="text" name="url"/>
-                        <input type="submit" value="Add"/>
-                    </form>
-                   """
-        return sub_form
 
 
 if __name__ == "__main__":
-    # server_name = 'http://localhost:{}'.format(serve_port)
-    # app.run(debug=True, port=8080)
-
-    server_name = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(serve_port)
-    app.run(debug=False, port=serve_port, host='0.0.0.0')
-    # app.run(debug=True, port=8080, host='127.0.0.1')
+    app.run(debug=debug_mode, port=serve_port, host='0.0.0.0')

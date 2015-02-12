@@ -1,8 +1,12 @@
 import os
+import csv
+import glob
+import hashlib
 import multiprocessing
-import hashlib, imp, glob, csv
+
 import numpy as np
 import pandas as pd
+
 from scipy import io
 from functools import partial
 from importlib import import_module
