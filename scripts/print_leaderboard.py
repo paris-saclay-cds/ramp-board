@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
-from databoard.generic import leaderboard_classical, leaderboard_combination
+from generic import leaderboard_classical, leaderboard_combination
 import glob
 from config_databoard import root_path
 

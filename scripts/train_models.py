@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.externals.joblib import Memory
 
-from databoard.generic import train_model, read_data
+from generic import train_model, read_data
 
 from config_databoard import root_path, n_CV, test_size
 from config_databoard import random_state, cachedir

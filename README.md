@@ -7,3 +7,15 @@
 
  - gitpython
  - flask
+
+# Commands
+
+
+- make setup
+- make fetch
+- make train
+- make leaderboard 
+
+To launch the web server, run
+
+- make server
