@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+import socket
 import os.path
 import pandas as pd
 from git import Repo, Submodule

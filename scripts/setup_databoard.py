@@ -7,7 +7,7 @@ import glob
 from sklearn.cross_validation import StratifiedShuffleSplit
 
 from databoard.generic import setup_ground_truth, read_data
-from config_databoard import root_path, n_CV, test_size, random_state
+from config_databoard import root_path, n_CV, test_size, random_state, cachedir
 
 # cleanup prediction files
 fnames = []
