@@ -6,10 +6,10 @@ setup:
 	$(PYTHON) scripts/setup_databoard.py
 
 fetch:
-	$(PYTHON) scripts/repos2databoard.py
+	$(PYTHON) scripts/fetch_models.py
 
 train:
-	$(PYTHON) scripts/train_model.py
+	$(PYTHON) scripts/train_models.py
 
 server:
 	$(PYTHON) server.py

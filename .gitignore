@@ -5,3 +5,4 @@ TeamsRepos
 .DS_Store
 last_trained_timestamp.py
 *.csv
+models

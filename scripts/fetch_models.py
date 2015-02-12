@@ -5,7 +5,7 @@ import glob
 import os
 import git
 import numpy as np
-import pandas as pd 
+import pandas as pd
 
 from config_databoard import repos_path, root_path
 
@@ -29,11 +29,15 @@ for rp in repo_paths:
         team_name = os.path.basename(rp)
         repo = git.Repo(rp)
         o = repo.remotes.origin
-        o.pull()
+        # o.pull()
 
         if len(repo.tags) > 0:
             for t in repo.tags:
                 tag_name = t.name
+                if ',' in tag_name:
+                    # avoid , and spaces in folder/tag names
+                    tag_name = tag_name.replace(',', ';')
+                    tag_name = tag_name.replace(' ', '_')
                 c = t.commit
                 tree = repo.tree(c.hexsha)
                 b = tree['model.py']
@@ -59,8 +63,7 @@ if len(tags_info) > 0:
     df = pd.DataFrame(np.array(tags_info), columns=columns)
     print df
 
-    print('Writing submission.csv file')
+    print('Writing submissions.csv file')
     df.to_csv('submissions.csv', index=False)
 else:
     print('No submission found')
-

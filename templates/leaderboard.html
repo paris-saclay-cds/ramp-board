@@ -14,21 +14,11 @@
             <div class="column four">{{leaderboard_1|safe}}</div>
             <div class="column four">{{leaderboard_2|safe}}</div>
         </div>
-
-<!--         <div className="ui page grid">
-            <h1>Teams list</h1>
-            {% for sm in submodules %}
-            <div className="four wide column">
-                <div class="ui card">
-                    <div class="content">
-                        <div class="header">{{sm.name}}</div>
-                        <div class="meta">
-                            <span>{{sm.parent_commit.author}}</span>
-                        </div>
-                    </div>
-                </div>
+        <div class="ui two column grid">
+            <div class="row">
+                <div class="column four"><h2>Failed models</h2></div>
             </div>
-            {% endfor %}
-        </div> -->
+            <div class="column four">{{failed_models|safe}}</div>
+        </div>
     </body>
 </html>

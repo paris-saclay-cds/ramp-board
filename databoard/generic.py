@@ -8,11 +8,13 @@ import multiprocessing
 from functools import partial
 from config_databoard import root_path, n_CV, test_size, n_processes, random_state
 
+
 def read_data():
     df = pd.read_csv('train.csv')
     y = df['TARGET'].values
     X = df.drop('TARGET', axis=1).values
     return X, y
+
 
 def setup_ground_truth(gt_path, y, skf):
     """Setting up the GroundTruth subdir, saving y_test for each fold in skf. File
@@ -33,6 +35,7 @@ def setup_ground_truth(gt_path, y, skf):
         f_name_pred = gt_path + "/pred_" + h_str + ".csv"
         print f_name_pred
         np.savetxt(f_name_pred, y[test_is], delimiter="\n", fmt='%d')
+
 
 def save_scores(skf_is, m_path, X, y, f_name_score):
     hasher = hashlib.md5()
@@ -76,13 +79,13 @@ def train_model(m_path, X, y, skf):
 
     Parameters
     ----------
-    m_paths : array-like, shape = [k_models]
-    X : array-like, shape = [n_instances, d_features]
-    y : array-like, shape = [n_instances]
+    m_paths : list, shape (k_models,)
+    X : array-like, shape (n_instances, d_features)
+    y : array-like, shape (n_instances,)
         the label vector
-    skf : array-like, shape = [N_folds], a cross_validation object
+    skf : object
+        a cross_validation object with n_folds
     """
-
     print m_path
     model = imp.load_source('model',m_path + "/model.py")
     f_name_score = m_path + "/score.csv"
@@ -94,25 +97,29 @@ def train_model(m_path, X, y, skf):
     pool.map(partial_save_scores, skf)
     pool.close()
 
+
 def score(y_pred, y_test):
-    #return 1 - accuracy_score(y_pred, y_test)
-    #return accuracy_score(y_pred, y_test)
+    # return 1 - accuracy_score(y_pred, y_test)
+    # return accuracy_score(y_pred, y_test)
     fpr, tpr, _ = roc_curve(y_test, y_pred)
     return auc(fpr, tpr)
+
 
 def leaderboard_classical(gt_path, models):
     """Output classical leaderboard (sorted in increasing order by score).
 
     Parameters
     ----------
-    m_paths : array-like, shape = [k_models]
+    m_paths : list, shape (k_models,)
         A list of paths, each containing a "score.csv" file with three columns:
             1) the file prefix (hash of the test index set the model was tested on)
             2) the number of test points
             3) the test score (the lower the better; error)
+
     Returns
     -------
-    leaderboard : a pandas DataFrame with two columns:
+    leaderboard : DataFrame
+        a pandas DataFrame with two columns:
             1) The model name (the name of the subdir)
             2) the mean score
         example:
@@ -130,7 +137,7 @@ def leaderboard_classical(gt_path, models):
 
     """
     models = models.sort(columns='timestamp')
-    print models    
+    print models
     m_paths = [os.path.join(root_path, 'models', path) for path in models['path']]
     pr_paths = glob.glob(gt_path + "/pred_*")
     pr_names = np.array([pr_path.split('/')[-1] for pr_path in pr_paths])
@@ -142,22 +149,27 @@ def leaderboard_classical(gt_path, models):
         y_test = pd.read_csv(gt_path + '/' + pr_name, names=['pred']).values.flatten()
         for m_path in models['path']:
             pr_path = os.path.join(root_path, 'models', m_path, pr_name)
-            #print pr_path
+            # print pr_path
             inp = pd.read_csv(pr_path, names=['pred', 'rank'])
             y_preds.append(inp['pred'].values) # use m_path as db key
             y_ranks.append(inp['rank'].values)
         # y_preds: k vectors of length n
         y_preds = np.array(y_preds)
         y_ranks = np.array(y_ranks)
-        #scores = [score(y_pred, y_test) for y_pred in y_preds]
-        scores = [score(y_rank, y_test) for y_rank in y_ranks]
-        #print scores
+        try:
+            #scores = [score(y_pred, y_test) for y_pred in y_preds]
+            scores = [score(y_rank, y_test) for y_rank in y_ranks]
+        except:
+            print 'FAILED in one fold (%s)' % pr_name
+            scores = [0.] * len(m_paths)
+        # print scores
         mean_scores += scores
     mean_scores /= len(pr_names)
     scoring_higher_the_better = True
     leaderboard = models.copy()
     leaderboard['score'] = mean_scores # argsort of argsort gives rank of entry
     return leaderboard.sort(columns=['score'], ascending=not scoring_higher_the_better)
+
 
 def combine_models(y_preds, y_ranks, indexes):
     """Combines the predictions y_preds[indexes] by "rank"
@@ -177,10 +189,11 @@ def combine_models(y_preds, y_ranks, indexes):
     k = len(indexes)
     n = len(y_preds[0])
     n_ones = n * k - y_preds[indexes].sum() # number of zeros
-    sum_y_ranks = y_ranks[indexes].sum(axis=0) + k #sum of ranks \in [1,n]
+    sum_y_ranks = y_ranks[indexes].sum(axis=0) + k # sum of ranks \in [1,n]
     com_y_pred = np.zeros(n, dtype=int)
     com_y_pred[np.greater(sum_y_ranks, n_ones)] = 1
     return com_y_pred
+
 
 def combine_models_using_ranks(y_preds, y_ranks, indexes):
     """Combines the predictions y_preds[indexes] by "rank"
@@ -203,6 +216,7 @@ def combine_models_using_ranks(y_preds, y_ranks, indexes):
     sum_y_ranks = y_ranks[indexes].sum(axis=0) + k #sum of ranks \in [1,n]
     com_y_ranks = sum_y_ranks.argsort()
     return com_y_ranks
+
 
 def leaderboard_combination(gt_path, models):
     """Output combined leaderboard (sorted in decreasing order by score). We use
@@ -311,4 +325,3 @@ def leaderboard_combination(gt_path, models):
     leaderboard = models.copy()
     leaderboard['score'] = counts # argsort of argsort gives rank of entry
     return leaderboard.sort(columns=['score'],  ascending=False)
- 
