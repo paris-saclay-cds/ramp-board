@@ -48,7 +48,11 @@ def save_scores(skf_is, m_path, X, y, f_name_score):
     y_train = y[train_is]
     X_test = X[test_is]
     y_test = y[test_is]
-    model = imp.load_source('model',m_path + "/model.py")
+
+    open(m_path + "/__init__.py", 'a').close()  # so to make it importable
+    module_path = '.'.join(m_path.lstrip('./').split('/'))
+    model = import_module('.model', module_path)
+
     y_pred, y_score = model.model(X_train, y_train, X_test)
     # y_rank[i] is the the rank of the ith element of y_score
     y_rank = y_score[:,1].argsort().argsort()
@@ -88,7 +92,7 @@ def train_model(m_path, X, y, skf):
         a cross_validation object with n_folds
     """
     print m_path
-    model = imp.load_source('model',m_path + "/model.py")
+
     f_name_score = m_path + "/score.csv"
     scores = []
     f = open(f_name_score, "w")
