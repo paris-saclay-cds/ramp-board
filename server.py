@@ -107,9 +107,9 @@ def add_submodule():
 
 
 if __name__ == "__main__":
-    server_name = 'http://localhost:{}'.format(serve_port)
-    app.run(debug=True, port=8080)
+    # server_name = 'http://localhost:{}'.format(serve_port)
+    # app.run(debug=True, port=8080)
 
-    # server_name = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(serve_port)
-    # app.run(debug=False, port=serve_port, host='0.0.0.0')
+    server_name = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(serve_port)
+    app.run(debug=False, port=serve_port, host='0.0.0.0')
     # app.run(debug=True, port=8080, host='127.0.0.1')
