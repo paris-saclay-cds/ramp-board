@@ -64,6 +64,6 @@ if len(tags_info) > 0:
     print df
 
     print('Writing submissions.csv file')
-    df.to_csv('submissions.csv', index=False)
+    df.to_csv('output/submissions.csv', index=False)
 else:
     print('No submission found')

@@ -14,7 +14,7 @@ X, y = read_data()
 skf = StratifiedShuffleSplit(y, n_iter=n_CV, test_size=test_size,
                              random_state=random_state)
 
-models = pd.read_csv("submissions.csv")
+models = pd.read_csv("output/submissions.csv")
 
 mem = Memory(cachedir=cachedir)
 train_model = mem.cache(train_model)
@@ -54,5 +54,5 @@ trained_models, failed_models = train_models(models)
 print trained_models
 print failed_models
 
-trained_models.to_csv("trained_submissions.csv", index=False)
-failed_models.to_csv("failed_submissions.csv", index=False)
+trained_models.to_csv("output/trained_submissions.csv", index=False)
+failed_models.to_csv("output/failed_submissions.csv", index=False)

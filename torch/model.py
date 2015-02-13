@@ -57,7 +57,7 @@ def model(X_train, y_train, X_test):
 
 if __name__ == "__main__":
 
-    train = pd.read_csv("train.csv").values
+    train = pd.read_csv("input/train.csv").values
     X = train[:, 1:]
     y = train[:, 0]
     targets, proba = model(X, y, X)

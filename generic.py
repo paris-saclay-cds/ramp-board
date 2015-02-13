@@ -14,8 +14,8 @@ from sklearn.metrics import accuracy_score, roc_curve, auc
 from config_databoard import root_path, n_CV, test_size, n_processes, random_state
 
 
-def read_data():
-    df = pd.read_csv('train.csv')
+def read_data(filename='input/train.csv'):
+    df = pd.read_csv(filename)
     y = df['TARGET'].values
     X = df.drop('TARGET', axis=1).values
     return X, y

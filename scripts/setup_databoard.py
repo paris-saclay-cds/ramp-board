@@ -20,9 +20,7 @@ fnames += glob.glob('models/*/*/pred_*')
 for fname in fnames:
     os.remove(fname)
 
-old_fnames = ["leaderboard1.csv", "leaderboard2.csv",
-              "failed_submissions.csv", "submissions.csv",
-              "trained_submissions.csv"]
+old_fnames = glob.glob('output/*.csv') 
 for fname in old_fnames:
     if os.path.exists(fname):
         os.remove(fname)

@@ -54,9 +54,9 @@ def show_leaderboard_1():
                        justify='left',
                        classes=['ui', 'blue', 'table'])
 
-    l1 = pd.read_csv("leaderboard1.csv")
-    l2 = pd.read_csv("leaderboard2.csv")
-    failed = pd.read_csv("failed_submissions.csv")
+    l1 = pd.read_csv("output/leaderboard1.csv")
+    l2 = pd.read_csv("output/leaderboard2.csv")
+    failed = pd.read_csv("output/failed_submissions.csv")
 
     failed["error"] = failed.path
     failed["error"] = failed.error.map(error_local_to_url)
