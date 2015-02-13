@@ -5,23 +5,25 @@
         <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/1.8.1/semantic.min.css">
     </head>
     <body style="margin:50">
-        <h1>Leaderboards</h1>
+        <h1 class="ui center aligned icon header red">
+            <i class="circular users icon"></i>
+            Leaderboards
+        </h1>
         <div class="ui stackable two column grid">
-            <div class="row">
-                <div class="column four"><h2>Best models</h2></div>
-                <div class="column four"><h2>Most contributive models</h2></div>
+            <div class="column">
+                <h2>Best models</h2>
+                {{leaderboard_1|safe}}
             </div>
-            <div class="column four">{{leaderboard_1|safe}}</div>
-            <div class="column four">{{leaderboard_2|safe}}</div>
-        </div>
-
-        {% if failed_models is not none %}
-        <div class="ui two column grid">
-            <div class="row">
-                <div class="column four"><h2>Failed models</h2></div>
+            <div class="column">
+                <h2>Most contributive models</h2>
+                {{leaderboard_2|safe}}
             </div>
-            <div class="column four">{{failed_models|safe}}</div>
+            {% if failed_models is not none %}
+            <div class="column">
+                <h2>Failed models</h2>
+                {{failed_models|safe}}
+            </div>
+            {% endif %} 
         </div>
-        {% endif %}
     </body>
 </html>
