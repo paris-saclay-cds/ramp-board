@@ -16,6 +16,9 @@ if os.path.exists('ground_truth'):
 else:
     os.mkdir('ground_truth')
 
+if not os.path.exists('output'):
+    os.mkdir('output')
+
 if not os.path.exists('models'):
     os.mkdir('models')
     open('models/__init__.py', 'a').close()
