@@ -9,7 +9,7 @@ random_state = 57
 # this is debug mode
 debug_mode = 'onevm' not in socket.gethostname()
 
-n_processes = 2 if debug_mode else cpu_count()
+n_processes = 3 if debug_mode else cpu_count()
 n_CV = 2 if debug_mode else 5 * n_processes
 
 repos_path = "./TeamsRepos"

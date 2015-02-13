@@ -12,6 +12,7 @@ from functools import partial
 from importlib import import_module
 from sklearn.metrics import accuracy_score, roc_curve, auc
 from config_databoard import root_path, n_CV, test_size, n_processes, random_state
+from sklearn.externals.joblib import Parallel, delayed
 
 
 def read_data(filename='input/train.csv'):
@@ -99,12 +100,14 @@ def train_model(m_path, X, y, skf):
 
     f_name_score = m_path + "/score.csv"
     scores = []
-    f = open(f_name_score, "w")
-    f.close()
-    partial_save_scores = partial(save_scores, m_path=m_path, X=X, y=y, f_name_score=f_name_score)
-    pool = multiprocessing.Pool(processes=n_processes)
-    pool.map(partial_save_scores, skf)
-    pool.close()
+    open(f_name_score, "w").close()
+
+    Parallel(n_jobs=n_processes)(delayed(save_scores)(skf_is, m_path, X, y, f_name_score) for skf_is in skf)
+    
+    # partial_save_scores = partial(save_scores, m_path=m_path, X=X, y=y, f_name_score=f_name_score)
+    # pool = multiprocessing.Pool(processes=n_processes)
+    # pool.map(partial_save_scores, skf)
+    # pool.close()
 
 
 def score(y_pred, y_test):

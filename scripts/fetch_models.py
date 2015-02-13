@@ -43,11 +43,16 @@ for rp in repo_paths:
                 b = tree['model.py']
                 file_content = b.data_stream.read()
                 model_path = os.path.join(submissions_path, team_name)
+
                 if not os.path.exists(model_path):
                     os.mkdir(model_path)
+                    open(os.path.join(model_path, '__init__.py'), 'a').close()
+
                 model_path = os.path.join(model_path, tag_name)
                 if not os.path.exists(model_path):
                     os.mkdir(model_path)
+                    open(os.path.join(model_path, '__init__.py'), 'a').close()
+
                 model_path = os.path.join(model_path, 'model.py')
                 with open(model_path, 'w') as f:
                     f.write(file_content)

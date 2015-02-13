@@ -15,6 +15,11 @@ if os.path.exists('ground_truth'):
     fnames = glob.glob('ground_truth/pred_*')
 else:
     os.mkdir('ground_truth')
+
+if not os.path.exists('models'):
+    os.mkdir('models')
+    open('models/__init__.py', 'a').close()
+
 fnames += glob.glob('models/*/pred_*')
 fnames += glob.glob('models/*/*/pred_*')
 for fname in fnames:
