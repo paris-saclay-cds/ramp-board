@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+import os
 import os.path
 import pandas as pd
 
@@ -9,7 +10,7 @@ from config_databoard import (
     repos_path, 
     serve_port,
     server_name,
-    debug_mode,
+    local_deployment,
 )
 from flask import (
     Flask, 
@@ -46,7 +47,7 @@ def list_submodules():
 
 
 @app.route("/leaderboard/")
-def show_leaderboard_1():
+def show_leaderboard():
     html_params = dict(escape=False,
                        index=False,
                        max_cols=None,
@@ -57,7 +58,7 @@ def show_leaderboard_1():
 
     if not all((os.path.exists("output/leaderboard1.csv"),
                 os.path.exists("output/leaderboard2.csv"),
-                os.path.exists("output/failed_submissions.csv"))):
+        )):
         return redirect(url_for('list_submodules'))
 
     l1 = pd.read_csv("output/leaderboard1.csv")
@@ -73,7 +74,11 @@ def show_leaderboard_1():
 
     html1 = l1.to_html(**html_params)
     html2 = l2.to_html(**html_params)
-    failed_html = failed.to_html(**html_params)
+
+    if failed.shape[0] == 0:
+        failed_html = None
+    else:
+        failed_html = failed.to_html(**html_params)
 
     return render_template('leaderboard.html', 
                            leaderboard_1=html1,
@@ -110,4 +115,9 @@ def add_submodule():
 
 
 if __name__ == "__main__":
-    app.run(debug=debug_mode, port=serve_port, host='0.0.0.0')
+    debug_mode = os.environ.get('DEBUGLB', local_deployment)
+    try: 
+        debug_mode = bool(int(debug_mode))
+    except ValueError:
+        debug_mode = True  # a non empty string means debug
+    app.run(debug=bool(debug_mode), port=serve_port, host='0.0.0.0')

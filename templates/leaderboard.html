@@ -6,7 +6,7 @@
     </head>
     <body style="margin:50">
         <h1>Leaderboards</h1>
-        <div class="ui two column grid">
+        <div class="ui stackable two column grid">
             <div class="row">
                 <div class="column four"><h2>Best models</h2></div>
                 <div class="column four"><h2>Most contributive models</h2></div>
@@ -14,11 +14,14 @@
             <div class="column four">{{leaderboard_1|safe}}</div>
             <div class="column four">{{leaderboard_2|safe}}</div>
         </div>
+
+        {% if failed_models is not none %}
         <div class="ui two column grid">
             <div class="row">
                 <div class="column four"><h2>Failed models</h2></div>
             </div>
             <div class="column four">{{failed_models|safe}}</div>
         </div>
+        {% endif %}
     </body>
 </html>
