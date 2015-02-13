@@ -29,7 +29,11 @@ for rp in repo_paths:
         team_name = os.path.basename(rp)
         repo = git.Repo(rp)
         o = repo.remotes.origin
-        # o.pull()
+        
+        repo_path = os.path.join(submissions_path, team_name)
+        if not os.path.exists(repo_path):
+            os.mkdir(repo_path)
+        open(os.path.join(repo_path, '__init__.py'), 'a').close()
 
         if len(repo.tags) > 0:
             for t in repo.tags:
@@ -42,16 +46,11 @@ for rp in repo_paths:
                 tree = repo.tree(c.hexsha)
                 b = tree['model.py']
                 file_content = b.data_stream.read()
-                model_path = os.path.join(submissions_path, team_name)
-
+                
+                model_path = os.path.join(repo_path, tag_name)
                 if not os.path.exists(model_path):
                     os.mkdir(model_path)
-                    open(os.path.join(model_path, '__init__.py'), 'a').close()
-
-                model_path = os.path.join(model_path, tag_name)
-                if not os.path.exists(model_path):
-                    os.mkdir(model_path)
-                    open(os.path.join(model_path, '__init__.py'), 'a').close()
+                open(os.path.join(model_path, '__init__.py'), 'a').close()
 
                 model_path = os.path.join(model_path, 'model.py')
                 with open(model_path, 'w') as f:

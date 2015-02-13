@@ -21,7 +21,7 @@ if not os.path.exists('output'):
 
 if not os.path.exists('models'):
     os.mkdir('models')
-    open('models/__init__.py', 'a').close()
+open('models/__init__.py', 'a').close()
 
 fnames += glob.glob('models/*/pred_*')
 fnames += glob.glob('models/*/*/pred_*')
