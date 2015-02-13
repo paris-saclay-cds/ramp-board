@@ -1,16 +1,10 @@
 # Databoard
 
-**note**: `server.py` is a separate file, it's meant to be the REST little API to register every team. I'll refactor the whole thing soon.
-
-
 # Dependencies
-
  - gitpython
  - flask
 
 # Commands
-
-
 - make setup
 - make fetch
 - make train
@@ -19,3 +13,7 @@
 To launch the web server, run
 
 - make server
+
+
+# Setting up the data set
+The data must be input inside the `input/` folder.
