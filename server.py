@@ -54,6 +54,12 @@ def show_leaderboard_1():
                        justify='left',
                        classes=['ui', 'blue', 'table'])
 
+
+    if not all((os.path.exists("output/leaderboard1.csv"),
+                os.path.exists("output/leaderboard2.csv"),
+                os.path.exists("output/failed_submissions.csv"))):
+        return redirect(url_for('list_submodules'))
+
     l1 = pd.read_csv("output/leaderboard1.csv")
     l2 = pd.read_csv("output/leaderboard2.csv")
     failed = pd.read_csv("output/failed_submissions.csv")
