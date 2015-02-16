@@ -4,7 +4,7 @@ import os
 import os.path
 import pandas as pd
 
-from git import Repo, Submodule
+from git import Repo, Submodule, BadName
 from config_databoard import (
     root_path, 
     repos_path, 
@@ -43,7 +43,11 @@ def error_local_to_url(path):
 @app.route("/")
 @app.route("/register/")
 def list_submodules():
-    return render_template('list.html', submodules=repo.submodules)
+    try:
+        sm = repo.submodules
+    except BadName:
+        sm = []
+    return render_template('list.html', submodules=sm)
 
 
 @app.route("/leaderboard/")
