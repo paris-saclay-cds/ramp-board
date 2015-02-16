@@ -6,8 +6,13 @@ from sklearn.externals.joblib import Memory
 
 from generic import train_model, read_data
 
-from config_databoard import root_path, n_CV, test_size
-from config_databoard import random_state, cachedir
+from config_databoard import (
+    root_path, 
+    n_CV, 
+    test_size, 
+    random_state, 
+    cachedir
+)
 
 
 X, y = read_data()

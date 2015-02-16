@@ -50,11 +50,9 @@ for rp in repo_paths:
             for t in repo.tags:
                 tag_name = t.name
 
-                # remove comas 
-                if ',' in tag_name:
-                    # avoid , and spaces in folder/tag names
-                    tag_name = tag_name.replace(',', ';')
-                    tag_name = tag_name.replace(' ', '_')
+                tag_name = tag_name.replace(',', ';')
+                tag_name = tag_name.replace(' ', '_')
+                tag_name = tag_name.replace('.', '->')
  
                 model_path = os.path.join(repo_path, tag_name)
                 copy_git_tree(t.object.tree, model_path)

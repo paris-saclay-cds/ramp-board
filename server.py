@@ -19,6 +19,7 @@ from flask import (
     url_for, 
     render_template, 
     send_from_directory,
+    flash,
 )
 
 
@@ -26,6 +27,7 @@ pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 app = Flask(__name__)
 repo = Repo(repos_path)
+app.secret_key = os.urandom(24)
 
 
 def model_local_to_url(path):
@@ -113,14 +115,22 @@ def download_error(team, tag):
 @app.route("/add/", methods=("POST",))
 def add_submodule():
     if request.method == "POST":
-        submodule_name = request.form["name"]
-        Submodule.add(
-                repo = repo,
-                name = submodule_name,
-                path = submodule_name,
-                url = request.form["url"],
-            )
-        repo.index.commit('Submodule added: {}'.format(submodule_name))
+        submodule_name = request.form["name"].strip()
+        submodule_path = request.form["url"].strip()
+        message = ''
+        try:
+            Submodule.add(
+                    repo = repo,
+                    name = submodule_name,
+                    path = submodule_name,
+                    url = submodule_path,
+                )
+            repo.index.commit('Submodule added: {}'.format(submodule_name))
+        except Exception as e:
+            message = str(e)
+
+        if message:
+            flash(message)
         return redirect(url_for('list_submodules'))
 
 

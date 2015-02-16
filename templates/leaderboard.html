@@ -3,16 +3,16 @@
 {% block content %}
 <div class="ui stackable two column grid">
     <div class="column">
-        <h2>Best models</h2>
+        <h2 class="ui horizontal header divider">Best models</h2>
         {{leaderboard_1|safe}}
     </div>
     <div class="column">
-        <h2>Most contributive models</h2>
+        <h2 class="ui horizontal header divider">Most contributive models</h2>
         {{leaderboard_2|safe}}
     </div>
     {% if failed_models is not none %}
     <div class="column">
-        <h2>Failed models</h2>
+        <h2 class="ui horizontal header divider">Failed models</h2>
         {{failed_models|safe}}
     </div>
     {% endif %} 

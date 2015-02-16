@@ -1,19 +1,22 @@
 <html>
     <head>
         {% block head %}
+        <script src="{{ url_for('static', filename='jquery-1.11.2.min.js') }}"></script>
         <script src="{{ url_for('static', filename='semantic.min.js') }}"></script>
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='semantic.min.css') }}">
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='icon.min.css') }}">
         <title>{% block title %}{% endblock %} - Databoard</title>
         {% endblock %}
+        <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     </head>
     <body style="margin:50">
         <div id="header">
             {% block header %}
+            <a href='/'>
             <h1 class="ui center aligned icon header blue">
                 <i class="circular users icon"></i>
-                Databoard - {{ self.title() }}
+                Databoard
             </h1>
+            </a>
             {% endblock %}
         </div>
         <div id="content">{% block content %}{% endblock %}</div>
