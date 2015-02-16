@@ -19,3 +19,5 @@ serve_port = 8080
 debug_server = 'http://' + "localhost:{}".format(serve_port) 
 deploy_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(serve_port)
 server_name = debug_server if local_deployment else deploy_server
+
+assert repos_path != 'models' 

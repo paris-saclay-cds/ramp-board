@@ -105,12 +105,14 @@ def download_error(team, tag):
 @app.route("/add/", methods=("POST",))
 def add_submodule():
     if request.method == "POST":
+        submodule_name = request.form["name"]
         Submodule.add(
                 repo = repo,
-                name = request.form["name"],
-                path = request.form["name"],
+                name = submodule_name,
+                path = submodule_name,
                 url = request.form["url"],
             )
+        repo.index.commit('Submodule added: {}'.format(submodule_name))
         return redirect(url_for('list_submodules'))
 
 

@@ -4,10 +4,18 @@
 import os
 import glob
 
-from sklearn.cross_validation import StratifiedShuffleSplit
-
+from git import Repo, Submodule
 from generic import setup_ground_truth, read_data
-from config_databoard import root_path, n_CV, test_size, random_state, cachedir
+from sklearn.cross_validation import StratifiedShuffleSplit
+from config_databoard import (
+    root_path, 
+    n_CV, 
+    test_size, 
+    random_state, 
+    cachedir,
+    repos_path,
+)
+
 
 # cleanup prediction files
 fnames = []
@@ -32,6 +40,9 @@ old_fnames = glob.glob('output/*.csv')
 for fname in old_fnames:
     if os.path.exists(fname):
         os.remove(fname)
+
+# Prepare the teams repo submodules
+repo = Repo.init(repos_path)  # does nothing if already exists
 
 # Create last_trained_timestamp.py file
 gt_path = os.path.join(root_path, 'ground_truth')
