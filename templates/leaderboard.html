@@ -1,27 +1,20 @@
-<html>
-    <head>
-        <script type="text/javascript" src="//code.jquery.com/jquery-1.10.0.min.js"></script>
-        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/1.8.1/semantic.min.js"></script>
-        <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/semantic-ui/1.8.1/semantic.min.css">
-    </head>
-    <body style="margin:50">
-        <h1>Leaderboards</h1>
-        <div class="ui stackable two column grid">
-            <div class="row">
-                <div class="column four"><h2>Best models</h2></div>
-                <div class="column four"><h2>Most contributive models</h2></div>
-            </div>
-            <div class="column four">{{leaderboard_1|safe}}</div>
-            <div class="column four">{{leaderboard_2|safe}}</div>
-        </div>
-
-        {% if failed_models is not none %}
-        <div class="ui two column grid">
-            <div class="row">
-                <div class="column four"><h2>Failed models</h2></div>
-            </div>
-            <div class="column four">{{failed_models|safe}}</div>
-        </div>
-        {% endif %}
-    </body>
-</html>
+{% extends "base.html" %}
+{% block title %}Leaderboards{% endblock %}
+{% block content %}
+<div class="ui stackable two column grid">
+    <div class="column">
+        <h2>Best models</h2>
+        {{leaderboard_1|safe}}
+    </div>
+    <div class="column">
+        <h2>Most contributive models</h2>
+        {{leaderboard_2|safe}}
+    </div>
+    {% if failed_models is not none %}
+    <div class="column">
+        <h2>Failed models</h2>
+        {{failed_models|safe}}
+    </div>
+    {% endif %} 
+</div>
+{% endblock %}

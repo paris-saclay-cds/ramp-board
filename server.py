@@ -30,13 +30,13 @@ repo = Repo(repos_path)
 
 def model_local_to_url(path):
     filename = '%s/models/%s' % (server_name, path)
-    link = '<a href="{0}">Show the code</a>'.format(filename)
+    link = '<a href="{0}">Code</a>'.format(filename)
     return link
 
 
 def error_local_to_url(path):
     filename = '%s/models/%s/error' % (server_name, path)
-    link = '<a href="{0}">Show the error</a>'.format(filename)
+    link = '<a href="{0}">Error</a>'.format(filename)
     return link
 
 
@@ -49,12 +49,11 @@ def list_submodules():
 @app.route("/leaderboard/")
 def show_leaderboard():
     html_params = dict(escape=False,
-                       index=False,
+                       index=True,
                        max_cols=None,
                        max_rows=None,
                        justify='left',
-                       classes=['ui', 'blue', 'table'])
-
+                       classes=['ui', 'table', 'blue'])
 
     if not all((os.path.exists("output/leaderboard1.csv"),
                 os.path.exists("output/leaderboard2.csv"),
@@ -64,6 +63,11 @@ def show_leaderboard():
     l1 = pd.read_csv("output/leaderboard1.csv")
     l2 = pd.read_csv("output/leaderboard2.csv")
     failed = pd.read_csv("output/failed_submissions.csv")
+
+    l1.index = range(1, len(l1) + 1)
+    l2.index = range(1, len(l2) + 1)
+    failed.index = range(1, len(failed) + 1)
+
 
     failed["error"] = failed.path
     failed["error"] = failed.error.map(error_local_to_url)
