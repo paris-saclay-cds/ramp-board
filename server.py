@@ -53,7 +53,7 @@ def show_leaderboard():
                        max_cols=None,
                        max_rows=None,
                        justify='left',
-                       classes=['ui', 'table', 'red'])
+                       classes=['ui', 'table', 'blue'])
 
     if not all((os.path.exists("output/leaderboard1.csv"),
                 os.path.exists("output/leaderboard2.csv"),

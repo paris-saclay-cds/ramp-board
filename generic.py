@@ -171,8 +171,11 @@ def leaderboard_classical(gt_path, models):
         try:
             #scores = [score(y_pred, y_test) for y_pred in y_preds]
             scores = [score(y_rank, y_test) for y_rank in y_ranks]
-        except:
+        except Exception as e:
             print 'FAILED in one fold (%s)' % pr_name
+            print '++++++++'
+            print e
+            print '++++++++'
             scores = [0.] * len(m_paths)
         # print scores
         mean_scores += scores

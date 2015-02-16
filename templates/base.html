@@ -1,0 +1,21 @@
+<html>
+    <head>
+        {% block head %}
+        <script src="{{ url_for('static', filename='semantic.min.js') }}"></script>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='semantic.min.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='icon.min.css') }}">
+        <title>{% block title %}{% endblock %} - Databoard</title>
+        {% endblock %}
+    </head>
+    <body style="margin:50">
+        <div id="header">
+            {% block header %}
+            <h1 class="ui center aligned icon header blue">
+                <i class="circular users icon"></i>
+                Databoard - {{ self.title() }}
+            </h1>
+            {% endblock %}
+        </div>
+        <div id="content">{% block content %}{% endblock %}</div>
+    </body>
+</html>
