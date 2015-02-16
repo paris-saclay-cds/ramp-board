@@ -1,12 +1,12 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
-import glob
 import os
 import git
+import glob
+import shutil
 import numpy as np
 import pandas as pd
-
 from config_databoard import repos_path, root_path
 
 base_path = repos_path
@@ -19,6 +19,17 @@ if not os.path.exists(submissions_path):
 
 tags_info = []
 
+
+def copy_git_tree(tree, dest_folder):
+    if not os.path.exists(dest_folder):
+        os.mkdir(dest_folder)
+    for file_elem in tree.blobs:
+        with open(os.path.join(dest_folder, file_elem.name), 'w') as f:
+            shutil.copyfileobj(file_elem.data_stream, f)
+    for tree_elem in tree.trees:
+        copy_git_tree(tree_elem, os.path.join(dest_folder, tree_elem.name))
+
+        
 for rp in repo_paths:
     print rp
 
@@ -38,25 +49,19 @@ for rp in repo_paths:
         if len(repo.tags) > 0:
             for t in repo.tags:
                 tag_name = t.name
+
+                # remove comas 
                 if ',' in tag_name:
                     # avoid , and spaces in folder/tag names
                     tag_name = tag_name.replace(',', ';')
                     tag_name = tag_name.replace(' ', '_')
-                c = t.commit
-                tree = repo.tree(c.hexsha)
-                b = tree['model.py']
-                file_content = b.data_stream.read()
-                
+ 
                 model_path = os.path.join(repo_path, tag_name)
-                if not os.path.exists(model_path):
-                    os.mkdir(model_path)
+                copy_git_tree(t.object.tree, model_path)
                 open(os.path.join(model_path, '__init__.py'), 'a').close()
-
-                model_path = os.path.join(model_path, 'model.py')
-                with open(model_path, 'w') as f:
-                    f.write(file_content)
+                
                 relative_model_path = os.path.join(team_name, tag_name)
-                tags_info.append([team_name, tag_name, c.committed_date, relative_model_path])
+                tags_info.append([team_name, tag_name, t.commit.committed_date, relative_model_path])
         else:
             print('No tag found for %s' % team_name)
     except Exception, e:
