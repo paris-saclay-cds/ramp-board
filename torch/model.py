@@ -43,17 +43,25 @@ def model(X_train, y_train, X_test):
     targets_tmp_file = NamedTemporaryFile(delete=False)
     targets_tmp_file.close()
 
-    subprocess.call("cd %s; luajit model_generic.lua --train %s --test %s --outputproba %s --outputtargets %s" % (path, train_tmp_file.name, test_tmp_file.name, proba_tmp_file.name, targets_tmp_file.name), shell=True)
 
-    proba = pd.read_csv(proba_tmp_file.name, header=False).values
-    targets = pd.read_csv(targets_tmp_file.name, header=False).values
-    if len(targets.shape) == 2:
-        targets = targets[:, 0]
-    os.remove(train_tmp_file.name)
-    os.remove(test_tmp_file.name)
-    os.remove(proba_tmp_file.name)
-    os.remove(targets_tmp_file.name)
-    return targets, proba
+    try:
+
+        subprocess.call("cd %s; luajit model_generic.lua --train %s --test %s --outputproba %s --outputtargets %s" % (path, train_tmp_file.name, test_tmp_file.name, proba_tmp_file.name, targets_tmp_file.name), shell=True)
+
+        proba = pd.read_csv(proba_tmp_file.name, header=None).values
+        targets = pd.read_csv(targets_tmp_file.name, header=None).values
+        if len(targets.shape) == 2:
+            targets = targets[:, 0]
+
+        return targets, proba
+    except Exception, e:
+        print str(e)
+
+    finally:
+        os.remove(train_tmp_file.name)
+        os.remove(test_tmp_file.name)
+        os.remove(proba_tmp_file.name)
+        os.remove(targets_tmp_file.name)
 
 if __name__ == "__main__":
 
