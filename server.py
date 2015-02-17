@@ -59,7 +59,8 @@ def show_leaderboard():
                        max_cols=None,
                        max_rows=None,
                        justify='left',
-                       classes=['ui', 'table', 'blue'])
+                       classes=['ui', 'table', 'blue'],
+                       )
 
     if not all((os.path.exists("output/leaderboard1.csv"),
                 os.path.exists("output/leaderboard2.csv"),
@@ -74,21 +75,23 @@ def show_leaderboard():
     l2.index = range(1, len(l2) + 1)
     failed.index = range(1, len(failed) + 1)
 
-
     failed["error"] = failed.path
     failed["error"] = failed.error.map(error_local_to_url)
 
     for df in [l1, l2, failed]:
-        df.drop('timestamp', axis=1, inplace=True)
         df.path = df.path.map(model_local_to_url)
+        df.alias = df.alias.map(model_local_to_url)
 
-    html1 = l1.to_html(**html_params)
-    html2 = l2.to_html(**html_params)
+    common_columns = ['team', 'model', 'alias']
+    scores_columns = common_columns + ['score']
+    error_columns = common_columns + ['error']
+    html1 = l1.to_html(columns=scores_columns, **html_params)
+    html2 = l2.to_html(columns=scores_columns, **html_params)
 
     if failed.shape[0] == 0:
         failed_html = None
     else:
-        failed_html = failed.to_html(**html_params)
+        failed_html = failed.to_html(columns=error_columns, **html_params)
 
     return render_template('leaderboard.html', 
                            leaderboard_1=html1,

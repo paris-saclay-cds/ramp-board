@@ -33,12 +33,15 @@ def train_models(models, last_time_stamp=None):
     failed_models = models.copy()
     trained_models = models.copy()
 
-    for idx, team, model, timestamp, path in zip(models.index.values,
-                                                 models['team'],
-                                                 models['model'],
-                                                 models['timestamp'],
-                                                 models['path']):
-        m_path = os.path.join(root_path, 'models', path)
+    for idx, team, model, timestamp, path, alias in zip(
+        models.index.values,
+        models['team'],
+        models['model'],
+        models['timestamp'],
+        models['path'],
+        models['alias'],
+        ):
+        m_path = os.path.join(root_path, 'models', alias)
 
         print "Training : %s" % m_path
 

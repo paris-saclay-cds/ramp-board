@@ -4,7 +4,9 @@
 import os
 import git
 import glob
+import uuid 
 import shutil
+import contextlib
 import numpy as np
 import pandas as pd
 from config_databoard import repos_path, root_path
@@ -29,9 +31,21 @@ def copy_git_tree(tree, dest_folder):
     for tree_elem in tree.trees:
         copy_git_tree(tree_elem, os.path.join(dest_folder, tree_elem.name))
 
-        
+
+@contextlib.contextmanager  
+def changedir(dir_name):
+    current_dir = os.getcwd()
+    try:
+        os.chdir(dir_name)
+        yield
+    except Exception as e:
+        print(e)  # to be replaced with proper logging
+    finally:
+        os.chdir(current_dir)
+
+
 for rp in repo_paths:
-    print rp
+    print(rp)
 
     if not os.path.isdir(rp):
         continue
@@ -39,8 +53,6 @@ for rp in repo_paths:
     try:
         team_name = os.path.basename(rp)
         repo = git.Repo(rp)
-        o = repo.remotes.origin
-        
         repo_path = os.path.join(submissions_path, team_name)
         if not os.path.exists(repo_path):
             os.mkdir(repo_path)
@@ -50,25 +62,38 @@ for rp in repo_paths:
             for t in repo.tags:
                 tag_name = t.name
 
-                tag_name = tag_name.replace(',', ';')
-                tag_name = tag_name.replace(' ', '_')
-                tag_name = tag_name.replace('.', '->')
+                # tag_name = tag_name.replace(',', ';')
+                # tag_name = tag_name.replace(' ', '_')
+                # tag_name = tag_name.replace('.', '->')
  
+                unique_tag = str(uuid.uuid3(uuid.NAMESPACE_DNS, tag_name)).replace('-', '_')
+                tag_name_alias = 'm_{}'.format(unique_tag)
+
                 model_path = os.path.join(repo_path, tag_name)
                 copy_git_tree(t.object.tree, model_path)
                 open(os.path.join(model_path, '__init__.py'), 'a').close()
-                
+
+                with changedir(repo_path):
+                    if os.path.islink(tag_name_alias):
+                        os.unlink(tag_name_alias)    
+                    os.symlink(tag_name, tag_name_alias)
+
                 relative_model_path = os.path.join(team_name, tag_name)
-                tags_info.append([team_name, tag_name, t.commit.committed_date, relative_model_path])
+                relative_alias_path = os.path.join(team_name, tag_name_alias)
+                tags_info.append([team_name, 
+                                  tag_name, 
+                                  t.commit.committed_date, 
+                                  relative_model_path, 
+                                  relative_alias_path])
         else:
             print('No tag found for %s' % team_name)
     except Exception, e:
-        print "Error: %s" % e
+        print("Error: %s" % e)
 
 if len(tags_info) > 0:
-    columns = ['team', 'model', 'timestamp', 'path']
+    columns = ['team', 'model', 'timestamp', 'path', 'alias']
     df = pd.DataFrame(np.array(tags_info), columns=columns)
-    print df
+    print(df)
 
     print('Writing submissions.csv file')
     df.to_csv('output/submissions.csv', index=False)
