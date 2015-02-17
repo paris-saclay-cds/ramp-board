@@ -2,7 +2,12 @@
 # License: BSD 3 clause
 
 import os
+import sys
 import glob
+
+# FIXME: use relative imports instead
+prog_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(1, prog_path)
 
 from git import Repo, Submodule
 from generic import setup_ground_truth, read_data
@@ -15,7 +20,6 @@ from config_databoard import (
     cachedir,
     repos_path,
 )
-
 
 # cleanup prediction files
 fnames = []

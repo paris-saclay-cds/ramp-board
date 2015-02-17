@@ -1,4 +1,5 @@
 import os
+import sys
 import csv
 import glob
 import hashlib
@@ -13,6 +14,13 @@ from importlib import import_module
 from sklearn.metrics import accuracy_score, roc_curve, auc
 from config_databoard import root_path, n_CV, test_size, n_processes, random_state
 from sklearn.externals.joblib import Parallel, delayed
+
+# FIXME: use relative imports instead
+prog_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(1, prog_path)
+
+# this is needed by import_module
+sys.path.insert(1, os.path.join(prog_path, 'models'))
 
 
 def read_data(filename='input/train.csv'):

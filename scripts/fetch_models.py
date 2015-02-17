@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 import os
+import sys
 import git
 import glob
 import uuid 
@@ -9,7 +10,15 @@ import shutil
 import contextlib
 import numpy as np
 import pandas as pd
+
+# FIXME: use relative imports instead
+prog_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(1, prog_path)
+
 from config_databoard import repos_path, root_path
+
+
+sys.path.insert(1, os.path.join(prog_path, 'models'))
 
 base_path = repos_path
 repo_paths = sorted(glob.glob(os.path.join(base_path, '*')))
@@ -66,7 +75,7 @@ for rp in repo_paths:
                 # tag_name = tag_name.replace(' ', '_')
                 # tag_name = tag_name.replace('.', '->')
  
-                unique_tag = str(uuid.uuid3(uuid.NAMESPACE_DNS, tag_name)).replace('-', '_')
+                unique_tag = str(uuid.uuid3(uuid.NAMESPACE_DNS, tag_name))
                 tag_name_alias = 'm_{}'.format(unique_tag)
 
                 model_path = os.path.join(repo_path, tag_name)
@@ -83,8 +92,8 @@ for rp in repo_paths:
                 tags_info.append([team_name, 
                                   tag_name, 
                                   t.commit.committed_date, 
-                                  relative_model_path, 
-                                  relative_alias_path])
+                                  relative_alias_path,
+                                  relative_model_path])
         else:
             print('No tag found for %s' % team_name)
     except Exception, e:

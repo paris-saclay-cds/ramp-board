@@ -1,10 +1,16 @@
 #!/usr/bin/env python2
 
 import os
+import sys
 import os.path
 import pandas as pd
 
 from git import Repo, Submodule, BadName
+
+# FIXME: use relative imports instead
+prog_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(1, prog_path)
+
 from config_databoard import (
     root_path, 
     repos_path, 
@@ -82,7 +88,7 @@ def show_leaderboard():
         df.path = df.path.map(model_local_to_url)
         df.alias = df.alias.map(model_local_to_url)
 
-    common_columns = ['team', 'model', 'alias']
+    common_columns = ['team', 'model', 'path']
     scores_columns = common_columns + ['score']
     error_columns = common_columns + ['error']
     html1 = l1.to_html(columns=scores_columns, **html_params)

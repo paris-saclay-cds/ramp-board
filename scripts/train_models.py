@@ -1,8 +1,13 @@
 import os
+import sys
 import pandas as pd
 
 from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.externals.joblib import Memory
+
+# FIXME: use relative imports instead
+prog_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(1, prog_path)
 
 from generic import train_model, read_data
 
@@ -41,7 +46,7 @@ def train_models(models, last_time_stamp=None):
         models['path'],
         models['alias'],
         ):
-        m_path = os.path.join(root_path, 'models', alias)
+        m_path = os.path.join(root_path, 'models', path)
 
         print "Training : %s" % m_path
 

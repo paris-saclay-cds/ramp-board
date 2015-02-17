@@ -1,5 +1,10 @@
 import os
+import sys
 import pandas as pd
+
+# FIXME: use relative imports instead
+prog_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(1, prog_path)
 
 from generic import leaderboard_classical, leaderboard_combination
 from config_databoard import root_path
