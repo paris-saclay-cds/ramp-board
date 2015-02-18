@@ -67,6 +67,9 @@ def save_scores(skf_is, m_path, X, y, f_name_score):
     model = import_module('.model', module_path)
 
     y_pred, y_score = model.model(X_train, y_train, X_test)
+
+    assert len(y_pred) == len(y_score) == len(X_test)
+    
     # y_rank[i] is the the rank of the ith element of y_score
     y_rank = y_score[:,1].argsort().argsort()
     output = np.transpose(np.array([y_pred, y_rank]))
