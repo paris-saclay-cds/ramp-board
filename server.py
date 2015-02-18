@@ -106,19 +106,36 @@ def show_leaderboard():
 
 
 @app.route('/models/<path:team>/<path:tag>')
+@app.route('/models/<path:team>/<path:tag>/raw')
 def download_model(team, tag):
     directory = os.path.join(root_path, "models", team, tag)
-    return send_from_directory(directory,
-                               'model.py',
-                               mimetype='text/x-script.python')
+    model_url = os.path.join(directory, 'model.py')
+
+    if request.path.split('/')[-1] == 'raw':
+        return send_from_directory(directory,
+                                   'model.py',
+                                   mimetype='application/octet-stream')
+    else:
+        with open(model_url) as f:
+            code = f.read()
+        return render_template('model.html', code=code, model_url=request.path + '/raw')
 
 
 @app.route('/models/<path:team>/<path:tag>/error')
 def download_error(team, tag):
     directory = os.path.join(root_path, "models", team, tag)
+    error_url = os.path.join(directory, 'error.txt')
+
+    if not os.path.exists(error_url):
+        return redirect(url_for('show_leaderboard'))
+    with open(error_url) as f:
+        code = f.read()
+    return render_template('model.html', code=code)
+
+    directory = os.path.join(root_path, "models", team, tag)
     return send_from_directory(directory,
                                'error.txt',
-                               mimetype='text/x-script.python')
+                               mimetype='text/plain')
 
 
 @app.route("/add/", methods=("POST",))

@@ -8,7 +8,7 @@
         {% endblock %}
         <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     </head>
-    <body style="margin:50">
+    <body style="margin:50px" {% block bodyoptions %}{% endblock %}>
         <div id="header">
             {% block header %}
             <a href='/'>
