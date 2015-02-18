@@ -105,8 +105,8 @@ def show_leaderboard():
                            failed_models=failed_html)
 
 
-@app.route('/models/<path:team>/<path:tag>')
-@app.route('/models/<path:team>/<path:tag>/raw')
+@app.route('/models/<team>/<tag>')
+@app.route('/models/<team>/<tag>/raw')
 def download_model(team, tag):
     directory = os.path.join(root_path, "models", team, tag)
     model_url = os.path.join(directory, 'model.py')
@@ -121,7 +121,7 @@ def download_model(team, tag):
         return render_template('model.html', code=code, model_url=request.path + '/raw')
 
 
-@app.route('/models/<path:team>/<path:tag>/error')
+@app.route('/models/<team>/<tag>/error')
 def download_error(team, tag):
     directory = os.path.join(root_path, "models", team, tag)
     error_url = os.path.join(directory, 'error.txt')
