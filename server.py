@@ -50,7 +50,7 @@ def error_local_to_url(path):
 
 
 @app.route("/")
-@app.route("/register/")
+@app.route("/register")
 def list_submodules():
     try:
         sm = repo.submodules
@@ -58,8 +58,8 @@ def list_submodules():
         sm = []
     return render_template('list.html', submodules=sm)
 
-@app.route("/_leaderboard/")
-@app.route("/leaderboard/")
+@app.route("/_leaderboard")
+@app.route("/leaderboard")
 def show_leaderboard():
     html_params = dict(escape=False,
                        index=True,
@@ -111,8 +111,8 @@ def show_leaderboard():
                                failed_models=failed_html)
 
 
-@app.route('/models/<team>/<tag>/')
-@app.route('/models/<team>/<tag>/raw/')
+@app.route('/models/<team>/<tag>')
+@app.route('/models/<team>/<tag>/raw')
 def download_model(team, tag):
     directory = os.path.join(root_path, "models", team, tag)
     model_url = os.path.join(directory, 'model.py')
@@ -124,10 +124,10 @@ def download_model(team, tag):
     else:
         with open(model_url) as f:
             code = f.read()
-        return render_template('model.html', code=code, model_url=request.path + '/raw')
+        return render_template('model.html', code=code, model_url=request.path.rstrip('/') + '/raw')
 
 
-@app.route('/models/<team>/<tag>/error/')
+@app.route('/models/<team>/<tag>/error')
 def download_error(team, tag):
     directory = os.path.join(root_path, "models", team, tag)
     error_url = os.path.join(directory, 'error.txt')
