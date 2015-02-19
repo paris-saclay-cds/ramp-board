@@ -1,8 +1,9 @@
 # Databoard
 
 # Dependencies
- - gitpython
- - flask
+Install dependencies with `pip install -r requirements.txt`
+
+(You might want to create a virtualenv beforehand)
 
 # Commands
 - make setup

@@ -42,6 +42,12 @@ def model_local_to_url(path):
     link = '<a href="{0}">Code</a>'.format(filename)
     return link
 
+def model_with_link(path_model):
+    path, model = path_model.split()
+    filename = '%s/models/%s' % (server_name, path)
+    link = '<a href="{}">{}</a>'.format(filename, model)
+    return link
+
 
 def error_local_to_url(path):
     filename = '%s/models/%s/error' % (server_name, path)
@@ -85,11 +91,16 @@ def show_leaderboard():
     failed["error"] = failed.path
     failed["error"] = failed.error.map(error_local_to_url)
 
-    for df in [l1, l2, failed]:
-        df.path = df.path.map(model_local_to_url)
-        df.alias = df.alias.map(model_local_to_url)
+    col_map = {'model': 'model<i class="help circle link icon" data-content="Click on the model name to view it"></i>'}
 
-    common_columns = ['team', 'model', 'path']
+    for df in [l1, l2, failed]:
+        df['path_model'] = df.path + ' ' + df.model  # dirty hack
+        df.model = df.path_model.map(model_with_link)
+        df.rename(
+            columns=col_map, 
+            inplace=True)
+
+    common_columns = ['team', col_map['model']]
     scores_columns = common_columns + ['score']
     error_columns = common_columns + ['error']
     html1 = l1.to_html(columns=scores_columns, **html_params)
