@@ -26,6 +26,7 @@ from flask import (
     render_template, 
     send_from_directory,
     flash,
+    jsonify,
 )
 
 
@@ -57,7 +58,7 @@ def list_submodules():
         sm = []
     return render_template('list.html', submodules=sm)
 
-
+@app.route("/_leaderboard/")
 @app.route("/leaderboard/")
 def show_leaderboard():
     html_params = dict(escape=False,
@@ -99,14 +100,19 @@ def show_leaderboard():
     else:
         failed_html = failed.to_html(columns=error_columns, **html_params)
 
-    return render_template('leaderboard.html', 
-                           leaderboard_1=html1,
-                           leaderboard_2=html2,
-                           failed_models=failed_html)
+    if '_' in request.path:
+        return jsonify(leaderboard_1=html1,
+                       leaderboard_2=html2,
+                       failed_models=failed_html)
+    else:
+        return render_template('leaderboard.html', 
+                               leaderboard_1=html1,
+                               leaderboard_2=html2,
+                               failed_models=failed_html)
 
 
-@app.route('/models/<team>/<tag>')
-@app.route('/models/<team>/<tag>/raw')
+@app.route('/models/<team>/<tag>/')
+@app.route('/models/<team>/<tag>/raw/')
 def download_model(team, tag):
     directory = os.path.join(root_path, "models", team, tag)
     model_url = os.path.join(directory, 'model.py')
@@ -121,7 +127,7 @@ def download_model(team, tag):
         return render_template('model.html', code=code, model_url=request.path + '/raw')
 
 
-@app.route('/models/<team>/<tag>/error')
+@app.route('/models/<team>/<tag>/error/')
 def download_error(team, tag):
     directory = os.path.join(root_path, "models", team, tag)
     error_url = os.path.join(directory, 'error.txt')

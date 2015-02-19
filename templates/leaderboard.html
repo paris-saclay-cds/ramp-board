@@ -1,19 +1,39 @@
 {% extends "base.html" %}
 {% block title %}Leaderboards{% endblock %}
 {% block content %}
+
+<script type=text/javascript>
+  $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+</script>
+
+<script type=text/javascript>
+  $(function load_leaderboards() {
+      $.getJSON($SCRIPT_ROOT + '/_leaderboard', {}, function(data) {
+        $("#leaderboard_1").html(data.leaderboard_1);
+        $("#leaderboard_2").html(data.leaderboard_2);
+        $("#failed_models").html(data.failed_models);
+        if (! data.failed_models)
+            $("#id_col").hide();
+        else
+            $("#id_col").show();
+        setTimeout(load_leaderboards, 5000);  // 10 sec 
+      });
+  });
+</script>
+
 <div class="ui stackable two column grid">
     <div class="column">
         <h2 class="ui horizontal header divider">Best models</h2>
-        {{leaderboard_1|safe}}
+        <div id='leaderboard_1'>{{leaderboard_1|safe}}</div>
     </div>
     <div class="column">
         <h2 class="ui horizontal header divider">Most contributive models</h2>
-        {{leaderboard_2|safe}}
+        <div id='leaderboard_2'>{{leaderboard_2|safe}}</div>
     </div>
     {% if failed_models is not none %}
-    <div class="column">
+    <div class="column" id="id_col">
         <h2 class="ui horizontal header divider">Failed models</h2>
-        {{failed_models|safe}}
+        <div id='failed_models'>{{failed_models|safe}}</div>
     </div>
     {% endif %} 
 </div>
