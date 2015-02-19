@@ -4,6 +4,7 @@ from multiprocessing import cpu_count
 root_path = "."
 test_size = 0.5
 random_state = 57
+tag_len_limit = 40
 
 # temporary trick to detect if whether
 # this is debug mode

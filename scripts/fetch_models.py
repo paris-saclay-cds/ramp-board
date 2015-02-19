@@ -15,7 +15,7 @@ import pandas as pd
 prog_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(1, prog_path)
 
-from config_databoard import repos_path, root_path
+from config_databoard import repos_path, root_path, tag_len_limit
 
 
 sys.path.insert(1, os.path.join(prog_path, 'models'))

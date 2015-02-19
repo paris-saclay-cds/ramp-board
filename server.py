@@ -17,6 +17,7 @@ from config_databoard import (
     serve_port,
     server_name,
     local_deployment,
+    tag_len_limit,
 )
 from flask import (
     Flask, 
@@ -45,7 +46,13 @@ def model_local_to_url(path):
 def model_with_link(path_model):
     path, model = path_model.split()
     filename = '%s/models/%s' % (server_name, path)
-    link = '<a href="{}">{}</a>'.format(filename, model)
+
+    # if the tag name is too long, shrink it.
+    if len(model) > tag_len_limit:
+        model_trucated = model[:tag_len_limit] + '[...]'
+        link = '<a href="{0}" class="popup" data-content="{1}">{2}</a>'.format(filename, model, model_trucated)
+    else:
+        link = '<a href="{0}">{1}</a>'.format(filename, model)
     return link
 
 
@@ -91,7 +98,7 @@ def show_leaderboard():
     failed["error"] = failed.path
     failed["error"] = failed.error.map(error_local_to_url)
 
-    col_map = {'model': 'model<i class="help circle link icon" data-content="Click on the model name to view it"></i>'}
+    col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
 
     for df in [l1, l2, failed]:
         df['path_model'] = df.path + ' ' + df.model  # dirty hack
@@ -130,7 +137,9 @@ def download_model(team, tag):
 
     if request.path.split('/')[-1] == 'raw':
         return send_from_directory(directory,
-                                   'model.py',
+                                   'model.py', 
+                                   as_attachment=True,
+                                   attachment_filename='{}_{}.py'.format(team, tag),
                                    mimetype='application/octet-stream')
     else:
         with open(model_url) as f:
