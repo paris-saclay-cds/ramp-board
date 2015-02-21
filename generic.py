@@ -77,6 +77,38 @@ def save_scores(skf_is, m_path, X, y, f_name_score):
     print f_name_pred
 
 
+def train_models(models, X, y, skf, last_time_stamp=None):
+    models = models.sort("timestamp")
+    models.index = range(1, len(models) + 1)
+    # models = models[models.index < 50]  # XXX to make things fast
+
+    failed_models = models.copy()
+    trained_models = models.copy()
+
+    for idx, team, model, timestamp, path, alias in zip(
+        models.index.values,
+        models['team'],
+        models['model'],
+        models['timestamp'],
+        models['path'],
+        models['alias'],
+        ):
+        m_path = os.path.join(root_path, 'models', path)
+
+        print "Training : %s" % m_path
+
+        try:
+            train_model(m_path, X, y, skf)
+            failed_models.drop(idx, axis=0, inplace=True)
+        except Exception, e:
+            trained_models.drop(idx, axis=0, inplace=True)
+            print e
+            with open(os.path.join(m_path, 'error.txt'), 'w') as f:
+                f.write("%s" % e)
+            print "ERROR (non fatal): Model not trained."
+
+    return trained_models, failed_models
+
 def train_model(m_path, X, y, skf):
     """Training a model on all folds and saving the predictions and rank order. The latter we can
     use for computing ROC or cutting ties.
