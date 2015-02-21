@@ -14,7 +14,7 @@ from importlib import import_module
 from sklearn.metrics import accuracy_score, roc_curve, auc
 from config_databoard import root_path, n_CV, test_size, n_processes, random_state
 from sklearn.externals.joblib import Parallel, delayed
-from sklearn.cross_validation import StratifiedShuffleSplit
+from specific import read_data, run_model
 
 # FIXME: use relative imports instead
 prog_path = os.path.dirname(os.path.abspath(__file__))
@@ -22,14 +22,6 @@ sys.path.insert(1, prog_path)
 
 # this is needed by import_module
 sys.path.insert(1, os.path.join(prog_path, 'models'))
-
-
-def read_data(filename='input/train.csv'):
-    df = pd.read_csv(filename)
-    y = df['TARGET'].values
-    X = df.drop('TARGET', axis=1).values
-    return X, y
-
 
 def setup_ground_truth():
     """Setting up the GroundTruth subdir, saving y_test for each fold in skf. File
@@ -44,8 +36,7 @@ def setup_ground_truth():
     gt_path = os.path.join(root_path, 'ground_truth')
     os.rmdir(gt_path)  # cleanup the ground_truth
     os.mkdir(gt_path)
-    X, y = read_data()
-    skf = StratifiedShuffleSplit(y, n_iter=n_CV, test_size=test_size, random_state=random_state)
+    X, y, skf = read_data()
 
     print gt_path
     scores = []
@@ -73,7 +64,7 @@ def save_scores(skf_is, m_path, X, y, f_name_score):
     module_path = '.'.join(m_path.lstrip('./').split('/'))
     model = import_module('.model', module_path)
 
-    y_pred, y_score = model.model(X_train, y_train, X_test)
+    y_pred, y_score = run_model(model, X_train, y_train, X_test)
 
     assert len(y_pred) == len(y_score) == len(X_test)
     
@@ -87,8 +78,7 @@ def save_scores(skf_is, m_path, X, y, f_name_score):
 def train_models(models, last_time_stamp=None):
     models = models.sort("timestamp")
     models.index = range(1, len(models) + 1)
-    X, y = read_data()
-    skf = StratifiedShuffleSplit(y, n_iter=n_CV, test_size=test_size, random_state=random_state)
+    X, y, skf = read_data()
 
     # models = models[models.index < 50]  # XXX to make things fast
 
