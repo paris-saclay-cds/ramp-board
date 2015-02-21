@@ -1,3 +1,5 @@
 gitpython
 flask
 fabric
+Flask-Shelve
+Flask-Mail

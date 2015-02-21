@@ -11,11 +11,17 @@ import contextlib
 import numpy as np
 import pandas as pd
 
+from server import app 
+from flask_mail import Mail
+from flask_mail import Message
+
+
+
 # FIXME: use relative imports instead
 prog_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(1, prog_path)
 
-from config_databoard import repos_path, root_path, tag_len_limit
+from config_databoard import repos_path, root_path, tag_len_limit, notification_recipients
 
 
 sys.path.insert(1, os.path.join(prog_path, 'models'))
@@ -28,7 +34,30 @@ submissions_path = os.path.join(root_path, 'models')
 if not os.path.exists(submissions_path):
     os.mkdir(submissions_path)
 
+
 tags_info = []
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_DEBUG'] = app.debug
+app.config['MAIL_USERNAME'] = 'databoardmailer@gmail.com'
+app.config['MAIL_PASSWORD'] = 'peace27man'
+app.config['MAIL_DEFAULT_SENDER'] = ('Databoard', 'databoardmailer@gmail.com')
+
+mail = Mail(app)
+
+def send_mail_notif(submissions):
+    msg = Message("New submissions", reply_to='djalel.benbouzid@gmail.com')
+
+    msg.recipients = notification_recipients
+
+    body_message = 'New submissions: <br/><ul>'
+    for team, tag in submissions:
+        body_message += '<li><b>{}</b>: {}</li>'.format(team, tag)
+    body_message += '</ul>'
+    msg.html = body_message
+    mail.send(msg)
 
 
 def copy_git_tree(tree, dest_folder):
@@ -52,6 +81,11 @@ def changedir(dir_name):
     finally:
         os.chdir(current_dir)
 
+new_submissions = []
+old_submissions = set()
+if os.path.exists("output/submissions.csv"):
+    old_submissions = pd.read_csv("output/submissions.csv")
+    old_submissions = {(t, m) for t, m in old_submissions[['team', 'model']].values}
 
 for rp in repo_paths:
     print(rp)
@@ -75,6 +109,10 @@ for rp in repo_paths:
                 # tag_name = tag_name.replace(' ', '_')
                 # tag_name = tag_name.replace('.', '->')
  
+                current_submission = (str(team_name), str(tag_name))
+                if current_submission not in old_submissions:
+                    new_submissions.append(current_submission)
+
                 unique_tag = str(uuid.uuid3(uuid.NAMESPACE_DNS, tag_name))
                 tag_name_alias = 'm_{}'.format(unique_tag)
 
@@ -100,6 +138,11 @@ for rp in repo_paths:
         print("Error: %s" % e)
 
 if len(tags_info) > 0:
+
+    if new_submissions:
+        with app.app_context():
+            send_mail_notif(new_submissions)
+
     columns = ['team', 'model', 'timestamp', 'path', 'alias']
     df = pd.DataFrame(np.array(tags_info), columns=columns)
     print(df)
