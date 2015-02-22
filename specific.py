@@ -48,11 +48,11 @@ def split_data():
         test_size=skf_test_size, random_state=random_state)
     return X_train, y_train, X_test, y_test, skf
 
-def run_model(model, X_train, y_train, X_test):
+def run_model(model, X_valid_train, y_valid_train, X_valid_test, X_test):
     clf = model.Classifier()
-    clf.fit(X_train, y_train)
-    y_pred = clf.predict(X_test)
-    y_score = clf.predict_proba(X_test)
+    clf.fit(X_valid_train, y_valid_train)
+    y_pred = clf.predict(X_valid_test)
+    y_score = clf.predict_proba(X_valid_test)
     return y_pred, y_score
 
 

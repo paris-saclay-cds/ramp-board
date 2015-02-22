@@ -49,24 +49,25 @@ def setup_ground_truth():
         np.savetxt(f_name_pred, y_train[test_is], delimiter="\n", fmt='%d')
 
 
-def save_scores(skf_is, m_path, X, y, f_name_score):
+def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
     hasher = hashlib.md5()
-    train_is, test_is = skf_is
-    hasher.update(test_is)
+    valid_train_is, valid_test_is = skf_is
+    hasher.update(valid_is)
     h_str = hasher.hexdigest()
     f_name_pred = m_path + "/pred_" + h_str + ".csv"
-    X_train = X[train_is]
-    y_train = y[train_is]
-    X_test = X[test_is]
-    y_test = y[test_is]
+    X_valid_train = X[valid_train_is]
+    y_valid_train = y[valid_train_is]
+    X_valid_test = X[valid_test_is]
+    y_valid_test = y[valid_test_is]
 
     open(m_path + "/__init__.py", 'a').close()  # so to make it importable
     module_path = '.'.join(m_path.lstrip('./').split('/'))
     model = import_module('.model', module_path)
 
-    y_pred, y_score = run_model(model, X_train, y_train, X_test)
+    y_pred, y_score = run_model(model, X_valid_train, y_valid_train, 
+        X_valid_test, X_test)
 
-    assert len(y_pred) == len(y_score) == len(X_test)
+    assert len(y_pred) == len(y_score) == len(X_valid)
     
     # y_rank[i] is the the rank of the ith element of y_score
     y_rank = y_score[:,1].argsort().argsort()
@@ -98,7 +99,7 @@ def train_models(models, last_time_stamp=None):
         print "Training : %s" % m_path
 
         try:
-            train_model(m_path, X_train, y_train, skf)
+            train_model(m_path, X_train, y_train, X_test, y_test, skf)
             failed_models.drop(idx, axis=0, inplace=True)
         except Exception, e:
             trained_models.drop(idx, axis=0, inplace=True)
@@ -109,7 +110,7 @@ def train_models(models, last_time_stamp=None):
 
     return trained_models, failed_models
 
-def train_model(m_path, X, y, skf):
+def train_model(m_path, X_train, y_train, X_test, y_test, skf):
     """Training a model on all folds and saving the predictions and rank order. The latter we can
     use for computing ROC or cutting ties.
 
@@ -145,7 +146,8 @@ def train_model(m_path, X, y, skf):
     scores = []
     open(f_name_score, "w").close()
 
-    Parallel(n_jobs=n_processes)(delayed(save_scores)(skf_is, m_path, X, y, f_name_score) for skf_is in skf)
+    Parallel(n_jobs=n_processes)(delayed(save_scores)
+        (skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score) for skf_is in skf)
     
     # partial_save_scores = partial(save_scores, m_path=m_path, X=X, y=y, f_name_score=f_name_score)
     # pool = multiprocessing.Pool(processes=n_processes)
