@@ -21,8 +21,8 @@ n_CV = 2 if local_deployment else 5 * n_processes
 
 def read_data(filename):
     df = pd.read_csv(filename)
-    y = df[target_column_name]
-    X = df.drop(target_column_name, axis=1)
+    y = df[target_column_name].values
+    X = df.drop(target_column_name, axis=1).values
     return X, y
 
 def prepare_data():
@@ -42,11 +42,11 @@ def prepare_data():
     df_test.to_csv(test_filename, index=False) 
 
 def split_data():
-    df_X_train, df_y_train = read_data(train_filename)
-    df_X_test, df_y_test = read_data(test_filename)
-    skf = StratifiedShuffleSplit(df_y_train, n_iter=n_CV, 
+    X_train, y_train = read_data(train_filename)
+    X_test, y_test = read_data(test_filename)
+    skf = StratifiedShuffleSplit(y_train, n_iter=n_CV, 
         test_size=skf_test_size, random_state=random_state)
-    return df_X_train.values, df_y_train.values, skf
+    return X_train, y_train, skf
 
 def run_model(model, X_train, y_train, X_test):
     clf = model.Classifier()
