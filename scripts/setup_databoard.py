@@ -16,6 +16,7 @@ from config_databoard import (
     cachedir,
     repos_path,
 )
+from specific import prepare_data
 
 # cleanup prediction files
 fnames = []
@@ -43,6 +44,9 @@ for fname in old_fnames:
 
 # Prepare the teams repo submodules
 repo = Repo.init(repos_path)  # does nothing if already exists
+
+# Preparing the data set, typically public train/private held-out test cut
+prepare_data()
 
 # Set up the ground truth predictions for the CV folds
 setup_ground_truth()
