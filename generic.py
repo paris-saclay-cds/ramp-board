@@ -36,7 +36,7 @@ def setup_ground_truth():
     gt_path = os.path.join(root_path, 'ground_truth')
     os.rmdir(gt_path)  # cleanup the ground_truth
     os.mkdir(gt_path)
-    X, y, skf = split_data()
+    X_train, y_train, X_test, y_test, skf = split_data()
 
     print gt_path
     scores = []
@@ -46,7 +46,7 @@ def setup_ground_truth():
         h_str = hasher.hexdigest()
         f_name_pred = gt_path + "/pred_" + h_str + ".csv"
         print f_name_pred
-        np.savetxt(f_name_pred, y[test_is], delimiter="\n", fmt='%d')
+        np.savetxt(f_name_pred, y_train[test_is], delimiter="\n", fmt='%d')
 
 
 def save_scores(skf_is, m_path, X, y, f_name_score):
@@ -78,7 +78,7 @@ def save_scores(skf_is, m_path, X, y, f_name_score):
 def train_models(models, last_time_stamp=None):
     models = models.sort("timestamp")
     models.index = range(1, len(models) + 1)
-    X, y, skf = read_data()
+    X_train, y_train, X_test, y_test, skf = split_data()
 
     # models = models[models.index < 50]  # XXX to make things fast
 
@@ -98,7 +98,7 @@ def train_models(models, last_time_stamp=None):
         print "Training : %s" % m_path
 
         try:
-            train_model(m_path, X, y, skf)
+            train_model(m_path, X_train, y_train, skf)
             failed_models.drop(idx, axis=0, inplace=True)
         except Exception, e:
             trained_models.drop(idx, axis=0, inplace=True)

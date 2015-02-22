@@ -46,7 +46,7 @@ def split_data():
     X_test, y_test = read_data(test_filename)
     skf = StratifiedShuffleSplit(y_train, n_iter=n_CV, 
         test_size=skf_test_size, random_state=random_state)
-    return X_train, y_train, skf
+    return X_train, y_train, X_test, y_test, skf
 
 def run_model(model, X_train, y_train, X_test):
     clf = model.Classifier()
