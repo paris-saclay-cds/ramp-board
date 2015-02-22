@@ -17,7 +17,7 @@ random_state = 57
 raw_filename = os.path.join(raw_data_path, 'data.csv')
 train_filename = os.path.join(public_data_path, 'train.csv')
 test_filename = os.path.join(private_data_path, 'test.csv')
-n_CV = 2 if local_deployment else 5 * n_processes
+n_CV = 2 if local_deployment else 5 * n_processes #
 
 def prepare_data():
     try:
