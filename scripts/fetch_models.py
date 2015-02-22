@@ -15,8 +15,6 @@ from server import app
 from flask_mail import Mail
 from flask_mail import Message
 
-
-
 # FIXME: use relative imports instead
 prog_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(1, prog_path)

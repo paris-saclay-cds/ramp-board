@@ -14,7 +14,7 @@ from importlib import import_module
 from sklearn.metrics import accuracy_score, roc_curve, auc
 from config_databoard import root_path, n_processes
 from sklearn.externals.joblib import Parallel, delayed
-from specific import read_data, run_model
+from specific import split_data, run_model
 
 # FIXME: use relative imports instead
 prog_path = os.path.dirname(os.path.abspath(__file__))
@@ -36,7 +36,7 @@ def setup_ground_truth():
     gt_path = os.path.join(root_path, 'ground_truth')
     os.rmdir(gt_path)  # cleanup the ground_truth
     os.mkdir(gt_path)
-    X, y, skf = read_data()
+    X, y, skf = split_data()
 
     print gt_path
     scores = []
