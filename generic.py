@@ -12,7 +12,7 @@ from scipy import io
 from functools import partial
 from importlib import import_module
 from sklearn.metrics import accuracy_score, roc_curve, auc
-from config_databoard import root_path, n_CV, test_size, n_processes, random_state
+from config_databoard import root_path, n_processes
 from sklearn.externals.joblib import Parallel, delayed
 from specific import read_data, run_model
 

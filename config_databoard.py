@@ -1,19 +1,25 @@
 import socket
+import os
 from multiprocessing import cpu_count
 
 root_path = "."
-test_size = 0.5
-random_state = 57
 tag_len_limit = 40
 
 # temporary trick to detect if whether
 # this is debug mode
 local_deployment = 'onevm' not in socket.gethostname()
-
 n_processes = 3 if local_deployment else cpu_count()
-n_CV = 2 if local_deployment else 5 * n_processes
 
-repos_path = "./TeamsRepos"
+# paths
+repos_path = os.path.join(root_path, 'TeamsRepos')
+ground_truth_path = os.path.join(root_path, 'ground_truth')
+data_path = os.path.join(root_path, 'data')
+raw_data_path = os.path.join(data_path, 'raw')
+public_data_path = os.path.join(data_path, 'public')
+private_data_path = os.path.join(data_path, 'private')
+output_path = os.path.join(data_path, 'output')
+models_path = os.path.join(data_path, 'models')
+
 cachedir = '.'
 serve_port = 8080
 

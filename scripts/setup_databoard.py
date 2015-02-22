@@ -15,29 +15,32 @@ from config_databoard import (
     root_path, 
     cachedir,
     repos_path,
+    ground_truth_path,
+    output_path,
+    models_path
 )
 from specific import prepare_data
 
 # cleanup prediction files
 fnames = []
-if os.path.exists('ground_truth'):
-    fnames = glob.glob('ground_truth/pred_*')
+if os.path.exists(ground_truth_path):
+    fnames = glob.glob(os.path.join(ground_truth_path, 'pred_*'))
 else:
-    os.mkdir('ground_truth')
+    os.mkdir(ground_truth_path)
 
-if not os.path.exists('output'):
-    os.mkdir('output')
+if not os.path.exists(output_path):
+    os.mkdir(output_path)
 
-if not os.path.exists('models'):
-    os.mkdir('models')
-open('models/__init__.py', 'a').close()
+if not os.path.exists(models_path):
+    os.mkdir(models_path)
+open(os.path.join(models_path, '__init__.py'), 'a').close()
 
-fnames += glob.glob('models/*/pred_*')
-fnames += glob.glob('models/*/*/pred_*')
+fnames += glob.glob(os.path.join(models_path, '*', 'pred_*'))
+fnames += glob.glob(os.path.join(models_path, '*', '*', 'pred_*'))
 for fname in fnames:
     os.remove(fname)
 
-old_fnames = glob.glob('output/*.csv') 
+old_fnames = glob.glob(os.path.join(output_path, '*.csv'))
 for fname in old_fnames:
     if os.path.exists(fname):
         os.remove(fname)
