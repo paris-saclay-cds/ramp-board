@@ -52,7 +52,7 @@ def setup_ground_truth():
 def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
     hasher = hashlib.md5()
     valid_train_is, valid_test_is = skf_is
-    hasher.update(valid_is)
+    hasher.update(valid_test_is)
     h_str = hasher.hexdigest()
     f_name_pred = m_path + "/pred_" + h_str + ".csv"
     X_valid_train = X[valid_train_is]
