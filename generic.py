@@ -12,9 +12,9 @@ from scipy import io
 from functools import partial
 from importlib import import_module
 from sklearn.metrics import accuracy_score, roc_curve, auc
-from config_databoard import root_path, n_processes
+from config_databoard import root_path, models_path, n_processes
 from sklearn.externals.joblib import Parallel, delayed
-from specific import split_data, run_model
+from specific import split_data, run_model #
 
 # FIXME: use relative imports instead
 prog_path = os.path.dirname(os.path.abspath(__file__))
@@ -203,6 +203,7 @@ def leaderboard_classical(gt_path, models):
     m_paths = [os.path.join(root_path, 'models', path) for path in models['path']]
     pr_paths = glob.glob(gt_path + "/pred_*")
     pr_names = np.array([pr_path.split('/')[-1] for pr_path in pr_paths])
+    print pr_names
     mean_scores = np.zeros(len(m_paths))
     # get model file names
     for pr_name in pr_names:
@@ -235,6 +236,24 @@ def leaderboard_classical(gt_path, models):
     leaderboard['score'] = mean_scores # argsort of argsort gives rank of entry
     return leaderboard.sort(columns=['score'], ascending=not scoring_higher_the_better)
 
+def private_leaderboard_classical(models):
+    models = models.sort(columns='timestamp')
+    m_paths = [os.path.join(root_path, 'models', path) for path in models['path']]
+    _, _, _, y_test, _ = split_data()
+    leaderboard = models.copy()
+    leaderboard['score'] = 0.0
+    mean_scores = np.zeros(len(m_paths))
+    # get model file names
+    for mi, m_path in zip(range(len(models)), models['path']):
+        pr_paths = glob.glob(os.path.join(models_path, m_path, 'test_*'))
+        sum_rank = np.zeros(len(y_test))
+        for pr_path in pr_paths:
+             inp = pd.read_csv(pr_path, names=['pred', 'rank'])
+             sum_rank += inp['rank'].values
+        y_rank = sum_rank.argsort().argsort()
+        leaderboard.loc[mi, 'score'] = score(y_rank, y_test)
+    scoring_higher_the_better = True
+    return leaderboard.sort(columns=['score'], ascending=not scoring_higher_the_better)
 
 def combine_models(y_preds, y_ranks, indexes):
     """Combines the predictions y_preds[indexes] by "rank"
