@@ -64,10 +64,11 @@ def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
     module_path = '.'.join(m_path.lstrip('./').split('/'))
     model = import_module('.model', module_path)
 
-    y_pred, y_score = run_model(model, X_valid_train, y_valid_train, 
-        X_valid_test, X_test)
+    y_valid_pred, y_valid_score, y_test_pred, y_test_score = run_model(model, 
+        X_valid_train, y_valid_train, X_valid_test, X_test)
 
-    assert len(y_pred) == len(y_score) == len(X_valid_test)
+    assert len(y_valid_pred) == len(y_valid_score) == len(X_valid_test)
+    assert len(y_test_pred) == len(y_test_score) == len(X_test)
     
     # y_rank[i] is the the rank of the ith element of y_score
     y_rank = y_score[:,1].argsort().argsort()

@@ -51,8 +51,10 @@ def split_data():
 def run_model(model, X_valid_train, y_valid_train, X_valid_test, X_test):
     clf = model.Classifier()
     clf.fit(X_valid_train, y_valid_train)
-    y_pred = clf.predict(X_valid_test)
-    y_score = clf.predict_proba(X_valid_test)
-    return y_pred, y_score
+    y_valid_pred = clf.predict(X_valid_test)
+    y_valid_score = clf.predict_proba(X_valid_test)
+    y_test_pred = clf.predict(X_test)
+    y_test_score = clf.predict_proba(X_test)
+    return y_valid_pred, y_valid_score, y_test_pred, y_test_score
 
 
