@@ -50,11 +50,12 @@ def setup_ground_truth():
 
 
 def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
-    hasher = hashlib.md5()
     valid_train_is, valid_test_is = skf_is
+    hasher = hashlib.md5()
     hasher.update(valid_test_is)
     h_str = hasher.hexdigest()
     f_name_pred = m_path + "/pred_" + h_str + ".csv"
+    f_name_test = m_path + "/test_" + h_str + ".csv"
     X_valid_train = X_train[valid_train_is]
     y_valid_train = y_train[valid_train_is]
     X_valid_test = X_train[valid_test_is]
@@ -71,9 +72,12 @@ def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
     assert len(y_test_pred) == len(y_test_score) == len(X_test)
     
     # y_rank[i] is the the rank of the ith element of y_score
-    y_rank = y_score[:,1].argsort().argsort()
-    output = np.transpose(np.array([y_pred, y_rank]))
-    np.savetxt(f_name_pred, output, fmt='%d,%d')
+    y_valid_rank = y_valid_score[:,1].argsort().argsort()
+    y_test_rank = y_test_score[:,1].argsort().argsort()
+    output_valid = np.transpose(np.array([y_valid_pred, y_valid_rank]))
+    np.savetxt(f_name_pred, output_valid, fmt='%d,%d')
+    output_test = np.transpose(np.array([y_test_pred, y_test_rank]))
+    np.savetxt(f_name_test, output_test, fmt='%d,%d')
     print f_name_pred
 
 
