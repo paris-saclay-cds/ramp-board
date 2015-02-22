@@ -17,8 +17,8 @@ data_path = os.path.join(root_path, 'data')
 raw_data_path = os.path.join(data_path, 'raw')
 public_data_path = os.path.join(data_path, 'public')
 private_data_path = os.path.join(data_path, 'private')
-output_path = os.path.join(data_path, 'output')
-models_path = os.path.join(data_path, 'models')
+output_path = os.path.join(root_path, 'output')
+models_path = os.path.join(root_path, 'models')
 
 cachedir = '.'
 serve_port = 8080
