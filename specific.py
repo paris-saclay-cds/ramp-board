@@ -1,9 +1,15 @@
 import socket
 import os
-from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
-from config_databoard import local_deployment, raw_data_path, public_data_path, private_data_path
 import pandas as pd
+from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
+from config_databoard import (
+    local_deployment,
+    raw_data_path,
+    public_data_path,
+    private_data_path
+)
 
+hackaton_title = 'Mortality prediction'
 target_column_name = 'TARGET'
 held_out_test_size = 0.2
 skf_test_size = 0.5
