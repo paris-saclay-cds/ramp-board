@@ -67,7 +67,7 @@ def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
     y_pred, y_score = run_model(model, X_valid_train, y_valid_train, 
         X_valid_test, X_test)
 
-    assert len(y_pred) == len(y_score) == len(X_valid)
+    assert len(y_pred) == len(y_score) == len(X_valid_test)
     
     # y_rank[i] is the the rank of the ith element of y_score
     y_rank = y_score[:,1].argsort().argsort()
