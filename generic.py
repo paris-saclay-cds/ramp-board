@@ -55,10 +55,10 @@ def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
     hasher.update(valid_test_is)
     h_str = hasher.hexdigest()
     f_name_pred = m_path + "/pred_" + h_str + ".csv"
-    X_valid_train = X[valid_train_is]
-    y_valid_train = y[valid_train_is]
-    X_valid_test = X[valid_test_is]
-    y_valid_test = y[valid_test_is]
+    X_valid_train = X_train[valid_train_is]
+    y_valid_train = y_train[valid_train_is]
+    X_valid_test = X_train[valid_test_is]
+    y_valid_test = y_train[valid_test_is]
 
     open(m_path + "/__init__.py", 'a').close()  # so to make it importable
     module_path = '.'.join(m_path.lstrip('./').split('/'))
