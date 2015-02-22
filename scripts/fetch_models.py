@@ -96,6 +96,9 @@ for rp in repo_paths:
     try:
         team_name = os.path.basename(rp)
         repo = git.Repo(rp)
+        o = repo.remotes.origin
+        o.pull()
+
         repo_path = os.path.join(submissions_path, team_name)
         if not os.path.exists(repo_path):
             os.mkdir(repo_path)
