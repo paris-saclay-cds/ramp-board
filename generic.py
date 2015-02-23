@@ -12,9 +12,17 @@ from scipy import io
 from functools import partial
 from importlib import import_module
 from sklearn.metrics import accuracy_score, roc_curve, auc
-from config_databoard import root_path, models_path, n_processes
+from config_databoard import (
+    root_path, 
+    models_path, 
+    n_processes,
+    cachedir,
+)
 from sklearn.externals.joblib import Parallel, delayed
 from specific import split_data, run_model #
+from sklearn.externals.joblib import Memory
+
+mem = Memory(cachedir=cachedir)
 
 # FIXME: use relative imports instead
 prog_path = os.path.dirname(os.path.abspath(__file__))
@@ -49,6 +57,7 @@ def setup_ground_truth():
         np.savetxt(f_name_pred, y_train[test_is], delimiter="\n", fmt='%d')
 
 
+#@mem.cache
 def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
     valid_train_is, valid_test_is = skf_is
     hasher = hashlib.md5()
