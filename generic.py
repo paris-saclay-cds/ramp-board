@@ -56,7 +56,7 @@ def setup_ground_truth():
         print f_name_pred
         np.savetxt(f_name_pred, y_train[test_is], delimiter="\n", fmt='%d')
 
-
+#
 #@mem.cache
 def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
     valid_train_is, valid_test_is = skf_is
