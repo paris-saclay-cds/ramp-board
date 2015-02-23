@@ -35,7 +35,7 @@ if not os.path.exists(models_path):
     os.mkdir(models_path)
 open(os.path.join(models_path, '__init__.py'), 'a').close()
 
-fnames += glob.glob(os.path.join(models_path, '*', 'pred_*'))
+# fnames += glob.glob(os.path.join(models_path, '*', 'pred_*'))
 fnames += glob.glob(os.path.join(models_path, '*', '*', 'pred_*'))
 for fname in fnames:
     os.remove(fname)
