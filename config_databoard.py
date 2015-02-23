@@ -1,5 +1,6 @@
-import socket
 import os
+import socket
+from git import Repo
 from multiprocessing import cpu_count
 
 root_path = "."
@@ -27,10 +28,17 @@ debug_server = 'http://' + "localhost:{}".format(serve_port)
 deploy_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(serve_port)
 server_name = debug_server if local_deployment else deploy_server
 
+
 notification_recipients = []
 notification_recipients.append("djalel.benbouzid@gmail.com")
 notification_recipients.append("balazs.kegl@gmail.com")
 notification_recipients.append("alexandre.gramfort@gmail.com")
 
+if local_deployment:
+    try:
+        user_mail = Repo('.').config_reader().get_value('user', 'email')
+        notification_recipients = [user_mail]
+    except:
+        pass
 
 assert repos_path != 'models' 

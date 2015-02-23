@@ -19,7 +19,7 @@ from flask_mail import Message
 prog_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(1, prog_path)
 
-from config_databoard import repos_path, root_path, tag_len_limit, notification_recipients
+from config_databoard import repos_path, root_path, tag_len_limit, notification_recipients, server_name
 from specific import hackaton_title
 
 sys.path.insert(1, os.path.join(prog_path, 'models'))
@@ -46,12 +46,17 @@ app.config['MAIL_DEFAULT_SENDER'] = ('Databoard', 'databoardmailer@gmail.com')
 mail = Mail(app)
 
 def send_mail_notif(submissions):
+
+    print('Sending notification email to: {}'.format(', '.join(notification_recipients)))
     msg = Message('New submissions in the ' + hackaton_title + ' hackaton', 
         reply_to='djalel.benbouzid@gmail.com')
 
     msg.recipients = notification_recipients
 
-    body_message = 'New submissions: <br/><ul>'
+    body_message = '<b>Dataset</b>: {}</br>'.format(hackaton_title)
+    body_message += '<b>Server</b>: {}</br>'.format(server_name)
+
+    body_message += 'New submissions: <br/><ul>'
     for team, tag in submissions:
         body_message += '<li><b>{}</b>: {}</li>'.format(team, tag)
     body_message += '</ul>'
