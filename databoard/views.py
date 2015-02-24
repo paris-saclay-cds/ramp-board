@@ -5,8 +5,9 @@ import pandas as pd
 
 from git import Repo
 from collections import namedtuple
+
+
 from flask import (
-    Flask, 
     request, 
     redirect, 
     url_for, 
@@ -16,7 +17,8 @@ from flask import (
     jsonify,
 )
 
-from incentiboard.config_databoard import (
+from databoard import app
+from .config_databoard import (
     root_path, 
     repos_path, 
     serve_port,
@@ -25,11 +27,8 @@ from incentiboard.config_databoard import (
     tag_len_limit,
 )
 
-
-pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
-
-app = Flask(__name__)
 app.secret_key = os.urandom(24)
+pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 
 def model_local_to_url(path):

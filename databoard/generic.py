@@ -381,7 +381,7 @@ def leaderboard_combination(gt_path, models):
             improvement = True
             while improvement:
                 old_best_indexes = best_indexes
-                best_indexes = best_combine(y_preds, y_ranks, best_indexes)
+                best_indexes = best_combine(y_preds, y_ranks, y_test, best_indexes)
                 improvement = len(best_indexes) != len(old_best_indexes)
 
             counts[best_indexes] += 1
@@ -391,7 +391,7 @@ def leaderboard_combination(gt_path, models):
     return leaderboard.sort(columns=['score'],  ascending=False)
 
 
-def best_combine(y_preds, y_ranks, best_indexes):
+def best_combine(y_preds, y_ranks, y_test, best_indexes):
     """Finds the model that minimizes the score if added to y_preds[indexes].
 
     Parameters
@@ -420,6 +420,7 @@ def best_combine(y_preds, y_ranks, best_indexes):
         com_y_pred = combine_models_using_ranks(y_preds, y_ranks, np.append(best_indexes, i))
         #print score(y_pred, y_test), score(com_y_pred, y_test)
         #if score(y_pred, y_test) > score(com_y_pred, y_test) + eps:
+
         if score(y_pred, y_test) < score(com_y_pred, y_test) - eps:
             y_pred = com_y_pred
             best_index = i

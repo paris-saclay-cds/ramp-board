@@ -4,8 +4,8 @@ import os
 
 if __name__ == "__main__":
 
-    from incentiboard.views import app
-    from incentiboard.config_databoard import (
+    from databoard import app
+    from databoard.config_databoard import (
         serve_port,
         local_deployment,
     )

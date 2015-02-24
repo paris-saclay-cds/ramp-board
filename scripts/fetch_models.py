@@ -14,9 +14,9 @@ import pandas as pd
 from flask_mail import Mail
 from flask_mail import Message
 
-from incentiboard.views import app
-from incentiboard.specific import hackaton_title
-from incentiboard.config_databoard import repos_path, root_path, tag_len_limit, notification_recipients, server_name
+from databoard import app
+from databoard.specific import hackaton_title
+from databoard.config_databoard import repos_path, root_path, tag_len_limit, notification_recipients, server_name
 
 # sys.path.insert(1, os.path.join(prog_path, 'models'))
 
@@ -30,14 +30,6 @@ if not os.path.exists(submissions_path):
 
 
 tags_info = []
-
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_DEBUG'] = app.debug
-app.config['MAIL_USERNAME'] = 'databoardmailer@gmail.com'
-app.config['MAIL_PASSWORD'] = 'peace27man'
-app.config['MAIL_DEFAULT_SENDER'] = ('Databoard', 'databoardmailer@gmail.com')
 
 mail = Mail(app)
 

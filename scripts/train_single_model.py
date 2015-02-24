@@ -2,7 +2,7 @@ import click
 import numpy as np
 import pandas as pd
 
-from incentiboard.generic import train_models
+from databoard.generic import train_models
 
 
 @click.command()

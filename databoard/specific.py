@@ -1,8 +1,10 @@
-import socket
 import os
+import socket
 import pandas as pd
+
 from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
-from config_databoard import (
+
+from .config_databoard import (
     local_deployment,
     raw_data_path,
     public_data_path,

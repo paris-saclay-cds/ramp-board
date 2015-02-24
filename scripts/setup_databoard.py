@@ -7,9 +7,9 @@ import glob
 
 from git import Repo, Submodule
 
-from incentiboard.generic import setup_ground_truth
-from incentiboard.specific import prepare_data
-from incentiboard.config_databoard import (
+from databoard.generic import setup_ground_truth
+from databoard.specific import prepare_data
+from databoard.config_databoard import (
     root_path, 
     cachedir,
     repos_path,

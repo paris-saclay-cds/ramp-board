@@ -5,8 +5,8 @@ import glob
 import numpy as np
 import pandas as pd
 
-from incentiboard.generic import leaderboard_classical, leaderboard_combination
-from incentiboard.config_databoard import (
+from databoard.generic import leaderboard_classical, leaderboard_combination
+from databoard.config_databoard import (
     root_path, 
     repos_path, 
     serve_port,

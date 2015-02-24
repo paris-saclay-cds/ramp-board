@@ -1,7 +1,7 @@
 import socket
-from sklearn.cross_validation import StratifiedShuffleSplit
-from config_databoard import local_deployment
 import pandas as pd
+from sklearn.cross_validation import StratifiedShuffleSplit
+from .config_databoard import local_deployment
 
 def read_data(filename='input/train.csv'):
     test_size = 0.5

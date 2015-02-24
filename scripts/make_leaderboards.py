@@ -2,8 +2,8 @@ import os
 import sys
 import pandas as pd
 
-from incentiboard.generic import leaderboard_classical, leaderboard_combination, private_leaderboard_classical
-from incentiboard.config_databoard import root_path
+from databoard.generic import leaderboard_classical, leaderboard_combination, private_leaderboard_classical
+from databoard.config_databoard import root_path
 
 groundtruth_path = os.path.join(root_path, 'ground_truth')
 

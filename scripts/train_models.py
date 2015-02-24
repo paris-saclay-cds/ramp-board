@@ -4,8 +4,8 @@ import pandas as pd
 
 from sklearn.externals.joblib import Memory
 
-from incentiboard.generic import train_models
-from incentiboard.config_databoard import cachedir
+from databoard.generic import train_models
+from databoard.config_databoard import cachedir
 
 
 models = pd.read_csv("output/submissions.csv")
