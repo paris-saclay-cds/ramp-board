@@ -7,6 +7,7 @@ from config_databoard import (
     raw_data_path,
     public_data_path,
     private_data_path,
+    n_processes,
 )
 
 hackaton_title = 'Mortality prediction'

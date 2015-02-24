@@ -1,11 +1,10 @@
-#!/usr/bin/env python2
-
 import os
 import sys
 import os.path
 import pandas as pd
 
-from git import Repo, Submodule, BadName
+from git import Repo
+from collections import namedtuple
 from flask import (
     Flask, 
     request, 
@@ -30,7 +29,6 @@ from incentiboard.config_databoard import (
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 app = Flask(__name__)
-repo = Repo(repos_path)
 app.secret_key = os.urandom(24)
 
 
@@ -60,12 +58,12 @@ def error_local_to_url(path):
 
 @app.route("/")
 @app.route("/register")
-def list_submodules():
-    try:
-        sm = repo.submodules
-    except BadName:
-        sm = []
-    return render_template('list.html', submodules=sm)
+def list_teams_repos():
+    RepoInfo = namedtuple('RepoInfo', 'name url') 
+    dir_list = filter(lambda x: not x.startswith('.'), os.listdir(repos_path))
+    get_repo_url = lambda f: Repo(os.path.join(repos_path, f)).config_reader().get_value('remote "origin"', 'url')
+    dir_list = [RepoInfo(f, get_repo_url(f)) for f in dir_list]
+    return render_template('list.html', submodules=dir_list)
 
 @app.route("/_leaderboard")
 @app.route("/leaderboard")
@@ -81,7 +79,7 @@ def show_leaderboard():
     if not all((os.path.exists("output/leaderboard1.csv"),
                 os.path.exists("output/leaderboard2.csv"),
         )):
-        return redirect(url_for('list_submodules'))
+        return redirect(url_for('list_teams_repos'))
 
     l1 = pd.read_csv("output/leaderboard1.csv")
     l2 = pd.read_csv("output/leaderboard2.csv")
@@ -161,22 +159,16 @@ def download_error(team, tag):
 
 
 @app.route("/add/", methods=("POST",))
-def add_submodule():
+def add_team_repo():
     if request.method == "POST":
-        submodule_name = request.form["name"].strip()
-        submodule_path = request.form["url"].strip()
+        repo_name = request.form["name"].strip()
+        repo_path = request.form["url"].strip()
         message = ''
         try:
-            Submodule.add(
-                    repo = repo,
-                    name = submodule_name,
-                    path = submodule_name,
-                    url = submodule_path,
-                )
-            repo.index.commit('Submodule added: {}'.format(submodule_name))
+            git.Repo.clone_from(repo_path, repo_name)
         except Exception as e:
             message = str(e)
 
         if message:
             flash(message)
-        return redirect(url_for('list_submodules'))
+        return redirect(url_for('list_teams_repos'))

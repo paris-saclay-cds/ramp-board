@@ -16,10 +16,38 @@
             $("#id_col").hide();
         else
             $("#id_col").show();
-        setTimeout(load_leaderboards, 3000);  // 3 sec 
+        timeout = setTimeout(load_leaderboards, 3000);  // 3 sec 
       });
   });
+  
+  var $checkbox = $("#autorefresh");
+  $checkbox.checkbox({
+    onEnable: function() {
+        timeout = setTimeout(load_leaderboards, 3000);
+        console.log("onEnable!" + $checkbox.prop("checked"));
+    },
+    onDisable: function() {
+        clearTimeout(timeout);
+        console.log("onDisable!" + $checkbox.prop("checked"));
+    }
+  });
+
+  $('.popup').popup({
+    inline   : true,
+    hoverable: true,
+    position : 'bottom left',
+    delay: {
+        show: 300,
+        hide: 800
+    }
+  });
+
 </script>
+
+<!-- <div class="ui toggle checkbox" id="autorefresh">
+    <input type="checkbox" name="public">
+    <label>Auto-refresh</label>
+</div> -->
 
 <div class="ui stackable two column grid">
     <div class="column">
