@@ -176,7 +176,7 @@ def score(y_pred, y_test):
     return auc(fpr, tpr)
 
 
-def leaderboard_classical(gt_path, models):
+def leaderboard_classical(groundtruth_path, models):
     """Output classical leaderboard (sorted in increasing order by score).
 
     Parameters
@@ -207,39 +207,48 @@ def leaderboard_classical(gt_path, models):
         9   Kegl3  0.251158
 
     """
-    models = models.sort(columns='timestamp')
+
+    # FIXME: the iteration is done function of the number of gt files
+    #        return if no model trained
+
     print models
-    m_paths = [os.path.join(root_path, 'models', path) for path in models['path']]
-    pr_paths = glob.glob(gt_path + "/pred_*")
-    pr_names = np.array([pr_path.split('/')[-1] for pr_path in pr_paths])
-    print pr_names
-    mean_scores = np.zeros(len(m_paths))
-    # get model file names
-    for pr_name in pr_names:
-        y_preds = []
-        y_ranks = []
-        y_test = pd.read_csv(gt_path + '/' + pr_name, names=['pred']).values.flatten()
-        for m_path in models['path']:
-            pr_path = os.path.join(root_path, 'models', m_path, pr_name)
-            # print pr_path
-            inp = pd.read_csv(pr_path, names=['pred', 'rank'])
-            y_preds.append(inp['pred'].values) # use m_path as db key
-            y_ranks.append(inp['rank'].values)
-        # y_preds: k vectors of length n
-        y_preds = np.array(y_preds)
-        y_ranks = np.array(y_ranks)
-        try:
-            #scores = [score(y_pred, y_test) for y_pred in y_preds]
-            scores = [score(y_rank, y_test) for y_rank in y_ranks]
-        except Exception as e:
-            print 'FAILED in one fold (%s)' % pr_name
-            print '++++++++'
-            print e
-            print '++++++++'
-            scores = [0.] * len(m_paths)
-        # print scores
-        mean_scores += scores
-    mean_scores /= len(pr_names)
+
+    models = models.sort(columns='timestamp')
+    models_paths = [os.path.join(root_path, 'models', path) for path in models['path']]
+    fold_labels_paths = glob.glob(groundtruth_path + "/pred_*")
+    fold_labels_paths = np.array([labels_path.split('/')[-1] for labels_path in fold_labels_paths])
+
+    print fold_labels_paths
+
+    mean_scores = np.zeros(len(models_paths))
+
+    if models.shape[0] != 0:
+        for labels_path in fold_labels_paths:
+            y_preds = []
+            y_ranks = []
+            y_test = pd.read_csv(groundtruth_path + '/' + labels_path, names=['pred']).values.flatten()
+            for model_path in models['path']:
+                predictions_path = os.path.join(root_path, 'models', model_path, labels_path)
+                predictions = pd.read_csv(predictions_path, names=['pred', 'rank'])
+                y_preds.append(predictions['pred'].values) # use m_path as db key
+                y_ranks.append(predictions['rank'].values)
+
+            y_preds = np.array(y_preds)
+            y_ranks = np.array(y_ranks)
+
+            try:
+                #scores = [score(y_pred, y_test) for y_pred in y_preds]
+                scores = [score(y_rank, y_test) for y_rank in y_ranks]
+            except Exception as e:
+                print 'FAILED in one fold (%s)' % labels_path
+                print '++++++++'
+                print e
+                print '++++++++'
+                scores = [0.] * len(models_paths)
+            # print scores
+            mean_scores += scores
+
+    mean_scores /= len(fold_labels_paths)
     scoring_higher_the_better = True
     leaderboard = models.copy()
     leaderboard['score'] = mean_scores # argsort of argsort gives rank of entry
@@ -379,42 +388,48 @@ def leaderboard_combination(gt_path, models):
         else:
             return best_indexes
 
-    models = models.sort(columns='timestamp')
     print models
+
+    models = models.sort(columns='timestamp')
+
     # get prediction file names
-    pr_paths = glob.glob(os.path.join(gt_path, 'pred_*'))
-    pr_names = np.array([pr_path.split('/')[-1] for pr_path in pr_paths])
+    fold_labels_paths = glob.glob(os.path.join(gt_path, 'pred_*'))
+    fold_labels_paths = np.array([pr_path.split('/')[-1] for pr_path in fold_labels_paths])
+
     # get model file names
     counts = np.zeros(len(models), dtype=int)
-    for pr_name in pr_names:
-        # probab;y an overshoot to use dataframes here, but slightly simpler code
-        # to be simplified perhaps
-        y_preds = pd.DataFrame()
-        y_ranks = pd.DataFrame()
-        y_test = pd.read_csv(gt_path + '/' + pr_name, names=['pred']).values.flatten()
-        for m_path in models['path']:
-            pr_path = os.path.join(root_path, 'models', m_path, pr_name)
-            #print pr_path
-            inp = pd.read_csv(pr_path, names=['pred', 'rank'])
-            y_preds[m_path] = inp['pred'] # use m_path as db key
-            y_ranks[m_path] = inp['rank']
-        # y_preds: k vectors of length n
-        y_preds = np.transpose(y_preds.values)
-        y_ranks = np.transpose(y_ranks.values)
-        #scores = [score(y_pred, y_test) for y_pred in y_preds]
-        scores = [score(y_rank, y_test) for y_rank in y_ranks]
-        #print scores
-        #best_indexes = np.array([np.argmin(scores)])
-        best_indexes = np.array([np.argmax(scores)])
-        #print best_indexes
-        improvement = True
-        while improvement:
-            old_best_indexes = best_indexes
-            best_indexes = best_combine(y_preds, y_ranks, best_indexes)
-            improvement = len(best_indexes) != len(old_best_indexes)
-            #print best_indexes
-        counts[best_indexes] += 1
-        #print counts
+
+    if models.shape[0] != 0:
+        for labels_path in fold_labels_paths:
+            # probably an overshoot to use dataframes here, but slightly simpler code
+            # to be simplified perhaps
+            y_preds = pd.DataFrame()
+            y_ranks = pd.DataFrame()
+            y_test = pd.read_csv(gt_path + '/' + labels_path, names=['pred']).values.flatten()
+
+            for model_path in models['path']:
+                predictions_path = os.path.join(root_path, 'models', model_path, labels_path)
+                predictions = pd.read_csv(predictions_path, names=['pred', 'rank'])
+                y_preds[model_path] = predictions['pred'] # use m_path as db key
+                y_ranks[model_path] = predictions['rank']
+
+            # y_preds: k vectors of length n
+            y_preds = np.transpose(y_preds.values)
+            y_ranks = np.transpose(y_ranks.values)
+            #scores = [score(y_pred, y_test) for y_pred in y_preds]
+            scores = [score(y_rank, y_test) for y_rank in y_ranks]
+            #print scores
+            #best_indexes = np.array([np.argmin(scores)])
+            best_indexes = np.array([np.argmax(scores)])
+
+            improvement = True
+            while improvement:
+                old_best_indexes = best_indexes
+                best_indexes = best_combine(y_preds, y_ranks, best_indexes)
+                improvement = len(best_indexes) != len(old_best_indexes)
+
+            counts[best_indexes] += 1
+
     leaderboard = models.copy()
     leaderboard['score'] = counts # argsort of argsort gives rank of entry
     return leaderboard.sort(columns=['score'],  ascending=False)
