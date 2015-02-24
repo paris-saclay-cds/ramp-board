@@ -35,10 +35,14 @@ if not os.path.exists(models_path):
     os.mkdir(models_path)
 open(os.path.join(models_path, '__init__.py'), 'a').close()
 
-# fnames += glob.glob(os.path.join(models_path, '*', 'pred_*'))
+
+# TODO: the following will be removed after switching to a database
 fnames += glob.glob(os.path.join(models_path, '*', '*', 'pred_*'))
+fnames += glob.glob(os.path.join(models_path, '*', '*', 'score.csv'))
+fnames += glob.glob(os.path.join(models_path, '*', '*', 'error.txt'))
 for fname in fnames:
-    os.remove(fname)
+    if os.path.exists(fname):
+        os.remove(fname)
 
 old_fnames = glob.glob(os.path.join(output_path, '*.csv'))
 for fname in old_fnames:

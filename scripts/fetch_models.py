@@ -5,8 +5,8 @@ import os
 import sys
 import git
 import glob
-import uuid 
 import shutil
+import hashlib 
 import contextlib
 import numpy as np
 import pandas as pd
@@ -112,7 +112,7 @@ for rp in repo_paths:
             for t in repo.tags:
                 tag_name = t.name
 
-                # tag_name = tag_name.replace(',', ';')
+                # tag_name = tag_name.replace(',', ';')  # prevent csv separator clash
                 # tag_name = tag_name.replace(' ', '_')
                 # tag_name = tag_name.replace('.', '->')
  
@@ -120,8 +120,9 @@ for rp in repo_paths:
                 if current_submission not in old_submissions:
                     new_submissions.append(current_submission)
 
-                unique_tag = str(uuid.uuid3(uuid.NAMESPACE_DNS, tag_name))
-                tag_name_alias = 'm_{}'.format(unique_tag)
+                sha_hasher = hashlib.sha1()
+                sha_hasher.update(tag_name)
+                tag_name_alias = 'm{}'.format(sha_hasher.hexdigest())
 
                 model_path = os.path.join(repo_path, tag_name)
                 copy_git_tree(t.object.tree, model_path)
