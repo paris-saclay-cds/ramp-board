@@ -28,21 +28,20 @@ def model(X_train, y_train, X_test):
 
     test = pd.DataFrame(X_test, columns=header[1:])
 
-
-    train_tmp_file = NamedTemporaryFile(delete=False)
+    temp_dir = '.'
+    train_tmp_file = NamedTemporaryFile(delete=False, dir=temp_dir)
     train.to_csv(train_tmp_file, header=header, index=False)
     train_tmp_file.close()
 
-    test_tmp_file = NamedTemporaryFile(delete=False)
+    test_tmp_file = NamedTemporaryFile(delete=False, dir=temp_dir)
     test.to_csv(test_tmp_file, header=header[1:], index=False)
     test_tmp_file.close()
 
-    proba_tmp_file = NamedTemporaryFile(delete=False)
+    proba_tmp_file = NamedTemporaryFile(delete=False, dir=temp_dir)
     proba_tmp_file.close()
 
-    targets_tmp_file = NamedTemporaryFile(delete=False)
+    targets_tmp_file = NamedTemporaryFile(delete=False, dir=temp_dir)
     targets_tmp_file.close()
-
 
     try:
 
@@ -66,6 +65,9 @@ def model(X_train, y_train, X_test):
 if __name__ == "__main__":
 
     train = pd.read_csv("input/train.csv").values
+    test = pd.read_csv("input/test.csv").values
+    test = test[:, 1:]
     X = train[:, 1:]
     y = train[:, 0]
-    targets, proba = model(X, y, X)
+    targets, proba = model(X, y, test)
+    print len(targets), len(proba), len(test)
