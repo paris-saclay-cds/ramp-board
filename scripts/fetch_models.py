@@ -124,16 +124,16 @@ for rp in repo_paths:
                 sha_hasher.update(tag_name)
                 tag_name_alias = 'm{}'.format(sha_hasher.hexdigest())
 
-                model_path = os.path.join(repo_path, tag_name)
+                model_path = os.path.join(repo_path, tag_name_alias)
                 copy_git_tree(t.object.tree, model_path)
                 open(os.path.join(model_path, '__init__.py'), 'a').close()
 
-                with changedir(repo_path):
-                    if os.path.islink(tag_name_alias):
-                        os.unlink(tag_name_alias)    
-                    os.symlink(tag_name, tag_name_alias)
+                # with changedir(repo_path):
+                #     if os.path.islink(tag_name_alias):
+                #         os.unlink(tag_name_alias)    
+                #     os.symlink(tag_name, tag_name_alias)
 
-                relative_model_path = os.path.join(team_name, tag_name)
+                relative_model_path = os.path.join(team_name, tag_name_alias)
                 relative_alias_path = os.path.join(team_name, tag_name_alias)
                 tags_info.append([team_name, 
                                   tag_name, 
