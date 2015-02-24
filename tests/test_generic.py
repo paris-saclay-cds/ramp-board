@@ -1,7 +1,6 @@
 import numpy as np
-
-from generic import combine_models
 from numpy.testing import assert_array_equal
+from incentiboard.generic import combine_models
 
 
 def test_combine_models():

@@ -1,7 +1,9 @@
-import pandas as pd
-import numpy as np
 import click
-from generic import train_models
+import numpy as np
+import pandas as pd
+
+from incentiboard.generic import train_models
+
 
 @click.command()
 @click.option('--alias', default='kegl/rf300')

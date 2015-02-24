@@ -4,32 +4,26 @@ import csv
 import glob
 import hashlib
 import multiprocessing
-
 import numpy as np
 import pandas as pd
-
 from scipy import io
 from functools import partial
 from importlib import import_module
 from sklearn.metrics import accuracy_score, roc_curve, auc
-from config_databoard import (
+from sklearn.externals.joblib import Parallel, delayed
+from sklearn.externals.joblib import Memory
+
+from .config_databoard import (
     root_path, 
     models_path, 
     n_processes,
     cachedir,
 )
-from sklearn.externals.joblib import Parallel, delayed
-from specific import split_data, run_model #
-from sklearn.externals.joblib import Memory
+from .specific import split_data, run_model
+
 
 mem = Memory(cachedir=cachedir)
 
-# FIXME: use relative imports instead
-prog_path = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(1, prog_path)
-
-# this is needed by import_module
-sys.path.insert(1, os.path.join(prog_path, 'models'))
 
 def setup_ground_truth():
     """Setting up the GroundTruth subdir, saving y_test for each fold in skf. File
@@ -56,8 +50,7 @@ def setup_ground_truth():
         print f_name_pred
         np.savetxt(f_name_pred, y_train[test_is], delimiter="\n", fmt='%d')
 
-#
-#@mem.cache
+
 def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
     valid_train_is, valid_test_is = skf_is
     hasher = hashlib.md5()
@@ -119,11 +112,15 @@ def train_models(models, last_time_stamp=None):
             trained_models.drop(idx, axis=0, inplace=True)
             print e
             with open(os.path.join(m_path, 'error.txt'), 'w') as f:
-                f.write("%s" % e)
+                cut_exception_text = str(e).find(path)
+                if cut_exception_text > 0:
+                    a = e[cut_exception_text:]
+                f.write("{}".format(e))
             print "ERROR (non fatal): Model not trained."
 
     return trained_models, failed_models
 
+@mem.cache
 def train_model(m_path, X_train, y_train, X_test, y_test, skf):
     """Training a model on all folds and saving the predictions and rank order. The latter we can
     use for computing ROC or cutting ties.
@@ -207,9 +204,6 @@ def leaderboard_classical(groundtruth_path, models):
         9   Kegl3  0.251158
 
     """
-
-    # FIXME: the iteration is done function of the number of gt files
-    #        return if no model trained
 
     print models
 

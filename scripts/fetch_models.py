@@ -11,18 +11,14 @@ import contextlib
 import numpy as np
 import pandas as pd
 
-from server import app 
 from flask_mail import Mail
 from flask_mail import Message
 
-# FIXME: use relative imports instead
-prog_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(1, prog_path)
+from incentiboard.views import app
+from incentiboard.specific import hackaton_title
+from incentiboard.config_databoard import repos_path, root_path, tag_len_limit, notification_recipients, server_name
 
-from config_databoard import repos_path, root_path, tag_len_limit, notification_recipients, server_name
-from specific import hackaton_title
-
-sys.path.insert(1, os.path.join(prog_path, 'models'))
+# sys.path.insert(1, os.path.join(prog_path, 'models'))
 
 base_path = repos_path
 repo_paths = sorted(glob.glob(os.path.join(base_path, '*')))

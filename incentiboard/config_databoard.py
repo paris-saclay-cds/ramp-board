@@ -12,7 +12,7 @@ local_deployment = 'onevm' not in socket.gethostname()
 n_processes = 3 if local_deployment else cpu_count()
 
 # paths
-repos_path = os.path.join(root_path, 'TeamsRepos')
+repos_path = os.path.join(root_path, 'teams_repos')
 ground_truth_path = os.path.join(root_path, 'ground_truth')
 data_path = os.path.join(root_path, 'data')
 raw_data_path = os.path.join(data_path, 'raw')

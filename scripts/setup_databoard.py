@@ -5,13 +5,11 @@ import os
 import sys
 import glob
 
-# FIXME: use relative imports instead
-prog_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(1, prog_path)
-
 from git import Repo, Submodule
-from generic import setup_ground_truth
-from config_databoard import (
+
+from incentiboard.generic import setup_ground_truth
+from incentiboard.specific import prepare_data
+from incentiboard.config_databoard import (
     root_path, 
     cachedir,
     repos_path,
@@ -19,7 +17,6 @@ from config_databoard import (
     output_path,
     models_path
 )
-from specific import prepare_data
 
 # cleanup prediction files
 fnames = []
