@@ -4,13 +4,11 @@ import pandas as pd
 
 from sklearn.externals.joblib import Memory
 
-from incentiboard.generic import train_models, train_model
+from incentiboard.generic import train_models
 from incentiboard.config_databoard import cachedir
 
 
 models = pd.read_csv("output/submissions.csv")
-
-mem = Memory(cachedir=cachedir)
 
 trained_models, failed_models = train_models(models)
 

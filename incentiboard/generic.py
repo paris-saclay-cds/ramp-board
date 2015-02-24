@@ -344,44 +344,6 @@ def leaderboard_combination(gt_path, models):
 
     """
 
-    def best_combine(y_preds, y_ranks, best_indexes):
-        """Finds the model that minimizes the score if added to y_preds[indexes].
-
-        Parameters
-        ----------
-        y_preds : array-like, shape = [k_models, n_instances], binary
-        best_indexes : array-like, shape = [max k_models], a set of indices of 
-            the current best model
-        Returns
-        -------
-        best_indexes : array-like, shape = [max k_models], a list of indices. If 
-        no model imporving the input combination, the input index set is returned. 
-        otherwise the best model is added to the set. We could also return the 
-        combined prediction (for efficiency, so the combination would not have to 
-        be done each time; right now the algo is quadratic), but first I don't think
-        any meaningful rules will be associative, in which case we should redo the
-        combination from scratch each time the set changes.
-        """
-        eps = 0.01/len(y_preds)
-        #y_pred = combine_models(y_preds, y_ranks, best_indexes)
-        y_pred = combine_models_using_ranks(y_preds, y_ranks, best_indexes)
-        best_index = -1
-        # Combination with replacement, what Caruana suggests. Basically, if a model
-        # added several times, it's upweighted.
-        for i in range(len(y_preds)):
-            #com_y_pred = combine_models(y_preds, y_ranks, np.append(best_indexes, i))
-            com_y_pred = combine_models_using_ranks(y_preds, y_ranks, np.append(best_indexes, i))
-            #print score(y_pred, y_test), score(com_y_pred, y_test)
-            #if score(y_pred, y_test) > score(com_y_pred, y_test) + eps:
-            if score(y_pred, y_test) < score(com_y_pred, y_test) - eps:
-                y_pred = com_y_pred
-                best_index = i
-            #print score(y_pred, y_test), score(com_y_pred, y_test)
-        if best_index > -1:
-            return np.append(best_indexes, best_index)
-        else:
-            return best_indexes
-
     print models
 
     models = models.sort(columns='timestamp')
@@ -427,3 +389,42 @@ def leaderboard_combination(gt_path, models):
     leaderboard = models.copy()
     leaderboard['score'] = counts # argsort of argsort gives rank of entry
     return leaderboard.sort(columns=['score'],  ascending=False)
+
+
+def best_combine(y_preds, y_ranks, best_indexes):
+    """Finds the model that minimizes the score if added to y_preds[indexes].
+
+    Parameters
+    ----------
+    y_preds : array-like, shape = [k_models, n_instances], binary
+    best_indexes : array-like, shape = [max k_models], a set of indices of 
+        the current best model
+    Returns
+    -------
+    best_indexes : array-like, shape = [max k_models], a list of indices. If 
+    no model imporving the input combination, the input index set is returned. 
+    otherwise the best model is added to the set. We could also return the 
+    combined prediction (for efficiency, so the combination would not have to 
+    be done each time; right now the algo is quadratic), but first I don't think
+    any meaningful rules will be associative, in which case we should redo the
+    combination from scratch each time the set changes.
+    """
+    eps = 0.01/len(y_preds)
+    #y_pred = combine_models(y_preds, y_ranks, best_indexes)
+    y_pred = combine_models_using_ranks(y_preds, y_ranks, best_indexes)
+    best_index = -1
+    # Combination with replacement, what Caruana suggests. Basically, if a model
+    # added several times, it's upweighted.
+    for i in range(len(y_preds)):
+        #com_y_pred = combine_models(y_preds, y_ranks, np.append(best_indexes, i))
+        com_y_pred = combine_models_using_ranks(y_preds, y_ranks, np.append(best_indexes, i))
+        #print score(y_pred, y_test), score(com_y_pred, y_test)
+        #if score(y_pred, y_test) > score(com_y_pred, y_test) + eps:
+        if score(y_pred, y_test) < score(com_y_pred, y_test) - eps:
+            y_pred = com_y_pred
+            best_index = i
+        #print score(y_pred, y_test), score(com_y_pred, y_test)
+    if best_index > -1:
+        return np.append(best_indexes, best_index)
+    else:
+        return best_indexes
