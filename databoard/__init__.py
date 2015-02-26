@@ -3,8 +3,7 @@ import logging
 from flask import Flask
 from logging.handlers import SMTPHandler
 
-app = Flask(__name__)
-import databoard.views
+app = Flask('databoard')
 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
@@ -14,7 +13,9 @@ app.config['MAIL_USERNAME'] = 'databoardmailer@gmail.com'
 app.config['MAIL_PASSWORD'] = 'peace27man'
 app.config['MAIL_DEFAULT_SENDER'] = ('Databoard', 'databoardmailer@gmail.com')
 app.config['MAIL_RECIPIENTS'] = '' #notification_recipients
+app.config['LOG_FILENAME'] = None  # if None, output to screen
 
+app.debug = True
 
 if app.debug:
     logging.basicConfig(

@@ -6,6 +6,7 @@ import sys
 import git
 import glob
 import shutil
+import logging
 import hashlib 
 import contextlib
 import numpy as np
@@ -15,34 +16,24 @@ from flask_mail import Mail
 from flask_mail import Message
 
 from databoard import app
-from databoard.specific import hackaton_title
-from databoard.config_databoard import repos_path, root_path, tag_len_limit, notification_recipients, server_name
-
-# sys.path.insert(1, os.path.join(prog_path, 'models'))
-
-base_path = repos_path
-repo_paths = sorted(glob.glob(os.path.join(base_path, '*')))
-
-submissions_path = os.path.join(root_path, 'models')
-
-if not os.path.exists(submissions_path):
-    os.mkdir(submissions_path)
+from .specific import hackaton_title
+from .config_databoard import repos_path, root_path, tag_len_limit, notification_recipients, server_name
 
 
-tags_info = []
-
-mail = Mail(app)
+logger = logging.getLogger('databoard')
 
 def send_mail_notif(submissions):
 
-    print('Sending notification email to: {}'.format(', '.join(notification_recipients)))
+    mail = Mail(app)
+
+    logger.info('Sending notification email to: {}'.format(', '.join(notification_recipients)))
     msg = Message('New submissions in the ' + hackaton_title + ' hackaton', 
         reply_to='djalel.benbouzid@gmail.com')
 
     msg.recipients = notification_recipients
 
-    body_message = '<b>Dataset</b>: {}</br>'.format(hackaton_title)
-    body_message += '<b>Server</b>: {}</br>'.format(server_name)
+    body_message = '<b>Dataset</b>: {}<br/>'.format(hackaton_title)
+    body_message += '<b>Server</b>: {}<br/>'.format(server_name)
 
     body_message += 'New submissions: <br/><ul>'
     for team, tag in submissions:
@@ -69,81 +60,92 @@ def changedir(dir_name):
         os.chdir(dir_name)
         yield
     except Exception as e:
-        print(e)  # to be replaced with proper logging
+        logger.error(e) 
     finally:
         os.chdir(current_dir)
 
-new_submissions = []
-old_submissions = set()
-if os.path.exists("output/submissions.csv"):
-    old_submissions = pd.read_csv("output/submissions.csv")
-    old_submissions = {(t, m) for t, m in old_submissions[['team', 'model']].values}
 
-for rp in repo_paths:
-    print(rp)
+def fetch_models():
+    base_path = repos_path
+    repo_paths = sorted(glob.glob(os.path.join(base_path, '*')))
 
-    if not os.path.isdir(rp):
-        continue
+    submissions_path = os.path.join(root_path, 'models')
 
-    try:
-        team_name = os.path.basename(rp)
-        repo = git.Repo(rp)
-        o = repo.remotes.origin
-        o.pull()
+    if not os.path.exists(submissions_path):
+        os.mkdir(submissions_path)
 
-        repo_path = os.path.join(submissions_path, team_name)
-        if not os.path.exists(repo_path):
-            os.mkdir(repo_path)
-        open(os.path.join(repo_path, '__init__.py'), 'a').close()
+    tags_info = []
+    new_submissions = []
+    old_submissions = set()
+    if os.path.exists("output/submissions.csv"):
+        old_submissions = pd.read_csv("output/submissions.csv")
+        old_submissions = {(t, m) for t, m in old_submissions[['team', 'model']].values}
 
-        if len(repo.tags) > 0:
-            for t in repo.tags:
-                tag_name = t.name
+    for rp in repo_paths:
+        logger.debug(rp)
 
-                # tag_name = tag_name.replace(',', ';')  # prevent csv separator clash
-                # tag_name = tag_name.replace(' ', '_')
-                # tag_name = tag_name.replace('.', '->')
- 
-                current_submission = (str(team_name), str(tag_name))
-                if current_submission not in old_submissions:
-                    new_submissions.append(current_submission)
+        if not os.path.isdir(rp):
+            continue
 
-                sha_hasher = hashlib.sha1()
-                sha_hasher.update(tag_name)
-                tag_name_alias = 'm{}'.format(sha_hasher.hexdigest())
+        try:
+            team_name = os.path.basename(rp)
+            repo = git.Repo(rp)
+            o = repo.remotes.origin
+            o.pull()
 
-                model_path = os.path.join(repo_path, tag_name_alias)
-                copy_git_tree(t.object.tree, model_path)
-                open(os.path.join(model_path, '__init__.py'), 'a').close()
+            repo_path = os.path.join(submissions_path, team_name)
+            if not os.path.exists(repo_path):
+                os.mkdir(repo_path)
+            open(os.path.join(repo_path, '__init__.py'), 'a').close()
 
-                # with changedir(repo_path):
-                #     if os.path.islink(tag_name_alias):
-                #         os.unlink(tag_name_alias)    
-                #     os.symlink(tag_name, tag_name_alias)
+            if len(repo.tags) > 0:
+                for t in repo.tags:
+                    tag_name = t.name
 
-                relative_model_path = os.path.join(team_name, tag_name_alias)
-                relative_alias_path = os.path.join(team_name, tag_name_alias)
-                tags_info.append([team_name, 
-                                  tag_name, 
-                                  t.commit.committed_date, 
-                                  relative_alias_path,
-                                  relative_model_path])
-        else:
-            print('No tag found for %s' % team_name)
-    except Exception, e:
-        print("Error: %s" % e)
+                    # tag_name = tag_name.replace(',', ';')  # prevent csv separator clash
+                    # tag_name = tag_name.replace(' ', '_')
+                    # tag_name = tag_name.replace('.', '->')
+     
+                    current_submission = (str(team_name), str(tag_name))
+                    if current_submission not in old_submissions:
+                        new_submissions.append(current_submission)
 
-if len(tags_info) > 0:
+                    sha_hasher = hashlib.sha1()
+                    sha_hasher.update(tag_name)
+                    tag_name_alias = 'm{}'.format(sha_hasher.hexdigest())
 
-    if new_submissions:
-        with app.app_context():
-            send_mail_notif(new_submissions)
+                    model_path = os.path.join(repo_path, tag_name_alias)
+                    copy_git_tree(t.object.tree, model_path)
+                    open(os.path.join(model_path, '__init__.py'), 'a').close()
 
-    columns = ['team', 'model', 'timestamp', 'path', 'alias']
-    df = pd.DataFrame(np.array(tags_info), columns=columns)
-    print(df)
+                    # with changedir(repo_path):
+                    #     if os.path.islink(tag_name_alias):
+                    #         os.unlink(tag_name_alias)    
+                    #     os.symlink(tag_name, tag_name_alias)
 
-    print('Writing submissions.csv file')
-    df.to_csv('output/submissions.csv', index=False)
-else:
-    print('No submission found')
+                    relative_model_path = os.path.join(team_name, tag_name_alias)
+                    relative_alias_path = os.path.join(team_name, tag_name_alias)
+                    tags_info.append([team_name, 
+                                      tag_name, 
+                                      t.commit.committed_date, 
+                                      relative_alias_path,
+                                      relative_model_path])
+            else:
+                logger.debug('No tag found for %s' % team_name)
+        except Exception, e:
+            logger.error("%s" % e)
+
+    if len(tags_info) > 0:
+
+        if new_submissions:
+            with app.app_context():
+                send_mail_notif(new_submissions)
+
+        columns = ['team', 'model', 'timestamp', 'path', 'alias']
+        df = pd.DataFrame(np.array(tags_info), columns=columns)
+        logger.debug(df)
+
+        logger.info('Writing submissions.csv file')
+        df.to_csv('output/submissions.csv', index=False)
+    else:
+        logger.debug('No submission found')

@@ -5,7 +5,7 @@ import os
 import sys
 import glob
 
-from git import Repo, Submodule
+from git import Repo
 
 from databoard.generic import setup_ground_truth
 from databoard.specific import prepare_data

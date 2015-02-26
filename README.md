@@ -18,3 +18,5 @@ To launch the web server, run
 
 # Setting up the data set
 The data must be input inside the `input/` folder.
+
+- Specify the port with `export SERV_PORT=<port number>` (default port: 8080)
