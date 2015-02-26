@@ -7,3 +7,4 @@ last_trained_timestamp.py
 *.csv
 models
 joblib
+*.log
