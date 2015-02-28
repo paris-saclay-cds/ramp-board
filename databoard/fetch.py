@@ -81,15 +81,18 @@ def fetch_models():
         old_submissions = pd.read_csv("output/submissions.csv")
         old_submissions = {(t, m) for t, m in old_submissions[['team', 'model']].values}
 
-    for rp in repo_paths:
-        logger.debug(rp)
+    for repo_path in repo_paths:
 
-        if not os.path.isdir(rp):
+        # TODO: remove failed models from the database
+
+        logger.debug(repo_path)
+
+        if not os.path.isdir(repo_path):
             continue
 
         try:
-            team_name = os.path.basename(rp)
-            repo = git.Repo(rp)
+            team_name = os.path.basename(repo_path)
+            repo = git.Repo(repo_path)
             o = repo.remotes.origin
             o.pull()
 

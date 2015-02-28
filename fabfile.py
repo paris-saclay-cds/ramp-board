@@ -51,6 +51,10 @@ def init_config():
     # TOOD:
 
 
+def clean-pyc():
+    local('find . -name "*.pyc" | xargs rm -f')
+
+
 def clean():
     import glob
     import shutil
@@ -63,7 +67,6 @@ def clean():
 
     if not os.path.exists(models_path):
         os.mkdir(models_path)
-
 
     fnames = []
     # if os.path.exists(ground_truth_path):
@@ -79,6 +82,7 @@ def clean():
     fnames += glob.glob(os.path.join(models_path, '*', '*', 'pred_*'))
     fnames += glob.glob(os.path.join(models_path, '*', '*', 'score.csv'))
     fnames += glob.glob(os.path.join(models_path, '*', '*', 'error.txt'))
+
     for fname in fnames:
         if os.path.exists(fname):
             os.remove(fname)
@@ -145,11 +149,6 @@ def serve():
 def rserve():
     with cd(dest_path):
         run('python server.py')
-
-
-
-def clean_pyc():
-    local('find . -name "*.pyc" | xargs rm -f')
 
 
 def remote_pull():
