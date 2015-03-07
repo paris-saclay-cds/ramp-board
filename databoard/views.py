@@ -80,8 +80,8 @@ def show_leaderboard():
     with shelve_database() as db:
         submissions = db['models']
 
-        l1 = submissions.join(db['leaderboard1'], how='outer')
-        l2 = submissions.join(db['leaderboard2'], how='outer')
+        l1 = submissions.join(db['leaderboard1'], how='inner')  # 'inner' means intersection of the indices
+        l2 = submissions.join(db['leaderboard2'], how='inner')
         failed = submissions[submissions.state == "error"]
 
         # FIXME: doesn't display failed models when no trained one exists
