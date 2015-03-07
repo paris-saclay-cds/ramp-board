@@ -3,3 +3,4 @@ flask
 fabric
 Flask-Shelve
 Flask-Mail
+enum34

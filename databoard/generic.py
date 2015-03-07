@@ -3,6 +3,7 @@ import sys
 import csv
 import glob
 import hashlib
+import logging
 import multiprocessing
 import numpy as np
 import pandas as pd
@@ -13,6 +14,7 @@ from sklearn.metrics import accuracy_score, roc_curve, auc
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.externals.joblib import Memory
 
+from .model import ModelState
 from .config_databoard import (
     root_path, 
     models_path, 
@@ -23,7 +25,7 @@ from .specific import split_data, run_model
 
 
 mem = Memory(cachedir=cachedir)
-
+logger = logging.getLogger('databoard')
 
 def setup_ground_truth():
     """Setting up the GroundTruth subdir, saving y_test for each fold in skf. File
@@ -84,41 +86,40 @@ def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
 
 
 def train_models(models, last_time_stamp=None):
-    models = models.sort("timestamp")
-    models.index = range(1, len(models) + 1)
+    models_sorted = models[models['state'] == 'new'].sort("timestamp")
+    # models_sorted.index = range(1, len(models_sorted) + 1)
+
     X_train, y_train, X_test, y_test, skf = split_data()
 
-    # models = models[models.index < 50]  # XXX to make things fast
+    # models_sorted = models_sorted[models_sorted.index < 50]  # XXX to make things fast
 
-    failed_models = models.copy()
-    trained_models = models.copy()
+    for idx, m in models_sorted.iterrows():
 
-    for idx, team, model, timestamp, path, alias in zip(
-        models.index.values,
-        models['team'],
-        models['model'],
-        models['timestamp'],
-        models['path'],
-        models['alias'],
-        ):
+        team = m['team']
+        model = m['model']
+        timestamp = m['timestamp']
+        path = m['path']
         m_path = os.path.join(root_path, 'models', path)
 
-        print "Training : %s" % m_path
+        logger.info("Training : %s" % m_path)
 
         try:
             train_model(m_path, X_train, y_train, X_test, y_test, skf)
-            failed_models.drop(idx, axis=0, inplace=True)
+            # failed_models.drop(idx, axis=0, inplace=True)
+            models.loc[idx, 'state'] = "trained"
         except Exception, e:
-            trained_models.drop(idx, axis=0, inplace=True)
-            print e
+            models.loc[idx, 'state'] = "error"
+            # trained_models.drop(idx, axis=0, inplace=True)
+            logger.error("Training failed with exception: \n{}".format(e))
+
+            # TODO: put the error in the database instead of a file
+            # Keep the model folder clean.
             with open(os.path.join(m_path, 'error.txt'), 'w') as f:
                 cut_exception_text = str(e).find(path)
                 if cut_exception_text > 0:
                     a = e[cut_exception_text:]
                 f.write("{}".format(e))
-            print "ERROR (non fatal): Model not trained."
 
-    return trained_models, failed_models
 
 @mem.cache
 def train_model(m_path, X_train, y_train, X_test, y_test, skf):
@@ -173,7 +174,7 @@ def score(y_pred, y_test):
     return auc(fpr, tpr)
 
 
-def leaderboard_classical(groundtruth_path, models):
+def leaderboard_classical(groundtruth_path, orig_models):
     """Output classical leaderboard (sorted in increasing order by score).
 
     Parameters
@@ -205,9 +206,11 @@ def leaderboard_classical(groundtruth_path, models):
 
     """
 
-    print models
+    # FIXME:
+    # we should not modify the original models df by 
+    # sorting it or explicitly modifying its index
 
-    models = models.sort(columns='timestamp')
+    models = orig_models.sort(columns='timestamp')
     models_paths = [os.path.join(root_path, 'models', path) for path in models['path']]
     fold_labels_paths = glob.glob(groundtruth_path + "/pred_*")
     fold_labels_paths = np.array([labels_path.split('/')[-1] for labels_path in fold_labels_paths])
@@ -242,14 +245,15 @@ def leaderboard_classical(groundtruth_path, models):
             # print scores
             mean_scores += scores
 
+    # TODO: add a score column to the models df
+
     mean_scores /= len(fold_labels_paths)
     scoring_higher_the_better = True
-    leaderboard = models.copy()
-    leaderboard['score'] = mean_scores # argsort of argsort gives rank of entry
+    leaderboard = pd.DataFrame({'score': mean_scores}, index=models.index)
     return leaderboard.sort(columns=['score'], ascending=not scoring_higher_the_better)
 
-def private_leaderboard_classical(models):
-    models = models.sort(columns='timestamp')
+def private_leaderboard_classical(orig_models):
+    models = orig_models.sort(columns='timestamp')
     m_paths = [os.path.join(root_path, 'models', path) for path in models['path']]
     _, _, _, y_test, _ = split_data()
     leaderboard = models.copy()
@@ -267,6 +271,8 @@ def private_leaderboard_classical(models):
     scoring_higher_the_better = True
     return leaderboard.sort(columns=['score'], ascending=not scoring_higher_the_better)
 
+
+# deprecated?
 def combine_models(y_preds, y_ranks, indexes):
     """Combines the predictions y_preds[indexes] by "rank"
     voting. I'll detail it once you verify that it makes sense (see my mail)
@@ -314,7 +320,7 @@ def combine_models_using_ranks(y_preds, y_ranks, indexes):
     return com_y_ranks
 
 
-def leaderboard_combination(gt_path, models):
+def leaderboard_combination(gt_path, orig_models):
     """Output combined leaderboard (sorted in decreasing order by score). We use
     Caruana's greedy combination
     http://www.cs.cornell.edu/~caruana/ctp/ct.papers/caruana.icml04.icdm06long.pdf
@@ -344,9 +350,7 @@ def leaderboard_combination(gt_path, models):
 
     """
 
-    print models
-
-    models = models.sort(columns='timestamp')
+    models = orig_models.sort(columns='timestamp')
 
     # get prediction file names
     fold_labels_paths = glob.glob(os.path.join(gt_path, 'pred_*'))
@@ -386,8 +390,8 @@ def leaderboard_combination(gt_path, models):
 
             counts[best_indexes] += 1
 
-    leaderboard = models.copy()
-    leaderboard['score'] = counts # argsort of argsort gives rank of entry
+    # leaderboard = models.copy()
+    leaderboard = pd.DataFrame({'score': counts}, index=models.index)
     return leaderboard.sort(columns=['score'],  ascending=False)
 
 

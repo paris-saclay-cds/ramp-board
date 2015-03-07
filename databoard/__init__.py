@@ -15,29 +15,29 @@ app.config['MAIL_DEFAULT_SENDER'] = ('Databoard', 'databoardmailer@gmail.com')
 app.config['MAIL_RECIPIENTS'] = '' #notification_recipients
 app.config['LOG_FILENAME'] = None  # if None, output to screen
 
-app.debug = True
+app.debug_mode = True
 
-if app.debug:
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(levelname)s: %(message)s',
-        filename=app.config['LOG_FILENAME'])
-else:
-    mail_handler = SMTPHandler(mailhost=app.config['MAIL_SERVER'],
-        fromaddr=app.config['MAIL_DEFAULT_SENDER'],
-        toaddrs=app.config['MAIL_RECIPIENTS'], 
-        subject='Databoard error')
-    mail_handler.setFormatter(logging.Formatter('''\
-        Message type:       %(levelname)s
-        Location:           %(pathname)s:%(lineno)d
-        Module:             %(module)s
-        Function:           %(funcName)s
-        Time:               %(asctime)s
-        Message:
-        %(message)s
-        '''))
+# if app.debug:
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(levelname)s: %(message)s',
+    filename=app.config['LOG_FILENAME'])
+# else:
+#     mail_handler = SMTPHandler(mailhost=app.config['MAIL_SERVER'],
+#         fromaddr=app.config['MAIL_DEFAULT_SENDER'],
+#         toaddrs=app.config['MAIL_RECIPIENTS'], 
+#         subject='Databoard error')
+#     mail_handler.setFormatter(logging.Formatter('''\
+#         Message type:       %(levelname)s
+#         Location:           %(pathname)s:%(lineno)d
+#         Module:             %(module)s
+#         Function:           %(funcName)s
+#         Time:               %(asctime)s
+#         Message:
+#         %(message)s
+#         '''))
 
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.ERROR)
-    logger.addHandler(mail_handler)
+#     logger = logging.getLogger('databoard')
+#     logger.setLevel(logging.ERROR)
+#     logger.addHandler(mail_handler)
 

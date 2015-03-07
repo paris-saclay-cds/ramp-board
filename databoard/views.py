@@ -1,11 +1,11 @@
 import os
 import sys
+import logging
 import os.path
 import pandas as pd
 
 from git import Repo
 from collections import namedtuple
-
 
 from flask import (
     request, 
@@ -18,6 +18,7 @@ from flask import (
 )
 
 from databoard import app
+from .model import shelve_database, columns, ModelState
 from .config_databoard import (
     root_path, 
     repos_path, 
@@ -30,6 +31,7 @@ from .config_databoard import (
 app.secret_key = os.urandom(24)
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
+logger = logging.getLogger('databoard')
 
 def model_local_to_url(path):
     filename = '%s/models/%s' % (server_name, path)
@@ -75,14 +77,20 @@ def show_leaderboard():
                        classes=['ui', 'table', 'blue'],
                        )
 
-    if not all((os.path.exists("output/leaderboard1.csv"),
-                os.path.exists("output/leaderboard2.csv"),
-        )):
-        return redirect(url_for('list_teams_repos'))
+    # if not all((os.path.exists("output/leaderboard1.csv"),
+    #             os.path.exists("output/leaderboard2.csv"),
+    #     )):
+    #     return redirect(url_for('list_teams_repos'))
 
-    l1 = pd.read_csv("output/leaderboard1.csv")
-    l2 = pd.read_csv("output/leaderboard2.csv")
-    failed = pd.read_csv("output/failed_submissions.csv")
+    with shelve_database() as db:
+        submissions = db['models']
+        l1 = submissions.join(db['leaderboard1'], how='outer')
+        l2 = submissions.join(db['leaderboard2'], how='outer')
+        failed = submissions[submissions.state == "error"]
+
+    # l1 = pd.read_csv("output/leaderboard1.csv")
+    # l2 = pd.read_csv("output/leaderboard2.csv")
+    # failed = pd.read_csv("output/failed_submissions.csv")
 
     l1.index = range(1, len(l1) + 1)
     l2.index = range(1, len(l2) + 1)
@@ -94,6 +102,7 @@ def show_leaderboard():
     col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
 
     for df in [l1, l2, failed]:
+        print df
         df['path_model'] = df.path + ' ' + df.model  # dirty hack
         df.model = df.path_model.map(model_with_link)
         df.rename(

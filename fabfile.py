@@ -3,6 +3,7 @@ import logging
 import pandas as pd
 import fabric.contrib.project as project
 from fabric.api import *
+from databoard.model import shelve_database, columns, ModelState
 from databoard.config_databoard import (
     root_path, 
     cachedir,
@@ -24,13 +25,23 @@ dest_path = '/mnt/datacamp/databoard'
 logger = logging.getLogger('databoard')
 
 
+def clear_cache():
+    from sklearn.externals.joblib import Memory
+    mem = Memory(cachedir=cachedir)
+    mem.clear()
+
+
+def init_config():
+    pass
+    # TODO
+
+
 def setup():
     from git import Repo
     from databoard.generic import setup_ground_truth
     from databoard.specific import prepare_data
-    from sklearn.externals.joblib import Memory
     
-    clean()
+    # clean()
 
     open(os.path.join(models_path, '__init__.py'), 'a').close()
     # Prepare the teams repo submodules
@@ -40,19 +51,9 @@ def setup():
     # Set up the ground truth predictions for the CV folds
     setup_ground_truth()
     # Flush joblib cache
-    mem = Memory(cachedir=cachedir)
-    mem.clear()
-
+    
+    clear_cache()
     init_config()
-
-
-def init_config():
-    pass
-    # TOOD:
-
-
-def clean-pyc():
-    local('find . -name "*.pyc" | xargs rm -f')
 
 
 def clean():
@@ -93,6 +94,10 @@ def clean():
     #         os.remove(fname)
 
 
+def clean_pyc():
+    local('find . -name "*.pyc" | xargs rm -f')
+
+
 def fetch():
     from databoard.fetch import fetch_models
     fetch_models()
@@ -107,27 +112,42 @@ def leaderboard():
 
     groundtruth_path = os.path.join(root_path, 'ground_truth')
 
-    submissions_path = os.path.join(root_path, 'output/trained_submissions.csv')
-    trained_models = pd.read_csv(submissions_path)
+    # submissions_path = os.path.join(root_path, 'output/trained_submissions.csv')
+    with shelve_database() as db:
+        submissions = db['models']
+        trained_models = submissions[submissions.state == "trained"]
+        # trained_models = pd.read_csv(submissions_path)
 
     l1 = leaderboard_classical(groundtruth_path, trained_models)
     l2 = leaderboard_combination(groundtruth_path, trained_models)
-    l3 = private_leaderboard_classical(trained_models)
+    # l3 = private_leaderboard_classical(trained_models)
 
-    l1.to_csv("output/leaderboard1.csv", index=False)
-    l2.to_csv("output/leaderboard2.csv", index=False)
-    l3.to_csv("output/leaderboard3.csv", index=False)
+    with shelve_database() as db:
+        db['leaderboard1'] = l1
+        db['leaderboard2'] = l2
+
+    # l1.to_csv("output/leaderboard1.csv", index=False)
+    # l2.to_csv("output/leaderboard2.csv", index=False)
+    # l3.to_csv("output/leaderboard3.csv", index=False)
 
 
 def train():
     from databoard.generic import train_models
 
-    models = pd.read_csv("output/submissions.csv")
-    trained_models, failed_models = train_models(models)
-    logger.debug(trained_models)
-    logger.debug(failed_models)
-    trained_models.to_csv("output/trained_submissions.csv", index=False)
-    failed_models.to_csv("output/failed_submissions.csv", index=False)
+    with shelve_database() as db:
+        models = db['models']
+
+    # models = pd.read_csv("output/submissions.csv")
+    # trained_models, failed_models = train_models(models)
+    train_models(models)
+
+    with shelve_database() as db:
+        db['models'] = models
+        logger.debug(models[models['state'] == "trained"])
+        logger.debug(models[models['state'] == "error"])
+
+    # trained_models.to_csv("output/trained_submissions.csv", index=False)
+    # failed_models.to_csv("output/failed_submissions.csv", index=False)
 
 
 def serve():
@@ -145,6 +165,8 @@ def serve():
         host='0.0.0.0')
 
 
+# TODO: fill up the following functions so to easily deploy
+# databoard on the server
 
 def rserve():
     with cd(dest_path):
