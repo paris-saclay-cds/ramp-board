@@ -9,7 +9,7 @@ from flask.ext.shelve import get_shelve
 
 app.config['SHELVE_FILENAME'] = 'shelve'
 app.config['SHELVE_FLAG'] = 'c'
-app.config['SHELVE_PROTOCOL'] = 0
+app.config['SHELVE_PROTOCOL'] = 2
 app.config['SHELVE_WRITEBACK'] = True
 
 init_app(app)

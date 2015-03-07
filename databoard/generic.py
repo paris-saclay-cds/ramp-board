@@ -87,6 +87,8 @@ def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
 
 def train_models(models, last_time_stamp=None):
     models_sorted = models[models['state'] == 'new'].sort("timestamp")
+
+    # FIXME: should not modify the index like this
     # models_sorted.index = range(1, len(models_sorted) + 1)
 
     X_train, y_train, X_test, y_test, skf = split_data()

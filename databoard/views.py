@@ -77,20 +77,17 @@ def show_leaderboard():
                        classes=['ui', 'table', 'blue'],
                        )
 
-    # if not all((os.path.exists("output/leaderboard1.csv"),
-    #             os.path.exists("output/leaderboard2.csv"),
-    #     )):
-    #     return redirect(url_for('list_teams_repos'))
-
     with shelve_database() as db:
         submissions = db['models']
+
         l1 = submissions.join(db['leaderboard1'], how='outer')
         l2 = submissions.join(db['leaderboard2'], how='outer')
         failed = submissions[submissions.state == "error"]
 
-    # l1 = pd.read_csv("output/leaderboard1.csv")
-    # l2 = pd.read_csv("output/leaderboard2.csv")
-    # failed = pd.read_csv("output/failed_submissions.csv")
+        # FIXME: doesn't display failed models when no trained one exists
+        if len(submissions) == 0 or len(l1) == 0 or len(l2) == 0:
+            # FIXME: display an empty leaderboard
+            return redirect(url_for('list_teams_repos'))
 
     l1.index = range(1, len(l1) + 1)
     l2.index = range(1, len(l2) + 1)

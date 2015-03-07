@@ -35,24 +35,46 @@ def init_config():
     pass
     # TODO
 
+def clear_db():
+    with shelve_database() as db:
+        db.clear()
+        db['models'] = pd.DataFrame(columns=columns)
+        db['leaderboard1'] = pd.DataFrame(columns=['scores'])
+        db['leaderboard2'] = pd.DataFrame(columns=['scores'])
+
 
 def setup():
     from git import Repo
     from databoard.generic import setup_ground_truth
     from databoard.specific import prepare_data
     
-    # clean()
+    logger.info('Remove the old files.')
+    clean()
+
+    # create the database if it doesn't exist
+    logger.info('Clear the database.')
+    clear_db()
 
     open(os.path.join(models_path, '__init__.py'), 'a').close()
+
     # Prepare the teams repo submodules
-    repo = Repo.init(repos_path)  # does nothing if already exists
+    # logger.info('Init team repos git')
+    # repo = Repo.init(repos_path)  # does nothing if already exists
+
     # Preparing the data set, typically public train/private held-out test cut
+    logger.info('Prepare the dataset.')
     prepare_data()
+
     # Set up the ground truth predictions for the CV folds
+    logger.info('Setup the groundtruth.')
     setup_ground_truth()
-    # Flush joblib cache
     
+    # Flush joblib cache
+
     clear_cache()
+    logger.info('Flush the joblib cache.')
+
+    logger.info('Config init.')
     init_config()
 
 
@@ -122,6 +144,9 @@ def leaderboard():
     l2 = leaderboard_combination(groundtruth_path, trained_models)
     # l3 = private_leaderboard_classical(trained_models)
 
+    # The following assignments only work because leaderboard_classical & co
+    # are idempotent.
+    # FIXME (potentially)
     with shelve_database() as db:
         db['leaderboard1'] = l1
         db['leaderboard2'] = l2

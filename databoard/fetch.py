@@ -76,16 +76,6 @@ def fetch_models():
     if not os.path.exists(submissions_path):
         os.mkdir(submissions_path)
 
-    # tags_info = []
-    # old_submissions = set()
-
-    # if len(old_submissions) != 0:
-    #     old_submissions = {(t, m) for t, m in old_submissions[['team', 'model']].values}
-
-    # if os.path.exists("output/submissions.csv"):
-    #     old_submissions = pd.read_csv("output/submissions.csv")
-    #     old_submissions = {(t, m) for t, m in old_submissions[['team', 'model']].values}
-
     new_submissions = set()  # a set of submission hashes
 
     # create the database if it doesn't exist
@@ -123,14 +113,6 @@ def fetch_models():
             try:
                 tag_name = t.name
 
-                # tag_name = tag_name.replace(',', ';')  # prevent csv separator clash
-                # tag_name = tag_name.replace(' ', '_')
-                # tag_name = tag_name.replace('.', '->')
- 
-                # current_submission = (str(team_name), str(tag_name))
-                # if current_submission not in old_submissions:
-                #     new_submissions.append(current_submission)
-
                 # will serve for the dataframe index
                 sha_hasher = hashlib.sha1()
                 sha_hasher.update(team_name)
@@ -141,12 +123,11 @@ def fetch_models():
 
                 with shelve_database() as db:
 
+                    # skip if the model is trained, otherwise, replace the entry with a new one
                     if tag_name_alias in db['models'].index:
                         if db['models'].loc[tag_name_alias, 'state'] == 'trained':
-                            print 'HEHE already trained'
                             continue
                         else:
-                            print 'Replace by new'
                             db['models'].drop(tag_name_alias, inplace=True)
 
                     new_submissions.add(tag_name_alias)
@@ -166,7 +147,6 @@ def fetch_models():
                     file_listing = filter(lambda f: not f.endswith('.pyc'), file_listing)
                     file_listing = filter(lambda f: not f.endswith('.csv'), file_listing)
                     file_listing = filter(lambda f: not f.endswith('error.txt'), file_listing)
-                    file_listing = '|'.join(file_listing)
                     
                     # prepre a dataframe for the concatnation 
                     new_entry = pd.DataFrame({
@@ -175,23 +155,13 @@ def fetch_models():
                         'timestamp': t.commit.committed_date, 
                         'path': os.path.join(team_name, tag_name_alias),
                         'state': "new",
-                        'listing': file_listing,
+                        # 'listing': file_listing,
                     }, index=[tag_name_alias])
-                        
+
+                    # set a list into a cell
+                    new_entry.set_value(tag_name_alias, 'listing', file_listing)
                     db['models'] = db['models'].append(new_entry)
 
-                # with changedir(repo_path):
-                #     if os.path.islink(tag_name_alias):
-                #         os.unlink(tag_name_alias)    
-                #     os.symlink(tag_name, tag_name_alias)
-
-                # relative_model_path = os.path.join(team_name, tag_name_alias)
-                # relative_alias_path = os.path.join(team_name, tag_name_alias)
-                # tags_info.append([team_name, 
-                #                   tag_name, 
-                #                   t.commit.committed_date, 
-                #                   relative_alias_path,
-                #                   relative_model_path])
             except Exception, e:
                 logger.error("%s" % e)
 
@@ -213,18 +183,5 @@ def fetch_models():
             send_mail_notif(really_new_submissions)
         except:
             logger.error('Unable to send email notifications for new models.')
-
-
-    # if len(tags_info) > 0:
-
-    #     if new_submissions:
-    #         send_mail_notif(new_submissions)
-
-    #     columns = ['team', 'model', 'timestamp', 'path', 'alias']
-    #     df = pd.DataFrame(np.array(tags_info), columns=columns)
-        # logger.debug(df)
-
-        # logger.info('Writing submissions.csv file')
-        # df.to_csv('output/submissions.csv', index=False)
     else:
         logger.debug('No new submission.')
