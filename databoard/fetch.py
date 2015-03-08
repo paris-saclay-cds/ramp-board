@@ -88,7 +88,7 @@ def fetch_models():
 
     for repo_path in repo_paths:
 
-        logger.debug(repo_path)
+        logger.debug('Repo name: {}'.format(repo_path))
 
         if not os.path.isdir(repo_path):
             continue
@@ -110,15 +110,18 @@ def fetch_models():
             logger.debug('No tag found for %s' % team_name)
 
         for t in repo.tags:
+            
+            # FIXME: this huge try-except is a nightmare
             try:
                 tag_name = t.name
+                logger.debug('Tag name: {}'.format(tag_name))
 
                 # will serve for the dataframe index
                 sha_hasher = hashlib.sha1()
                 sha_hasher.update(team_name)
                 sha_hasher.update(tag_name)
                 tag_name_alias = 'm{}'.format(sha_hasher.hexdigest())
-
+                logger.debug('Tag alias: {}'.format(tag_name_alias))
                 model_path = os.path.join(repo_path, tag_name_alias)
 
                 with shelve_database() as db:
@@ -147,7 +150,8 @@ def fetch_models():
                     file_listing = filter(lambda f: not f.endswith('.pyc'), file_listing)
                     file_listing = filter(lambda f: not f.endswith('.csv'), file_listing)
                     file_listing = filter(lambda f: not f.endswith('error.txt'), file_listing)
-                    
+                    file_listing = '|'.join(file_listing)
+
                     # prepre a dataframe for the concatnation 
                     new_entry = pd.DataFrame({
                         'team': team_name, 
@@ -155,16 +159,15 @@ def fetch_models():
                         'timestamp': t.commit.committed_date, 
                         'path': os.path.join(team_name, tag_name_alias),
                         'state': "new",
-                        # 'listing': file_listing,
+                        'listing': file_listing,
                     }, index=[tag_name_alias])
 
                     # set a list into a cell
-                    new_entry.set_value(tag_name_alias, 'listing', file_listing)
+                    # new_entry.set_value(tag_name_alias, 'listing', file_listing)
                     db['models'] = db['models'].append(new_entry)
 
             except Exception, e:
                 logger.error("%s" % e)
-
 
     # remove the failed submissions that have been deleted
     removed_failed_submissions = old_failed_submissions - set(new_submissions)

@@ -1,13 +1,12 @@
 # TODO: journaling wit git?
 
-
 from enum import Enum
 from databoard import app
 from contextlib import contextmanager
 from flask.ext.shelve import init_app
 from flask.ext.shelve import get_shelve
 
-app.config['SHELVE_FILENAME'] = 'shelve'
+app.config['SHELVE_FILENAME'] = 'shelve.db'
 app.config['SHELVE_FLAG'] = 'c'
 app.config['SHELVE_PROTOCOL'] = 2
 app.config['SHELVE_WRITEBACK'] = True

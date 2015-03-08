@@ -8,3 +8,5 @@ last_trained_timestamp.py
 models
 joblib
 *.log
+*.lock
+*.db

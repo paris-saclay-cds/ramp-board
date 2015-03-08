@@ -1,6 +1,8 @@
-gitpython
-flask
-fabric
-Flask-Shelve
-Flask-Mail
-enum34
+numpy>=1.9.2
+scikit-learn>=0.15.2
+enum34>=1.0.4
+Fabric>=1.10.1
+GitPython>=0.3.6
+Flask>=0.10.1
+Flask-Shelve>=0.1.1
+Flask-Mail>=0.9.1

@@ -3,13 +3,13 @@ import logging
 import pandas as pd
 import fabric.contrib.project as project
 from fabric.api import *
-from databoard.model import shelve_database, columns, ModelState
+from databoard.model import shelve_database, ModelState
 from databoard.config_databoard import (
     root_path, 
     cachedir,
     repos_path,
     ground_truth_path,
-    output_path,
+    # output_path,
     models_path,
     local_deployment,
 )
@@ -25,6 +25,11 @@ dest_path = '/mnt/datacamp/databoard'
 logger = logging.getLogger('databoard')
 
 
+def all():
+    fetch()
+    train()
+    leaderboard()
+
 def clear_cache():
     from sklearn.externals.joblib import Memory
     mem = Memory(cachedir=cachedir)
@@ -36,7 +41,9 @@ def init_config():
     # TODO
 
 def clear_db():
-    with shelve_database() as db:
+    from databoard.model import columns
+    
+    with shelve_database('c') as db:
         db.clear()
         db['models'] = pd.DataFrame(columns=columns)
         db['leaderboard1'] = pd.DataFrame(columns=['scores'])
@@ -44,7 +51,7 @@ def clear_db():
 
 
 def setup():
-    from git import Repo
+    # from git import Repo
     from databoard.generic import setup_ground_truth
     from databoard.specific import prepare_data
     
@@ -85,8 +92,8 @@ def clean():
     shutil.rmtree(ground_truth_path, ignore_errors=True)
     os.mkdir(ground_truth_path)
 
-    shutil.rmtree(output_path, ignore_errors=True)
-    os.mkdir(output_path)
+    # shutil.rmtree(output_path, ignore_errors=True)
+    # os.mkdir(output_path)
 
     if not os.path.exists(models_path):
         os.mkdir(models_path)

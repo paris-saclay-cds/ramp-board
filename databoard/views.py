@@ -34,13 +34,13 @@ pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 logger = logging.getLogger('databoard')
 
 def model_local_to_url(path):
-    filename = '%s/models/%s' % (server_name, path)
+    filename = '%s/models/%s/model.py' % (server_name, path)
     link = '<a href="{0}">Code</a>'.format(filename)
     return link
 
 def model_with_link(path_model):
     path, model = path_model.split()
-    filename = '%s/models/%s' % (server_name, path)
+    filename = '%s/models/%s/model.py' % (server_name, path)
 
     # if the tag name is too long, shrink it.
     if len(model) > tag_len_limit:
@@ -128,22 +128,30 @@ def show_leaderboard():
                                failed_models=failed_html)
 
 
-@app.route('/models/<team>/<tag>')
-@app.route('/models/<team>/<tag>/raw')
-def download_model(team, tag):
+@app.route('/models/<team>/<tag>/<filename>')
+@app.route('/models/<team>/<tag>/<filename>/raw')
+def download_model(team, tag, filename):
     directory = os.path.join(root_path, "models", team, tag)
-    model_url = os.path.join(directory, 'model.py')
+    model_url = os.path.join(directory, filename)
 
     if request.path.split('/')[-1] == 'raw':
         return send_from_directory(directory,
-                                   'model.py', 
+                                   filename, 
                                    as_attachment=True,
-                                   attachment_filename='{}_{}.py'.format(team, tag),
+                                   attachment_filename='{}_{}_{}'.format(team, tag, filename), 
                                    mimetype='application/octet-stream')
     else:
         with open(model_url) as f:
             code = f.read()
-        return render_template('model.html', code=code, model_url=request.path.rstrip('/') + '/raw')
+        with shelve_database() as db:
+            models = db['models']
+            listing = models.loc[tag, 'listing'].split('|')
+        return render_template(
+            'model.html', 
+            code=code, 
+            model_url=request.path.rstrip('/') + '/raw',
+            listing=listing,
+            archive_url=None,) # TODO: <--
 
 
 @app.route('/models/<team>/<tag>/error')

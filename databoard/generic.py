@@ -42,14 +42,14 @@ def setup_ground_truth():
     os.mkdir(gt_path)
     X_train, y_train, X_test, y_test, skf = split_data()
 
-    print gt_path
+    logger.debug('Ground truth files...')
     scores = []
     for train_is, test_is in skf:
         hasher = hashlib.md5()
         hasher.update(test_is)
         h_str = hasher.hexdigest()
         f_name_pred = gt_path + "/pred_" + h_str + ".csv"
-        print f_name_pred
+        logger.debug(f_name_pred)
         np.savetxt(f_name_pred, y_train[test_is], delimiter="\n", fmt='%d')
 
 

@@ -3,7 +3,9 @@ import socket
 from git import Repo
 from multiprocessing import cpu_count
 
-root_path = "."
+# root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+root_path = '.'
+
 tag_len_limit = 40
 
 # temporary trick to detect if whether
@@ -18,7 +20,7 @@ data_path = os.path.join(root_path, 'data')
 raw_data_path = os.path.join(data_path, 'raw')
 public_data_path = os.path.join(data_path, 'public')
 private_data_path = os.path.join(data_path, 'private')
-output_path = os.path.join(root_path, 'output')
+# output_path = os.path.join(root_path, 'output')
 models_path = os.path.join(root_path, 'models')
 
 cachedir = '.'
