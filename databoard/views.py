@@ -26,6 +26,7 @@ from .config_databoard import (
     server_name,
     local_deployment,
     tag_len_limit,
+    models_path,
 )
 
 app.secret_key = os.urandom(24)
@@ -131,7 +132,8 @@ def show_leaderboard():
 @app.route('/models/<team>/<tag>/<filename>')
 @app.route('/models/<team>/<tag>/<filename>/raw')
 def download_model(team, tag, filename):
-    directory = os.path.join(root_path, "models", team, tag)
+    directory = os.path.join(models_path, team, tag)
+    directory = os.path.abspath(directory)
     model_url = os.path.join(directory, filename)
 
     if request.path.split('/')[-1] == 'raw':
@@ -164,11 +166,6 @@ def download_error(team, tag):
     with open(error_url) as f:
         code = f.read()
     return render_template('model.html', code=code)
-
-    directory = os.path.join(root_path, "models", team, tag)
-    return send_from_directory(directory,
-                               'error.txt',
-                               mimetype='text/plain')
 
 
 @app.route("/add/", methods=("POST",))
