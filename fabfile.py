@@ -14,13 +14,18 @@ from databoard.config_databoard import (
     local_deployment,
 )
 
+# Open ports in Stratuslab
+# 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015, 
+# 8080, 8081, 8095, 8188, 8443, 8444, 9002, 10339, 10636, 15000, 15001, 15002, 
+# 15003, 15004, 20000-25000.
 
 env.user = 'root'  # the user to use for the remote commands
 
 # the servers where the commands are executed
 env.hosts = ['onevm-222.lal.in2p3.fr']
 production = env.hosts[0]
-dest_path = '/mnt/datacamp/databoard'
+dest_path = '/mnt/datacamp/databoard_03'
+server_port = '9002'
 
 logger = logging.getLogger('databoard')
 
@@ -215,8 +220,24 @@ def publish():
     local('')
     project.rsync_project(
         remote_dir=dest_path,
-        exclude=".DS_Store",
+        exclude=[ '.DS_Store', 
+                  'TeamsRepos', 
+                  'teams_repos', 
+                  'models', 
+                  'output',
+                  'joblib',
+                  'shelve*',
+                  '*.ipynb*',
+                  '*.log',
+                  '.git*',
+                  '.gitignore',
+                  '*.pyc'],
         local_dir='.',
-        delete=False,
+        delete=True,
         extra_opts='-c',
     )
+
+# @hosts(production)
+# def rserver():
+#     run('export SERV_PORT={}'.format(server_port))
+#     run('screen -m -d -S $lb_serv fab serve)

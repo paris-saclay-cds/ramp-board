@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil
 import logging
 import os.path
 import pandas as pd
@@ -148,12 +149,17 @@ def download_model(team, tag, filename):
         with shelve_database() as db:
             models = db['models']
             listing = models.loc[tag, 'listing'].split('|')
+
+        # TODO:
+        # create the model archive 
+        # shutil.make_archive()
+
         return render_template(
             'model.html', 
             code=code, 
             model_url=request.path.rstrip('/') + '/raw',
             listing=listing,
-            archive_url=None,) # TODO: <--
+            archive_url='#')
 
 
 @app.route('/models/<team>/<tag>/error')
