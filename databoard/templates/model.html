@@ -12,7 +12,7 @@ onload="prettyPrint()"
 {% block title %}Model code{% endblock %}
 {% block content %}
 
-{% if listing %}
+{% if listing and filename != 'error.txt' %}
     {% set left_col_width = 'twelve' %}    
 {% else %}
     {% set left_col_width = 'sixteen' %}
@@ -20,15 +20,21 @@ onload="prettyPrint()"
 
 <div class="ui stackable two column grid">
     <div class="{{ left_col_width }} wide column">
-        {% if model_url %}
-        <a href="{{model_url}}"><h4 class="ui horizontal header divider grey"><i class="download grey icon"></i>{{filename}}</h4></a>
-        {% endif %}
+        <h4 class="ui horizontal header divider grey">
+            <a href="/leaderboard"><i class="dashboard grey icon"></i>Leaderboard</a>
+            <span><i class="angle right grey icon"></i></span>
+            {{ team_name }} 
+            <span><i class="angle right grey icon"></i></span>
+            {{ model_name }} 
+            <span><i class="angle right grey icon"></i></span>
+            <a href="{{model_url}}"><i class="download grey icon"></i>{{filename}}</a>
+            </h4>
         <pre class="prettyprint linenums">{{code}}</pre>
     </div>
-    {% if listing %}
+    {% if listing and filename != 'error.txt' %}
     <div class="four wide column">
         <div class="ui sticky">
-        <a href="{{archive_url}}"><h4 class="ui horizontal header divider grey"><i class="folder open grey icon"></i>Archive</h4></a>
+        <h4 class="ui horizontal header divider grey"><a href="{{archive_url}}"><i class="folder open grey icon"></i>Archive</a></h4>
             {% for f in listing %}
             <div class="ui fluid card">
                 <div class="content">

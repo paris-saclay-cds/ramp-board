@@ -6,8 +6,8 @@ import os.path
 import pandas as pd
 
 from git import Repo
+from zipfile import ZipFile
 from collections import namedtuple
-
 from flask import (
     request, 
     redirect, 
@@ -20,6 +20,7 @@ from flask import (
 
 from databoard import app
 from .model import shelve_database, columns, ModelState
+from .generic import changedir
 from .config_databoard import (
     root_path, 
     repos_path, 
@@ -40,7 +41,6 @@ logger = logging.getLogger('databoard')
 
 def model_with_link(path_model):
     path, model = path_model.split()
-    # filename = '%s/models/%s/model.py' % (server_name + ':' + str(os.getenv('SERV_PORT', port)), path)
     filename = '/models/%s/model.py' % (path)
 
     # if the tag name is too long, shrink it.
@@ -53,7 +53,6 @@ def model_with_link(path_model):
 
 
 def error_local_to_url(path):
-    # filename = '%s/models/%s/error' % (server_name + ':' + str(os.getenv('SERV_PORT', port)), path)
     filename = '/models/%s/error' % (path)
     link = '<a href="{0}">Error</a>'.format(filename)
     return link
@@ -139,48 +138,51 @@ def show_leaderboard():
 
 @app.route('/models/<team>/<tag>/<filename>')
 @app.route('/models/<team>/<tag>/<filename>/raw')
-def download_model(team, tag, filename):
+def view_model(team, tag, filename):
     directory = os.path.join(models_path, team, tag)
     directory = os.path.abspath(directory)
-    model_url = os.path.join(directory, filename)
+    archive_filename = 'archive.zip'
+    archive_url = '/models/{}/{}/{}/raw'.format(team, tag, os.path.basename(archive_filename))
+   
+    if filename == 'error':
+        filename += '.txt'
+    if filename == archive_filename:
+        with shelve_database() as db:
+            models = db['models'].loc[tag, 'listing'].split('|')
+        with changedir(directory):
+            with ZipFile(archive_filename, 'w') as archive:
+                for f in listing:
+                    archive.write(f)
 
+    
     if request.path.split('/')[-1] == 'raw':
         return send_from_directory(directory,
                                    filename, 
                                    as_attachment=True,
                                    attachment_filename='{}_{}_{}'.format(team, tag[:6], filename), 
                                    mimetype='application/octet-stream')
-    else:
-        with open(model_url) as f:
-            code = f.read()
-        with shelve_database() as db:
-            models = db['models']
-            listing = models.loc[tag, 'listing'].split('|')
 
-        # TODO:
-        # create the model archive 
-        # shutil.make_archive()
-
-        return render_template(
-            'model.html', 
-            code=code, 
-            model_url=request.path.rstrip('/') + '/raw',
-            listing=listing,
-            archive_url='#',
-            filename=filename)
-
-
-@app.route('/models/<team>/<tag>/error')
-def download_error(team, tag):
-    directory = os.path.join(root_path, "models", team, tag)
-    error_url = os.path.join(directory, 'error.txt')
-
-    if not os.path.exists(error_url):
+    model_url = request.path.rstrip('/') + '/raw'
+    model_file = os.path.join(directory, filename)
+    if not os.path.exists(model_file):
         return redirect(url_for('show_leaderboard'))
-    with open(error_url) as f:
+    
+    with open(model_file) as f:
         code = f.read()
-    return render_template('model.html', code=code)
-
+    with shelve_database() as db:
+        models = db['models']
+        listing = models.loc[tag, 'listing'].split('|')
+        model_name = models.loc[tag, 'model']
+   
+    return render_template(
+        'model.html', 
+        code=code, 
+        model_url=model_url,
+        listing=listing,
+        archive_url=archive_url,
+        filename=filename,
+        model_name=model_name,
+        team_name=team)
 
 @app.route("/add/", methods=("POST",))
 def add_team_repo():

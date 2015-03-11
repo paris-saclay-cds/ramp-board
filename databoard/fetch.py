@@ -13,10 +13,10 @@ import pandas as pd
 
 from flask_mail import Mail
 from flask_mail import Message
-from contextlib import contextmanager
 
 from databoard import app
 from .model import shelve_database, columns, ModelState
+from .generic import changedir
 from .specific import hackaton_title
 from .config_databoard import repos_path, root_path, tag_len_limit, notification_recipients, server_name
 
@@ -53,18 +53,6 @@ def copy_git_tree(tree, dest_folder):
             shutil.copyfileobj(file_elem.data_stream, f)
     for tree_elem in tree.trees:
         copy_git_tree(tree_elem, os.path.join(dest_folder, tree_elem.name))
-
-
-@contextmanager  
-def changedir(dir_name):
-    current_dir = os.getcwd()
-    try:
-        os.chdir(dir_name)
-        yield
-    except Exception as e:
-        logger.error(e) 
-    finally:
-        os.chdir(current_dir)
 
 
 def fetch_models():
