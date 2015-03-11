@@ -1,7 +1,6 @@
 *.pyc
-submissions.csv
-trained_submissions.csv
 TeamsRepos
+teams_repos
 .DS_Store
 last_trained_timestamp.py
 *.csv
@@ -10,3 +9,4 @@ joblib
 *.log
 *.lock
 *.db
+shelve_manager_local.ipynb

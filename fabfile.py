@@ -51,7 +51,7 @@ def clear_db():
         db['leaderboard1'] = pd.DataFrame(columns=['scores'])
         db['leaderboard2'] = pd.DataFrame(columns=['scores'])
 
-def clear_team_repos():
+def clear_registrants():
     import shutil
     # Prepare the teams repo submodules
     # logger.info('Init team repos git')
@@ -101,7 +101,7 @@ def setup():
 
     # # Remove the git repos of the teams
     # logger.info('Clear the teams repositories.')
-    # clear_team_repos()
+    # clear_registrants()
 
     # Preparing the data set, typically public train/private held-out test cut
     logger.info('Prepare the dataset.')
