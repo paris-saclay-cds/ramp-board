@@ -15,7 +15,7 @@ app.config['MAIL_DEFAULT_SENDER'] = ('Databoard', 'databoardmailer@gmail.com')
 app.config['MAIL_RECIPIENTS'] = '' #notification_recipients
 app.config['LOG_FILENAME'] = None  # if None, output to screen
 
-app.debug_mode = True
+# app.debug_mode = True
 
 # if app.debug:
 logging.basicConfig(

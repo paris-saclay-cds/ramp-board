@@ -10,6 +10,7 @@ import pandas as pd
 from scipy import io
 from functools import partial
 from importlib import import_module
+from contextlib import contextmanager
 from sklearn.metrics import accuracy_score, roc_curve, auc
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.externals.joblib import Memory
@@ -27,6 +28,18 @@ sys.path.append(os.path.dirname(os.path.abspath(models_path)))
 
 mem = Memory(cachedir=cachedir)
 logger = logging.getLogger('databoard')
+
+@contextmanager  
+def changedir(dir_name):
+    current_dir = os.getcwd()
+    try:
+        os.chdir(dir_name)
+        yield
+    except Exception as e:
+        logger.error(e) 
+    finally:
+        os.chdir(current_dir)
+
 
 def setup_ground_truth():
     """Setting up the GroundTruth subdir, saving y_test for each fold in skf. File
