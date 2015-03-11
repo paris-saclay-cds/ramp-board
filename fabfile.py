@@ -85,6 +85,10 @@ def setup():
     from databoard.generic import setup_ground_truth
     from databoard.specific import prepare_data
     
+    # Preparing the data set, typically public train/private held-out test cut
+    logger.info('Prepare the dataset.')
+    prepare_data()
+
     logger.info('Remove the ground truth files.')
     clear_groundtruth()
 
@@ -103,9 +107,6 @@ def setup():
     # logger.info('Clear the teams repositories.')
     # clear_registrants()
 
-    # Preparing the data set, typically public train/private held-out test cut
-    logger.info('Prepare the dataset.')
-    prepare_data()
 
     # Flush joblib cache
     # clear_cache()
