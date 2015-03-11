@@ -148,7 +148,7 @@ def view_model(team, tag, filename):
         filename += '.txt'
     if filename == archive_filename:
         with shelve_database() as db:
-            models = db['models'].loc[tag, 'listing'].split('|')
+            listing = db['models'].loc[tag, 'listing'].split('|')
         with changedir(directory):
             with ZipFile(archive_filename, 'w') as archive:
                 for f in listing:
