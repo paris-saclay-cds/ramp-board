@@ -35,14 +35,13 @@ pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 logger = logging.getLogger('databoard')
 
-def model_local_to_url(path):
-    filename = '%s/models/%s/model.py' % (server_name, path)
-    link = '<a href="{0}">Code</a>'.format(filename)
-    return link
+# TMP:
+# app.config['SERVER_NAME'] = server_name + ':' + str(os.getenv('SERV_PORT', port))
 
 def model_with_link(path_model):
     path, model = path_model.split()
-    filename = '%s/models/%s/model.py' % (server_name, path)
+    # filename = '%s/models/%s/model.py' % (server_name + ':' + str(os.getenv('SERV_PORT', port)), path)
+    filename = '/models/%s/model.py' % (path)
 
     # if the tag name is too long, shrink it.
     if len(model) > tag_len_limit:
@@ -54,7 +53,8 @@ def model_with_link(path_model):
 
 
 def error_local_to_url(path):
-    filename = '%s/models/%s/error' % (server_name, path)
+    # filename = '%s/models/%s/error' % (server_name + ':' + str(os.getenv('SERV_PORT', port)), path)
+    filename = '/models/%s/error' % (path)
     link = '<a href="{0}">Error</a>'.format(filename)
     return link
 
@@ -63,10 +63,16 @@ def error_local_to_url(path):
 @app.route("/register")
 def list_teams_repos():
     RepoInfo = namedtuple('RepoInfo', 'name url') 
-    dir_list = filter(lambda x: not x.startswith('.'), os.listdir(repos_path))
+    dir_list = filter(lambda x: not os.path.basename(x).startswith('.'), os.listdir(repos_path))
     get_repo_url = lambda f: Repo(os.path.join(repos_path, f)).config_reader().get_value('remote "origin"', 'url')
-    dir_list = [RepoInfo(f, get_repo_url(f)) for f in dir_list]
-    return render_template('list.html', submodules=dir_list)
+
+    repo_list = [] 
+    for f in dir_list:
+        try:
+            repo_list.append(RepoInfo(f, get_repo_url(f)))
+        except Exception as e:
+            logger.error('Error when listing the repository: {}\n{}'.format(f, e))
+    return render_template('list.html', submodules=repo_list)
 
 @app.route("/_leaderboard")
 @app.route("/leaderboard")
@@ -101,8 +107,9 @@ def show_leaderboard():
     col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
 
     for df in [l1, l2, failed]:
-        print df
-        df['path_model'] = df.path + ' ' + df.model  # dirty hack
+        # dirty hack
+        # create a new column 'path_model' and use to generate the link
+        df['path_model'] = df.path + ' ' + df.model
         df.model = df.path_model.map(model_with_link)
         df.rename(
             columns=col_map, 
@@ -141,7 +148,7 @@ def download_model(team, tag, filename):
         return send_from_directory(directory,
                                    filename, 
                                    as_attachment=True,
-                                   attachment_filename='{}_{}_{}'.format(team, tag, filename), 
+                                   attachment_filename='{}_{}_{}'.format(team, tag[:6], filename), 
                                    mimetype='application/octet-stream')
     else:
         with open(model_url) as f:
@@ -159,7 +166,8 @@ def download_model(team, tag, filename):
             code=code, 
             model_url=request.path.rstrip('/') + '/raw',
             listing=listing,
-            archive_url='#')
+            archive_url='#',
+            filename=filename)
 
 
 @app.route('/models/<team>/<tag>/error')
@@ -181,10 +189,12 @@ def add_team_repo():
         repo_path = request.form["url"].strip()
         message = ''
         try:
-            git.Repo.clone_from(repo_path, repo_name)
+            Repo.clone_from(repo_path, os.path.join(repos_path, repo_name))
         except Exception as e:
+            logger.error('Unable to add a repository: \n{}'.format(e))
             message = str(e)
 
         if message:
             flash(message)
+
         return redirect(url_for('list_teams_repos'))

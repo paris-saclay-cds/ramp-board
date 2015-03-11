@@ -23,6 +23,7 @@ from .config_databoard import (
 )
 from .specific import split_data, run_model
 
+sys.path.append(os.path.dirname(os.path.abspath(models_path)))
 
 mem = Memory(cachedir=cachedir)
 logger = logging.getLogger('databoard')

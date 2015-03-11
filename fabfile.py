@@ -3,6 +3,7 @@ import logging
 import pandas as pd
 import fabric.contrib.project as project
 from fabric.api import *
+from fabric.contrib.files import exists
 from databoard.model import shelve_database, ModelState
 from databoard.config_databoard import (
     root_path, 
@@ -20,6 +21,7 @@ from databoard.config_databoard import (
 # 15003, 15004, 20000-25000.
 
 env.user = 'root'  # the user to use for the remote commands
+env.use_ssh_config = True
 
 # the servers where the commands are executed
 env.hosts = ['onevm-222.lal.in2p3.fr']
@@ -40,11 +42,6 @@ def clear_cache():
     mem = Memory(cachedir=cachedir)
     mem.clear()
 
-
-def init_config():
-    pass
-    # TODO
-
 def clear_db():
     from databoard.model import columns
     
@@ -54,64 +51,17 @@ def clear_db():
         db['leaderboard1'] = pd.DataFrame(columns=['scores'])
         db['leaderboard2'] = pd.DataFrame(columns=['scores'])
 
-
-def setup():
-    # from git import Repo
-    from databoard.generic import setup_ground_truth
-    from databoard.specific import prepare_data
-    
-    logger.info('Remove the old files.')
-    clean()
-
-    # create the database if it doesn't exist
-    logger.info('Clear the database.')
-    clear_db()
-
-    open(os.path.join(models_path, '__init__.py'), 'a').close()
-
+def clear_team_repos():
+    import shutil
     # Prepare the teams repo submodules
     # logger.info('Init team repos git')
     # repo = Repo.init(repos_path)  # does nothing if already exists
+    shutil.rmtree(repos_path, ignore_errors=True)
+    os.mkdir(repos_path)
 
-    # Preparing the data set, typically public train/private held-out test cut
-    logger.info('Prepare the dataset.')
-    prepare_data()
-
-    # Set up the ground truth predictions for the CV folds
-    logger.info('Setup the groundtruth.')
-    setup_ground_truth()
-    
-    # Flush joblib cache
-
-    clear_cache()
-    logger.info('Flush the joblib cache.')
-
-    logger.info('Config init.')
-    init_config()
-
-
-def clean():
+def clear_pred_files():
     import glob
-    import shutil
-    
-    shutil.rmtree(ground_truth_path, ignore_errors=True)
-    os.mkdir(ground_truth_path)
-
-    # shutil.rmtree(output_path, ignore_errors=True)
-    # os.mkdir(output_path)
-
-    if not os.path.exists(models_path):
-        os.mkdir(models_path)
-
     fnames = []
-    # if os.path.exists(ground_truth_path):
-    #     fnames = glob.glob(os.path.join(ground_truth_path, 'pred_*'))
-    # else:
-    #     os.mkdir(ground_truth_path)
-    # if not os.path.exists(output_path):
-    #     os.mkdir(output_path)
-    # if not os.path.exists(models_path):
-    #     os.mkdir(models_path)
 
     # TODO: some of the following will be removed after switching to a database
     fnames += glob.glob(os.path.join(models_path, '*', '*', 'pred_*'))
@@ -122,11 +72,47 @@ def clean():
         if os.path.exists(fname):
             os.remove(fname)
 
-    # old_fnames = glob.glob(os.path.join(output_path, '*.csv'))
-    # for fname in old_fnames:
-    #     if os.path.exists(fname):
-    #         os.remove(fname)
+def clear_groundtruth():
+    import shutil    
+    shutil.rmtree(ground_truth_path, ignore_errors=True)
+    os.mkdir(ground_truth_path)
 
+def init_config():
+    pass
+    # TODO
+
+def setup():
+    from databoard.generic import setup_ground_truth
+    from databoard.specific import prepare_data
+    
+    logger.info('Remove the ground truth files.')
+    clear_groundtruth()
+
+    # Set up the ground truth predictions for the CV folds
+    logger.info('Setup the groundtruth.')
+    setup_ground_truth()
+    
+    logger.info('Clear the database.')
+    clear_db()
+
+    if not os.path.exists(models_path):
+        os.mkdir(models_path)
+    open(os.path.join(models_path, '__init__.py'), 'a').close()
+
+    # # Remove the git repos of the teams
+    # logger.info('Clear the teams repositories.')
+    # clear_team_repos()
+
+    # Preparing the data set, typically public train/private held-out test cut
+    logger.info('Prepare the dataset.')
+    prepare_data()
+
+    # Flush joblib cache
+    # clear_cache()
+    # logger.info('Flush the joblib cache.')
+
+    logger.info('Config init.')
+    init_config()
 
 def clean_pyc():
     local('find . -name "*.pyc" | xargs rm -f')
@@ -187,7 +173,7 @@ def train():
     # failed_models.to_csv("output/failed_submissions.csv", index=False)
 
 
-def serve():
+def serve(port=8080):
     from databoard import app
     import databoard.views
 
@@ -198,22 +184,24 @@ def serve():
         debug_mode = True  # a non empty string means debug
     app.run(
         debug=bool(debug_mode), 
-        port=os.getenv('SERV_PORT', 8080), 
+        port=int(os.getenv('SERV_PORT', port)), 
         host='0.0.0.0')
 
 
 # TODO: fill up the following functions so to easily deploy
 # databoard on the server
 
-def rserve():
-    with cd(dest_path):
-        run('python server.py')
+# FIXME: dtach not working
+@hosts(production)
+def rserve(sockname="db_server"):
+    if not exists("/usr/bin/dtach"):
+        sudo("apt-get install dtach")
 
-
-def remote_pull():
     with cd(dest_path):
-        run('git pull')
-        
+        # run('export SERV_PORT={}'.format(server_port))
+        # run('fab serve')
+        # run('dtach -n `mktemp -u /tmp/{}.XXXX` export SERV_PORT={};fab serve'.format(sockname, server_port))
+        return run('dtach -n `mktemp -u /tmp/{}.XXXX` fab serve:port={}'.format(sockname, server_port))
 
 @hosts(production)
 def publish():
@@ -236,8 +224,3 @@ def publish():
         delete=True,
         extra_opts='-c',
     )
-
-# @hosts(production)
-# def rserver():
-#     run('export SERV_PORT={}'.format(server_port))
-#     run('screen -m -d -S $lb_serv fab serve)

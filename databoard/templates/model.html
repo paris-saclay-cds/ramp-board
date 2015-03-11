@@ -21,23 +21,28 @@ onload="prettyPrint()"
 <div class="ui stackable two column grid">
     <div class="{{ left_col_width }} wide column">
         {% if model_url %}
-        <a href="{{model_url}}"><h4 class="ui horizontal header divider grey"><i class="download grey icon"></i>Download</h4></a>
+        <a href="{{model_url}}"><h4 class="ui horizontal header divider grey"><i class="download grey icon"></i>{{filename}}</h4></a>
         {% endif %}
         <pre class="prettyprint linenums">{{code}}</pre>
     </div>
     {% if listing %}
     <div class="four wide column">
+        <div class="ui sticky">
         <a href="{{archive_url}}"><h4 class="ui horizontal header divider grey"><i class="folder open grey icon"></i>Archive</h4></a>
-        
-        {% for f in listing %}
-        <div class="ui fluid card">
-            <div class="content">
-                <div class="description">
-                    <a href="{{f}}"><i class="file grey icon"></i>{{f}}</a>
+            {% for f in listing %}
+            <div class="ui fluid card">
+                <div class="content">
+                    <div class="description">
+                        {% if f==filename %}
+                        <i class="file grey icon"></i>{{f}}
+                        {% else %}
+                        <a href="{{f}}"><i class="file grey icon"></i>{{f}}</a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
     {% endif %}
 </div> 
