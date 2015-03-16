@@ -24,10 +24,11 @@ The data must be input inside the `input/` folder.
 
 
 ## Command description 
-- fab setup
-- fab fetch
-- fab train
-- fab leaderboard 
+- `fab setup`
+	- to reinitialize the registrations and the joblib cache, use `fab setup:wipeall:1`
+- `fab fetch`
+- `fab train`
+- `fab leaderboard`
 
 ### Launch the web server
 
@@ -36,10 +37,10 @@ The data must be input inside the `input/` folder.
 
 ### Other commands
 
-- fab clear_cache  # clear joblib cache
-- fab clear_db  # clear the database
-- fab clear_registrants  # clear the teams repositories
-- fab all # equivalent to fab fetch train leaderboard 
+- `fab clear_cache  # clear joblib cache`
+- `fab clear_db  # clear the database`
+- `fab clear_registrants  # clear the teams repositories`
+- `fab all # equivalent to fab fetch train leaderboard`
 
 
 
