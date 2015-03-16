@@ -81,7 +81,7 @@ def init_config():
     pass
     # TODO
 
-def setup():
+def setup(wipeall):
     from databoard.generic import setup_ground_truth
     from databoard.specific import prepare_data
     
@@ -103,17 +103,17 @@ def setup():
         os.mkdir(models_path)
     open(os.path.join(models_path, '__init__.py'), 'a').close()
 
-    # # Remove the git repos of the teams
-    # logger.info('Clear the teams repositories.')
-    # clear_registrants()
-
-
-    # Flush joblib cache
-    # clear_cache()
-    # logger.info('Flush the joblib cache.')
-
     logger.info('Config init.')
     init_config()
+
+    if wipeall == True:
+        # Remove the git repos of the teams
+        logger.info('Clear the teams repositories.')
+        clear_registrants()
+
+        # Flush joblib cache
+        logger.info('Flush the joblib cache.')
+        clear_cache()
 
 def clean_pyc():
     local('find . -name "*.pyc" | xargs rm -f')
@@ -222,6 +222,6 @@ def publish():
                   '.gitignore',
                   '*.pyc'],
         local_dir='.',
-        delete=True,
+        delete=False,
         extra_opts='-c',
     )
