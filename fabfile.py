@@ -106,7 +106,7 @@ def setup(wipeall):
     logger.info('Config init.')
     init_config()
 
-    if wipeall == True:
+    if wipeall:
         # Remove the git repos of the teams
         logger.info('Clear the teams repositories.')
         clear_registrants()
