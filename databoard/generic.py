@@ -83,19 +83,19 @@ def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
     module_path = '.'.join(m_path.lstrip('./').split('/'))
     model = import_module('.model', module_path)
 
-    y_valid_pred, y_valid_score, y_test_pred, y_test_score = run_model(model, 
+    y_valid_pred, y_valid_proba, y_test_pred, y_test_proba = run_model(model, 
         X_valid_train, y_valid_train, X_valid_test, X_test)
 
-    assert len(y_valid_pred) == len(y_valid_score) == len(X_valid_test)
-    assert len(y_test_pred) == len(y_test_score) == len(X_test)
+    assert len(y_valid_pred) == len(y_valid_proba) == len(X_valid_test)
+    assert len(y_test_pred) == len(y_test_proba) == len(X_test)
     
-    # y_rank[i] is the the rank of the ith element of y_score
-    #y_valid_rank = y_valid_score[:,1].argsort().argsort()
-    #y_test_rank = y_test_score[:,1].argsort().argsort()
-    #output_valid = np.transpose(np.array([y_valid_pred, y_valid_rank]))
-    output_valid = np.transpose(np.array([y_valid_pred, y_valid_score[:,1]]))
+    # y_proba[i] is the the proba of the ith element of y_proba
+    #y_valid_proba = y_valid_proba[:,1].argsort().argsort()
+    #y_test_proba = y_test_proba[:,1].argsort().argsort()
+    #output_valid = np.transpose(np.array([y_valid_pred, y_valid_proba]))
+    output_valid = np.transpose(np.array([y_valid_pred, y_valid_proba[:,1]]))
     np.savetxt(f_name_pred, output_valid, fmt='%d,%lf')
-    output_test = np.transpose(np.array([y_test_pred, y_test_score[:,1]]))
+    output_test = np.transpose(np.array([y_test_pred, y_test_proba[:,1]]))
     np.savetxt(f_name_test, output_test, fmt='%d,%lf')
     print f_name_pred
 
@@ -140,7 +140,7 @@ def train_models(models, last_time_stamp=None):
 
 @mem.cache
 def train_model(m_path, X_train, y_train, X_test, y_test, skf):
-    """Training a model on all folds and saving the predictions and rank order. The latter we can
+    """Training a model on all folds and saving the predictions and proba order. The latter we can
     use for computing ROC or cutting ties.
 
     m_path/model.py 
@@ -152,8 +152,8 @@ def train_model(m_path, X_train, y_train, X_test, y_test, skf):
                          n_estimators=20))])
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
-    y_score = clf.predict_proba(X_test)
-    return y_pred, y_score
+    y_proba = clf.predict_proba(X_test)
+    return y_pred, y_proba
 
     File names are pred_<hash of the np.array(test index vector)>.csv. A score.csv file is also
     saved with k_model lines of header
@@ -243,16 +243,16 @@ def leaderboard_classical(groundtruth_path, orig_models):
             y_test = pd.read_csv(groundtruth_path + '/' + labels_path, names=['pred']).values.flatten()
             for model_path in models['path']:
                 predictions_path = os.path.join(root_path, 'models', model_path, labels_path)
-                predictions = pd.read_csv(predictions_path, names=['pred', 'rank'])
+                predictions = pd.read_csv(predictions_path, names=['pred', 'proba'])
                 y_preds.append(predictions['pred'].values) # use m_path as db key
-                y_probas.append(predictions['rank'].values)
+                y_probas.append(predictions['proba'].values)
 
             y_preds = np.array(y_preds)
             y_probas = np.array(y_probas)
 
             try:
                 #scores = [score(y_pred, y_test) for y_pred in y_preds]
-                scores = [score(y_rank, y_test) for y_rank in y_probas]
+                scores = [score(y_proba, y_test) for y_proba in y_probas]
             except Exception as e:
                 print 'FAILED in one fold (%s)' % labels_path
                 print '++++++++'
@@ -279,18 +279,18 @@ def private_leaderboard_classical(orig_models):
     # get model file names
     for mi, m_path in zip(range(len(models)), models['path']):
         pr_paths = glob.glob(os.path.join(models_path, m_path, 'test_*'))
-        sum_rank = np.zeros(len(y_test))
+        sum_proba = np.zeros(len(y_test))
         for pr_path in pr_paths:
-             inp = pd.read_csv(pr_path, names=['pred', 'rank'])
-             sum_rank += inp['rank'].values
-        y_rank = sum_rank.argsort().argsort()
-        leaderboard.loc[mi, 'score'] = score(y_rank, y_test)
+             inp = pd.read_csv(pr_path, names=['pred', 'proba'])
+             sum_proba += inp['proba'].values
+        y_proba = sum_proba.argsort().argsort()
+        leaderboard.loc[mi, 'score'] = score(y_proba, y_test)
     scoring_higher_the_better = True
     return leaderboard.sort(columns=['score'], ascending=not scoring_higher_the_better)
 
 
-def combine_models_using_ranks(y_preds, y_probas, indexes):
-    """Combines the predictions y_preds[indexes] by "rank"
+def combine_models_using_probas(y_preds, y_probas, indexes):
+    """Combines the predictions y_preds[indexes] by "proba"
     voting. I'll detail it once you verify that it makes sense (see my mail)
 
     Parameters
@@ -359,15 +359,15 @@ def leaderboard_combination(gt_path, orig_models):
 
             for model_path in models['path']:
                 predictions_path = os.path.join(root_path, 'models', model_path, labels_path)
-                predictions = pd.read_csv(predictions_path, names=['pred', 'rank'])
+                predictions = pd.read_csv(predictions_path, names=['pred', 'proba'])
                 y_preds[model_path] = predictions['pred'] # use m_path as db key
-                y_probas[model_path] = predictions['rank']
+                y_probas[model_path] = predictions['proba']
 
             # y_preds: k vectors of length n
             y_preds = np.transpose(y_preds.values)
             y_probas = np.transpose(y_probas.values)
             #scores = [score(y_pred, y_test) for y_pred in y_preds]
-            scores = [score(y_rank, y_test) for y_rank in y_probas]
+            scores = [score(y_proba, y_test) for y_proba in y_probas]
             #print scores
             #best_indexes = np.array([np.argmin(scores)])
             best_indexes = np.array([np.argmax(scores)])
@@ -405,13 +405,13 @@ def best_combine(y_preds, y_probas, y_test, best_indexes):
     """
     eps = 0.01/len(y_preds)
     #y_pred = combine_models(y_preds, y_probas, best_indexes)
-    y_pred = combine_models_using_ranks(y_preds, y_probas, best_indexes)
+    y_pred = combine_models_using_probas(y_preds, y_probas, best_indexes)
     best_index = -1
     # Combination with replacement, what Caruana suggests. Basically, if a model
     # added several times, it's upweighted.
     for i in range(len(y_preds)):
         #com_y_pred = combine_models(y_preds, y_probas, np.append(best_indexes, i))
-        com_y_pred = combine_models_using_ranks(y_preds, y_probas, np.append(best_indexes, i))
+        com_y_pred = combine_models_using_probas(y_preds, y_probas, np.append(best_indexes, i))
         #print score(y_pred, y_test), score(com_y_pred, y_test)
         #if score(y_pred, y_test) > score(com_y_pred, y_test) + eps:
 
