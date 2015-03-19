@@ -3,6 +3,7 @@ import socket
 import pandas as pd
 
 from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
+from sklearn.calibration import CalibratedClassifierCV
 
 from .config_databoard import (
     local_deployment,
