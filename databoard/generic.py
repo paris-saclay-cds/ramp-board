@@ -90,12 +90,13 @@ def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
     assert len(y_test_pred) == len(y_test_score) == len(X_test)
     
     # y_rank[i] is the the rank of the ith element of y_score
-    y_valid_rank = y_valid_score[:,1].argsort().argsort()
-    y_test_rank = y_test_score[:,1].argsort().argsort()
-    output_valid = np.transpose(np.array([y_valid_pred, y_valid_rank]))
-    np.savetxt(f_name_pred, output_valid, fmt='%d,%d')
-    output_test = np.transpose(np.array([y_test_pred, y_test_rank]))
-    np.savetxt(f_name_test, output_test, fmt='%d,%d')
+    #y_valid_rank = y_valid_score[:,1].argsort().argsort()
+    #y_test_rank = y_test_score[:,1].argsort().argsort()
+    #output_valid = np.transpose(np.array([y_valid_pred, y_valid_rank]))
+    output_valid = np.transpose(np.array([y_valid_pred, y_valid_score[:,1]]))
+    np.savetxt(f_name_pred, output_valid, fmt='%d,%lf')
+    output_test = np.transpose(np.array([y_test_pred, y_test_score[:,1]]))
+    np.savetxt(f_name_test, output_test, fmt='%d,%lf')
     print f_name_pred
 
 
@@ -238,20 +239,20 @@ def leaderboard_classical(groundtruth_path, orig_models):
     if models.shape[0] != 0:
         for labels_path in fold_labels_paths:
             y_preds = []
-            y_ranks = []
+            y_probas = []
             y_test = pd.read_csv(groundtruth_path + '/' + labels_path, names=['pred']).values.flatten()
             for model_path in models['path']:
                 predictions_path = os.path.join(root_path, 'models', model_path, labels_path)
                 predictions = pd.read_csv(predictions_path, names=['pred', 'rank'])
                 y_preds.append(predictions['pred'].values) # use m_path as db key
-                y_ranks.append(predictions['rank'].values)
+                y_probas.append(predictions['rank'].values)
 
             y_preds = np.array(y_preds)
-            y_ranks = np.array(y_ranks)
+            y_probas = np.array(y_probas)
 
             try:
                 #scores = [score(y_pred, y_test) for y_pred in y_preds]
-                scores = [score(y_rank, y_test) for y_rank in y_ranks]
+                scores = [score(y_rank, y_test) for y_rank in y_probas]
             except Exception as e:
                 print 'FAILED in one fold (%s)' % labels_path
                 print '++++++++'
@@ -288,15 +289,14 @@ def private_leaderboard_classical(orig_models):
     return leaderboard.sort(columns=['score'], ascending=not scoring_higher_the_better)
 
 
-# deprecated?
-def combine_models(y_preds, y_ranks, indexes):
+def combine_models_using_ranks(y_preds, y_probas, indexes):
     """Combines the predictions y_preds[indexes] by "rank"
     voting. I'll detail it once you verify that it makes sense (see my mail)
 
     Parameters
     ----------
     y_preds : array-like, shape = [k_models, n_instances], binary
-    y_ranks : array-like, shape = [k_models, n_instances], permutation of [0,...,n_instances]
+    y_probas : array-like, shape = [k_models, n_instances], permutation of [0,...,n_instances]
     indexes : array-like, shape = [max k_models], a set of indices of 
         models to combine
     Returns
@@ -304,36 +304,10 @@ def combine_models(y_preds, y_ranks, indexes):
     com_y_pred : array-like, shape = [n_instances], a list of (combined) 
         binary predictions.
     """
-    k = len(indexes)
-    n = len(y_preds[0])
-    n_ones = n * k - y_preds[indexes].sum() # number of zeros
-    sum_y_ranks = y_ranks[indexes].sum(axis=0) + k # sum of ranks \in [1,n]
-    com_y_pred = np.zeros(n, dtype=int)
-    com_y_pred[np.greater(sum_y_ranks, n_ones)] = 1
-    return com_y_pred
-
-
-def combine_models_using_ranks(y_preds, y_ranks, indexes):
-    """Combines the predictions y_preds[indexes] by "rank"
-    voting. I'll detail it once you verify that it makes sense (see my mail)
-
-    Parameters
-    ----------
-    y_preds : array-like, shape = [k_models, n_instances], binary
-    y_ranks : array-like, shape = [k_models, n_instances], permutation of [0,...,n_instances]
-    indexes : array-like, shape = [max k_models], a set of indices of 
-        models to combine
-    Returns
-    -------
-    com_y_pred : array-like, shape = [n_instances], a list of (combined) 
-        binary predictions.
-    """
-    k = len(indexes)
-    n = len(y_preds[0])
-    n_ones = n * k - y_preds[indexes].sum() # number of zeros
-    sum_y_ranks = y_ranks[indexes].sum(axis=0) + k #sum of ranks \in [1,n]
-    com_y_ranks = sum_y_ranks.argsort()
-    return com_y_ranks
+    #k = len(indexes)
+    #n = len(y_preds[0])
+    #n_ones = n * k - y_preds[indexes].sum() # number of zeros
+    return np.log(y_probas[indexes]).sum(axis=0)
 
 
 def leaderboard_combination(gt_path, orig_models):
@@ -380,20 +354,20 @@ def leaderboard_combination(gt_path, orig_models):
             # probably an overshoot to use dataframes here, but slightly simpler code
             # to be simplified perhaps
             y_preds = pd.DataFrame()
-            y_ranks = pd.DataFrame()
+            y_probas = pd.DataFrame()
             y_test = pd.read_csv(gt_path + '/' + labels_path, names=['pred']).values.flatten()
 
             for model_path in models['path']:
                 predictions_path = os.path.join(root_path, 'models', model_path, labels_path)
                 predictions = pd.read_csv(predictions_path, names=['pred', 'rank'])
                 y_preds[model_path] = predictions['pred'] # use m_path as db key
-                y_ranks[model_path] = predictions['rank']
+                y_probas[model_path] = predictions['rank']
 
             # y_preds: k vectors of length n
             y_preds = np.transpose(y_preds.values)
-            y_ranks = np.transpose(y_ranks.values)
+            y_probas = np.transpose(y_probas.values)
             #scores = [score(y_pred, y_test) for y_pred in y_preds]
-            scores = [score(y_rank, y_test) for y_rank in y_ranks]
+            scores = [score(y_rank, y_test) for y_rank in y_probas]
             #print scores
             #best_indexes = np.array([np.argmin(scores)])
             best_indexes = np.array([np.argmax(scores)])
@@ -401,9 +375,9 @@ def leaderboard_combination(gt_path, orig_models):
             improvement = True
             while improvement:
                 old_best_indexes = best_indexes
-                best_indexes = best_combine(y_preds, y_ranks, y_test, best_indexes)
+                best_indexes = best_combine(y_preds, y_probas, y_test, best_indexes)
                 improvement = len(best_indexes) != len(old_best_indexes)
-
+            print best_indexes
             counts[best_indexes] += 1
 
     # leaderboard = models.copy()
@@ -411,7 +385,7 @@ def leaderboard_combination(gt_path, orig_models):
     return leaderboard.sort(columns=['score'],  ascending=False)
 
 
-def best_combine(y_preds, y_ranks, y_test, best_indexes):
+def best_combine(y_preds, y_probas, y_test, best_indexes):
     """Finds the model that minimizes the score if added to y_preds[indexes].
 
     Parameters
@@ -430,14 +404,14 @@ def best_combine(y_preds, y_ranks, y_test, best_indexes):
     combination from scratch each time the set changes.
     """
     eps = 0.01/len(y_preds)
-    #y_pred = combine_models(y_preds, y_ranks, best_indexes)
-    y_pred = combine_models_using_ranks(y_preds, y_ranks, best_indexes)
+    #y_pred = combine_models(y_preds, y_probas, best_indexes)
+    y_pred = combine_models_using_ranks(y_preds, y_probas, best_indexes)
     best_index = -1
     # Combination with replacement, what Caruana suggests. Basically, if a model
     # added several times, it's upweighted.
     for i in range(len(y_preds)):
-        #com_y_pred = combine_models(y_preds, y_ranks, np.append(best_indexes, i))
-        com_y_pred = combine_models_using_ranks(y_preds, y_ranks, np.append(best_indexes, i))
+        #com_y_pred = combine_models(y_preds, y_probas, np.append(best_indexes, i))
+        com_y_pred = combine_models_using_ranks(y_preds, y_probas, np.append(best_indexes, i))
         #print score(y_pred, y_test), score(com_y_pred, y_test)
         #if score(y_pred, y_test) > score(com_y_pred, y_test) + eps:
 
