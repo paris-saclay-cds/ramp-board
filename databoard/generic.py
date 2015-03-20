@@ -22,7 +22,7 @@ from .config_databoard import (
     n_processes,
     cachedir,
 )
-from .specific import split_data, run_model
+from .specific import test_filename, read_data, split_data, run_model
 
 sys.path.append(os.path.dirname(os.path.abspath(models_path)))
 
@@ -229,20 +229,20 @@ def leaderboard_classical(groundtruth_path, orig_models):
 
     models = orig_models.sort(columns='timestamp')
     models_paths = [os.path.join(root_path, 'models', path) for path in models['path']]
-    fold_labels_paths = glob.glob(groundtruth_path + "/pred_*")
-    fold_labels_paths = np.array([labels_path.split('/')[-1] for labels_path in fold_labels_paths])
+    pred_paths = glob.glob(groundtruth_path + "/pred_*")
+    pred_paths = np.array([pred_path.split('/')[-1] for pred_path in pred_paths])
 
-    print fold_labels_paths
+    print pred_paths
 
     mean_scores = np.zeros(len(models_paths))
 
     if models.shape[0] != 0:
-        for labels_path in fold_labels_paths:
+        for pred_path in pred_paths:
             y_preds = []
             y_probas = []
-            y_test = pd.read_csv(groundtruth_path + '/' + labels_path, names=['pred']).values.flatten()
+            y_test = pd.read_csv(groundtruth_path + '/' + pred_path, names=['pred']).values.flatten()
             for model_path in models['path']:
-                predictions_path = os.path.join(root_path, 'models', model_path, labels_path)
+                predictions_path = os.path.join(root_path, 'models', model_path, pred_path)
                 predictions = pd.read_csv(predictions_path, names=['pred', 'proba'])
                 y_preds.append(predictions['pred'].values) # use m_path as db key
                 y_probas.append(predictions['proba'].values)
@@ -254,7 +254,7 @@ def leaderboard_classical(groundtruth_path, orig_models):
                 #scores = [score(y_pred, y_test) for y_pred in y_preds]
                 scores = [score(y_proba, y_test) for y_proba in y_probas]
             except Exception as e:
-                print 'FAILED in one fold (%s)' % labels_path
+                print 'FAILED in one fold (%s)' % pred_path
                 print '++++++++'
                 print e
                 print '++++++++'
@@ -264,7 +264,7 @@ def leaderboard_classical(groundtruth_path, orig_models):
 
     # TODO: add a score column to the models df
 
-    mean_scores /= len(fold_labels_paths)
+    mean_scores /= len(pred_paths)
     scoring_higher_the_better = True
     leaderboard = pd.DataFrame({'score': mean_scores}, index=models.index)
     return leaderboard.sort(columns=['score'], ascending=not scoring_higher_the_better)
@@ -342,23 +342,28 @@ def leaderboard_combination(gt_path, orig_models):
 
     models = orig_models.sort(columns='timestamp')
 
-    # get prediction file names
-    fold_labels_paths = glob.glob(os.path.join(gt_path, 'pred_*'))
-    fold_labels_paths = np.array([pr_path.split('/')[-1] for pr_path in fold_labels_paths])
 
     # get model file names
     counts = np.zeros(len(models), dtype=int)
-
     if models.shape[0] != 0:
-        for labels_path in fold_labels_paths:
+        # get prediction file names
+        pred_paths = glob.glob(os.path.join(
+            models_path, models['path'][0], 'pred_*'))
+        pred_paths = np.array([pred_path.split('/')[-1] for pred_path in pred_paths])
+        test_paths = glob.glob(os.path.join(
+            models_path, models['path'][0], 'test_*'))
+        _, y_test = read_data(test_filename)
+        y_test_log_probas = np.zeros(len(y_test), dtype=float)
+        for pred_path in pred_paths:
             # probably an overshoot to use dataframes here, but slightly simpler code
             # to be simplified perhaps
             y_preds = pd.DataFrame()
             y_probas = pd.DataFrame()
-            y_test = pd.read_csv(gt_path + '/' + labels_path, names=['pred']).values.flatten()
+            y_valid_test = pd.read_csv(
+                os.path.join(gt_path, pred_path), names=['pred']).values.flatten()
 
             for model_path in models['path']:
-                predictions_path = os.path.join(root_path, 'models', model_path, labels_path)
+                predictions_path = os.path.join(root_path, 'models', model_path, pred_path)
                 predictions = pd.read_csv(predictions_path, names=['pred', 'proba'])
                 y_preds[model_path] = predictions['pred'] # use m_path as db key
                 y_probas[model_path] = predictions['proba']
@@ -366,8 +371,8 @@ def leaderboard_combination(gt_path, orig_models):
             # y_preds: k vectors of length n
             y_preds = np.transpose(y_preds.values)
             y_probas = np.transpose(y_probas.values)
-            #scores = [score(y_pred, y_test) for y_pred in y_preds]
-            scores = [score(y_proba, y_test) for y_proba in y_probas]
+            #scores = [score(y_pred, y_valid_test) for y_pred in y_preds]
+            scores = [score(y_proba, y_valid_test) for y_proba in y_probas]
             #print scores
             #best_indexes = np.array([np.argmin(scores)])
             best_indexes = np.array([np.argmax(scores)])
@@ -375,10 +380,22 @@ def leaderboard_combination(gt_path, orig_models):
             improvement = True
             while improvement:
                 old_best_indexes = best_indexes
-                best_indexes = best_combine(y_preds, y_probas, y_test, best_indexes)
+                best_indexes = best_combine(
+                    y_preds, y_probas, y_valid_test, best_indexes)
                 improvement = len(best_indexes) != len(old_best_indexes)
             print best_indexes
             counts[best_indexes] += 1
+
+            for index in best_indexes:
+                test_predictions = pd.read_csv(
+                    test_paths[index], names=['pred', 'proba'])
+                # We divide by len(best_indexes)to avoid over-biasing by 
+                # larger combinations
+                y_test_log_probas += \
+                    np.log(test_predictions['proba'].values) / len(best_indexes)
+    
+        print score(y_test_log_probas, y_test)
+        print private_leaderboard_classical(orig_models)
 
     # leaderboard = models.copy()
     leaderboard = pd.DataFrame({'score': counts}, index=models.index)
