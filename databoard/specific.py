@@ -62,8 +62,8 @@ def run_model(model, X_valid_train, y_valid_train, X_valid_test, X_test):
     clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
     clf_c.fit(X_valid_train, y_valid_train)
     y_valid_pred = clf_c.predict(X_valid_test)
-    y_valid_score = clf_c.predict_proba(X_valid_test)
+    y_valid_proba = clf_c.predict_proba(X_valid_test)
     y_test_pred = clf_c.predict(X_test)
-    y_test_score = clf_c.predict_proba(X_test)
-    return y_valid_pred, y_valid_score, y_test_pred, y_test_score
+    y_test_proba = clf_c.predict_proba(X_test)
+    return y_valid_pred, y_valid_proba, y_test_pred, y_test_proba
 
