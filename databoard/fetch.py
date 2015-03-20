@@ -82,12 +82,16 @@ def fetch_models():
             continue
 
         team_name = os.path.basename(repo_path)
-        repo = git.Repo(repo_path)
+        try:
+            repo = git.Repo(repo_path)
+        except Exception as e:
+            logger.error('Problem when reading a repo: \n{}'.format(e))
+            continue
 
         try:
             repo.remotes.origin.pull()
-        except:
-            logger.error('Unable to pull from repo. Possibly no connexion.')
+        except Exception as e:
+            logger.error('Unable to pull from repo. Possibly no connexion: \n{}'.format(e))
 
         repo_path = os.path.join(submissions_path, team_name)
         if not os.path.exists(repo_path):
@@ -154,7 +158,7 @@ def fetch_models():
                     # new_entry.set_value(tag_name_alias, 'listing', file_listing)
                     db['models'] = db['models'].append(new_entry)
 
-            except Exception, e:
+            except Exception as e:
                 logger.error("%s" % e)
 
     # remove the failed submissions that have been deleted
