@@ -310,7 +310,7 @@ def combine_models_using_probas(y_preds, y_probas, indexes):
     return np.log(y_probas[indexes]).sum(axis=0)
 
 
-def leaderboard_combination(gt_path, orig_models):
+def leaderboard_combination(groundtruth_path, orig_models):
     """Output combined leaderboard (sorted in decreasing order by score). We use
     Caruana's greedy combination
     http://www.cs.cornell.edu/~caruana/ctp/ct.papers/caruana.icml04.icdm06long.pdf
@@ -318,7 +318,7 @@ def leaderboard_combination(gt_path, orig_models):
 
     Parameters
     ----------
-    gt_paths : ground truth path
+    groundtruth_paths : ground truth path
     m_paths : array-like, shape = [k_models]
         A list of paths, each containing len(skf) csv files with y_test.
     Returns
@@ -353,14 +353,15 @@ def leaderboard_combination(gt_path, orig_models):
         test_paths = glob.glob(os.path.join(
             models_path, models['path'][0], 'test_*'))
         _, y_test = read_data(test_filename)
-        y_test_log_probas = np.zeros(len(y_test), dtype=float)
+        y_test_combined_log_probas = np.zeros(len(y_test), dtype=float)
+        y_test_best_log_probas = np.zeros(len(y_test), dtype=float)
         for pred_path in pred_paths:
             # probably an overshoot to use dataframes here, but slightly simpler code
             # to be simplified perhaps
             y_preds = pd.DataFrame()
             y_probas = pd.DataFrame()
             y_valid_test = pd.read_csv(
-                os.path.join(gt_path, pred_path), names=['pred']).values.flatten()
+                os.path.join(groundtruth_path, pred_path), names=['pred']).values.flatten()
 
             for model_path in models['path']:
                 predictions_path = os.path.join(root_path, 'models', model_path, pred_path)
@@ -391,11 +392,13 @@ def leaderboard_combination(gt_path, orig_models):
                     test_paths[index], names=['pred', 'proba'])
                 # We divide by len(best_indexes)to avoid over-biasing by 
                 # larger combinations
-                y_test_log_probas += \
+                y_test_combined_log_probas += \
                     np.log(test_predictions['proba'].values) / len(best_indexes)
-    
-        print score(y_test_log_probas, y_test)
-        print private_leaderboard_classical(orig_models)
+            test_predictions = pd.read_csv(
+                test_paths[best_indexes[0]], names=['pred', 'proba'])
+            y_test_best_log_probas += np.log(test_predictions['proba'].values)
+        print "foldwise combined test score = ", score(y_test_combined_log_probas, y_test)
+        print "foldwise best test score = ", score(y_test_best_log_probas, y_test)
 
     # leaderboard = models.copy()
     leaderboard = pd.DataFrame({'score': counts}, index=models.index)
