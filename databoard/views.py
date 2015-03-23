@@ -100,8 +100,8 @@ def show_leaderboard():
     l2.index = range(1, len(l2) + 1)
     failed.index = range(1, len(failed) + 1)
 
-    failed["error"] = failed.path
-    failed["error"] = failed.error.map(error_local_to_url)
+    failed.loc[:, "error"] = failed.path
+    failed.loc[:, "error"] = failed.error.map(error_local_to_url)
 
     col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
 
