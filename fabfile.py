@@ -81,7 +81,7 @@ def init_config():
     pass
     # TODO
 
-def setup(wipeall):
+def setup(wipeall=False):
     from databoard.generic import setup_ground_truth
     from databoard.specific import prepare_data
     
