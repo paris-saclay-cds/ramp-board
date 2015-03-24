@@ -72,7 +72,7 @@ def fetch_models():
             db['models'] = pd.DataFrame(columns=columns)
         models = db['models']
         old_submissions = set(models.index)
-        old_failed_submissions = set(models[models['state'] == 'error'].index)
+        old_failed_submissions = set(models[models['state'] == 'error'].index) 
 
     for repo_path in repo_paths:
 
@@ -87,6 +87,16 @@ def fetch_models():
         except Exception as e:
             logger.error('Problem when reading a repo: \n{}'.format(e))
             continue
+
+        for t in repo.tags:
+            tag_name = t.name
+            sha_hasher = hashlib.sha1()
+            sha_hasher.update(team_name)
+            sha_hasher.update(tag_name)
+            tag_name_alias = 'm{}'.format(sha_hasher.hexdigest())
+            if tag_name_alias in old_failed_submissions:
+                logger.debug('Deleting local tag: {}'.format(tag_name))
+                repo.delete_tag(tag_name)
 
         try:
             repo.remotes.origin.pull()
