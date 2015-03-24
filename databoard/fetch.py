@@ -99,6 +99,8 @@ def fetch_models():
                 repo.delete_tag(tag_name)
 
         try:
+            # just in case the working tree is dirty
+            repo.head.reset(index=True, working_tree=True)  
             repo.remotes.origin.pull()
         except Exception as e:
             logger.error('Unable to pull from repo. Possibly no connexion: \n{}'.format(e))
