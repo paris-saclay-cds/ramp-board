@@ -26,7 +26,7 @@ env.use_ssh_config = True
 # the servers where the commands are executed
 env.hosts = ['onevm-222.lal.in2p3.fr']
 production = env.hosts[0]
-dest_path = '/mnt/datacamp/databoard_03'
+dest_path = '/mnt/datacamp/databoard_02_dj'
 server_port = '9002'
 
 logger = logging.getLogger('databoard')
@@ -123,6 +123,12 @@ def fetch():
     from databoard.fetch import fetch_models
     fetch_models()
 
+def repete_fetch(delay='60'):
+    import time
+    while True:
+        fetch()
+        delay = int(os.getenv('FETCH_DELAY', delay))
+        time.sleep(delay)
 
 def leaderboard():
     from databoard.generic import (
