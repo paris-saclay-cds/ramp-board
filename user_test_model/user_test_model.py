@@ -18,8 +18,9 @@ if __name__ == '__main__':
         y_valid_train = y[valid_train_is]
         X_valid_test = X[valid_test_is]
         y_valid_test = y[valid_test_is]
-        clf = model.Classifier()
-        clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
+        #clf = model.Classifier()
+        #clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
+        clf_c = model.Classifier()
         clf_c.fit(X_valid_train, y_valid_train)
         y_valid_pred = clf_c.predict(X_valid_test)
         y_valid_proba = clf_c.predict_proba(X_valid_test)
