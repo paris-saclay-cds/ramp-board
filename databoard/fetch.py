@@ -128,12 +128,20 @@ def fetch_models():
                 logger.debug('Tag alias: {}'.format(tag_name_alias))
                 model_path = os.path.join(repo_path, tag_name_alias)
 
+                commit_time = t.commit.committed_date
+
                 with shelve_database() as db:
 
                     # skip if the model is trained, otherwise, replace the entry with a new one
                     if tag_name_alias in db['models'].index:
                         if db['models'].loc[tag_name_alias, 'state'] == 'trained':
                             continue
+                        elif db['models'].loc[tag_name_alias, 'state'] == 'error':
+                            if db['models'].loc[tag_name_alias, 'timestamp'] >= commit_time:
+                                new_submissions.add(tag_name_alias)
+                                continue
+                            else:
+                                db['models'].drop(tag_name_alias, inplace=True)
                         else:
                             db['models'].drop(tag_name_alias, inplace=True)
 
@@ -143,7 +151,6 @@ def fetch_models():
                     copy_git_tree(t.object.tree, model_path)
                     open(os.path.join(model_path, '__init__.py'), 'a').close()
 
-                    commit_time = t.commit.committed_date
                     relative_path = os.path.join(team_name, tag_name_alias)
 
                     # listing the model files
@@ -160,7 +167,7 @@ def fetch_models():
                     new_entry = pd.DataFrame({
                         'team': team_name, 
                         'model': tag_name, 
-                        'timestamp': t.commit.committed_date, 
+                        'timestamp': commit_time, 
                         'path': os.path.join(team_name, tag_name_alias),
                         'state': "new",
                         'listing': file_listing,
@@ -171,6 +178,7 @@ def fetch_models():
                     db['models'] = db['models'].append(new_entry)
 
             except Exception as e:
+                raise
                 logger.error("%s" % e)
 
     # remove the failed submissions that have been deleted
