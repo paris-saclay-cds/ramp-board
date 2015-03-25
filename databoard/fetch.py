@@ -139,6 +139,7 @@ def fetch_models():
                         elif db['models'].loc[tag_name_alias, 'state'] == 'error':
                             if db['models'].loc[tag_name_alias, 'timestamp'] >= commit_time:
                                 new_submissions.add(tag_name_alias)
+                                old_submissions.remove(tag_name_alias)
                                 continue
                             else:
                                 db['models'].drop(tag_name_alias, inplace=True)
