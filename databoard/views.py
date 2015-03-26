@@ -190,11 +190,20 @@ def add_team_repo():
         repo_name = request.form["name"].strip()
         repo_path = request.form["url"].strip()
         message = ''
-        try:
-            Repo.clone_from(repo_path, os.path.join(repos_path, repo_name))
-        except Exception as e:
-            logger.error('Unable to add a repository: \n{}'.format(e))
-            message = str(e)
+        
+        correct_name = True
+        for name_part in repo_name.split('_'):
+            if not name_part.isalnum():
+                correct_name = False
+                message = 'Incorrect team name. Please only use letters, digits and underscores.'
+                break
+
+        if correct_name: 
+            try:
+                Repo.clone_from(repo_path, os.path.join(repos_path, repo_name))
+            except Exception as e:
+                logger.error('Unable to add a repository: \n{}'.format(e))
+                message = str(e)
 
         if message:
             flash(message)
