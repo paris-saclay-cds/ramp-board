@@ -90,6 +90,7 @@ def show_leaderboard():
         l1 = submissions.join(db['leaderboard1'], how='inner')  # 'inner' means intersection of the indices
         l2 = submissions.join(db['leaderboard2'], how='inner')
         failed = submissions[submissions.state == "error"]
+        new_models = submissions[submissions.state == "new"]
 
         # FIXME: doesn't display failed models when no trained one exists
         if len(submissions) == 0 or len(l1) == 0 or len(l2) == 0:
@@ -99,13 +100,15 @@ def show_leaderboard():
     l1.index = range(1, len(l1) + 1)
     l2.index = range(1, len(l2) + 1)
     failed.index = range(1, len(failed) + 1)
+    new_models.sort(columns='timestamp', inplace=True, ascending=True)
+    new_models.index = range(1, len(new_models) + 1)
 
     failed.loc[:, "error"] = failed.path
     failed.loc[:, "error"] = failed.error.map(error_local_to_url)
 
     col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
 
-    for df in [l1, l2, failed]:
+    for df in [l1, l2, failed, new_models]:
         # dirty hack
         # create a new column 'path_model' and use to generate the link
         df['path_model'] = df.path + ' ' + df.model
@@ -117,23 +120,29 @@ def show_leaderboard():
     common_columns = ['team', col_map['model']]
     scores_columns = common_columns + ['score']
     error_columns = common_columns + ['error']
-    html1 = l1.to_html(columns=scores_columns, **html_params)
-    html2 = l2.to_html(columns=scores_columns, **html_params)
+    l1_html = l1.to_html(columns=scores_columns, **html_params)
+    l2_html = l2.to_html(columns=scores_columns, **html_params)
+    new_html = new_models.to_html(columns=common_columns, **html_params)
 
     if failed.shape[0] == 0:
         failed_html = None
     else:
         failed_html = failed.to_html(columns=error_columns, **html_params)
 
+    if new_models.shape[0] == 0:
+        new_html = None
+
     if '_' in request.path:
-        return jsonify(leaderboard_1=html1,
-                       leaderboard_2=html2,
-                       failed_models=failed_html)
+        return jsonify(leaderboard_1=l1_html,
+                       leaderboard_2=l2_html,
+                       failed_models=failed_html,
+                       new_models=new_html)
     else:
         return render_template('leaderboard.html', 
-                               leaderboard_1=html1,
-                               leaderboard_2=html2,
-                               failed_models=failed_html)
+                               leaderboard_1=l1_html,
+                               leaderboard_2=l2_html,
+                               failed_models=failed_html,
+                               new_models=new_html)
 
 
 @app.route('/models/<team>/<tag>/<filename>')

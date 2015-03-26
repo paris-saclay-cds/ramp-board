@@ -13,9 +13,15 @@
         $("#leaderboard_2").html(data.leaderboard_2);
         $("#failed_models").html(data.failed_models);
         if (! data.failed_models)
-            $("#id_col").hide();
+            $("#id_failed_models").hide();
         else
-            $("#id_col").show();
+            $("#id_failed_models").show();
+
+        $("#new_models").html(data.new_models);
+        if (! data.new_models)
+            $("#id_new_models").hide();
+        else
+            $("#id_new_models").show();
         timeout = setTimeout(load_leaderboards, 3000);  // 3 sec 
       });
   });
@@ -58,11 +64,21 @@
         <h2 class="ui horizontal header divider">Most contributive models</h2>
         <div id='leaderboard_2'>{{leaderboard_2|safe}}</div>
     </div>
+    <div class="column">
+    {% if new_models is not none %}
+      <div id="id_new_models">
+        <h2 class="ui horizontal header divider">New models</h2>
+        <div id='new_models'>{{new_models|safe}}</div>
+      </div>
+    {% endif %} 
+    </div>
+    <div class="column">
     {% if failed_models is not none %}
-    <div class="column" id="id_col">
+      <div id="id_failed_models">
         <h2 class="ui horizontal header divider">Failed models</h2>
         <div id='failed_models'>{{failed_models|safe}}</div>
-    </div>
+      </div>
     {% endif %} 
+    </div>
 </div>
 {% endblock %}
