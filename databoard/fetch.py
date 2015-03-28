@@ -94,6 +94,8 @@ def fetch_models():
             sha_hasher.update(team_name)
             sha_hasher.update(tag_name)
             tag_name_alias = 'm{}'.format(sha_hasher.hexdigest())
+            # We delete tags of failed submissions, so they 
+            # can be refetched
             if tag_name_alias in old_failed_submissions:
                 logger.debug('Deleting local tag: {}'.format(tag_name))
                 repo.delete_tag(tag_name)
