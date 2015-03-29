@@ -22,7 +22,13 @@ from .config_databoard import (
     n_processes,
     cachedir,
 )
-from .specific import test_filename, read_data, split_data, run_model
+from .specific import (
+    test_filename, 
+    read_data, 
+    split_data, 
+    run_model, 
+    Score,
+)
 
 sys.path.append(os.path.dirname(os.path.abspath(models_path)))
 
@@ -183,14 +189,6 @@ def train_model(m_path, X_train, y_train, X_test, y_test, skf):
     # pool.map(partial_save_scores, skf)
     # pool.close()
 
-
-def score(y_pred, y_test):
-    # return 1 - accuracy_score(y_pred, y_test)
-    # return accuracy_score(y_pred, y_test)
-    fpr, tpr, _ = roc_curve(y_test, y_pred)
-    return auc(fpr, tpr)
-
-
 def leaderboard_classical(groundtruth_path, orig_models):
     """Output classical leaderboard (sorted in increasing order by score).
 
@@ -252,7 +250,7 @@ def leaderboard_classical(groundtruth_path, orig_models):
 
             try:
                 #scores = [score(y_pred, y_test) for y_pred in y_preds]
-                scores = [score(y_proba, y_test) for y_proba in y_probas]
+                scores = [Score().score(y_test, y_proba) for y_proba in y_probas]
             except Exception as e:
                 print 'FAILED in one fold (%s)' % pred_path
                 print '++++++++'
@@ -265,9 +263,9 @@ def leaderboard_classical(groundtruth_path, orig_models):
     # TODO: add a score column to the models df
 
     mean_scores /= len(pred_paths)
-    scoring_higher_the_better = True
     leaderboard = pd.DataFrame({'score': mean_scores}, index=models.index)
-    return leaderboard.sort(columns=['score'], ascending=not scoring_higher_the_better)
+    return leaderboard.sort(
+        columns=['score'], ascending=not Score().higher_the_better)
 
 def private_leaderboard_classical(orig_models):
     models = orig_models.sort(columns='timestamp')
@@ -284,9 +282,9 @@ def private_leaderboard_classical(orig_models):
              inp = pd.read_csv(pr_path, names=['pred', 'proba'])
              sum_proba += inp['proba'].values
         y_proba = sum_proba.argsort().argsort()
-        leaderboard.loc[mi, 'score'] = score(y_proba, y_test)
-    scoring_higher_the_better = True
-    return leaderboard.sort(columns=['score'], ascending=not scoring_higher_the_better)
+        leaderboard.loc[mi, 'score'] = Score().score(y_test, y_proba)
+    return leaderboard.sort(
+        columns=['score'], ascending=not Score().higher_the_better)
 
 
 def combine_models_using_probas(y_preds, y_probas, indexes):
@@ -372,8 +370,7 @@ def leaderboard_combination(groundtruth_path, orig_models):
             # y_preds: k vectors of length n
             y_preds = np.transpose(y_preds.values)
             y_probas = np.transpose(y_probas.values)
-            #scores = [score(y_pred, y_valid_test) for y_pred in y_preds]
-            scores = [score(y_proba, y_valid_test) for y_proba in y_probas]
+            scores = [Score().score(y_valid_test, y_proba) for y_proba in y_probas]
             #print scores
             #best_indexes = np.array([np.argmin(scores)])
             best_indexes = np.array([np.argmax(scores)])
@@ -397,8 +394,8 @@ def leaderboard_combination(groundtruth_path, orig_models):
             test_predictions = pd.read_csv(
                 test_paths[best_indexes[0]], names=['pred', 'proba'])
             y_test_best_log_probas += np.log(test_predictions['proba'].values)
-        print "foldwise combined test score = ", score(y_test_combined_log_probas, y_test)
-        print "foldwise best test score = ", score(y_test_best_log_probas, y_test)
+        print "foldwise combined test score = ", Score().score(y_test, y_test_combined_log_probas)
+        print "foldwise best test score = ", Score().score(y_test, y_test_best_log_probas)
 
     # leaderboard = models.copy()
     leaderboard = pd.DataFrame({'score': counts}, index=models.index)
@@ -423,22 +420,18 @@ def best_combine(y_preds, y_probas, y_test, best_indexes):
     any meaningful rules will be associative, in which case we should redo the
     combination from scratch each time the set changes.
     """
-    eps = 0.01/len(y_preds)
-    #y_pred = combine_models(y_preds, y_probas, best_indexes)
     y_pred = combine_models_using_probas(y_preds, y_probas, best_indexes)
     best_index = -1
+    # FIXME: I don't remember why we need eps, but without it the results are
+    # very different. In any case, the Score class should take care of its eps 
+    eps = 0.01/len(y_preds)
     # Combination with replacement, what Caruana suggests. Basically, if a model
     # added several times, it's upweighted.
     for i in range(len(y_preds)):
-        #com_y_pred = combine_models(y_preds, y_probas, np.append(best_indexes, i))
         com_y_pred = combine_models_using_probas(y_preds, y_probas, np.append(best_indexes, i))
-        #print score(y_pred, y_test), score(com_y_pred, y_test)
-        #if score(y_pred, y_test) > score(com_y_pred, y_test) + eps:
-
-        if score(y_pred, y_test) < score(com_y_pred, y_test) - eps:
+        if Score().score(y_test, y_pred) < Score().score(y_test, com_y_pred) - eps:
             y_pred = com_y_pred
             best_index = i
-        #print score(y_pred, y_test), score(com_y_pred, y_test)
     if best_index > -1:
         return np.append(best_indexes, best_index)
     else:

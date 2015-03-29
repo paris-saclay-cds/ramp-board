@@ -7,22 +7,20 @@
 
 from sklearn.metrics import accuracy_score, roc_curve, auc
 
-class ScoreAuc():
+class Score():
     def __init__(self):
-        self.higher_the_better = True
+        self.higher_the_better = True #default
 
+class ScoreAuc(Score):
     def score(self, y_test_list, y_pred_list):
         fpr, tpr, _ = roc_curve(y_test_list, y_pred_list)
         return auc(fpr, tpr)
 
-class ScoreAccuracy():
-    def __init__(self):
-        self.higher_the_better = True
-
+class ScoreAccuracy(Score):
     def score(self, y_test_list, y_pred_list):
         return accuracy_score(y_test_list, y_pred_list)
 
-class ScoreError():
+class ScoreError(Score):
     def __init__(self):
         self.higher_the_better = False
 
