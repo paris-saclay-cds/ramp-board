@@ -135,7 +135,7 @@ def fetch_models():
                 logger.debug('Tag alias: {}'.format(tag_name_alias))
                 model_path = os.path.join(repo_path, tag_name_alias)
 
-                commit_time = t.commit.committed_date
+                new_commit_time = t.commit.committed_date
 
                 with shelve_database() as db:
 
@@ -144,12 +144,14 @@ def fetch_models():
                         if db['models'].loc[tag_name_alias, 'state'] == 'trained':
                             continue
                         elif db['models'].loc[tag_name_alias, 'state'] == 'error':
-                            if db['models'].loc[tag_name_alias, 'timestamp'] >= commit_time:
+
+                            # if the failed model timestamp is changed
+                            if db['models'].loc[tag_name_alias, 'timestamp'] < new_commit_time:
+                                db['models'].drop(tag_name_alias, inplace=True)
                                 new_submissions.add(tag_name_alias)
                                 old_submissions.remove(tag_name_alias)
-                                continue
                             else:
-                                db['models'].drop(tag_name_alias, inplace=True)
+                                continue
                         else:
                             db['models'].drop(tag_name_alias, inplace=True)
 
@@ -175,7 +177,7 @@ def fetch_models():
                     new_entry = pd.DataFrame({
                         'team': team_name, 
                         'model': tag_name, 
-                        'timestamp': commit_time, 
+                        'timestamp': new_commit_time, 
                         'path': os.path.join(team_name, tag_name_alias),
                         'state': "new",
                         'listing': file_listing,

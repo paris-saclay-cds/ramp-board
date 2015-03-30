@@ -30,8 +30,7 @@
 </script>
 {% endif %}
 {% endwith %}
-
-<h1 class="ui horizontal header divider" style="padding: 20px ">Registration</h1>
+<h3 class="ui horizontal header divider" style="padding-bottom: 20px ">Registration</h3>
 <form class="ui form" method="post" action="/add/">
     <div class="two fields">
         <div class="required field">
@@ -49,9 +48,9 @@
         <input type="submit" value="Add" class="ui submit button">
     </div>
 </form>
-
+<h3 class="ui horizontal header divider"><a href='/leaderboard'>Leaderboards</a></h3>
 {% if submodules %}
-<h1 class="ui horizontal header divider">Teams list</h1>
+<h3 class="ui horizontal header divider">Teams</h3>
 <div class="ui fluid stackable grid">
     {% for sm in submodules %}
     <div class="eight wide column">
@@ -67,5 +66,5 @@
     {% endfor %}
 </div>
 {% endif %}
-<h4 class="ui horizontal header divider" style="padding: 20px">Go to the <a href='/leaderboard'>leaderboard</a></h4>
+
 {% endblock %}

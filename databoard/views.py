@@ -105,19 +105,20 @@ def show_leaderboard():
     failed.loc[:, "error"] = failed.path
     failed.loc[:, "error"] = failed.error.map(error_local_to_url)
 
-    col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
+    # col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
 
     for df in [l1, l2, failed, new_models]:
         # dirty hack
         # create a new column 'path_model' and use to generate the link
         df['path_model'] = df.path + ' ' + df.model
         df.model = df.path_model.map(model_with_link)
-        df.rename(
-            columns=col_map, 
-            inplace=True)
+        # df.rename(
+        #     columns=col_map, 
+        #     inplace=True)
 
 
-    common_columns = ['team', col_map['model']]
+    common_columns = ['team', 'model']
+    # common_columns = ['team', col_map['model']]
     scores_columns = common_columns + ['score']
     error_columns = common_columns + ['error']
     l1_html = l1.to_html(columns=scores_columns, **html_params)
