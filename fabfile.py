@@ -81,6 +81,14 @@ def init_config():
     pass
     # TODO
 
+def print_db(table='models'):
+    with shelve_database('c') as db:
+        if table not in db:
+            print('Select one of the following tables:')
+            print '\n'.join('\t- {}'.format(t) for t in db)
+            return
+        print db[table]
+
 def setup(wipeall=False):
     from databoard.generic import setup_ground_truth
     from databoard.specific import prepare_data
