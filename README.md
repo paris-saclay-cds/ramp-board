@@ -1,3 +1,4 @@
+
 # Databoard
 
 ## Dependencies
@@ -41,6 +42,9 @@ The data must be input inside the `input/` folder.
 - `fab clear_db  # clear the database`
 - `fab clear_registrants  # clear the teams repositories`
 - `fab all # equivalent to fab fetch train leaderboard`
+- `fab print_db[:table=<table name>,state=<model state>]`
+	-  e.g. `fab print_db:table=models,state=error`
+	- or simply `fab print_db:models,trained`
 
 
 

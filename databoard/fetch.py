@@ -145,14 +145,15 @@ def fetch_models():
                             continue
                         elif db['models'].loc[tag_name_alias, 'state'] == 'error':
 
-                            # if the failed model timestamp is changed
+                            # if the failed model timestamp has changed
                             if db['models'].loc[tag_name_alias, 'timestamp'] < new_commit_time:
                                 db['models'].drop(tag_name_alias, inplace=True)
-                                new_submissions.add(tag_name_alias)
-                                old_submissions.remove(tag_name_alias)
+                                old_failed_submissions.remove(tag_name_alias)
                             else:
+                                new_submissions.add(tag_name_alias)
                                 continue
                         else:
+                            # default case
                             db['models'].drop(tag_name_alias, inplace=True)
 
                     new_submissions.add(tag_name_alias)
@@ -192,7 +193,7 @@ def fetch_models():
                 logger.error("%s" % e)
 
     # remove the failed submissions that have been deleted
-    removed_failed_submissions = old_failed_submissions - set(new_submissions)
+    removed_failed_submissions = old_failed_submissions - new_submissions
     with shelve_database() as db:
         db['models'].drop(removed_failed_submissions, inplace=True)
 
