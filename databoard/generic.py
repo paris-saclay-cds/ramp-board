@@ -60,7 +60,7 @@ def setup_ground_truth():
     gt_path = os.path.join(root_path, 'ground_truth')
     os.rmdir(gt_path)  # cleanup the ground_truth
     os.mkdir(gt_path)
-    X_train, y_train, X_test, y_test, skf = split_data()
+    X_train, y_train, X_test, y_test, vf_train, vf_test, skf = split_data()
 
     logger.debug('Ground truth files...')
     scores = []
