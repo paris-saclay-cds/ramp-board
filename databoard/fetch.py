@@ -35,6 +35,7 @@ def send_mail_notif(submissions):
 
         body_message = '<b>Dataset</b>: {}<br/>'.format(hackaton_title)
         body_message += '<b>Server</b>: {}<br/>'.format(server_name)
+        body_message += '<b>Folder</b>: {}<br/>'.format(os.path.abspath(root_path))
 
         body_message += 'New submissions: <br/><ul>'
         for team, tag in submissions:
