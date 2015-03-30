@@ -56,6 +56,7 @@
 </div> -->
 
 <div class="ui stackable two column grid">
+    {% if leaderboard_1|length and leaderboard_2|length %}
     <div class="column">
         <h2 class="ui horizontal header divider">Best models</h2>
         <div id='leaderboard_1'>{{leaderboard_1|safe}}</div>
@@ -64,8 +65,9 @@
         <h2 class="ui horizontal header divider">Most contributive models</h2>
         <div id='leaderboard_2'>{{leaderboard_2|safe}}</div>
     </div>
+    {% endif %} 
     <div class="column">
-    {% if new_models is not none %}
+    {% if new_models|length %}
       <div id="id_new_models">
         <h2 class="ui horizontal header divider">New models</h2>
         <div id='new_models'>{{new_models|safe}}</div>
@@ -73,7 +75,7 @@
     {% endif %} 
     </div>
     <div class="column">
-    {% if failed_models is not none %}
+    {% if failed_models|length %}
       <div id="id_failed_models">
         <h2 class="ui horizontal header divider">Failed models</h2>
         <div id='failed_models'>{{failed_models|safe}}</div>

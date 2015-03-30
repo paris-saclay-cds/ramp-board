@@ -48,8 +48,8 @@ def clear_db():
     with shelve_database('c') as db:
         db.clear()
         db['models'] = pd.DataFrame(columns=columns)
-        db['leaderboard1'] = pd.DataFrame(columns=['scores'])
-        db['leaderboard2'] = pd.DataFrame(columns=['scores'])
+        db['leaderboard1'] = pd.DataFrame(columns=['score'])
+        db['leaderboard2'] = pd.DataFrame(columns=['score'])
 
 def clear_registrants():
     import shutil

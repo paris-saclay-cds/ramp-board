@@ -92,9 +92,8 @@ def show_leaderboard():
         failed = submissions[submissions.state == "error"]
         new_models = submissions[submissions.state == "new"]
 
-        # FIXME: doesn't display failed models when no trained one exists
-        if len(submissions) == 0 or len(l1) == 0 or len(l2) == 0:
-            # FIXME: display an empty leaderboard
+        if len(submissions) == 0: # or len(l1) == 0 or len(l2) == 0:
+            # flash('No models submitted yet.')
             return redirect(url_for('list_teams_repos'))
 
     l1.index = range(1, len(l1) + 1)
@@ -117,6 +116,7 @@ def show_leaderboard():
             columns=col_map, 
             inplace=True)
 
+
     common_columns = ['team', col_map['model']]
     scores_columns = common_columns + ['score']
     error_columns = common_columns + ['error']
@@ -124,13 +124,13 @@ def show_leaderboard():
     l2_html = l2.to_html(columns=scores_columns, **html_params)
     new_html = new_models.to_html(columns=common_columns, **html_params)
 
-    if failed.shape[0] == 0:
-        failed_html = None
-    else:
-        failed_html = failed.to_html(columns=error_columns, **html_params)
+    # if failed.shape[0] == 0:
+    #     failed_html = None
+    # else:
+    failed_html = failed.to_html(columns=error_columns, **html_params)
 
-    if new_models.shape[0] == 0:
-        new_html = None
+    # if new_models.shape[0] == 0:
+    #     new_html = None
 
     if '_' in request.path:
         return jsonify(leaderboard_1=l1_html,
