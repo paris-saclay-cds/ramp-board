@@ -100,7 +100,11 @@ def fetch_models():
 
         try:
             # just in case the working tree is dirty
-            repo.head.reset(index=True, working_tree=True)  
+            repo.head.reset(index=True, working_tree=True)
+        except Exception as e:
+            logger.error('Unable to reset to HEAD: \n{}'.format(e))
+
+        try:
             repo.remotes.origin.pull()
         except Exception as e:
             logger.error('Unable to pull from repo. Possibly no connexion: \n{}'.format(e))
