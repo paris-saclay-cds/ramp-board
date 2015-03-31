@@ -39,16 +39,15 @@ def csv_array_to_float(csv_array_string):
 def csv_array_to_float_comma(csv_array_string):
     return map(float, csv_array_string[1:-1].split(','))
 
-def read_data(filename):
-    df = pd.read_csv(filename, index_col=0)
-    y = df[target_column_name].values
-    X = df.drop(target_column_name, axis=1).values
-    return X, y
-
-def read_vf_data(filename):
-    vf_raw = pd.read_csv(filename, index_col=0)
-    vf = vf_raw.applymap(csv_array_to_float_comma)
-    return vf
+# X is a column-indexed dict, y is a numpy array
+def read_data(df_filename, vf_filename):
+    df = pd.read_csv(df_filename, index_col=0)
+    y_array = df[target_column_name].values
+    X_dict = df.drop(target_column_name, axis=1).to_dict(orient='list')
+    vf_raw = pd.read_csv(vf_filename, index_col=0)
+    vf_dict = vf_raw.applymap(csv_array_to_float_comma).to_dict(orient='list')
+    X_dict = dict(X_dict.items() + vf_dict.items())
+    return X_dict, y_array
 
 def prepare_data():
     try:
@@ -86,13 +85,11 @@ def prepare_data():
     vf_test.to_csv(vf_test_filename, index=True)
 
 def split_data():
-    X_train, y_train = read_data(train_filename)
-    X_test, y_test = read_data(test_filename)
-    vf_train = read_vf_data(vf_train_filename)
-    vf_test = read_vf_data(vf_test_filename)
+    X_train, y_train = read_data(train_filename, vf_train_filename)
+    X_test, y_test = read_data(test_filename, vf_test_filename)
     skf = StratifiedShuffleSplit(y_train, n_iter=n_CV, 
         test_size=skf_test_size, random_state=random_state)
-    return X_train, y_train, X_test, y_test, vf_train, vf_test, skf
+    return X_train, y_train, X_test, y_test, skf
 
 def run_model(model, X_valid_train, y_valid_train, X_valid_test, X_test):
     clf = model.Classifier()
