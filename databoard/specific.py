@@ -1,10 +1,12 @@
 import os
 import socket
 import pandas as pd
-
+from importlib import import_module
 from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
 from sklearn.calibration import CalibratedClassifierCV
-from .scores import ScoreAuc as Score
+# menu
+from .scores import ScoreAccuracy as Score
+from .output_type import save_multi_class_ouput as save_model_output
 
 from .config_databoard import (
     local_deployment,
@@ -16,7 +18,7 @@ from .config_databoard import (
 
 hackaton_title = 'Variable star type prediction'
 target_column_name = 'type'
-held_out_test_size = 0.2
+held_out_test_size = 0.7
 skf_test_size = 0.5
 random_state = 57
 raw_filename = os.path.join(raw_data_path, 'data.csv')
@@ -30,28 +32,30 @@ vf_test_filename = os.path.join(private_data_path, 'test_varlength_features.csv'
 n_CV = 2 if local_deployment else 1 * n_processes
 
 def csv_array_to_float(csv_array_string):
-    return map(float, csv_array_string[1:-1].split())
-
-# I'm not prepared for this kind of shit late at night. Pandas can handle 
-# variable length vectors as db elements. In the notebook, when I do to_csv, 
-# it turns them into strings "[elem1 elem2 ... elemn]". When I call python it 
-# turns them into strings "[elem1, elem2, ... ,elemn]" (notice the commas).
-def csv_array_to_float_comma(csv_array_string):
     return map(float, csv_array_string[1:-1].split(','))
 
-# X is a column-indexed dict, y is a numpy array
+def merge_two_dicts(x, y):
+    """Given two dicts, merge them into a new dict as a shallow copy."""
+    z = x.copy()
+    z.update(y)
+    return z
+
+# X is a list of dicts, each dict is indexed by column
 def read_data(df_filename, vf_filename):
     df = pd.read_csv(df_filename, index_col=0)
     y_array = df[target_column_name].values
-    X_dict = df.drop(target_column_name, axis=1).to_dict(orient='list')
+    X_dict = df.drop(target_column_name, axis=1).to_dict(orient='records')
     vf_raw = pd.read_csv(vf_filename, index_col=0)
-    vf_dict = vf_raw.applymap(csv_array_to_float_comma).to_dict(orient='list')
-    X_dict = dict(X_dict.items() + vf_dict.items())
+    vf_dict = vf_raw.applymap(csv_array_to_float).to_dict(orient='records')
+    X_dict = [merge_two_dicts(d_inst, v_inst) for d_inst, v_inst in zip(X_dict, vf_dict)]
     return X_dict, y_array
 
 def prepare_data():
     try:
         df = pd.read_csv(raw_filename, index_col=0)
+        # we drop the "unkown" class for this ramp
+        index_list = df[df['type'] < 5].index
+        df = df.loc[index_list]
     except IOError, e:
         print e
         print raw_filename + " should be placed in " + raw_data_path + " before running make setup"
@@ -59,6 +63,7 @@ def prepare_data():
 
     try:
         vf_raw = pd.read_csv(vf_raw_filename, index_col=0, compression = 'gzip')
+        vf_raw = vf_raw.loc[index_list]
         vf = vf_raw.applymap(csv_array_to_float)
     except IOError, e:
         print e
@@ -85,19 +90,29 @@ def prepare_data():
     vf_test.to_csv(vf_test_filename, index=True)
 
 def split_data():
-    X_train, y_train = read_data(train_filename, vf_train_filename)
-    X_test, y_test = read_data(test_filename, vf_test_filename)
-    skf = StratifiedShuffleSplit(y_train, n_iter=n_CV, 
+    X_train_dict, y_train_array = read_data(train_filename, vf_train_filename)
+    X_test_dict, y_test_array = read_data(test_filename, vf_test_filename)
+    skf = StratifiedShuffleSplit(y_train_array, n_iter=n_CV, 
         test_size=skf_test_size, random_state=random_state)
-    return X_train, y_train, X_test, y_test, skf
+    return X_train_dict, y_train_array, X_test_dict, y_test_array, skf
 
-def run_model(model, X_valid_train, y_valid_train, X_valid_test, X_test):
-    clf = model.Classifier()
+def run_model(module_path, X_valid_train_dict, y_valid_train, 
+              X_valid_test_dict, X_test_dict):
+     # Feature extraction
+    feature_extractor = import_module('.feature_extractor', module_path)
+    fe = feature_extractor.FeatureExtractor()
+    fe.fit(X_valid_train_dict)
+    X_valid_train_array = fe.transform(X_valid_train_dict)
+    X_valid_test_array = fe.transform(X_valid_test_dict)
+    X_test_array = fe.transform(X_test_dict)
+
+    # Classification
+    classifier = import_module('.classifier', module_path)
+    clf = classifier.Classifier()
     clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
-    clf_c.fit(X_valid_train, y_valid_train)
-    y_valid_pred = clf_c.predict(X_valid_test)
-    y_valid_proba = clf_c.predict_proba(X_valid_test)
-    y_test_pred = clf_c.predict(X_test)
-    y_test_proba = clf_c.predict_proba(X_test)
-    return y_valid_pred, y_valid_proba, y_test_pred, y_test_proba
-
+    clf_c.fit(X_valid_train_array, y_valid_train)
+    y_valid_pred = clf_c.predict(X_valid_test_array)
+    y_valid_score = clf_c.predict_proba(X_valid_test_array)
+    y_test_pred = clf_c.predict(X_test_array)
+    y_test_score = clf_c.predict_proba(X_test_array)
+    return y_valid_pred, y_valid_score, y_test_pred, y_test_score

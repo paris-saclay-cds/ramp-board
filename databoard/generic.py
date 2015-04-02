@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 from scipy import io
 from functools import partial
-from importlib import import_module
 from contextlib import contextmanager
 from sklearn.metrics import accuracy_score, roc_curve, auc
 from sklearn.externals.joblib import Parallel, delayed
@@ -26,7 +25,8 @@ from .specific import (
     test_filename, 
     read_data, 
     split_data, 
-    run_model, 
+    run_model,
+    save_model_output,
     Score,
 )
 
@@ -72,39 +72,25 @@ def setup_ground_truth():
         logger.debug(f_name_pred)
         np.savetxt(f_name_pred, y_train[test_is], delimiter="\n", fmt='%d')
 
-
 def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
     valid_train_is, valid_test_is = skf_is
     hasher = hashlib.md5()
     hasher.update(valid_test_is)
     h_str = hasher.hexdigest()
-    f_name_pred = m_path + "/pred_" + h_str + ".csv"
+    f_name_valid = m_path + "/valid_" + h_str + ".csv"
     f_name_test = m_path + "/test_" + h_str + ".csv"
-    X_valid_train = X_train[valid_train_is]
-    y_valid_train = y_train[valid_train_is]
-    X_valid_test = X_train[valid_test_is]
-    y_valid_test = y_train[valid_test_is]
+    logger.info("Hash string : %s" % h_str)
+    # the current paradigm is that X is a list of things (not necessarily np array)
+    X_valid_train = [X_train[i] for i in valid_train_is]
+    y_valid_train = [y_train[i] for i in valid_train_is]
+    X_valid_test = [X_train[i] for i in valid_test_is]
+    y_valid_test = [y_train[i] for i in valid_test_is]
 
     open(m_path + "/__init__.py", 'a').close()  # so to make it importable
     module_path = '.'.join(m_path.lstrip('./').split('/'))
-    model = import_module('.model', module_path)
-
-    y_valid_pred, y_valid_proba, y_test_pred, y_test_proba = run_model(model, 
-        X_valid_train, y_valid_train, X_valid_test, X_test)
-
-    assert len(y_valid_pred) == len(y_valid_proba) == len(X_valid_test)
-    assert len(y_test_pred) == len(y_test_proba) == len(X_test)
-    
-    # y_proba[i] is the the proba of the ith element of y_proba
-    #y_valid_proba = y_valid_proba[:,1].argsort().argsort()
-    #y_test_proba = y_test_proba[:,1].argsort().argsort()
-    #output_valid = np.transpose(np.array([y_valid_pred, y_valid_proba]))
-    output_valid = np.transpose(np.array([y_valid_pred, y_valid_proba[:,1]]))
-    np.savetxt(f_name_pred, output_valid, fmt='%d,%lf')
-    output_test = np.transpose(np.array([y_test_pred, y_test_proba[:,1]]))
-    np.savetxt(f_name_test, output_test, fmt='%d,%lf')
-    print f_name_pred
-
+    model_output = run_model(
+        module_path, X_valid_train, y_valid_train, X_valid_test, X_test)
+    save_model_output(model_output, f_name_valid, f_name_test)
 
 def train_models(models, last_time_stamp=None):
     models_sorted = models[models['state'] == 'new'].sort("timestamp")
@@ -112,6 +98,7 @@ def train_models(models, last_time_stamp=None):
     # FIXME: should not modify the index like this
     # models_sorted.index = range(1, len(models_sorted) + 1)
 
+    logger.info("Reading data")
     X_train, y_train, X_test, y_test, skf = split_data()
 
     # models_sorted = models_sorted[models_sorted.index < 50]  # XXX to make things fast
@@ -144,7 +131,7 @@ def train_models(models, last_time_stamp=None):
                 f.write("{}".format(e))
 
 
-@mem.cache
+#@mem.cache
 def train_model(m_path, X_train, y_train, X_test, y_test, skf):
     """Training a model on all folds and saving the predictions and proba order. The latter we can
     use for computing ROC or cutting ties.
@@ -175,14 +162,16 @@ def train_model(m_path, X_train, y_train, X_test, y_test, skf):
     skf : object
         a cross_validation object with n_folds
     """
-    print m_path
 
     f_name_score = m_path + "/score.csv"
     scores = []
     open(f_name_score, "w").close()
 
-    Parallel(n_jobs=n_processes)(delayed(save_scores)
-        (skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score) for skf_is in skf)
+    for skf_is in skf:
+        save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score)
+    
+#    Parallel(n_jobs=n_processes)(delayed(save_scores)
+#        (skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score) for skf_is in skf)
     
     # partial_save_scores = partial(save_scores, m_path=m_path, X=X, y=y, f_name_score=f_name_score)
     # pool = multiprocessing.Pool(processes=n_processes)

@@ -24,10 +24,10 @@ env.user = 'root'  # the user to use for the remote commands
 env.use_ssh_config = True
 
 # the servers where the commands are executed
-env.hosts = ['onevm-222.lal.in2p3.fr']
+env.hosts = ['onevm-190.lal.in2p3.fr']
 production = env.hosts[0]
-dest_path = '/mnt/datacamp/databoard_02_8080_kegl'
-server_port = '8080'
+dest_path = '/mnt/datacamp/databoard_03_9002_test'
+server_port = '9002'
 
 logger = logging.getLogger('databoard')
 
