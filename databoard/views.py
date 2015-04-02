@@ -40,15 +40,16 @@ logger = logging.getLogger('databoard')
 # app.config['SERVER_NAME'] = server_name + ':' + str(os.getenv('SERV_PORT', port))
 
 def model_with_link(path_model):
-    path, model = path_model.split()
-    filename = '/models/%s/model.py' % (path)
+    path, model, listing = path_model.split()
+    filename = listing.split('|')[0]
+    filename_path = '/models/{}/{}'.format(path, filename)
 
     # if the tag name is too long, shrink it.
     if len(model) > tag_len_limit:
         model_trucated = model[:tag_len_limit] + '[...]'
-        link = '<a href="{0}" class="popup" data-content="{1}">{2}</a>'.format(filename, model, model_trucated)
+        link = '<a href="{0}" class="popup" data-content="{1}">{2}</a>'.format(filename_path, model, model_trucated)
     else:
-        link = '<a href="{0}">{1}</a>'.format(filename, model)
+        link = '<a href="{0}">{1}</a>'.format(filename_path, model)
     return link
 
 
@@ -110,7 +111,7 @@ def show_leaderboard():
     for df in [l1, l2, failed, new_models]:
         # dirty hack
         # create a new column 'path_model' and use to generate the link
-        df['path_model'] = df.path + ' ' + df.model
+        df['path_model'] = df.path + ' ' + df.model + ' ' + df.listing
         df.model = df.path_model.map(model_with_link)
         # df.rename(
         #     columns=col_map, 
