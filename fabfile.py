@@ -147,7 +147,6 @@ def leaderboard(which='all'):
     from databoard.generic import (
         leaderboard_classical, 
         leaderboard_combination, 
-        private_leaderboard_classical,
     )
 
     groundtruth_path = os.path.join(root_path, 'ground_truth')

@@ -19,6 +19,7 @@ from .config_databoard import (
 
 hackaton_title = 'Variable star type prediction'
 target_column_name = 'type'
+labels = [1, 2, 3, 4]
 held_out_test_size = 0.7
 skf_test_size = 0.5
 random_state = 57
