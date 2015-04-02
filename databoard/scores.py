@@ -17,8 +17,10 @@ class ScoreAuc(Score):
         return auc(fpr, tpr)
 
 class ScoreAccuracy(Score):
-    def score(self, y_test_list, y_pred_list):
-        return accuracy_score(y_test_list, y_pred_list)
+    def score(self, ground_truth_list, prediction_list):
+        #pred = [class_label,[class_probas]]
+        return accuracy_score(
+            ground_truth_list, [pred[0] for pred in prediction_list])
 
 class ScoreError(Score):
     def __init__(self):

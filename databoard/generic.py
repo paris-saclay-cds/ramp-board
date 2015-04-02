@@ -26,7 +26,8 @@ from .specific import (
     read_data, 
     split_data, 
     run_model,
-    save_model_output,
+    save_model_predictions,
+    load_model_predictions,
     Score,
 )
 
@@ -49,7 +50,7 @@ def changedir(dir_name):
 
 def setup_ground_truth():
     """Setting up the GroundTruth subdir, saving y_test for each fold in skf. File
-    names are pred_<hash of the test index vector>.csv.
+    names are valid_<hash of the test index vector>.csv.
 
     Parameters
     ----------
@@ -67,19 +68,19 @@ def setup_ground_truth():
     for train_is, test_is in skf:
         hasher = hashlib.md5()
         hasher.update(test_is)
-        h_str = hasher.hexdigest()
-        f_name_pred = gt_path + "/pred_" + h_str + ".csv"
-        logger.debug(f_name_pred)
-        np.savetxt(f_name_pred, y_train[test_is], delimiter="\n", fmt='%d')
+        hash_string = hasher.hexdigest()
+        f_name_valid = gt_path + "/ground_truth_valid_" + hash_string + ".csv"
+        logger.debug(f_name_valid)
+        np.savetxt(f_name_valid, y_train[test_is], delimiter="\n", fmt='%d')
 
 def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
     valid_train_is, valid_test_is = skf_is
     hasher = hashlib.md5()
     hasher.update(valid_test_is)
-    h_str = hasher.hexdigest()
-    f_name_valid = m_path + "/valid_" + h_str + ".csv"
-    f_name_test = m_path + "/test_" + h_str + ".csv"
-    logger.info("Hash string : %s" % h_str)
+    hash_string = hasher.hexdigest()
+    f_name_valid = m_path + "/valid_" + hash_string + ".csv"
+    f_name_test = m_path + "/test_" + hash_string + ".csv"
+    logger.info("Hash string : %s" % hash_string)
     # the current paradigm is that X is a list of things (not necessarily np array)
     X_valid_train = [X_train[i] for i in valid_train_is]
     y_valid_train = [y_train[i] for i in valid_train_is]
@@ -90,7 +91,7 @@ def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
     module_path = '.'.join(m_path.lstrip('./').split('/'))
     model_output = run_model(
         module_path, X_valid_train, y_valid_train, X_valid_test, X_test)
-    save_model_output(model_output, f_name_valid, f_name_test)
+    save_model_predictions(model_output, f_name_valid, f_name_test)
 
 def train_models(models, last_time_stamp=None):
     models_sorted = models[models['state'] == 'new'].sort("timestamp")
@@ -148,7 +149,7 @@ def train_model(m_path, X_train, y_train, X_test, y_test, skf):
     y_proba = clf.predict_proba(X_test)
     return y_pred, y_proba
 
-    File names are pred_<hash of the np.array(test index vector)>.csv. A score.csv file is also
+    File names are valid_<hash of the np.array(test index vector)>.csv. A score.csv file is also
     saved with k_model lines of header
     <hash of the test index vector>, <number of test instances>, <error>
     evaluations are parallel, so the order in score.csv is undefined.
@@ -215,43 +216,42 @@ def leaderboard_classical(groundtruth_path, orig_models):
     # sorting it or explicitly modifying its index
 
     models = orig_models.sort(columns='timestamp')
-    models_paths = [os.path.join(root_path, 'models', path) for path in models['path']]
-    pred_paths = glob.glob(groundtruth_path + "/pred_*")
-    pred_paths = np.array([pred_path.split('/')[-1] for pred_path in pred_paths])
-
-    print pred_paths
-
+    models_paths = [os.path.join(root_path, 'models', path)
+                    for path in models['path']]
+    ground_truth_paths = glob.glob(groundtruth_path + "/ground_truth_valid*")
+    hash_strings = [path.split('/')[-1].split('.')[-2].split('_')[-1]
+                    for path in ground_truth_paths]
     mean_scores = np.zeros(len(models_paths))
 
     if models.shape[0] != 0:
-        for pred_path in pred_paths:
-            y_preds = []
-            y_probas = []
-            y_test = pd.read_csv(groundtruth_path + '/' + pred_path, names=['pred']).values.flatten()
+        for hash_string in hash_strings:
+            ground_truth_path = os.path.join(
+                groundtruth_path, "ground_truth_valid_" + hash_string + ".csv")
+            ground_truth = pd.read_csv(ground_truth_path, 
+                names=['ground_truth']).values.flatten()
+            predictions_list = []
             for model_path in models['path']:
-                predictions_path = os.path.join(root_path, 'models', model_path, pred_path)
-                predictions = pd.read_csv(predictions_path, names=['pred', 'proba'])
-                y_preds.append(predictions['pred'].values) # use m_path as db key
-                y_probas.append(predictions['proba'].values)
-
-            y_preds = np.array(y_preds)
-            y_probas = np.array(y_probas)
-
+                predictions_path = os.path.join(
+                    root_path, "models", model_path, 
+                    "valid_" + hash_string + ".csv")
+                predictions = load_model_predictions(predictions_path)
+                predictions_list.append(predictions)
             try:
                 #scores = [score(y_pred, y_test) for y_pred in y_preds]
-                scores = [Score().score(y_test, y_proba) for y_proba in y_probas]
+                scores = [Score().score(ground_truth, predictions) 
+                          for predictions in predictions_list]
             except Exception as e:
-                print 'FAILED in one fold (%s)' % pred_path
+                print 'FAILED in one fold (%s)' % hash_string
                 print '++++++++'
                 print e
                 print '++++++++'
                 scores = [0.] * len(models_paths)
-            # print scores
             mean_scores += scores
 
     # TODO: add a score column to the models df
 
-    mean_scores /= len(pred_paths)
+    mean_scores /= len(hash_strings)
+    logger.info("classical leaderboard mean valid scores = ", mean_scores)
     leaderboard = pd.DataFrame({'score': mean_scores}, index=models.index)
     return leaderboard.sort(
         columns=['score'], ascending=not Score().higher_the_better)
@@ -335,7 +335,7 @@ def leaderboard_combination(groundtruth_path, orig_models):
     if models.shape[0] != 0:
         # get prediction file names
         pred_paths = glob.glob(os.path.join(
-            models_path, models['path'][0], 'pred_*'))
+            models_path, models['path'][0], 'valid_*'))
         pred_paths = np.array([pred_path.split('/')[-1] for pred_path in pred_paths])
         test_paths = glob.glob(os.path.join(
             models_path, models['path'][0], 'test_*'))
@@ -390,6 +390,11 @@ def leaderboard_combination(groundtruth_path, orig_models):
     leaderboard = pd.DataFrame({'score': counts}, index=models.index)
     return leaderboard.sort(columns=['score'],  ascending=False)
 
+def better_score(score1, score2, eps):
+    if Score().higher_the_better:
+        return score1 > score2 + eps
+    else:
+        return score1 < score2 - eps
 
 def best_combine(y_preds, y_probas, y_test, best_indexes):
     """Finds the model that minimizes the score if added to y_preds[indexes].
@@ -417,8 +422,10 @@ def best_combine(y_preds, y_probas, y_test, best_indexes):
     # Combination with replacement, what Caruana suggests. Basically, if a model
     # added several times, it's upweighted.
     for i in range(len(y_preds)):
-        com_y_pred = combine_models_using_probas(y_preds, y_probas, np.append(best_indexes, i))
-        if Score().score(y_test, y_pred) < Score().score(y_test, com_y_pred) - eps:
+        com_y_pred = combine_models_using_probas(
+            y_preds, y_probas, np.append(best_indexes, i))
+        if better(Score().score(y_test, com_y_pred), 
+                  Score().score(y_test, y_pred)):
             y_pred = com_y_pred
             best_index = i
     if best_index > -1:

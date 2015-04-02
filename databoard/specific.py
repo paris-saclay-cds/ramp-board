@@ -6,7 +6,8 @@ from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
 from sklearn.calibration import CalibratedClassifierCV
 # menu
 from .scores import ScoreAccuracy as Score
-from .output_type import save_multi_class_ouput as save_model_output
+from .output_type import save_multi_class_predictions as save_model_predictions
+from .output_type import load_multi_class_predictions as load_model_predictions
 
 from .config_databoard import (
     local_deployment,
