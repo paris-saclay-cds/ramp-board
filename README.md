@@ -1,3 +1,4 @@
+
 # Databoard
 
 ## Dependencies
@@ -27,8 +28,9 @@ The data must be input inside the `input/` folder.
 - `fab setup`
 	- to reinitialize the registrations and the joblib cache, use `fab setup:wipeall:1`
 - `fab fetch`
-- `fab train`
-- `fab leaderboard`
+- `fab train[:lb=<leaderboard parameters>]`
+- `fab leaderboard[:which=<leaderboards>]`
+	- `which` can be `1`, `2`, or `all` (default).
 
 ### Launch the web server
 
@@ -41,6 +43,9 @@ The data must be input inside the `input/` folder.
 - `fab clear_db  # clear the database`
 - `fab clear_registrants  # clear the teams repositories`
 - `fab all # equivalent to fab fetch train leaderboard`
+- `fab print_db[:table=<table name>,state=<model state>]`
+	-  e.g. `fab print_db:table=models,state=error`
+	- or simply `fab print_db:models,trained`
 
 
 

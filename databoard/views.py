@@ -92,9 +92,8 @@ def show_leaderboard():
         failed = submissions[submissions.state == "error"]
         new_models = submissions[submissions.state == "new"]
 
-        # FIXME: doesn't display failed models when no trained one exists
-        if len(submissions) == 0 or len(l1) == 0 or len(l2) == 0:
-            # FIXME: display an empty leaderboard
+        if len(submissions) == 0: # or len(l1) == 0 or len(l2) == 0:
+            # flash('No models submitted yet.')
             return redirect(url_for('list_teams_repos'))
 
     l1.index = range(1, len(l1) + 1)
@@ -106,31 +105,33 @@ def show_leaderboard():
     failed.loc[:, "error"] = failed.path
     failed.loc[:, "error"] = failed.error.map(error_local_to_url)
 
-    col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
+    # col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
 
     for df in [l1, l2, failed, new_models]:
         # dirty hack
         # create a new column 'path_model' and use to generate the link
         df['path_model'] = df.path + ' ' + df.model
         df.model = df.path_model.map(model_with_link)
-        df.rename(
-            columns=col_map, 
-            inplace=True)
+        # df.rename(
+        #     columns=col_map, 
+        #     inplace=True)
 
-    common_columns = ['team', col_map['model']]
+
+    common_columns = ['team', 'model']
+    # common_columns = ['team', col_map['model']]
     scores_columns = common_columns + ['score']
     error_columns = common_columns + ['error']
     l1_html = l1.to_html(columns=scores_columns, **html_params)
     l2_html = l2.to_html(columns=scores_columns, **html_params)
     new_html = new_models.to_html(columns=common_columns, **html_params)
 
-    if failed.shape[0] == 0:
-        failed_html = None
-    else:
-        failed_html = failed.to_html(columns=error_columns, **html_params)
+    # if failed.shape[0] == 0:
+    #     failed_html = None
+    # else:
+    failed_html = failed.to_html(columns=error_columns, **html_params)
 
-    if new_models.shape[0] == 0:
-        new_html = None
+    # if new_models.shape[0] == 0:
+    #     new_html = None
 
     if '_' in request.path:
         return jsonify(leaderboard_1=l1_html,

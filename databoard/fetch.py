@@ -35,6 +35,7 @@ def send_mail_notif(submissions):
 
         body_message = '<b>Dataset</b>: {}<br/>'.format(hackaton_title)
         body_message += '<b>Server</b>: {}<br/>'.format(server_name)
+        body_message += '<b>Folder</b>: {}<br/>'.format(os.path.abspath(root_path))
 
         body_message += 'New submissions: <br/><ul>'
         for team, tag in submissions:
@@ -102,7 +103,11 @@ def fetch_models():
 
         try:
             # just in case the working tree is dirty
-            repo.head.reset(index=True, working_tree=True)  
+            repo.head.reset(index=True, working_tree=True)
+        except Exception as e:
+            logger.error('Unable to reset to HEAD: \n{}'.format(e))
+
+        try:
             repo.remotes.origin.pull()
         except Exception as e:
             logger.error('Unable to pull from repo. Possibly no connexion: \n{}'.format(e))
@@ -130,7 +135,7 @@ def fetch_models():
                 logger.debug('Tag alias: {}'.format(tag_name_alias))
                 model_path = os.path.join(repo_path, tag_name_alias)
 
-                commit_time = t.commit.committed_date
+                new_commit_time = t.commit.committed_date
 
                 with shelve_database() as db:
 
@@ -139,13 +144,16 @@ def fetch_models():
                         if db['models'].loc[tag_name_alias, 'state'] == 'trained':
                             continue
                         elif db['models'].loc[tag_name_alias, 'state'] == 'error':
-                            if db['models'].loc[tag_name_alias, 'timestamp'] >= commit_time:
-                                new_submissions.add(tag_name_alias)
-                                old_submissions.remove(tag_name_alias)
-                                continue
-                            else:
+
+                            # if the failed model timestamp has changed
+                            if db['models'].loc[tag_name_alias, 'timestamp'] < new_commit_time:
                                 db['models'].drop(tag_name_alias, inplace=True)
+                                old_failed_submissions.remove(tag_name_alias)
+                            else:
+                                new_submissions.add(tag_name_alias)
+                                continue
                         else:
+                            # default case
                             db['models'].drop(tag_name_alias, inplace=True)
 
                     new_submissions.add(tag_name_alias)
@@ -170,7 +178,7 @@ def fetch_models():
                     new_entry = pd.DataFrame({
                         'team': team_name, 
                         'model': tag_name, 
-                        'timestamp': commit_time, 
+                        'timestamp': new_commit_time, 
                         'path': os.path.join(team_name, tag_name_alias),
                         'state': "new",
                         'listing': file_listing,
@@ -185,7 +193,7 @@ def fetch_models():
                 logger.error("%s" % e)
 
     # remove the failed submissions that have been deleted
-    removed_failed_submissions = old_failed_submissions - set(new_submissions)
+    removed_failed_submissions = old_failed_submissions - new_submissions
     with shelve_database() as db:
         db['models'].drop(removed_failed_submissions, inplace=True)
 

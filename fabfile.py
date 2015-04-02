@@ -48,8 +48,8 @@ def clear_db():
     with shelve_database('c') as db:
         db.clear()
         db['models'] = pd.DataFrame(columns=columns)
-        db['leaderboard1'] = pd.DataFrame(columns=['scores'])
-        db['leaderboard2'] = pd.DataFrame(columns=['scores'])
+        db['leaderboard1'] = pd.DataFrame(columns=['score'])
+        db['leaderboard2'] = pd.DataFrame(columns=['score'])
 
 def clear_registrants():
     import shutil
@@ -80,6 +80,19 @@ def clear_groundtruth():
 def init_config():
     pass
     # TODO
+
+def print_db(table='models', state=None):
+    with shelve_database('c') as db:
+        if table not in db:
+            print('Select one of the following tables:')
+            print '\n'.join('\t- {}'.format(t) for t in db)
+            return
+        df = db[table]
+    if not state:
+        print df
+    else:
+        print df[df.state == state]
+
 
 def setup(wipeall=False):
     from databoard.generic import setup_ground_truth
@@ -130,7 +143,7 @@ def repeat_fetch(delay='60'):
         delay = int(os.getenv('FETCH_DELAY', delay))
         time.sleep(delay)
 
-def leaderboard():
+def leaderboard(which='all'):
     from databoard.generic import (
         leaderboard_classical, 
         leaderboard_combination, 
@@ -145,23 +158,24 @@ def leaderboard():
         trained_models = submissions[submissions.state == "trained"]
         # trained_models = pd.read_csv(submissions_path)
 
-    l1 = leaderboard_classical(groundtruth_path, trained_models)
-    l2 = leaderboard_combination(groundtruth_path, trained_models)
+    if which in ('all', '1'):
+        l1 = leaderboard_classical(groundtruth_path, trained_models)
+        # The following assignments only work because leaderboard_classical & co
+        # are idempotent.
+        # FIXME (potentially)
+        with shelve_database() as db:
+            db['leaderboard1'] = l1
+
+    if which in ('all', '2'):
+        l2 = leaderboard_combination(groundtruth_path, trained_models)
+        # FIXME: same as above
+        with shelve_database() as db:
+            db['leaderboard2'] = l2
+
     # l3 = private_leaderboard_classical(trained_models)
 
-    # The following assignments only work because leaderboard_classical & co
-    # are idempotent.
-    # FIXME (potentially)
-    with shelve_database() as db:
-        db['leaderboard1'] = l1
-        db['leaderboard2'] = l2
 
-    # l1.to_csv("output/leaderboard1.csv", index=False)
-    # l2.to_csv("output/leaderboard2.csv", index=False)
-    # l3.to_csv("output/leaderboard3.csv", index=False)
-
-
-def train():
+def train(lb=None):
     from databoard.generic import train_models
 
     with shelve_database() as db:
@@ -176,8 +190,8 @@ def train():
         logger.debug(models[models['state'] == "trained"])
         logger.debug(models[models['state'] == "error"])
 
-    # trained_models.to_csv("output/trained_submissions.csv", index=False)
-    # failed_models.to_csv("output/failed_submissions.csv", index=False)
+    if lb:
+        leaderboard(lb)
 
 
 def serve(port=8080):
