@@ -174,7 +174,7 @@ def leaderboard(which='all'):
     # l3 = private_leaderboard_classical(trained_models)
 
 
-def train(lb=None):
+def train(lb=None, state=False):
     from databoard.generic import train_models
 
     with shelve_database() as db:
@@ -182,12 +182,15 @@ def train(lb=None):
 
     # models = pd.read_csv("output/submissions.csv")
     # trained_models, failed_models = train_models(models)
-    train_models(models)
+    train_models(models, state=state)
+
+    idx = models.index
 
     with shelve_database() as db:
-        db['models'] = models
-        logger.debug(models[models['state'] == "trained"])
-        logger.debug(models[models['state'] == "error"])
+        db['models'].loc[idx, :] = models
+
+    logger.debug(models[models['state'] == "trained"])
+    logger.debug(models[models['state'] == "error"])
 
     if lb:
         leaderboard(lb)
