@@ -1,5 +1,5 @@
 import numpy as np
-
+#
 class FeatureExtractor():
 
     def __init__(self):
@@ -17,9 +17,9 @@ class FeatureExtractor():
             'asym_b', 
             'asym_r', 
             'log_p_not_variable', 
-            'flux_b', 
-            'flux_r', 
+            'sigma_flux_b', 
+            'sigma_flux_r', 
             'quality', 
-            'div_period'
+            'div_period',
         ]
         return np.array([[instance[col] for col in cols] for instance in X_dict])
