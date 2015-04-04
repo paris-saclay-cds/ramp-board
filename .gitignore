@@ -10,3 +10,6 @@ joblib
 *.lock
 *.db
 shelve_manager_local.ipynb
+data
+output
+

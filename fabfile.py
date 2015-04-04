@@ -240,6 +240,7 @@ def publish():
                   '*.log',
                   '.git*',
                   '.gitignore',
+                  '*.bak',
                   '*.pyc'],
         local_dir='.',
         delete=False,
