@@ -99,7 +99,8 @@ def train_models(models, last_time_stamp=None, state=None):
 
     if not state:
         state = 'new'
-    elif state == 'all': 
+    
+    if state == 'all': 
         models_sorted = models.sort("timestamp")
     else:
         models_sorted = models[models['state'] == state].sort("timestamp")
