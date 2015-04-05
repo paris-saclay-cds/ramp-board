@@ -32,8 +32,6 @@ from .specific import (
     labels,
 )
 
-sys.path.append(os.path.dirname(os.path.abspath(models_path)))
-
 mem = Memory(cachedir=cachedir)
 logger = logging.getLogger('databoard')
 
@@ -91,14 +89,21 @@ def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
     y_valid_test = [y_train[i] for i in valid_test_is]
 
     open(m_path + "/__init__.py", 'a').close()  # so to make it importable
-    module_path = '.'.join(m_path.lstrip('./').split('/'))
+    module_path = m_path.lstrip('./').replace('/', '.')
     model_output = run_model(
         module_path, X_valid_train, y_valid_train, X_valid_test, X_test)
     save_model_predictions(model_output, f_name_valid, f_name_test)
 
-def train_models(models, last_time_stamp=None):
-    models_sorted = models[models['state'] == 'new'].sort("timestamp")
 
+def train_models(models, last_time_stamp=None, state=None):
+
+    if not state:
+        state = 'new'
+    models_sorted = models[models['state'] == state].sort("timestamp")
+        
+    if len(models_sorted) == 0:
+        logger.info("No models to train.")
+        return
     # FIXME: should not modify the index like this
     # models_sorted.index = range(1, len(models_sorted) + 1)
 
@@ -113,7 +118,7 @@ def train_models(models, last_time_stamp=None):
         model = m['model']
         timestamp = m['timestamp']
         path = m['path']
-        m_path = os.path.join(root_path, 'models', path)
+        m_path = os.path.join(models_path, path)
 
         logger.info("Training : %s" % m_path)
 
@@ -233,7 +238,7 @@ def leaderboard_classical(ground_truth_path, orig_models):
     # sorting it or explicitly modifying its index
 
     models = orig_models.sort(columns='timestamp')
-    models_paths = [os.path.join(root_path, 'models', path)
+    models_paths = [os.path.join(models_path, path)
                     for path in models['path']]
     ground_truth_filanames = glob.glob(ground_truth_path + "/ground_truth_valid*")
     ground_truth_test = pd.read_csv(
@@ -337,7 +342,7 @@ def leaderboard_combination(ground_truth_path, orig_models):
     models = orig_models.sort(columns='timestamp')
     counts = np.zeros(len(models), dtype=int)
     if models.shape[0] != 0:
-        models_paths = [os.path.join(root_path, 'models', path)
+        models_paths = [os.path.join(models_path, path)
                         for path in models['path']]
         ground_truth_filanames = glob.glob(ground_truth_path + "/ground_truth_valid*")
         hash_strings = [hash_string_from_path(path) for path in ground_truth_filanames]

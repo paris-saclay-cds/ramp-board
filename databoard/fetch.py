@@ -18,7 +18,7 @@ from databoard import app
 from .model import shelve_database, columns, ModelState
 from .generic import changedir
 from .specific import hackaton_title
-from .config_databoard import repos_path, root_path, tag_len_limit, notification_recipients, server_name
+from .config_databoard import repos_path, root_path, tag_len_limit, notification_recipients, server_name, models_path
 
 
 logger = logging.getLogger('databoard')
@@ -60,10 +60,9 @@ def fetch_models():
     base_path = repos_path
     repo_paths = sorted(glob.glob(os.path.join(base_path, '*')))
 
-    submissions_path = os.path.join(root_path, 'models')
-
-    if not os.path.exists(submissions_path):
-        os.mkdir(submissions_path)
+    if not os.path.exists(models_path):
+        logger.warning("Models folder didn't exist. An empty folder was created.")
+        os.mkdir(models_path)
 
     new_submissions = set()  # a set of submission hashes
 
@@ -112,7 +111,7 @@ def fetch_models():
         except Exception as e:
             logger.error('Unable to pull from repo. Possibly no connexion: \n{}'.format(e))
 
-        repo_path = os.path.join(submissions_path, team_name)
+        repo_path = os.path.join(models_path, team_name)
         if not os.path.exists(repo_path):
             os.mkdir(repo_path)
         open(os.path.join(repo_path, '__init__.py'), 'a').close()
