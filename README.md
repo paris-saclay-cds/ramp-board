@@ -28,7 +28,7 @@ The data must be input inside the `input/` folder.
 - `fab setup`
 	- to reinitialize the registrations and the joblib cache, use `fab setup:wipeall:1`
 - `fab fetch`
-- `fab train[:lb=<leaderboard parameters>][state=<specific state to train>]`
+- `fab train[:lb=<leaderboard parameters>][state=<specific state to train>]`  # use 'all' to force train all the models
 - `fab leaderboard[:which=<leaderboards>]`
 	- `which` can be `1`, `2`, or `all` (default).
 

@@ -20,8 +20,7 @@ from .config_databoard import (
     root_path
 )
 
-# sys.path.append(os.path.dirname(os.path.abspath(models_path)))
-print 'Zlabiyyaaa', os.path.abspath(models_path)
+sys.path.append(os.path.dirname(os.path.abspath(models_path)))
 
 hackaton_title = 'Variable star type prediction'
 target_column_name = 'type'

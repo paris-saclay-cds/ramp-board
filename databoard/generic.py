@@ -99,7 +99,10 @@ def train_models(models, last_time_stamp=None, state=None):
 
     if not state:
         state = 'new'
-    models_sorted = models[models['state'] == state].sort("timestamp")
+    elif state == 'all': 
+        models_sorted = models.sort("timestamp")
+    else:
+        models_sorted = models[models['state'] == state].sort("timestamp")
         
     if len(models_sorted) == 0:
         logger.info("No models to train.")
@@ -140,7 +143,7 @@ def train_models(models, last_time_stamp=None, state=None):
                 f.write("{}".format(e))
 
 
-#@mem.cache
+# @mem.cache
 def train_model(m_path, X_train, y_train, X_test, y_test, skf):
     """Training a model on all folds and saving the predictions and proba order. The latter we can
     use for computing ROC or cutting ties.
@@ -173,14 +176,13 @@ def train_model(m_path, X_train, y_train, X_test, y_test, skf):
     """
 
     f_name_score = m_path + "/score.csv"
-    scores = []
     open(f_name_score, "w").close()
 
     for skf_is in skf:
         save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score)
     
-#    Parallel(n_jobs=n_processes)(delayed(save_scores)
-#        (skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score) for skf_is in skf)
+    # Parallel(n_jobs=n_processes)(delayed(save_scores)
+    #     (skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score) for skf_is in skf)
     
     # partial_save_scores = partial(save_scores, m_path=m_path, X=X, y=y, f_name_score=f_name_score)
     # pool = multiprocessing.Pool(processes=n_processes)
