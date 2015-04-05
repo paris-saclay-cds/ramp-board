@@ -63,6 +63,7 @@ def fetch_models():
     if not os.path.exists(models_path):
         logger.warning("Models folder didn't exist. An empty folder was created.")
         os.mkdir(models_path)
+    open(os.path.join(models_path, '__init__.py'), 'a').close()
 
     new_submissions = set()  # a set of submission hashes
 

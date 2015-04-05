@@ -1,4 +1,5 @@
 import os
+import sys
 import socket
 import pandas as pd
 from importlib import import_module
@@ -15,7 +16,12 @@ from .config_databoard import (
     public_data_path,
     private_data_path,
     n_processes,
+    models_path,
+    root_path
 )
+
+# sys.path.append(os.path.dirname(os.path.abspath(models_path)))
+print 'Zlabiyyaaa', os.path.abspath(models_path)
 
 hackaton_title = 'Variable star type prediction'
 target_column_name = 'type'
