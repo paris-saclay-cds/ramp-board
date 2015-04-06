@@ -78,12 +78,19 @@ def list_teams_repos():
 @app.route("/leaderboard")
 def show_leaderboard():
     html_params = dict(escape=False,
-                       index=True,
+                       index=False,
                        max_cols=None,
                        max_rows=None,
                        justify='left',
-                       classes=['ui', 'table', 'blue'],
                        )
+    table_classes = ['ui', 'blue', 'celled', 'table']
+    sortable_table_classes = table_classes + ['sortable']
+
+    # col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
+    common_columns = ['team', 'model']
+    # common_columns = ['team', col_map['model']]
+    scores_columns = ['rank'] + common_columns + ['score']
+    error_columns = common_columns + ['error']
 
     with shelve_database() as db:
         submissions = db['models']
@@ -106,8 +113,10 @@ def show_leaderboard():
     failed.loc[:, "error"] = failed.path
     failed.loc[:, "error"] = failed.error.map(error_local_to_url)
 
-    # col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
-
+    # adding the rank column
+    for df in [l1, l2]:
+        df['rank'] = df.index
+    
     for df in [l1, l2, failed, new_models]:
         # dirty hack
         # create a new column 'path_model' and use to generate the link
@@ -117,19 +126,14 @@ def show_leaderboard():
         #     columns=col_map, 
         #     inplace=True)
 
-
-    common_columns = ['team', 'model']
-    # common_columns = ['team', col_map['model']]
-    scores_columns = common_columns + ['score']
-    error_columns = common_columns + ['error']
-    l1_html = l1.to_html(columns=scores_columns, **html_params)
-    l2_html = l2.to_html(columns=scores_columns, **html_params)
-    new_html = new_models.to_html(columns=common_columns, **html_params)
+    l1_html = l1.to_html(columns=scores_columns, classes=sortable_table_classes, **html_params)
+    l2_html = l2.to_html(columns=scores_columns, classes=sortable_table_classes, **html_params)
+    new_html = new_models.to_html(columns=common_columns, classes=table_classes, **html_params)
 
     # if failed.shape[0] == 0:
     #     failed_html = None
     # else:
-    failed_html = failed.to_html(columns=error_columns, **html_params)
+    failed_html = failed.to_html(columns=error_columns, classes=table_classes, **html_params)
 
     # if new_models.shape[0] == 0:
     #     new_html = None

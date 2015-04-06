@@ -1,4 +1,8 @@
 {% extends "base.html" %}
+{% block head %}
+    {{ super() }}
+    <script src="{{ url_for('static', filename='tablesort.js') }}"></script>
+{% endblock %}
 {% block title %}Leaderboards{% endblock %}
 {% block content %}
 
@@ -7,47 +11,63 @@
 </script>
 
 <script type=text/javascript>
-  $(function load_leaderboards() {
-      $.getJSON($SCRIPT_ROOT + '/_leaderboard', {}, function(data) {
-        $("#leaderboard_1").html(data.leaderboard_1);
-        $("#leaderboard_2").html(data.leaderboard_2);
-        $("#failed_models").html(data.failed_models);
-        if (! data.failed_models)
-            $("#id_failed_models").hide();
-        else
-            $("#id_failed_models").show();
+  // var $checkbox = $("#autorefresh");
+  // $checkbox.checkbox({
+  //   onEnable: function() {
+  //       timeout = setTimeout(updateLeaderboards, 3000);
+  //       console.log("onEnable!" + $checkbox.prop("checked"));
+  //   },
+  //   onDisable: function() {
+  //       clearTimeout(timeout);
+  //       console.log("onDisable!" + $checkbox.prop("checked"));
+  //   }
+  // });
 
-        $("#new_models").html(data.new_models);
-        if (! data.new_models)
-            $("#id_new_models").hide();
-        else
-            $("#id_new_models").show();
-        timeout = setTimeout(load_leaderboards, 3000);  // 3 sec 
-      });
-  });
-  
-  var $checkbox = $("#autorefresh");
-  $checkbox.checkbox({
-    onEnable: function() {
-        timeout = setTimeout(load_leaderboards, 3000);
-        console.log("onEnable!" + $checkbox.prop("checked"));
-    },
-    onDisable: function() {
-        clearTimeout(timeout);
-        console.log("onDisable!" + $checkbox.prop("checked"));
-    }
-  });
+  // $('.popup').popup({
+  //   inline   : true,
+  //   hoverable: true,
+  //   position : 'bottom left',
+  //   delay: {
+  //       show: 300,
+  //       hide: 800
+  //   }
+  // });
+</script>
+<script type=text/javascript>
+  function sortTables() {
+    $('table.dataframe thead tr th:first-child').data('sortBy', function(th, td, tablesort) {
+          return parseInt(td.text(), 10);
+    });
+    $('table.dataframe thead th').filter(":contains('score')").data('sortBy', function(th, td, tablesort) {
+          return parseFloat(td.text());
+    });
+    $('table.dataframe thead th').filter(":contains('score')").addClass('descending');
+    $('.sortable.table').tablesort();
+  }
 
-  $('.popup').popup({
-    inline   : true,
-    hoverable: true,
-    position : 'bottom left',
-    delay: {
-        show: 300,
-        hide: 800
-    }
-  });
+  function updateLeaderboards() {
+    $.getJSON($SCRIPT_ROOT + '/_leaderboard', {}, function(data) {
+      $("#leaderboard_1").html(data.leaderboard_1);
+      $("#leaderboard_2").html(data.leaderboard_2);
+      $("#failed_models").html(data.failed_models);
+      $("#new_models").html(data.new_models);
+      // if (! data.new_models)
+      //     $("#id_new_models").hide();
+      // else
+      //     $("#id_new_models").show();
+      // if (! data.failed_models)
+      //     $("#id_failed_models").hide();
+      // else
+      //     $("#id_failed_models").show();
+    });
+    timeout = setTimeout(updateLeaderboards, 3000);  // 3 sec 
+    sortTables();
+  }
 
+  $(document).ready(function() {
+    sortTables();
+    // timeout = setTimeout(updateLeaderboards, 3000);  // 3 sec 
+  });
 </script>
 
 <!-- <div class="ui toggle checkbox" id="autorefresh">
@@ -83,4 +103,5 @@
     {% endif %} 
     </div>
 </div>
+
 {% endblock %}
