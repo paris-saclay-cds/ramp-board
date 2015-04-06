@@ -109,7 +109,7 @@ def run_model(module_path, X_valid_train_dict, y_valid_train,
      # Feature extraction
     feature_extractor = import_module('.feature_extractor', module_path)
     fe = feature_extractor.FeatureExtractor()
-    fe.fit(X_valid_train_dict)
+    fe.fit(X_valid_train_dict, y_valid_train)
     X_valid_train_array = fe.transform(X_valid_train_dict)
     X_valid_test_array = fe.transform(X_valid_test_dict)
     X_test_array = fe.transform(X_test_dict)
