@@ -48,13 +48,14 @@ def merge_two_dicts(x, y):
     return z
 
 # X is a list of dicts, each dict is indexed by column
-def read_data(df_filename, vf_filename):
-    df = pd.read_csv(df_filename, index_col=0)
-    y_array = df[target_column_name].values
-    X_dict = df.drop(target_column_name, axis=1).to_dict(orient='records')
-    vf_raw = pd.read_csv(vf_filename, index_col=0)
-    vf_dict = vf_raw.applymap(csv_array_to_float).to_dict(orient='records')
-    X_dict = [merge_two_dicts(d_inst, v_inst) for d_inst, v_inst in zip(X_dict, vf_dict)]
+def read_data(static_filename, variable_filename):
+    static_df = pd.read_csv(static_filename, index_col=0)
+    y_array = static_df[target_column_name].values
+    X_static_dict = static_df.drop(target_column_name, axis=1).to_dict(orient='records')
+    variable_df = pd.read_csv(variable_filename, index_col=0)
+    X_variable_dict = variable_df.applymap(csv_array_to_float).to_dict(orient='records')
+    X_dict = [merge_two_dicts(d_inst, v_inst)
+              for d_inst, v_inst in zip(X_static_dict, X_variable_dict)]
     return X_dict, y_array
 
 def prepare_data():
