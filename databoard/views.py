@@ -100,22 +100,25 @@ def show_leaderboard():
         failed = submissions[submissions.state == "error"]
         new_models = submissions[submissions.state == "new"]
 
-        if len(submissions) == 0: # or len(l1) == 0 or len(l2) == 0:
-            # flash('No models submitted yet.')
-            return redirect(url_for('list_teams_repos'))
-
-    l1.index = range(1, len(l1) + 1)
-    l2.index = range(1, len(l2) + 1)
-    failed.index = range(1, len(failed) + 1)
+    if len(submissions) == 0: # or len(l1) == 0 or len(l2) == 0:
+        # flash('No models submitted yet.')
+        return redirect(url_for('list_teams_repos'))
+    
+    failed.sort(columns='timestamp', inplace=True, ascending=True)
     new_models.sort(columns='timestamp', inplace=True, ascending=True)
-    new_models.index = range(1, len(new_models) + 1)
+
+    # l1.index = range(1, len(l1) + 1)
+    # l2.index = range(1, len(l2) + 1)
+    # failed.index = range(1, len(failed) + 1)
+    # new_models.index = range(1, len(new_models) + 1)
 
     failed.loc[:, "error"] = failed.path
     failed.loc[:, "error"] = failed.error.map(error_local_to_url)
 
     # adding the rank column
     for df in [l1, l2]:
-        df['rank'] = df.index
+        df.sort(columns='score', inplace=True, ascending=False)
+        df['rank'] = range(1, len(df) + 1)
     
     for df in [l1, l2, failed, new_models]:
         # dirty hack
