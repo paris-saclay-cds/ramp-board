@@ -32,8 +32,26 @@ from .specific import (
     labels,
 )
 
+# We needed to make the sets global because Parallel hung
+# when we passed a list of dictionaries to the function
+# to be dispatched, save_scores()
+class DataSets():
+
+    def __init__(self):
+        pass
+
+    def set_sets(self, X_train, y_train, X_test, y_test):
+        self.X_train = X_train
+        self.y_train = y_train
+        self.X_test = X_test
+        self.y_test = y_test
+
+    def get_sets(self):
+        return self.X_train, self.y_train, self.X_test, self.y_test
+
 mem = Memory(cachedir=cachedir)
 logger = logging.getLogger('databoard')
+data_sets = DataSets()
 
 @contextmanager  
 def changedir(dir_name):
@@ -74,8 +92,9 @@ def setup_ground_truth():
         logger.debug(f_name_valid)
         np.savetxt(f_name_valid, y_train[test_is], delimiter="\n", fmt='%d')
 
-def save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score):
+def save_scores(skf_is, m_path):
     valid_train_is, valid_test_is = skf_is
+    X_train, y_train, X_test, y_test = data_sets.get_sets()
     hasher = hashlib.md5()
     hasher.update(valid_test_is)
     hash_string = hasher.hexdigest()
@@ -113,6 +132,7 @@ def train_models(models, last_time_stamp=None, state=None):
 
     logger.info("Reading data")
     X_train, y_train, X_test, y_test, skf = split_data()
+    data_sets.set_sets(X_train, y_train, X_test, y_test)
 
     # models_sorted = models_sorted[models_sorted.index < 50]  # XXX to make things fast
 
@@ -127,7 +147,7 @@ def train_models(models, last_time_stamp=None, state=None):
         logger.info("Training : %s" % m_path)
 
         try:
-            train_model(m_path, X_train, y_train, X_test, y_test, skf)
+            train_model(m_path, skf)
             # failed_models.drop(idx, axis=0, inplace=True)
             models.loc[idx, 'state'] = "trained"
         except Exception, e:
@@ -144,8 +164,8 @@ def train_models(models, last_time_stamp=None, state=None):
                 f.write("{}".format(e))
 
 
-# @mem.cache
-def train_model(m_path, X_train, y_train, X_test, y_test, skf):
+@mem.cache
+def train_model(m_path, skf):
     """Training a model on all folds and saving the predictions and proba order. The latter we can
     use for computing ROC or cutting ties.
 
@@ -176,14 +196,13 @@ def train_model(m_path, X_train, y_train, X_test, y_test, skf):
         a cross_validation object with n_folds
     """
 
-    f_name_score = m_path + "/score.csv"
-    open(f_name_score, "w").close()
-
-    for skf_is in skf:
-        save_scores(skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score)
+    #Uncomment this and comment out the follwing two lines if
+    #parallel training is not working
+    #for skf_is in skf:
+    #    save_scores(skf_is, m_path)
     
-    # Parallel(n_jobs=n_processes)(delayed(save_scores)
-    #     (skf_is, m_path, X_train, y_train, X_test, y_test, f_name_score) for skf_is in skf)
+    Parallel(n_jobs=n_processes)(delayed(save_scores)
+                                 (skf_is, m_path) for skf_is in skf)
     
     # partial_save_scores = partial(save_scores, m_path=m_path, X=X, y=y, f_name_score=f_name_score)
     # pool = multiprocessing.Pool(processes=n_processes)
