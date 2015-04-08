@@ -89,14 +89,13 @@ def show_leaderboard():
     # col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
     common_columns = ['team', 'model']
     # common_columns = ['team', col_map['model']]
-    scores_columns = ['rank'] + common_columns + ['score']
+    scores_columns = ['rank'] + common_columns + ['score', 'originality']
     error_columns = common_columns + ['error']
 
     with shelve_database() as db:
         submissions = db['models']
-
-        l1 = submissions.join(db['leaderboard1'], how='inner')  # 'inner' means intersection of the indices
-        l2 = submissions.join(db['leaderboard2'], how='inner')
+        # 'inner' means intersection of the indices
+        lb = submissions.join(db['leaderboard1'], how='inner').join(db['leaderboard2'], how='inner')
         failed = submissions[submissions.state == "error"]
         new_models = submissions[submissions.state == "new"]
 
@@ -116,11 +115,10 @@ def show_leaderboard():
     failed.loc[:, "error"] = failed.error.map(error_local_to_url)
 
     # adding the rank column
-    for df in [l1, l2]:
-        df.sort(columns='score', inplace=True, ascending=False)
-        df['rank'] = range(1, len(df) + 1)
+    lb.sort(columns='score', inplace=True, ascending=False)
+    lb['rank'] = range(1, len(lb) + 1)
     
-    for df in [l1, l2, failed, new_models]:
+    for df in [lb, failed, new_models]:
         # dirty hack
         # create a new column 'path_model' and use to generate the link
         df['path_model'] = df.path + ' ' + df.model + ' ' + df.listing
@@ -129,8 +127,7 @@ def show_leaderboard():
         #     columns=col_map, 
         #     inplace=True)
 
-    l1_html = l1.to_html(columns=scores_columns, classes=sortable_table_classes, **html_params)
-    l2_html = l2.to_html(columns=scores_columns, classes=sortable_table_classes, **html_params)
+    lb_html = lb.to_html(columns=scores_columns, classes=sortable_table_classes, **html_params)
     new_html = new_models.to_html(columns=common_columns, classes=table_classes, **html_params)
 
     # if failed.shape[0] == 0:
@@ -142,14 +139,12 @@ def show_leaderboard():
     #     new_html = None
 
     if '_' in request.path:
-        return jsonify(leaderboard_1=l1_html,
-                       leaderboard_2=l2_html,
+        return jsonify(leaderboard=lb_html,
                        failed_models=failed_html,
                        new_models=new_html)
     else:
         return render_template('leaderboard.html', 
-                               leaderboard_1=l1_html,
-                               leaderboard_2=l2_html,
+                               leaderboard=lb_html,
                                failed_models=failed_html,
                                new_models=new_html)
 

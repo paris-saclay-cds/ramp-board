@@ -417,8 +417,8 @@ def leaderboard_combination(ground_truth_path, orig_models):
             Score().score(ground_truth_test, combined_foldwise_best_test_predictions)
 
     # leaderboard = models.copy()
-    leaderboard = pd.DataFrame({'score': counts}, index=models.index)
-    return leaderboard.sort(columns=['score'],  ascending=False)
+    leaderboard = pd.DataFrame({'originality': counts}, index=models.index)
+    return leaderboard.sort(columns=['originality'],  ascending=False)
 
 def better_score(score1, score2, eps):
     if Score().higher_the_better:

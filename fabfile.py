@@ -49,7 +49,7 @@ def clear_db():
         db.clear()
         db['models'] = pd.DataFrame(columns=columns)
         db['leaderboard1'] = pd.DataFrame(columns=['score'])
-        db['leaderboard2'] = pd.DataFrame(columns=['score'])
+        db['leaderboard2'] = pd.DataFrame(columns=['originality'])
 
 def clear_registrants():
     import shutil

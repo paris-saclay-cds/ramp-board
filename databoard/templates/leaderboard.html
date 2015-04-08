@@ -35,20 +35,23 @@
 </script>
 <script type=text/javascript>
   function sortTables() {
-    $('table.dataframe thead tr th:first-child').data('sortBy', function(th, td, tablesort) {
-          return parseInt(td.text(), 10);
-    });
-    $('table.dataframe thead th').filter(":contains('score')").data('sortBy', function(th, td, tablesort) {
-          return parseFloat(td.text());
-    });
-    $('table.dataframe thead th').filter(":contains('score')").addClass('descending');
+    // $('table.dataframe thead tr th:first-child').data('sortBy', function(th, td, tablesort) {
+    //       return parseInt(td.text(), 10);
+    // });
+    // $('table.dataframe thead th').filter(":contains('score')").data('sortBy', function(th, td, tablesort) {
+    //       return parseFloat(td.text());
+    // });
+    // $('table.dataframe thead th').filter(":eq('score')").addClass('descending');
+    $('table.dataframe thead th').filter(function() {
+      return $(this).text() === 'score';
+    }).addClass('descending');
+
     $('.sortable.table').tablesort();
   }
 
   function updateLeaderboards() {
     $.getJSON($SCRIPT_ROOT + '/_leaderboard', {}, function(data) {
-      $("#leaderboard_1").html(data.leaderboard_1);
-      $("#leaderboard_2").html(data.leaderboard_2);
+      $("#leaderboard").html(data.leaderboard);
       $("#failed_models").html(data.failed_models);
       $("#new_models").html(data.new_models);
       // if (! data.new_models)
@@ -76,32 +79,24 @@
 </div> -->
 
 <div class="ui stackable two column grid">
-    {% if leaderboard_1|length and leaderboard_2|length %}
+  <div class="one column row">
     <div class="column">
-        <h3 class="ui horizontal header divider">Best models</h3>
-        <div id='leaderboard_1'>{{leaderboard_1|safe}}</div>
+      <h3 class="ui horizontal header divider">Leaderboard</h3>
+      <div id='leaderboard'>{{leaderboard|safe}}</div>
     </div>
-    <div class="column">
-        <h3 class="ui horizontal header divider">Most contributive models</h3>
-        <div id='leaderboard_2'>{{leaderboard_2|safe}}</div>
+  </div>
+  <div class="column">
+    <div id="id_new_models">
+      <h3 class="ui horizontal header divider">New models</h3>
+      <div id='new_models'>{{new_models|safe}}</div>
     </div>
-    {% endif %} 
-    <div class="column">
-    {% if new_models|length %}
-      <div id="id_new_models">
-        <h3 class="ui horizontal header divider">New models</h3>
-        <div id='new_models'>{{new_models|safe}}</div>
-      </div>
-    {% endif %} 
+  </div>
+  <div class="column">
+    <div id="id_failed_models">
+      <h3 class="ui horizontal header divider">Failed models</h3>
+      <div id='failed_models'>{{failed_models|safe}}</div>
     </div>
-    <div class="column">
-    {% if failed_models|length %}
-      <div id="id_failed_models">
-        <h3 class="ui horizontal header divider">Failed models</h3>
-        <div id='failed_models'>{{failed_models|safe}}</div>
-      </div>
-    {% endif %} 
-    </div>
+  </div>
 </div>
 
 {% endblock %}
