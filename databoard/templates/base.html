@@ -8,18 +8,26 @@
         {% endblock %}
         <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     </head>
-    <body style="margin:20px" {% block bodyoptions %}{% endblock %}>
-        <div id="header" style="margin-bottom:20px">
+    <body {% block bodyoptions %}{% endblock %}>
+        <div id="header">
             {% block header %}
-            <a href='/'>
-              <h2 class="ui blue header">
-                  <i class="circular users icon"></i>
-                  <div class="content">
-                    RAMP
-                    <div class="sub header">Rapid Analysis and Model Prototyping</div>
-                  </div>
-              </h2>
-            </a>
+            <div class="ui two column middle aligned grid" style="padding:20px">
+              <div class="five wide column">
+                <a href='/'>
+                  <h2 class="ui blue header">
+                      <i class="circular users icon"></i>
+                      <div class="content">
+                        RAMP
+                        <div class="sub header">Rapid Analysis and Model Prototyping</div>
+                      </div>
+                  </h2>
+                </a>
+              </div>
+              <!-- <div class="ui vertical fitted divider"></div> -->
+              <div class="three wide column">
+                <h2 class="ui orange header">{{ ramp_title }}</h2>
+              </div>
+            </div>
             <!-- <div class="ui menu">
               <a class="active item">
                 <i class="home icon"></i> Home
@@ -38,6 +46,6 @@
             </div> -->
             {% endblock %}
         </div>
-        <div id="content">{% block content %}{% endblock %}</div>
+        <div id="content" style="padding:20px">{% block content %}{% endblock %}</div>
     </body>
 </html>

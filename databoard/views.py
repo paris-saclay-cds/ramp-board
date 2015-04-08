@@ -21,6 +21,7 @@ from flask import (
 from databoard import app
 from .model import shelve_database, columns, ModelState
 from .generic import changedir
+from .specific import hackaton_title
 from .config_databoard import (
     root_path, 
     repos_path, 
@@ -72,7 +73,7 @@ def list_teams_repos():
             repo_list.append(RepoInfo(f, get_repo_url(f)))
         except Exception as e:
             logger.error('Error when listing the repository: {}\n{}'.format(f, e))
-    return render_template('list.html', submodules=repo_list)
+    return render_template('list.html', submodules=repo_list, ramp_title=hackaton_title)
 
 @app.route("/_leaderboard")
 @app.route("/leaderboard")
@@ -146,7 +147,8 @@ def show_leaderboard():
         return render_template('leaderboard.html', 
                                leaderboard=lb_html,
                                failed_models=failed_html,
-                               new_models=new_html)
+                               new_models=new_html, 
+                               ramp_title=hackaton_title)
 
 
 @app.route('/models/<team>/<tag>/<filename>')
@@ -195,7 +197,8 @@ def view_model(team, tag, filename):
         archive_url=archive_url,
         filename=filename,
         model_name=model_name,
-        team_name=team)
+        team_name=team,
+        ramp_title=hackaton_title)
 
 @app.route("/add/", methods=("POST",))
 def add_team_repo():
