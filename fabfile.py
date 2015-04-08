@@ -174,27 +174,57 @@ def leaderboard(which='all'):
     # l3 = private_leaderboard_classical(trained_models)
 
 
-def train(lb=None, state=False):
+def train(lb=None, state=False, tag=None):
     from databoard.generic import train_models
 
     with shelve_database() as db:
         models = db['models']
 
+    if tag is not None:
+        models = models[models.model.str.contains(tag)]
+        state = 'all'  # force train all the selected models
+        if len(models) == 0:
+            print('No existing model containing the tag: {}'.format(tag))
+            return
+
+    if not state:
+        state = 'new'
+    
+    if state != 'all': 
+        models = models[models.state == state]
+
     # models = pd.read_csv("output/submissions.csv")
     # trained_models, failed_models = train_models(models)
-    train_models(models, state=state)
+    train_models(models)
 
     idx = models.index
 
     with shelve_database() as db:
         db['models'].loc[idx, :] = models
 
-    logger.debug(models[models['state'] == "trained"])
-    logger.debug(models[models['state'] == "error"])
+    # logger.debug(models[models['state'] == "trained"])
+    # logger.debug(models[models['state'] == "error"])
 
     if lb:
         leaderboard(lb)
 
+
+def kill(team, tag):
+    import glob
+    import signal
+    from databoard.fetch import get_tag_uid
+
+    answer = 'y'
+    while answer != 'y':
+        answer = raw_input('Sure? (y/n): ')
+
+    pid_filenames = os.path.join(models_path, team, get_tag_uid(team, tag), 'pid_*')
+    print pid_filenames
+    for f in glob.glob(pid_filenames):
+        with open(f) as pid_file:
+            pid = pid_file.read()
+            os.kill(int(pid), signal.SIGKILL)    
+            
 
 def serve(port=8080):
     from databoard import app

@@ -107,28 +107,20 @@ def save_scores(skf_is, m_path):
     X_valid_test = [X_train[i] for i in valid_test_is]
     y_valid_test = [y_train[i] for i in valid_test_is]
 
-    open(m_path + "/__init__.py", 'a').close()  # so to make it importable
+    open(os.path.join(m_path, '/__init__.py'), 'a').close()  # so to make it importable
     module_path = m_path.lstrip('./').replace('/', '.')
     model_output = run_model(
         module_path, X_valid_train, y_valid_train, X_valid_test, X_test)
     save_model_predictions(model_output, f_name_valid, f_name_test)
 
 
-def train_models(models, last_time_stamp=None, state=None):
+def train_models(models, last_time_stamp=None):
 
-    if not state:
-        state = 'new'
-    
-    if state == 'all': 
-        models_sorted = models.sort("timestamp")
-    else:
-        models_sorted = models[models['state'] == state].sort("timestamp")
+    models_sorted = models.sort("timestamp")
         
     if len(models_sorted) == 0:
         logger.info("No models to train.")
         return
-    # FIXME: should not modify the index like this
-    # models_sorted.index = range(1, len(models_sorted) + 1)
 
     logger.info("Reading data")
     X_train, y_train, X_test, y_test, skf = split_data()
@@ -202,7 +194,7 @@ def train_model(m_path, skf):
     #for skf_is in skf:
     #    save_scores(skf_is, m_path)
     
-    Parallel(n_jobs=n_processes)(delayed(save_scores)
+    Parallel(n_jobs=n_processes, verbose=5)(delayed(save_scores)
                                  (skf_is, m_path) for skf_is in skf)
     
     # partial_save_scores = partial(save_scores, m_path=m_path, X=X, y=y, f_name_score=f_name_score)

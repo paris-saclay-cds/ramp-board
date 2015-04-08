@@ -23,6 +23,13 @@ from .config_databoard import repos_path, root_path, tag_len_limit, notification
 
 logger = logging.getLogger('databoard')
 
+def get_tag_uid(team_name, tag_name, **kwargs):
+    sha_hasher = hashlib.sha1()
+    sha_hasher.update(team_name)
+    sha_hasher.update(tag_name)
+    tag_name_alias = 'm{}'.format(sha_hasher.hexdigest())
+    return tag_name_alias
+
 def send_mail_notif(submissions):
     with app.app_context():
         mail = Mail(app)
@@ -91,10 +98,7 @@ def fetch_models():
 
         for t in repo.tags:
             tag_name = t.name
-            sha_hasher = hashlib.sha1()
-            sha_hasher.update(team_name)
-            sha_hasher.update(tag_name)
-            tag_name_alias = 'm{}'.format(sha_hasher.hexdigest())
+            tag_name_alias = get_tag_uid(team_name, tag_name)
             # We delete tags of failed submissions, so they 
             # can be refetched
             if tag_name_alias in old_failed_submissions:
@@ -127,11 +131,8 @@ def fetch_models():
                 tag_name = t.name
                 logger.debug('Tag name: {}'.format(tag_name))
 
-                # will serve for the dataframe index
-                sha_hasher = hashlib.sha1()
-                sha_hasher.update(team_name)
-                sha_hasher.update(tag_name)
-                tag_name_alias = 'm{}'.format(sha_hasher.hexdigest())
+                # will serve as dataframe index
+                tag_name_alias = get_tag_uid(team_name, tag_name)
                 logger.debug('Tag alias: {}'.format(tag_name_alias))
                 model_path = os.path.join(repo_path, tag_name_alias)
 
