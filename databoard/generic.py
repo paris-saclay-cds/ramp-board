@@ -158,10 +158,11 @@ def train_models(models, last_time_stamp=None, state=None):
             # TODO: put the error in the database instead of a file
             # Keep the model folder clean.
             with open(os.path.join(m_path, 'error.txt'), 'w') as f:
-                cut_exception_text = str(e).find(path)
+                error_msg = str(e)
+                cut_exception_text = error_msg.rfind('--->')
                 if cut_exception_text > 0:
-                    a = e[cut_exception_text:]
-                f.write("{}".format(e))
+                    error_msg = error_msg[cut_exception_text:]
+                f.write("{}".format(error_msg))
 
 
 @mem.cache
