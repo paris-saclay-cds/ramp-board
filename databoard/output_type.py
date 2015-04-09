@@ -26,10 +26,9 @@ def save_multi_class_prediction(y_pred, y_proba, f_name):
         fmt = fmt + ",%lf"
     np.savetxt(f_name, output, fmt=fmt)
 
-def save_multi_class_predictions(model_output, f_name_valid, f_name_test):
-    y_valid_pred, y_valid_proba, y_test_pred, y_test_proba = model_output
-    save_multi_class_prediction(y_valid_pred, y_valid_proba, f_name_valid)
-    save_multi_class_prediction(y_test_pred, y_test_proba, f_name_test)
+def save_multi_class_predictions(model_output, f_name):
+    y_pred, y_proba = model_output
+    save_multi_class_prediction(y_pred, y_proba, f_name)
 
 def load_multi_class_predictions(predictions_path):
     csv_file = open(predictions_path)

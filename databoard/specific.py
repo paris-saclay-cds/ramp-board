@@ -104,23 +104,28 @@ def split_data():
         test_size=skf_test_size, random_state=random_state)
     return X_train_dict, y_train_array, X_test_dict, y_test_array, skf
 
-def run_model(module_path, X_valid_train_dict, y_valid_train, 
-              X_valid_test_dict, X_test_dict):
+def run_model(module_path, X_valid_train_dict, y_valid_train):
      # Feature extraction
     feature_extractor = import_module('.feature_extractor', module_path)
     fe = feature_extractor.FeatureExtractor()
     fe.fit(X_valid_train_dict, y_valid_train)
     X_valid_train_array = fe.transform(X_valid_train_dict)
-    X_valid_test_array = fe.transform(X_valid_test_dict)
-    X_test_array = fe.transform(X_test_dict)
 
     # Classification
     classifier = import_module('.classifier', module_path)
     clf = classifier.Classifier()
     clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
     clf_c.fit(X_valid_train_array, y_valid_train)
-    y_valid_pred = clf_c.predict(X_valid_test_array)
-    y_valid_score = clf_c.predict_proba(X_valid_test_array)
+    return fe, clf_c
+
+def test_model(trained_model, X_test_dict):
+    fe, clf_c = trained_model
+
+    # Feature extraction
+    X_test_array = fe.transform(X_test_dict)
+
+    # Classification
     y_test_pred = clf_c.predict(X_test_array)
     y_test_score = clf_c.predict_proba(X_test_array)
-    return y_valid_pred, y_valid_score, y_test_pred, y_test_score
+    return y_test_pred, y_test_score
+
