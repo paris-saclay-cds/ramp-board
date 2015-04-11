@@ -90,7 +90,7 @@ def show_leaderboard():
     # col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
     common_columns = ['team', 'model']
     # common_columns = ['team', col_map['model']]
-    scores_columns = ['rank'] + common_columns + ['score', 'originality']
+    scores_columns = ['rank'] + common_columns + ['score', 'contributivity']
     error_columns = common_columns + ['error']
 
     with shelve_database() as db:
