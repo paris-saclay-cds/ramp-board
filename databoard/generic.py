@@ -401,8 +401,8 @@ def leaderboard_combination(ground_truth_path, orig_models):
             counts += np.histogram(best_indexes, bins = range(len(models) + 1))[0]
 
     # leaderboard = models.copy()
-    leaderboard = pd.DataFrame({'originality': counts}, index=models.index)
-    return leaderboard.sort(columns=['originality'],  ascending=False)
+    leaderboard = pd.DataFrame({'contributivity': counts}, index=models.index)
+    return leaderboard.sort(columns=['contributivity'],  ascending=False)
 
 
 def leaderboard_combination_with_test(ground_truth_path, orig_models):
@@ -490,8 +490,8 @@ def leaderboard_combination_with_test(ground_truth_path, orig_models):
             Score().score(ground_truth_test, combined_foldwise_best_test_predictions)
 
     # leaderboard = models.copy()
-    leaderboard = pd.DataFrame({'originality': counts}, index=models.index)
-    return leaderboard.sort(columns=['originality'],  ascending=False)
+    leaderboard = pd.DataFrame({'contributivity': counts}, index=models.index)
+    return leaderboard.sort(columns=['contributivity'],  ascending=False)
 
 def better_score(score1, score2, eps):
     if Score().higher_the_better:

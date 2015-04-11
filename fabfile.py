@@ -24,10 +24,15 @@ env.user = 'root'  # the user to use for the remote commands
 env.use_ssh_config = True
 
 # the servers where the commands are executed
-env.hosts = ['onevm-190.lal.in2p3.fr']
+env.hosts = ['onevm-54.lal.in2p3.fr']
+#env.hosts = ['onevm-188.lal.in2p3.fr']
 production = env.hosts[0]
-dest_path = '/mnt/datacamp/databoard_03_9002_test'
-server_port = '9002'
+#dest_path = '/mnt/datacamp/databoard_03_9002_test'
+#server_port = '9002'
+#dest_path = '/mnt/datacamp/databoard_03_8080_test'
+server_port = '80'
+dest_path = '/mnt/datacamp/databoard_03_80_deployment'
+#server_port = '8080'
 
 logger = logging.getLogger('databoard')
 
@@ -49,7 +54,7 @@ def clear_db():
         db.clear()
         db['models'] = pd.DataFrame(columns=columns)
         db['leaderboard1'] = pd.DataFrame(columns=['score'])
-        db['leaderboard2'] = pd.DataFrame(columns=['originality'])
+        db['leaderboard2'] = pd.DataFrame(columns=['contributivity'])
 
 def clear_registrants():
     import shutil
