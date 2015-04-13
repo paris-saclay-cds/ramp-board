@@ -2,6 +2,7 @@ import os
 import sys
 import csv
 import glob
+import pickle
 import hashlib
 import logging
 import multiprocessing
@@ -113,6 +114,11 @@ def save_scores(skf_is, m_path, test=False):
     module_path = m_path.lstrip('./').replace('/', '.')
 
     trained_model = run_model(module_path, X_valid_train, y_valid_train)
+    with open(os.path.join(m_path, "model_" + hash_string + ".p"),'w') as f:
+        pickle.dump(trained_model, f)
+    with open(os.path.join(m_path, "model_" + hash_string + ".p"),'r') as f:
+        trained_model = pickle.load(f)
+
     valid_model_output = test_model(trained_model, X_valid_test)
     save_model_predictions(valid_model_output, f_name_valid)
     if test:
