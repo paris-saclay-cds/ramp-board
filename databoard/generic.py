@@ -22,17 +22,7 @@ from .config_databoard import (
     n_processes,
     cachedir,
 )
-from .specific import (
-    test_filename, 
-    read_data, 
-    split_data, 
-    run_model,
-    test_model,
-    save_model_predictions,
-    load_model_predictions,
-    Score,
-    labels,
-)
+import specific
 
 # We needed to make the sets global because Parallel hung
 # when we passed a list of dictionaries to the function
@@ -126,7 +116,7 @@ def setup_ground_truth():
     ground_truth_path = os.path.join(root_path, 'ground_truth')
     os.rmdir(ground_truth_path)  # cleanup the ground_truth
     os.mkdir(ground_truth_path)
-    _, y_train, _, y_test, skf = split_data()
+    _, y_train, _, y_test, skf = specific.split_data()
     f_name_test = ground_truth_path + "/ground_truth_test.csv"
     np.savetxt(f_name_test, y_test, delimiter="\n", fmt='%d')
 
@@ -153,14 +143,14 @@ def train_and_valid_on_fold(skf_is, m_path):
     module_path = get_module_path(m_path)
 
     logger.info("Training : %s" % hash_string)
-    trained_model = run_model(module_path, X_valid_train, y_valid_train)
+    trained_model = specific.train_model(module_path, X_valid_train, y_valid_train)
     with open(get_model_f_name(m_path, hash_string), 'w') as f:
         pickle.dump(trained_model, f)
 
     logger.info("Validating : %s" % hash_string)
-    valid_model_output = test_model(trained_model, X_valid_test)
+    valid_model_output = specific.test_model(trained_model, X_valid_test)
     f_name_valid = os.path.join(m_path, "valid_" + hash_string + ".csv")
-    save_model_predictions(valid_model_output, f_name_valid)
+    specific.save_model_predictions(valid_model_output, f_name_valid)
 
 def test_on_fold(skf_is, m_path):
     valid_train_is, valid_test_is = skf_is
@@ -174,8 +164,8 @@ def test_on_fold(skf_is, m_path):
 
     with open(get_model_f_name(m_path, hash_string), 'r') as f:
         trained_model = pickle.load(f)
-    test_model_output = test_model(trained_model, X_test)
-    save_model_predictions(test_model_output, f_name_test)
+    test_model_output = specific.test_model(trained_model, X_test)
+    specific.save_model_predictions(test_model_output, f_name_test)
 
 def train_and_valid_models(models, last_time_stamp=None):
 
@@ -186,7 +176,7 @@ def train_and_valid_models(models, last_time_stamp=None):
         return
 
     logger.info("Reading data")
-    X_train, y_train, X_test, y_test, skf = split_data()
+    X_train, y_train, X_test, y_test, skf = specific.split_data()
     data_sets.set_sets(X_train, y_train, X_test, y_test)
 
     for idx, m in models_sorted.iterrows():
@@ -233,15 +223,16 @@ def train_and_valid_model(m_path, skf):
     #Uncomment this and comment out the follwing two lines if
     #parallel training is not working
     #for skf_is in skf:
-    #    save_scores(skf_is, m_path)
+    #    train_and_valid_on_fold(skf_is, m_path)
     
-    Parallel(n_jobs=n_processes, verbose=5)(delayed(train_and_valid_on_fold)(skf_is, m_path)
+    Parallel(n_jobs=n_processes, verbose=5)\
+        (delayed(train_and_valid_on_fold)(skf_is, m_path)
          for skf_is in skf)
     
-    # partial_save_scores = partial(save_scores, m_path=m_path, X=X, y=y, f_name_score=f_name_score)
-    # pool = multiprocessing.Pool(processes=n_processes)
-    # pool.map(partial_save_scores, skf)
-    # pool.close()
+    #partial_train = partial(train_and_valid_on_fold, m_path=m_path)
+    #pool = multiprocessing.Pool(processes=n_processes)
+    #pool.map(partial_train, skf)
+    #pool.close()
 
 def test_models(models, last_time_stamp=None):
 
@@ -252,7 +243,7 @@ def test_models(models, last_time_stamp=None):
         return
 
     logger.info("Reading data")
-    X_train, y_train, X_test, y_test, skf = split_data()
+    X_train, y_train, X_test, y_test, skf = specific.split_data()
     data_sets.set_sets(X_train, y_train, X_test, y_test)
 
     for idx, m in models_sorted.iterrows():
@@ -299,7 +290,8 @@ def test_model(m_path, skf):
     m_paths : list, shape (k_models,)
     """
 
-    Parallel(n_jobs=n_processes, verbose=5)(delayed(test_on_fold)(skf_is, m_path)
+    Parallel(n_jobs=n_processes, verbose=5)\
+        (delayed(test_on_fold)(skf_is, m_path)
          for skf_is in skf)
 
 def get_predictions_lists(model_paths, hash_string):
@@ -309,7 +301,7 @@ def get_predictions_lists(model_paths, hash_string):
             predictions_path = os.path.join(
                 root_path, "models", model_path, 
                 test_set + "_" + hash_string + ".csv")
-            predictions = load_model_predictions(predictions_path)
+            predictions = specific.load_model_predictions(predictions_path)
             predictions_lists[test_set].append(predictions)
     return predictions_lists
 
@@ -320,7 +312,7 @@ def get_predictions_lists_no_test(model_paths, hash_string):
             predictions_path = os.path.join(
                 root_path, "models", model_path, 
                 test_set + "_" + hash_string + ".csv")
-            predictions = load_model_predictions(predictions_path)
+            predictions = specific.load_model_predictions(predictions_path)
             predictions_lists[test_set].append(predictions)
     return predictions_lists
 
@@ -341,7 +333,7 @@ def leaderboard_classical(ground_truth_path, orig_models):
                 names=['ground_truth']).values.flatten()
             predictions_lists = get_predictions_lists_no_test(
                 models['path'], hash_string)
-            valid_scores = [Score().score(ground_truth, predictions) 
+            valid_scores = [specific.Score().score(ground_truth, predictions) 
                             for predictions in predictions_lists['valid']]
             mean_valid_scores += valid_scores
 
@@ -352,7 +344,7 @@ def leaderboard_classical(ground_truth_path, orig_models):
         format(mean_valid_scores))
     leaderboard = pd.DataFrame({'score': mean_valid_scores}, index=models.index)
     return leaderboard.sort(
-        columns=['score'], ascending=not Score().higher_the_better)
+        columns=['score'], ascending=not specific.Score().higher_the_better)
 
 
 def leaderboard_classical_with_test(ground_truth_path, orig_models):
@@ -411,10 +403,10 @@ def leaderboard_classical_with_test(ground_truth_path, orig_models):
                 names=['ground_truth']).values.flatten()
             predictions_lists = get_predictions_lists(
                 models['path'], hash_string)
-            valid_scores = [Score().score(ground_truth, predictions) 
+            valid_scores = [specific.Score().score(ground_truth, predictions) 
                             for predictions in predictions_lists['valid']]
             mean_valid_scores += valid_scores
-            test_scores = [Score().score(ground_truth_test, predictions) 
+            test_scores = [specific.Score().score(ground_truth_test, predictions) 
                            for predictions in predictions_lists['test']]
             mean_test_scores += test_scores
 
@@ -428,7 +420,7 @@ def leaderboard_classical_with_test(ground_truth_path, orig_models):
         format(mean_test_scores))
     leaderboard = pd.DataFrame({'score': mean_valid_scores}, index=models.index)
     return leaderboard.sort(
-        columns=['score'], ascending=not Score().higher_the_better)
+        columns=['score'], ascending=not specific.Score().higher_the_better)
 
 # FIXME: This is really dependent on the output_type and the score at the same 
 # time
@@ -458,7 +450,7 @@ def combine_models_using_probas(predictions_list, indexes):
     # We do mean probas because sum(log(probas)) have problems at zero
     means_y_probas = y_probas.mean(axis=0)
     # don't really have to convert it back to list, just to stay consistent
-    predictions = [[labels[y_proba.argmax()], y_proba.tolist()]
+    predictions = [[specific.labels[y_proba.argmax()], y_proba.tolist()]
                    for y_proba in means_y_probas]
     #print predictions
     return predictions
@@ -480,7 +472,7 @@ def leaderboard_combination(ground_truth_path, orig_models):
                 names=['ground_truth']).values.flatten()
             predictions_lists = get_predictions_lists_no_test(
                 models['path'], hash_string)
-            valid_scores = [Score().score(ground_truth, predictions) 
+            valid_scores = [specific.Score().score(ground_truth, predictions) 
                             for predictions in predictions_lists['valid']]
             best_indexes = np.array([np.argmax(valid_scores)])
 
@@ -551,7 +543,7 @@ def leaderboard_combination_with_test(ground_truth_path, orig_models):
                 names=['ground_truth']).values.flatten()
             predictions_lists = get_predictions_lists(
                 models['path'], hash_string)
-            valid_scores = [Score().score(ground_truth, predictions) 
+            valid_scores = [specific.Score().score(ground_truth, predictions) 
                             for predictions in predictions_lists['valid']]
             best_indexes = np.array([np.argmax(valid_scores)])
 
@@ -578,19 +570,19 @@ def leaderboard_combination_with_test(ground_truth_path, orig_models):
                 combined_test_predictions_list, 
                 range(len(combined_test_predictions_list)))
         print "foldwise combined test score = ", \
-            Score().score(ground_truth_test, combined_combined_test_predictions)
+            specific.Score().score(ground_truth_test, combined_combined_test_predictions)
         combined_foldwise_best_test_predictions = combine_models_using_probas(
                 foldwise_best_test_predictions_list, 
                 range(len(foldwise_best_test_predictions_list)))
         print "foldwise best test score = ", \
-            Score().score(ground_truth_test, combined_foldwise_best_test_predictions)
+            specific.Score().score(ground_truth_test, combined_foldwise_best_test_predictions)
 
     # leaderboard = models.copy()
     leaderboard = pd.DataFrame({'contributivity': counts}, index=models.index)
     return leaderboard.sort(columns=['contributivity'],  ascending=False)
 
 def better_score(score1, score2, eps):
-    if Score().higher_the_better:
+    if specific.Score().higher_the_better:
         return score1 > score2 + eps
     else:
         return score1 < score2 - eps
@@ -623,8 +615,8 @@ def best_combine(predictions_list, ground_truth, best_indexes):
     for i in range(len(predictions_list)):
         combined_predictions = combine_models_using_probas(
             predictions_list, np.append(best_indexes, i))
-        if better_score(Score().score(ground_truth, combined_predictions), 
-                        Score().score(ground_truth, best_predictions),
+        if better_score(specific.Score().score(ground_truth, combined_predictions), 
+                        specific.Score().score(ground_truth, best_predictions),
                         eps):
             best_predictions = combined_predictions
             best_index = i

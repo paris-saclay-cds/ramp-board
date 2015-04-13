@@ -104,7 +104,7 @@ def split_data():
         test_size=skf_test_size, random_state=random_state)
     return X_train_dict, y_train_array, X_test_dict, y_test_array, skf
 
-def run_model(module_path, X_valid_train_dict, y_valid_train):
+def train_model(module_path, X_valid_train_dict, y_valid_train):
      # Feature extraction
     feature_extractor = import_module('.feature_extractor', module_path)
     fe = feature_extractor.FeatureExtractor()
