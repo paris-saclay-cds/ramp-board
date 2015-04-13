@@ -29,10 +29,10 @@ env.hosts = ['onevm-54.lal.in2p3.fr']
 production = env.hosts[0]
 #dest_path = '/mnt/datacamp/databoard_03_9002_test'
 #server_port = '9002'
-#dest_path = '/mnt/datacamp/databoard_03_8080_test'
-server_port = '80'
-dest_path = '/mnt/datacamp/databoard_03_80_deployment'
-#server_port = '8080'
+dest_path = '/mnt/datacamp/databoard_03_8080_test'
+#server_port = '80'
+#dest_path = '/mnt/datacamp/databoard_03_80_deployment'
+server_port = '8080'
 
 logger = logging.getLogger('databoard')
 
@@ -179,8 +179,8 @@ def leaderboard(which='all'):
     # l3 = private_leaderboard_classical(trained_models)
 
 
-def train(lb=None, state=False, tag=None):
-    from databoard.generic import train_models
+def train(state=False, tag=None):
+    from databoard.generic import train_and_valid_models
 
     with shelve_database() as db:
         models = db['models']
@@ -198,21 +198,38 @@ def train(lb=None, state=False, tag=None):
     if state != 'all': 
         models = models[models.state == state]
 
-    # models = pd.read_csv("output/submissions.csv")
-    # trained_models, failed_models = train_models(models)
-    train_models(models)
+    train_and_valid_models(models)
 
     idx = models.index
 
     with shelve_database() as db:
         db['models'].loc[idx, :] = models
 
-    # logger.debug(models[models['state'] == "trained"])
-    # logger.debug(models[models['state'] == "error"])
+def test(state=False, tag=None):
+    from databoard.generic import test_models
 
-    if lb:
-        leaderboard(lb)
+    with shelve_database() as db:
+        models = db['models']
 
+    if tag is not None:
+        models = models[models.model.str.contains(tag)]
+        state = 'all'  # force test all the selected models
+        if len(models) == 0:
+            print('No existing model containing the tag: {}'.format(tag))
+            return
+
+    if not state:
+        state = 'trained'
+    
+    if state != 'all': 
+        models = models[models.state == state]
+
+    test_models(models)
+
+    idx = models.index
+
+    with shelve_database() as db:
+        db['models'].loc[idx, :] = models
 
 def kill(team, tag):
     import glob

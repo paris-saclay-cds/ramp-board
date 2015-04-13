@@ -51,9 +51,55 @@ class DataSets():
     def get_sets(self):
         return self.X_train, self.y_train, self.X_test, self.y_test
 
+    def get_training_sets(self):
+        return self.X_train, self.y_train
+
+    def get_test_sets(self):
+        return self.X_test, self.y_test
+
 mem = Memory(cachedir=cachedir)
 logger = logging.getLogger('databoard')
 data_sets = DataSets()
+
+def get_hash_string_from_indices(index_list):
+    """We identify files output on cross validation (models, predictions)
+    by hashing the point indices coming from an skf object.
+
+    Parameters
+    ----------
+    test_is : np.array, shape (size_of_set,)
+
+    Returns
+    -------
+    hash_string
+    """
+    hasher = hashlib.md5()
+    hasher.update(index_list)
+    return hasher.hexdigest()
+
+def get_hash_string_from_path(path):
+    """When running testing or leaderboard, instead of recreating the hash 
+    strings from the skf, we just read them from the file names. This is more
+    robust: only existing files will be opened when running those functions.
+    On the other hand, model directories should be clean otherwise old dangling
+    files will also be used. The file names are supposed to be
+    <prefix>_<hash_string>.<extension>
+
+    Parameters
+    ----------
+    path : string with the file name after the last '/'
+
+    Returns
+    -------
+    hash_string
+    """
+    return path.split('/')[-1].split('.')[-2].split('_')[-1]
+
+def get_module_path(m_path):
+    return m_path.lstrip('./').replace('/', '.')
+
+def get_model_f_name(m_path, hash_string):
+    return os.path.join(m_path, "model_" + hash_string + ".p")
 
 @contextmanager  
 def changedir(dir_name):
@@ -68,8 +114,8 @@ def changedir(dir_name):
 
 
 def setup_ground_truth():
-    """Setting up the GroundTruth subdir, saving y_test for each fold in skf. File
-    names are valid_<hash of the test index vector>.csv.
+    """Setting up the GroundTruth subdir, saving y_test for each fold in skf. 
+    File names are valid_<hash of the train index vector>.csv.
 
     Parameters
     ----------
@@ -87,45 +133,51 @@ def setup_ground_truth():
     logger.debug('Ground truth files...')
     scores = []
     for train_is, test_is in skf:
-        hasher = hashlib.md5()
-        hasher.update(test_is)
-        hash_string = hasher.hexdigest()
-        f_name_valid = ground_truth_path + "/ground_truth_valid_" + hash_string + ".csv"
+        hash_string = get_hash_string_from_indices(train_is)
+        f_name_valid = os.path.join(
+            ground_truth_path, "ground_truth_valid_" + hash_string + ".csv")
         logger.debug(f_name_valid)
         np.savetxt(f_name_valid, y_train[test_is], delimiter="\n", fmt='%d')
 
-def save_scores(skf_is, m_path, test=False):
+def train_and_valid_on_fold(skf_is, m_path):
     valid_train_is, valid_test_is = skf_is
-    X_train, y_train, X_test, y_test = data_sets.get_sets()
-    hasher = hashlib.md5()
-    hasher.update(valid_test_is)
-    hash_string = hasher.hexdigest()
-    f_name_valid = m_path + "/valid_" + hash_string + ".csv"
-    f_name_test = m_path + "/test_" + hash_string + ".csv"
-    logger.info("Hash string : %s" % hash_string)
-    # the current paradigm is that X is a list of things (not necessarily np array)
+    X_train, y_train = data_sets.get_training_sets()
+    hash_string = get_hash_string_from_indices(valid_train_is)
+    # the current paradigm is that X is a list of things (not necessarily np.array)
     X_valid_train = [X_train[i] for i in valid_train_is]
     y_valid_train = [y_train[i] for i in valid_train_is]
     X_valid_test = [X_train[i] for i in valid_test_is]
     y_valid_test = [y_train[i] for i in valid_test_is]
 
-    open(os.path.join(m_path, '/__init__.py'), 'a').close()  # so to make it importable
+    open(os.path.join(m_path, "__init__.py"), 'a').close()  # so to make it importable
+    module_path = get_module_path(m_path)
 
-    module_path = m_path.lstrip('./').replace('/', '.')
-
+    logger.info("Training : %s" % hash_string)
     trained_model = run_model(module_path, X_valid_train, y_valid_train)
-    with open(os.path.join(m_path, "model_" + hash_string + ".p"),'w') as f:
+    with open(get_model_f_name(m_path, hash_string), 'w') as f:
         pickle.dump(trained_model, f)
-    with open(os.path.join(m_path, "model_" + hash_string + ".p"),'r') as f:
-        trained_model = pickle.load(f)
 
+    logger.info("Validating : %s" % hash_string)
     valid_model_output = test_model(trained_model, X_valid_test)
+    f_name_valid = os.path.join(m_path, "valid_" + hash_string + ".csv")
     save_model_predictions(valid_model_output, f_name_valid)
-    if test:
-        test_model_output = test_model(trained_model, X_test)
-        save_model_predictions(test_model_output, f_name_test)
 
-def train_models(models, last_time_stamp=None, test=False):
+def test_on_fold(skf_is, m_path):
+    valid_train_is, valid_test_is = skf_is
+    X_test, y_test = data_sets.get_test_sets()
+    hash_string = get_hash_string_from_indices(valid_train_is)
+    f_name_test = m_path + "/test_" + hash_string + ".csv"
+    logger.info("Testing : %s" % hash_string)
+
+    open(os.path.join(m_path, '/__init__.py'), 'a').close()  # so to make it importable
+    module_path = get_module_path(m_path)
+
+    with open(get_model_f_name(m_path, hash_string), 'r') as f:
+        trained_model = pickle.load(f)
+    test_model_output = test_model(trained_model, X_test)
+    save_model_predictions(test_model_output, f_name_test)
+
+def train_and_valid_models(models, last_time_stamp=None):
 
     models_sorted = models.sort("timestamp")
         
@@ -136,8 +188,6 @@ def train_models(models, last_time_stamp=None, test=False):
     logger.info("Reading data")
     X_train, y_train, X_test, y_test, skf = split_data()
     data_sets.set_sets(X_train, y_train, X_test, y_test)
-
-    # models_sorted = models_sorted[models_sorted.index < 50]  # XXX to make things fast
 
     for idx, m in models_sorted.iterrows():
 
@@ -150,7 +200,7 @@ def train_models(models, last_time_stamp=None, test=False):
         logger.info("Training : %s" % m_path)
 
         try:
-            train_model(m_path, skf, test)
+            train_and_valid_model(m_path, skf)
             # failed_models.drop(idx, axis=0, inplace=True)
             models.loc[idx, 'state'] = "trained"
         except Exception, e:
@@ -169,35 +219,15 @@ def train_models(models, last_time_stamp=None, test=False):
 
 
 @mem.cache
-def train_model(m_path, skf, test=False):
-    """Training a model on all folds and saving the predictions and proba order. The latter we can
-    use for computing ROC or cutting ties.
-
-    m_path/model.py 
-    should contain the model function, for example
-
-    def model(X_train, y_train, X_test):
-    clf = Pipeline([('imputer', Imputer(strategy='most_frequent')),
-        ('rf', AdaBoostClassifier(base_estimator=RandomForestClassifier(max_depth=5, n_estimators=100),
-                         n_estimators=20))])
-    clf.fit(X_train, y_train)
-    y_pred = clf.predict(X_test)
-    y_proba = clf.predict_proba(X_test)
-    return y_pred, y_proba
-
-    File names are valid_<hash of the np.array(test index vector)>.csv. A score.csv file is also
-    saved with k_model lines of header
-    <hash of the test index vector>, <number of test instances>, <error>
-    evaluations are parallel, so the order in score.csv is undefined.
+def train_and_valid_model(m_path, skf):
+    """Train a model on all folds and save the valid predictions and the 
+    model pickle. All model file names use the format
+    <hash of the np.array(train index vector)>
 
     Parameters
     ----------
     m_paths : list, shape (k_models,)
-    X : array-like, shape (n_instances, d_features)
-    y : array-like, shape (n_instances,)
-        the label vector
-    skf : object
-        a cross_validation object with n_folds
+    skf : object a cross_validation object with N folds
     """
 
     #Uncomment this and comment out the follwing two lines if
@@ -205,16 +235,72 @@ def train_model(m_path, skf, test=False):
     #for skf_is in skf:
     #    save_scores(skf_is, m_path)
     
-    Parallel(n_jobs=n_processes, verbose=5)(delayed(save_scores)
-                                 (skf_is, m_path, test) for skf_is in skf)
+    Parallel(n_jobs=n_processes, verbose=5)(delayed(train_and_valid_on_fold)(skf_is, m_path)
+         for skf_is in skf)
     
     # partial_save_scores = partial(save_scores, m_path=m_path, X=X, y=y, f_name_score=f_name_score)
     # pool = multiprocessing.Pool(processes=n_processes)
     # pool.map(partial_save_scores, skf)
     # pool.close()
 
-def hash_string_from_path(path):
-    return path.split('/')[-1].split('.')[-2].split('_')[-1]
+def test_models(models, last_time_stamp=None):
+
+    models_sorted = models.sort("timestamp")
+        
+    if len(models_sorted) == 0:
+        logger.info("No models to test.")
+        return
+
+    logger.info("Reading data")
+    X_train, y_train, X_test, y_test, skf = split_data()
+    data_sets.set_sets(X_train, y_train, X_test, y_test)
+
+    for idx, m in models_sorted.iterrows():
+
+        team = m['team']
+        model = m['model']
+        timestamp = m['timestamp']
+        path = m['path']
+        m_path = os.path.join(models_path, path)
+
+        logger.info("Testing : %s" % m_path)
+
+        if models.loc[idx, 'state'] not in ["trained", "test_error"]:
+            logger.error("Only trained models can be tested")
+            logger.error(m_path + "is untrained")
+            return
+
+        try:
+            test_model(m_path, skf)
+            # failed_models.drop(idx, axis=0, inplace=True)
+            models.loc[idx, 'state'] = "tested"
+        except Exception, e:
+            models.loc[idx, 'state'] = "test_error"
+            # trained_models.drop(idx, axis=0, inplace=True)
+            logger.error("Testing failed with exception: \n{}".format(e))
+
+            # TODO: put the error in the database instead of a file
+            # Keep the model folder clean.
+            with open(os.path.join(m_path, 'test_error.txt'), 'w') as f:
+                error_msg = str(e)
+                cut_exception_text = error_msg.rfind('--->')
+                if cut_exception_text > 0:
+                    error_msg = error_msg[cut_exception_text:]
+                f.write("{}".format(error_msg))
+
+@mem.cache
+def test_model(m_path, skf):
+    """Test a model on all folds and save the test predictions. All model file 
+    names use the format
+    <hash of the np.array(train index vector)>
+
+    Parameters
+    ----------
+    m_paths : list, shape (k_models,)
+    """
+
+    Parallel(n_jobs=n_processes, verbose=5)(delayed(test_on_fold)(skf_is, m_path)
+         for skf_is in skf)
 
 def get_predictions_lists(model_paths, hash_string):
     predictions_lists = {'valid' : [], 'test' : []}
@@ -243,7 +329,8 @@ def leaderboard_classical(ground_truth_path, orig_models):
     models_paths = [os.path.join(models_path, path)
                     for path in models['path']]
     ground_truth_filanames = glob.glob(ground_truth_path + "/ground_truth_valid*")
-    hash_strings = [hash_string_from_path(path) for path in ground_truth_filanames]
+    hash_strings = [get_hash_string_from_path(path) 
+                    for path in ground_truth_filanames]
     mean_valid_scores = np.zeros(len(models_paths))
 
     if models.shape[0] != 0:
@@ -311,7 +398,8 @@ def leaderboard_classical_with_test(ground_truth_path, orig_models):
     ground_truth_test = pd.read_csv(
         os.path.join(ground_truth_path, "ground_truth_test.csv"),
         names=['ground_truth']).values.flatten()
-    hash_strings = [hash_string_from_path(path) for path in ground_truth_filanames]
+    hash_strings = [get_hash_string_from_path(path)
+                    for path in ground_truth_filanames]
     mean_valid_scores = np.zeros(len(models_paths))
     mean_test_scores = np.zeros(len(models_paths))
 
@@ -382,7 +470,8 @@ def leaderboard_combination(ground_truth_path, orig_models):
         models_paths = [os.path.join(models_path, path)
                         for path in models['path']]
         ground_truth_filanames = glob.glob(ground_truth_path + "/ground_truth_valid*")
-        hash_strings = [hash_string_from_path(path) for path in ground_truth_filanames]
+        hash_strings = [get_hash_string_from_path(path) 
+                        for path in ground_truth_filanames]
 
         for hash_string in hash_strings:
             ground_truth_filename = os.path.join(
@@ -447,7 +536,8 @@ def leaderboard_combination_with_test(ground_truth_path, orig_models):
         models_paths = [os.path.join(models_path, path)
                         for path in models['path']]
         ground_truth_filanames = glob.glob(ground_truth_path + "/ground_truth_valid*")
-        hash_strings = [hash_string_from_path(path) for path in ground_truth_filanames]
+        hash_strings = [get_hash_string_from_path(path) 
+                        for path in ground_truth_filanames]
         ground_truth_test = pd.read_csv(
             os.path.join(ground_truth_path, "ground_truth_test.csv"),
             names=['ground_truth']).values.flatten()
