@@ -231,6 +231,25 @@ def test(state=False, tag=None):
     with shelve_database() as db:
         db['models'].loc[idx, :] = models
 
+import numpy as np
+
+def set_state(team, tag, state):
+    with shelve_database() as db:
+        models = db['models']
+    models = models[np.logical_and(models['model'] == tag, 
+        models['team'] == team)]
+
+    if len(models) > 1:
+        print "ambiguous selection"
+        print selected_models
+        return
+    if len(models) == 0:
+        print "no model found"
+        return
+    idx = models.index
+    with shelve_database() as db:
+        db['models'].loc[idx, 'state'] = state
+
 def kill(team, tag):
     import glob
     import signal
