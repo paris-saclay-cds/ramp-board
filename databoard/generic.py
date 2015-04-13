@@ -129,7 +129,7 @@ def setup_ground_truth():
         logger.debug(f_name_valid)
         np.savetxt(f_name_valid, y_train[test_is], delimiter="\n", fmt='%d')
 
-def train_and_valid_on_fold(skf_is, m_path):
+def train_and_valid_on_fold(m_path, skf_is):
     valid_train_is, valid_test_is = skf_is
     X_train, y_train = data_sets.get_training_sets()
     hash_string = get_hash_string_from_indices(valid_train_is)
@@ -152,62 +152,6 @@ def train_and_valid_on_fold(skf_is, m_path):
     f_name_valid = os.path.join(m_path, "valid_" + hash_string + ".csv")
     specific.save_model_predictions(valid_model_output, f_name_valid)
 
-def test_on_fold(skf_is, m_path):
-    valid_train_is, valid_test_is = skf_is
-    X_test, y_test = data_sets.get_test_sets()
-    hash_string = get_hash_string_from_indices(valid_train_is)
-    f_name_test = m_path + "/test_" + hash_string + ".csv"
-    logger.info("Testing : %s" % hash_string)
-
-    open(os.path.join(m_path, '/__init__.py'), 'a').close()  # so to make it importable
-    module_path = get_module_path(m_path)
-
-    with open(get_model_f_name(m_path, hash_string), 'r') as f:
-        trained_model = pickle.load(f)
-    test_model_output = specific.test_model(trained_model, X_test)
-    specific.save_model_predictions(test_model_output, f_name_test)
-
-def train_and_valid_models(models, last_time_stamp=None):
-
-    models_sorted = models.sort("timestamp")
-        
-    if len(models_sorted) == 0:
-        logger.info("No models to train.")
-        return
-
-    logger.info("Reading data")
-    X_train, y_train, X_test, y_test, skf = specific.split_data()
-    data_sets.set_sets(X_train, y_train, X_test, y_test)
-
-    for idx, m in models_sorted.iterrows():
-
-        team = m['team']
-        model = m['model']
-        timestamp = m['timestamp']
-        path = m['path']
-        m_path = os.path.join(models_path, path)
-
-        logger.info("Training : %s" % m_path)
-
-        try:
-            train_and_valid_model(m_path, skf)
-            # failed_models.drop(idx, axis=0, inplace=True)
-            models.loc[idx, 'state'] = "trained"
-        except Exception, e:
-            models.loc[idx, 'state'] = "error"
-            # trained_models.drop(idx, axis=0, inplace=True)
-            logger.error("Training failed with exception: \n{}".format(e))
-
-            # TODO: put the error in the database instead of a file
-            # Keep the model folder clean.
-            with open(os.path.join(m_path, 'error.txt'), 'w') as f:
-                error_msg = str(e)
-                cut_exception_text = error_msg.rfind('--->')
-                if cut_exception_text > 0:
-                    error_msg = error_msg[cut_exception_text:]
-                f.write("{}".format(error_msg))
-
-
 @mem.cache
 def train_and_valid_model(m_path, skf):
     """Train a model on all folds and save the valid predictions and the 
@@ -226,13 +170,80 @@ def train_and_valid_model(m_path, skf):
     #    train_and_valid_on_fold(skf_is, m_path)
     
     Parallel(n_jobs=n_processes, verbose=5)\
-        (delayed(train_and_valid_on_fold)(skf_is, m_path)
+        (delayed(train_and_valid_on_fold)(m_path, skf_is)
          for skf_is in skf)
     
     #partial_train = partial(train_and_valid_on_fold, m_path=m_path)
     #pool = multiprocessing.Pool(processes=n_processes)
     #pool.map(partial_train, skf)
     #pool.close()
+
+def train_and_valid_models(models, last_time_stamp=None):
+
+    models_sorted = models.sort("timestamp")
+        
+    if len(models_sorted) == 0:
+        logger.info("No models to train.")
+        return
+
+    logger.info("Reading data")
+    X_train, y_train, X_test, y_test, skf = specific.split_data()
+    data_sets.set_sets(X_train, y_train, X_test, y_test)
+
+    for idx, m in models_sorted.iterrows():
+        m_path = os.path.join(models_path, m['path'])
+
+        logger.info("Training : %s" % m_path)
+
+        try:
+            train_and_valid_model(m_path, skf)
+            # failed_models.drop(idx, axis=0, inplace=True)
+            models.loc[idx, 'state'] = "trained"
+        except Exception, e:
+            models.loc[idx, 'state'] = "error"
+            logger.error("Training failed with exception: \n{}".format(e))
+
+            # TODO: put the error in the database instead of a file
+            # Keep the model folder clean.
+            with open(os.path.join(m_path, 'error.txt'), 'w') as f:
+                error_msg = str(e)
+                cut_exception_text = error_msg.rfind('--->')
+                if cut_exception_text > 0:
+                    error_msg = error_msg[cut_exception_text:]
+                f.write("{}".format(error_msg))
+
+def test_on_fold(m_path, hash_string):
+    X_test, y_test = data_sets.get_test_sets()
+
+    open(os.path.join(m_path, '/__init__.py'), 'a').close()  # so to make it importable
+    module_path = get_module_path(m_path)
+
+    with open(get_model_f_name(m_path, hash_string), 'r') as f:
+        trained_model = pickle.load(f)
+
+    logger.info("Testing : %s" % hash_string)
+    test_model_output = specific.test_model(trained_model, X_test)
+    f_name_test = m_path + "/test_" + hash_string + ".csv"
+    specific.save_model_predictions(test_model_output, f_name_test)
+
+@mem.cache
+def test_model(m_path):
+    """Test a model on all folds and save the test predictions. All model file 
+    names use the format
+    <hash of the np.array(train index vector)>
+
+    Parameters
+    ----------
+    m_paths : list, shape (k_models,)
+    """
+
+    model_filanames = glob.glob(os.path.join(m_path, "model_*.p"))
+    hash_strings = [get_hash_string_from_path(path) 
+                    for path in model_filanames]
+
+    Parallel(n_jobs=n_processes, verbose=5)\
+        (delayed(test_on_fold)(m_path, hash_string)
+         for hash_string in hash_strings)
 
 def test_models(models, last_time_stamp=None):
 
@@ -247,22 +258,17 @@ def test_models(models, last_time_stamp=None):
     data_sets.set_sets(X_train, y_train, X_test, y_test)
 
     for idx, m in models_sorted.iterrows():
-
-        team = m['team']
-        model = m['model']
-        timestamp = m['timestamp']
-        path = m['path']
-        m_path = os.path.join(models_path, path)
+        m_path = os.path.join(models_path, m['path'])
 
         logger.info("Testing : %s" % m_path)
 
         if models.loc[idx, 'state'] not in ["trained", "test_error"]:
             logger.error("Only trained models can be tested")
-            logger.error(m_path + "is untrained")
+            logger.error(m_path + " is untrained")
             return
 
         try:
-            test_model(m_path, skf)
+            test_model(m_path)
             # failed_models.drop(idx, axis=0, inplace=True)
             models.loc[idx, 'state'] = "tested"
         except Exception, e:
@@ -279,20 +285,6 @@ def test_models(models, last_time_stamp=None):
                     error_msg = error_msg[cut_exception_text:]
                 f.write("{}".format(error_msg))
 
-@mem.cache
-def test_model(m_path, skf):
-    """Test a model on all folds and save the test predictions. All model file 
-    names use the format
-    <hash of the np.array(train index vector)>
-
-    Parameters
-    ----------
-    m_paths : list, shape (k_models,)
-    """
-
-    Parallel(n_jobs=n_processes, verbose=5)\
-        (delayed(test_on_fold)(skf_is, m_path)
-         for skf_is in skf)
 
 def get_predictions_lists(model_paths, hash_string):
     predictions_lists = {'valid' : [], 'test' : []}
