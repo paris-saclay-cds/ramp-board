@@ -1,5 +1,6 @@
 import os
 import logging
+import numpy as np
 import pandas as pd
 import fabric.contrib.project as project
 from fabric.api import *
@@ -152,18 +153,17 @@ def leaderboard(which='all'):
     from databoard.generic import (
         leaderboard_classical, 
         leaderboard_combination, 
-    )
+        leaderboard_execution_times, 
+     )
 
-    groundtruth_path = os.path.join(root_path, 'ground_truth')
-
-    # submissions_path = os.path.join(root_path, 'output/trained_submissions.csv')
     with shelve_database() as db:
         submissions = db['models']
-        trained_models = submissions[submissions.state == "trained"]
-        # trained_models = pd.read_csv(submissions_path)
+        trained_models = submissions[
+            np.logical_or(submissions['state'] == "trained", 
+                          submissions['state'] == "tested")]
 
     if which in ('all', '1'):
-        l1 = leaderboard_classical(groundtruth_path, trained_models)
+        l1 = leaderboard_classical(trained_models)
         # The following assignments only work because leaderboard_classical & co
         # are idempotent.
         # FIXME (potentially)
@@ -171,10 +171,16 @@ def leaderboard(which='all'):
             db['leaderboard1'] = l1
 
     if which in ('all', '2'):
-        l2 = leaderboard_combination(groundtruth_path, trained_models)
+        l2 = leaderboard_combination(trained_models)
         # FIXME: same as above
         with shelve_database() as db:
             db['leaderboard2'] = l2
+
+    if which in ('all', 'times'):
+        l_times = leaderboard_execution_times(trained_models)
+        # FIXME: same as above
+        with shelve_database() as db:
+            db['leaderboard_execution_times'] = l_times
 
     # l3 = private_leaderboard_classical(trained_models)
 
@@ -219,7 +225,7 @@ def test(state=False, tag=None):
             return
 
     if not state:
-        state = 'trained'
+        state = 'new'
     
     if state != 'all': 
         models = models[models.state == state]
@@ -231,13 +237,19 @@ def test(state=False, tag=None):
     with shelve_database() as db:
         db['models'].loc[idx, :] = models
 
-import numpy as np
+def change_state(from_state, to_state):
+    with shelve_database() as db:
+        models = db['models']
+    models = models[models['state'] == from_state]
+
+    with shelve_database() as db:
+        db['models'].loc[idx, 'state'] = to_state
 
 def set_state(team, tag, state):
     with shelve_database() as db:
         models = db['models']
     models = models[np.logical_and(models['model'] == tag, 
-        models['team'] == team)]
+                                   models['team'] == team)]
 
     if len(models) > 1:
         print "ambiguous selection"
