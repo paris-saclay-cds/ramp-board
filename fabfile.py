@@ -109,17 +109,17 @@ def setup(wipeall=False):
     from databoard.specific import prepare_data
     
     # Preparing the data set, typically public train/private held-out test cut
-    logger.info('Prepare the dataset.')
+    logger.info('Preparing the dataset.')
     prepare_data()
 
-    logger.info('Remove the ground truth files.')
+    logger.info('Removing the ground truth files.')
     clear_groundtruth()
 
     # Set up the ground truth predictions for the CV folds
-    logger.info('Setup the groundtruth.')
+    logger.info('Setting up the groundtruth.')
     setup_ground_truth()
     
-    logger.info('Clear the database.')
+    logger.info('Clearing the database.')
     clear_db()
 
     if not os.path.exists(models_path):
@@ -131,11 +131,11 @@ def setup(wipeall=False):
 
     if wipeall:
         # Remove the git repos of the teams
-        logger.info('Clear the teams repositories.')
+        logger.info('Clearing the teams repositories.')
         clear_registrants()
 
         # Flush joblib cache
-        logger.info('Flush the joblib cache.')
+        logger.info('Flushing the joblib cache.')
         clear_cache()
 
 def clean_pyc():

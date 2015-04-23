@@ -93,7 +93,7 @@ def get_module_path(full_model_path):
 
     Parameters
     ----------
-    full_model_path : of the form <root_path>/models/<team>/<model_hash_string>
+    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
 
     Returns
     -------
@@ -101,32 +101,47 @@ def get_module_path(full_model_path):
     """
     return full_model_path.lstrip('./').replace('/', '.')
 
-def get_full_model_path(idx, model_df):
-    return os.path.join(models_path, model_df['team'], idx)
+def get_full_model_path(tag_name_alias, model_df):
+    """Computing the full model path. 
 
-def get_f_dir(m_path, subdir):
-    dir = os.path.join(m_path, subdir)
+    Parameters
+    ----------
+    tag_name_alias : the hash string computed on the submission in 
+        fetch.get_tag_uid. It usually comes from the index of the models table.
+    
+    model_df : an entry of the models table.
+
+    Returns
+    -------
+    full_model_path : of the form 
+        <root_path>/models/<model_df['team']>/tag_name_alias
+    """
+    return os.path.join(models_path, model_df['team'], tag_name_alias)
+
+def get_f_dir(full_model_path, subdir):
+    dir = os.path.join(full_model_path, subdir)
     if not os.path.exists(dir):
         os.mkdir(dir)
     return dir
 
-def get_f_name(m_path, subdir, f_name, extension = "csv"):
-    return os.path.join(get_f_dir(m_path, subdir), f_name + '.' + extension)
+def get_f_name(full_model_path, subdir, f_name, extension = "csv"):
+    return os.path.join(get_f_dir(full_model_path, subdir), 
+                        f_name + '.' + extension)
 
-def get_model_f_name(m_path, hash_string):
-    return get_f_name(m_path, "model", hash_string, "p")
+def get_model_f_name(full_model_path, hash_string):
+    return get_f_name(full_model_path, "model", hash_string, "p")
 
-def get_valid_f_name(m_path, hash_string):
-    return get_f_name(m_path, "valid", hash_string)
+def get_valid_f_name(full_model_path, hash_string):
+    return get_f_name(full_model_path, "valid", hash_string)
 
-def get_test_f_name(m_path, hash_string):
-    return get_f_name(m_path, "test", hash_string)
+def get_test_f_name(full_model_path, hash_string):
+    return get_f_name(full_model_path, "test", hash_string)
 
-def get_train_time_f_name(m_path, hash_string):
-    return get_f_name(m_path, "train_time", hash_string)
+def get_train_time_f_name(full_model_path, hash_string):
+    return get_f_name(full_model_path, "train_time", hash_string)
 
-def get_valid_time_f_name(m_path, hash_string):
-    return get_f_name(m_path, "valid_time", hash_string)
+def get_valid_time_f_name(full_model_path, hash_string):
+    return get_f_name(full_model_path, "valid_time", hash_string)
 
 def get_ground_truth_valid_f_name(hash_string):
     return get_f_name(ground_truth_path, "ground_truth_valid", hash_string)
@@ -252,26 +267,16 @@ def train_and_valid_on_fold(skf_is, full_model_path):
 
 #@mem.cache
 def train_and_valid_model(full_model_path, skf):
-    """Train a model on all folds and save the valid predictions and the 
-    model pickle. All model file names use the format
-    <hash of the np.array(train index vector)>
-
-    Parameters
-    ----------
-    m_paths : list, shape (k_models,)
-    skf : object a cross_validation object with N folds
-    """
-
     #Uncomment this and comment out the follwing two lines if
     #parallel training is not working
     #for skf_is in skf:
-    #    train_and_valid_on_fold(skf_is, m_path)
+    #    train_and_valid_on_fold(skf_is, full_model_path)
     
     Parallel(n_jobs=n_processes, verbose=5)\
         (delayed(train_and_valid_on_fold)(skf_is, full_model_path)
          for skf_is in skf)
     
-    #partial_train = partial(train_and_valid_on_fold, m_path=m_path)
+    #partial_train = partial(train_and_valid_on_fold, full_model_path=full_model_path)
     #pool = multiprocessing.Pool(processes=n_processes)
     #pool.map(partial_train, skf)
     #pool.close()
@@ -299,13 +304,12 @@ def train_and_valid_model(full_model_path, skf):
     #X_train, y_train = data_sets.get_training_sets()
 
     #for skf_is, i in zip(skf, range(n_processes)):
-    #    calc(skf_is, m_path, X_train, y_train, i)
+    #    calc(skf_is, full_model_path, X_train, y_train, i)
     #    time.sleep(5)
 
     #exchange.finish()
  
 def train_and_valid_models(orig_models_df, last_time_stamp=None):
-
     models_df = orig_models_df.sort("timestamp")
         
     if models_df.shape[0] == 0:
@@ -317,19 +321,19 @@ def train_and_valid_models(orig_models_df, last_time_stamp=None):
     data_sets.set_sets(X_train, y_train, X_test, y_test)
 
     for idx, model_df in models_df.iterrows():
-        full_model_path = get_full_model_path(idx, model_df)
-
         if model_df['state'] in ["ignore"]:
-            return
+            continue
+
+        full_model_path = get_full_model_path(idx, model_df)
 
         logger.info("Training : %s" % full_model_path)
 
         try:
             train_and_valid_model(full_model_path, skf)
             # failed_models.drop(idx, axis=0, inplace=True)
-            models_df.loc[idx, 'state'] = "trained"
+            orig_models_df.loc[idx, 'state'] = "trained"
         except Exception, e:
-            models_df.loc[idx, 'state'] = "error"
+            orig_models_df.loc[idx, 'state'] = "error"
             logger.error("Training failed with exception: \n{}".format(e))
 
             # TODO: put the error in the database instead of a file
@@ -342,21 +346,12 @@ def train_and_valid_models(orig_models_df, last_time_stamp=None):
                 f.write("{}".format(error_msg))
 
 #@mem.cache
-def test_model(m_path, skf):
-    """Test a model on all folds and save the test predictions. All model file 
-    names use the format
-    <hash of the np.array(train index vector)>
-
-    Parameters
-    ----------
-    m_paths : list, shape (k_models,)
-    """
-
+def test_model(full_model_path, skf):
 
     Parallel(n_jobs=n_processes, verbose=5)\
-        (delayed(test_on_fold)(skf_is, m_path) for skf_is in skf)
+        (delayed(test_on_fold)(skf_is, full_model_path) for skf_is in skf)
 
-    #partial_test = partial(test_on_fold, m_path=m_path)
+    #partial_test = partial(test_on_fold, full_model_path=full_model_path)
     #pool = multiprocessing.Pool(processes=n_processes)
     #pool.map(partial_test, skf)
     #pool.close()
@@ -364,7 +359,6 @@ def test_model(m_path, skf):
 
 
 def test_models(orig_models_df, last_time_stamp=None):
-
     models_df = orig_models_df.sort("timestamp")
         
     if models_df.shape[0] == 0:
@@ -376,19 +370,19 @@ def test_models(orig_models_df, last_time_stamp=None):
     data_sets.set_sets(X_train, y_train, X_test, y_test)
 
     for idx, model_df in models_df.iterrows():
-        full_model_path = get_full_model_path(idx, model_df)
-
         if model_df['state'] in ["ignore"]:
-            return
+            continue
+
+        full_model_path = get_full_model_path(idx, model_df)
 
         logger.info("Testing : %s" % full_model_path)
 
         try:
             test_model(full_model_path, skf)
             # failed_models.drop(idx, axis=0, inplace=True)
-            models_df.loc[idx, 'state'] = "tested"
+            orig_models_df.loc[idx, 'state'] = "tested"
         except Exception, e:
-            models_df.loc[idx, 'state'] = "test_error"
+            orig_models_df.loc[idx, 'state'] = "test_error"
             # trained_models.drop(idx, axis=0, inplace=True)
             logger.error("Testing failed with exception: \n{}".format(e))
 
