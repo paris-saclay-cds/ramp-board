@@ -180,7 +180,6 @@ def fetch_models():
                         'team': team_name, 
                         'model': tag_name, 
                         'timestamp': new_commit_time, 
-                        'path': os.path.join(team_name, tag_name_alias),
                         'state': "new",
                         'listing': file_listing,
                     }, index=[tag_name_alias])

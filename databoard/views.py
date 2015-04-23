@@ -131,7 +131,7 @@ def show_leaderboard():
     for df in [lb, failed, new_models]:
         # dirty hack
         # create a new column 'path_model' and use to generate the link
-        df['path_model'] = df.path + ' ' + df.model + ' ' + df.listing
+        df['path_model'] = df.team + ' ' + df.model + ' ' + df.listing
         df.model = df.path_model.map(model_with_link)
         # df.rename(
         #     columns=col_map, 

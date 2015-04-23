@@ -13,7 +13,7 @@ app.config['SHELVE_WRITEBACK'] = True
 
 init_app(app)
 
-columns = ['team', 'model', 'timestamp', 'path', 'state', 'listing']
+columns = ['team', 'model', 'timestamp', 'state', 'listing']
 
 
 @contextmanager
