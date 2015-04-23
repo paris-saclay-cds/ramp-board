@@ -25,6 +25,8 @@ from .config_databoard import (
 )
 import specific
 
+reorganize model dirs, one type of output per dir
+
 # We needed to make the sets global because Parallel hung
 # when we passed a list of dictionaries to the function
 # to be dispatched, save_scores()
@@ -168,7 +170,8 @@ def train_on_fold(skf_is, m_path):
     hash_string = get_hash_string_from_indices(valid_train_is)
     # the current paradigm is that X is a list of things (not necessarily np.array)
     X_valid_train = [X_train[i] for i in valid_train_is]
-    y_valid_train = [y_train[i] for i in valid_train_is]
+    # but y should be an np.array just in case no one touches it in the fe
+    y_valid_train = np.array([y_train[i] for i in valid_train_is])
 
     open(os.path.join(m_path, "__init__.py"), 'a').close()  # so to make it importable
     module_path = get_module_path(m_path)
@@ -204,7 +207,7 @@ def test_on_fold(skf_is, m_path):
             trained_model = pickle.load(f)
     except IOError, e: # no pickled model, retrain
         logger.info("No pickle, retraining")
-        trained_model = train_on_fold(m_path, skf_is)
+        trained_model = train_on_fold(skf_is, m_path)
 
     test_model_output, _ = test_trained_model(trained_model, X_test)
 
@@ -219,7 +222,7 @@ def train_and_valid_on_fold(skf_is, m_path):
     X_train, y_train = data_sets.get_training_sets()
     hash_string = get_hash_string_from_indices(valid_train_is)
     X_valid_test = [X_train[i] for i in valid_test_is]
-    y_valid_test = [y_train[i] for i in valid_test_is]
+    y_valid_test = np.array([y_train[i] for i in valid_test_is])
 
     logger.info("Validating : %s" % hash_string)
     valid_model_output, test_time = test_trained_model(trained_model, X_valid_test)
@@ -229,7 +232,7 @@ def train_and_valid_on_fold(skf_is, m_path):
         # saving validation set predictions
         specific.save_model_predictions(valid_model_output, f)
 
-@mem.cache
+#@mem.cache
 def train_and_valid_model(m_path, skf):
     """Train a model on all folds and save the valid predictions and the 
     model pickle. All model file names use the format
@@ -246,15 +249,43 @@ def train_and_valid_model(m_path, skf):
     #for skf_is in skf:
     #    train_and_valid_on_fold(skf_is, m_path)
     
-    #Parallel(n_jobs=n_processes, verbose=5)\
-    #    (delayed(train_and_valid_on_fold)(skf_is, m_path)
-    #     for skf_is in skf)
+    Parallel(n_jobs=n_processes, verbose=5)\
+        (delayed(train_and_valid_on_fold)(skf_is, m_path)
+         for skf_is in skf)
     
-    partial_train = partial(train_and_valid_on_fold, m_path=m_path)
-    pool = multiprocessing.Pool(processes=n_processes)
-    pool.map(partial_train, skf)
-    pool.close()
+    #partial_train = partial(train_and_valid_on_fold, m_path=m_path)
+    #pool = multiprocessing.Pool(processes=n_processes)
+    #pool.map(partial_train, skf)
+    #pool.close()
 
+    #import pprocess
+    #import time
+    #pprocess.pmap(partial_train, skf, limit=n_processes)
+
+    #class MyExchange(pprocess.Exchange):
+
+    #    "Parallel convenience class containing the array assignment operation."
+
+    #    def store_data(self, ch):
+    #        r = ch.receive()
+    #        print "*****************************************************"
+    #        print r
+
+    #exchange = MyExchange(limit=n_processes)
+
+    # Wrap the calculate function and manage it.
+
+    #calc = exchange.manage(pprocess.MakeParallel(train_and_valid_on_fold))
+
+    # Perform the work.
+    #X_train, y_train = data_sets.get_training_sets()
+
+    #for skf_is, i in zip(skf, range(n_processes)):
+    #    calc(skf_is, m_path, X_train, y_train, i)
+    #    time.sleep(5)
+
+    #exchange.finish()
+ 
 def train_and_valid_models(models, last_time_stamp=None):
 
     models_sorted = models.sort("timestamp")
@@ -289,7 +320,7 @@ def train_and_valid_models(models, last_time_stamp=None):
                     error_msg = error_msg[cut_exception_text:]
                 f.write("{}".format(error_msg))
 
-@mem.cache
+#@mem.cache
 def test_model(m_path, skf):
     """Test a model on all folds and save the test predictions. All model file 
     names use the format
@@ -302,7 +333,14 @@ def test_model(m_path, skf):
 
 
     Parallel(n_jobs=n_processes, verbose=5)\
-        (delayed(test_on_fold)(m_path, skf_is) for skf_is in skf)
+        (delayed(test_on_fold)(skf_is, m_path) for skf_is in skf)
+
+    #partial_test = partial(test_on_fold, m_path=m_path)
+    #pool = multiprocessing.Pool(processes=n_processes)
+    #pool.map(partial_test, skf)
+    #pool.close()
+    #pprocess.pmap(partial_test, skf, limit=n_processes)
+
 
 def test_models(models, last_time_stamp=None):
 
@@ -321,9 +359,7 @@ def test_models(models, last_time_stamp=None):
 
         logger.info("Testing : %s" % m_path)
 
-        if models.loc[idx, 'state'] not in ["trained", "test_error"]:
-            logger.error("Only trained models can be tested")
-            logger.error(m_path + " is untrained")
+        if models.loc[idx, 'state'] in ["ignore"]:
             return
 
         try:

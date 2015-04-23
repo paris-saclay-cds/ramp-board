@@ -16,6 +16,10 @@ from databoard.config_databoard import (
     local_deployment,
 )
 
+# for pickling theano
+import sys
+sys.setrecursionlimit(50000)
+
 # Open ports in Stratuslab
 # 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015, 
 # 8080, 8081, 8095, 8188, 8443, 8444, 9002, 10339, 10636, 15000, 15001, 15002, 
@@ -225,7 +229,7 @@ def test(state=False, tag=None):
             return
 
     if not state:
-        state = 'new'
+        state = 'trained'
     
     if state != 'all': 
         models = models[models.state == state]
@@ -242,6 +246,7 @@ def change_state(from_state, to_state):
         models = db['models']
     models = models[models['state'] == from_state]
 
+    idx = models.index
     with shelve_database() as db:
         db['models'].loc[idx, 'state'] = to_state
 

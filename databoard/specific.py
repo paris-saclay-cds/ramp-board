@@ -114,9 +114,11 @@ def train_model(module_path, X_valid_train_dict, y_valid_train):
     # Classification
     classifier = import_module('.classifier', module_path)
     clf = classifier.Classifier()
-    clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
-    clf_c.fit(X_valid_train_array, y_valid_train)
-    return fe, clf_c
+    #clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
+    #clf_c.fit(X_valid_train_array, y_valid_train)
+    clf.fit(X_valid_train_array, y_valid_train)
+    #return fe, clf_c
+    return fe, clf
 
 def test_model(trained_model, X_test_dict):
     fe, clf_c = trained_model
