@@ -326,7 +326,7 @@ def train_and_valid_models(orig_models_df, last_time_stamp=None):
 
         full_model_path = get_full_model_path(idx, model_df)
 
-        logger.info("Training : %s" % full_model_path)
+        logger.info("Training : %s/%s" % model_df['team'], model_df['tag'])
 
         try:
             train_and_valid_model(full_model_path, skf)
@@ -375,7 +375,7 @@ def test_models(orig_models_df, last_time_stamp=None):
 
         full_model_path = get_full_model_path(idx, model_df)
 
-        logger.info("Testing : %s" % full_model_path)
+        logger.info("Testing : %s/%s" % model_df['team'], model_df['tag'])
 
         try:
             test_model(full_model_path, skf)
@@ -395,11 +395,11 @@ def test_models(orig_models_df, last_time_stamp=None):
                     error_msg = error_msg[cut_exception_text:]
                 f.write("{}".format(error_msg))
 
-def get_predictions_lists(models_df, hash_string):
+def get_predictions_lists(models_df, subdir, hash_string):
     predictions_list = []
     for idx, model_df in models_df.iterrows():
         full_model_path = get_full_model_path(idx, model_df)
-        predictions_path = get_valid_f_name(full_model_path, hash_string)
+        predictions_path = get_f_name(full_model_path, subdir, hash_string)
         predictions = specific.load_model_predictions(predictions_path)
         predictions_list.append(predictions)
     return predictions_list
@@ -417,14 +417,18 @@ def leaderboard_execution_times(models_df):
         for hash_string in hash_strings:
             for idx, model_df in models_df.iterrows():
                 full_model_path = get_full_model_path(idx, model_df)
-                try: # FIXME: take try off once clean train
+                try: 
                     with open(get_train_time_f_name(full_model_path, hash_string), 'r') as f:
-                        # FIXME: take abs off once clean train
                         leaderboard.loc[idx, 'train time'] += abs(float(f.read()))
+                except IOError:
+                    logger.debug("Can't open %s, setting training time to 0" % 
+                        get_train_time_f_name(full_model_path, hash_string))
+                try: 
                     with open(get_valid_time_f_name(full_model_path, hash_string), 'r') as f:
                         leaderboard.loc[idx, 'test time'] += abs(float(f.read()))
                 except IOError:
-                    pass
+                    logger.debug("Can't open %s, setting testing time to 0" % 
+                        get_test_time_f_name(full_model_path, hash_string))
 
     leaderboard['train time'] = map(int, leaderboard['train time'] / num_cv_folds)
     leaderboard['test time'] = map(int, leaderboard['test time'] / num_cv_folds)
@@ -439,7 +443,7 @@ def get_ground_truth(ground_truth_filename):
     return pd.read_csv(
         ground_truth_filename, names=['ground_truth']).values.flatten()
 
-def leaderboard_classical(models_df):
+def leaderboard_classical(models_df, subdir = "valid"):
     hash_strings = get_hash_strings_from_ground_truth()
     mean_valid_scores = np.zeros(models_df.shape[0])
 
@@ -447,7 +451,8 @@ def leaderboard_classical(models_df):
         for hash_string in hash_strings:
             ground_truth_filename = get_ground_truth_valid_f_name(hash_string)
             ground_truth = get_ground_truth(ground_truth_filename)
-            predictions_list = get_predictions_lists(models_df, hash_string)
+            predictions_list = get_predictions_lists(
+                models_df, subdir, hash_string)
             valid_scores = [specific.Score().score(ground_truth, predictions) 
                             for predictions in predictions_list]
             mean_valid_scores += valid_scores
@@ -495,31 +500,42 @@ def combine_models_using_probas(predictions_list, indexes):
     #print predictions
     return predictions
 
+def get_best_index_list(models_df, hash_string):
+    ground_truth_filename = get_ground_truth_valid_f_name(hash_string)
+    ground_truth = get_ground_truth(ground_truth_filename)
+    predictions_list = get_predictions_lists(models_df, "valid", hash_string)
+    valid_scores = [specific.Score().score(ground_truth, predictions) 
+                    for predictions in predictions_list]
+    best_index_list = np.array([np.argmax(valid_scores)])
+
+    improvement = True
+    while improvement:
+        old_best_index_list = best_index_list
+        best_index_list = best_combine(
+            predictions_list, ground_truth, best_index_list)
+        improvement = len(best_index_list) != len(old_best_index_list)
+    logger.info("best indices = {}".format(best_index_list))
+    return best_index_list
+
 def leaderboard_combination(orig_models_df):
     models_df = orig_models_df.sort(columns='timestamp')
     hash_strings = get_hash_strings_from_ground_truth()
     counts = np.zeros(models_df.shape[0], dtype=int)
 
     if models_df.shape[0] != 0:
-        for hash_string in hash_strings:
-            ground_truth_filename = get_ground_truth_valid_f_name(hash_string)
-            ground_truth = get_ground_truth(ground_truth_filename)
-            predictions_list = get_predictions_lists(models_df, hash_string)
-            valid_scores = [specific.Score().score(ground_truth, predictions) 
-                            for predictions in predictions_list]
-            best_index_list = np.array([np.argmax(valid_scores)])
+        best_index_lists = Parallel(n_jobs=n_processes, verbose=0)\
+            (delayed(get_best_index_list)(models_df, hash_string)
+             for hash_string in hash_strings)
+        for best_index_list in best_index_lists:
+            counts += np.histogram(best_index_list, 
+                                   bins=range(models_df.shape[0] + 1))[0]
 
-            improvement = True
-            while improvement:
-                old_best_index_list = best_index_list
-                best_index_list = best_combine(
-                    predictions_list, ground_truth, best_index_list)
-                improvement = len(best_index_list) != len(old_best_index_list)
-            logger.info("best indices = {}".format(best_index_list))
-            # adding 1 each time a model appears in best_indexes, with 
-            # replacement (so counts[best_indexes] += 1 did not work)
-            counts += np.histogram(
-                best_index_list, bins=range(models_df.shape[0] + 1))[0]
+        #for hash_string in hash_strings:
+        #    best_index_list = get_best_index_list(models_df, hash_string)
+        #    # adding 1 each time a model appears in best_indexes, with 
+        #    # replacement (so counts[best_indexes] += 1 did not work)
+        #    counts += np.histogram(
+        #        best_index_list, bins=range(models_df.shape[0] + 1))[0]
 
     # leaderboard = models.copy()
     leaderboard = pd.DataFrame({'contributivity': counts}, index=models_df.index)
