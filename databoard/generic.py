@@ -449,7 +449,10 @@ def leaderboard_classical(models_df, subdir = "valid"):
 
     if models_df.shape[0] != 0:
         for hash_string in hash_strings:
-            ground_truth_filename = get_ground_truth_valid_f_name(hash_string)
+            if subdir == "valid":
+                ground_truth_filename = get_ground_truth_valid_f_name(hash_string)
+            else: #subdir = "test"
+                ground_truth_filename = get_ground_truth_test_f_name()
             ground_truth = get_ground_truth(ground_truth_filename)
             predictions_list = get_predictions_lists(
                 models_df, subdir, hash_string)
@@ -537,7 +540,6 @@ def leaderboard_combination(orig_models_df):
         #    counts += np.histogram(
         #        best_index_list, bins=range(models_df.shape[0] + 1))[0]
 
-    # leaderboard = models.copy()
     leaderboard = pd.DataFrame({'contributivity': counts}, index=models_df.index)
     return leaderboard.sort(columns=['contributivity'], ascending=False)
 

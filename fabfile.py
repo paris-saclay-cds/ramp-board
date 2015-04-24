@@ -165,8 +165,9 @@ def leaderboard(which='all'):
         trained_models = submissions[
             np.logical_or(submissions['state'] == "trained", 
                           submissions['state'] == "tested")]
+        tested_models = submissions[submissions['state'] == "tested"]
 
-    if which in ('all', '1'):
+    if which in ('all', 'classical'):
         l1 = leaderboard_classical(trained_models)
         # The following assignments only work because leaderboard_classical & co
         # are idempotent.
@@ -174,7 +175,7 @@ def leaderboard(which='all'):
         with shelve_database() as db:
             db['leaderboard1'] = l1
 
-    if which in ('all', '2'):
+    if which in ('all', 'combined'):
         l2 = leaderboard_combination(trained_models)
         # FIXME: same as above
         with shelve_database() as db:
@@ -185,6 +186,12 @@ def leaderboard(which='all'):
         # FIXME: same as above
         with shelve_database() as db:
             db['leaderboard_execution_times'] = l_times
+
+    if which in ('test'):
+        l_test = leaderboard_classical(tested_models, "test")
+        # FIXME: same as above
+        with shelve_database() as db:
+            db['leaderboard_classical_test'] = l_test
 
     # l3 = private_leaderboard_classical(trained_models)
 
