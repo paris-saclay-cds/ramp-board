@@ -153,7 +153,7 @@ def repeat_fetch(delay='60'):
         delay = int(os.getenv('FETCH_DELAY', delay))
         time.sleep(delay)
 
-def leaderboard(which='all'):
+def leaderboard(which='all', test=False):
     from databoard.generic import (
         leaderboard_classical, 
         leaderboard_combination, 
@@ -174,9 +174,12 @@ def leaderboard(which='all'):
         # FIXME (potentially)
         with shelve_database() as db:
             db['leaderboard1'] = l1
+            if test:
+                l_test = leaderboard_classical(tested_models, "test")
+                db['leaderboard_classical_test'] = l_test
 
     if which in ('all', 'combined'):
-        l2 = leaderboard_combination(trained_models)
+        l2 = leaderboard_combination(trained_models, test)
         # FIXME: same as above
         with shelve_database() as db:
             db['leaderboard2'] = l2
@@ -186,15 +189,6 @@ def leaderboard(which='all'):
         # FIXME: same as above
         with shelve_database() as db:
             db['leaderboard_execution_times'] = l_times
-
-    if which in ('test'):
-        l_test = leaderboard_classical(tested_models, "test")
-        # FIXME: same as above
-        with shelve_database() as db:
-            db['leaderboard_classical_test'] = l_test
-
-    # l3 = private_leaderboard_classical(trained_models)
-
 
 def train(state=False, tag=None):
     from databoard.generic import train_and_valid_models
