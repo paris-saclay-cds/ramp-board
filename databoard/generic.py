@@ -243,10 +243,8 @@ def test_on_fold(skf_is, full_model_path):
         trained_model = train_on_fold(skf_is, full_model_path)
 
     test_model_output, _ = test_trained_model(trained_model, X_test)
-
-    with open(get_test_f_name(full_model_path, hash_string), 'w') as f:
-        # saving test set predictions
-        specific.save_model_predictions(test_model_output, f)
+    test_f_name = get_test_f_name(full_model_path, hash_string)
+    test_model_output.save_predictions(test_f_name)
 
 def train_and_valid_on_fold(skf_is, full_model_path):
     trained_model = train_on_fold(skf_is, full_model_path)
@@ -259,11 +257,11 @@ def train_and_valid_on_fold(skf_is, full_model_path):
 
     logger.info("Validating : %s" % hash_string)
     valid_model_output, test_time = test_trained_model(trained_model, X_valid_test)
+    valid_f_name = get_valid_f_name(full_model_path, hash_string)
+    valid_model_output.save_predictions(valid_f_name)
     with open(get_valid_time_f_name(full_model_path, hash_string), 'w') as f:
         f.write(str(test_time))  # saving running time
-    with open(get_valid_f_name(full_model_path, hash_string), 'w') as f:
-        # saving validation set predictions
-        specific.save_model_predictions(valid_model_output, f)
+
 
 #@mem.cache
 def train_and_valid_model(full_model_path, skf):
@@ -326,7 +324,7 @@ def train_and_valid_models(orig_models_df, last_time_stamp=None):
 
         full_model_path = get_full_model_path(idx, model_df)
 
-        logger.info("Training : %s/%s" % model_df['team'], model_df['tag'])
+        logger.info("Training : %s/%s".format(model_df['team'], model_df['model']))
 
         try:
             train_and_valid_model(full_model_path, skf)
@@ -375,7 +373,8 @@ def test_models(orig_models_df, last_time_stamp=None):
 
         full_model_path = get_full_model_path(idx, model_df)
 
-        logger.info("Testing : %s/%s" % model_df['team'], model_df['tag'])
+        logger.info("Testing : %s/%s".format(model_df['team'], model_df['model']))
+        logger.info("Testing : " + idx)
 
         try:
             test_model(full_model_path, skf)
@@ -395,12 +394,13 @@ def test_models(orig_models_df, last_time_stamp=None):
                     error_msg = error_msg[cut_exception_text:]
                 f.write("{}".format(error_msg))
 
-def get_predictions_lists(models_df, subdir, hash_string):
+def get_predictions_list(models_df, subdir, hash_string):
     predictions_list = []
     for idx, model_df in models_df.iterrows():
         full_model_path = get_full_model_path(idx, model_df)
         predictions_path = get_f_name(full_model_path, subdir, hash_string)
-        predictions = specific.load_model_predictions(predictions_path)
+        output = specific.OutputType(predictions_path)
+        predictions = output.get_predictions()
         predictions_list.append(predictions)
     return predictions_list
 
@@ -454,10 +454,10 @@ def leaderboard_classical(models_df, subdir = "valid"):
             else: #subdir = "test"
                 ground_truth_filename = get_ground_truth_test_f_name()
             ground_truth = get_ground_truth(ground_truth_filename)
-            predictions_lists = get_predictions_lists(
+            predictions_list = get_predictions_list(
                 models_df, subdir, hash_string)
-            valid_scores = [specific.Score().score(ground_truth, predictions_list) 
-                            for predictions_list in predictions_lists]
+            valid_scores = [specific.Score().score(ground_truth, predictions) 
+                            for predictions in predictions_list]
             mean_valid_scores += valid_scores
 
     mean_valid_scores /= len(hash_strings)
@@ -514,6 +514,11 @@ def best_combine(predictions_list, ground_truth, best_indexes):
     else:
         return best_indexes
 
+# TODO: this shuold be an inner consistency operation in OutputType
+def get_y_pred_array(y_probas_array):
+    return np.array([specific.labels[y_probas.argmax()]
+                     for y_probas in y_probas_array])
+
 # FIXME: This is really dependent on the output_type and the score at the same 
 # time
 def combine_models_using_probas(predictions_list, indexes):
@@ -534,18 +539,15 @@ def combine_models_using_probas(predictions_list, indexes):
     #k = len(indexes)
     #n = len(y_preds[0])
     #n_ones = n * k - y_preds[indexes].sum() # number of zeros
-    y_probas = np.array([[predictions_list[i][j][1] 
-                 for j in range(len(predictions_list[i]))
-                ]
-                for i in indexes
-               ])
+    y_probas_arrays = []
+    for index in indexes:
+        y_pred_array, y_probas_array = predictions_list[index]
+        y_probas_arrays.append(y_probas_array)
+    y_probas_arrays = np.array(y_probas_arrays)
     # We do mean probas because sum(log(probas)) have problems at zero
-    means_y_probas = y_probas.mean(axis=0)
-    # don't really have to convert it back to list, just to stay consistent
-    predictions = [[specific.labels[y_proba.argmax()], y_proba.tolist()]
-                   for y_proba in means_y_probas]
-    #print predictions
-    return predictions
+    combined_y_probas_array = y_probas_arrays.mean(axis=0)
+    combined_y_pred_array = get_y_pred_array(combined_y_probas_array)
+    return combined_y_pred_array, combined_y_probas_array
 
 from sklearn.isotonic import IsotonicRegression
 from sklearn.cross_validation import StratifiedShuffleSplit
@@ -574,61 +576,56 @@ class IsotonicCalibrator():
             X_calibrated_transpose, sum_rows)
         return X_calibrated_normalized_transpose.T
 
-def calibrate_test(predict_proba_array, ground_truth, test_predict_proba_array):
+def calibrate_test(y_probas_array, ground_truth, test_y_probas_array):
     isotonic_calibrator = IsotonicCalibrator()
-    isotonic_calibrator.fit(predict_proba_array, ground_truth)
-    calibrated_test_predict_proba_array = isotonic_calibrator.predict(
-        test_predict_proba_array)
-    return calibrated_test_predict_proba_array
+    isotonic_calibrator.fit(y_probas_array, ground_truth)
+    calibrated_test_y_probas_array = isotonic_calibrator.predict(
+        test_y_probas_array)
+    return calibrated_test_y_probas_array
 
-def calibrate(predict_proba_array, ground_truth, test_predict_proba_array = []):
+def calibrate(y_probas_array, ground_truth):
     skf = StratifiedShuffleSplit(ground_truth, n_iter=1, test_size=0.5, 
                                  random_state=specific.random_state)
-    calibrated_proba_array = np.empty(predict_proba_array.shape)
+    calibrated_proba_array = np.empty(y_probas_array.shape)
     fold1_is, fold2_is = list(skf)[0]
     folds = [(fold1_is, fold2_is), (fold2_is, fold1_is)]
     isotonic_calibrator = IsotonicCalibrator()
     for fold_train_is, fold_test_is in folds:
-        isotonic_calibrator.fit(predict_proba_array[fold_train_is], 
+        isotonic_calibrator.fit(y_probas_array[fold_train_is], 
                                 ground_truth[fold_train_is])
         calibrated_proba_array[fold_test_is] = isotonic_calibrator.predict(
-            predict_proba_array[fold_test_is])
+            y_probas_array[fold_test_is])
     return calibrated_proba_array
 
-# It's a bit messy now. Calibration takes the proba array whereas 
-# predictions_list also contains the label. In any case, this is completely
-# ouput_type dependent, so will probably go there.
+# TODO: This is completely ouput_type dependent, so will probably go there.
 def get_best_index_list(models_df, hash_string):
     ground_truth_filename = get_ground_truth_valid_f_name(hash_string)
     ground_truth = get_ground_truth(ground_truth_filename)
 
-    predictions_lists_orig = get_predictions_lists(models_df, "valid", hash_string)
-    predictions_lists = []
-    for predictions_list_orig in predictions_lists_orig:
-        # getting rid of the predicted labels predictions_list[:,0]
-        predict_proba_list = [
-            predictions[1] for predictions in predictions_list_orig]
-        predict_proba_array = np.array(predict_proba_list)
-        calibrated_proba_array = calibrate(predict_proba_array, ground_truth)
-        predictions_list = [[predictions[0], calibrated_proba_list]
-            for predictions, calibrated_proba_list
-            in zip(predictions_list_orig, calibrated_proba_array.tolist())]
-        predictions_lists.append(predictions_list)
+    # Calibrating predictions
+    uncalibrated_predictions_list = get_predictions_list(models_df, "valid", hash_string)
+    predictions_list = []
+    for uncalibrated_predictions in uncalibrated_predictions_list:
+        y_pred_array, y_probas_array = uncalibrated_predictions
+        calibrated_y_probas_array = calibrate(y_probas_array, ground_truth)
+        calibrated_y_pred_array = get_y_pred_array(calibrated_y_probas_array)
+        predictions = calibrated_y_pred_array, calibrated_y_probas_array
+        predictions_list.append(predictions)
 
-    valid_scores = [specific.Score().score(ground_truth, predictions_list) 
-                    for predictions_list in predictions_lists]
+    valid_scores = [specific.Score().score(ground_truth, predictions) 
+                    for predictions in predictions_list]
     best_index_list = np.array([np.argmax(valid_scores)])
 
     improvement = True
     while improvement:
         old_best_index_list = best_index_list
         best_index_list = best_combine(
-            predictions_lists, ground_truth, best_index_list)
+            predictions_list, ground_truth, best_index_list)
         improvement = len(best_index_list) != len(old_best_index_list)
     logger.info("best indices = {}".format(best_index_list))
     best_score = np.max(valid_scores)
     combined_predictions = combine_models_using_probas(
-        predictions_lists, best_index_list)
+        predictions_list, best_index_list)
     combined_score = specific.Score().score(ground_truth, combined_predictions)
     return best_index_list, best_score, combined_score
 
@@ -636,7 +633,8 @@ def get_best_index_list(models_df, hash_string):
 #TODO: make an actual prediction
 #TODO: parallelize
 def make_combined_test_prediction(best_index_lists, models_df, hash_strings):
-    # We shouod use it to calibrate only the needed models, only once
+    # We should use it to calibrate only the needed models, only once
+    # not yet used
     unique_best_index_list = np.unique([best_index for best_index_list in best_index_lists
                                  for best_index in best_index_list])
 
@@ -644,42 +642,30 @@ def make_combined_test_prediction(best_index_lists, models_df, hash_strings):
         ground_truth_test_filename = get_ground_truth_test_f_name()
         ground_truth_test = get_ground_truth(ground_truth_test_filename)
         combined_test_predictions_list = []
+        foldwise_best_test_predictions_list = []
         for hash_string, best_index_list in zip(hash_strings, best_index_lists):
             print hash_string
             ground_truth_valid_filename = get_ground_truth_valid_f_name(hash_string)
             ground_truth_valid = get_ground_truth(ground_truth_valid_filename)
-            test_predictions_lists_orig = get_predictions_lists(
+            uncalibrated_test_predictions_list = get_predictions_list(
                 models_df, "test", hash_string)
-            valid_predictions_lists_orig = get_predictions_lists(
+            valid_predictions_list = get_predictions_list(
                 models_df, "valid", hash_string)
-            test_predictions_lists = []
+            test_predictions_list = []
             for best_index in best_index_list:
-                test_predictions_list_orig = test_predictions_lists_orig[best_index]
-                valid_predictions_list_orig = valid_predictions_lists_orig[best_index]
-
-                valid_predict_proba_list = [
-                    predictions[1] for predictions in valid_predictions_list_orig]
-                valid_predict_proba_array = np.array(valid_predict_proba_list)
-
-                test_predict_proba_list = [
-                    predictions[1] for predictions in test_predictions_list_orig]
-                test_predict_proba_array = np.array(test_predict_proba_list)
-
-                calibrated_test_predict_proba_array = calibrate_test(
-                    valid_predict_proba_array, ground_truth_valid, 
-                    test_predict_proba_array)
-                test_predictions_list = [[predictions[0], calibrated_proba_list]
-                    for predictions, calibrated_proba_list
-                    in zip(test_predictions_list_orig, 
-                        calibrated_test_predict_proba_array.tolist())]
-                test_predictions_lists.append(test_predictions_list)
+                _, uncalibrated_test_y_probas_array = uncalibrated_test_predictions_list[best_index]
+                _, valid_y_probas_array = valid_predictions_list[best_index]
+                test_y_probas_array = calibrate_test(
+                    valid_y_probas_array, ground_truth_valid, 
+                    uncalibrated_test_y_probas_array)
+                test_y_pred_array = get_y_pred_array(test_y_probas_array)
+                test_predictions = test_y_pred_array, test_y_probas_array
+                test_predictions_list.append(test_predictions)
 
             combined_test_predictions = combine_models_using_probas(
-                test_predictions_lists, range(len(test_predictions_lists)))
+                test_predictions_list, range(len(test_predictions_list)))
             combined_test_predictions_list.append(combined_test_predictions)
-            #foldwise_best_test_predictions = \
-            #    predictions_lists['test'][best_indexes[0]]
-            #foldwise_best_test_predictions_list.append(foldwise_best_test_predictions)
+            foldwise_best_test_predictions_list.append(test_predictions_list[0])
 
 
         combined_combined_test_predictions = combine_models_using_probas(
@@ -688,11 +674,11 @@ def make_combined_test_prediction(best_index_lists, models_df, hash_strings):
         print "foldwise combined test score = ", \
             specific.Score().score(
                 ground_truth_test, combined_combined_test_predictions)
-        #combined_foldwise_best_test_predictions = combine_models_using_probas(
-        #        foldwise_best_test_predictions_list, 
-        #        range(len(foldwise_best_test_predictions_list)))
-        #print "foldwise best test score = ", \
-        #    specific.Score().score(ground_truth_test, combined_foldwise_best_test_predictions)
+        combined_foldwise_best_test_predictions = combine_models_using_probas(
+                foldwise_best_test_predictions_list, 
+                range(len(foldwise_best_test_predictions_list)))
+        print "foldwise best test score = ", \
+            specific.Score().score(ground_truth_test, combined_foldwise_best_test_predictions)
 
 def leaderboard_combination(orig_models_df, test=False):
     models_df = orig_models_df.sort(columns='timestamp')
@@ -709,15 +695,17 @@ def leaderboard_combination(orig_models_df, test=False):
         for best_index_list in best_index_lists:
             counts += np.histogram(best_index_list, 
                                    bins=range(models_df.shape[0] + 1))[0]
-        if test:
-            make_combined_test_prediction(
-                best_index_lists, models_df, hash_strings)
+        
         #for hash_string in hash_strings:
-        #    best_index_list = get_best_index_list(models_df, hash_string)
+        #    best_index_list, best_score, combined_score = get_best_index_list(models_df, hash_string)
         #    # adding 1 each time a model appears in best_indexes, with 
         #    # replacement (so counts[best_indexes] += 1 did not work)
         #    counts += np.histogram(
         #        best_index_list, bins=range(models_df.shape[0] + 1))[0]
+
+        if test:
+            make_combined_test_prediction(
+                best_index_lists, models_df, hash_strings)
 
     leaderboard = pd.DataFrame({'contributivity': counts}, index=models_df.index)
     return leaderboard.sort(columns=['contributivity'], ascending=False)

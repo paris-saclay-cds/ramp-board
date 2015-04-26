@@ -18,27 +18,24 @@ def load_binary_predictions(model_output, f_name_valid, f_name_test):
     save_single_class_prediction(y_test_pred, y_test_proba, f_name_test)
 
 # Multi-class classification
-def save_multi_class_prediction(y_pred, y_proba, f_name):
-    num_classes = y_proba.shape[1]
-    output = [np.append(y, p) for y, p in zip(y_pred, y_proba)]
-    fmt = "%d"
-    for i in range(num_classes):
-        fmt = fmt + ",%lf"
-    np.savetxt(f_name, output, fmt=fmt)
+class MultiClassClassification:
+    def __init__(self, y_pred_array, y_probas_array):
+        self.y_pred_array = y_pred_array
+        self.y_probas_array = y_probas_array
 
-def save_multi_class_predictions(model_output, f_name):
-    y_pred, y_proba = model_output
-    save_multi_class_prediction(y_pred, y_proba, f_name)
+    def __init__(self, f_name):
+        output = np.genfromtxt(f_name, delimiter=',')
+        self.y_pred_array = np.array(output[:,0], dtype=int)
+        self.y_probas_array = np.array(output[:,1:], dtype=float)
 
-def load_multi_class_predictions(predictions_path):
-    csv_file = open(predictions_path)
-    predictions = []
-    for row in csv_file:
-        number_strings = row.split(',')
-        probas = map(float, number_strings[1:])
-        prediction = [
-            int(number_strings[0]), # class label
-            map(float, number_strings[1:])  # class probas list
-        ]
-        predictions.append(prediction)
-    return predictions
+    def save_predictions(self, f_name):
+        num_classes = self.y_probas_array.shape[1]
+        output = [np.append(y_pred, y_probas) for y_pred, y_probas
+                  in zip(self.y_pred_array, self.y_probas_array)]
+        fmt = "%d"
+        for i in range(num_classes):
+            fmt = fmt + ",%lf"
+        np.savetxt(f_name, output, fmt=fmt)
+
+    def get_predictions(self):
+        return self.y_pred_array, self.y_probas_array

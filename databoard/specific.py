@@ -7,8 +7,8 @@ from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
 from sklearn.calibration import CalibratedClassifierCV
 # menu
 from .scores import ScoreAccuracy as Score
-from .output_type import save_multi_class_predictions as save_model_predictions
-from .output_type import load_multi_class_predictions as load_model_predictions
+from .output_type import MultiClassClassification as OutputType
+import output_type
 
 from .config_databoard import (
     local_deployment,
@@ -121,13 +121,13 @@ def train_model(module_path, X_valid_train_dict, y_valid_train):
     return fe, clf
 
 def test_model(trained_model, X_test_dict):
-    fe, clf_c = trained_model
+    fe, clf = trained_model
 
     # Feature extraction
     X_test_array = fe.transform(X_test_dict)
 
     # Classification
-    y_test_pred = clf_c.predict(X_test_array)
-    y_test_score = clf_c.predict_proba(X_test_array)
-    return y_test_pred, y_test_score
+    y_pred_array = clf.predict(X_test_array)
+    y_probas_array = clf.predict_proba(X_test_array)
+    return output_type.MultiClassClassification(y_pred_array, y_probas_array)
 
