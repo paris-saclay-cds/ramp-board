@@ -15,6 +15,7 @@ from databoard.config_databoard import (
     models_path,
     local_deployment,
 )
+import databoard.specific as specific
 
 # for pickling theano
 import sys
@@ -30,15 +31,9 @@ env.use_ssh_config = True
 
 # the servers where the commands are executed
 env.hosts = ['onevm-54.lal.in2p3.fr']
-#env.hosts = ['onevm-188.lal.in2p3.fr']
 production = env.hosts[0]
-#dest_path = '/mnt/datacamp/databoard_03_9002_test'
-#server_port = '9002'
-dest_path = '/mnt/datacamp/databoard_03_8080_test'
-#server_port = '80'
-#dest_path = '/mnt/datacamp/databoard_03_80_deployment'
-server_port = '8080'
 
+#dest_path and server_port should be set in specific
 logger = logging.getLogger('databoard')
 
 
@@ -153,7 +148,7 @@ def repeat_fetch(delay='60'):
         delay = int(os.getenv('FETCH_DELAY', delay))
         time.sleep(delay)
 
-def leaderboard(which='all', test=False):
+def leaderboard(which='all', test=False, calibrate=False):
     from databoard.generic import (
         leaderboard_classical, 
         leaderboard_combination, 
@@ -168,14 +163,15 @@ def leaderboard(which='all', test=False):
         tested_models = submissions[submissions['state'] == "tested"]
 
     if which in ('all', 'classical'):
-        l1 = leaderboard_classical(trained_models)
+        l1 = leaderboard_classical(trained_models, calibrate=calibrate)
         # The following assignments only work because leaderboard_classical & co
         # are idempotent.
         # FIXME (potentially)
         with shelve_database() as db:
             db['leaderboard1'] = l1
             if test:
-                l_test = leaderboard_classical(tested_models, "test")
+                l_test = leaderboard_classical(
+                    tested_models, subdir="test", calibrate=calibrate)
                 db['leaderboard_classical_test'] = l_test
 
     if which in ('all', 'combined'):
@@ -309,23 +305,31 @@ def rserve(sockname="db_server"):
     if not exists("/usr/bin/dtach"):
         sudo("apt-get install dtach")
 
-    with cd(dest_path):
-        # run('export SERV_PORT={}'.format(server_port))
+    with cd(specific.dest_path):
+        # run('export SERV_PORT={}'.format(specific.server_port))
         # run('fab serve')
-        # run('dtach -n `mktemp -u /tmp/{}.XXXX` export SERV_PORT={};fab serve'.format(sockname, server_port))
-        return run('dtach -n `mktemp -u /tmp/{}.XXXX` fab serve:port={}'.format(sockname, server_port))
+        # run('dtach -n `mktemp -u /tmp/{}.XXXX` export SERV_PORT={};fab serve'.format(sockname, specific.server_port))
+        return run('dtach -n `mktemp -u /tmp/{}.XXXX` fab serve:port={}'.format(sockname, specific.server_port))
+
+from importlib import import_module
 
 @hosts(production)
-def publish():
+def publish():#ramp):
+#    from ramps.variable_stars.specific import dest_path
+#    print dest_path
+#    import_module('.specific', "ramps." + ramp)
     local('')
     project.rsync_project(
-        remote_dir=dest_path,
+        remote_dir=specific.dest_path,
         exclude=[ '.DS_Store', 
                   'TeamsRepos', 
                   'teams_repos', 
+                  'data', 
                   'models', 
                   'output',
                   'joblib',
+                  'ramps',
+                  'user_test_model',
                   'shelve*',
                   '*.ipynb*',
                   '*.log',

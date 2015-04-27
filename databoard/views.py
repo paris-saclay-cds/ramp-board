@@ -43,7 +43,6 @@ logger = logging.getLogger('databoard')
 
 def model_with_link(path_model):
     path, model, listing = path_model.split()
-    print path, model, listing
     filename = listing.split('|')[0]
     filename_path = '/models/{}/{}'.format(path, filename)
 
@@ -94,15 +93,12 @@ def show_leaderboard():
     # col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
     common_columns = ['team', 'model', 'commit']
     # common_columns = ['team', col_map['model']]
-    scores_columns = ['rank'] + common_columns + \
-        ['score', 'contributivity', 'train time', 'test time']
     error_columns = common_columns + ['error']
 
     with shelve_database() as db:
         submissions = db['models']
         submissions['commit'] = map(timestamp_to_time, submissions['timestamp'])
         # 'inner' means intersection of the indices
-        print db['leaderboard_execution_times']
 
         lb = submissions.join(db['leaderboard1'], how='inner').\
                          join(db['leaderboard2'], how='inner').\
@@ -122,7 +118,7 @@ def show_leaderboard():
     # failed.index = range(1, len(failed) + 1)
     # new_models.index = range(1, len(new_models) + 1)
 
-    failed.loc[:, "error"] = failed.path
+    failed.loc[:, "error"] = failed.team + "/" + failed.index 
     failed.loc[:, "error"] = failed.error.map(error_local_to_url)
 
     # adding the rank column
@@ -139,6 +135,10 @@ def show_leaderboard():
         #     columns=col_map, 
         #     inplace=True)
 
+    scores_columns = ['rank'] + common_columns + ['score']
+    if 'calib score' in lb.columns:
+        scores_columns += ['calib score']
+    scores_columns += ['contributivity', "train time", "test time"]
     lb_html = lb.to_html(columns=scores_columns, classes=sortable_table_classes, **html_params)
     new_html = new_models.to_html(columns=common_columns, classes=table_classes, **html_params)
 
@@ -179,19 +179,16 @@ def show_private_leaderboard():
     # col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
     common_columns = ['team', 'model', 'commit']
     # common_columns = ['team', col_map['model']]
-    scores_columns = ['rank'] + common_columns + \
-        ['score', 'contributivity', 'train time', 'test time']
     error_columns = common_columns + ['error']
 
     with shelve_database() as db:
         submissions = db['models']
         submissions['commit'] = map(timestamp_to_time, submissions['timestamp'])
         # 'inner' means intersection of the indices
-        print db['leaderboard_execution_times']
 
         lb = submissions.join(db['leaderboard_classical_test'], how='inner').\
                          join(db['leaderboard2'], how='inner').\
-                         join(db['leaderboard_execution_times'], how='inner')                         
+                         join(db['leaderboard_execution_times'], how='inner')
         failed = submissions[submissions.state == "error"]
         new_models = submissions[submissions.state == "new"]
 
@@ -207,7 +204,7 @@ def show_private_leaderboard():
     # failed.index = range(1, len(failed) + 1)
     # new_models.index = range(1, len(new_models) + 1)
 
-    failed.loc[:, "error"] = failed.path
+    failed.loc[:, "error"] = failed.team + "/" + failed.index
     failed.loc[:, "error"] = failed.error.map(error_local_to_url)
 
     # adding the rank column
@@ -224,6 +221,10 @@ def show_private_leaderboard():
         #     columns=col_map, 
         #     inplace=True)
 
+    scores_columns = ['rank'] + common_columns + ['score']
+    if 'calib score' in lb.columns:
+        scores_columns += ['calib score']
+    scores_columns += ['contributivity', "train time", "test time"]
     lb_html = lb.to_html(columns=scores_columns, classes=sortable_table_classes, **html_params)
     new_html = new_models.to_html(columns=common_columns, classes=table_classes, **html_params)
 

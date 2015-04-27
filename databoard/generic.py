@@ -181,7 +181,7 @@ def setup_ground_truth():
     os.mkdir(ground_truth_path)
     _, y_train, _, y_test, skf = specific.split_data()
     f_name_test = get_ground_truth_test_f_name()
-    np.savetxt(f_name_test, y_test, delimiter="\n", fmt='%d')
+    np.savetxt(f_name_test, y_test, delimiter="\n", fmt='%s')
 
     logger.debug('Ground truth files...')
     scores = []
@@ -189,7 +189,7 @@ def setup_ground_truth():
         hash_string = get_hash_string_from_indices(train_is)
         f_name_valid = get_ground_truth_valid_f_name(hash_string)
         logger.debug(f_name_valid)
-        np.savetxt(f_name_valid, y_train[test_is], delimiter="\n", fmt='%d')
+        np.savetxt(f_name_valid, y_train[test_is], delimiter="\n", fmt='%s')
 
 def test_trained_model(trained_model, X_test):
     start = timeit.default_timer()
@@ -272,7 +272,7 @@ def train_and_valid_model(full_model_path, skf):
     
     Parallel(n_jobs=n_processes, verbose=5)\
         (delayed(train_and_valid_on_fold)(skf_is, full_model_path)
-         for skf_is in skf)
+        for skf_is in skf)
     
     #partial_train = partial(train_and_valid_on_fold, full_model_path=full_model_path)
     #pool = multiprocessing.Pool(processes=n_processes)
@@ -324,7 +324,7 @@ def train_and_valid_models(orig_models_df, last_time_stamp=None):
 
         full_model_path = get_full_model_path(idx, model_df)
 
-        logger.info("Training : %s/%s".format(model_df['team'], model_df['model']))
+        logger.info("Training : {}/{}".format(model_df['team'], model_df['model']))
 
         try:
             train_and_valid_model(full_model_path, skf)
@@ -373,7 +373,7 @@ def test_models(orig_models_df, last_time_stamp=None):
 
         full_model_path = get_full_model_path(idx, model_df)
 
-        logger.info("Testing : %s/%s".format(model_df['team'], model_df['model']))
+        logger.info("Testing : {}/{}".format(model_df['team'], model_df['model']))
         logger.info("Testing : " + idx)
 
         try:
@@ -399,7 +399,7 @@ def get_predictions_list(models_df, subdir, hash_string):
     for idx, model_df in models_df.iterrows():
         full_model_path = get_full_model_path(idx, model_df)
         predictions_path = get_f_name(full_model_path, subdir, hash_string)
-        output = specific.OutputType(predictions_path)
+        output = specific.OutputType(f_name=predictions_path)
         predictions = output.get_predictions()
         predictions_list.append(predictions)
     return predictions_list
@@ -443,7 +443,7 @@ def get_ground_truth(ground_truth_filename):
     return pd.read_csv(
         ground_truth_filename, names=['ground_truth']).values.flatten()
 
-def get_scores(models_df, hash_string, subdir = "valid"):
+def get_scores(models_df, hash_string, subdir = "valid", calibrate=False):
     logger.info("Evaluating : {}".format(hash_string))
     if subdir == "valid":
         ground_truth_filename = get_ground_truth_valid_f_name(hash_string)
@@ -451,22 +451,51 @@ def get_scores(models_df, hash_string, subdir = "valid"):
         ground_truth_filename = get_ground_truth_test_f_name()
     ground_truth = get_ground_truth(ground_truth_filename)
     specific.score.set_eps(0.01 / len(ground_truth))
-    predictions_list = get_predictions_list(models_df, subdir, hash_string)
+
+    if calibrate:
+        # Calibrating predictions
+        if subdir == "valid":
+            uncalibrated_predictions_list = get_predictions_list(
+                models_df, "valid", hash_string)
+            predictions_list = calibrate_predictions(
+                uncalibrated_predictions_list, ground_truth)
+
+        else: #subdir == "test":
+            uncalibrated_test_predictions_list = get_predictions_list(
+                models_df, "test", hash_string)
+            valid_predictions_list = get_predictions_list(
+                models_df, "valid", hash_string)
+            ground_truth_valid_filename = get_ground_truth_valid_f_name(hash_string)
+            ground_truth_valid = get_ground_truth(ground_truth_valid_filename)
+            predictions_list = calibrate_test_predictions(
+                uncalibrated_test_predictions_list, valid_predictions_list, 
+                ground_truth_valid)
+    else:
+        predictions_list = get_predictions_list(models_df, subdir, hash_string)
+
+
     scores = np.array([specific.score(ground_truth, predictions) 
                        for predictions in predictions_list])
     return scores
 
-def leaderboard_classical(models_df, subdir = "valid"):
+def leaderboard_classical(models_df, subdir = "valid", calibrate = False):
     hash_strings = get_hash_strings_from_ground_truth()
     mean_scores = np.array([specific.score.zero() 
                             for _ in range(models_df.shape[0])])
+    mean_scores_calibrated = np.array([specific.score.zero() 
+                            for _ in range(models_df.shape[0])])
+
     if models_df.shape[0] != 0:
         scores_list = Parallel(n_jobs=n_processes, verbose=0)\
             (delayed(get_scores)(models_df, hash_string, subdir)
              for hash_string in hash_strings)
-        # Even though __div__ is defined for ScoreObject, array-wise division
-        # doesn't seem to work, so we do sum and divide below
         mean_scores = np.mean(np.array(scores_list), axis=0)
+
+        if calibrate:
+            scores_list = Parallel(n_jobs=n_processes, verbose=0)\
+                (delayed(get_scores)(models_df, hash_string, subdir, calibrate)
+                 for hash_string in hash_strings)
+            mean_scores_calibrated = np.mean(np.array(scores_list), axis=0)
 
         #for hash_string in hash_strings:
         #    scores = get_scores(models_df, hash_string, subdir)
@@ -476,6 +505,10 @@ def leaderboard_classical(models_df, subdir = "valid"):
     logger.info("classical leaderboard mean {} scores = {}".
         format(subdir, mean_scores))
     leaderboard = pd.DataFrame({'score': mean_scores}, index=models_df.index)
+    if calibrate:
+        logger.info("classical leaderboard calibrated mean {} scores = {}".
+            format(subdir, mean_scores_calibrated))
+        leaderboard['calib score'] = mean_scores_calibrated
     return leaderboard.sort(columns=['score'])
 
 def best_combine(predictions_list, ground_truth, best_indexes):
@@ -507,6 +540,7 @@ def best_combine(predictions_list, ground_truth, best_indexes):
            specific.score(ground_truth, best_predictions):
             best_predictions = combined_predictions
             best_index = i
+            #print i, specific.score(ground_truth, combined_predictions)
     if best_index > -1:
         return np.append(best_indexes, best_index)
     else:
@@ -597,13 +631,7 @@ def calibrate(y_probas_array, ground_truth):
             y_probas_array[fold_test_is])
     return calibrated_proba_array
 
-# TODO: This is completely ouput_type dependent, so will probably go there.
-def get_best_index_list(models_df, hash_string):
-    ground_truth_filename = get_ground_truth_valid_f_name(hash_string)
-    ground_truth = get_ground_truth(ground_truth_filename)
-
-    # Calibrating predictions
-    uncalibrated_predictions_list = get_predictions_list(models_df, "valid", hash_string)
+def calibrate_predictions(uncalibrated_predictions_list, ground_truth):
     predictions_list = []
     for uncalibrated_predictions in uncalibrated_predictions_list:
         y_pred_array, y_probas_array = uncalibrated_predictions
@@ -611,40 +639,13 @@ def get_best_index_list(models_df, hash_string):
         calibrated_y_pred_array = get_y_pred_array(calibrated_y_probas_array)
         predictions = calibrated_y_pred_array, calibrated_y_probas_array
         predictions_list.append(predictions)
+    return predictions_list
 
-    valid_scores = [specific.score(ground_truth, predictions) 
-                    for predictions in predictions_list]
-    best_index_list = np.array([np.argmax(valid_scores)])
-
-    improvement = True
-    while improvement:
-        old_best_index_list = best_index_list
-        best_index_list = best_combine(
-            predictions_list, ground_truth, best_index_list)
-        improvement = len(best_index_list) != len(old_best_index_list)
-    logger.info("best indices = {}".format(best_index_list))
-    best_score = np.max(valid_scores)
-    combined_predictions = combine_models_using_probas(
-        predictions_list, best_index_list)
-    combined_score = specific.score(ground_truth, combined_predictions)
-    return best_index_list, best_score, combined_score
-
-def get_calibrated_test_predictions(valid_y_probas_array, ground_truth_valid,
-                                    uncalibrated_test_y_probas_array):
-    test_y_probas_array = calibrate_test(
-        valid_y_probas_array, ground_truth_valid, 
-        uncalibrated_test_y_probas_array)
-    return get_y_pred_array(test_y_probas_array), test_y_probas_array
-
-def get_combined_test_predictions(models_df, hash_string, best_index_list):
-    assert(len(best_index_list) > 0)
-    logger.info("Evaluating combined test: {}".format(hash_string))
-    ground_truth_valid_filename = get_ground_truth_valid_f_name(hash_string)
-    ground_truth_valid = get_ground_truth(ground_truth_valid_filename)
-    uncalibrated_test_predictions_list = get_predictions_list(
-        models_df, "test", hash_string)
-    valid_predictions_list = get_predictions_list(
-        models_df, "valid", hash_string)
+def calibrate_test_predictions(uncalibrated_test_predictions_list, 
+                               valid_predictions_list, ground_truth_valid,
+                               best_index_list = []):
+    if len(best_index_list) == 0:
+        best_index_list = range(len(uncalibrated_test_predictions_list))
     test_predictions_list = []
     for best_index in best_index_list:
         _, uncalibrated_test_y_probas_array = \
@@ -656,6 +657,49 @@ def get_combined_test_predictions(models_df, hash_string, best_index_list):
         test_y_pred_array = get_y_pred_array(test_y_probas_array)
         test_predictions = test_y_pred_array, test_y_probas_array
         test_predictions_list.append(test_predictions)
+    return test_predictions_list
+
+# TODO: This is completely ouput_type dependent, so will probably go there.
+def get_best_index_list(models_df, hash_string):
+    ground_truth_filename = get_ground_truth_valid_f_name(hash_string)
+    ground_truth = get_ground_truth(ground_truth_filename)
+
+    uncalibrated_predictions_list = get_predictions_list(models_df, "valid", hash_string)
+    predictions_list = calibrate_predictions(
+        uncalibrated_predictions_list, ground_truth)
+    valid_scores = [specific.score(ground_truth, predictions) 
+                    for predictions in predictions_list]
+    best_index_list = np.array([np.argmax(valid_scores)])
+
+    improvement = True
+    max_len_best_index_list = 80
+    while improvement and len(best_index_list) < max_len_best_index_list:
+        old_best_index_list = best_index_list
+        best_index_list = best_combine(
+            predictions_list, ground_truth, best_index_list)
+        improvement = len(best_index_list) != len(old_best_index_list)
+    logger.info("best indices = {}".format(best_index_list))
+    best_score = np.max(valid_scores)
+    combined_predictions = combine_models_using_probas(
+        predictions_list, best_index_list)
+    combined_score = specific.score(ground_truth, combined_predictions)
+    return best_index_list, best_score, combined_score
+
+def get_combined_test_predictions(models_df, hash_string, best_index_list):
+    assert(len(best_index_list) > 0)
+    logger.info("Evaluating combined test: {}".format(hash_string))
+    ground_truth_valid_filename = get_ground_truth_valid_f_name(hash_string)
+    ground_truth_valid = get_ground_truth(ground_truth_valid_filename)
+
+    #Calibrating predictions
+    uncalibrated_test_predictions_list = get_predictions_list(
+        models_df, "test", hash_string)
+    valid_predictions_list = get_predictions_list(
+        models_df, "valid", hash_string)
+    test_predictions_list = calibrate_test_predictions(
+        uncalibrated_test_predictions_list, valid_predictions_list, 
+        ground_truth_valid, best_index_list)
+
     combined_test_predictions = combine_models_using_probas(
         test_predictions_list, range(len(test_predictions_list)))
     foldwise_best_test_predictions = test_predictions_list[0]
@@ -687,12 +731,12 @@ def make_combined_test_prediction(best_index_lists, models_df, hash_strings):
 
         combined_combined_test_predictions = combine_models_using_probas(
                 combined_test_predictions_list)
-        print "foldwise combined test score = {}".format(specific.score(
-                ground_truth_test, combined_combined_test_predictions))
+        logger.info("foldwise combined test score = {}".format(specific.score(
+                ground_truth_test, combined_combined_test_predictions)))
         combined_foldwise_best_test_predictions = combine_models_using_probas(
                 foldwise_best_test_predictions_list)
-        print "foldwise best test score = {}".format(specific.score(
-            ground_truth_test, combined_foldwise_best_test_predictions))
+        logger.info("foldwise best test score = {}".format(specific.score(
+            ground_truth_test, combined_foldwise_best_test_predictions)))
 
 def leaderboard_combination(orig_models_df, test=False):
     models_df = orig_models_df.sort(columns='timestamp')

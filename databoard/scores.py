@@ -66,7 +66,7 @@ class ScoreFunction():
         self.higher_the_better = True #default
 
     def set_labels(self, labels):
-        self.labels = labels
+        self.labels = np.sort(labels) # sklearn policy
         self.label_index_dict = dict(zip(self.labels, range(len(self.labels))))
 
     def set_eps(self, eps):
