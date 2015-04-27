@@ -6,9 +6,9 @@ from importlib import import_module
 from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
 from sklearn.calibration import CalibratedClassifierCV
 # menu
-from .scores import ScoreAccuracy as Score
 from .output_type import MultiClassClassification as OutputType
 import output_type
+import scores
 
 from .config_databoard import (
     local_deployment,
@@ -37,6 +37,11 @@ vf_train_filename = os.path.join(public_data_path, 'train_varlength_features.csv
 vf_test_filename = os.path.join(private_data_path, 'test_varlength_features.csv')
 
 n_CV = 2 if local_deployment else 1 * n_processes
+
+#score = scores.Accuracy()
+#score = scores.Error()
+score = scores.NegativeLogLikelihood()
+score.set_labels(labels)
 
 def csv_array_to_float(csv_array_string):
     return map(float, csv_array_string[1:-1].split(','))
