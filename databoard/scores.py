@@ -72,11 +72,6 @@ class ScoreFunction():
     def set_eps(self, eps):
         self.eps = eps
 
-class AUC(ScoreFunction):
-    def score(self, y_test_list, y_pred_list):
-        fpr, tpr, _ = roc_curve(y_test_list, y_pred_list)
-        return auc(fpr, tpr)
-
 class Accuracy(ScoreFunction):
     def __call__(self, ground_truth_list, predictions):
         y_pred_array, y_probas_array = predictions
@@ -100,9 +95,12 @@ class NegativeLogLikelihood(ScoreFunction):
         y_pred_array, y_probas_array = predictions
         ground_truth_index_list = [self.label_index_dict[ground_truth] 
                                    for ground_truth in ground_truth_list]
+        # Normalize rows
+        y_probas_array_normalized = \
+            y_probas_array / np.sum(y_probas_array, axis=1, keepdims=True)
         probas = np.array([y_probas[ground_truth_index] 
                            for y_probas, ground_truth_index 
-                           in zip(y_probas_array, ground_truth_index_list)])
+                           in zip(y_probas_array_normalized, ground_truth_index_list)])
         # Kaggle's rule
         probas = np.array([max(10 ** -15 , min(1 - 10 ** -15, p))
                            for p in probas])

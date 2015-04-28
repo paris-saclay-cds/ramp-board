@@ -1,6 +1,5 @@
 import csv
 import numpy as np
-import pandas as pd
 
 # Fixme: should be classes
 # Binary classification: to be tested
@@ -27,9 +26,14 @@ class MultiClassClassification:
         except KeyError:
             # loading from file
             f_name = kwargs['f_name']
-            input = np.genfromtxt(f_name, delimiter=',')
-            self.y_pred_array = input[:,0]
-            self.y_probas_array = np.array(input[:,1:], dtype=float)
+            with open(f_name) as f:
+                input = list(csv.reader(f))
+                input = map(list,map(None,*input))
+
+                #print np.array(input[1:]).astype(float)
+                self.y_pred_array = np.array(input[0])
+                self.y_probas_array = np.array(input[1:]).astype(float).T
+                #print self.y_probas_array
 
     def save_predictions(self, f_name):
         num_classes = self.y_probas_array.shape[1]

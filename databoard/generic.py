@@ -203,7 +203,7 @@ def train_on_fold(skf_is, full_model_path):
     hash_string = get_hash_string_from_indices(valid_train_is)
     # the current paradigm is that X is a list of things (not necessarily np.array)
     X_valid_train = [X_train[i] for i in valid_train_is]
-    # but y should be an np.array just in case no one touches it in the fe
+    # and y is an np.array
     y_valid_train = np.array([y_train[i] for i in valid_train_is])
 
     open(os.path.join(full_model_path, "__init__.py"), 'a').close()  # so to make it importable
@@ -395,7 +395,7 @@ def test_models(orig_models_df, last_time_stamp=None):
                 f.write("{}".format(error_msg))
 
 def get_predictions_list(models_df, subdir, hash_string):
-    predictions_list = []
+    predictions_list = [] 
     for idx, model_df in models_df.iterrows():
         full_model_path = get_full_model_path(idx, model_df)
         predictions_path = get_f_name(full_model_path, subdir, hash_string)
@@ -473,7 +473,6 @@ def get_scores(models_df, hash_string, subdir = "valid", calibrate=False):
     else:
         predictions_list = get_predictions_list(models_df, subdir, hash_string)
 
-
     scores = np.array([specific.score(ground_truth, predictions) 
                        for predictions in predictions_list])
     return scores
@@ -491,16 +490,22 @@ def leaderboard_classical(models_df, subdir = "valid", calibrate = False):
              for hash_string in hash_strings)
         mean_scores = np.mean(np.array(scores_list), axis=0)
 
+        #for hash_string in hash_strings:
+        #    scores = get_scores(models_df, hash_string, subdir)
+        #    mean_scores += scores
+        #    mean_scores /= len(hash_strings)
+
         if calibrate:
             scores_list = Parallel(n_jobs=n_processes, verbose=0)\
                 (delayed(get_scores)(models_df, hash_string, subdir, calibrate)
                  for hash_string in hash_strings)
             mean_scores_calibrated = np.mean(np.array(scores_list), axis=0)
+        
+            #for hash_string in hash_strings:
+            #    scores_list = get_scores(models_df, hash_string, subdir, calibrate)
+            #    mean_scores_calibrated += scores_list
+            #mean_scores_calibrated /= len(hash_strings)
 
-        #for hash_string in hash_strings:
-        #    scores = get_scores(models_df, hash_string, subdir)
-        #    mean_scores += scores
-        #    mean_scores /= len(hash_strings)
 
     logger.info("classical leaderboard mean {} scores = {}".
         format(subdir, mean_scores))
@@ -548,26 +553,12 @@ def best_combine(predictions_list, ground_truth, best_indexes):
 
 # TODO: this shuold be an inner consistency operation in OutputType
 def get_y_pred_array(y_probas_array):
-    return np.array([specific.labels[y_probas.argmax()]
+    return np.array([specific.labels[y_probas.argmax()] 
                      for y_probas in y_probas_array])
 
 # FIXME: This is really dependent on the output_type and the score at the same 
 # time
 def combine_models_using_probas(predictions_list, indexes = []):
-    """Combines the predictions y_preds[indexes] by "proba"
-    voting. I'll detail it once you verify that it makes sense (see my mail)
-
-    Parameters
-    ----------
-    y_preds : array-like, shape = [k_models, n_instances], binary
-    y_probas : array-like, shape = [k_models, n_instances], permutation of [0,...,n_instances]
-    indexes : array-like, shape = [max k_models], a set of indices of 
-        models to combine
-    Returns
-    -------
-    com_y_pred : array-like, shape = [n_instances], a list of (combined) 
-        binary predictions.
-    """
     #k = len(indexes)
     #n = len(y_preds[0])
     #n_ones = n * k - y_preds[indexes].sum() # number of zeros
@@ -590,31 +581,32 @@ class IsotonicCalibrator():
     def __init__(self):
         pass
     
-    def fit(self, X, y):
-        labels = np.sort(np.unique(y))
+    def fit(self, X_array, y_list, plot=False):
+        labels = np.sort(np.unique(y_list))
         self.calibrators = []
-        for class_index in range(X.shape[1]):
+        for class_index in range(X_array.shape[1]):
             calibrator = IsotonicRegression(
                 y_min=0., y_max=1., out_of_bounds='clip')
-            class_indicator = np.zeros(X.shape[0])
-            class_indicator[y == labels[class_index]] = 1
-            calibrator.fit(X[:,class_index], class_indicator)
+            class_indicator = np.array([1 if y == labels[class_index] else 0 
+                                        for y in y_list])
+            calibrator.fit(X_array[:,class_index], class_indicator)
             self.calibrators.append(calibrator)
             
-    def predict(self, X):
-        X_calibrated_transpose = np.array(
-            [self.calibrators[class_index].predict(X[:,class_index])
-             for class_index in range(X.shape[1])])
-        sum_rows = np.sum(X_calibrated_transpose, axis=0)
-        X_calibrated_normalized_transpose = np.divide(
-            X_calibrated_transpose, sum_rows)
-        return X_calibrated_normalized_transpose.T
+    def predict_proba(self, y_probas_array_uncalibrated):
+        num_classes = y_probas_array_uncalibrated.shape[1]
+        y_probas_array_transpose = np.array(
+            [self.calibrators[class_index].predict(
+                y_probas_array_uncalibrated[:,class_index])
+             for class_index in range(num_classes)])
+        sum_rows = np.sum(y_probas_array_transpose, axis=0)
+        y_probas_array_normalized_transpose = np.divide(
+            y_probas_array_transpose, sum_rows)
+        return y_probas_array_normalized_transpose.T
 
 def calibrate_test(y_probas_array, ground_truth, test_y_probas_array):
-    isotonic_calibrator = IsotonicCalibrator()
-    isotonic_calibrator.fit(y_probas_array, ground_truth)
-    calibrated_test_y_probas_array = isotonic_calibrator.predict(
-        test_y_probas_array)
+    calibrator = IsotonicCalibrator()
+    calibrator.fit(y_probas_array, ground_truth)
+    calibrated_test_y_probas_array = calibrator.predict_proba(test_y_probas_array)
     return calibrated_test_y_probas_array
 
 def calibrate(y_probas_array, ground_truth):
@@ -623,11 +615,11 @@ def calibrate(y_probas_array, ground_truth):
     calibrated_proba_array = np.empty(y_probas_array.shape)
     fold1_is, fold2_is = list(skf)[0]
     folds = [(fold1_is, fold2_is), (fold2_is, fold1_is)]
-    isotonic_calibrator = IsotonicCalibrator()
+    calibrator = IsotonicCalibrator()
     for fold_train_is, fold_test_is in folds:
-        isotonic_calibrator.fit(y_probas_array[fold_train_is], 
-                                ground_truth[fold_train_is])
-        calibrated_proba_array[fold_test_is] = isotonic_calibrator.predict(
+        calibrator.fit(
+            y_probas_array[fold_train_is], ground_truth[fold_train_is])
+        calibrated_proba_array[fold_test_is] = calibrator.predict_proba(
             y_probas_array[fold_test_is])
     return calibrated_proba_array
 
