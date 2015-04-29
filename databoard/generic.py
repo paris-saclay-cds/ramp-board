@@ -451,7 +451,7 @@ def get_scores(models_df, hash_string, subdir = "valid", calibrate=False):
         ground_truth_filename = get_ground_truth_test_f_name()
     ground_truth = get_ground_truth(ground_truth_filename)
     specific.score.set_eps(0.01 / len(ground_truth))
-
+ 
     if calibrate:
         # Calibrating predictions
         if subdir == "valid":
@@ -574,7 +574,7 @@ def combine_models_using_probas(predictions_list, indexes = []):
     combined_y_pred_array = get_y_pred_array(combined_y_probas_array)
     return combined_y_pred_array, combined_y_probas_array
 
-from sklearn.isotonic import IsotonicRegression
+from .isotonic import IsotonicRegression
 from sklearn.cross_validation import StratifiedShuffleSplit
 
 class IsotonicCalibrator():
@@ -589,7 +589,18 @@ class IsotonicCalibrator():
                 y_min=0., y_max=1., out_of_bounds='clip')
             class_indicator = np.array([1 if y == labels[class_index] else 0 
                                         for y in y_list])
-            calibrator.fit(X_array[:,class_index], class_indicator)
+            #print "before"
+            #np.save("x", X_array[:,class_index])
+            #np.save("y", class_indicator)
+            #x = np.load("x.npy")
+            #y = np.load("y.npy")
+            calibrator = IsotonicRegression(
+                y_min=0., y_max=1., out_of_bounds='clip')
+            #print x
+            #print y
+            #calibrator.fit(x, y)
+            calibrator.fit(X_array[:,class_index], class_indicator)            
+            #print "after"
             self.calibrators.append(calibrator)
             
     def predict_proba(self, y_probas_array_uncalibrated):
