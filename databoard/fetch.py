@@ -143,7 +143,7 @@ def fetch_models():
                     # skip if the model is trained, otherwise, replace the entry with a new one
                     if tag_name_alias in db['models'].index:
                         if db['models'].loc[tag_name_alias, 'state'] in \
-                            ['tested, 'trained', 'ignore']:
+                            ['tested', 'trained', 'ignore']:
                             continue
                         elif db['models'].loc[tag_name_alias, 'state'] == 'error':
 
