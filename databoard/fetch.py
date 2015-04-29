@@ -17,7 +17,7 @@ from flask_mail import Message
 from databoard import app
 from .model import shelve_database, columns, ModelState
 from .generic import changedir
-from .specific import hackaton_title
+import specific
 from .config_databoard import repos_path, root_path, tag_len_limit, notification_recipients, server_name, models_path
 
 
@@ -35,13 +35,13 @@ def send_mail_notif(submissions):
         mail = Mail(app)
 
         logger.info('Sending notification email to: {}'.format(', '.join(notification_recipients)))
-        msg = Message('New submissions in the ' + hackaton_title + ' hackaton', 
+        msg = Message('New submissions in the ' + specific.hackaton_title + ' hackaton', 
             reply_to='djalel.benbouzid@gmail.com')
 
         msg.recipients = notification_recipients
 
-        body_message = '<b>Dataset</b>: {}<br/>'.format(hackaton_title)
-        body_message += '<b>Server</b>: {}<br/>'.format(server_name)
+        body_message = '<b>Dataset</b>: {}<br/>'.format(specific.hackaton_title)
+        body_message += '<b>Server</b>: {}<br/>'.format(specific.hserver_name)
         body_message += '<b>Folder</b>: {}<br/>'.format(os.path.abspath(root_path))
 
         body_message += 'New submissions: <br/><ul>'

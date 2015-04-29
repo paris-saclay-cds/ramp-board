@@ -599,7 +599,8 @@ class IsotonicCalibrator():
             #print x
             #print y
             #calibrator.fit(x, y)
-            calibrator.fit(X_array[:,class_index], class_indicator)            
+            calibrator.fit(np.nan_to_num(X_array[:,class_index]), 
+                class_indicator)            
             #print "after"
             self.calibrators.append(calibrator)
             
@@ -607,17 +608,73 @@ class IsotonicCalibrator():
         num_classes = y_probas_array_uncalibrated.shape[1]
         y_probas_array_transpose = np.array(
             [self.calibrators[class_index].predict(
-                y_probas_array_uncalibrated[:,class_index])
+                np.nan_to_num(y_probas_array_uncalibrated[:,class_index]))
              for class_index in range(num_classes)])
         sum_rows = np.sum(y_probas_array_transpose, axis=0)
         y_probas_array_normalized_transpose = np.divide(
             y_probas_array_transpose, sum_rows)
         return y_probas_array_normalized_transpose.T
 
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
+from sklearn.base import BaseEstimator
+import os
+os.environ["OMP_NUM_THREADS"] = "1"
+
+import theano
+from lasagne.layers import DenseLayer
+from lasagne.layers import InputLayer
+from lasagne.layers import DropoutLayer
+from lasagne.nonlinearities import softmax
+from lasagne.updates import nesterov_momentum
+from nolearn.lasagne import NeuralNet
+
+class NolearnCalibrator(BaseEstimator):
+    def __init__(self):
+        self.net = None
+        self.label_encoder = None
+    
+    def fit(self, X_array, y_pred_array):
+        labels = np.sort(np.unique(y_pred_array))
+        num_classes = X_array.shape[1]
+        layers0 = [('input', InputLayer),
+                   ('dense', DenseLayer),
+                   ('output', DenseLayer)]
+        X = X_array.astype(theano.config.floatX)
+        self.scaler = StandardScaler()
+        X = self.scaler.fit_transform(X)
+        self.label_encoder = LabelEncoder()
+        #y = class_indicators.astype(np.int32)
+        y = self.label_encoder.fit_transform(y_pred_array).astype(np.int32)
+        scaler = StandardScaler()
+        X = scaler.fit_transform(X)
+        num_features = X.shape[1]
+        self.net = NeuralNet(layers=layers0,
+                             input_shape=(None, num_features),
+                             dense_num_units=num_features,
+                             output_num_units=num_classes,
+                             output_nonlinearity=softmax,
+
+                             update=nesterov_momentum,
+                             update_learning_rate=0.01,
+                             update_momentum=0.9,
+
+                             eval_size=0.2,
+                             verbose=0,
+                             max_epochs=100)
+        self.net.fit(X, y)
+
+    def predict_proba(self, y_probas_array_uncalibrated):
+        num_classes = y_probas_array_uncalibrated.shape[1]
+        X = y_probas_array_uncalibrated.astype(theano.config.floatX)
+        X = self.scaler.fit_transform(X)
+        return self.net.predict_proba(X)
+
 def calibrate_test(y_probas_array, ground_truth, test_y_probas_array):
-    calibrator = IsotonicCalibrator()
-    calibrator.fit(y_probas_array, ground_truth)
-    calibrated_test_y_probas_array = calibrator.predict_proba(test_y_probas_array)
+    #calibrator = IsotonicCalibrator()
+    calibrator = NolearnCalibrator()
+    calibrator.fit(np.nan_to_num(y_probas_array), ground_truth)
+    calibrated_test_y_probas_array = calibrator.predict_proba(np.nan_to_num(test_y_probas_array))
     return calibrated_test_y_probas_array
 
 def calibrate(y_probas_array, ground_truth):
@@ -626,12 +683,13 @@ def calibrate(y_probas_array, ground_truth):
     calibrated_proba_array = np.empty(y_probas_array.shape)
     fold1_is, fold2_is = list(skf)[0]
     folds = [(fold1_is, fold2_is), (fold2_is, fold1_is)]
-    calibrator = IsotonicCalibrator()
+    #calibrator = IsotonicCalibrator()
+    calibrator = NolearnCalibrator()
     for fold_train_is, fold_test_is in folds:
         calibrator.fit(
-            y_probas_array[fold_train_is], ground_truth[fold_train_is])
+            np.nan_to_num(y_probas_array[fold_train_is]), ground_truth[fold_train_is])
         calibrated_proba_array[fold_test_is] = calibrator.predict_proba(
-            y_probas_array[fold_test_is])
+            np.nan_to_num(y_probas_array[fold_test_is]))
     return calibrated_proba_array
 
 def calibrate_predictions(uncalibrated_predictions_list, ground_truth):
