@@ -219,7 +219,8 @@ def train_on_fold(skf_is, full_model_path):
     try:
         with open(get_model_f_name(full_model_path, hash_string), 'w') as f:
             pickle.dump(trained_model, f) # saving the model
-    except pickle.PicklingError, e:
+#    except pickle.PicklingError, e:
+    except Exception as e:
         logger.error("Cannot pickle trained model\n{}".format(e))
         os.remove(get_model_f_name(full_model_path, hash_string))
 
@@ -477,7 +478,59 @@ def get_scores(models_df, hash_string, subdir = "valid", calibrate=False):
                        for predictions in predictions_list])
     return scores
 
+def get_predictions(models_df, train_is, test_is):
+    hash_string = get_hash_string_from_indices(train_is)
+    logger.info("Evaluating : {}".format(hash_string))
+    ground_truth_filename = get_ground_truth_valid_f_name(hash_string)
+    ground_truth = get_ground_truth(ground_truth_filename)
+    specific.score.set_eps(0.01 / len(ground_truth))
+ 
+    uncalibrated_predictions_list = get_predictions_list(
+        models_df, "valid", hash_string)
+    predictions_list = calibrate_predictions(
+        uncalibrated_predictions_list, ground_truth)
+    return predictions_list
+
 def leaderboard_classical(models_df, subdir = "valid", calibrate = False):
+    _, _, _, _, skf = specific.split_data()
+    mean_y_probass_array = np.zeros([models_df.shape[0],
+        list(skf)[0][0].shape[0] + list(skf)[0][1].shape[0],
+        9], dtype=float)
+    #mean_predictions.fill(specific.score.zero())
+    count_predictions = np.zeros([models_df.shape[0], 
+        list(skf)[0][0].shape[0] + list(skf)[0][1].shape[0], 9], dtype=int)
+    ground_truth_full = ["" for _ in range(list(skf)[0][0].shape[0] + list(skf)[0][1].shape[0])]
+
+    if models_df.shape[0] != 0:
+        predictions_lists = Parallel(n_jobs=n_processes, verbose=0)\
+            (delayed(get_predictions)(models_df, train_is, test_is)
+             for train_is, test_is in skf)
+        y_probass_array_list = [np.array([y_probas_array 
+            for y_pred_array, y_probas_array in predictions_list])
+            for predictions_list in predictions_lists]
+        for (train_is, test_is),y_probass_array in zip(skf, y_probass_array_list):
+            mean_y_probass_array[:, test_is] += y_probass_array
+            count_predictions[:, test_is] += 1
+            hash_string = get_hash_string_from_indices(train_is)
+            logger.info("Meaning : {}".format(hash_string))
+            ground_truth_filename = get_ground_truth_valid_f_name(hash_string)
+            ground_truth = get_ground_truth(ground_truth_filename)
+            for test_i, i in zip(test_is, range(len(test_is))):
+                ground_truth_full[test_i] = ground_truth[i]
+        print ground_truth_full
+        mean_y_probass_array /= count_predictions
+        mean_scores = []
+        for mean_y_probas_array in mean_y_probass_array:
+            mean_y_pred_array = get_y_pred_array(mean_y_probas_array)
+            predictions = mean_y_pred_array, mean_y_probas_array
+            mean_scores.append(specific.score(ground_truth_full, predictions))
+
+    logger.info("classical leaderboard mean {} scores = {}".
+        format(subdir, mean_scores))
+    leaderboard = pd.DataFrame({'score': mean_scores}, index=models_df.index)
+    return leaderboard.sort(columns=['score'])
+
+def leaderboard_classical_bak(models_df, subdir = "valid", calibrate = False):
     hash_strings = get_hash_strings_from_ground_truth()
     mean_scores = np.array([specific.score.zero() 
                             for _ in range(models_df.shape[0])])
@@ -515,7 +568,6 @@ def leaderboard_classical(models_df, subdir = "valid", calibrate = False):
             format(subdir, mean_scores_calibrated))
         leaderboard['calib score'] = mean_scores_calibrated
     return leaderboard.sort(columns=['score'])
-
 def best_combine(predictions_list, ground_truth, best_indexes):
     """Finds the model that minimizes the score if added to y_preds[indexes].
 
@@ -671,8 +723,8 @@ class NolearnCalibrator(BaseEstimator):
         return self.net.predict_proba(X)
 
 def calibrate_test(y_probas_array, ground_truth, test_y_probas_array):
-    #calibrator = IsotonicCalibrator()
-    calibrator = NolearnCalibrator()
+    calibrator = IsotonicCalibrator()
+    #calibrator = NolearnCalibrator()
     calibrator.fit(np.nan_to_num(y_probas_array), ground_truth)
     calibrated_test_y_probas_array = calibrator.predict_proba(np.nan_to_num(test_y_probas_array))
     return calibrated_test_y_probas_array
@@ -683,8 +735,8 @@ def calibrate(y_probas_array, ground_truth):
     calibrated_proba_array = np.empty(y_probas_array.shape)
     fold1_is, fold2_is = list(skf)[0]
     folds = [(fold1_is, fold2_is), (fold2_is, fold1_is)]
-    #calibrator = IsotonicCalibrator()
-    calibrator = NolearnCalibrator()
+    calibrator = IsotonicCalibrator()
+    #calibrator = NolearnCalibrator()
     for fold_train_is, fold_test_is in folds:
         calibrator.fit(
             np.nan_to_num(y_probas_array[fold_train_is]), ground_truth[fold_train_is])
