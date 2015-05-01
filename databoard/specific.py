@@ -7,7 +7,7 @@ from importlib import import_module
 from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
 from sklearn.calibration import CalibratedClassifierCV
 # menu
-from output_type import MultiClassClassification as OutputType
+import multiclass_prediction_type as prediction_type # menu polymorphism example
 import scores
 
 from .config_databoard import (
@@ -116,7 +116,7 @@ def test_model(trained_model, X_test_dict):
         y_calib_pred_array = np.array([labels[y_probas.argmax()] 
                                        for y_probas in y_calib_probas_array])
        
-        return OutputType(
+        return prediction_type.PredictionType(
             y_pred_array=y_calib_pred_array, y_probas_array=y_calib_probas_array)
    
     else:  # uncalibrated classifier
@@ -128,6 +128,7 @@ def test_model(trained_model, X_test_dict):
         # Classification
         y_pred_array = clf.predict(X_test_array)
         y_probas_array = clf.predict_proba(X_test_array)
-        return OutputType(y_pred_array=y_pred_array, y_probas_array=y_probas_array)
+        return prediction_type.PredictionType(
+            y_pred_array=y_pred_array, y_probas_array=y_probas_array)
 
 

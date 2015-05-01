@@ -400,7 +400,8 @@ def get_predictions_list(models_df, subdir, hash_string):
     for idx, model_df in models_df.iterrows():
         full_model_path = get_full_model_path(idx, model_df)
         predictions_path = get_f_name(full_model_path, subdir, hash_string)
-        output = specific.OutputType(f_name=predictions_path)
+        #output = specific.OutputType(f_name=predictions_path)
+        output = specific.prediction_type.PredictionType(f_name=predictions_path)
         predictions = output.get_predictions()
         predictions_list.append(predictions)
     return predictions_list
@@ -517,7 +518,6 @@ def leaderboard_classical(models_df, subdir = "valid", calibrate = False):
             ground_truth = get_ground_truth(ground_truth_filename)
             for test_i, i in zip(test_is, range(len(test_is))):
                 ground_truth_full[test_i] = ground_truth[i]
-        print ground_truth_full
         mean_y_probass_array /= count_predictions
         mean_scores = []
         for mean_y_probas_array in mean_y_probass_array:
