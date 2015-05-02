@@ -92,7 +92,7 @@ class Error(ScoreFunction):
 
 class NegativeLogLikelihood(ScoreFunction):
     def __call__(self, ground_truth_list, predictions):
-        y_pred_array, y_probas_array = predictions
+        y_pred_array, y_probas_array = predictions.get_predictions()
         ground_truth_index_list = [self.label_index_dict[ground_truth] 
                                    for ground_truth in ground_truth_list]
         # Normalize rows

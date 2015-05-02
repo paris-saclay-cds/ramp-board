@@ -21,13 +21,11 @@ from .config_databoard import (
 )
 
 sys.path.append(os.path.dirname(os.path.abspath(models_path)))
-server_port = '8081'
-dest_path = '/mnt/datacamp/databoard_04_8081_test'
 
 hackaton_title = 'Kaggle Otto product classification'
 target_column_name = 'target'
-labels = ["Class_1", "Class_2", "Class_3", "Class_4", "Class_5", "Class_6", 
-          "Class_7", "Class_8", "Class_9"]
+prediction_type.labels = ["Class_1", "Class_2", "Class_3", "Class_4", "Class_5", 
+                          "Class_6", "Class_7", "Class_8", "Class_9"]
 #held_out_test_size = 0.7
 skf_test_size = 0.5
 random_state = 57
@@ -35,12 +33,12 @@ random_state = 57
 train_filename = os.path.join(public_data_path, 'train.csv')
 test_filename = os.path.join(private_data_path, 'test.csv')
 
-n_CV = 2 if local_deployment else 1 * n_processes
+n_CV = 2 if local_deployment else 3 * n_processes
 
 #score = scores.Accuracy()
 #score = scores.Error()
 score = scores.NegativeLogLikelihood()
-score.set_labels(labels)
+score.set_labels(prediction_type.labels)
 
 
 # X is a list of dicts, each dict is indexed by column
@@ -113,10 +111,10 @@ def test_model(trained_model, X_test_dict):
         # Calibration
         y_calib_probas_array = calib.predict_proba(y_probas_array)
         # calibration can change the classification (the argmax class)
-        y_calib_pred_array = np.array([labels[y_probas.argmax()] 
+        y_calib_pred_array = np.array([prediction_type.labels[y_probas.argmax()] 
                                        for y_probas in y_calib_probas_array])
        
-        return prediction_type.PredictionType(
+        return prediction_type.PredictionArrayType(
             y_pred_array=y_calib_pred_array, y_probas_array=y_calib_probas_array)
    
     else:  # uncalibrated classifier
@@ -128,7 +126,7 @@ def test_model(trained_model, X_test_dict):
         # Classification
         y_pred_array = clf.predict(X_test_array)
         y_probas_array = clf.predict_proba(X_test_array)
-        return prediction_type.PredictionType(
+        return prediction_type.PredictionArrayType(
             y_pred_array=y_pred_array, y_probas_array=y_probas_array)
 
 
