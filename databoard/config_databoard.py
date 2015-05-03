@@ -24,10 +24,15 @@ private_data_path = os.path.join(data_path, 'private')
 models_path = os.path.join(root_path, 'models')
 
 cachedir = '.'
-serve_port = 8080
 
-debug_server = 'http://' + "localhost:{}".format(serve_port) 
-deploy_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(serve_port)
+#server_port = '8081'
+#dest_path = '/mnt/datacamp/databoard_04_8081_test'
+
+server_port = '8080'
+dest_path = '/mnt/datacamp/databoard_03_8080_test'
+
+debug_server = 'http://' + "localhost:{}".format(server_port) 
+deploy_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(server_port)
 server_name = debug_server if local_deployment else deploy_server
 
 

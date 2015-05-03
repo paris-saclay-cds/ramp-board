@@ -52,7 +52,7 @@ class PredictionArrayType:
         num_classes = self.y_probas_array.shape[1]
         with open(f_name, "w") as f:
             for y_pred, y_probas in zip(self.y_pred_array, self.y_probas_array):
-                f.write(y_pred)
+                f.write(str(y_pred))
                 for y_proba in y_probas:
                     f.write("," + str(y_proba))
                 f.write("\n")

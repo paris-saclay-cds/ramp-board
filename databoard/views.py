@@ -26,7 +26,7 @@ from .specific import hackaton_title
 from .config_databoard import (
     root_path, 
     repos_path, 
-    serve_port,
+    server_port,
     server_name,
     local_deployment,
     tag_len_limit,

@@ -849,8 +849,10 @@ def get_ground_truth_valid_list(hash_strings):
 def get_Gabor_combined_mean_score(predictions_list, skf, hash_strings, 
                                   num_points, verbose=True):
     """Input is a list of predictions of a single model on a list of folds."""
-    sum_y_probas_array = np.zeros([num_points, 9], dtype=float)
-    count_predictions = np.zeros([num_points, 9], dtype=int)
+    # TODO: this has to be mad more generic, now it works only for 
+    # multiclass proba arrays
+    sum_y_probas_array = np.zeros([num_points, len(specific.prediction_type.labels)], dtype=float)
+    count_predictions = np.zeros([num_points, len(specific.prediction_type.labels)], dtype=int)
     ground_truth_valid_list = get_ground_truth_valid_list(hash_strings)
     ground_truth_full = ['' for _ in range(num_points)]
     y_probas_array_list = np.array([predictions.get_predictions()[1]
@@ -920,7 +922,6 @@ def leaderboard_combination(orig_models_df, test=False):
         foldwise_best_scores = [specific.score(ground_truth, foldwise_best_predictions)
                                 for ground_truth, foldwise_best_predictions
                                 in zip(ground_truth_valid_list, foldwise_best_predictions_list)]
-        print foldwise_best_predictions_list
         combined_scores = [specific.score(ground_truth, combined_predictions)
                            for ground_truth, combined_predictions
                            in zip(ground_truth_valid_list, combined_predictions_list)]
@@ -937,7 +938,7 @@ def leaderboard_combination(orig_models_df, test=False):
             list(combined_predictions_list), skf, hash_strings, num_train)
         foldwise_best_score = get_Gabor_combined_mean_score(
             list(foldwise_best_predictions_list), skf, hash_strings, num_train)
-        logger.info("Score of 'means' (Gabor's formula)")
+        logger.info("Score of \"means\" (Gabor's formula)")
         logger.info("foldwise best validation score = {}".format(foldwise_best_score))
         logger.info("foldwise combined validation score = {}".format(combined_score))
          

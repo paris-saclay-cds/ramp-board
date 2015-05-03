@@ -74,7 +74,7 @@ class ScoreFunction():
 
 class Accuracy(ScoreFunction):
     def __call__(self, ground_truth_list, predictions):
-        y_pred_array, y_probas_array = predictions
+        y_pred_array, y_probas_array = predictions.get_predictions()
         return ScoreHigherTheBetter(
             accuracy_score(ground_truth_list, y_pred_array), self.eps)
 
@@ -83,7 +83,7 @@ class Accuracy(ScoreFunction):
 
 class Error(ScoreFunction):
     def __call__(self, ground_truth_list, predictions):
-        y_pred_array, y_probas_array = predictions
+        y_pred_array, y_probas_array = predictions.get_predictions()
         return ScoreLowerTheBetter(
             1 - accuracy_score(ground_truth_list, y_pred_array), self.eps)
 

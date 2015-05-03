@@ -7,15 +7,16 @@ from fabric.api import *
 from fabric.contrib.files import exists
 from databoard.model import shelve_database, ModelState
 from databoard.config_databoard import (
-    root_path, 
+    root_path,
+    dest_path,
     cachedir,
     repos_path,
     ground_truth_path,
     # output_path,
     models_path,
     local_deployment,
+    server_port
 )
-import databoard.specific as specific
 
 # for pickling theano
 import sys
@@ -32,8 +33,6 @@ env.use_ssh_config = True
 # the servers where the commands are executed
 env.hosts = ['onevm-54.lal.in2p3.fr']
 production = env.hosts[0]
-
-#dest_path and server_port should be set in specific
 logger = logging.getLogger('databoard')
 
 
@@ -69,6 +68,7 @@ def clear_pred_files():
     fnames = []
 
     # TODO: some of the following will be removed after switching to a database
+    # TODO: library structure has changed, this is out of date
     fnames += glob.glob(os.path.join(models_path, '*', '*', 'pred_*'))
     fnames += glob.glob(os.path.join(models_path, '*', '*', 'score.csv'))
     fnames += glob.glob(os.path.join(models_path, '*', '*', 'error.txt'))
@@ -98,6 +98,21 @@ def print_db(table='models', state=None):
     else:
         print df[df.state == state]
 
+
+def setup_ground_truth():
+    from databoard.generic import setup_ground_truth
+    from databoard.specific import prepare_data
+    
+    # Preparing the data set, typically public train/private held-out test cut
+    logger.info('Preparing the dataset.')
+    prepare_data()
+
+    logger.info('Removing the ground truth files.')
+    clear_groundtruth()
+
+    # Set up the ground truth predictions for the CV folds
+    logger.info('Setting up the groundtruth.')
+    setup_ground_truth()
 
 def setup(wipeall=False):
     from databoard.generic import setup_ground_truth
@@ -305,11 +320,11 @@ def rserve(sockname="db_server"):
     if not exists("/usr/bin/dtach"):
         sudo("apt-get install dtach")
 
-    with cd(specific.dest_path):
-        # run('export SERV_PORT={}'.format(specific.server_port))
+    with cd(dest_path):
+        # run('export SERV_PORT={}'.format(server_port))
         # run('fab serve')
-        # run('dtach -n `mktemp -u /tmp/{}.XXXX` export SERV_PORT={};fab serve'.format(sockname, specific.server_port))
-        return run('dtach -n `mktemp -u /tmp/{}.XXXX` fab serve:port={}'.format(sockname, specific.server_port))
+        # run('dtach -n `mktemp -u /tmp/{}.XXXX` export SERV_PORT={};fab serve'.format(sockname, server_port))
+        return run('dtach -n `mktemp -u /tmp/{}.XXXX` fab serve:port={}'.format(sockname, server_port))
 
 from importlib import import_module
 
@@ -320,7 +335,7 @@ def publish():#ramp):
 #    import_module('.specific', "ramps." + ramp)
     local('')
     project.rsync_project(
-        remote_dir=specific.dest_path,
+        remote_dir=dest_path,
         exclude=[ '.DS_Store', 
                   'TeamsRepos', 
                   'teams_repos', 

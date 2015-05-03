@@ -1,12 +1,13 @@
 import os
 import sys
 import socket
+import numpy as np
 import pandas as pd
 from importlib import import_module
 from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
 from sklearn.calibration import CalibratedClassifierCV
 # menu
-from .output_type import MultiClassClassification as OutputType
+import multiclass_prediction_type as prediction_type # menu polymorphism example
 import scores
 
 from .config_databoard import (
@@ -20,12 +21,10 @@ from .config_databoard import (
 )
 
 sys.path.append(os.path.dirname(os.path.abspath(models_path)))
-server_port = '8080'
-dest_path = '/mnt/datacamp/databoard_03_8080_test'
 
 hackaton_title = 'Variable star type prediction'
 target_column_name = 'type'
-labels = [1, 2, 3, 4]
+prediction_type.labels = [1, 2, 3, 4]
 held_out_test_size = 0.7
 skf_test_size = 0.5
 random_state = 57
@@ -39,10 +38,10 @@ vf_test_filename = os.path.join(private_data_path, 'test_varlength_features.csv'
 
 n_CV = 2 if local_deployment else 1 * n_processes
 
-#score = scores.Accuracy()
+score = scores.Accuracy()
 #score = scores.Error()
-score = scores.NegativeLogLikelihood()
-score.set_labels(labels)
+#score = scores.NegativeLogLikelihood()
+score.set_labels(prediction_type.labels)
 
 def csv_array_to_float(csv_array_string):
     return map(float, csv_array_string[1:-1].split(','))
@@ -110,17 +109,17 @@ def split_data():
         test_size=skf_test_size, random_state=random_state)
     return X_train_dict, y_train_array, X_test_dict, y_test_array, skf
 
-def train_model(module_path, X_valid_train_dict, y_valid_train):
+def train_model(module_path, X_train_dict, y_train_array):
      # Feature extraction
     feature_extractor = import_module('.feature_extractor', module_path)
     fe = feature_extractor.FeatureExtractor()
-    fe.fit(X_valid_train_dict, y_valid_train)
-    X_valid_train_array = fe.transform(X_valid_train_dict)
+    fe.fit(X_train_dict, y_train_array)
+    X_train_array = fe.transform(X_train_dict)
 
     # Classification
     classifier = import_module('.classifier', module_path)
     clf = classifier.Classifier()
-    clf.fit(X_valid_train_array, y_valid_train)
+    clf.fit(X_train_array, y_train_array)
     return fe, clf
 
 def test_model(trained_model, X_test_dict):
@@ -132,5 +131,6 @@ def test_model(trained_model, X_test_dict):
     # Classification
     y_pred_array = clf.predict(X_test_array)
     y_probas_array = clf.predict_proba(X_test_array)
-    return OutputType(y_pred_array=y_pred_array, y_probas_array=y_probas_array)
+    return prediction_type.PredictionArrayType(
+        y_pred_array=y_pred_array, y_probas_array=y_probas_array)
 
