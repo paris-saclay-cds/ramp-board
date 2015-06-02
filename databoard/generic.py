@@ -3,6 +3,7 @@ import sys
 import csv
 import glob
 import pickle
+import random
 import timeit
 import hashlib
 import logging
@@ -23,6 +24,7 @@ from .config_databoard import (
     ground_truth_path, 
     n_processes,
     cachedir,
+    private_data_path,
 )
 import specific
 
@@ -216,13 +218,12 @@ def train_on_fold(skf_is, full_model_path):
     with open(get_train_time_f_name(full_model_path, hash_string), 'w') as f:
         f.write(str(end - start)) # saving running time
 
-    try:
-        with open(get_model_f_name(full_model_path, hash_string), 'w') as f:
-            pickle.dump(trained_model, f) # saving the model
-#    except pickle.PicklingError, e:
-    except Exception as e:
-        logger.error("Cannot pickle trained model\n{}".format(e))
-        os.remove(get_model_f_name(full_model_path, hash_string))
+    #try:
+    #    with open(get_model_f_name(full_model_path, hash_string), 'w') as f:
+    #        pickle.dump(trained_model, f) # saving the model
+    #except Exception as e:
+    #    logger.error("Cannot pickle trained model\n{}".format(e))
+    #    os.remove(get_model_f_name(full_model_path, hash_string))
 
 
     # in case we want to train and test without going through pickling, for
@@ -232,7 +233,6 @@ def train_on_fold(skf_is, full_model_path):
 def test_on_fold(skf_is, full_model_path):
     valid_train_is, _ = skf_is
     hash_string = get_hash_string_from_indices(valid_train_is)
-    X_test, _ = data_sets.get_test_sets()
 
     logger.info("Testing : %s" % hash_string)
     try:
@@ -243,6 +243,30 @@ def test_on_fold(skf_is, full_model_path):
         logger.info("No pickle, retraining")
         trained_model = train_on_fold(skf_is, full_model_path)
 
+    X_test, _ = data_sets.get_test_sets()
+    test_model_output, _ = test_trained_model(trained_model, X_test)
+    test_f_name = get_test_f_name(full_model_path, hash_string)
+    test_model_output.save_predictions(test_f_name)
+
+# TODO: Should be factorized
+def train_valid_and_test_on_fold(skf_is, full_model_path):
+    trained_model = train_on_fold(skf_is, full_model_path)
+
+    valid_train_is, valid_test_is = skf_is
+    X_train, y_train = data_sets.get_training_sets()
+    hash_string = get_hash_string_from_indices(valid_train_is)
+    X_valid_test = [X_train[i] for i in valid_test_is]
+    y_valid_test = np.array([y_train[i] for i in valid_test_is])
+
+    logger.info("Validating : %s" % hash_string)
+    valid_model_output, test_time = test_trained_model(trained_model, X_valid_test)
+    valid_f_name = get_valid_f_name(full_model_path, hash_string)
+    valid_model_output.save_predictions(valid_f_name)
+    with open(get_valid_time_f_name(full_model_path, hash_string), 'w') as f:
+        f.write(str(test_time))  # saving running time
+
+    logger.info("Testing : %s" % hash_string)
+    X_test, _ = data_sets.get_test_sets()
     test_model_output, _ = test_trained_model(trained_model, X_test)
     test_f_name = get_test_f_name(full_model_path, hash_string)
     test_model_output.save_predictions(test_f_name)
@@ -263,6 +287,11 @@ def train_and_valid_on_fold(skf_is, full_model_path):
     with open(get_valid_time_f_name(full_model_path, hash_string), 'w') as f:
         f.write(str(test_time))  # saving running time
 
+
+def train_valid_and_test_model(full_model_path, skf):
+    Parallel(n_jobs=n_processes, verbose=5)\
+        (delayed(train_valid_and_test_on_fold)(skf_is, full_model_path)
+        for skf_is in skf)
 
 #@mem.cache
 def train_and_valid_model(full_model_path, skf):
@@ -344,6 +373,42 @@ def train_and_valid_models(orig_models_df, last_time_stamp=None):
                     error_msg = error_msg[cut_exception_text:]
                 f.write("{}".format(error_msg))
 
+def train_valid_and_test_models(orig_models_df, last_time_stamp=None):
+    models_df = orig_models_df.sort("timestamp")
+        
+    if models_df.shape[0] == 0:
+        logger.info("No models to train.")
+        return
+
+    logger.info("Reading data")
+    X_train, y_train, X_test, y_test, skf = specific.split_data()
+    data_sets.set_sets(X_train, y_train, X_test, y_test)
+
+    for idx, model_df in models_df.iterrows():
+        if model_df['state'] in ["ignore"]:
+            continue
+
+        full_model_path = get_full_model_path(idx, model_df)
+
+        logger.info("Training : {}/{}".format(model_df['team'], model_df['model']))
+
+        try:
+            train_valid_and_test_model(full_model_path, skf)
+            # failed_models.drop(idx, axis=0, inplace=True)
+            orig_models_df.loc[idx, 'state'] = "tested"
+        except Exception, e:
+            orig_models_df.loc[idx, 'state'] = "error"
+            logger.error("Training/testing failed with exception: \n{}".format(e))
+
+            # TODO: put the error in the database instead of a file
+            # Keep the model folder clean.
+            with open(get_f_name(full_model_path, '.', "error", "txt"), 'w') as f:
+                error_msg = str(e)
+                cut_exception_text = error_msg.rfind('--->')
+                if cut_exception_text > 0:
+                    error_msg = error_msg[cut_exception_text:]
+                f.write("{}".format(error_msg))
+
 #@mem.cache
 def test_model(full_model_path, skf):
 
@@ -400,8 +465,15 @@ def get_predictions_list(models_df, subdir, hash_string):
     for idx, model_df in models_df.iterrows():
         full_model_path = get_full_model_path(idx, model_df)
         predictions_path = get_f_name(full_model_path, subdir, hash_string)
-        predictions = specific.prediction_type.PredictionArrayType(
-            f_name=predictions_path)
+        # When the prediction file is not there (eg because the model has
+        # not yet been tested), we set the preicition to None. The list can
+        # be still used if that model is not needed (for example, not in 
+        # best_index_list). TODO: handle this more intellingently
+        try:
+            predictions = specific.prediction_type.PredictionArrayType(
+                f_name=predictions_path)
+        except IOError:
+            predictions = None
         predictions_list.append(predictions)
     return predictions_list
 
@@ -597,7 +669,7 @@ class IsotonicCalibrator():
         for class_index in range(X_array.shape[1]):
             calibrator = IsotonicRegression(
                 y_min=0., y_max=1., out_of_bounds='clip')
-            class_indicator = np.array([1 if y == labels[class_index] else 0 
+            class_indicator = np.array([1 if y == labels[class_index] else 0
                                         for y in y_list])
             #print "before"
             #np.save("x", X_array[:,class_index])
@@ -605,7 +677,7 @@ class IsotonicCalibrator():
             #x = np.load("x.npy")
             #y = np.load("y.npy")
             calibrator = IsotonicRegression(
-                y_min=0., y_max=1., out_of_bounds='clip')
+                y_min=0, y_max=1, out_of_bounds='clip')
             #print x
             #print y
             #calibrator.fit(x, y)
@@ -724,16 +796,22 @@ def get_calibrated_predictions_list(models_df, hash_string, ground_truth = []):
     return predictions_list
 
 # TODO: This is completely ouput_type dependent, so will probably go there.
-def get_best_index_list(models_df, hash_string):
+def get_best_index_list(models_df, hash_string, selected_index_list=[]):
+    if len(selected_index_list) == 0:
+        selected_index_list = np.arange(len(models_df))
     ground_truth_valid_filename = get_ground_truth_valid_f_name(hash_string)
     ground_truth_valid = get_ground_truth(ground_truth_valid_filename)
 
     predictions_list = get_calibrated_predictions_list(
         models_df, hash_string, ground_truth_valid)
+    predictions_list = [predictions_list[i] for i in selected_index_list]
+
     valid_scores = [specific.score(ground_truth_valid, predictions) 
                     for predictions in predictions_list]
-    best_index_list = np.array([np.argmax(valid_scores)])
-    foldwise_best_predictions = predictions_list[np.argmax(valid_scores)]
+    best_prediction_index = np.argmax(valid_scores)
+
+    best_index_list = np.array([best_prediction_index])
+    foldwise_best_predictions = predictions_list[best_prediction_index]
 
     improvement = True
     max_len_best_index_list = 80
@@ -742,11 +820,11 @@ def get_best_index_list(models_df, hash_string):
         best_index_list = best_combine(
             predictions_list, ground_truth_valid, best_index_list)
         improvement = len(best_index_list) != len(old_best_index_list)
-    logger.info("best indices = {}".format(best_index_list))
+    logger.info("best indices = {}".format(selected_index_list[best_index_list]))
     combined_predictions = specific.prediction_type.combine(
         predictions_list, best_index_list)
-    return best_index_list, foldwise_best_predictions, combined_predictions,\
-        ground_truth_valid
+    return selected_index_list[best_index_list], foldwise_best_predictions, \
+        combined_predictions, ground_truth_valid
 
 def get_combined_test_predictions(models_df, hash_string, best_index_list):
     assert(len(best_index_list) > 0)
@@ -763,11 +841,10 @@ def get_combined_test_predictions(models_df, hash_string, best_index_list):
         uncalibrated_test_predictions_list, valid_predictions_list, 
         ground_truth_valid, best_index_list)
 
-    combined_test_predictions = combine_models_using_probas(
+    combined_test_predictions = specific.prediction_type.combine(
         test_predictions_list, range(len(test_predictions_list)))
     foldwise_best_test_predictions = test_predictions_list[0]
-    return combined_test_predictions, foldwise_best_test_predictions, \
-           ground_truth_valid
+    return combined_test_predictions, foldwise_best_test_predictions
 
 #TODO: make an actual prediction
 def make_combined_test_prediction(best_index_lists, models_df, hash_strings):
@@ -793,12 +870,16 @@ def make_combined_test_prediction(best_index_lists, models_df, hash_strings):
         #    # best in the fold
         #    foldwise_best_test_predictions_list.append(foldwise_best_test_predictions)
 
-        combined_combined_test_predictions = combine_models_using_probas(
+        combined_combined_test_predictions = specific.prediction_type.combine(
                 combined_test_predictions_list)
         logger.info("foldwise combined test score = {}".format(specific.score(
                 ground_truth_test, combined_combined_test_predictions)))
-        combined_foldwise_best_test_predictions = combine_models_using_probas(
+        combined_combined_test_predictions.save_predictions(
+            os.path.join(private_data_path, "foldwise_combined.csv"))
+        combined_foldwise_best_test_predictions = specific.prediction_type.combine(
                 foldwise_best_test_predictions_list)
+        combined_foldwise_best_test_predictions.save_predictions(
+            os.path.join(private_data_path, "foldwise_best.csv"))
         logger.info("foldwise best test score = {}".format(specific.score(
             ground_truth_test, combined_foldwise_best_test_predictions)))
 
@@ -808,9 +889,15 @@ def leaderboard_combination_mean_of_scores(orig_models_df, test=False):
     counts = np.zeros(models_df.shape[0], dtype=int)
 
     if models_df.shape[0] != 0:
+        random_index_lists = np.array([random.sample(
+            range(len(models_df)), int(0.9*models_df.shape[0]))
+            for _ in range(2)])
+        print random_index_lists
+
         list_of_tuples = Parallel(n_jobs=n_processes, verbose=0)\
-            (delayed(get_best_index_list)(models_df, hash_string)
-             for hash_string in hash_strings)
+            (delayed(get_best_index_list)(models_df, hash_string, random_index_list)
+             for hash_string in hash_strings 
+             for random_index_list in random_index_lists)
         best_index_lists, foldwise_best_predictions_list, \
             combined_predictions_list, ground_truth_valid_list = \
             zip(*list_of_tuples)
@@ -849,7 +936,7 @@ def get_ground_truth_valid_list(hash_strings):
 def get_Gabor_combined_mean_score(predictions_list, skf, hash_strings, 
                                   num_points, verbose=True):
     """Input is a list of predictions of a single model on a list of folds."""
-    # TODO: this has to be mad more generic, now it works only for 
+    # TODO: this has to be made more generic, now it works only for 
     # multiclass proba arrays
     sum_y_probas_array = np.zeros([num_points, len(specific.prediction_type.labels)], dtype=float)
     count_predictions = np.zeros([num_points, len(specific.prediction_type.labels)], dtype=int)
@@ -903,6 +990,7 @@ def leaderboard_classical(models_df, subdir = "valid", calibrate = False):
     leaderboard = pd.DataFrame({'score': mean_scores}, index=models_df.index)
     return leaderboard.sort(columns=['score'])
 
+
 def leaderboard_combination(orig_models_df, test=False):
     models_df = orig_models_df.sort(columns='timestamp')
     counts = np.zeros(models_df.shape[0], dtype=int)
@@ -910,20 +998,34 @@ def leaderboard_combination(orig_models_df, test=False):
     if models_df.shape[0] != 0:
         _, y_train_array, _, _, skf = specific.split_data()
         num_train = len(y_train_array)
-        # we need the hash strings in the same order as train/test_is
+        num_bags = 1
+        # One of Caruana's trick: bag the models
+        #selected_index_lists = np.array([random.sample(
+        #    range(len(models_df)), int(0.8*models_df.shape[0]))
+        #    for _ in range(num_bags)])
+        # Or you can select a subset
+        #selected_index_lists = np.array([[24, 26, 28, 31]])
+        # Or just take everybody
+        selected_index_lists = np.array([range(len(models_df))])
+        logger.info("Combining models {}".format(selected_index_lists))
+
+        # we need the hash strings in the same order as train/test_is, can't
+        # get them from the file names
         hash_strings = [get_hash_string_from_indices(train_is) 
                         for train_is, test_is in skf]
         list_of_tuples = Parallel(n_jobs=n_processes, verbose=0)\
-            (delayed(get_best_index_list)(models_df, hash_string)
-             for hash_string in hash_strings)
+            (delayed(get_best_index_list)(models_df, hash_string, selected_index_list)
+             for hash_string in hash_strings 
+             for selected_index_list in selected_index_lists)
+
         best_index_lists, foldwise_best_predictions_list, \
             combined_predictions_list, ground_truth_valid_list = \
             zip(*list_of_tuples)
-        foldwise_best_scores = [specific.score(ground_truth, foldwise_best_predictions)
-                                for ground_truth, foldwise_best_predictions
+        foldwise_best_scores = [specific.score(ground_truth, predictions)
+                                for ground_truth, predictions
                                 in zip(ground_truth_valid_list, foldwise_best_predictions_list)]
-        combined_scores = [specific.score(ground_truth, combined_predictions)
-                           for ground_truth, combined_predictions
+        combined_scores = [specific.score(ground_truth, predictions)
+                           for ground_truth, predictions
                            in zip(ground_truth_valid_list, combined_predictions_list)]
 
         logger.info("Mean of scores")
@@ -935,9 +1037,11 @@ def leaderboard_combination(orig_models_df, test=False):
                                    bins=range(models_df.shape[0] + 1))[0]
 
         combined_score = get_Gabor_combined_mean_score(
-            list(combined_predictions_list), skf, hash_strings, num_train)
+            list(combined_predictions_list), np.repeat(list(skf), num_bags, axis=0), 
+            np.repeat(hash_strings, num_bags), num_train)
         foldwise_best_score = get_Gabor_combined_mean_score(
-            list(foldwise_best_predictions_list), skf, hash_strings, num_train)
+            list(foldwise_best_predictions_list), np.repeat(list(skf), num_bags, axis=0), 
+            np.repeat(hash_strings, num_bags), num_train)
         logger.info("Score of \"means\" (Gabor's formula)")
         logger.info("foldwise best validation score = {}".format(foldwise_best_score))
         logger.info("foldwise combined validation score = {}".format(combined_score))
@@ -955,5 +1059,4 @@ def leaderboard_combination(orig_models_df, test=False):
 
     leaderboard = pd.DataFrame({'contributivity': counts}, index=models_df.index)
     return leaderboard.sort(columns=['contributivity'], ascending=False)
-
 

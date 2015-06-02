@@ -69,7 +69,7 @@ class PredictionArrayType:
         # a list of predictions produced by different functions on the same
         # data point. We return a single PrdictionType
 
-        #Just saving here in case we want to go bakc there how to 
+        #Just saving here in case we want to go back there how to 
         #combine based on simply ranks, k = len(indexes)
         #n = len(y_preds[0])
         #n_ones = n * k - y_preds[indexes].sum() # number of zeros

@@ -25,8 +25,12 @@ models_path = os.path.join(root_path, 'models')
 
 cachedir = '.'
 
+#server_port = '8095'
+#dest_path = '/mnt/datacamp/databoard_04_8095_test'
+
 #server_port = '8081'
 #dest_path = '/mnt/datacamp/databoard_04_8081_test'
+
 
 server_port = '8080'
 dest_path = '/mnt/datacamp/databoard_03_8080_test'

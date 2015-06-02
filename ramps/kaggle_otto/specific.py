@@ -27,7 +27,7 @@ target_column_name = 'target'
 prediction_type.labels = ["Class_1", "Class_2", "Class_3", "Class_4", "Class_5", 
                           "Class_6", "Class_7", "Class_8", "Class_9"]
 #held_out_test_size = 0.7
-skf_test_size = 0.5
+skf_test_size = 0.2
 random_state = 57
 #raw_filename = os.path.join(raw_data_path, 'data.csv')
 train_filename = os.path.join(public_data_path, 'train.csv')

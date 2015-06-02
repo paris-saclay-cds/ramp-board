@@ -38,7 +38,7 @@ logger = logging.getLogger('databoard')
 
 def all():
     fetch()
-    train()
+    train_test()
     leaderboard()
 
 def clear_cache():
@@ -247,6 +247,32 @@ def test(state=False, tag=None):
         models = models[models.state == state]
 
     test_models(models)
+
+    idx = models.index
+
+    with shelve_database() as db:
+        db['models'].loc[idx, :] = models
+
+def train_test(state=False, tag=None):
+    from databoard.generic import train_valid_and_test_models
+
+    with shelve_database() as db:
+        models = db['models']
+
+    if tag is not None:
+        models = models[models.model.str.contains(tag)]
+        state = 'all'  # force test all the selected models
+        if len(models) == 0:
+            print('No existing model containing the tag: {}'.format(tag))
+            return
+
+    if not state:
+        state = 'new'
+    
+    if state != 'all': 
+        models = models[models.state == state]
+
+    train_valid_and_test_models(models)
 
     idx = models.index
 
