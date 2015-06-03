@@ -59,7 +59,12 @@ def split_data():
         test_size=skf_test_size, random_state=random_state)
     return X_train_dict, y_train_array, X_test_dict, y_test_array, skf
 
-def train_model(module_path, X_train_dict, y_train_array):
+def train_model(module_path, X_dict, y_array, skf_is):
+    # Preparing the training set
+    train_is, _ = skf_is
+    X_train_dict = [X_dict[i] for i in train_is]
+    y_train_array = np.array([y_array[i] for i in train_is])
+
      # Feature extraction
     feature_extractor = import_module('.feature_extractor', module_path)
     fe = feature_extractor.FeatureExtractor()
@@ -97,7 +102,11 @@ def train_model(module_path, X_train_dict, y_train_array):
         clf.fit(X_train_array, y_train_array)
         return fe, clf
 
-def test_model(trained_model, X_test_dict):
+def test_model(trained_model, X_dict, skf_is):
+    # Preparing the test (or valid) set
+    _, test_is = skf_is
+    X_test_dict = [X_dict[i] for i in test_is]
+
     if len(trained_model) == 3: # calibrated classifier
         fe, clf, calib = trained_model
         

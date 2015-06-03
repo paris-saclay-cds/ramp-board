@@ -193,27 +193,36 @@ def setup_ground_truth():
         logger.debug(f_name_valid)
         np.savetxt(f_name_valid, y_train[test_is], delimiter="\n", fmt='%s')
 
-def test_trained_model(trained_model, X_test):
+def test_trained_model(trained_model, X, skf_is = None):
+    if skf_is == None:
+        skf_is = ([], range(len(X))) # test on all point
     start = timeit.default_timer()
-    test_model_output = specific.test_model(trained_model, X_test)
+    test_model_output = specific.test_model(trained_model, X, skf_is)
     end = timeit.default_timer()
     return test_model_output, end - start
 
 def train_on_fold(skf_is, full_model_path):
+    """Trains the model on a single fold. It requires specific to contain
+    a train_model function that takes the module_path, X_train, y_train, and
+    an skf_is containing the train_train and valid_train indices. Most of the
+    time it will simply train on X_train[valid_train] but in the case of time
+    series it may do feature extraction on the full file (using always the past).
+
+    Parameters
+    ----------
+    skf_is : a pair of indices (train_train_is, valid_train_is)
+    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    """
     valid_train_is, _ = skf_is
     X_train, y_train = data_sets.get_training_sets()
     hash_string = get_hash_string_from_indices(valid_train_is)
-    # the current paradigm is that X is a list of things (not necessarily np.array)
-    X_valid_train = [X_train[i] for i in valid_train_is]
-    # and y is an np.array
-    y_valid_train = np.array([y_train[i] for i in valid_train_is])
-
+    logger.info("Training : %s" % hash_string)
+    start = timeit.default_timer()
     open(os.path.join(full_model_path, "__init__.py"), 'a').close()  # so to make it importable
     module_path = get_module_path(full_model_path)
 
-    logger.info("Training : %s" % hash_string)
-    start = timeit.default_timer()
-    trained_model = specific.train_model(module_path, X_valid_train, y_valid_train)
+    trained_model = specific.train_model(module_path, X_train, y_train, skf_is)
+
     end = timeit.default_timer()
     with open(get_train_time_f_name(full_model_path, hash_string), 'w') as f:
         f.write(str(end - start)) # saving running time
@@ -255,11 +264,10 @@ def train_valid_and_test_on_fold(skf_is, full_model_path):
     valid_train_is, valid_test_is = skf_is
     X_train, y_train = data_sets.get_training_sets()
     hash_string = get_hash_string_from_indices(valid_train_is)
-    X_valid_test = [X_train[i] for i in valid_test_is]
-    y_valid_test = np.array([y_train[i] for i in valid_test_is])
 
     logger.info("Validating : %s" % hash_string)
-    valid_model_output, test_time = test_trained_model(trained_model, X_valid_test)
+    valid_model_output, test_time = test_trained_model(
+        trained_model, X_train, skf_is)
     valid_f_name = get_valid_f_name(full_model_path, hash_string)
     valid_model_output.save_predictions(valid_f_name)
     with open(get_valid_time_f_name(full_model_path, hash_string), 'w') as f:
@@ -277,11 +285,10 @@ def train_and_valid_on_fold(skf_is, full_model_path):
     valid_train_is, valid_test_is = skf_is
     X_train, y_train = data_sets.get_training_sets()
     hash_string = get_hash_string_from_indices(valid_train_is)
-    X_valid_test = [X_train[i] for i in valid_test_is]
-    y_valid_test = np.array([y_train[i] for i in valid_test_is])
 
     logger.info("Validating : %s" % hash_string)
-    valid_model_output, test_time = test_trained_model(trained_model, X_valid_test)
+    valid_model_output, test_time = test_trained_model(
+        trained_model, X_train, skf_is)
     valid_f_name = get_valid_f_name(full_model_path, hash_string)
     valid_model_output.save_predictions(valid_f_name)
     with open(get_valid_time_f_name(full_model_path, hash_string), 'w') as f:
