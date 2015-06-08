@@ -214,7 +214,11 @@ def train_on_fold(skf_is, full_model_path):
     full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
     """
     valid_train_is, _ = skf_is
-    X_train, y_train = data_sets.get_training_sets()
+    # We had a bug when several threads wanted to access the same variable
+    # Plus splitting is a much faster operation, not sure why (get makes copies?)
+    #X_train, y_train = data_sets.get_training_sets()
+    X_train, y_train, X_test, y_test, skf = specific.split_data()
+
     hash_string = get_hash_string_from_indices(valid_train_is)
     logger.info("Training : %s" % hash_string)
     start = timeit.default_timer()
@@ -222,7 +226,6 @@ def train_on_fold(skf_is, full_model_path):
     module_path = get_module_path(full_model_path)
 
     trained_model = specific.train_model(module_path, X_train, y_train, skf_is)
-
     end = timeit.default_timer()
     with open(get_train_time_f_name(full_model_path, hash_string), 'w') as f:
         f.write(str(end - start)) # saving running time
@@ -252,7 +255,8 @@ def test_on_fold(skf_is, full_model_path):
         logger.info("No pickle, retraining")
         trained_model = train_on_fold(skf_is, full_model_path)
 
-    X_test, _ = data_sets.get_test_sets()
+    #X_test, _ = data_sets.get_test_sets()
+    X_train, y_train, X_test, y_test, skf = specific.split_data()
     test_model_output, _ = test_trained_model(trained_model, X_test)
     test_f_name = get_test_f_name(full_model_path, hash_string)
     test_model_output.save_predictions(test_f_name)
@@ -262,7 +266,8 @@ def train_valid_and_test_on_fold(skf_is, full_model_path):
     trained_model = train_on_fold(skf_is, full_model_path)
 
     valid_train_is, valid_test_is = skf_is
-    X_train, y_train = data_sets.get_training_sets()
+    #X_train, y_train = data_sets.get_training_sets()
+    X_train, y_train, X_test, y_test, skf = specific.split_data()
     hash_string = get_hash_string_from_indices(valid_train_is)
 
     logger.info("Validating : %s" % hash_string)
@@ -274,7 +279,8 @@ def train_valid_and_test_on_fold(skf_is, full_model_path):
         f.write(str(test_time))  # saving running time
 
     logger.info("Testing : %s" % hash_string)
-    X_test, _ = data_sets.get_test_sets()
+    #X_test, _ = data_sets.get_test_sets()
+    X_train, y_train, X_test, y_test, skf = specific.split_data()
     test_model_output, _ = test_trained_model(trained_model, X_test)
     test_f_name = get_test_f_name(full_model_path, hash_string)
     test_model_output.save_predictions(test_f_name)
@@ -283,7 +289,8 @@ def train_and_valid_on_fold(skf_is, full_model_path):
     trained_model = train_on_fold(skf_is, full_model_path)
 
     valid_train_is, valid_test_is = skf_is
-    X_train, y_train = data_sets.get_training_sets()
+    #X_train, y_train = data_sets.get_training_sets()
+    X_train, y_train, X_test, y_test, skf = specific.split_data()
     hash_string = get_hash_string_from_indices(valid_train_is)
 
     logger.info("Validating : %s" % hash_string)
@@ -306,7 +313,9 @@ def train_and_valid_model(full_model_path, skf):
     #parallel training is not working
     #for skf_is in skf:
     #    train_and_valid_on_fold(skf_is, full_model_path)
-    
+
+    # from joblib.pool import has_shareable_memory
+
     Parallel(n_jobs=n_processes, verbose=5)\
         (delayed(train_and_valid_on_fold)(skf_is, full_model_path)
         for skf_is in skf)
@@ -318,7 +327,7 @@ def train_and_valid_model(full_model_path, skf):
 
     #import pprocess
     #import time
-    #pprocess.pmap(partial_train, skf, limit=n_processes)
+    ##pprocess.pmap(partial_train, skf, limit=n_processes)
 
     #class MyExchange(pprocess.Exchange):
 
@@ -331,15 +340,14 @@ def train_and_valid_model(full_model_path, skf):
 
     #exchange = MyExchange(limit=n_processes)
 
-    # Wrap the calculate function and manage it.
+    ## Wrap the calculate function and manage it.
 
     #calc = exchange.manage(pprocess.MakeParallel(train_and_valid_on_fold))
 
-    # Perform the work.
-    #X_train, y_train = data_sets.get_training_sets()
+    ## Perform the work.
 
     #for skf_is, i in zip(skf, range(n_processes)):
-    #    calc(skf_is, full_model_path, X_train, y_train, i)
+    #    calc(skf_is, full_model_path)
     #    time.sleep(5)
 
     #exchange.finish()
@@ -798,8 +806,12 @@ def get_calibrated_predictions_list(models_df, hash_string, ground_truth = []):
     logger.info("Evaluating : {}".format(hash_string))
     specific.score.set_eps(0.01 / len(ground_truth))
 
-    predictions_list = calibrate_predictions(
-        uncalibrated_predictions_list, ground_truth)
+    # TODO: make calibration optional, output-type or score dependent
+    # this doesn't work for RMSE
+    #predictions_list = calibrate_predictions(
+    #    uncalibrated_predictions_list, ground_truth)
+
+    predictions_list = uncalibrated_predictions_list
     return predictions_list
 
 # TODO: This is completely ouput_type dependent, so will probably go there.
@@ -899,7 +911,7 @@ def leaderboard_combination_mean_of_scores(orig_models_df, test=False):
         random_index_lists = np.array([random.sample(
             range(len(models_df)), int(0.9*models_df.shape[0]))
             for _ in range(2)])
-        print random_index_lists
+        #print random_index_lists
 
         list_of_tuples = Parallel(n_jobs=n_processes, verbose=0)\
             (delayed(get_best_index_list)(models_df, hash_string, random_index_list)
@@ -941,6 +953,35 @@ def get_ground_truth_valid_list(hash_strings):
             for hash_string in hash_strings]
 
 def get_Gabor_combined_mean_score(predictions_list, skf, hash_strings, 
+                                  num_points, verbose=True):
+    """Input is a list of predictions of a single model on a list of folds."""
+    sum_y_pred_array = np.zeros(num_points, dtype=float)
+    count_predictions = np.zeros(num_points, dtype=int)
+    ground_truth_valid_list = get_ground_truth_valid_list(hash_strings)
+    ground_truth_full = ['' for _ in range(num_points)]
+    y_pred_array_list = np.array([predictions.get_predictions()
+        for predictions in predictions_list])
+    for (train_is, test_is), y_pred_array, hash_string, ground_truth_valid \
+            in zip(skf, y_pred_array_list, hash_strings, ground_truth_valid_list):
+        sum_y_pred_array[test_is] += y_pred_array
+        count_predictions[test_is] += 1
+        for test_i, i in zip(test_is, range(len(test_is))):
+            ground_truth_full[test_i] = ground_truth_valid[i]
+        mean_y_pred_array = sum_y_pred_array / count_predictions
+        # we may not have any predictions for certain data points.
+        valid_point_indexes = np.argwhere(count_predictions != 0).flatten()
+        predictions = specific.prediction_type.PredictionArrayType(
+            y_pred_array=mean_y_pred_array[valid_point_indexes])
+        ground_truth_full_valid = [ground_truth_full[i] for i in valid_point_indexes]
+        score = specific.score(ground_truth_full_valid, predictions)
+        if verbose:
+            print score
+    if verbose:
+        print "-------------"
+    return score
+
+# for multiclass this should be renamed get_Gabor_combined_mean_score
+def get_Gabor_combined_mean_score_multiclass(predictions_list, skf, hash_strings, 
                                   num_points, verbose=True):
     """Input is a list of predictions of a single model on a list of folds."""
     # TODO: this has to be made more generic, now it works only for 

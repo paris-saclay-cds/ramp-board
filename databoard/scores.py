@@ -109,3 +109,13 @@ class NegativeLogLikelihood(ScoreFunction):
 
     def zero(self):
         return ScoreLowerTheBetter(0.0, self.eps)
+
+class RMSE(ScoreFunction):
+    def __call__(self, ground_truth_list, predictions):
+        y_pred_array = predictions.get_predictions()
+        score = np.sqrt(np.mean(np.square(ground_truth_list - y_pred_array)))
+        return ScoreLowerTheBetter(score)
+
+    def zero(self):
+        return ScoreLowerTheBetter(0.0, self.eps)
+
