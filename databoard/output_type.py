@@ -18,7 +18,6 @@ def load_binary_predictions(model_output, f_name_valid, f_name_test):
     save_single_class_prediction(y_valid_pred, y_valid_proba, f_name_valid)
     save_single_class_prediction(y_test_pred, y_test_proba, f_name_test)
 
-# Multi-class classification
 class MultiClassClassification:
     def __init__(self, *args, **kwargs):
         try:
