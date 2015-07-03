@@ -1,19 +1,26 @@
 import os
 import logging
+import numpy as np
 import pandas as pd
 import fabric.contrib.project as project
 from fabric.api import *
 from fabric.contrib.files import exists
 from databoard.model import shelve_database, ModelState
 from databoard.config_databoard import (
-    root_path, 
+    root_path,
+    dest_path,
     cachedir,
     repos_path,
     ground_truth_path,
     # output_path,
     models_path,
     local_deployment,
+    server_port
 )
+
+# for pickling theano
+import sys
+sys.setrecursionlimit(50000)
 
 # Open ports in Stratuslab
 # 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015, 
@@ -24,17 +31,14 @@ env.user = 'root'  # the user to use for the remote commands
 env.use_ssh_config = True
 
 # the servers where the commands are executed
-env.hosts = ['onevm-190.lal.in2p3.fr']
+env.hosts = ['onevm-55.lal.in2p3.fr']
 production = env.hosts[0]
-dest_path = '/mnt/datacamp/databoard_03_9002_test'
-server_port = '9002'
-
 logger = logging.getLogger('databoard')
 
 
 def all():
     fetch()
-    train()
+    train_test()
     leaderboard()
 
 def clear_cache():
@@ -49,7 +53,7 @@ def clear_db():
         db.clear()
         db['models'] = pd.DataFrame(columns=columns)
         db['leaderboard1'] = pd.DataFrame(columns=['score'])
-        db['leaderboard2'] = pd.DataFrame(columns=['originality'])
+        db['leaderboard2'] = pd.DataFrame(columns=['contributivity'])
 
 def clear_registrants():
     import shutil
@@ -64,6 +68,7 @@ def clear_pred_files():
     fnames = []
 
     # TODO: some of the following will be removed after switching to a database
+    # TODO: library structure has changed, this is out of date
     fnames += glob.glob(os.path.join(models_path, '*', '*', 'pred_*'))
     fnames += glob.glob(os.path.join(models_path, '*', '*', 'score.csv'))
     fnames += glob.glob(os.path.join(models_path, '*', '*', 'error.txt'))
@@ -94,22 +99,37 @@ def print_db(table='models', state=None):
         print df[df.state == state]
 
 
+def setup_ground_truth():
+    from databoard.generic import setup_ground_truth
+    from databoard.specific import prepare_data
+    
+    # Preparing the data set, typically public train/private held-out test cut
+    logger.info('Preparing the dataset.')
+    prepare_data()
+
+    logger.info('Removing the ground truth files.')
+    clear_groundtruth()
+
+    # Set up the ground truth predictions for the CV folds
+    logger.info('Setting up the groundtruth.')
+    setup_ground_truth()
+
 def setup(wipeall=False):
     from databoard.generic import setup_ground_truth
     from databoard.specific import prepare_data
     
     # Preparing the data set, typically public train/private held-out test cut
-    logger.info('Prepare the dataset.')
+    logger.info('Preparing the dataset.')
     prepare_data()
 
-    logger.info('Remove the ground truth files.')
+    logger.info('Removing the ground truth files.')
     clear_groundtruth()
 
     # Set up the ground truth predictions for the CV folds
-    logger.info('Setup the groundtruth.')
+    logger.info('Setting up the groundtruth.')
     setup_ground_truth()
     
-    logger.info('Clear the database.')
+    logger.info('Clearing the database.')
     clear_db()
 
     if not os.path.exists(models_path):
@@ -121,11 +141,11 @@ def setup(wipeall=False):
 
     if wipeall:
         # Remove the git repos of the teams
-        logger.info('Clear the teams repositories.')
+        logger.info('Clearing the teams repositories.')
         clear_registrants()
 
         # Flush joblib cache
-        logger.info('Flush the joblib cache.')
+        logger.info('Flushing the joblib cache.')
         clear_cache()
 
 def clean_pyc():
@@ -143,39 +163,46 @@ def repeat_fetch(delay='60'):
         delay = int(os.getenv('FETCH_DELAY', delay))
         time.sleep(delay)
 
-def leaderboard(which='all'):
+def leaderboard(which='all', test=False, calibrate=False):
     from databoard.generic import (
         leaderboard_classical, 
         leaderboard_combination, 
-    )
+        leaderboard_execution_times, 
+     )
 
-    groundtruth_path = os.path.join(root_path, 'ground_truth')
-
-    # submissions_path = os.path.join(root_path, 'output/trained_submissions.csv')
     with shelve_database() as db:
         submissions = db['models']
-        trained_models = submissions[submissions.state == "trained"]
-        # trained_models = pd.read_csv(submissions_path)
+        trained_models = submissions[
+            np.logical_or(submissions['state'] == "trained", 
+                          submissions['state'] == "tested")]
+        tested_models = submissions[submissions['state'] == "tested"]
 
-    if which in ('all', '1'):
-        l1 = leaderboard_classical(groundtruth_path, trained_models)
+    if which in ('all', 'classical'):
+        l1 = leaderboard_classical(trained_models, calibrate=calibrate)
         # The following assignments only work because leaderboard_classical & co
         # are idempotent.
         # FIXME (potentially)
         with shelve_database() as db:
             db['leaderboard1'] = l1
+            if test:
+                l_test = leaderboard_classical(
+                    tested_models, subdir="test", calibrate=calibrate)
+                db['leaderboard_classical_test'] = l_test
 
-    if which in ('all', '2'):
-        l2 = leaderboard_combination(groundtruth_path, trained_models)
+    if which in ('all', 'combined'):
+        l2 = leaderboard_combination(trained_models, test)
         # FIXME: same as above
         with shelve_database() as db:
             db['leaderboard2'] = l2
 
-    # l3 = private_leaderboard_classical(trained_models)
+    if which in ('all', 'times'):
+        l_times = leaderboard_execution_times(trained_models)
+        # FIXME: same as above
+        with shelve_database() as db:
+            db['leaderboard_execution_times'] = l_times
 
-
-def train(lb=None, state=False, tag=None):
-    from databoard.generic import train_models
+def train(state=False, tag=None):
+    from databoard.generic import train_and_valid_models
 
     with shelve_database() as db:
         models = db['models']
@@ -193,21 +220,90 @@ def train(lb=None, state=False, tag=None):
     if state != 'all': 
         models = models[models.state == state]
 
-    # models = pd.read_csv("output/submissions.csv")
-    # trained_models, failed_models = train_models(models)
-    train_models(models)
+    train_and_valid_models(models)
 
     idx = models.index
 
     with shelve_database() as db:
         db['models'].loc[idx, :] = models
 
-    # logger.debug(models[models['state'] == "trained"])
-    # logger.debug(models[models['state'] == "error"])
+def test(state=False, tag=None):
+    from databoard.generic import test_models
 
-    if lb:
-        leaderboard(lb)
+    with shelve_database() as db:
+        models = db['models']
 
+    if tag is not None:
+        models = models[models.model.str.contains(tag)]
+        state = 'all'  # force test all the selected models
+        if len(models) == 0:
+            print('No existing model containing the tag: {}'.format(tag))
+            return
+
+    if not state:
+        state = 'trained'
+    
+    if state != 'all': 
+        models = models[models.state == state]
+
+    test_models(models)
+
+    idx = models.index
+
+    with shelve_database() as db:
+        db['models'].loc[idx, :] = models
+
+def train_test(state=False, tag=None):
+    from databoard.generic import train_valid_and_test_models
+
+    with shelve_database() as db:
+        models = db['models']
+
+    if tag is not None:
+        models = models[models.model.str.contains(tag)]
+        state = 'all'  # force test all the selected models
+        if len(models) == 0:
+            print('No existing model containing the tag: {}'.format(tag))
+            return
+
+    if not state:
+        state = 'new'
+    
+    if state != 'all': 
+        models = models[models.state == state]
+
+    train_valid_and_test_models(models)
+
+    idx = models.index
+
+    with shelve_database() as db:
+        db['models'].loc[idx, :] = models
+
+def change_state(from_state, to_state):
+    with shelve_database() as db:
+        models = db['models']
+    models = models[models['state'] == from_state]
+
+    idx = models.index
+    with shelve_database() as db:
+        db['models'].loc[idx, 'state'] = to_state
+
+def set_state(team, tag, state):
+    with shelve_database() as db:
+        models = db['models']
+    models = models[np.logical_and(models['model'] == tag, 
+                                   models['team'] == team)]
+
+    if len(models) > 1:
+        print "ambiguous selection"
+        print selected_models
+        return
+    if len(models) == 0:
+        print "no model found"
+        return
+    idx = models.index
+    with shelve_database() as db:
+        db['models'].loc[idx, 'state'] = state
 
 def kill(team, tag):
     import glob
@@ -256,17 +352,25 @@ def rserve(sockname="db_server"):
         # run('dtach -n `mktemp -u /tmp/{}.XXXX` export SERV_PORT={};fab serve'.format(sockname, server_port))
         return run('dtach -n `mktemp -u /tmp/{}.XXXX` fab serve:port={}'.format(sockname, server_port))
 
+from importlib import import_module
+
 @hosts(production)
-def publish():
+def publish():#ramp):
+#    from ramps.variable_stars.specific import dest_path
+#    print dest_path
+#    import_module('.specific', "ramps." + ramp)
     local('')
     project.rsync_project(
         remote_dir=dest_path,
         exclude=[ '.DS_Store', 
                   'TeamsRepos', 
                   'teams_repos', 
+                  'data', 
                   'models', 
                   'output',
                   'joblib',
+                  'ramps',
+                  'user_test_model',
                   'shelve*',
                   '*.ipynb*',
                   '*.log',

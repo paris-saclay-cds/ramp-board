@@ -24,10 +24,34 @@ private_data_path = os.path.join(data_path, 'private')
 models_path = os.path.join(root_path, 'models')
 
 cachedir = '.'
-serve_port = 8080
 
-debug_server = 'http://' + "localhost:{}".format(serve_port) 
-deploy_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(serve_port)
+# Open ports in Stratuslab
+# 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015, 
+# 8080, 8081, 8095, 8188, 8443, 8444, 9002, 10339, 10636, 15000, 15001, 15002, 
+# 15003, 15004, 20000-25000.
+
+# amadeus
+server_port = '8443'
+dest_path = '/mnt/datacamp/databoard_06_8443_test'
+
+# el nino
+#server_port = '8188'
+#dest_path = '/mnt/datacamp/databoard_05_8188_test'
+
+# kaggle otto with skf_test_size = 0.5
+#server_port = '8081'
+#dest_path = '/mnt/datacamp/databoard_04_8081_test'
+
+# kaggle otto with skf_test_size = 0.2
+#server_port = '8095'
+#dest_path = '/mnt/datacamp/databoard_04_8095_test'
+
+# variable star
+#server_port = '8080'
+#dest_path = '/mnt/datacamp/databoard_03_8080_test'
+
+debug_server = 'http://' + "localhost:{}".format(server_port) 
+deploy_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(server_port)
 server_name = debug_server if local_deployment else deploy_server
 
 

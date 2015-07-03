@@ -3,6 +3,7 @@ import sys
 import shutil
 import logging
 import os.path
+import datetime
 import pandas as pd
 
 from git import Repo
@@ -25,7 +26,7 @@ from .specific import hackaton_title
 from .config_databoard import (
     root_path, 
     repos_path, 
-    serve_port,
+    server_port,
     server_name,
     local_deployment,
     tag_len_limit,
@@ -59,6 +60,8 @@ def error_local_to_url(path):
     link = '<a href="{0}">Error</a>'.format(filename)
     return link
 
+def timestamp_to_time(timestamp):
+    return datetime.datetime.fromtimestamp(int(timestamp)).strftime('%Y-%m-%d %H:%M:%S')
 
 @app.route("/")
 @app.route("/register")
@@ -88,15 +91,18 @@ def show_leaderboard():
     sortable_table_classes = table_classes + ['sortable']
 
     # col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
-    common_columns = ['team', 'model']
+    common_columns = ['team', 'model', 'commit']
     # common_columns = ['team', col_map['model']]
-    scores_columns = ['rank'] + common_columns + ['score', 'originality']
     error_columns = common_columns + ['error']
 
     with shelve_database() as db:
         submissions = db['models']
+        submissions['commit'] = map(timestamp_to_time, submissions['timestamp'])
         # 'inner' means intersection of the indices
-        lb = submissions.join(db['leaderboard1'], how='inner').join(db['leaderboard2'], how='inner')
+
+        lb = submissions.join(db['leaderboard1'], how='inner').\
+                         join(db['leaderboard2'], how='inner').\
+                         join(db['leaderboard_execution_times'], how='inner')                         
         failed = submissions[submissions.state == "error"]
         new_models = submissions[submissions.state == "new"]
 
@@ -112,7 +118,7 @@ def show_leaderboard():
     # failed.index = range(1, len(failed) + 1)
     # new_models.index = range(1, len(new_models) + 1)
 
-    failed.loc[:, "error"] = failed.path
+    failed.loc[:, "error"] = failed.team + "/" + failed.index 
     failed.loc[:, "error"] = failed.error.map(error_local_to_url)
 
     # adding the rank column
@@ -122,12 +128,103 @@ def show_leaderboard():
     for df in [lb, failed, new_models]:
         # dirty hack
         # create a new column 'path_model' and use to generate the link
-        df['path_model'] = df.path + ' ' + df.model + ' ' + df.listing
+        df['path_model'] = df.team + "/" + df.index + ' ' + \
+            df.model + ' ' + df.listing
         df.model = df.path_model.map(model_with_link)
         # df.rename(
         #     columns=col_map, 
         #     inplace=True)
 
+    scores_columns = ['rank'] + common_columns + ['score']
+    if 'calib score' in lb.columns:
+        scores_columns += ['calib score']
+    scores_columns += ['contributivity', "train time", "test time"]
+    lb_html = lb.to_html(columns=scores_columns, classes=sortable_table_classes, **html_params)
+    new_html = new_models.to_html(columns=common_columns, classes=table_classes, **html_params)
+
+    # if failed.shape[0] == 0:
+    #     failed_html = None
+    # else:
+    failed_html = failed.to_html(columns=error_columns, classes=table_classes, **html_params)
+
+    # if new_models.shape[0] == 0:
+    #     new_html = None
+
+    if '_' in request.path:
+        return jsonify(leaderboard=lb_html,
+                       failed_models=failed_html,
+                       new_models=new_html)
+    else:
+        return render_template('leaderboard.html', 
+                               leaderboard=lb_html,
+                               failed_models=failed_html,
+                               new_models=new_html, 
+                               ramp_title=hackaton_title)
+
+# FIXME Djalel: I just copy-pasted this a la Robi. Could be factorized with 
+# previous function I suppose
+# TODO: should be accesible only by admins
+@app.route("/_privateleaderboard")
+@app.route("/privateleaderboard")
+def show_private_leaderboard():
+    html_params = dict(escape=False,
+                       index=False,
+                       max_cols=None,
+                       max_rows=None,
+                       justify='left',
+                       )
+    table_classes = ['ui', 'blue', 'celled', 'table']
+    sortable_table_classes = table_classes + ['sortable']
+
+    # col_map = {'model': 'model <i class="help popup circle link icon" data-content="Click on the model name to view it"></i>'}
+    common_columns = ['team', 'model', 'commit']
+    # common_columns = ['team', col_map['model']]
+    error_columns = common_columns + ['error']
+
+    with shelve_database() as db:
+        submissions = db['models']
+        submissions['commit'] = map(timestamp_to_time, submissions['timestamp'])
+        # 'inner' means intersection of the indices
+
+        lb = submissions.join(db['leaderboard_classical_test'], how='inner').\
+                         join(db['leaderboard2'], how='inner').\
+                         join(db['leaderboard_execution_times'], how='inner')
+        failed = submissions[submissions.state == "error"]
+        new_models = submissions[submissions.state == "new"]
+
+    if len(submissions) == 0: # or len(l1) == 0 or len(l2) == 0:
+        # flash('No models submitted yet.')
+        return redirect(url_for('list_teams_repos'))
+    
+    failed.sort(columns='timestamp', inplace=True, ascending=True)
+    new_models.sort(columns='timestamp', inplace=True, ascending=True)
+
+    # l1.index = range(1, len(l1) + 1)
+    # l2.index = range(1, len(l2) + 1)
+    # failed.index = range(1, len(failed) + 1)
+    # new_models.index = range(1, len(new_models) + 1)
+
+    failed.loc[:, "error"] = failed.team + "/" + failed.index
+    failed.loc[:, "error"] = failed.error.map(error_local_to_url)
+
+    # adding the rank column
+    lb.sort(columns='score', inplace=True, ascending=False)
+    lb['rank'] = range(1, len(lb) + 1)
+    
+    for df in [lb, failed, new_models]:
+        # dirty hack
+        # create a new column 'path_model' and use to generate the link
+        df['path_model'] = df.team + "/" + df.index + ' ' + \
+            df.model + ' ' + df.listing
+        df.model = df.path_model.map(model_with_link)
+        # df.rename(
+        #     columns=col_map, 
+        #     inplace=True)
+
+    scores_columns = ['rank'] + common_columns + ['score']
+    if 'calib score' in lb.columns:
+        scores_columns += ['calib score']
+    scores_columns += ['contributivity', "train time", "test time"]
     lb_html = lb.to_html(columns=scores_columns, classes=sortable_table_classes, **html_params)
     new_html = new_models.to_html(columns=common_columns, classes=table_classes, **html_params)
 

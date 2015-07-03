@@ -30,8 +30,9 @@ The data must be input inside the `input/` folder.
 - `fab fetch`
 - `fab train[:lb=<leaderboard parameters>][state=<specific state to train>]`  # use 'all' to force train all the models
 - `fab leaderboard[:which=<leaderboards>]`
-	- `which` can be `1`, `2`, or `all` (default).
-
+	- `which` can be `classical`, `combined`, `times`, `test`, or `all` (default).
+    - `all` doesn't contain test
+    
 ### Launch the web server
 
 - `export SERV_PORT=<port number>  # 8080 by default`
