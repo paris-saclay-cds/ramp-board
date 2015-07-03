@@ -31,7 +31,7 @@ env.user = 'root'  # the user to use for the remote commands
 env.use_ssh_config = True
 
 # the servers where the commands are executed
-env.hosts = ['onevm-54.lal.in2p3.fr']
+env.hosts = ['onevm-55.lal.in2p3.fr']
 production = env.hosts[0]
 logger = logging.getLogger('databoard')
 

@@ -41,7 +41,9 @@ train_filename = os.path.join(
 test_filename = os.path.join(
     private_data_path, 'resampled_tas_Amon_CCSM4_piControl_r2i1p1_095301-110812.nc')
 
-n_CV = 2 if local_deployment else n_processes
+from multiprocessing import cpu_count
+n_CV = 2 if local_deployment else cpu_count() #n_processes
+
 score = scores.RMSE()
 
 def get_enso_mean(tas):

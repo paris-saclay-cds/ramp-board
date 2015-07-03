@@ -30,9 +30,13 @@ cachedir = '.'
 # 8080, 8081, 8095, 8188, 8443, 8444, 9002, 10339, 10636, 15000, 15001, 15002, 
 # 15003, 15004, 20000-25000.
 
+# amadeus
+server_port = '8443'
+dest_path = '/mnt/datacamp/databoard_06_8443_test'
+
 # el nino
-server_port = '8188'
-dest_path = '/mnt/datacamp/databoard_05_8188_test'
+#server_port = '8188'
+#dest_path = '/mnt/datacamp/databoard_05_8188_test'
 
 # kaggle otto with skf_test_size = 0.5
 #server_port = '8081'

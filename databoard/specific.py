@@ -5,7 +5,7 @@ import socket
 import numpy as np
 import pandas as pd
 from importlib import import_module
-from sklearn.cross_validation import ShuffleSplit
+from sklearn.cross_validation import ShuffleSplit, train_test_split
 # menu
 import regression_prediction_type as prediction_type # menu polymorphism example
 import scores
@@ -22,63 +22,67 @@ from .config_databoard import (
 
 sys.path.append(os.path.dirname(os.path.abspath(models_path)))
 
-hackaton_title = 'El Nino prediction'
-target_column_name = 'target'
-#held_out_test_size = 0.7
+hackaton_title = 'Amadeus number of passengers prediction'
+target_column_name = 'log_PAX'
+drop_column_names = ['PAX']
 skf_test_size = 0.5
+held_out_test_size = 0.5
 random_state = 57
+raw_filename = os.path.join(raw_data_path, 'data_amadeus.csv')
+train_filename = os.path.join(public_data_path, 'train.csv')
+test_filename = os.path.join(private_data_path, 'test.csv')
 
-en_lat_bottom = -5
-en_lat_top = 5
-en_lon_left = 360-170
-en_lon_right = 360-120
-n_burn_in = 120
-n_lookahead = 6
+from multiprocessing import cpu_count
+n_CV = 2 if local_deployment else cpu_count() #n_processes
 
-#raw_filename = os.path.join(raw_data_path, 'data.csv')
-train_filename = os.path.join(
-    public_data_path, 'resampled_tas_Amon_CCSM4_piControl_r1i1p1_080001-130012.nc')
-test_filename = os.path.join(
-    private_data_path, 'resampled_tas_Amon_CCSM4_piControl_r2i1p1_095301-110812.nc')
-
-n_CV = 2 if local_deployment else n_processes
 score = scores.RMSE()
 
-def get_enso_mean(tas):
-    return tas.loc[:, en_lat_bottom:en_lat_top, en_lon_left:en_lon_right].mean(dim=('lat','lon'))
-
-def read_data(xray_filename):
-    temperatures_xray = xray.open_dataset(xray_filename, decode_times=False)
-    # ridiculous as it sounds, there is simply no way to convert a date starting 
-    # with the year 800 into pd array
-    temperatures_xray['time'] = pd.date_range(
-        '1/1/1700', periods=temperatures_xray['time'].shape[0], freq='M') - \
-        np.timedelta64(15, 'D')
-    #target = get_enso_mean(temperatures_xray['tas'])
-    #target['time'] = np.roll(target['time'], n_lookahead)
-    #target[:n_lookahead] = np.NaN
-    #temperatures_xray['target'] = target
-    return temperatures_xray
+def read_data(df_filename):
+    data = pd.read_csv(df_filename)
+    return data
 
 def prepare_data():
-    pass
-    # train and tes splits are given
+    try:
+        df = read_data(raw_filename)
+        df = df.drop(drop_column_names, axis=1)
+    except IOError, e:
+        print e
+        print raw_filename + " should be placed in " + raw_data_path + " before running make setup"
+        raise
+
+    df_train, df_test = train_test_split(
+        df, test_size=held_out_test_size, random_state=random_state)
+
+    if not os.path.exists(public_data_path):
+        os.mkdir(public_data_path)
+    if not os.path.exists(private_data_path):
+        os.mkdir(private_data_path)
+
+    df_train.to_csv(train_filename) 
+    df_test.to_csv(test_filename)
 
 def split_data():
-    X_train_xray = read_data(train_filename)
-    y_train_array = X_train_xray['target'].values[n_burn_in:-n_lookahead]
-    X_test_xray = read_data(test_filename)
-    y_test_array = X_test_xray['target'].values[n_burn_in:-n_lookahead]
+    df_train = read_data(train_filename)
+    X_train_df = df_train.drop(target_column_name, axis=1)
+    y_train_array = df_train[target_column_name].values
+    df_test = read_data(test_filename)
+    X_test_df = df_test.drop(target_column_name, axis=1)
+    y_test_array = df_test[target_column_name].values
     skf = ShuffleSplit(
-        X_train_xray['time'].shape[0] - n_burn_in - n_lookahead, 
-        n_iter=n_CV, test_size=skf_test_size, random_state=random_state)
-    return X_train_xray, y_train_array, X_test_xray, y_test_array, skf
+        y_train_array.shape[0], n_iter=n_CV, test_size=skf_test_size, 
+        random_state=random_state)
+    return X_train_df, y_train_array, X_test_df, y_test_array, skf
 
-def train_model(module_path, X_xray, y_array, skf_is):
+def train_model(module_path, X_df, y_array, skf_is):
     # Feature extraction
-    feature_extractor = import_module('.ts_feature_extractor', module_path)
-    ts_fe = feature_extractor.FeatureExtractor()
-    X_array = ts_fe.transform(X_xray, n_burn_in, n_lookahead, skf_is)
+    feature_extractor = import_module('.feature_extractor', module_path)
+    fe = feature_extractor.FeatureExtractor()
+    X_df.insert(0, "order", range(X_df.shape[0]))
+    fe.fit(X_df, y_array)
+    X_array = fe.transform(X_df)
+    print X_array[:,0]
+    X_array = np.sort(X_array, axis=0)
+    print X_array[:,0]
     # Regression
     train_is, _ = skf_is
     X_train_array = np.array([X_array[i] for i in train_is])
@@ -86,12 +90,16 @@ def train_model(module_path, X_xray, y_array, skf_is):
     regressor = import_module('.regressor', module_path)
     reg = regressor.Regressor()
     reg.fit(X_train_array, y_train_array)
-    return ts_fe, reg
+    return fe, reg
 
-def test_model(trained_model, X_xray, skf_is):
-    ts_fe, reg = trained_model
+def test_model(trained_model, X_df, skf_is):
+    fe, reg = trained_model
     # Feature extraction
-    X_array = ts_fe.transform(X_xray, n_burn_in, n_lookahead, skf_is)
+    X_df.insert(0, "order", range(X_df.shape[0]))
+    X_array = fe.transform(X_df)
+    print X_array[:,0]
+    X_array = np.sort(X_array, axis=0)
+    print X_array[:,0]
     # Regression
     _, test_is = skf_is
     X_test_array = np.array([X_array[i] for i in test_is])
