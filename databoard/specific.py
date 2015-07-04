@@ -77,12 +77,8 @@ def train_model(module_path, X_df, y_array, skf_is):
     # Feature extraction
     feature_extractor = import_module('.feature_extractor', module_path)
     fe = feature_extractor.FeatureExtractor()
-    X_df.insert(0, "order", range(X_df.shape[0]))
     fe.fit(X_df, y_array)
     X_array = fe.transform(X_df)
-    print X_array[:,0]
-    X_array = np.sort(X_array, axis=0)
-    print X_array[:,0]
     # Regression
     train_is, _ = skf_is
     X_train_array = np.array([X_array[i] for i in train_is])
@@ -95,11 +91,7 @@ def train_model(module_path, X_df, y_array, skf_is):
 def test_model(trained_model, X_df, skf_is):
     fe, reg = trained_model
     # Feature extraction
-    X_df.insert(0, "order", range(X_df.shape[0]))
     X_array = fe.transform(X_df)
-    print X_array[:,0]
-    X_array = np.sort(X_array, axis=0)
-    print X_array[:,0]
     # Regression
     _, test_is = skf_is
     X_test_array = np.array([X_array[i] for i in test_is])
