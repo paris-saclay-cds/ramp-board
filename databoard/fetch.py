@@ -176,7 +176,7 @@ def fetch_models():
                     # filtering useless files
                     file_listing = filter(lambda f: not f.startswith('__'), file_listing)
                     file_listing = filter(lambda f: not f.endswith('.pyc'), file_listing)
-                    file_listing = filter(lambda f: not f.endswith('.csv'), file_listing)
+                    # file_listing = filter(lambda f: not f.endswith('.csv'), file_listing)
                     file_listing = filter(lambda f: not f.endswith('error.txt'), file_listing)
                     file_listing = '|'.join(file_listing)
 
