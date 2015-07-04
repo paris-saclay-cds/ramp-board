@@ -159,7 +159,6 @@ def fetch_models():
                             # default case
                             db['models'].drop(tag_name_alias, inplace=True)
 
-                    new_submissions.add(tag_name_alias)
 
                     # recursively copy the model files
                     try:
@@ -168,6 +167,7 @@ def fetch_models():
                         continue
                     open(os.path.join(model_path, '__init__.py'), 'a').close()
 
+                    new_submissions.add(tag_name_alias)
                     relative_path = os.path.join(team_name, tag_name_alias)
 
                     # listing the model files
