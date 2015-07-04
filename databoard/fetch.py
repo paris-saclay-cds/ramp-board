@@ -161,7 +161,10 @@ def fetch_models():
                     new_submissions.add(tag_name_alias)
 
                     # recursively copy the model files
-                    copy_git_tree(t.object.tree, model_path)
+                    try:
+                        copy_git_tree(t.object.tree, model_path)
+                    except:
+                        continue
                     open(os.path.join(model_path, '__init__.py'), 'a').close()
 
                     relative_path = os.path.join(team_name, tag_name_alias)
