@@ -129,7 +129,7 @@ def fetch_models():
             # FIXME: this huge try-except is a nightmare
             try:
                 tag_name = t.name
-                tag_name = tag_name.replace(' ', '_')
+                # tag_name = tag_name.replace(' ', '_')
                 logger.debug('Tag name: {}'.format(tag_name))
 
                 # will serve as dataframe index
