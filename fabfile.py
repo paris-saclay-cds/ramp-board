@@ -363,6 +363,7 @@ def publish():#ramp):
     project.rsync_project(
         remote_dir=dest_path,
         exclude=[ '.DS_Store', 
+                  'ground_truth', 
                   'TeamsRepos', 
                   'teams_repos', 
                   'data', 

@@ -856,9 +856,13 @@ def get_combined_test_predictions(models_df, hash_string, best_index_list):
         models_df, "test", hash_string)
     valid_predictions_list = get_predictions_list(
         models_df, "valid", hash_string)
-    test_predictions_list = calibrate_test_predictions(
-        uncalibrated_test_predictions_list, valid_predictions_list, 
-        ground_truth_valid, best_index_list)
+    # Uncommented calibration for regression
+    # TODO: clean this up
+    # same bug as in get_calibrated_predictions_list
+    #test_predictions_list = calibrate_test_predictions(
+    #    uncalibrated_test_predictions_list, valid_predictions_list, 
+    #    ground_truth_valid, best_index_list)
+    test_predictions_list = uncalibrated_test_predictions_list
 
     combined_test_predictions = specific.prediction_type.combine(
         test_predictions_list, range(len(test_predictions_list)))
