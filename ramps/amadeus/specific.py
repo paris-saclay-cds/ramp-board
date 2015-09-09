@@ -24,7 +24,7 @@ sys.path.append(os.path.dirname(os.path.abspath(models_path)))
 
 # should be the same as the directory in ramp, and fab publish should also be 
 # called with the same name as parameter
-hackaton_name = 'amadeus'
+ramp_name = 'amadeus'
 # will be displayed on the web site
 hackaton_title = 'Amadeus number of passengers prediction'
 target_column_name = 'log_PAX'

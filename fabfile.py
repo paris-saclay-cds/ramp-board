@@ -355,11 +355,13 @@ def rserve(sockname="db_server"):
 from importlib import import_module
 
 @hosts(production)
-def publish(ramp_name):#ramp):
+def publish(ramp_name):
 #    from ramps.variable_stars.specific import dest_path
 #    print dest_path
 #    import_module('.specific', "ramps." + ramp)
     local('')
+    #TODO: check if ramp_name is the same as in
+    #      'ramps/' + ramp_name + '/specific.py'
     project.rsync_project(
         remote_dir=dest_path,
         exclude=[ '.DS_Store', 
@@ -383,10 +385,22 @@ def publish(ramp_name):#ramp):
         delete=False,
         extra_opts='-c',
     )
+    # publishing the specific.py specific to the ramp called ramp_name
     project.rsync_project(
         remote_dir=dest_path + '/databoard/',
         local_dir='ramps/' + ramp_name + '/specific.py',
         delete=False,
+        extra_opts='-c',
+    )
+
+# (re)publish data set from 'ramps/' + ramp_name + '/data'
+# fab setup_ground_truth should be run at the server side
+@hosts(production)
+def publish_data(ramp_name):
+    project.rsync_project(
+        remote_dir=dest_path,
+        local_dir='ramps/' + ramp_name + '/data',
+        delete=True,
         extra_opts='-c',
     )
 
