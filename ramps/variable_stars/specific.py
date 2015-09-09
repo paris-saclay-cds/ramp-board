@@ -32,9 +32,7 @@ raw_filename = os.path.join(raw_data_path, 'data.csv')
 train_filename = os.path.join(public_data_path, 'train.csv')
 test_filename = os.path.join(private_data_path, 'test.csv')
 
-vf_raw_filename = os.path.join(raw_data_path, 'varlength_features.csv.gz')
-vf_train_filename = os.path.join(public_data_path, 'train_varlength_features.csv')
-vf_test_filename = os.path.join(private_data_path, 'test_varlength_features.csv')
+n_CV = 2 if local_deployment else 3 * n_processes
 
 n_CV = 2 if local_deployment else 1 * n_processes
 
