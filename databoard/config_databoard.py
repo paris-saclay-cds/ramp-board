@@ -31,8 +31,12 @@ cachedir = '.'
 # 15003, 15004, 20000-25000.
 
 # amadeus
-server_port = '8443'
-dest_path = '/mnt/datacamp/databoard_06_8443_test'
+#server_port = '8443'
+#dest_path = '/mnt/datacamp/databoard_06_8443_test'
+
+# pollenating insects
+server_port = '8444'
+dest_path = '/mnt/datacamp/databoard_07_8444_test'
 
 # el nino
 #server_port = '8188'

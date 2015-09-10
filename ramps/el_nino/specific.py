@@ -42,7 +42,7 @@ test_filename = os.path.join(
     private_data_path, 'resampled_tas_Amon_CCSM4_piControl_r2i1p1_095301-110812.nc')
 
 from multiprocessing import cpu_count
-n_CV = 2 if local_deployment else cpu_count() #n_processes
+n_CV = 2 if local_deployment else 27 #cpu_count() #n_processes
 
 score = scores.RMSE()
 

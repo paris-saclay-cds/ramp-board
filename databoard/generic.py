@@ -142,6 +142,9 @@ def get_test_f_name(full_model_path, hash_string):
 def get_train_time_f_name(full_model_path, hash_string):
     return get_f_name(full_model_path, "train_time", hash_string)
 
+def get_test_time_f_name(full_model_path, hash_string):
+    return get_f_name(full_model_path, "test_time", hash_string)
+
 def get_valid_time_f_name(full_model_path, hash_string):
     return get_f_name(full_model_path, "valid_time", hash_string)
 
@@ -1017,6 +1020,8 @@ def get_Gabor_combined_mean_score_multiclass(predictions_list, skf, hash_strings
         print "-------------"
     return score
 
+# TODO: I'm not sure how but the subdir = "test" version has disappeared
+# should be implemented
 def leaderboard_classical(models_df, subdir = "valid", calibrate = False):
     mean_scores = []
 
