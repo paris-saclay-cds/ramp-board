@@ -28,32 +28,8 @@ from .config_databoard import (
 )
 import specific
 
-# We needed to make the sets global because Parallel hung
-# when we passed a list of dictionaries to the function
-# to be dispatched, save_scores()
-class DataSets():
-
-    def __init__(self):
-        pass
-
-    def set_sets(self, X_train, y_train, X_test, y_test):
-        self.X_train = X_train
-        self.y_train = y_train
-        self.X_test = X_test
-        self.y_test = y_test
-
-    def get_sets(self):
-        return self.X_train, self.y_train, self.X_test, self.y_test
-
-    def get_training_sets(self):
-        return self.X_train, self.y_train
-
-    def get_test_sets(self):
-        return self.X_test, self.y_test
-
 mem = Memory(cachedir=cachedir)
 logger = logging.getLogger('databoard')
-data_sets = DataSets()
 
 def get_hash_string_from_indices(index_list):
     """We identify files output on cross validation (models, predictions)
@@ -175,12 +151,6 @@ def changedir(dir_name):
 def setup_ground_truth():
     """Setting up the GroundTruth subdir, saving y_test for each fold in skf. 
     File names are valid_<hash of the train index vector>.csv.
-
-    Parameters
-    ----------
-    gt_paths : ground truth path
-    y : array-like, shape = [n_instances]
-        the label vector
     """
     os.rmdir(ground_truth_path)  # cleanup the ground_truth
     os.mkdir(ground_truth_path)
@@ -217,9 +187,6 @@ def train_on_fold(skf_is, full_model_path):
     full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
     """
     valid_train_is, _ = skf_is
-    # We had a bug when several threads wanted to access the same variable
-    # Plus splitting is a much faster operation, not sure why (get makes copies?)
-    #X_train, y_train = data_sets.get_training_sets()
     X_train, y_train, X_test, y_test, skf = specific.split_data()
 
     hash_string = get_hash_string_from_indices(valid_train_is)
@@ -258,7 +225,6 @@ def test_on_fold(skf_is, full_model_path):
         logger.info("No pickle, retraining")
         trained_model = train_on_fold(skf_is, full_model_path)
 
-    #X_test, _ = data_sets.get_test_sets()
     X_train, y_train, X_test, y_test, skf = specific.split_data()
     test_model_output, _ = test_trained_model(trained_model, X_test)
     test_f_name = get_test_f_name(full_model_path, hash_string)
@@ -269,7 +235,6 @@ def train_valid_and_test_on_fold(skf_is, full_model_path):
     trained_model = train_on_fold(skf_is, full_model_path)
 
     valid_train_is, valid_test_is = skf_is
-    #X_train, y_train = data_sets.get_training_sets()
     X_train, y_train, X_test, y_test, skf = specific.split_data()
     hash_string = get_hash_string_from_indices(valid_train_is)
 
@@ -282,7 +247,6 @@ def train_valid_and_test_on_fold(skf_is, full_model_path):
         f.write(str(test_time))  # saving running time
 
     logger.info("Testing : %s" % hash_string)
-    #X_test, _ = data_sets.get_test_sets()
     X_train, y_train, X_test, y_test, skf = specific.split_data()
     test_model_output, _ = test_trained_model(trained_model, X_test)
     test_f_name = get_test_f_name(full_model_path, hash_string)
@@ -292,7 +256,6 @@ def train_and_valid_on_fold(skf_is, full_model_path):
     trained_model = train_on_fold(skf_is, full_model_path)
 
     valid_train_is, valid_test_is = skf_is
-    #X_train, y_train = data_sets.get_training_sets()
     X_train, y_train, X_test, y_test, skf = specific.split_data()
     hash_string = get_hash_string_from_indices(valid_train_is)
 
@@ -364,7 +327,6 @@ def train_and_valid_models(orig_models_df, last_time_stamp=None):
 
     logger.info("Reading data")
     X_train, y_train, X_test, y_test, skf = specific.split_data()
-    data_sets.set_sets(X_train, y_train, X_test, y_test)
 
     for idx, model_df in models_df.iterrows():
         if model_df['state'] in ["ignore"]:
@@ -400,7 +362,6 @@ def train_valid_and_test_models(orig_models_df, last_time_stamp=None):
 
     logger.info("Reading data")
     X_train, y_train, X_test, y_test, skf = specific.split_data()
-    data_sets.set_sets(X_train, y_train, X_test, y_test)
 
     for idx, model_df in models_df.iterrows():
         if model_df['state'] in ["ignore"]:
@@ -449,7 +410,6 @@ def test_models(orig_models_df, last_time_stamp=None):
 
     logger.info("Reading data")
     X_train, y_train, X_test, y_test, skf = specific.split_data()
-    data_sets.set_sets(X_train, y_train, X_test, y_test)
 
     for idx, model_df in models_df.iterrows():
         if model_df['state'] in ["ignore"]:
