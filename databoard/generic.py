@@ -30,10 +30,12 @@ import specific
 
 mem = Memory(cachedir=cachedir)
 logger = logging.getLogger('databoard')
+is_parallelize = True # make it False if parallel training is not working
+is_pickle_trained_model = False # often doesn't work and takes a lot of disk space
 
 def get_hash_string_from_indices(index_list):
     """We identify files output on cross validation (models, predictions)
-    by hashing the point indices coming from an skf object.
+    by hashing the point indices coming from an cv object.
 
     Parameters
     ----------
@@ -49,7 +51,7 @@ def get_hash_string_from_indices(index_list):
 
 def get_hash_string_from_path(path):
     """When running testing or leaderboard, instead of recreating the hash 
-    strings from the skf, we just read them from the file names. This is more
+    strings from the cv, we just read them from the file names. This is more
     robust: only existing files will be opened when running those functions.
     On the other hand, model directories should be clean otherwise old dangling
     files will also be used. The file names are supposed to be
@@ -118,9 +120,6 @@ def get_test_f_name(full_model_path, hash_string):
 def get_train_time_f_name(full_model_path, hash_string):
     return get_f_name(full_model_path, "train_time", hash_string)
 
-def get_test_time_f_name(full_model_path, hash_string):
-    return get_f_name(full_model_path, "test_time", hash_string)
-
 def get_valid_time_f_name(full_model_path, hash_string):
     return get_f_name(full_model_path, "valid_time", hash_string)
 
@@ -147,186 +146,289 @@ def changedir(dir_name):
     finally:
         os.chdir(current_dir)
 
-
 def setup_ground_truth():
-    """Setting up the GroundTruth subdir, saving y_test for each fold in skf. 
+    """Setting up the GroundTruth subdir, saving y_test for each fold in cv. 
     File names are valid_<hash of the train index vector>.csv.
     """
     os.rmdir(ground_truth_path)  # cleanup the ground_truth
     os.mkdir(ground_truth_path)
-    _, y_train, _, y_test, skf = specific.split_data()
+    _, y_train = specific.get_train_data()
+    _, y_test = specific.get_test_data()
+    cv = specific.get_cv(y_train)
     f_name_test = get_ground_truth_test_f_name()
     np.savetxt(f_name_test, y_test, delimiter="\n", fmt='%s')
 
     logger.debug('Ground truth files...')
     scores = []
-    for train_is, test_is in skf:
+    for train_is, test_is in cv:
         hash_string = get_hash_string_from_indices(train_is)
         f_name_valid = get_ground_truth_valid_f_name(hash_string)
         logger.debug(f_name_valid)
         np.savetxt(f_name_valid, y_train[test_is], delimiter="\n", fmt='%s')
 
-def test_trained_model(trained_model, X, skf_is = None):
-    if skf_is == None:
-        skf_is = ([], range(len(X))) # test on all point
-    start = timeit.default_timer()
-    test_model_output = specific.test_model(trained_model, X, skf_is)
-    end = timeit.default_timer()
-    return test_model_output, end - start
+################################################################################
+######################## TRAINING, VALUDATION, TESTING #########################
+################################################################################
 
-def train_on_fold(skf_is, full_model_path):
-    """Trains the model on a single fold. It requires specific to contain
-    a train_model function that takes the module_path, X_train, y_train, and
-    an skf_is containing the train_train and valid_train indices. Most of the
-    time it will simply train on X_train[valid_train] but in the case of time
-    series it may do feature extraction on the full file (using always the past).
+#@mem.cache
+def run_on_folds(method, full_model_path, cv):
+    """Runs various combinations of train, validate, and test on all folds.
+    If is_parallelize is True, it will launch the jobs in parallel on different
+    cores. 
 
     Parameters
     ----------
-    skf_is : a pair of indices (train_train_is, valid_train_is)
+    method : the method to be run (train_valid_and_test_on_fold, 
+        train_and_valid_on_fold, test_on_fold)
     full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    cv : a list of pairs of training and validation indices, identifying the
+        folds
     """
-    valid_train_is, _ = skf_is
-    X_train, y_train, X_test, y_test, skf = specific.split_data()
+    if is_parallelize:
+        Parallel(n_jobs=n_processes, verbose=5)\
+            (delayed(method)(cv_is, full_model_path) for cv_is in cv)
+    else:
+        for cv_is in cv:
+            method(cv_is, full_model_path)
 
+def write_execution_time(f_name, time):
+    with open(f_name, 'w') as f:
+        f.write(str(time)) # writing running time
+
+def pickle_trained_model(f_name, trained_model):
+    try:
+        with open(f_name, 'w') as f:
+            pickle.dump(trained_model, f) # saving the model
+    except Exception as e:
+        logger.error("Cannot pickle trained model\n{}".format(e))
+        os.remove(f_name)
+
+def train_on_fold(X_train, y_train, cv_is, full_model_path):
+    """Trains the model on a single fold. Wrapper around specific.train_model().
+    It requires specific to contain a train_model function that takes the 
+    module_path, X_train, y_train, and an cv_is containing the train_train and 
+    valid_train indices. Most of the time it will simply train on 
+    X_train[valid_train] but in the case of time series it may do feature 
+    extraction on the full file (using always the past). Training time is
+    measured and returned.
+
+    Parameters
+    ----------
+    X_train, y_train: training input data and labels
+    cv_is : a pair of indices (train_train_is, valid_train_is)
+    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+
+    Returns
+    -------
+    trained_model : the trained model, to be fed to specific.test_model
+    train_time : the wall clock time of the train
+     """
+    valid_train_is, _ = cv_is
     hash_string = get_hash_string_from_indices(valid_train_is)
-    logger.info("Training : %s" % hash_string)
-    start = timeit.default_timer()
+
+    logger.info("Training on fold : %s" % hash_string)
+    
     open(os.path.join(full_model_path, "__init__.py"), 'a').close()  # so to make it importable
     module_path = get_module_path(full_model_path)
 
-    trained_model = specific.train_model(module_path, X_train, y_train, skf_is)
+    start = timeit.default_timer()
+    trained_model = specific.train_model(module_path, X_train, y_train, cv_is)
     end = timeit.default_timer()
-    with open(get_train_time_f_name(full_model_path, hash_string), 'w') as f:
-        f.write(str(end - start)) # saving running time
+    train_time = end - start
+    
+    return trained_model, train_time
 
-    #try:
-    #    with open(get_model_f_name(full_model_path, hash_string), 'w') as f:
-    #        pickle.dump(trained_model, f) # saving the model
-    #except Exception as e:
-    #    logger.error("Cannot pickle trained model\n{}".format(e))
-    #    os.remove(get_model_f_name(full_model_path, hash_string))
+def train_measure_and_pickle_on_fold(X_train, y_train, cv_is, full_model_path):
+    """Calls train_on_fold() to train on fold, writes execution time in 
+    <full_model_path>/train_time/<hash_string>.csv and pickles the model
+    (if is_pickle_trained_model) into full_model_path>/model/<hash_string>.p
 
+    Parameters
+    ----------
+    X_train, y_train: training input data and labels
+    cv_is : a pair of indices (train_train_is, valid_train_is)
+    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
 
-    # in case we want to train and test without going through pickling, for
-    # example, because pickling doesn't work, we return the model
-    return trained_model
-
-def test_on_fold(skf_is, full_model_path):
-    valid_train_is, _ = skf_is
+    Returns
+    -------
+    trained_model : the trained model, to be fed to specific.test_model
+     """
+    valid_train_is, _ = cv_is
     hash_string = get_hash_string_from_indices(valid_train_is)
 
-    logger.info("Testing : %s" % hash_string)
+    trained_model, train_time = train_on_fold(
+        X_train, y_train, cv_is, full_model_path)
+    write_execution_time(
+        get_train_time_f_name(full_model_path, hash_string), train_time)
+    if is_pickle_trained_model:
+        pickle_trained_model(
+            get_model_f_name(full_model_path, hash_string), trained_model)
+    return trained_model
+
+def test_trained_model(trained_model, X, cv_is = None):
+    """Tests and times a trained model on a fold. If cv_is is None, tests
+    on the whole (holdout) set. Wrapper around specific.test_model()
+
+    Parameters
+    ----------
+    trained_model : a trained model, returned by specific.train_model()
+    X : input data
+    cv_is : a pair of indices (train_train_is, valid_train_is)
+
+    Returns
+    -------
+    test_model_output : the output of the tested model, returned by 
+        specific.test_model
+    test_time : the wall clock time of the test
+    """
+    if cv_is == None:
+        cv_is = ([], range(len(X))) # test on all points
+    start = timeit.default_timer()
+    test_model_output = specific.test_model(trained_model, X, cv_is)
+    end = timeit.default_timer()
+    test_time = end - start
+    return test_model_output, test_time
+
+def test_trained_model_on_test(trained_model, X_test, hash_string, full_model_path):
+    """Tests a trained model on (holdout) X_test and outputs
+    the predictions into <full_model_path>/test/<hash_string>.csv.
+
+    Parameters
+    ----------
+    trained_model : a trained model, returned by specific.train_model()
+    X_test : input (holdout test) data
+    hash_string : the fold identifier
+    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    """
+    logger.info("Testing on fold : %s" % hash_string)
+    # We ignore test time, it is measured when validating
+    test_model_output, _ = test_trained_model(trained_model, X_test)
+    test_f_name = get_test_f_name(full_model_path, hash_string)
+    test_model_output.save_predictions(test_f_name)
+
+def test_trained_model_and_measure_on_valid(trained_model, X_train, 
+                                            cv_is, full_model_path):
+    """Tests a trained model on a validation fold represented by cv_is, 
+    outputs the predictions into <full_model_path>/valid/<hash_string>.csv and
+    the validation time into <full_model_path>/valid_time/<hash_string>.csv.
+
+    Parameters
+    ----------
+    trained_model : a trained model, returned by specific.train_model()
+    X_train : input (training) data
+    cv_is : a pair of indices (train_train_is, valid_train_is)
+    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    """
+    valid_train_is, _ = cv_is
+    hash_string = get_hash_string_from_indices(valid_train_is)
+
+    logger.info("Validating on fold : %s" % hash_string)
+
+    valid_model_output, valid_time = test_trained_model(
+        trained_model, X_train, cv_is)
+    valid_f_name = get_valid_f_name(full_model_path, hash_string)
+    valid_model_output.save_predictions(valid_f_name)
+    write_execution_time(
+        get_valid_time_f_name(full_model_path, hash_string), valid_time)
+
+def test_on_fold(cv_is, full_model_path):
+    """Tests a trained model on a validation fold represented by cv_is. 
+    Reloads the data so safe in each thread. Tries to unpickle the trained
+    model, if can't, retrains. Called using run_on_folds().
+
+    Parameters
+    ----------
+    cv_is : a pair of indices (train_train_is, valid_train_is)
+    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    """
+
+    X_train, y_train = specific.get_train_data()
+    X_test, _ = specific.get_test_data()
+    valid_train_is, _ = cv_is
+    hash_string = get_hash_string_from_indices(valid_train_is)
+
     try:
-        logger.info("Loading from pickle")
+        logger.info("Loading from pickle on fold : %s" % hash_string)
         with open(get_model_f_name(full_model_path, hash_string), 'r') as f:
             trained_model = pickle.load(f)
     except IOError, e: # no pickled model, retrain
-        logger.info("No pickle, retraining")
-        trained_model = train_on_fold(skf_is, full_model_path)
+        logger.info("No pickle, retraining on fold : %s" % hash_string)
+        trained_model = train_measure_and_pickle_on_fold(
+            X_train, y_train, cv_is, full_model_path)
 
-    X_train, y_train, X_test, y_test, skf = specific.split_data()
-    test_model_output, _ = test_trained_model(trained_model, X_test)
-    test_f_name = get_test_f_name(full_model_path, hash_string)
-    test_model_output.save_predictions(test_f_name)
+    test_trained_model_on_test(
+        trained_model, X_test, hash_string, full_model_path)
 
-# TODO: Should be factorized
-def train_valid_and_test_on_fold(skf_is, full_model_path):
-    trained_model = train_on_fold(skf_is, full_model_path)
+def train_valid_and_test_on_fold(cv_is, full_model_path):
+    """Trains and validates a model on a validation fold represented by 
+    cv_is, then tests it. Reloads the data so safe in each thread.  Called 
+    using run_on_folds().
 
-    valid_train_is, valid_test_is = skf_is
-    X_train, y_train, X_test, y_test, skf = specific.split_data()
+    Parameters
+    ----------
+    cv_is : a pair of indices (train_train_is, valid_train_is)
+    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    """
+    X_train, y_train = specific.get_train_data()
+    X_test, _ = specific.get_test_data()
+    valid_train_is, valid_test_is = cv_is
     hash_string = get_hash_string_from_indices(valid_train_is)
 
-    logger.info("Validating : %s" % hash_string)
-    valid_model_output, test_time = test_trained_model(
-        trained_model, X_train, skf_is)
-    valid_f_name = get_valid_f_name(full_model_path, hash_string)
-    valid_model_output.save_predictions(valid_f_name)
-    with open(get_valid_time_f_name(full_model_path, hash_string), 'w') as f:
-        f.write(str(test_time))  # saving running time
+    trained_model = train_measure_and_pickle_on_fold(
+        X_train, y_train, cv_is, full_model_path)
 
-    logger.info("Testing : %s" % hash_string)
-    X_train, y_train, X_test, y_test, skf = specific.split_data()
-    test_model_output, _ = test_trained_model(trained_model, X_test)
-    test_f_name = get_test_f_name(full_model_path, hash_string)
-    test_model_output.save_predictions(test_f_name)
+    test_trained_model_and_measure_on_valid(
+        trained_model, X_train, cv_is, full_model_path)
 
-def train_and_valid_on_fold(skf_is, full_model_path):
-    trained_model = train_on_fold(skf_is, full_model_path)
+    test_trained_model_on_test(
+        trained_model, X_test, hash_string, full_model_path)
 
-    valid_train_is, valid_test_is = skf_is
-    X_train, y_train, X_test, y_test, skf = specific.split_data()
+def train_and_valid_on_fold(cv_is, full_model_path):
+    """Trains and validates a model on a validation fold represented by 
+    cv_is. Reloads the data so safe in each thread.  Called using 
+    run_on_folds().
+
+    Parameters
+    ----------
+    cv_is : a pair of indices (train_train_is, valid_train_is)
+    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    """
+    X_train, y_train = specific.get_train_data()
+    valid_train_is, valid_test_is = cv_is
     hash_string = get_hash_string_from_indices(valid_train_is)
 
-    logger.info("Validating : %s" % hash_string)
-    valid_model_output, test_time = test_trained_model(
-        trained_model, X_train, skf_is)
-    valid_f_name = get_valid_f_name(full_model_path, hash_string)
-    valid_model_output.save_predictions(valid_f_name)
-    with open(get_valid_time_f_name(full_model_path, hash_string), 'w') as f:
-        f.write(str(test_time))  # saving running time
+    trained_model = train_measure_and_pickle_on_fold(
+        X_train, y_train, cv_is, full_model_path)
 
+    test_trained_model_and_measure_on_valid(
+        trained_model, X_train, cv_is, full_model_path)
 
-def train_valid_and_test_model(full_model_path, skf):
-    Parallel(n_jobs=n_processes, verbose=5)\
-        (delayed(train_valid_and_test_on_fold)(skf_is, full_model_path)
-        for skf_is in skf)
+def run_models(orig_models_df, infinitive, past_participle, gerund, error_state, 
+               method):
+    """The master method that runs different pipelines (train+valid, 
+    train+valid+test, test).
 
-#@mem.cache
-def train_and_valid_model(full_model_path, skf):
-    #Uncomment this and comment out the follwing two lines if
-    #parallel training is not working
-    #for skf_is in skf:
-    #    train_and_valid_on_fold(skf_is, full_model_path)
-
-    # from joblib.pool import has_shareable_memory
-
-    Parallel(n_jobs=n_processes, verbose=5)\
-        (delayed(train_and_valid_on_fold)(skf_is, full_model_path)
-        for skf_is in skf)
-    
-    #partial_train = partial(train_and_valid_on_fold, full_model_path=full_model_path)
-    #pool = multiprocessing.Pool(processes=n_processes)
-    #pool.map(partial_train, skf)
-    #pool.close()
-
-    #import pprocess
-    #import time
-    ##pprocess.pmap(partial_train, skf, limit=n_processes)
-
-    #class MyExchange(pprocess.Exchange):
-
-    #    "Parallel convenience class containing the array assignment operation."
-
-    #    def store_data(self, ch):
-    #        r = ch.receive()
-    #        print "*****************************************************"
-    #        print r
-
-    #exchange = MyExchange(limit=n_processes)
-
-    ## Wrap the calculate function and manage it.
-
-    #calc = exchange.manage(pprocess.MakeParallel(train_and_valid_on_fold))
-
-    ## Perform the work.
-
-    #for skf_is, i in zip(skf, range(n_processes)):
-    #    calc(skf_is, full_model_path)
-    #    time.sleep(5)
-
-    #exchange.finish()
- 
-def train_and_valid_models(orig_models_df, last_time_stamp=None):
+    Parameters
+    ----------
+    orig_models_df : the table of the models that should be run
+    infinitive, past_participle, gerund : three forms of the action naming
+        to be run. Like train, trained, training. Besides message strings,
+        past_participle is used for the final state of a successful run 
+        (trained, tested)
+    error_state : the state we get in after an unsuccesful run. The error 
+        message is saved in <error_state>.txt, to be rendered on the web site
+    method : the method to be run (train_and_valid_on_fold, 
+        train_valid_and_test_on_fold, test_on_fold)
+    """
     models_df = orig_models_df.sort("timestamp")
         
     if models_df.shape[0] == 0:
-        logger.info("No models to train.")
+        logger.info("No models to {}.".format(infinitive))
         return
 
     logger.info("Reading data")
-    X_train, y_train, X_test, y_test, skf = specific.split_data()
+    X_test, y_test = specific.get_test_data()
+    cv = specific.get_cv(y_test)
 
     for idx, model_df in models_df.iterrows():
         if model_df['state'] in ["ignore"]:
@@ -334,109 +436,42 @@ def train_and_valid_models(orig_models_df, last_time_stamp=None):
 
         full_model_path = get_full_model_path(idx, model_df)
 
-        logger.info("Training : {}/{}".format(model_df['team'], model_df['model']))
+        logger.info("{} : {}/{}".format(
+            str.capitalize(gerund), model_df['team'], model_df['model']))
 
         try:
-            train_and_valid_model(full_model_path, skf)
+            run_on_folds(method, full_model_path, cv)
             # failed_models.drop(idx, axis=0, inplace=True)
-            orig_models_df.loc[idx, 'state'] = "trained"
+            orig_models_df.loc[idx, 'state'] = past_participle
         except Exception, e:
-            orig_models_df.loc[idx, 'state'] = "error"
-            logger.error("Training failed with exception: \n{}".format(e))
+            orig_models_df.loc[idx, 'state'] = error_state
+            logger.error("{} failed with exception: \n{}".format(
+                str.capitalize(gerund), e))
 
             # TODO: put the error in the database instead of a file
             # Keep the model folder clean.
-            with open(get_f_name(full_model_path, '.', "error", "txt"), 'w') as f:
+            with open(get_f_name(full_model_path, '.', error_state, "txt"), 'w') as f:
                 error_msg = str(e)
                 cut_exception_text = error_msg.rfind('--->')
                 if cut_exception_text > 0:
                     error_msg = error_msg[cut_exception_text:]
                 f.write("{}".format(error_msg))
 
-def train_valid_and_test_models(orig_models_df, last_time_stamp=None):
-    models_df = orig_models_df.sort("timestamp")
-        
-    if models_df.shape[0] == 0:
-        logger.info("No models to train.")
-        return
+def train_and_valid_models(orig_models_df):
+    run_models(orig_models_df, "train", "trained", "training", "error", 
+               train_and_valid_on_fold)
 
-    logger.info("Reading data")
-    X_train, y_train, X_test, y_test, skf = specific.split_data()
+def train_valid_and_test_models(orig_models_df):
+    run_models(orig_models_df, "train/test", "tested", "training/testing", "error", 
+               train_valid_and_test_on_fold)
+   
+def test_models(orig_models_df):
+    run_models(orig_models_df, "test", "tested", "testing", "test_error", 
+               test_on_fold)
 
-    for idx, model_df in models_df.iterrows():
-        if model_df['state'] in ["ignore"]:
-            continue
-
-        full_model_path = get_full_model_path(idx, model_df)
-
-        logger.info("Training : {}/{}".format(model_df['team'], model_df['model']))
-
-        try:
-            train_valid_and_test_model(full_model_path, skf)
-            # failed_models.drop(idx, axis=0, inplace=True)
-            orig_models_df.loc[idx, 'state'] = "tested"
-        except Exception, e:
-            orig_models_df.loc[idx, 'state'] = "error"
-            logger.error("Training/testing failed with exception: \n{}".format(e))
-
-            # TODO: put the error in the database instead of a file
-            # Keep the model folder clean.
-            with open(get_f_name(full_model_path, '.', "error", "txt"), 'w') as f:
-                error_msg = str(e)
-                cut_exception_text = error_msg.rfind('--->')
-                if cut_exception_text > 0:
-                    error_msg = error_msg[cut_exception_text:]
-                f.write("{}".format(error_msg))
-
-#@mem.cache
-def test_model(full_model_path, skf):
-
-    Parallel(n_jobs=n_processes, verbose=5)\
-        (delayed(test_on_fold)(skf_is, full_model_path) for skf_is in skf)
-
-    #partial_test = partial(test_on_fold, full_model_path=full_model_path)
-    #pool = multiprocessing.Pool(processes=n_processes)
-    #pool.map(partial_test, skf)
-    #pool.close()
-    #pprocess.pmap(partial_test, skf, limit=n_processes)
-
-
-def test_models(orig_models_df, last_time_stamp=None):
-    models_df = orig_models_df.sort("timestamp")
-        
-    if models_df.shape[0] == 0:
-        logger.info("No models to test.")
-        return
-
-    logger.info("Reading data")
-    X_train, y_train, X_test, y_test, skf = specific.split_data()
-
-    for idx, model_df in models_df.iterrows():
-        if model_df['state'] in ["ignore"]:
-            continue
-
-        full_model_path = get_full_model_path(idx, model_df)
-
-        logger.info("Testing : {}/{}".format(model_df['team'], model_df['model']))
-        logger.info("Testing : " + idx)
-
-        try:
-            test_model(full_model_path, skf)
-            # failed_models.drop(idx, axis=0, inplace=True)
-            orig_models_df.loc[idx, 'state'] = "tested"
-        except Exception, e:
-            orig_models_df.loc[idx, 'state'] = "test_error"
-            # trained_models.drop(idx, axis=0, inplace=True)
-            logger.error("Testing failed with exception: \n{}".format(e))
-
-            # TODO: put the error in the database instead of a file
-            # Keep the model folder clean.
-            with open(get_f_name(full_model_path, '.', "test_error", "txt"), 'w') as f:
-                error_msg = str(e)
-                cut_exception_text = error_msg.rfind('--->')
-                if cut_exception_text > 0:
-                    error_msg = error_msg[cut_exception_text:]
-                f.write("{}".format(error_msg))
+################################################################################
+################################# LEADERBOARD ##################################
+################################################################################
 
 def get_predictions_list(models_df, subdir, hash_string):
     predictions_list = [] 
@@ -479,7 +514,7 @@ def leaderboard_execution_times(models_df):
                         leaderboard.loc[idx, 'test time'] += abs(float(f.read()))
                 except IOError:
                     logger.debug("Can't open %s, setting testing time to 0" % 
-                        get_test_time_f_name(full_model_path, hash_string))
+                        get_valid_time_f_name(full_model_path, hash_string))
 
     leaderboard['train time'] = map(int, leaderboard['train time'] / num_cv_folds)
     leaderboard['test time'] = map(int, leaderboard['test time'] / num_cv_folds)
@@ -529,10 +564,10 @@ def get_scores(models_df, hash_string, subdir = "valid", calibrate=False):
     return scores
 
 def calibrate(y_probas_array, ground_truth):
-    skf = StratifiedShuffleSplit(ground_truth, n_iter=1, test_size=0.5, 
+    cv = StratifiedShuffleSplit(ground_truth, n_iter=1, test_size=0.5, 
                                  random_state=specific.random_state)
     calibrated_proba_array = np.empty(y_probas_array.shape)
-    fold1_is, fold2_is = list(skf)[0]
+    fold1_is, fold2_is = list(cv)[0]
     folds = [(fold1_is, fold2_is), (fold2_is, fold1_is)]
     calibrator = IsotonicCalibrator()
     #calibrator = NolearnCalibrator()
@@ -919,7 +954,7 @@ def get_ground_truth_valid_list(hash_strings):
     return [get_ground_truth(get_ground_truth_valid_f_name(hash_string))
             for hash_string in hash_strings]
 
-def get_Gabor_combined_mean_score(predictions_list, skf, hash_strings, 
+def get_Gabor_combined_mean_score(predictions_list, cv, hash_strings, 
                                   num_points, verbose=True):
     """Input is a list of predictions of a single model on a list of folds."""
     sum_y_pred_array = np.zeros(num_points, dtype=float)
@@ -929,7 +964,7 @@ def get_Gabor_combined_mean_score(predictions_list, skf, hash_strings,
     y_pred_array_list = np.array([predictions.get_predictions()
         for predictions in predictions_list])
     for (train_is, test_is), y_pred_array, hash_string, ground_truth_valid \
-            in zip(skf, y_pred_array_list, hash_strings, ground_truth_valid_list):
+            in zip(cv, y_pred_array_list, hash_strings, ground_truth_valid_list):
         sum_y_pred_array[test_is] += y_pred_array
         count_predictions[test_is] += 1
         for test_i, i in zip(test_is, range(len(test_is))):
@@ -948,7 +983,7 @@ def get_Gabor_combined_mean_score(predictions_list, skf, hash_strings,
     return score
 
 # for multiclass this should be renamed get_Gabor_combined_mean_score
-def get_Gabor_combined_mean_score_multiclass(predictions_list, skf, hash_strings, 
+def get_Gabor_combined_mean_score_multiclass(predictions_list, cv, hash_strings, 
                                   num_points, verbose=True):
     """Input is a list of predictions of a single model on a list of folds."""
     # TODO: this has to be made more generic, now it works only for 
@@ -960,7 +995,7 @@ def get_Gabor_combined_mean_score_multiclass(predictions_list, skf, hash_strings
     y_probas_array_list = np.array([predictions.get_predictions()[1]
         for predictions in predictions_list])
     for (train_is, test_is), y_probas_array, hash_string, ground_truth_valid \
-            in zip(skf, y_probas_array_list, hash_strings, ground_truth_valid_list):
+            in zip(cv, y_probas_array_list, hash_strings, ground_truth_valid_list):
         sum_y_probas_array[test_is] += y_probas_array
         count_predictions[test_is] += 1
         for test_i, i in zip(test_is, range(len(test_is))):
@@ -986,11 +1021,11 @@ def leaderboard_classical(models_df, subdir = "valid", calibrate = False):
     mean_scores = []
 
     if models_df.shape[0] != 0:
-        _, y_train_array, _, _, skf = specific.split_data()
+        _, y_train_array, _, _, cv = specific.split_data()
         num_train = len(y_train_array)
         # we need the hash strings in the same order as train/test_is
         hash_strings = [get_hash_string_from_indices(train_is) 
-                        for train_is, test_is in skf]
+                        for train_is, test_is in cv]
         predictions_lists = Parallel(n_jobs=n_processes, verbose=0)\
             (delayed(get_calibrated_predictions_list)(models_df, hash_string)
              for hash_string in hash_strings)
@@ -999,7 +1034,7 @@ def leaderboard_classical(models_df, subdir = "valid", calibrate = False):
         # num_folds x num_models. We call mean_score per model, that is,
         # for every column
         mean_scores = [get_Gabor_combined_mean_score(
-            predictions_list, skf, hash_strings, num_train)
+            predictions_list, cv, hash_strings, num_train)
             for predictions_list in zip(*predictions_lists)]
 
     logger.info("classical leaderboard mean {} scores = {}".
@@ -1013,7 +1048,7 @@ def leaderboard_combination(orig_models_df, test=False):
     counts = np.zeros(models_df.shape[0], dtype=int)
 
     if models_df.shape[0] != 0:
-        _, y_train_array, _, _, skf = specific.split_data()
+        _, y_train_array, _, _, cv = specific.split_data()
         num_train = len(y_train_array)
         num_bags = 1
         # One of Caruana's trick: bag the models
@@ -1029,7 +1064,7 @@ def leaderboard_combination(orig_models_df, test=False):
         # we need the hash strings in the same order as train/test_is, can't
         # get them from the file names
         hash_strings = [get_hash_string_from_indices(train_is) 
-                        for train_is, test_is in skf]
+                        for train_is, test_is in cv]
         list_of_tuples = Parallel(n_jobs=n_processes, verbose=0)\
             (delayed(get_best_index_list)(models_df, hash_string, selected_index_list)
              for hash_string in hash_strings 
@@ -1054,10 +1089,10 @@ def leaderboard_combination(orig_models_df, test=False):
                                    bins=range(models_df.shape[0] + 1))[0]
 
         combined_score = get_Gabor_combined_mean_score(
-            list(combined_predictions_list), np.repeat(list(skf), num_bags, axis=0), 
+            list(combined_predictions_list), np.repeat(list(cv), num_bags, axis=0), 
             np.repeat(hash_strings, num_bags), num_train)
         foldwise_best_score = get_Gabor_combined_mean_score(
-            list(foldwise_best_predictions_list), np.repeat(list(skf), num_bags, axis=0), 
+            list(foldwise_best_predictions_list), np.repeat(list(cv), num_bags, axis=0), 
             np.repeat(hash_strings, num_bags), num_train)
         logger.info("Score of \"means\" (Gabor's formula)")
         logger.info("foldwise best validation score = {}".format(foldwise_best_score))

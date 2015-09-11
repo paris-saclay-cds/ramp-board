@@ -59,12 +59,18 @@ def prepare_data():
     np.savez(train_filename, X=X_train_array, y=y_train_array)
     np.savez(test_filename, X=X_test_array, y=y_test_array)
 
-def split_data():
+def get_train_data():
     X_train_array, y_train_array = read_data(train_filename)
+    return X_train_array, y_train_array
+
+def get_test_data():
     X_test_array, y_test_array = read_data(test_filename)
-    skf = StratifiedShuffleSplit(y_train_array, n_iter=n_CV, 
-        test_size=skf_test_size, random_state=random_state)
-    return X_train_array, y_train_array, X_test_array, y_test_array, skf
+    return X_test_array, y_test_array
+
+def get_cv(y_train_array):
+    cv = StratifiedShuffleSplit(y_train_array, 
+        n_iter=n_CV, test_size=skf_test_size, random_state=random_state)
+    return cv
 
 def train_model(module_path, X_array, y_array, skf_is):
     train_is, _ = skf_is
