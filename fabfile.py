@@ -164,7 +164,7 @@ def repeat_fetch(delay='60'):
         time.sleep(delay)
 
 def leaderboard(which='all', test=False, calibrate=False):
-    from databoard.generic import (
+    from databoard.leaderboard import (
         leaderboard_classical, 
         leaderboard_combination, 
         leaderboard_execution_times, 
@@ -202,7 +202,7 @@ def leaderboard(which='all', test=False, calibrate=False):
             db['leaderboard_execution_times'] = l_times
 
 def train(state=False, tag=None):
-    from databoard.generic import train_and_valid_models
+    from databoard.train_test import train_and_valid_models
 
     with shelve_database() as db:
         models = db['models']
@@ -228,7 +228,7 @@ def train(state=False, tag=None):
         db['models'].loc[idx, :] = models
 
 def test(state=False, tag=None):
-    from databoard.generic import test_models
+    from databoard.train_test import test_models
 
     with shelve_database() as db:
         models = db['models']
@@ -254,7 +254,7 @@ def test(state=False, tag=None):
         db['models'].loc[idx, :] = models
 
 def train_test(state=False, tag=None):
-    from databoard.generic import train_valid_and_test_models
+    from databoard.train_test import train_valid_and_test_models
 
     with shelve_database() as db:
         models = db['models']
