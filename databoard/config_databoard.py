@@ -1,5 +1,6 @@
 import os
 import socket
+import pandas as pd
 from git import Repo
 from multiprocessing import cpu_count
 
@@ -10,8 +11,8 @@ tag_len_limit = 40
 
 # temporary trick to detect if whether
 # this is debug mode
-local_deployment = 'onevm' not in socket.gethostname()
-n_processes = 3 if local_deployment else cpu_count()
+#local_deployment = 'onevm' not in socket.gethostname()
+#n_processes = 3 if local_deployment else cpu_count()
 
 # paths
 repos_path = os.path.join(root_path, 'teams_repos')
@@ -20,7 +21,6 @@ data_path = os.path.join(root_path, 'data')
 raw_data_path = os.path.join(data_path, 'raw')
 public_data_path = os.path.join(data_path, 'public')
 private_data_path = os.path.join(data_path, 'private')
-# output_path = os.path.join(root_path, 'output')
 models_path = os.path.join(root_path, 'models')
 
 cachedir = '.'
@@ -35,8 +35,8 @@ cachedir = '.'
 #dest_path = '/mnt/datacamp/databoard_06_8443_test'
 
 # pollenating insects
-server_port = '8444'
-dest_path = '/mnt/datacamp/databoard_07_8444_test'
+#server_port = '8444'
+#dest_path = '/mnt/datacamp/databoard_07_8444_test'
 
 # el nino
 #server_port = '8188'
@@ -54,21 +54,44 @@ dest_path = '/mnt/datacamp/databoard_07_8444_test'
 #server_port = '8080'
 #dest_path = '/mnt/datacamp/databoard_03_8080_test'
 
-debug_server = 'http://' + "localhost:{}".format(server_port) 
-deploy_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(server_port)
-server_name = debug_server if local_deployment else deploy_server
+#debug_server = 'http://' + "localhost:{}".format(server_port) 
+#deploy_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(server_port)
+#server_name = debug_server if local_deployment else deploy_server
 
+vd_deploy_server = 'onevm-85.lal.in2p3.fr'
+ramp_df_columns = ['ramp_name', 'deploy_server', 'server_port', 
+                   'destination_root', 'num_cpus', 'cv_test_size', 
+                   'random_state']
+ramp_df = pd.DataFrame(columns=ramp_df_columns)
+ramp_df = ramp_df.append(pd.Series({
+    'ramp_name' : 'pollenating_insects', 
+    'deploy_server' : vd_deploy_server, 
+    'server_port' : '8444', 
+    'destination_root' : '/mnt/datacamp',
+    'num_cpus' : 10,
+    'cv_test_size' : 0.2,
+    'random_state' : 57,
+}, name = 'pollenating_insects_1'))
 
+ramp_df[['num_cpus', 'random_state']] = ramp_df[['num_cpus', 'random_state']].astype(int)
 notification_recipients = []
 notification_recipients.append("djalel.benbouzid@gmail.com")
 notification_recipients.append("balazs.kegl@gmail.com")
 notification_recipients.append("alexandre.gramfort@gmail.com")
 
-if local_deployment:
-    try:
-        user_mail = Repo('.').config_reader().get_value('user', 'email')
-        notification_recipients = [user_mail]
-    except:
-        pass
-
 assert repos_path != 'models' 
+
+def get_ramp_field(field, ramp_index=None):
+    if ramp_index == None:
+        with open("ramp_index.txt") as f:
+            ramp_index = f.readline()
+    
+    ramp = ramp_df.loc[ramp_index]
+    return ramp[field]
+
+def get_destination_path(ramp_index=None):
+    destination_root = get_ramp_field('destination_root', ramp_index)
+    ramp_name = get_ramp_field('ramp_name', ramp_index)
+    server_port = get_ramp_field('server_port', ramp_index)
+    return os.path.join(destination_root, 
+                        "databoard_" + ramp_name + "_" + server_port)

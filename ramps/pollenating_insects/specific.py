@@ -1,3 +1,6 @@
+# Author: Balazs Kegl
+# License: BSD 3 clause
+
 import os
 import sys
 import socket
@@ -7,32 +10,26 @@ from importlib import import_module
 from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.calibration import CalibratedClassifierCV
 # menu
-import multiclass_prediction_type as prediction_type # menu polymorphism example
 import scores
+import multiclass_prediction_type as prediction_type # menu polymorphism example
+import config_databoard
 
-from .config_databoard import (
-    local_deployment,
-    raw_data_path,
-    public_data_path,
-    private_data_path,
-    n_processes,
-    models_path,
-    root_path
-)
-
-sys.path.append(os.path.dirname(os.path.abspath(models_path)))
+sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
 
 hackaton_title = 'Pollenating insect classification'
 prediction_type.labels = [565,  654,  682,  687,  696,  715,  759,  833,  835,  
                           881,  952,  970,  971,  978,  995,  996, 1061, 1071]
 #held_out_test_size = 0.7
-skf_test_size = 0.2
-random_state = 57
-raw_filename = os.path.join(raw_data_path, 'data_64x64.npz')
-train_filename = os.path.join(public_data_path, 'train_64x64.npz')
-test_filename = os.path.join(private_data_path, 'test_64x64.npz')
 
-n_CV = 2 if local_deployment else 10
+cv_test_size = config_databoard.get_ramp_field('cv_test_size')
+random_state = config_databoard.get_ramp_field('random_state')
+n_CV = config_databoard.get_ramp_field('num_cpus')
+
+raw_filename = os.path.join(config_databoard.raw_data_path, 'data_64x64.npz')
+train_filename = os.path.join(config_databoard.public_data_path, 'train_64x64.npz')
+test_filename = os.path.join(config_databoard.private_data_path, 'test_64x64.npz')
+
+#n_CV = config_databoard.ramp_df.loc[ramp_index]['num_cpus']
 
 score = scores.Accuracy()
 #score = scores.Error()
@@ -49,9 +46,9 @@ def read_data(npz_filename):
 
 def prepare_data():
     X_array, y_array = read_data(raw_filename)
-    skf = StratifiedShuffleSplit(
+    cv = StratifiedShuffleSplit(
         y_array, 1, test_size=0.2, random_state=random_state)
-    train_is, test_is = list(skf)[0]
+    train_is, test_is = list(cv)[0]
     X_train_array = X_array[train_is]
     X_test_array = X_array[test_is]
     y_train_array = y_array[train_is]
@@ -69,11 +66,11 @@ def get_test_data():
 
 def get_cv(y_train_array):
     cv = StratifiedShuffleSplit(y_train_array, 
-        n_iter=n_CV, test_size=skf_test_size, random_state=random_state)
+        n_iter=n_CV, test_size=cv_test_size, random_state=random_state)
     return cv
 
-def train_model(module_path, X_array, y_array, skf_is):
-    train_is, _ = skf_is
+def train_model(module_path, X_array, y_array, cv_is):
+    train_is, _ = cv_is
     X_train_array = X_array[train_is]
     y_train_array = y_array[train_is]
 
@@ -82,8 +79,8 @@ def train_model(module_path, X_array, y_array, skf_is):
     clf.fit(X_train_array, y_train_array)
     return clf
 
-def test_model(trained_model, X_array, skf_is):
-    _, test_is = skf_is
+def test_model(trained_model, X_array, cv_is):
+    _, test_is = cv_is
     X_test_array = X_array[test_is]
 
     clf = trained_model

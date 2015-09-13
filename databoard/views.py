@@ -23,23 +23,12 @@ from databoard import app
 from .model import shelve_database, columns, ModelState
 from .generic import changedir
 from .specific import hackaton_title
-from .config_databoard import (
-    root_path, 
-    repos_path, 
-    server_port,
-    server_name,
-    local_deployment,
-    tag_len_limit,
-    models_path,
-)
+import config_databoard
 
 app.secret_key = os.urandom(24)
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 logger = logging.getLogger('databoard')
-
-# TMP:
-# app.config['SERVER_NAME'] = server_name + ':' + str(os.getenv('SERV_PORT', port))
 
 def model_with_link(path_model):
     print path_model
@@ -49,8 +38,8 @@ def model_with_link(path_model):
     filename_path = '/models/{}/{}'.format(path, filename)
 
     # if the tag name is too long, shrink it.
-    if len(model) > tag_len_limit:
-        model_trucated = model[:tag_len_limit] + '[...]'
+    if len(model) > config_databoard.tag_len_limit:
+        model_trucated = model[:config_databoard.tag_len_limit] + '[...]'
         link = '<a href="{0}" class="popup" data-content="{1}">{2}</a>'.format(filename_path, model, model_trucated)
     else:
         link = '<a href="{0}">{1}</a>'.format(filename_path, model)
@@ -69,8 +58,8 @@ def timestamp_to_time(timestamp):
 @app.route("/register")
 def list_teams_repos():
     RepoInfo = namedtuple('RepoInfo', 'name url') 
-    dir_list = filter(lambda x: not os.path.basename(x).startswith('.'), os.listdir(repos_path))
-    get_repo_url = lambda f: Repo(os.path.join(repos_path, f)).config_reader().get_value('remote "origin"', 'url')
+    dir_list = filter(lambda x: not os.path.basename(x).startswith('.'), os.listdir(config_databoard.repos_path))
+    get_repo_url = lambda f: Repo(os.path.join(config_databoard.repos_path, f)).config_reader().get_value('remote "origin"', 'url')
 
     repo_list = [] 
     for f in dir_list:
@@ -253,7 +242,7 @@ def show_private_leaderboard():
 @app.route('/models/<team>/<tag>/<filename>')
 @app.route('/models/<team>/<tag>/<filename>/raw')
 def view_model(team, tag, filename):
-    directory = os.path.join(models_path, team, tag)
+    directory = os.path.join(config_databoard.models_path, team, tag)
     directory = os.path.abspath(directory)
     archive_filename = 'archive.zip'
     archive_url = '/models/{}/{}/{}/raw'.format(team, tag, os.path.basename(archive_filename))
@@ -315,7 +304,7 @@ def add_team_repo():
 
         if correct_name: 
             try:
-                Repo.clone_from(repo_path, os.path.join(repos_path, repo_name))
+                Repo.clone_from(repo_path, os.path.join(config_databoard.repos_path, repo_name))
             except Exception as e:
                 logger.error('Unable to add a repository: \n{}'.format(e))
                 message = str(e)

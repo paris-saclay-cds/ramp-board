@@ -18,8 +18,7 @@ from databoard import app
 from .model import shelve_database, columns, ModelState
 from .generic import changedir
 import specific
-from .config_databoard import repos_path, root_path, tag_len_limit, notification_recipients, server_name, models_path
-
+import config_databoard
 
 logger = logging.getLogger('databoard')
 
@@ -41,8 +40,10 @@ def send_mail_notif(submissions):
         msg.recipients = notification_recipients
 
         body_message = '<b>Dataset</b>: {}<br/>'.format(specific.hackaton_title)
-        body_message += '<b>Server</b>: {}<br/>'.format(specific.hserver_name)
-        body_message += '<b>Folder</b>: {}<br/>'.format(os.path.abspath(root_path))
+        body_message += '<b>Server</b>: {}<br/>'.format(config_databoard.get_ramp_field('deploy_server'))
+        body_message += '<b>Port</b>: {}<br/>'.format(config_databoard.get_ramp_field('server_port'))
+        body_message += '<b>Path</b>: {}<br/>'.format(config_databoard.get_destination_path())
+        body_message += '<b>Num_CPUs</b>: {}<br/>'.format(config_databoard.get_ramp_field('num_cpus'))
 
         body_message += 'New submissions: <br/><ul>'
         for team, tag in submissions:
@@ -64,13 +65,13 @@ def copy_git_tree(tree, dest_folder):
 
 
 def fetch_models():
-    base_path = repos_path
+    base_path = config_databoard.repos_path
     repo_paths = sorted(glob.glob(os.path.join(base_path, '*')))
 
-    if not os.path.exists(models_path):
+    if not os.path.exists(config_databoard.models_path):
         logger.warning("Models folder didn't exist. An empty folder was created.")
-        os.mkdir(models_path)
-    open(os.path.join(models_path, '__init__.py'), 'a').close()
+        os.mkdir(config_databoard.models_path)
+    open(os.path.join(config_databoard.models_path, '__init__.py'), 'a').close()
 
     new_submissions = set()  # a set of submission hashes
 
@@ -116,7 +117,7 @@ def fetch_models():
         except Exception as e:
             logger.error('Unable to pull from repo. Possibly no connexion: \n{}'.format(e))
 
-        repo_path = os.path.join(models_path, team_name)
+        repo_path = os.path.join(config_databoard.models_path, team_name)
         if not os.path.exists(repo_path):
             os.mkdir(repo_path)
         open(os.path.join(repo_path, '__init__.py'), 'a').close()

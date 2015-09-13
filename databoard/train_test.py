@@ -1,3 +1,6 @@
+# Author: Balazs Kegl
+# License: BSD 3 clause
+
 import os
 import pickle
 import timeit
@@ -15,7 +18,6 @@ from .config_databoard import (
     root_path, 
     models_path, 
     ground_truth_path, 
-    n_processes,
     cachedir,
     private_data_path,
 )
@@ -23,6 +25,7 @@ from .generic import (
     mem,
     logger,
     get_f_name,
+    get_ramp_field,
     get_module_path,
     get_test_f_name,
     get_valid_f_name,
@@ -34,6 +37,7 @@ from .generic import (
 )
 import specific
 
+n_processes = get_ramp_field('num_cpus')
 
 is_parallelize = True # make it False if parallel training is not working
 is_pickle_trained_model = False # often doesn't work and takes a lot of disk space

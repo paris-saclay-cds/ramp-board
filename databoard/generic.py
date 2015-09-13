@@ -8,18 +8,26 @@ from contextlib import contextmanager
 
 from sklearn.externals.joblib import Memory
 
-from .config_databoard import (
-    root_path, 
-    models_path, 
-    ground_truth_path, 
-    n_processes,
-    cachedir,
-    private_data_path,
-)
+import config_databoard
 import specific
 
-mem = Memory(cachedir=cachedir)
+mem = Memory(cachedir=config_databoard.cachedir)
 logger = logging.getLogger('databoard')
+
+def get_ramp_field(field, ramp_index=None):
+    if ramp_index == None:
+        with open("ramp_index.txt") as f:
+            ramp_index = f.readline()
+    
+    ramp = config_databoard.ramp_df.loc[ramp_index]
+    return ramp[field]
+
+def get_destination_path(ramp_index=None):
+    destination_root = get_ramp_field('destination_root', ramp_index)
+    ramp_name = get_ramp_field('ramp_name', ramp_index)
+    server_port = get_ramp_field('server_port', ramp_index)
+    return os.path.join(destination_root, 
+                        "databoard_" + ramp_name + "_" + server_port)
 
 def get_hash_string_from_indices(index_list):
     """We identify files output on cross validation (models, predictions)
@@ -84,7 +92,8 @@ def get_full_model_path(tag_name_alias, model_df):
     full_model_path : of the form 
         <root_path>/models/<model_df['team']>/tag_name_alias
     """
-    return os.path.join(models_path, model_df['team'], tag_name_alias)
+    return os.path.join(
+        config_databoard.models_path, model_df['team'], tag_name_alias)
 
 def get_f_dir(full_model_path, subdir):
     dir = os.path.join(full_model_path, subdir)
@@ -112,13 +121,15 @@ def get_valid_time_f_name(full_model_path, hash_string):
     return get_f_name(full_model_path, "valid_time", hash_string)
 
 def get_ground_truth_valid_f_name(hash_string):
-    return get_f_name(ground_truth_path, "ground_truth_valid", hash_string)
+    return get_f_name(
+        config_databoard.ground_truth_path, "ground_truth_valid", hash_string)
 
 def get_ground_truth_test_f_name():
-    return get_f_name(ground_truth_path, '.', "ground_truth_test")
+    return get_f_name(config_databoard.ground_truth_path, '.', "ground_truth_test")
 
 def get_hash_strings_from_ground_truth():
-    ground_truth_f_names = glob.glob(ground_truth_path + "/ground_truth_valid/*")
+    ground_truth_f_names = glob.glob(
+        config_databoard.ground_truth_path + "/ground_truth_valid/*")
     hash_strings = [get_hash_string_from_path(path) 
                     for path in ground_truth_f_names]
     return hash_strings
@@ -138,8 +149,8 @@ def setup_ground_truth():
     """Setting up the GroundTruth subdir, saving y_test for each fold in cv. 
     File names are valid_<hash of the train index vector>.csv.
     """
-    os.rmdir(ground_truth_path)  # cleanup the ground_truth
-    os.mkdir(ground_truth_path)
+    os.rmdir(config_databoard.ground_truth_path)  # cleanup the ground_truth
+    os.mkdir(config_databoard.ground_truth_path)
     _, y_train = specific.get_train_data()
     _, y_test = specific.get_test_data()
     cv = specific.get_cv(y_train)

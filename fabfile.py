@@ -6,17 +6,7 @@ import fabric.contrib.project as project
 from fabric.api import *
 from fabric.contrib.files import exists
 from databoard.model import shelve_database, ModelState
-from databoard.config_databoard import (
-    root_path,
-    dest_path,
-    cachedir,
-    repos_path,
-    ground_truth_path,
-    # output_path,
-    models_path,
-    local_deployment,
-    server_port
-)
+import databoard.config_databoard as config_databoard
 
 # for pickling theano
 import sys
@@ -43,7 +33,7 @@ def all():
 
 def clear_cache():
     from sklearn.externals.joblib import Memory
-    mem = Memory(cachedir=cachedir)
+    mem = Memory(cachedir=config_databoard.cachedir)
     mem.clear()
 
 def clear_db():
@@ -59,28 +49,28 @@ def clear_registrants():
     import shutil
     # Prepare the teams repo submodules
     # logger.info('Init team repos git')
-    # repo = Repo.init(repos_path)  # does nothing if already exists
-    shutil.rmtree(repos_path, ignore_errors=True)
-    os.mkdir(repos_path)
+    # repo = Repo.init(config_databoard.repos_path)  # does nothing if already exists
+    shutil.rmtree(config_databoard.repos_path, ignore_errors=True)
+    os.mkdir(config_databoard.repos_path)
 
-def clear_pred_files():
-    import glob
-    fnames = []
-
-    # TODO: some of the following will be removed after switching to a database
-    # TODO: library structure has changed, this is out of date
-    fnames += glob.glob(os.path.join(models_path, '*', '*', 'pred_*'))
-    fnames += glob.glob(os.path.join(models_path, '*', '*', 'score.csv'))
-    fnames += glob.glob(os.path.join(models_path, '*', '*', 'error.txt'))
-
-    for fname in fnames:
-        if os.path.exists(fname):
-            os.remove(fname)
+#def clear_pred_files():
+#    import glob
+#    fnames = []
+#
+#    # TODO: some of the following will be removed after switching to a database
+#    # TODO: library structure has changed, this is out of date
+#    fnames += glob.glob(os.path.join(config_databoard.models_path, '*', '*', 'pred_*'))
+#    fnames += glob.glob(os.path.join(config_databoard.models_path, '*', '*', 'score.csv'))
+#    fnames += glob.glob(os.path.join(config_databoard.models_path, '*', '*', 'error.txt'))
+#
+#    for fname in fnames:
+#        if os.path.exists(fname):
+#            os.remove(fname)
 
 def clear_groundtruth():
     import shutil    
-    shutil.rmtree(ground_truth_path, ignore_errors=True)
-    os.mkdir(ground_truth_path)
+    shutil.rmtree(config_databoard.ground_truth_path, ignore_errors=True)
+    os.mkdir(config_databoard.ground_truth_path)
 
 def init_config():
     pass
@@ -132,9 +122,9 @@ def setup(wipeall=False):
     logger.info('Clearing the database.')
     clear_db()
 
-    if not os.path.exists(models_path):
-        os.mkdir(models_path)
-    open(os.path.join(models_path, '__init__.py'), 'a').close()
+    if not os.path.exists(config_databoard.models_path):
+        os.mkdir(config_databoard.models_path)
+    open(os.path.join(config_databoard.models_path, '__init__.py'), 'a').close()
 
     logger.info('Config init.')
     init_config()
@@ -314,7 +304,7 @@ def kill(team, tag):
     while answer != 'y':
         answer = raw_input('Sure? (y/n): ')
 
-    pid_filenames = os.path.join(models_path, team, get_tag_uid(team, tag), 'pid_*')
+    pid_filenames = os.path.join(config_databoard.models_path, team, get_tag_uid(team, tag), 'pid_*')
     print pid_filenames
     for f in glob.glob(pid_filenames):
         with open(f) as pid_file:
@@ -322,18 +312,15 @@ def kill(team, tag):
             os.kill(int(pid), signal.SIGKILL)    
             
 
-def serve(port=8080):
+def serve():
     from databoard import app
     import databoard.views
 
-    debug_mode = os.getenv('DEBUGLB', local_deployment)
-    try: 
-        debug_mode = bool(int(debug_mode))
-    except ValueError:
-        debug_mode = True  # a non empty string means debug
+    server_port = int(config_databoard.get_ramp_field('server_port'))
+
     app.run(
-        debug=bool(debug_mode), 
-        port=int(os.getenv('SERV_PORT', port)), 
+        debug=True, 
+        port=server_port, 
         host='0.0.0.0')
 
 
@@ -341,29 +328,34 @@ def serve(port=8080):
 # databoard on the server
 
 # FIXME: dtach not working
-@hosts(production)
-def rserve(sockname="db_server"):
-    if not exists("/usr/bin/dtach"):
-        sudo("apt-get install dtach")
-
-    with cd(dest_path):
-        # run('export SERV_PORT={}'.format(server_port))
-        # run('fab serve')
-        # run('dtach -n `mktemp -u /tmp/{}.XXXX` export SERV_PORT={};fab serve'.format(sockname, server_port))
-        return run('dtach -n `mktemp -u /tmp/{}.XXXX` fab serve:port={}'.format(sockname, server_port))
+#@hosts(production)
+#def rserve(sockname="db_server"):
+#    if not exists("/usr/bin/dtach"):
+#        sudo("apt-get install dtach")
+#
+#    with cd(config_databoard.dest_path):
+#        # run('export SERV_PORT={}'.format(server_port))
+#        # run('fab serve')
+#        # run('dtach -n `mktemp -u /tmp/{}.XXXX` export SERV_PORT={};fab serve'.format(sockname, server_port))
+#        return run('dtach -n `mktemp -u /tmp/{}.XXXX` fab serve:port={}'.format(sockname, server_port))
 
 from importlib import import_module
 
 @hosts(production)
-def publish(ramp_name):
-#    from ramps.variable_stars.specific import dest_path
-#    print dest_path
-#    import_module('.specific', "ramps." + ramp)
+def publish(ramp_index):
     local('')
     #TODO: check if ramp_name is the same as in
     #      'ramps/' + ramp_name + '/specific.py'
+
+    # we save ramp_index in the main dir so the deplyment can query itself
+    # for example, in serve (to get the port number) and sepcific (to get
+    # the number of CPUs). generic.get_ramp_index() reads it in
+    with open('ramp_index.txt', 'w') as f:
+        f.write(ramp_index)
+    destination_path = config_databoard.get_destination_path(ramp_index)
+    ramp_name = config_databoard.get_ramp_field('ramp_name', ramp_index)
     project.rsync_project(
-        remote_dir=dest_path,
+        remote_dir=destination_path,
         exclude=[ '.DS_Store', 
                   'ground_truth', 
                   'TeamsRepos', 
@@ -387,18 +379,20 @@ def publish(ramp_name):
     )
     # publishing the specific.py specific to the ramp called ramp_name
     project.rsync_project(
-        remote_dir=dest_path + '/databoard/',
+        remote_dir=os.path.join(destination_path, 'databoard'),
         local_dir='ramps/' + ramp_name + '/specific.py',
         delete=False,
         extra_opts='-c',
     )
 
 # (re)publish data set from 'ramps/' + ramp_name + '/data'
-# fab setup_ground_truth should be run at the server side
+# fab setup_ground_truth should be run at the destination
 @hosts(production)
-def publish_data(ramp_name):
+def publish_data(ramp_index):
+    destination_path = config_databoard.get_destination_path(ramp_index)
+    ramp_name = config_databoard.get_ramp_field('ramp_name', ramp_index)
     project.rsync_project(
-        remote_dir=dest_path,
+        remote_dir=destination_path,
         local_dir='ramps/' + ramp_name + '/data',
         delete=True,
         extra_opts='-c',
