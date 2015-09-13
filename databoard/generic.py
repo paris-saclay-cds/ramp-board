@@ -14,21 +14,6 @@ import specific
 mem = Memory(cachedir=config_databoard.cachedir)
 logger = logging.getLogger('databoard')
 
-def get_ramp_field(field, ramp_index=None):
-    if ramp_index == None:
-        with open("ramp_index.txt") as f:
-            ramp_index = f.readline()
-    
-    ramp = config_databoard.ramp_df.loc[ramp_index]
-    return ramp[field]
-
-def get_destination_path(ramp_index=None):
-    destination_root = get_ramp_field('destination_root', ramp_index)
-    ramp_name = get_ramp_field('ramp_name', ramp_index)
-    server_port = get_ramp_field('server_port', ramp_index)
-    return os.path.join(destination_root, 
-                        "databoard_" + ramp_name + "_" + server_port)
-
 def get_hash_string_from_indices(index_list):
     """We identify files output on cross validation (models, predictions)
     by hashing the point indices coming from an cv object.
@@ -98,6 +83,7 @@ def get_full_model_path(tag_name_alias, model_df):
 def get_f_dir(full_model_path, subdir):
     dir = os.path.join(full_model_path, subdir)
     if not os.path.exists(dir):
+        print dir
         os.mkdir(dir)
     return dir
 

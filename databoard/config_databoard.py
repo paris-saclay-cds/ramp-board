@@ -72,8 +72,19 @@ ramp_df = ramp_df.append(pd.Series({
     'cv_test_size' : 0.2,
     'random_state' : 57,
 }, name = 'pollenating_insects_1'))
+ramp_df = ramp_df.append(pd.Series({
+    'ramp_name' : 'el_nino', 
+    'deploy_server' : vd_deploy_server, 
+    'server_port' : '9002', 
+    'destination_root' : '/mnt/datacamp',
+    'num_cpus' : 32,
+    'cv_test_size' : 0.5,
+    'random_state' : 57,
+}, name = 'el_nino_1'))
 
+# otherwise integers will have float type, weird
 ramp_df[['num_cpus', 'random_state']] = ramp_df[['num_cpus', 'random_state']].astype(int)
+
 notification_recipients = []
 notification_recipients.append("djalel.benbouzid@gmail.com")
 notification_recipients.append("balazs.kegl@gmail.com")
@@ -82,6 +93,9 @@ notification_recipients.append("alexandre.gramfort@gmail.com")
 assert repos_path != 'models' 
 
 def get_ramp_field(field, ramp_index=None):
+    """Normally only 'fab publish' will call it with the ramp_index
+    specified, otherwise it's coming from ramp_index.txt"""
+    
     if ramp_index == None:
         with open("ramp_index.txt") as f:
             ramp_index = f.readline()

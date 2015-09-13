@@ -1,3 +1,6 @@
+# Author: Balazs Kegl
+# License: BSD 3 clause
+
 import os
 import sys
 import xray
@@ -9,24 +12,16 @@ from sklearn.cross_validation import ShuffleSplit
 # menu
 import regression_prediction_type as prediction_type # menu polymorphism example
 import scores
+import config_databoard
 
-from .config_databoard import (
-    local_deployment,
-    raw_data_path,
-    public_data_path,
-    private_data_path,
-    n_processes,
-    models_path,
-    root_path
-)
-
-sys.path.append(os.path.dirname(os.path.abspath(models_path)))
+sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
 
 hackaton_title = 'El Nino prediction'
 target_column_name = 'target'
 #held_out_test_size = 0.7
-skf_test_size = 0.5
-random_state = 57
+cv_test_size = config_databoard.get_ramp_field('cv_test_size')
+random_state = config_databoard.get_ramp_field('random_state')
+n_CV = config_databoard.get_ramp_field('num_cpus')
 
 en_lat_bottom = -5
 en_lat_top = 5
@@ -36,13 +31,10 @@ n_burn_in = 120
 n_lookahead = 6
 
 #raw_filename = os.path.join(raw_data_path, 'data.csv')
-train_filename = os.path.join(
-    public_data_path, 'resampled_tas_Amon_CCSM4_piControl_r1i1p1_080001-130012.nc')
-test_filename = os.path.join(
-    private_data_path, 'resampled_tas_Amon_CCSM4_piControl_r2i1p1_095301-110812.nc')
-
-from multiprocessing import cpu_count
-n_CV = 2 if local_deployment else 27 #cpu_count() #n_processes
+train_filename = os.path.join(config_databoard.public_data_path, 
+    'resampled_tas_Amon_CCSM4_piControl_r1i1p1_080001-130012.nc')
+test_filename = os.path.join(config_databoard.private_data_path, 
+    'resampled_tas_Amon_CCSM4_piControl_r2i1p1_095301-110812.nc')
 
 score = scores.RMSE()
 
@@ -66,23 +58,29 @@ def prepare_data():
     pass
     # train and tes splits are given
 
-def split_data():
+def get_train_data():
     X_train_xray = read_data(train_filename)
     y_train_array = X_train_xray['target'].values[n_burn_in:-n_lookahead]
+    return X_train_xray, y_train_array
+
+def get_test_data():
     X_test_xray = read_data(test_filename)
     y_test_array = X_test_xray['target'].values[n_burn_in:-n_lookahead]
-    skf = ShuffleSplit(
-        X_train_xray['time'].shape[0] - n_burn_in - n_lookahead, 
-        n_iter=n_CV, test_size=skf_test_size, random_state=random_state)
-    return X_train_xray, y_train_array, X_test_xray, y_test_array, skf
+    return X_test_xray, y_test_array
 
-def train_model(module_path, X_xray, y_array, skf_is):
+def get_cv(y_train_array):
+    print y_train_array.shape
+    cv = ShuffleSplit(y_train_array.shape[0], n_iter=n_CV, 
+                      test_size=cv_test_size, random_state=random_state)
+    return cv
+
+def train_model(module_path, X_xray, y_array, cv_is):
     # Feature extraction
     feature_extractor = import_module('.ts_feature_extractor', module_path)
     ts_fe = feature_extractor.FeatureExtractor()
-    X_array = ts_fe.transform(X_xray, n_burn_in, n_lookahead, skf_is)
+    X_array = ts_fe.transform(X_xray, n_burn_in, n_lookahead, cv_is)
     # Regression
-    train_is, _ = skf_is
+    train_is, _ = cv_is
     X_train_array = np.array([X_array[i] for i in train_is])
     y_train_array = np.array([y_array[i] for i in train_is])
     regressor = import_module('.regressor', module_path)
@@ -90,12 +88,12 @@ def train_model(module_path, X_xray, y_array, skf_is):
     reg.fit(X_train_array, y_train_array)
     return ts_fe, reg
 
-def test_model(trained_model, X_xray, skf_is):
+def test_model(trained_model, X_xray, cv_is):
     ts_fe, reg = trained_model
     # Feature extraction
-    X_array = ts_fe.transform(X_xray, n_burn_in, n_lookahead, skf_is)
+    X_array = ts_fe.transform(X_xray, n_burn_in, n_lookahead, cv_is)
     # Regression
-    _, test_is = skf_is
+    _, test_is = cv_is
     X_test_array = np.array([X_array[i] for i in test_is])
     y_pred_array = reg.predict(X_test_array)
     return prediction_type.PredictionArrayType(y_pred_array=y_pred_array)

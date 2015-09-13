@@ -20,12 +20,12 @@ from .config_databoard import (
     ground_truth_path, 
     cachedir,
     private_data_path,
+    get_ramp_field,
 )
 from .generic import (
     mem,
     logger,
     get_f_name,
-    get_ramp_field,
     get_module_path,
     get_test_f_name,
     get_valid_f_name,
