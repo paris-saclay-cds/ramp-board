@@ -25,6 +25,9 @@ models_path = os.path.join(root_path, 'models')
 
 cachedir = '.'
 
+is_parallelize = True # make it False if parallel training is not working
+is_pickle_trained_model = False # often doesn't work and takes a lot of disk space
+
 # Open ports in Stratuslab
 # 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015, 
 # 8080, 8081, 8095, 8188, 8443, 8444, 9002, 10339, 10636, 15000, 15001, 15002, 

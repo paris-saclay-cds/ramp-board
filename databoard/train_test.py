@@ -20,9 +20,6 @@ import specific
 
 n_processes = config_databoard.get_ramp_field('num_cpus')
 
-is_parallelize = True # make it False if parallel training is not working
-is_pickle_trained_model = False # often doesn't work and takes a lot of disk space
-
 #@generic.mem.cache
 def run_on_folds(method, full_model_path, cv):
     """Runs various combinations of train, validate, and test on all folds.
@@ -37,7 +34,7 @@ def run_on_folds(method, full_model_path, cv):
     cv : a list of pairs of training and validation indices, identifying the
         folds
     """
-    if is_parallelize:
+    if config_databoard.is_parallelize:
         Parallel(n_jobs=n_processes, verbose=5)\
             (delayed(method)(cv_is, full_model_path) for cv_is in cv)
     else:
@@ -113,7 +110,7 @@ def train_measure_and_pickle_on_fold(X_train, y_train, cv_is, full_model_path):
         X_train, y_train, cv_is, full_model_path)
     write_execution_time(generic.get_train_time_f_name(
         full_model_path, hash_string), train_time)
-    if is_pickle_trained_model:
+    if config_databoard.is_pickle_trained_model:
         pickle_trained_model(generic.get_model_f_name(
             full_model_path, hash_string), trained_model)
     return trained_model
