@@ -50,22 +50,19 @@ def clear_registrants():
     # Prepare the teams repo submodules
     # logger.info('Init team repos git')
     # repo = Repo.init(config_databoard.repos_path)  # does nothing if already exists
-    shutil.rmtree(config_databoard.repos_path, ignore_errors=True)
+    print config_databoard.repos_path
+    shutil.rmtree(config_databoard.repos_path, ignore_errors=False)
     os.mkdir(config_databoard.repos_path)
 
-#def clear_pred_files():
-#    import glob
-#    fnames = []
-#
-#    # TODO: some of the following will be removed after switching to a database
-#    # TODO: library structure has changed, this is out of date
-#    fnames += glob.glob(os.path.join(config_databoard.models_path, '*', '*', 'pred_*'))
-#    fnames += glob.glob(os.path.join(config_databoard.models_path, '*', '*', 'score.csv'))
-#    fnames += glob.glob(os.path.join(config_databoard.models_path, '*', '*', 'error.txt'))
-#
-#    for fname in fnames:
-#        if os.path.exists(fname):
-#            os.remove(fname)
+def clear_pred_files():
+    import glob
+    fnames = glob.glob(
+        os.path.join(config_databoard.models_path, '*', '*', '*', '*.csv'))
+
+    for fname in fnames:
+        if os.path.exists(fname):
+            logger.info("Removing {}".format(fname))
+            os.remove(fname)
 
 def clear_groundtruth():
     import shutil    
@@ -121,6 +118,9 @@ def setup(wipeall=False):
     
     logger.info('Clearing the database.')
     clear_db()
+
+    logger.info('Clearing the predictions.')
+    clear_pred_files()
 
     if not os.path.exists(config_databoard.models_path):
         os.mkdir(config_databoard.models_path)

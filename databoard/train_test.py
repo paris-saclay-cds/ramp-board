@@ -277,8 +277,8 @@ def run_models(orig_models_df, infinitive, past_participle, gerund, error_state,
         return
 
     generic.logger.info("Reading data")
-    X_test, y_test = specific.get_test_data()
-    cv = specific.get_cv(y_test)
+    X_train, y_train = specific.get_train_data()
+    cv = specific.get_cv(y_train)
 
     for idx, model_df in models_df.iterrows():
         if model_df['state'] in ["ignore"]:

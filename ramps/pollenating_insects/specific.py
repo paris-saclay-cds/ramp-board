@@ -29,8 +29,6 @@ raw_filename = os.path.join(config_databoard.raw_data_path, 'data_64x64.npz')
 train_filename = os.path.join(config_databoard.public_data_path, 'train_64x64.npz')
 test_filename = os.path.join(config_databoard.private_data_path, 'test_64x64.npz')
 
-#n_CV = config_databoard.ramp_df.loc[ramp_index]['num_cpus']
-
 score = scores.Accuracy()
 #score = scores.Error()
 #score = scores.NegativeLogLikelihood()
