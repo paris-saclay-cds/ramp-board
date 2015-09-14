@@ -14,35 +14,16 @@ from contextlib import contextmanager
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.externals.joblib import Memory
 
-from .config_databoard import (
-    root_path, 
-    models_path, 
-    ground_truth_path, 
-    cachedir,
-    private_data_path,
-    get_ramp_field,
-)
-from .generic import (
-    mem,
-    logger,
-    get_f_name,
-    get_module_path,
-    get_test_f_name,
-    get_valid_f_name,
-    get_model_f_name,
-    get_full_model_path,
-    get_train_time_f_name,
-    get_valid_time_f_name,
-    get_hash_string_from_indices,
-)
+import config_databoard
+import generic
 import specific
 
-n_processes = get_ramp_field('num_cpus')
+n_processes = config_databoard.get_ramp_field('num_cpus')
 
 is_parallelize = True # make it False if parallel training is not working
 is_pickle_trained_model = False # often doesn't work and takes a lot of disk space
 
-#@mem.cache
+#@generic.mem.cache
 def run_on_folds(method, full_model_path, cv):
     """Runs various combinations of train, validate, and test on all folds.
     If is_parallelize is True, it will launch the jobs in parallel on different
@@ -72,7 +53,7 @@ def pickle_trained_model(f_name, trained_model):
         with open(f_name, 'w') as f:
             pickle.dump(trained_model, f) # saving the model
     except Exception as e:
-        logger.error("Cannot pickle trained model\n{}".format(e))
+        generic.logger.error("Cannot pickle trained model\n{}".format(e))
         os.remove(f_name)
 
 def train_on_fold(X_train, y_train, cv_is, full_model_path):
@@ -96,12 +77,12 @@ def train_on_fold(X_train, y_train, cv_is, full_model_path):
     train_time : the wall clock time of the train
      """
     valid_train_is, _ = cv_is
-    hash_string = get_hash_string_from_indices(valid_train_is)
+    hash_string = generic.get_hash_string_from_indices(valid_train_is)
 
-    logger.info("Training on fold : %s" % hash_string)
+    generic.logger.info("Training on fold : %s" % hash_string)
     
     open(os.path.join(full_model_path, "__init__.py"), 'a').close()  # so to make it importable
-    module_path = get_module_path(full_model_path)
+    module_path = generic.get_module_path(full_model_path)
 
     start = timeit.default_timer()
     trained_model = specific.train_model(module_path, X_train, y_train, cv_is)
@@ -126,15 +107,15 @@ def train_measure_and_pickle_on_fold(X_train, y_train, cv_is, full_model_path):
     trained_model : the trained model, to be fed to specific.test_model
      """
     valid_train_is, _ = cv_is
-    hash_string = get_hash_string_from_indices(valid_train_is)
+    hash_string = generic.get_hash_string_from_indices(valid_train_is)
 
     trained_model, train_time = train_on_fold(
         X_train, y_train, cv_is, full_model_path)
-    write_execution_time(
-        get_train_time_f_name(full_model_path, hash_string), train_time)
+    write_execution_time(generic.get_train_time_f_name(
+        full_model_path, hash_string), train_time)
     if is_pickle_trained_model:
-        pickle_trained_model(
-            get_model_f_name(full_model_path, hash_string), trained_model)
+        pickle_trained_model(generic.get_model_f_name(
+            full_model_path, hash_string), trained_model)
     return trained_model
 
 def test_trained_model(trained_model, X, cv_is = None):
@@ -172,10 +153,10 @@ def test_trained_model_on_test(trained_model, X_test, hash_string, full_model_pa
     hash_string : the fold identifier
     full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
     """
-    logger.info("Testing on fold : %s" % hash_string)
+    generic.logger.info("Testing on fold : %s" % hash_string)
     # We ignore test time, it is measured when validating
     test_model_output, _ = test_trained_model(trained_model, X_test)
-    test_f_name = get_test_f_name(full_model_path, hash_string)
+    test_f_name = generic.get_test_f_name(full_model_path, hash_string)
     test_model_output.save_predictions(test_f_name)
 
 def test_trained_model_and_measure_on_valid(trained_model, X_train, 
@@ -192,16 +173,16 @@ def test_trained_model_and_measure_on_valid(trained_model, X_train,
     full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
     """
     valid_train_is, _ = cv_is
-    hash_string = get_hash_string_from_indices(valid_train_is)
+    hash_string = generic.get_hash_string_from_indices(valid_train_is)
 
-    logger.info("Validating on fold : %s" % hash_string)
+    generic.logger.info("Validating on fold : %s" % hash_string)
 
     valid_model_output, valid_time = test_trained_model(
         trained_model, X_train, cv_is)
-    valid_f_name = get_valid_f_name(full_model_path, hash_string)
+    valid_f_name = generic.get_valid_f_name(full_model_path, hash_string)
     valid_model_output.save_predictions(valid_f_name)
-    write_execution_time(
-        get_valid_time_f_name(full_model_path, hash_string), valid_time)
+    write_execution_time(generic.get_valid_time_f_name(
+        full_model_path, hash_string), valid_time)
 
 def test_on_fold(cv_is, full_model_path):
     """Tests a trained model on a validation fold represented by cv_is. 
@@ -217,14 +198,14 @@ def test_on_fold(cv_is, full_model_path):
     X_train, y_train = specific.get_train_data()
     X_test, _ = specific.get_test_data()
     valid_train_is, _ = cv_is
-    hash_string = get_hash_string_from_indices(valid_train_is)
+    hash_string = generic.get_hash_string_from_indices(valid_train_is)
 
     try:
-        logger.info("Loading from pickle on fold : %s" % hash_string)
-        with open(get_model_f_name(full_model_path, hash_string), 'r') as f:
+        generic.logger.info("Loading from pickle on fold : %s" % hash_string)
+        with open(generic.get_model_f_name(full_model_path, hash_string), 'r') as f:
             trained_model = pickle.load(f)
     except IOError, e: # no pickled model, retrain
-        logger.info("No pickle, retraining on fold : %s" % hash_string)
+        generic.logger.info("No pickle, retraining on fold : %s" % hash_string)
         trained_model = train_measure_and_pickle_on_fold(
             X_train, y_train, cv_is, full_model_path)
 
@@ -244,7 +225,7 @@ def train_valid_and_test_on_fold(cv_is, full_model_path):
     X_train, y_train = specific.get_train_data()
     X_test, _ = specific.get_test_data()
     valid_train_is, valid_test_is = cv_is
-    hash_string = get_hash_string_from_indices(valid_train_is)
+    hash_string = generic.get_hash_string_from_indices(valid_train_is)
 
     trained_model = train_measure_and_pickle_on_fold(
         X_train, y_train, cv_is, full_model_path)
@@ -267,7 +248,7 @@ def train_and_valid_on_fold(cv_is, full_model_path):
     """
     X_train, y_train = specific.get_train_data()
     valid_train_is, valid_test_is = cv_is
-    hash_string = get_hash_string_from_indices(valid_train_is)
+    hash_string = generic.get_hash_string_from_indices(valid_train_is)
 
     trained_model = train_measure_and_pickle_on_fold(
         X_train, y_train, cv_is, full_model_path)
@@ -295,10 +276,10 @@ def run_models(orig_models_df, infinitive, past_participle, gerund, error_state,
     models_df = orig_models_df.sort("timestamp")
         
     if models_df.shape[0] == 0:
-        logger.info("No models to {}.".format(infinitive))
+        generic.logger.info("No models to {}.".format(infinitive))
         return
 
-    logger.info("Reading data")
+    generic.logger.info("Reading data")
     X_test, y_test = specific.get_test_data()
     cv = specific.get_cv(y_test)
 
@@ -306,9 +287,9 @@ def run_models(orig_models_df, infinitive, past_participle, gerund, error_state,
         if model_df['state'] in ["ignore"]:
             continue
 
-        full_model_path = get_full_model_path(idx, model_df)
+        full_model_path = generic.get_full_model_path(idx, model_df)
 
-        logger.info("{} : {}/{}".format(
+        generic.logger.info("{} : {}/{}".format(
             str.capitalize(gerund), model_df['team'], model_df['model']))
 
         try:
@@ -317,7 +298,7 @@ def run_models(orig_models_df, infinitive, past_participle, gerund, error_state,
             orig_models_df.loc[idx, 'state'] = past_participle
         except Exception, e:
             orig_models_df.loc[idx, 'state'] = error_state
-            logger.error("{} failed with exception: \n{}".format(
+            generic.logger.error("{} failed with exception: \n{}".format(
                 str.capitalize(gerund), e))
 
             # TODO: put the error in the database instead of a file
