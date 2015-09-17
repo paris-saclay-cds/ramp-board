@@ -68,11 +68,32 @@ def get_test_data():
     y_test_array = X_test_xray['target'].values[n_burn_in:-n_lookahead]
     return X_test_xray, y_test_array
 
+def get_check_data():
+    X_test_xray = read_data(test_filename)
+    y_test_array = X_test_xray['target'].values[n_burn_in:-n_lookahead]
+    return X_test_xray, y_test_array
+
 def get_cv(y_train_array):
     print y_train_array.shape
     cv = ShuffleSplit(y_train_array.shape[0], n_iter=n_CV, 
                       test_size=cv_test_size, random_state=random_state)
     return cv
+
+def check_model(module_path, X_xray, y_array, cv_is):
+    check_index = 250
+    feature_extractor = import_module('.ts_feature_extractor', module_path)
+    ts_fe = feature_extractor.FeatureExtractor()
+    X_array = ts_fe.transform(X_xray, n_burn_in, n_lookahead, cv_is)
+    X1 = ts_fe.transform(X_xray, n_burn_in, n_lookahead, cv_is)
+    check_xray = X_xray.copy(deep=True)
+    check_xray['tas'][n_burn_in + check_index:] += \
+        np.random.normal(0.0, 10.0, check_xray['tas'][n_burn_in + check_index:].shape)
+    X2 = ts_fe.transform(check_xray, n_burn_in, n_lookahead, cv_is)
+    first_modified_index = np.argmax(np.not_equal(X1, X2)[:,0])
+    if first_modified_index < check_index:
+        message = "The feature extractor looks into the feature by {} months".format(
+            check_index - first_modified_index)
+        raise AssertionError(message)
 
 def train_model(module_path, X_xray, y_array, cv_is):
     # Feature extraction

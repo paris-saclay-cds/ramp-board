@@ -191,6 +191,32 @@ def leaderboard(which='all', test=False, calibrate=False):
         with shelve_database() as db:
             db['leaderboard_execution_times'] = l_times
 
+def check(state=False, tag=None):
+    from databoard.train_test import check_models
+
+    with shelve_database() as db:
+        models = db['models']
+
+    if tag is not None:
+        models = models[models.model.str.contains(tag)]
+        state = 'all'  # force train all the selected models
+        if len(models) == 0:
+            print('No existing model containing the tag: {}'.format(tag))
+            return
+
+    if not state:
+        state = 'new'
+    
+    if state != 'all': 
+        models = models[models.state == state]
+
+    check_models(models)
+
+    idx = models.index
+
+    with shelve_database() as db:
+        db['models'].loc[idx, :] = models
+
 def train(state=False, tag=None):
     from databoard.train_test import train_and_valid_models
 

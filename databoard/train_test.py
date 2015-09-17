@@ -253,6 +253,19 @@ def train_and_valid_on_fold(cv_is, full_model_path):
     test_trained_model_and_measure_on_valid(
         trained_model, X_train, cv_is, full_model_path)
 
+def check_on_fold(cv_is, full_model_path):
+    """Checks a model. Called using run_on_folds().
+
+    Parameters
+    ----------
+    cv_is : a pair of indices (train_train_is, valid_train_is)
+    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    """
+
+    X_check, y_check = specific.get_check_data()
+    module_path = generic.get_module_path(full_model_path)
+    specific.check_model(module_path, X_check, y_check, cv_is)
+
 def run_models(orig_models_df, infinitive, past_participle, gerund, error_state, 
                method):
     """The master method that runs different pipelines (train+valid, 
@@ -300,7 +313,7 @@ def run_models(orig_models_df, infinitive, past_participle, gerund, error_state,
 
             # TODO: put the error in the database instead of a file
             # Keep the model folder clean.
-            with open(get_f_name(full_model_path, '.', error_state, "txt"), 'w') as f:
+            with open(generic.get_f_name(full_model_path, '.', error_state, "txt"), 'w') as f:
                 error_msg = str(e)
                 cut_exception_text = error_msg.rfind('--->')
                 if cut_exception_text > 0:
@@ -318,4 +331,9 @@ def train_valid_and_test_models(orig_models_df):
 def test_models(orig_models_df):
     run_models(orig_models_df, "test", "tested", "testing", "test_error", 
                test_on_fold)
+
+def check_models(orig_models_df):
+    run_models(orig_models_df, "check", "new", "checking", "error", 
+               check_on_fold)
+
 
