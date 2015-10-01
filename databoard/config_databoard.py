@@ -62,7 +62,7 @@ is_pickle_trained_model = False # often doesn't work and takes a lot of disk spa
 #deploy_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(server_port)
 #server_name = debug_server if local_deployment else deploy_server
 
-vd_deploy_server = 'onevm-85.lal.in2p3.fr'
+vd_deploy_server = 'mcherti@romeo1.univ-reims.fr'
 ramp_df_columns = ['ramp_name', 'deploy_server', 'server_port',
                    'destination_root', 'num_cpus', 'cv_test_size',
                    'random_state']
@@ -70,9 +70,9 @@ ramp_df = pd.DataFrame(columns=ramp_df_columns)
 ramp_df = ramp_df.append(pd.Series({
     'ramp_name' : 'pollenating_insects',
     'deploy_server' : vd_deploy_server,
-    'deploy_user' : 'root',
+    'deploy_user' : 'mcherti',
     'server_port' : '8444',
-    'destination_root' : '/mnt/datacamp',
+    'destination_root' : '/home/mcherti/ramp_pollenating_insects',
     'num_cpus' : 10,
     'cv_test_size' : 0.2,
     'random_state' : 57,
