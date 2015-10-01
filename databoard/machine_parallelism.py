@@ -4,6 +4,8 @@ import Queue
 import uuid
 import sys
 import os
+import time
+
 sys.path.append(os.path.dirname(__file__) + "/..")
 """
 First, you need to run a server
@@ -43,32 +45,38 @@ and
 
 for the server
 
-
-
-
-
 """
 
-class QueueManager(BaseManager): pass
+
+class QueueManager(BaseManager):
+    pass
+
+
+class TimeoutError(OSError):
+    pass
 
 host, port, password = '0.0.0.0', 50000, 'insects'
 
+
 def register_queues():
     available_jobs = Queue.Queue()
-    QueueManager.register('get_available_jobs', callable=lambda:available_jobs)
+    QueueManager.register('get_available_jobs', callable=lambda: available_jobs)
     finished_jobs = Queue.Queue()
-    QueueManager.register('get_finished_jobs', callable=lambda:finished_jobs)
+    QueueManager.register('get_finished_jobs', callable=lambda: finished_jobs)
+
 
 def build_queue_manager(host, port):
     q = QueueManager(address=(host, port), authkey=password)
     print("Using host={0} and port={1}".format(host, port))
     return q
 
+
 def serve_forever(host=host, port=port):
     register_queues()
     q = build_queue_manager(host, port)
     s = q.get_server()
     s.serve_forever()
+
 
 def be_client_forever(host=host, port=port):
     register_queues()
@@ -79,8 +87,13 @@ def be_client_forever(host=host, port=port):
     while True:
         job_id, method, args = available_jobs.get()
         print("Got a new job : {0}, let's run it !".format(job_id))
-        status = method(*args)
+        try:
+            status = method(*args)
+        except Exception, e:
+            print("Exception : ", str(e))
+            status = e
         finished_jobs.put((job_id, status))
+
 
 def put_job(method, args, host=host, port=port):
     register_queues()
@@ -92,7 +105,9 @@ def put_job(method, args, host=host, port=port):
     print("Putting a new job : {0} with method {1}".format(job_id, method))
     return job_id
 
-def wait_for(job_ids, host=host, port=port):
+
+def wait_for(job_ids, host=host, port=port, timeout=10000):
+    t = time.time()
     job_status = dict()
     register_queues()
     q = build_queue_manager(host=host, port=port)
@@ -107,6 +122,10 @@ def wait_for(job_ids, host=host, port=port):
             print("Job {0} finished".format(job_id))
         else:
             finished_jobs.put((job_id, status))
+
+        if len(job_ids) > 0 and int(time.time() - t) > timeout:
+            raise TimeoutError()
+
     return job_status
 
 wait_for_jobs_and_get_status = wait_for

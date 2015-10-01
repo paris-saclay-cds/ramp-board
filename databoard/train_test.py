@@ -18,7 +18,7 @@ import config_databoard
 import generic
 import specific
 
-from machine_parallelism import put_job , wait_for_jobs_and_get_status
+from machine_parallelism import put_job , wait_for_jobs_and_get_status, TimeoutError
 
 n_processes = config_databoard.get_ramp_field('num_cpus')
 
@@ -42,7 +42,16 @@ def run_on_folds(method, full_model_path, cv):
             for cv_is in cv:
                 job_id = put_job(method, (cv_is, full_model_path))
                 job_ids.add(job_id)
-            job_status = wait_for_jobs_and_get_status(job_ids)
+            try:
+                job_status = wait_for_jobs_and_get_status(job_ids,
+                                                          timeout=config_databoard.timeout_parallelize_across_machines)
+
+            except TimeoutError:
+                raise
+
+            for status in job_status.values():
+                if isinstance(status, Exception):
+                    raise status
         else:
             Parallel(n_jobs=n_processes, verbose=5)\
                 (delayed(method)(cv_is, full_model_path) for cv_is in cv)

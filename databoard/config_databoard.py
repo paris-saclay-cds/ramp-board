@@ -27,6 +27,7 @@ cachedir = '.'
 
 is_parallelize = True # make it False if parallel training is not working
 is_parallelize_across_machines = False # make it True to use parallelism across machines
+timeout_parallelize_across_machines = 3600 # maximum number of seconds per model training for parallelize across machines
 is_pickle_trained_model = False # often doesn't work and takes a lot of disk space
 
 # Open ports in Stratuslab
@@ -140,7 +141,6 @@ def get_ramp_field(field, ramp_index=None):
     if ramp_index == None:
         with open("ramp_index.txt") as f:
             ramp_index = f.readline()
-
     ramp = ramp_df.loc[ramp_index]
     return ramp[field]
 
