@@ -2,6 +2,9 @@ from multiprocessing.managers import BaseManager
 import sys
 import Queue
 import uuid
+import sys
+import os
+sys.path.append(os.path.dirname(__file__) + "/..")
 """
 First, you need to run a server
 > python machine_parallelism.py server
@@ -21,6 +24,28 @@ Now, you can train with machine parallelism :
 > fab train
 
 for instance.
+
+## IMPORTANT
+
+for this to work well with databoard,
+make sure you run machine_parallelism.py in the root
+directory of the ramp, where ramp_index.txt is.
+
+so you should run
+
+> python databoard/machine_parallelism.py client --host=serverhost
+
+for the clients
+
+and
+
+> python databoard/machine_parallelism.py server
+
+for the server
+
+
+
+
 
 """
 
