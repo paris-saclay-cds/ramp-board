@@ -17,7 +17,7 @@ import config_databoard
 sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
 
 hackaton_title = 'Pollenating insect classification'
-prediction_type.labels = [565,  654,  682,  687,  696,  715,  759,  833,  835,  
+prediction_type.labels = [565,  654,  682,  687,  696,  715,  759,  833,  835,
                           881,  952,  970,  971,  978,  995,  996, 1061, 1071]
 #held_out_test_size = 0.7
 
@@ -63,7 +63,7 @@ def get_test_data():
     return X_test_array, y_test_array
 
 def get_cv(y_train_array):
-    cv = StratifiedShuffleSplit(y_train_array, 
+    cv = StratifiedShuffleSplit(y_train_array,
         n_iter=n_CV, test_size=cv_test_size, random_state=random_state)
     return cv
 
@@ -71,10 +71,16 @@ def train_model(module_path, X_array, y_array, cv_is):
     train_is, _ = cv_is
     X_train_array = X_array[train_is]
     y_train_array = y_array[train_is]
-
     classifier = import_module('.classifier', module_path)
-    clf = classifier.Classifier()
-    clf.fit(X_train_array, y_train_array)
+    # for interfacing with torch, caffe?
+    if (hasattr(classifier.Classifier, "indexes") and
+        classifier.Classifier.indexes is True):
+        clf = classifier.Classifier(nb_examples=len(X_array))
+        clf.fit(train_is)
+    else:
+    # default behaviour
+        clf = classifier.Classifier()
+        clf.fit(X_train_array, y_train_array)
     return clf
 
 def test_model(trained_model, X_array, cv_is):
@@ -82,9 +88,15 @@ def test_model(trained_model, X_array, cv_is):
     X_test_array = X_array[test_is]
 
     clf = trained_model
-    y_pred_array = clf.predict(X_test_array)
-    y_probas_array = clf.predict_proba(X_test_array)
+
+    # for interfacing with torch, caffe?
+    if (hasattr(clf, "indexes") and
+        clf.indexes is True):
+        y_pred_array = clf.predict(test_is)
+        y_probas_array = clf.predict_proba(test_is)
+    else:
+    # default behavior
+        y_pred_array = clf.predict(X_test_array)
+        y_probas_array = clf.predict_proba(X_test_array)
     return prediction_type.PredictionArrayType(
         y_pred_array=y_pred_array, y_probas_array=y_probas_array)
-
-

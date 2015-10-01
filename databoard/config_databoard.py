@@ -26,11 +26,12 @@ models_path = os.path.join(root_path, 'models')
 cachedir = '.'
 
 is_parallelize = True # make it False if parallel training is not working
+is_parallelize_across_machines = False # make it True to use parallelism across machines
 is_pickle_trained_model = False # often doesn't work and takes a lot of disk space
 
 # Open ports in Stratuslab
-# 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015, 
-# 8080, 8081, 8095, 8188, 8443, 8444, 9002, 10339, 10636, 15000, 15001, 15002, 
+# 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015,
+# 8080, 8081, 8095, 8188, 8443, 8444, 9002, 10339, 10636, 15000, 15001, 15002,
 # 15003, 15004, 20000-25000.
 
 # amadeus
@@ -57,20 +58,20 @@ is_pickle_trained_model = False # often doesn't work and takes a lot of disk spa
 #server_port = '8080'
 #dest_path = '/mnt/datacamp/databoard_03_8080_test'
 
-#debug_server = 'http://' + "localhost:{}".format(server_port) 
+#debug_server = 'http://' + "localhost:{}".format(server_port)
 #deploy_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(server_port)
 #server_name = debug_server if local_deployment else deploy_server
 
 vd_deploy_server = 'onevm-85.lal.in2p3.fr'
-ramp_df_columns = ['ramp_name', 'deploy_server', 'server_port', 
-                   'destination_root', 'num_cpus', 'cv_test_size', 
+ramp_df_columns = ['ramp_name', 'deploy_server', 'server_port',
+                   'destination_root', 'num_cpus', 'cv_test_size',
                    'random_state']
 ramp_df = pd.DataFrame(columns=ramp_df_columns)
 ramp_df = ramp_df.append(pd.Series({
-    'ramp_name' : 'pollenating_insects', 
+    'ramp_name' : 'pollenating_insects',
     'deploy_server' : vd_deploy_server,
     'deploy_user' : 'root',
-    'server_port' : '8444', 
+    'server_port' : '8444',
     'destination_root' : '/mnt/datacamp',
     'num_cpus' : 10,
     'cv_test_size' : 0.2,
@@ -78,10 +79,10 @@ ramp_df = ramp_df.append(pd.Series({
 }, name = 'pollenating_insects_1'))
 
 ramp_df = ramp_df.append(pd.Series({
-    'ramp_name' : 'el_nino', 
+    'ramp_name' : 'el_nino',
     'deploy_user' : 'root',
-    'deploy_server' : vd_deploy_server, 
-    'server_port' : '9002', 
+    'deploy_server' : vd_deploy_server,
+    'server_port' : '9002',
     'destination_root' : '/mnt/datacamp',
     'num_cpus' : 32,
     'cv_test_size' : 0.5,
@@ -89,10 +90,10 @@ ramp_df = ramp_df.append(pd.Series({
 }, name = 'el_nino_1'))
 
 ramp_df = ramp_df.append(pd.Series({
-    'ramp_name' : 'el_nino', 
-    'deploy_server' : vd_deploy_server, 
+    'ramp_name' : 'el_nino',
+    'deploy_server' : vd_deploy_server,
     'deploy_user' : 'root',
-    'server_port' : '10339', 
+    'server_port' : '10339',
     'destination_root' : '/mnt/datacamp',
     'num_cpus' : 15,
     'cv_test_size' : 0.5,
@@ -100,10 +101,10 @@ ramp_df = ramp_df.append(pd.Series({
 }, name = 'el_nino_colorado'))
 
 ramp_df = ramp_df.append(pd.Series({
-    'ramp_name' : 'el_nino_block_cv', 
-    'deploy_server' : vd_deploy_server, 
+    'ramp_name' : 'el_nino_block_cv',
+    'deploy_server' : vd_deploy_server,
     'deploy_user' : 'root',
-    'server_port' : '5015', 
+    'server_port' : '5015',
     'destination_root' : '/mnt/datacamp',
     'num_cpus' : 15,
     'cv_test_size' : 0.5,
@@ -111,10 +112,10 @@ ramp_df = ramp_df.append(pd.Series({
 }, name = 'el_nino_colorado_block_cv'))
 
 ramp_df = ramp_df.append(pd.Series({
-    'ramp_name' : 'el_nino_bagged_cv_future', 
-    'deploy_server' : vd_deploy_server, 
+    'ramp_name' : 'el_nino_bagged_cv_future',
+    'deploy_server' : vd_deploy_server,
     'deploy_user' : 'root',
-    'server_port' : '3147', 
+    'server_port' : '3147',
     'destination_root' : '/mnt/datacamp',
     'num_cpus' : 15,
     'cv_test_size' : 0.2,
@@ -130,16 +131,16 @@ notification_recipients.append("djalel.benbouzid@gmail.com")
 notification_recipients.append("balazs.kegl@gmail.com")
 notification_recipients.append("alexandre.gramfort@gmail.com")
 
-assert repos_path != 'models' 
+assert repos_path != 'models'
 
 def get_ramp_field(field, ramp_index=None):
     """Normally only 'fab publish' will call it with the ramp_index
     specified, otherwise it's coming from ramp_index.txt"""
-    
+
     if ramp_index == None:
         with open("ramp_index.txt") as f:
             ramp_index = f.readline()
-    
+
     ramp = ramp_df.loc[ramp_index]
     return ramp[field]
 
@@ -147,5 +148,5 @@ def get_destination_path(ramp_index=None):
     destination_root = get_ramp_field('destination_root', ramp_index)
     ramp_name = get_ramp_field('ramp_name', ramp_index)
     server_port = get_ramp_field('server_port', ramp_index)
-    return os.path.join(destination_root, 
+    return os.path.join(destination_root,
                         "databoard_" + ramp_name + "_" + server_port)

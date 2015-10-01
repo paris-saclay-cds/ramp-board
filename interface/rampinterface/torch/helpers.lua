@@ -1,5 +1,19 @@
 local helpers = {}
 
+function helpers.get_indexes(filename)
+    local i
+    local indexes
+    i = 0
+    indexes = {}
+    local file = io.open(filename, "r")
+    
+    for line in file:lines() do
+      i = i + 1
+      indexes[i] = line + 1
+    end
+    return(indexes)
+end
+ 
 function helpers.get_data_and_column_names(data_filename)
     X, column_names = csv2tensor.load(data_filename, {exclude='TARGET'})
     y, dummy = csv2tensor.load(data_filename, {include='TARGET'})

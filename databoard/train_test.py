@@ -18,28 +18,38 @@ import config_databoard
 import generic
 import specific
 
+from machine_parallelism import put_job , wait_for_jobs_and_get_status
+
 n_processes = config_databoard.get_ramp_field('num_cpus')
 
 #@generic.mem.cache
 def run_on_folds(method, full_model_path, cv):
     """Runs various combinations of train, validate, and test on all folds.
     If is_parallelize is True, it will launch the jobs in parallel on different
-    cores. 
+    cores.
 
     Parameters
     ----------
-    method : the method to be run (train_valid_and_test_on_fold, 
+    method : the method to be run (train_valid_and_test_on_fold,
         train_and_valid_on_fold, test_on_fold)
     full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
     cv : a list of pairs of training and validation indices, identifying the
         folds
     """
     if config_databoard.is_parallelize:
-        Parallel(n_jobs=n_processes, verbose=5)\
-            (delayed(method)(cv_is, full_model_path) for cv_is in cv)
+        if config_databoard.is_parallelize_across_machines:
+            job_ids = set()
+            for cv_is in cv:
+                job_id = put_job(method, (cv_is, full_model_path))
+                job_ids.add(job_id)
+            job_status = wait_for_jobs_and_get_status(job_ids)
+        else:
+            Parallel(n_jobs=n_processes, verbose=5)\
+                (delayed(method)(cv_is, full_model_path) for cv_is in cv)
     else:
         for cv_is in cv:
             method(cv_is, full_model_path)
+
 
 def write_execution_time(f_name, time):
     with open(f_name, 'w') as f:
@@ -55,10 +65,10 @@ def pickle_trained_model(f_name, trained_model):
 
 def train_on_fold(X_train, y_train, cv_is, full_model_path):
     """Trains the model on a single fold. Wrapper around specific.train_model().
-    It requires specific to contain a train_model function that takes the 
-    module_path, X_train, y_train, and an cv_is containing the train_train and 
-    valid_train indices. Most of the time it will simply train on 
-    X_train[valid_train] but in the case of time series it may do feature 
+    It requires specific to contain a train_model function that takes the
+    module_path, X_train, y_train, and an cv_is containing the train_train and
+    valid_train indices. Most of the time it will simply train on
+    X_train[valid_train] but in the case of time series it may do feature
     extraction on the full file (using always the past). Training time is
     measured and returned.
 
@@ -77,7 +87,7 @@ def train_on_fold(X_train, y_train, cv_is, full_model_path):
     hash_string = generic.get_hash_string_from_indices(valid_train_is)
 
     generic.logger.info("Training on fold : %s" % hash_string)
-    
+
     open(os.path.join(full_model_path, "__init__.py"), 'a').close()  # so to make it importable
     module_path = generic.get_module_path(full_model_path)
 
@@ -85,11 +95,11 @@ def train_on_fold(X_train, y_train, cv_is, full_model_path):
     trained_model = specific.train_model(module_path, X_train, y_train, cv_is)
     end = timeit.default_timer()
     train_time = end - start
-    
+
     return trained_model, train_time
 
 def train_measure_and_pickle_on_fold(X_train, y_train, cv_is, full_model_path):
-    """Calls train_on_fold() to train on fold, writes execution time in 
+    """Calls train_on_fold() to train on fold, writes execution time in
     <full_model_path>/train_time/<hash_string>.csv and pickles the model
     (if is_pickle_trained_model) into full_model_path>/model/<hash_string>.p
 
@@ -127,7 +137,7 @@ def test_trained_model(trained_model, X, cv_is = None):
 
     Returns
     -------
-    test_model_output : the output of the tested model, returned by 
+    test_model_output : the output of the tested model, returned by
         specific.test_model
     test_time : the wall clock time of the test
     """
@@ -157,9 +167,9 @@ def test_trained_model_on_test(trained_model, X_test, hash_string, full_model_pa
     test_f_name = generic.get_test_f_name(full_model_path, hash_string)
     test_model_output.save_predictions(test_f_name)
 
-def test_trained_model_and_measure_on_valid(trained_model, X_train, 
+def test_trained_model_and_measure_on_valid(trained_model, X_train,
                                             cv_is, full_model_path):
-    """Tests a trained model on a validation fold represented by cv_is, 
+    """Tests a trained model on a validation fold represented by cv_is,
     outputs the predictions into <full_model_path>/valid/<hash_string>.csv and
     the validation time into <full_model_path>/valid_time/<hash_string>.csv.
 
@@ -183,7 +193,7 @@ def test_trained_model_and_measure_on_valid(trained_model, X_train,
         full_model_path, hash_string), valid_time)
 
 def test_on_fold(cv_is, full_model_path):
-    """Tests a trained model on a validation fold represented by cv_is. 
+    """Tests a trained model on a validation fold represented by cv_is.
     Reloads the data so safe in each thread. Tries to unpickle the trained
     model, if can't, retrains. Called using run_on_folds().
 
@@ -211,8 +221,8 @@ def test_on_fold(cv_is, full_model_path):
         trained_model, X_test, hash_string, full_model_path)
 
 def train_valid_and_test_on_fold(cv_is, full_model_path):
-    """Trains and validates a model on a validation fold represented by 
-    cv_is, then tests it. Reloads the data so safe in each thread.  Called 
+    """Trains and validates a model on a validation fold represented by
+    cv_is, then tests it. Reloads the data so safe in each thread.  Called
     using run_on_folds().
 
     Parameters
@@ -235,8 +245,8 @@ def train_valid_and_test_on_fold(cv_is, full_model_path):
         trained_model, X_test, hash_string, full_model_path)
 
 def train_and_valid_on_fold(cv_is, full_model_path):
-    """Trains and validates a model on a validation fold represented by 
-    cv_is. Reloads the data so safe in each thread.  Called using 
+    """Trains and validates a model on a validation fold represented by
+    cv_is. Reloads the data so safe in each thread.  Called using
     run_on_folds().
 
     Parameters
@@ -267,9 +277,9 @@ def check_on_fold(cv_is, full_model_path):
     module_path = generic.get_module_path(full_model_path)
     specific.check_model(module_path, X_check, y_check, cv_is)
 
-def run_models(orig_models_df, infinitive, past_participle, gerund, error_state, 
+def run_models(orig_models_df, infinitive, past_participle, gerund, error_state,
                method):
-    """The master method that runs different pipelines (train+valid, 
+    """The master method that runs different pipelines (train+valid,
     train+valid+test, test).
 
     Parameters
@@ -277,15 +287,15 @@ def run_models(orig_models_df, infinitive, past_participle, gerund, error_state,
     orig_models_df : the table of the models that should be run
     infinitive, past_participle, gerund : three forms of the action naming
         to be run. Like train, trained, training. Besides message strings,
-        past_participle is used for the final state of a successful run 
+        past_participle is used for the final state of a successful run
         (trained, tested)
-    error_state : the state we get in after an unsuccesful run. The error 
+    error_state : the state we get in after an unsuccesful run. The error
         message is saved in <error_state>.txt, to be rendered on the web site
-    method : the method to be run (train_and_valid_on_fold, 
+    method : the method to be run (train_and_valid_on_fold,
         train_valid_and_test_on_fold, test_on_fold)
     """
     models_df = orig_models_df.sort("timestamp")
-        
+
     if models_df.shape[0] == 0:
         generic.logger.info("No models to {}.".format(infinitive))
         return
@@ -322,19 +332,19 @@ def run_models(orig_models_df, infinitive, past_participle, gerund, error_state,
                 f.write("{}".format(error_msg))
 
 def train_and_valid_models(orig_models_df):
-    run_models(orig_models_df, "train", "trained", "training", "error", 
+    run_models(orig_models_df, "train", "trained", "training", "error",
                train_and_valid_on_fold)
 
 def train_valid_and_test_models(orig_models_df):
-    run_models(orig_models_df, "train/test", "tested", "training/testing", "error", 
+    run_models(orig_models_df, "train/test", "tested", "training/testing", "error",
                train_valid_and_test_on_fold)
-   
+
 def test_models(orig_models_df):
-    run_models(orig_models_df, "test", "tested", "testing", "test_error", 
+    run_models(orig_models_df, "test", "tested", "testing", "test_error",
                test_on_fold)
 
 def check_models(orig_models_df):
-    run_models(orig_models_df, "check", "new", "checking", "error", 
+    run_models(orig_models_df, "check", "new", "checking", "error",
                check_on_fold)
 
 

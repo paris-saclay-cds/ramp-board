@@ -25,7 +25,6 @@ end
 
 
 require 'model'
-csv2tensor = require 'csv2tensor'
 require 'csvigo'
 helpers  = require 'helpers'
 
@@ -33,17 +32,35 @@ helpers  = require 'helpers'
 cmd = torch.CmdLine()
 cmd:text()
 cmd:text('Generic torch model')
-cmd:option('--train', 'train.csv', 'training CSV file (with targets as the first col)')
-cmd:option('--test', 'test.csv', 'training CSV file (with no targets)')
+cmd:option('--X', 'dataset', 'training CSV file (with targets as the first col)')
+cmd:option('--y', 'labels', 'training CSV file (with no targets)')
+cmd:option('--train', 'labels', 'training CSV file (with no targets)')
+cmd:option('--test', 'labels', 'training CSV file (with no targets)')
 cmd:option('--outputproba', 'proba.csv', 'test predictions proba CSV file')
 cmd:option('--outputtargets', 'targets.csv', 'test predictions targets output CSV file')
 cmd:text()
 opt = cmd:parse(arg or {})
 
-train_obj = helpers.get_data_and_column_names(opt.train)
-test = csv2tensor.load(opt.test)
 
-targets, proba = model(train_obj.X, train_obj.y, test)
+X = torch.load(opt.X)
+print(X:size())
+y = torch.Tensor(helpers.get_indexes(opt.y))
+print(y:size())
+
+train = torch.LongTensor(helpers.get_indexes(opt.train))
+valid = torch.LongTensor(helpers.get_indexes(opt.test))
+
+X_train = X:index(1, train)
+X_valid = X:index(1, valid)
+y_train = y:index(1, train)
+y_valid = y:index(1, valid)
+
+print(X_train:size())
+print(X_valid:size())
+print(y_train:size())
+print(y_valid:size())
+
+targets, proba = model(X_train, y_train, X_valid)
 
 targets = torch.Tensor.totable(targets)
 proba = torch.Tensor.totable(proba)
