@@ -17,11 +17,12 @@ sys.setrecursionlimit(50000)
 # 8080, 8081, 8095, 8188, 8443, 8444, 9002, 10339, 10636, 15000, 15001, 15002, 
 # 15003, 15004, 20000-25000.
 
-env.user = 'root'  # the user to use for the remote commands
+# the user to use for the remote commands
+env.user = config_databoard.get_ramp_field('deploy_user') 
 env.use_ssh_config = True
 
 # the servers where the commands are executed
-env.hosts = ['onevm-85.lal.in2p3.fr']
+env.hosts = [config_databoard.get_ramp_field('deploy_server')]
 production = env.hosts[0]
 logger = logging.getLogger('databoard')
 
@@ -367,7 +368,7 @@ def serve():
 
 from importlib import import_module
 
-@hosts(production)
+#@hosts(production)
 def publish(ramp_index):
     local('')
     #TODO: check if ramp_name is the same as in
@@ -413,7 +414,7 @@ def publish(ramp_index):
 
 # (re)publish data set from 'ramps/' + ramp_name + '/data'
 # fab setup_ground_truth should be run at the destination
-@hosts(production)
+#@hosts(production)
 def publish_data(ramp_index):
     destination_path = config_databoard.get_destination_path(ramp_index)
     ramp_name = config_databoard.get_ramp_field('ramp_name', ramp_index)

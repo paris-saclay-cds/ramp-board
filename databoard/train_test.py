@@ -132,7 +132,8 @@ def test_trained_model(trained_model, X, cv_is = None):
     test_time : the wall clock time of the test
     """
     if cv_is == None:
-        cv_is = ([], range(len(X))) # test on all points
+        _, y_test = specific.get_test_data()
+        cv_is = ([], range(len(y_test))) # test on all points
     start = timeit.default_timer()
     test_model_output = specific.test_model(trained_model, X, cv_is)
     end = timeit.default_timer()

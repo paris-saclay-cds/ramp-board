@@ -1,3 +1,6 @@
+# Author: Balazs Kegl
+# License: BSD 3 clause
+
 import csv
 import numpy as np
 
@@ -22,6 +25,8 @@ class PredictionArrayType:
             # loading from file
             f_name = kwargs['f_name']
             self.y_pred_array = np.genfromtxt(f_name)
+        elif 'y_combined_array' in kwargs.keys():
+            self.y_pred_array = kwargs['y_combined_array']
         else:
             raise ValueError("Unkonwn init argument, {}".format(kwargs))
 
@@ -33,6 +38,11 @@ class PredictionArrayType:
 
     def get_predictions(self):
         return self.y_pred_array
+
+    def get_combineable_predictions(self):
+        """Returns an array which can be combined by taking means"""
+        return self.get_predictions()
+
 
 
     def combine(self, indexes = []):
@@ -53,6 +63,11 @@ class PredictionArrayType:
         combined_prediction = PredictionType(combined_y_preds)
         return combined_prediction
 
+def get_nan_combineable_predictions(num_points):
+    predictions = np.empty(num_points, dtype=float)
+    predictions.fill(np.nan)
+    return predictions
+
 def get_y_pred_array(y_probas_array):
     return np.array([labels[y_probas.argmax()] for y_probas in y_probas_array])
 
@@ -60,19 +75,4 @@ def get_y_pred_array(y_probas_array):
 # lists of PredictionArrayType
 def transpose(predictions_list):
     pass
-
-
-def combine(predictions_list, indexes = []):
-    if len(indexes) == 0: # we combine the full list
-        indexes = range(len(predictions_list))
-
-    y_preds_arrays = []
-    for index in indexes:
-        y_pred_array = predictions_list[index].get_predictions()
-        y_preds_arrays.append(y_pred_array)
-    y_preds_arrays = np.array(y_preds_arrays)
-
-    combined_y_pred_array = y_preds_arrays.mean(axis=0)
-    return PredictionArrayType(y_pred_array=combined_y_pred_array)
-
 

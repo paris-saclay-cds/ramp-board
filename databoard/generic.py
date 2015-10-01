@@ -83,8 +83,12 @@ def get_full_model_path(tag_name_alias, model_df):
 def get_f_dir(full_model_path, subdir):
     dir = os.path.join(full_model_path, subdir)
     if not os.path.exists(dir):
+        try:
+            os.mkdir(dir)
+        except OSError, e:
+            if not e.errno == 17: # file exists
+                raise
         print dir
-        os.mkdir(dir)
     return dir
 
 def get_f_name(full_model_path, subdir, f_name, extension = "csv"):

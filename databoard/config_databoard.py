@@ -68,15 +68,18 @@ ramp_df_columns = ['ramp_name', 'deploy_server', 'server_port',
 ramp_df = pd.DataFrame(columns=ramp_df_columns)
 ramp_df = ramp_df.append(pd.Series({
     'ramp_name' : 'pollenating_insects', 
-    'deploy_server' : vd_deploy_server, 
+    'deploy_server' : vd_deploy_server,
+    'deploy_user' : 'root',
     'server_port' : '8444', 
     'destination_root' : '/mnt/datacamp',
     'num_cpus' : 10,
     'cv_test_size' : 0.2,
     'random_state' : 57,
 }, name = 'pollenating_insects_1'))
+
 ramp_df = ramp_df.append(pd.Series({
     'ramp_name' : 'el_nino', 
+    'deploy_user' : 'root',
     'deploy_server' : vd_deploy_server, 
     'server_port' : '9002', 
     'destination_root' : '/mnt/datacamp',
@@ -84,6 +87,40 @@ ramp_df = ramp_df.append(pd.Series({
     'cv_test_size' : 0.5,
     'random_state' : 57,
 }, name = 'el_nino_1'))
+
+ramp_df = ramp_df.append(pd.Series({
+    'ramp_name' : 'el_nino', 
+    'deploy_server' : vd_deploy_server, 
+    'deploy_user' : 'root',
+    'server_port' : '10339', 
+    'destination_root' : '/mnt/datacamp',
+    'num_cpus' : 15,
+    'cv_test_size' : 0.5,
+    'random_state' : 57,
+}, name = 'el_nino_colorado'))
+
+ramp_df = ramp_df.append(pd.Series({
+    'ramp_name' : 'el_nino_block_cv', 
+    'deploy_server' : vd_deploy_server, 
+    'deploy_user' : 'root',
+    'server_port' : '5015', 
+    'destination_root' : '/mnt/datacamp',
+    'num_cpus' : 15,
+    'cv_test_size' : 0.5,
+    'random_state' : 57,
+}, name = 'el_nino_colorado_block_cv'))
+
+ramp_df = ramp_df.append(pd.Series({
+    'ramp_name' : 'el_nino_bagged_cv_future', 
+    'deploy_server' : vd_deploy_server, 
+    'deploy_user' : 'root',
+    'server_port' : '3147', 
+    'destination_root' : '/mnt/datacamp',
+    'num_cpus' : 15,
+    'cv_test_size' : 0.2,
+    'cv_bag_size' : 0.5,
+    'random_state' : 57,
+}, name = 'el_nino_colorado_bagged_cv_future'))
 
 # otherwise integers will have float type, weird
 ramp_df[['num_cpus', 'random_state']] = ramp_df[['num_cpus', 'random_state']].astype(int)

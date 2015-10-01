@@ -20,6 +20,7 @@ hackaton_title = 'El Nino prediction'
 target_column_name = 'target'
 #held_out_test_size = 0.7
 cv_test_size = config_databoard.get_ramp_field('cv_test_size')
+cv_bag_size = config_databoard.get_ramp_field('cv_bag_size')
 random_state = config_databoard.get_ramp_field('random_state')
 n_CV = config_databoard.get_ramp_field('num_cpus')
 
@@ -75,8 +76,14 @@ def get_check_data():
 
 def get_cv(y_train_array):
     print y_train_array.shape
-    cv = ShuffleSplit(y_train_array.shape[0], n_iter=n_CV, 
-                      test_size=cv_test_size, random_state=random_state)
+    n = y_train_array.shape[0]
+    cv_test_n = int(n * cv_test_size)
+    cv1 = ShuffleSplit(n - cv_test_n, n_iter=n_CV, 
+                      test_size=cv_bag_size, random_state=random_state)
+    test_is = np.arange(n - cv_test_n, n)
+    cv = []
+    for train_is, _ in cv1:
+        cv.append((train_is, test_is))
     return cv
 
 def check_model(module_path, X_xray, y_array, cv_is):

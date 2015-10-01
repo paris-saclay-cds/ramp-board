@@ -75,8 +75,15 @@ def get_check_data():
 
 def get_cv(y_train_array):
     print y_train_array.shape
-    cv = ShuffleSplit(y_train_array.shape[0], n_iter=n_CV, 
-                      test_size=cv_test_size, random_state=random_state)
+    n = y_train_array.shape[0]
+    test_start = int(n * (1 - cv_test_size))
+    n_test = n - test_start
+    block_size = int(n_test / n_CV)
+    cv = []
+    for i in range(n_CV):
+        train_is = np.arange(min(n, test_start + i * block_size))
+        test_is = np.arange(min(n, test_start + i * block_size), n)
+        cv.append((train_is, test_is))
     return cv
 
 def check_model(module_path, X_xray, y_array, cv_is):
