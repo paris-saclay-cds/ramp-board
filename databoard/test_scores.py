@@ -1,3 +1,6 @@
+# Author: Balazs Kegl
+# License: BSD 3 clause
+
 import numpy as np
 from numpy.testing import assert_equal
 from scores import ScoreAuc, ScoreAccuracy, ScoreError

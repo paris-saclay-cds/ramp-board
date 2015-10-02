@@ -2,7 +2,7 @@ import os
 import logging
 import numpy as np
 import pandas as pd
-import fabric.contrib.project as project
+#import fabric.contrib.project as project
 from fabric.api import *
 from fabric.contrib.files import exists
 from databoard.model import shelve_database, ModelState
@@ -18,12 +18,14 @@ sys.setrecursionlimit(50000)
 # 15003, 15004, 20000-25000.
 
 # the user to use for the remote commands
-env.user = config_databoard.get_ramp_field('deploy_user') 
-env.use_ssh_config = True
+#env.user = config_databoard.get_ramp_field('deploy_user') 
+#env.use_ssh_config = True
 
 # the servers where the commands are executed
-env.hosts = [config_databoard.get_ramp_field('deploy_server')]
-production = env.hosts[0]
+#env.hosts = [config_databoard.get_ramp_field('train_user') + '@' + config_databoard.get_ramp_field('train_server'), 
+#             config_databoard.get_ramp_field('web_user') + '@' + config_databoard.get_ramp_field('web_server'),]
+
+#production = env.hosts[0]
 logger = logging.getLogger('databoard')
 
 
@@ -164,9 +166,11 @@ def leaderboard(which='all', test=False, calibrate=False):
     with shelve_database() as db:
         submissions = db['models']
         trained_models = submissions[
-            np.logical_or(submissions['state'] == "trained", 
-                          submissions['state'] == "tested")]
+            np.any([submissions['state'] == "test_error",
+                    submissions['state'] == "trained",
+                    submissions['state'] == "tested"], axis=0)]
         tested_models = submissions[submissions['state'] == "tested"]
+        print trained_models
 
     if which in ('all', 'classical'):
         l1 = leaderboard_classical(trained_models, calibrate=calibrate)
@@ -368,7 +372,6 @@ def serve():
 
 from importlib import import_module
 
-#@hosts(production)
 def publish(ramp_index):
     local('')
     #TODO: check if ramp_name is the same as in
@@ -379,49 +382,60 @@ def publish(ramp_index):
     # the number of CPUs). generic.get_ramp_index() reads it in
     with open('ramp_index.txt', 'w') as f:
         f.write(ramp_index)
-    destination_path = config_databoard.get_destination_path(ramp_index)
-    ramp_name = config_databoard.get_ramp_field('ramp_name', ramp_index)
-    project.rsync_project(
-        remote_dir=destination_path,
-        exclude=[ '.DS_Store', 
-                  'ground_truth', 
-                  'TeamsRepos', 
-                  'teams_repos', 
-                  'data', 
-                  'models', 
-                  'output',
-                  'joblib',
-                  'ramps',
-                  'user_test_model',
-                  'shelve*',
-                  '*.ipynb*',
-                  '*.log',
-                  '.git*',
-                  '.gitignore',
-                  '*.bak',
-                  '*.pyc'],
-        local_dir='.',
-        delete=False,
-        extra_opts='-c',
-    )
-    # publishing the specific.py specific to the ramp called ramp_name
-    project.rsync_project(
-        remote_dir=os.path.join(destination_path, 'databoard'),
-        local_dir='ramps/' + ramp_name + '/specific.py',
-        delete=False,
-        extra_opts='-c',
-    )
+
+    command = "rsync"
+    exclude=[ '.DS_Store', 
+              'ground_truth', 
+              'TeamsRepos', 
+              'teams_repos', 
+              'data', 
+              'models', 
+              'output',
+              'joblib',
+              'ramps',
+              'user_test_model',
+              'shelve*',
+              '*.ipynb*',
+              '*.log',
+              '.git*',
+              '.gitignore',
+              '*.bak',
+              '*.pyc']
+    for lib in exclude:
+        command += " --exclude \"" + lib + "\""
+    command += " -pthrvz -c --rsh=\'ssh -i " + os.path.expanduser("~")
+    command += "/.ssh/datacamp/id_rsa -p 22 \' . "
+    command1 = command
+    command1 += config_databoard.get_ramp_field('web_user') + '@'
+    command1 += config_databoard.get_ramp_field('web_server') + ":"
+    command1 += config_databoard.get_web_destination_path(ramp_index)
+    print command1
+    os.system(command1)
+    command2 = command
+    command2 += config_databoard.get_ramp_field('train_user') + '@'
+    command2 += config_databoard.get_ramp_field('train_server') + ":"
+    command2 += config_databoard.get_train_destination_path(ramp_index)
+    print command2
+    os.system(command2)
 
 # (re)publish data set from 'ramps/' + ramp_name + '/data'
 # fab setup_ground_truth should be run at the destination
-#@hosts(production)
 def publish_data(ramp_index):
-    destination_path = config_databoard.get_destination_path(ramp_index)
     ramp_name = config_databoard.get_ramp_field('ramp_name', ramp_index)
-    project.rsync_project(
-        remote_dir=destination_path,
-        local_dir='ramps/' + ramp_name + '/data',
-        delete=True,
-        extra_opts='-c',
-    )
+    command = "rsync"
+    command += " --delete -pthrvz -c --rsh=\'ssh -i " + os.path.expanduser("~")
+    command += "/.ssh/datacamp/id_rsa -p 22 \' "
+    command += 'ramps/' + ramp_name + '/data ' 
+    command1 = command
+    command1 += config_databoard.get_ramp_field('web_user') + '@'
+    command1 += config_databoard.get_ramp_field('web_server') + ":"
+    command1 += config_databoard.get_web_destination_path(ramp_index) + "/"
+    print command1
+    os.system(command1)
+    command2 = command
+    command2 += config_databoard.get_ramp_field('train_user') + '@'
+    command2 += config_databoard.get_ramp_field('train_server') + ":"
+    command2 += config_databoard.get_web_destination_path(ramp_index) + "/"
+    print command2
+    os.system(command2)
 

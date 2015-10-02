@@ -60,31 +60,49 @@ is_pickle_trained_model = False # often doesn't work and takes a lot of disk spa
 #dest_path = '/mnt/datacamp/databoard_03_8080_test'
 
 #debug_server = 'http://' + "localhost:{}".format(server_port)
-#deploy_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(server_port)
-#server_name = debug_server if local_deployment else deploy_server
+#train_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(server_port)
+#server_name = debug_server if local_deployment else train_server
 
-vd_deploy_server = 'onevm-85.lal.in2p3.fr'
-ramp_df_columns = ['ramp_name', 'deploy_server', 'server_port',
-                   'destination_root', 'num_cpus', 'cv_test_size',
-                   'random_state']
+vd_server = 'onevm-85.lal.in2p3.fr'
+vd_root = '/mnt/datacamp'
+reims_server = 'romeo1.univ-reims.fr'
+
+ramp_df_columns = [
+    'ramp_name', # for naming the library where the data and specific.py is
+    'train_server', # the server for training
+    'train_user', #  the username on the train_server
+    'train_root', # the root dir of databoard on the train_server
+    'num_cpus', # number of cpus on the train_server
+    'web_server', # the server for the web site (and possibly leaderboard)
+    'web_user', #  the username on the web_server
+    'web_root', # the root dir of databoard on the web_server
+    'server_port', #  the server port on the web_server
+    'cv_test_size', # 
+    'random_state', #
+]
+
 ramp_df = pd.DataFrame(columns=ramp_df_columns)
 ramp_df = ramp_df.append(pd.Series({
     'ramp_name' : 'pollenating_insects',
-    'deploy_server' : 'romeo1.univ-reims.fr',
-    'deploy_user' : 'mcherti',
-    'server_port' : '8444',
-    'destination_root' : '/home/mcherti/ramp_pollenating_insects',
+    'train_server' : reims_server, 
+    'train_user' : 'mcherti',
+    'train_root' : '/home/mcherti/ramp_pollenating_insects',
     'num_cpus' : 10,
+    'web_server' : vd_server,
+    'web_user' : 'root',
+    'web_root' : vd_root,
+    'server_port' : '2170', 
     'cv_test_size' : 0.2,
-    'random_state' : 57,
+    'random_state' : 57, 
 }, name = 'pollenating_insects_1'))
 
+# TODO after insect ramp: clean up the old ramps
 ramp_df = ramp_df.append(pd.Series({
     'ramp_name' : 'el_nino',
-    'deploy_user' : 'root',
-    'deploy_server' : vd_deploy_server,
+    'train_server' : vd_server,
+    'train_user' : 'root',
+    'train_root' : '/mnt/datacamp',
     'server_port' : '9002',
-    'destination_root' : '/mnt/datacamp',
     'num_cpus' : 32,
     'cv_test_size' : 0.5,
     'random_state' : 57,
@@ -92,10 +110,10 @@ ramp_df = ramp_df.append(pd.Series({
 
 ramp_df = ramp_df.append(pd.Series({
     'ramp_name' : 'el_nino',
-    'deploy_server' : vd_deploy_server,
-    'deploy_user' : 'root',
+    'train_server' : vd_server,
+    'train_user' : 'root',
     'server_port' : '10339',
-    'destination_root' : '/mnt/datacamp',
+    'train_root' : '/mnt/datacamp',
     'num_cpus' : 15,
     'cv_test_size' : 0.5,
     'random_state' : 57,
@@ -103,10 +121,10 @@ ramp_df = ramp_df.append(pd.Series({
 
 ramp_df = ramp_df.append(pd.Series({
     'ramp_name' : 'el_nino_block_cv',
-    'deploy_server' : vd_deploy_server,
-    'deploy_user' : 'root',
+    'train_server' : vd_server,
+    'train_user' : 'root',
     'server_port' : '5015',
-    'destination_root' : '/mnt/datacamp',
+    'train_root' : '/mnt/datacamp',
     'num_cpus' : 15,
     'cv_test_size' : 0.5,
     'random_state' : 57,
@@ -114,10 +132,10 @@ ramp_df = ramp_df.append(pd.Series({
 
 ramp_df = ramp_df.append(pd.Series({
     'ramp_name' : 'el_nino_bagged_cv_future',
-    'deploy_server' : vd_deploy_server,
-    'deploy_user' : 'root',
+    'train_server' : vd_server,
+    'train_user' : 'root',
     'server_port' : '3147',
-    'destination_root' : '/mnt/datacamp',
+    'train_root' : '/mnt/datacamp',
     'num_cpus' : 15,
     'cv_test_size' : 0.2,
     'cv_bag_size' : 0.5,
@@ -144,9 +162,16 @@ def get_ramp_field(field, ramp_index=None):
     ramp = ramp_df.loc[ramp_index]
     return ramp[field]
 
-def get_destination_path(ramp_index=None):
-    destination_root = get_ramp_field('destination_root', ramp_index)
+def get_destination_path(root, ramp_index=None):
+    destination_root = get_ramp_field(root, ramp_index)
     ramp_name = get_ramp_field('ramp_name', ramp_index)
     server_port = get_ramp_field('server_port', ramp_index)
     return os.path.join(destination_root,
                         "databoard_" + ramp_name + "_" + server_port)
+
+def get_train_destination_path(ramp_index=None):
+    return get_destination_path('train_root', ramp_index=None)
+
+def get_web_destination_path(ramp_index=None):
+    return get_destination_path('web_root', ramp_index=None)
+
