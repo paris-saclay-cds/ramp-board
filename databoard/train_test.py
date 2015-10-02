@@ -17,8 +17,7 @@ from sklearn.externals.joblib import Memory
 import config_databoard
 import generic
 import specific
-
-from machine_parallelism import put_job , wait_for_jobs_and_get_status, TimeoutError
+import machine_parallelism
 
 n_processes = config_databoard.get_ramp_field('num_cpus')
 
@@ -40,13 +39,13 @@ def run_on_folds(method, full_model_path, cv):
         if config_databoard.is_parallelize_across_machines:
             job_ids = set()
             for cv_is in cv:
-                job_id = put_job(method, (cv_is, full_model_path))
+                job_id = machine_parallelism.put_job(method, (cv_is, full_model_path))
                 job_ids.add(job_id)
             try:
-                job_status = wait_for_jobs_and_get_status(job_ids,
-                                                          timeout=config_databoard.timeout_parallelize_across_machines)
+                job_status = machine_parallelism.wait_for_jobs_and_get_status(
+                    job_ids, timeout=config_databoard.timeout_parallelize_across_machines)
 
-            except TimeoutError:
+            except machine_parallelism.TimeoutError:
                 raise
 
             for status in job_status.values():
