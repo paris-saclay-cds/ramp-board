@@ -1,6 +1,7 @@
 import os
 import socket
 import pandas as pd
+import numpy as np
 from git import Repo
 from multiprocessing import cpu_count
 
@@ -80,6 +81,7 @@ ramp_df_columns = [
     'cv_test_size', # 
     'random_state', #
 ]
+# ignore web* variables if train and web servers, users, roots are the same
 
 ramp_df = pd.DataFrame(columns=ramp_df_columns)
 ramp_df = ramp_df.append(pd.Series({
@@ -102,8 +104,8 @@ ramp_df = ramp_df.append(pd.Series({
     'train_server' : vd_server,
     'train_user' : 'root',
     'train_root' : '/mnt/datacamp',
-    'server_port' : '9002',
     'num_cpus' : 32,
+    'server_port' : '9002',
     'cv_test_size' : 0.5,
     'random_state' : 57,
 }, name = 'el_nino_1'))
@@ -175,3 +177,10 @@ def get_train_destination_path(ramp_index=None):
 def get_web_destination_path(ramp_index=None):
     return get_destination_path('web_root', ramp_index=None)
 
+def is_same_web_and_train_servers(ramp_index):
+    return np.isnan(get_ramp_field('web_server', ramp_index)) or\
+           np.isnan(get_ramp_field('web_user', ramp_index)) or\
+           np.isnan(get_ramp_field('web_root', ramp_index)) or\
+           (get_ramp_field('web_server', ramp_index) == get_ramp_field('train_server', ramp_index)\
+           and get_ramp_field('web_user', ramp_index) == get_ramp_field('train_user', ramp_index)\
+           and get_ramp_field('web_root', ramp_index) == get_ramp_field('root_user', ramp_index))

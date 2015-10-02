@@ -144,7 +144,6 @@ def setup(wipeall=False):
 def clean_pyc():
     local('find . -name "*.pyc" | xargs rm -f')
 
-
 def fetch():
     from databoard.fetch import fetch_models
     fetch_models()
@@ -373,6 +372,7 @@ def serve():
 from importlib import import_module
 
 def publish(ramp_index):
+    ramp_name = config_databoard.get_ramp_field('ramp_name', ramp_index)
     local('')
     #TODO: check if ramp_name is the same as in
     #      'ramps/' + ramp_name + '/specific.py'
@@ -405,18 +405,42 @@ def publish(ramp_index):
         command += " --exclude \"" + lib + "\""
     command += " -pthrvz -c --rsh=\'ssh -i " + os.path.expanduser("~")
     command += "/.ssh/datacamp/id_rsa -p 22 \' . "
-    command1 = command
-    command1 += config_databoard.get_ramp_field('web_user') + '@'
-    command1 += config_databoard.get_ramp_field('web_server') + ":"
-    command1 += config_databoard.get_web_destination_path(ramp_index)
-    print command1
-    os.system(command1)
+    if not config_databoard.is_same_web_and_train_servers(ramp_index):
+        command1 = command
+        command1 += config_databoard.get_ramp_field('web_user', ramp_index) + '@'
+        command1 += config_databoard.get_ramp_field('web_server', ramp_index) + ":"
+        command1 += config_databoard.get_web_destination_path(ramp_index)
+        print command1
+        os.system(command1)
     command2 = command
-    command2 += config_databoard.get_ramp_field('train_user') + '@'
-    command2 += config_databoard.get_ramp_field('train_server') + ":"
+    command2 += config_databoard.get_ramp_field('train_user', ramp_index) + '@'
+    command2 += config_databoard.get_ramp_field('train_server', ramp_index) + ":"
     command2 += config_databoard.get_train_destination_path(ramp_index)
     print command2
     os.system(command2)
+
+    # TODO: maybe should be factorized
+    # rsyncing specific
+    command = "rsync"
+    command += " -pthrvz -c --rsh=\'ssh -i " + os.path.expanduser("~")
+    command += "/.ssh/datacamp/id_rsa -p 22 \'"
+    command += " ramps/" + ramp_name + "/specific.py "
+    if not config_databoard.is_same_web_and_train_servers(ramp_index):
+        command1 = command
+        command1 += config_databoard.get_ramp_field('web_user', ramp_index) + '@'
+        command1 += config_databoard.get_ramp_field('web_server', ramp_index) + ":"
+        command1 += config_databoard.get_web_destination_path(ramp_index)
+        command1 += "/databoard/"
+        print command1
+        os.system(command1)
+    command2 = command
+    command2 += config_databoard.get_ramp_field('train_user', ramp_index) + '@'
+    command2 += config_databoard.get_ramp_field('train_server', ramp_index) + ":"
+    command2 += config_databoard.get_train_destination_path(ramp_index)
+    command2 += "/databoard/"
+    print command2
+    os.system(command2)
+
 
 # (re)publish data set from 'ramps/' + ramp_name + '/data'
 # fab setup_ground_truth should be run at the destination
@@ -426,16 +450,17 @@ def publish_data(ramp_index):
     command += " --delete -pthrvz -c --rsh=\'ssh -i " + os.path.expanduser("~")
     command += "/.ssh/datacamp/id_rsa -p 22 \' "
     command += 'ramps/' + ramp_name + '/data ' 
-    command1 = command
-    command1 += config_databoard.get_ramp_field('web_user') + '@'
-    command1 += config_databoard.get_ramp_field('web_server') + ":"
-    command1 += config_databoard.get_web_destination_path(ramp_index) + "/"
-    print command1
+    if not config_databoard.is_same_web_and_train_servers(ramp_index):
+        command1 = command
+        command1 += config_databoard.get_ramp_field('web_user', ramp_index) + '@'
+        command1 += config_databoard.get_ramp_field('web_server', ramp_index) + ":"
+        command1 += config_databoard.get_web_destination_path(ramp_index) + "/"
+        print command1
     os.system(command1)
     command2 = command
-    command2 += config_databoard.get_ramp_field('train_user') + '@'
-    command2 += config_databoard.get_ramp_field('train_server') + ":"
-    command2 += config_databoard.get_web_destination_path(ramp_index) + "/"
+    command2 += config_databoard.get_ramp_field('train_user', ramp_index) + '@'
+    command2 += config_databoard.get_ramp_field('train_server', ramp_index) + ":"
+    command2 += config_databoard.get_train_destination_path(ramp_index) + "/"
     print command2
     os.system(command2)
 
