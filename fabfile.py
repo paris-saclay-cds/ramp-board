@@ -195,17 +195,24 @@ def leaderboard(which='all', test=False, calibrate=False):
         with shelve_database() as db:
             db['leaderboard_execution_times'] = l_times
 
-def check(state=False, tag=None):
+def check(state=False, tag=None, team=None):
     from databoard.train_test import check_models
 
     with shelve_database() as db:
         models = db['models']
 
     if tag is not None:
-        models = models[models.model.str.contains(tag)]
+        models = models[models.model == tag]
         state = 'all'  # force train all the selected models
         if len(models) == 0:
-            print('No existing model containing the tag: {}'.format(tag))
+            print('No existing model with the tag: {}'.format(tag))
+            return
+
+    if team is not None:
+        models = models[models.team == team]
+        state = 'all'  # force train all the selected models
+        if len(models) == 0:
+            print('No existing model with the team: {}'.format(tag))
             return
 
     if not state:
@@ -221,17 +228,24 @@ def check(state=False, tag=None):
     with shelve_database() as db:
         db['models'].loc[idx, :] = models
 
-def train(state=False, tag=None):
+def train(state=False, tag=None, team=None):
     from databoard.train_test import train_and_valid_models
 
     with shelve_database() as db:
         models = db['models']
 
     if tag is not None:
-        models = models[models.model.str.contains(tag)]
+        models = models[models.model == tag]
         state = 'all'  # force train all the selected models
         if len(models) == 0:
-            print('No existing model containing the tag: {}'.format(tag))
+            print('No existing model with the tag: {}'.format(tag))
+            return
+
+    if team is not None:
+        models = models[models.team == team]
+        state = 'all'  # force train all the selected models
+        if len(models) == 0:
+            print('No existing model with the team: {}'.format(tag))
             return
 
     if not state:
@@ -247,17 +261,24 @@ def train(state=False, tag=None):
     with shelve_database() as db:
         db['models'].loc[idx, :] = models
 
-def test(state=False, tag=None):
+def test(state=False, tag=None, team=None):
     from databoard.train_test import test_models
 
     with shelve_database() as db:
         models = db['models']
 
     if tag is not None:
-        models = models[models.model.str.contains(tag)]
-        state = 'all'  # force test all the selected models
+        models = models[models.model == tag]
+        state = 'all'  # force train all the selected models
         if len(models) == 0:
-            print('No existing model containing the tag: {}'.format(tag))
+            print('No existing model with the tag: {}'.format(tag))
+            return
+
+    if team is not None:
+        models = models[models.team == team]
+        state = 'all'  # force train all the selected models
+        if len(models) == 0:
+            print('No existing model with the team: {}'.format(tag))
             return
 
     if not state:
@@ -273,17 +294,24 @@ def test(state=False, tag=None):
     with shelve_database() as db:
         db['models'].loc[idx, :] = models
 
-def train_test(state=False, tag=None):
+def train_test(state=False, tag=None, team=None):
     from databoard.train_test import train_valid_and_test_models
 
     with shelve_database() as db:
         models = db['models']
 
     if tag is not None:
-        models = models[models.model.str.contains(tag)]
-        state = 'all'  # force test all the selected models
+        models = models[models.model == tag]
+        state = 'all'  # force train all the selected models
         if len(models) == 0:
-            print('No existing model containing the tag: {}'.format(tag))
+            print('No existing model with the tag: {}'.format(tag))
+            return
+
+    if team is not None:
+        models = models[models.team == team]
+        state = 'all'  # force train all the selected models
+        if len(models) == 0:
+            print('No existing model with the team: {}'.format(tag))
             return
 
     if not state:
@@ -400,7 +428,8 @@ def publish(ramp_index):
               '.git*',
               '.gitignore',
               '*.bak',
-              '*.pyc']
+              '*.pyc',
+              '*.sh',]
     for lib in exclude:
         command += " --exclude \"" + lib + "\""
     command += " -pthrvz -c --rsh=\'ssh -i " + os.path.expanduser("~")

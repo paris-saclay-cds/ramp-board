@@ -178,9 +178,6 @@ def get_web_destination_path(ramp_index=None):
     return get_destination_path('web_root', ramp_index=None)
 
 def is_same_web_and_train_servers(ramp_index):
-    return np.isnan(get_ramp_field('web_server', ramp_index)) or\
-           np.isnan(get_ramp_field('web_user', ramp_index)) or\
-           np.isnan(get_ramp_field('web_root', ramp_index)) or\
-           (get_ramp_field('web_server', ramp_index) == get_ramp_field('train_server', ramp_index)\
+    return (get_ramp_field('web_server', ramp_index) == get_ramp_field('train_server', ramp_index)\
            and get_ramp_field('web_user', ramp_index) == get_ramp_field('train_user', ramp_index)\
            and get_ramp_field('web_root', ramp_index) == get_ramp_field('root_user', ramp_index))

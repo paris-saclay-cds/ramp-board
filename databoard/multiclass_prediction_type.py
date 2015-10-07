@@ -2,74 +2,70 @@
 # License: BSD 3 clause
 
 import csv
+import string
 import numpy as np
 
 # Global static that should be set by specific (or somebody)
 labels = []
 
-class PredictionType:
-    def __init__(self, prediction):
-        self.y_pred, self.y_probas = prediction
-
-    def __str__(self):
-        return "y_pred = {}, y_probas = {}".format(self.y_pred, self.y_probas)
-
-    def get_prediction(self):
-        return self.y_pred, self.y_probas
-
-    def make_consistent(self):
-        """ Making the prediction consistent by setting the pred to the argmax
-        of the probas. Not sure what it's for here.
-        """
-        self.y_pred = labels[self.y_probas.argmax()]
-
 class PredictionArrayType:
     def __init__(self, *args, **kwargs):
-        if 'y_pred_array' in kwargs.keys() and 'y_probas_array' in kwargs.keys():
-            self.y_pred_array = kwargs['y_pred_array']
-            self.y_probas_array = kwargs['y_probas_array']
-        elif 'prediction_list' in kwargs.keys():
-            self.y_pred_array = np.array(
-                [prediction[0] for prediction in kwargs['prediction_list']])
-            self.y_probas_array = np.array(
-                [prediction[1] for prediction in kwargs['prediction_list']])
-        elif 'f_name' in kwargs.keys():
-            # loading from file
-            f_name = kwargs['f_name']
+        if 'y_prediction_array' in kwargs.keys(): # probability matrix
+            self.y_probas_array = np.array(kwargs['y_prediction_array'], dtype=np.float64)
+        elif 'y_pred_label_array' in kwargs.keys():
+            y_pred_label_array = kwargs['y_pred_label_array']
+            self._init_from_pred_label_array(y_pred_label_array)
+        elif 'y_pred_index_array' in kwargs.keys():
+            y_pred_index_array = kwargs['y_pred_index_array']
+            self.y_probas_array = np.zeros(
+                (len(y_pred_index_array), len(labels)), dtype=np.float64)
+            for y_probas, label_index in zip(self.y_probas_array, y_pred_index_array):
+                y_probas[label_index] = 1.0
+        # should match the way the target is represented when y_test is saved          
+        elif 'ground_truth_f_name' in kwargs.keys():
+            # loading from ground truth file
+            f_name = kwargs['ground_truth_f_name']
             with open(f_name) as f:
-                input = list(csv.reader(f))
-                input = map(list,map(None,*input))
-
-                #print np.array(input[1:]).astype(float)
-                self.y_pred_array = np.array(input[0])
-                self.y_probas_array = np.array(input[1:]).astype(float).T
-                #print self.y_probas_array
-        elif 'y_combined_array' in kwargs.keys():
-            self.y_probas_array = kwargs['y_combined_array']
-            label_indexes = np.argmax(self.y_probas_array, axis=1)
-            self.y_pred_array = np.array([labels[i] for i in label_indexes])
+                y_pred_label_array = list(csv.reader(f))
+            self._init_from_pred_label_array(y_pred_label_array) 
+        # should match save_prediction: representation of the target returned
+        # by specific.test_model           
+        elif 'predictions_f_name' in kwargs.keys():
+            f_name = kwargs['predictions_f_name']
+            with open(f_name) as f:
+                self.y_probas_array = np.array(list(csv.reader(f)), dtype=np.float64)
         else:
             raise ValueError("Unkonwn init argument, {}".format(kwargs))
+
+    def _init_from_pred_label_array(self, y_pred_label_array):
+        type_of_label = type(labels[0])
+        self.y_probas_array = np.zeros((len(y_pred_label_array), len(labels)), dtype=np.float64)
+        for y_probas, label_list in zip(self.y_probas_array, y_pred_label_array):
+            num_positive_labels = len(label_list)
+            label_list = map(type_of_label, label_list)
+            for label in label_list:
+                y_probas[labels.index(label)] = 1.0 / len(label_list)
+
 
 #    def __iter__(self):
 #        for y_pred, y_probas in self.get_predictions():
 #            yield y_pred, y_probas
 
     def save_predictions(self, f_name):
-        num_classes = self.y_probas_array.shape[1]
+        num_classes = len(labels)
         with open(f_name, "w") as f:
-            for y_pred, y_probas in zip(self.y_pred_array, self.y_probas_array):
-                f.write(str(y_pred))
-                for y_proba in y_probas:
-                    f.write("," + str(y_proba))
-                f.write("\n")
+            for y_probas in self.y_probas_array:
+                f.write(string.join(map(str, y_probas), ',') + '\n')
 
-    def get_predictions(self):
-        return self.y_pred_array, self.y_probas_array
+    def get_prediction_array(self):
+        return self.y_probas_array
 
     def get_combineable_predictions(self):
         """Returns an array which can be combined by taking means"""
         return self.y_probas_array
+
+    def get_pred_index_array(self):
+        return np.argmax(self.y_probas_array, axis=1)
 
     def combine(self, indexes = []):
         # Not yet used
@@ -95,11 +91,3 @@ def get_nan_combineable_predictions(num_points):
     predictions.fill(np.nan)
     return predictions
 
-
-def get_y_pred_array(y_probas_array):
-    return np.array([labels[y_probas.argmax()] for y_probas in y_probas_array])
-
-# also think about working with matrices of PredictionType instead of 
-# lists of PredictionArrayType
-def transpose(predictions_list):
-    pass

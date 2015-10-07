@@ -37,10 +37,10 @@ def get_predictions_list(models_df, subdir, hash_string):
     predictions_list = [] 
     for idx, model_df in models_df.iterrows():
         full_model_path = generic.get_full_model_path(idx, model_df)
-        predictions_path = generic.get_f_name(full_model_path, subdir, hash_string)
+        predictions_f_name = generic.get_f_name(full_model_path, subdir, hash_string)
         try:
             predictions = specific.prediction_type.PredictionArrayType(
-                f_name=predictions_path)
+                predictions_f_name=predictions_f_name)
         except IOError as e:
             print "WARNING: ", e
             predictions = None
@@ -76,8 +76,13 @@ def combine_predictions_list(predictions_list, indexes = []):
         np.array([predictions_list[i].get_combineable_predictions() for i in indexes])
     y_combined_array = y_combineable_array_list.mean(axis=0)
     combined_predictions = specific.prediction_type.PredictionArrayType(
-        y_combined_array=y_combined_array)
+        y_prediction_array=y_combined_array)
     return combined_predictions
+
+# TODO: should probably go to specific, or even output_type
+def get_ground_truth(ground_truth_f_name):        
+    return specific.prediction_type.PredictionArrayType(
+        ground_truth_f_name=ground_truth_f_name)
 
 def get_ground_truth_valid_list(hash_strings):
     return [get_ground_truth(generic.get_ground_truth_valid_f_name(hash_string))
@@ -107,24 +112,28 @@ def get_cv_bagging_score(predictions_list, cv, hash_strings, num_points):
         [specific.prediction_type.get_nan_combineable_predictions(num_points) 
          for _ in predictions_list])
     ground_truth_valid_list = get_ground_truth_valid_list(hash_strings)
-    ground_truth_full = np.empty(num_points, dtype=float)
-    ground_truth_full.fill(np.nan)
+    ground_truth_full_prediction_array = \
+        specific.prediction_type.get_nan_combineable_predictions(num_points)
     fold_scores = []
     for i in range(len(cv)):
         _, test_is = list(cv)[i]
         y_combineable_array_list[i][test_is] = \
             predictions_list[i].get_combineable_predictions()
-        ground_truth_full[test_is] = ground_truth_valid_list[i]
+        # this should maybe handled in the prediction_type
+        ground_truth_full_prediction_array[test_is] = \
+            ground_truth_valid_list[i].get_prediction_array()
         # indices of points which appear at least in one test set
-        valid_indexes = ~np.isnan(ground_truth_full)
+        valid_indexes = ~np.isnan(ground_truth_full_prediction_array)[:, 0] # TODO: this is definitely multiclass only
         # computing score after each fold for info
         y_combined_array = np.nanmean(y_combineable_array_list[:i+1], axis=0)
         combined_predictions = specific.prediction_type.PredictionArrayType(
-            y_combined_array=y_combined_array[valid_indexes])
+            y_prediction_array=y_combined_array[valid_indexes])
         fold_score = specific.score(ground_truth_valid_list[i], predictions_list[i])
         fold_scores.append(fold_score)
-        score = specific.score(ground_truth_full[valid_indexes], combined_predictions)
-        coverage = 1.0 * len(ground_truth_full[valid_indexes]) / num_points
+        ground_truth_full = specific.prediction_type.PredictionArrayType(
+            y_prediction_array=ground_truth_full_prediction_array[valid_indexes])
+        score = specific.score(ground_truth_full, combined_predictions)
+        coverage = 1.0 * len(ground_truth_full_prediction_array[valid_indexes]) / num_points
         generic.logger.info("Fold {}: score on fold = {}, combined score after fold = {}, coverage = {:>4}%".
             format(hash_strings[i], fold_score, score, int(round(100 * coverage))))
     fold_scores = np.array(fold_scores, dtype=float)
@@ -168,11 +177,6 @@ def leaderboard_execution_times(models_df):
         format(leaderboard['test time'].values))
     return leaderboard
 
-# TODO: should probably go to specific, or even output_type
-def get_ground_truth(ground_truth_filename):        
-    return pd.read_csv(
-        ground_truth_filename, names=['ground_truth']).values.flatten()
-
 def get_scores(models_df, hash_string, subdir = "valid", calibrate=False):
     generic.logger.info("Evaluating : {}".format(hash_string))
     if subdir == "valid":
@@ -180,7 +184,7 @@ def get_scores(models_df, hash_string, subdir = "valid", calibrate=False):
     else: #subdir == "test"
         ground_truth_filename = generic.get_ground_truth_test_f_name()
     ground_truth = get_ground_truth(ground_truth_filename)
-    specific.score.set_eps(0.01 / len(ground_truth))
+    specific.score.set_eps(0.01 / len(ground_truth.get_prediction_array()))
  
     if calibrate:
         # Calibrating predictions
@@ -234,7 +238,8 @@ def calibrate_predictions(uncalibrated_predictions_list, ground_truth):
         predictions_list.append(predictions)
     return predictions_list
 
-def leaderboard_classicial_mean_of_scores(models_df, subdir = "valid", calibrate = False):
+def leaderboard_classicial_mean_of_scores(models_df, subdir = "valid", 
+                                          calibrate = False):
     hash_strings = generic.get_hash_strings_from_ground_truth()
     mean_scores = np.array([specific.score.zero() 
                             for _ in range(models_df.shape[0])])
@@ -438,9 +443,9 @@ def calibrate_test_predictions(uncalibrated_test_predictions_list,
         test_predictions_list.append(test_predictions)
     return test_predictions_list
 
-def get_calibrated_predictions_list(models_df, hash_string, ground_truth = [], 
+def get_calibrated_predictions_list(models_df, hash_string, ground_truth = None, 
                                     subdir = "valid"): 
-    if len(ground_truth) == 0:
+    if ground_truth == None:
         ground_truth_filename = generic.get_ground_truth_valid_f_name(hash_string)
         ground_truth = get_ground_truth(ground_truth_filename)
 
@@ -448,7 +453,7 @@ def get_calibrated_predictions_list(models_df, hash_string, ground_truth = [],
         models_df, subdir, hash_string)
 
     generic.logger.info("Evaluating : {}".format(hash_string))
-    specific.score.set_eps(0.01 / len(ground_truth))
+    specific.score.set_eps(0.01 / len(ground_truth.get_prediction_array()))
 
     # TODO: make calibration optional, output-type or score dependent
     # this doesn't work for RMSE
@@ -483,7 +488,8 @@ def get_best_index_list(models_df, hash_string, selected_index_list=[]):
         best_index_list = best_combine(
             predictions_list, ground_truth_valid, best_index_list)
         improvement = len(best_index_list) != len(old_best_index_list)
-    generic.logger.info("best indices = {}".format(selected_index_list[best_index_list]))
+    generic.logger.info("best indices = {}".format(
+        selected_index_list[best_index_list]))
     combined_predictions = combine_predictions_list(
         predictions_list, best_index_list)
     return selected_index_list[best_index_list], foldwise_best_predictions, \
@@ -555,7 +561,7 @@ def make_combined_test_prediction(best_index_lists, models_df, hash_strings):
 def leaderboard_combination_mean_of_scores(orig_models_df, test=False):
     models_df = orig_models_df.sort(columns='timestamp')
     hash_strings = generic.get_hash_strings_from_ground_truth()
-    counts = np.zeros(models_df.shape[0], dtype=int)
+    counts = np.zeros(models_df.shape[0], dtype=float)
 
     if models_df.shape[0] != 0:
         random_index_lists = np.array([random.sample(
@@ -585,8 +591,9 @@ def leaderboard_combination_mean_of_scores(orig_models_df, test=False):
         generic.logger.info("foldwise best validation score = {}".format(np.mean(foldwise_best_scores)))
         generic.logger.info("foldwise combined validation score = {}".format(np.mean(combined_scores)))
         for best_index_list in best_index_lists:
-            counts += np.histogram(best_index_list, 
-                                   bins=range(models_df.shape[0] + 1))[0]
+            fold_counts = np.histogram(
+                best_index_list, bins=range(models_df.shape[0] + 1))[0]
+            counts += 1.0 * fold_counts / fold_counts.sum()
         
         #for hash_string in hash_strings:
         #    best_index_list, best_score, combined_score = get_best_index_list(models_df, hash_string)
@@ -644,7 +651,7 @@ def leaderboard_classical(models_df, subdir = "valid", calibrate = False):
 
 def leaderboard_combination(orig_models_df, test=False):
     models_df = orig_models_df.sort(columns='timestamp')
-    counts = np.zeros(models_df.shape[0], dtype=int)
+    normalized_counts = np.zeros(models_df.shape[0], dtype=float)
 
     if models_df.shape[0] != 0:
         _, y_train_array = specific.get_train_data()
@@ -692,8 +699,14 @@ def leaderboard_combination(orig_models_df, test=False):
         #generic.logger.info("foldwise combined validation score = {}".format(np.mean(combined_scores)))
         # contributivity counts
         for best_index_list in best_index_lists:
-            counts += np.histogram(best_index_list, 
-                                   bins=range(models_df.shape[0] + 1))[0]
+            fold_counts = np.histogram(
+                best_index_list, bins=range(models_df.shape[0] + 1))[0]
+            normalized_counts += 1.0 * fold_counts / fold_counts.sum()
+        normalized_counts = 100. * normalized_counts / normalized_counts.sum()
+        normalized_counts[normalized_counts > 0] = np.maximum(
+            1.0, normalized_counts[normalized_counts > 0]) # we have 1 for every model picked at least once
+        normalized_counts += 0.4999
+        integer_precentage_counts = normalized_counts.astype(int)
 
         generic.logger.info("============")
         generic.logger.info("Bagging foldwise combined models on validation")
@@ -720,5 +733,6 @@ def leaderboard_combination(orig_models_df, test=False):
             make_combined_test_prediction(
                 best_index_lists, models_df, hash_strings)
 
-    leaderboard = pd.DataFrame({'contributivity': counts}, index=models_df.index)
+    leaderboard = pd.DataFrame(
+        {'contributivity': integer_precentage_counts}, index=models_df.index)
     return leaderboard.sort(columns=['contributivity'], ascending=False)

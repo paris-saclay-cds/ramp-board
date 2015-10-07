@@ -73,38 +73,42 @@ class ScoreFunction():
         self.eps = eps
 
 class Accuracy(ScoreFunction):
-    def __call__(self, ground_truth_list, predictions):
-        y_pred_array, y_probas_array = predictions.get_predictions()
+    def __call__(self, ground_truth, predictions):
+        y_pred_array = predictions.get_pred_index_array()
+        ground_truth_pred_array = ground_truth.get_pred_index_array()
+        #print y_pred_array
+        #print ground_truth_pred_array
+        #print accuracy_score(ground_truth_pred_array, y_pred_array)
+        #print "\n"
         return ScoreHigherTheBetter(
-            accuracy_score(ground_truth_list, y_pred_array), self.eps)
+            accuracy_score(ground_truth_pred_array, y_pred_array), self.eps)
 
     def zero(self):
         return ScoreHigherTheBetter(0.0, self.eps)
 
 class Error(ScoreFunction):
-    def __call__(self, ground_truth_list, predictions):
-        y_pred_array, y_probas_array = predictions.get_predictions()
+    def __call__(self, ground_truth, predictions):
+        y_pred_array = predictions.get_pred_index_array()
+        ground_truth_pred_array = ground_truth.get_pred_index_array()
         return ScoreLowerTheBetter(
-            1 - accuracy_score(ground_truth_list, y_pred_array), self.eps)
+            1 - accuracy_score(ground_truth_pred_array, y_pred_array), self.eps)
 
     def zero(self):
         return ScoreLowerTheBetter(0.0, self.eps)
 
 class NegativeLogLikelihood(ScoreFunction):
-    def __call__(self, ground_truth_list, predictions):
-        y_pred_array, y_probas_array = predictions.get_predictions()
-        ground_truth_index_list = [self.label_index_dict[ground_truth] 
-                                   for ground_truth in ground_truth_list]
+    def __call__(self, ground_truth, predictions):
+        y_probas_array = predictions.get_prediction_array()
+        ground_truth_probas_array = ground_truth.get_prediction_array()
         # Normalize rows
         y_probas_array_normalized = \
             y_probas_array / np.sum(y_probas_array, axis=1, keepdims=True)
-        probas = np.array([y_probas[ground_truth_index] 
-                           for y_probas, ground_truth_index 
-                           in zip(y_probas_array_normalized, ground_truth_index_list)])
         # Kaggle's rule
-        probas = np.array([max(10 ** -15 , min(1 - 10 ** -15, p))
-                           for p in probas])
-        score = - np.mean(np.log(probas))
+        y_probas_array_limited = np.maximum(y_probas_array_normalized, 10 ** -15)
+        y_probas_array_limited = np.minimum(y_probas_array_normalized, 1 - 10 ** -15)
+        scores = - np.sum(np.log(y_probas_array_limited) * ground_truth_probas_array, 
+                          axis=1)
+        score = np.mean(scores)
         return ScoreLowerTheBetter(score)
 
     def zero(self):

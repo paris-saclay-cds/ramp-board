@@ -32,7 +32,7 @@ test_filename = os.path.join(config_databoard.private_data_path, 'test_64x64.npz
 score = scores.Accuracy()
 #score = scores.Error()
 #score = scores.NegativeLogLikelihood()
-score.set_labels(prediction_type.labels)
+#score.set_labels(prediction_type.labels)
 
 
 # X is a list of dicts, each dict is indexed by column
@@ -92,11 +92,8 @@ def test_model(trained_model, X_array, cv_is):
     # for interfacing with torch, caffe?
     if (hasattr(clf, "indexes") and
         clf.indexes is True):
-        y_pred_array = clf.predict(test_is)
         y_probas_array = clf.predict_proba(test_is)
     else:
     # default behavior
-        y_pred_array = clf.predict(X_test_array)
         y_probas_array = clf.predict_proba(X_test_array)
-    return prediction_type.PredictionArrayType(
-        y_pred_array=y_pred_array, y_probas_array=y_probas_array)
+    return prediction_type.PredictionArrayType(y_prediction_array=y_probas_array)
