@@ -115,6 +115,8 @@ def get_cv_bagging_score(predictions_list, cv, hash_strings, num_points):
     ground_truth_full_prediction_array = \
         specific.prediction_type.get_nan_combineable_predictions(num_points)
     fold_scores = []
+    # We crashed here because smebody output a matrix in predict proba with 
+    # 4 times more rows. We should check this in train_test
     for i in range(len(cv)):
         _, test_is = list(cv)[i]
         y_combineable_array_list[i][test_is] = \
