@@ -2,11 +2,11 @@ from multiprocessing.managers import BaseManager
 import sys
 import Queue
 import uuid
-import sys
 import os
 import time
 import traceback
-from joblib import Parallel, delayed
+# from sklearn.externals.joblib import Parallel, delayed
+
 
 sys.path.append(os.path.dirname(__file__) + "/..")
 """
@@ -80,9 +80,6 @@ def serve_forever(host=host, port=port):
     s.serve_forever()
 
 
-from cStringIO import StringIO
-import sys
-
 class Logger(object):
     def __init__(self, fd, terminal):
         self.terminal = terminal
@@ -90,13 +87,13 @@ class Logger(object):
 
     def write(self, message):
         self.terminal.write(message)
-        self.log.write(message)  
+        self.log.write(message)
 
     def flush(self):
         #this flush method is needed for python 3 compatibility.
         #this handles the flush command by doing nothing.
         #you might want to specify some extra behavior here.
-        pass    
+        pass
 
 def run_job(job_params, output_folder="."):
     title, job_id, method, args = job_params
@@ -177,7 +174,7 @@ if __name__ == "__main__":
     parser.add_argument("--host", help="host", default=host)
     parser.add_argument("--port", help="port", default=port, type=int)
     parser.add_argument("--output-folder", help="output-folder", default=".", type=str)
- 
+
     args = parser.parse_args()
     if len(sys.argv) <= 1:
         parser.print_help()

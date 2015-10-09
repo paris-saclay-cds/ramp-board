@@ -34,6 +34,12 @@ def all():
     train_test()
     leaderboard()
 
+def clear():
+    clear_cache()
+    clear_db()
+    clear_groundtruth()
+    # clear_registrants()
+
 def clear_cache():
     from sklearn.externals.joblib import Memory
     mem = Memory(cachedir=config_databoard.cachedir)
@@ -414,12 +420,8 @@ def publish(ramp_index):
     command = "rsync"
     exclude=[ '.DS_Store', 
               'ground_truth', 
-              'TeamsRepos', 
-              'teams_repos', 
               'data', 
               'models', 
-              'output',
-              'joblib',
               'ramps',
               'user_test_model',
               'shelve*',

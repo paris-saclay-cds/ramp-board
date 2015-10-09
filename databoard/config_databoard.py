@@ -84,6 +84,21 @@ ramp_df_columns = [
 # ignore web* variables if train and web servers, users, roots are the same
 
 ramp_df = pd.DataFrame(columns=ramp_df_columns)
+
+ramp_df = ramp_df.append(pd.Series({
+    'ramp_name' : 'iris',
+    'train_server' : "localhost",
+    'train_user' : 'alex',
+    'train_root' : '/tmp/ramp_iris',
+    'num_cpus' : 1,
+    'web_server' : 'localhost',
+    'web_user' : 'root',
+    'web_root' : 'localhost',
+    'server_port' : '8080',
+    'cv_test_size' : 0.2,
+    'random_state' : 57,
+}, name = 'iris'))
+
 ramp_df = ramp_df.append(pd.Series({
     'ramp_name' : 'pollenating_insects',
     'train_server' : reims_server, 
@@ -148,7 +163,6 @@ ramp_df = ramp_df.append(pd.Series({
 ramp_df[['num_cpus', 'random_state']] = ramp_df[['num_cpus', 'random_state']].astype(int)
 
 notification_recipients = []
-notification_recipients.append("djalel.benbouzid@gmail.com")
 notification_recipients.append("balazs.kegl@gmail.com")
 notification_recipients.append("alexandre.gramfort@gmail.com")
 
