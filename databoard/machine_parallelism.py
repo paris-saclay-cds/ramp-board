@@ -5,6 +5,8 @@ import uuid
 import sys
 import os
 import time
+import traceback
+from joblib import Parallel, delayed
 
 sys.path.append(os.path.dirname(__file__) + "/..")
 """
@@ -96,6 +98,29 @@ class Logger(object):
         #you might want to specify some extra behavior here.
         pass    
 
+def run_job(job_params, output_folder="."):
+    title, job_id, method, args = job_params
+    print("Got a new job : {0}, let's run it !".format(title))
+    filename = os.path.join(output_folder, title + ".out")
+    try:
+        fd = open(filename, "w", buffering=1)
+        bak_stdout = sys.stdout
+        bak_stderr = sys.stderr
+        sys.stdout = Logger(fd, sys.stdout)
+        sys.stderr = sys.stdout
+        status = method(*args)
+        fd.close()
+        sys.stdout = bak_stdout
+        sys.stderr = bak_stderr
+    except Exception, e:
+        print("Exception : ", repr(e))
+        trback = traceback.format_exc()
+        print(trback)
+        e.traceback = trback
+        status = e
+    return status
+
+
 def be_client_forever(host=host, port=port, output_folder="."):
     register_queues()
     q = build_queue_manager(host=host, port=port)
@@ -103,24 +128,12 @@ def be_client_forever(host=host, port=port, output_folder="."):
     available_jobs = q.get_available_jobs()
     finished_jobs = q.get_finished_jobs()
     while True:
-        title, job_id, method, args = available_jobs.get()
-        print("Got a new job : {0}, let's run it !".format(title))
-        filename = os.path.join(output_folder, title + ".out")
-        try:
-            fd = open(filename, "w", buffering=1)
-            bak_stdout = sys.stdout
-            bak_stderr = sys.stderr
-            sys.stdout = Logger(fd, sys.stdout)
-            sys.stderr = sys.stdout
-            status = method(*args)
-            fd.close()
-            sys.stdout = bak_stdout
-            sys.stderr = bak_stderr
-        except Exception, e:
-            print("Exception : ", str(e))
-            status = e
+        job_params = available_jobs.get()
+        _, job_id, _, _ = job_params
+        # run it as a separate process
+        #status = (Parallel(n_jobs=1, backend='multiprocessing')( [ delayed(run_job)(job_params, output_folder) ] ))[0]
+        status = run_job(job_params, output_folder)
         finished_jobs.put((job_id, status))
-
 
 def put_job(method, args, host=host, port=port, title=""):
     register_queues()

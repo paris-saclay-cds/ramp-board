@@ -333,8 +333,12 @@ def run_models(orig_models_df, infinitive, past_participle, gerund, error_state,
             orig_models_df.loc[idx, 'state'] = past_participle
         except Exception, e:
             orig_models_df.loc[idx, 'state'] = error_state
+            if hasattr(e, "traceback"):
+                msg = str(e.traceback)
+            else:
+                msg = repr(e)
             generic.logger.error("{} failed with exception: \n{}".format(
-                str.capitalize(gerund), e))
+                str.capitalize(gerund), msg))
 
             # TODO: put the error in the database instead of a file
             # Keep the model folder clean.
