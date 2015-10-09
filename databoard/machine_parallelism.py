@@ -78,30 +78,57 @@ def serve_forever(host=host, port=port):
     s.serve_forever()
 
 
-def be_client_forever(host=host, port=port):
+from cStringIO import StringIO
+import sys
+
+class Logger(object):
+    def __init__(self, fd, terminal):
+        self.terminal = terminal
+        self.log = fd
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)  
+
+    def flush(self):
+        #this flush method is needed for python 3 compatibility.
+        #this handles the flush command by doing nothing.
+        #you might want to specify some extra behavior here.
+        pass    
+
+def be_client_forever(host=host, port=port, output_folder="."):
     register_queues()
     q = build_queue_manager(host=host, port=port)
     q.connect()
     available_jobs = q.get_available_jobs()
     finished_jobs = q.get_finished_jobs()
     while True:
-        job_id, method, args = available_jobs.get()
-        print("Got a new job : {0}, let's run it !".format(job_id))
+        title, job_id, method, args = available_jobs.get()
+        print("Got a new job : {0}, let's run it !".format(title))
+        filename = os.path.join(output_folder, title + ".out")
         try:
+            fd = open(filename, "w", buffering=1)
+            bak_stdout = sys.stdout
+            bak_stderr = sys.stderr
+            sys.stdout = Logger(fd, sys.stdout)
+            sys.stderr = sys.stdout
             status = method(*args)
+            fd.close()
+            sys.stdout = bak_stdout
+            sys.stderr = bak_stderr
         except Exception, e:
             print("Exception : ", str(e))
             status = e
         finished_jobs.put((job_id, status))
 
 
-def put_job(method, args, host=host, port=port):
+def put_job(method, args, host=host, port=port, title=""):
     register_queues()
     job_id = str(uuid.uuid1())
     q = build_queue_manager(host=host, port=port)
     q.connect()
     available_jobs = q.get_available_jobs()
-    available_jobs.put((job_id, method, args))
+    available_jobs.put((title, job_id, method, args))
     print("Putting a new job : {0} with method {1}".format(job_id, method))
     return job_id
 
@@ -136,12 +163,14 @@ if __name__ == "__main__":
     parser.add_argument("mode", help="client|server")
     parser.add_argument("--host", help="host", default=host)
     parser.add_argument("--port", help="port", default=port, type=int)
+    parser.add_argument("--output-folder", help="output-folder", default=".", type=str)
+ 
     args = parser.parse_args()
     if len(sys.argv) <= 1:
         parser.print_help()
         sys.exit(0)
     if args.mode == "client":
-        be_client_forever(host=args.host, port=args.port)
+        be_client_forever(host=args.host, port=args.port, output_folder=args.output_folder)
     elif args.mode == "server":
         serve_forever(host=args.host, port=args.port)
     else:

@@ -22,7 +22,7 @@ import machine_parallelism
 n_processes = config_databoard.get_ramp_field('num_cpus')
 
 #@generic.mem.cache
-def run_on_folds(method, full_model_path, cv):
+def run_on_folds(method, full_model_path, cv, **kwargs):
     """Runs various combinations of train, validate, and test on all folds.
     If is_parallelize is True, it will launch the jobs in parallel on different
     cores.
@@ -35,11 +35,17 @@ def run_on_folds(method, full_model_path, cv):
     cv : a list of pairs of training and validation indices, identifying the
         folds
     """
+
+    if "team" in kwargs and "tag" in kwargs:
+        title = "{0}_{1}".format(kwargs["team"], kwargs["tag"])
+    else:
+        title = full_model_path.replace("/", "_")
+
     if config_databoard.is_parallelize:
         if config_databoard.is_parallelize_across_machines:
             job_ids = set()
-            for cv_is in cv:
-                job_id = machine_parallelism.put_job(method, (cv_is, full_model_path))
+            for i, cv_is in enumerate(cv):
+                job_id = machine_parallelism.put_job(method, (cv_is, full_model_path), title=title + "_cv{0}".format(i))
                 job_ids.add(job_id)
             try:
                 job_status = machine_parallelism.wait_for_jobs_and_get_status(
@@ -322,7 +328,7 @@ def run_models(orig_models_df, infinitive, past_participle, gerund, error_state,
             str.capitalize(gerund), model_df['team'], model_df['model']))
 
         try:
-            run_on_folds(method, full_model_path, cv)
+            run_on_folds(method, full_model_path, cv, team=model_df["team"], tag=model_df["model"])
             # failed_models.drop(idx, axis=0, inplace=True)
             orig_models_df.loc[idx, 'state'] = past_participle
         except Exception, e:
