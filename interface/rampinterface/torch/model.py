@@ -20,7 +20,6 @@ def model(X_train, y_train, X_test):
     if y_train_shape_dim == 1:
         y_train = y_train[:, np.newaxis]
 
-
     header = ["TARGET"] + ["v%d" % (i,) for i in xrange(X_train.shape[1])]
 
     train = np.concatenate((y_train, X_train), axis=1)
@@ -45,7 +44,8 @@ def model(X_train, y_train, X_test):
 
     try:
 
-        subprocess.call("cd %s; luajit model_generic.lua --train %s --test %s --outputproba %s --outputtargets %s" % (path, train_tmp_file.name, test_tmp_file.name, proba_tmp_file.name, targets_tmp_file.name), shell=True)
+        subprocess.call("cd %s; luajit model_generic.lua --train %s --test %s --outputproba %s --outputtargets %s" %
+                        (path, train_tmp_file.name, test_tmp_file.name, proba_tmp_file.name, targets_tmp_file.name), shell=True)
 
         proba = pd.read_csv(proba_tmp_file.name, header=None).values
         targets = pd.read_csv(targets_tmp_file.name, header=None).values

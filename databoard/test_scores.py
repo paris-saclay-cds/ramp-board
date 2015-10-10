@@ -5,6 +5,7 @@ import numpy as np
 from numpy.testing import assert_equal
 from scores import ScoreAuc, ScoreAccuracy, ScoreError
 
+
 def test_score_auc():
     y_test_list = np.array([0, 0, 0, 0, 1, 1, 1, 1])
     y_pred_list = np.array([1, 2, 3, 4, 5, 6, 7, 8])
@@ -18,12 +19,14 @@ def test_score_auc():
     score = score_function.score(y_test_list, y_pred_list)
     assert_equal(score, 0.0)
 
+
 def test_score_accuracy():
     y_test_list = np.array([0, 0, 0, 0, 1, 1, 1, 1])
     y_pred_list = np.array([0, 0, 0, 0, 1, 1, 1, 1])
     score_function = ScoreAccuracy()
     score = score_function.score(y_test_list, y_pred_list)
     assert_equal(score, 1.0)
+
 
 def test_score_error():
     y_test_list = np.array([0, 0, 0, 0, 1, 1, 1, 1])

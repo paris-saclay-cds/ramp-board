@@ -8,8 +8,10 @@
 import numpy as np
 from sklearn.metrics import accuracy_score, roc_curve, auc
 
+
 class ScoreObject():
-    def __init__(self, score, eps = 10 ** -8):
+
+    def __init__(self, score, eps=10 ** -8):
         self.score = score
         self.eps = eps
         self.dtype = np.dtype(np.float)
@@ -28,14 +30,16 @@ class ScoreObject():
 
     def __str__(self):
         return "{:.4f}".format(self.score)
-    
+
     __repr__ = __str__
 
     def __eq__(self, right):
         return abs(self.score - right.score) <= self.eps
 
+
 class ScoreLowerTheBetter(ScoreObject):
-    def __init__(self, score, eps = 10 ** -8):
+
+    def __init__(self, score, eps=10 ** -8):
         ScoreObject.__init__(self, score, eps)
 
     def __add__(self, right):
@@ -46,9 +50,11 @@ class ScoreLowerTheBetter(ScoreObject):
 
     def __gt__(self, right):
         return self.score < right.score - self.eps
+
 
 class ScoreHigherTheBetter(ScoreObject):
-    def __init__(self, score, eps = 10 ** -8):
+
+    def __init__(self, score, eps=10 ** -8):
         ScoreObject.__init__(self, score, eps)
 
     def __add__(self, right):
@@ -60,33 +66,39 @@ class ScoreHigherTheBetter(ScoreObject):
     def __gt__(self, right):
         return self.score > right.score + self.eps
 
+
 class ScoreFunction():
+
     def __init__(self, eps=10 ** -8):
         self.eps = eps
-        self.higher_the_better = True #default
+        self.higher_the_better = True  # default
 
     def set_labels(self, labels):
-        self.labels = np.sort(labels) # sklearn policy
+        self.labels = np.sort(labels)  # sklearn policy
         self.label_index_dict = dict(zip(self.labels, range(len(self.labels))))
 
     def set_eps(self, eps):
         self.eps = eps
 
+
 class Accuracy(ScoreFunction):
+
     def __call__(self, ground_truth, predictions):
         y_pred_array = predictions.get_pred_index_array()
         ground_truth_pred_array = ground_truth.get_pred_index_array()
-        #print y_pred_array
-        #print ground_truth_pred_array
-        #print accuracy_score(ground_truth_pred_array, y_pred_array)
-        #print "\n"
+        # print y_pred_array
+        # print ground_truth_pred_array
+        # print accuracy_score(ground_truth_pred_array, y_pred_array)
+        # print "\n"
         return ScoreHigherTheBetter(
             accuracy_score(ground_truth_pred_array, y_pred_array), self.eps)
 
     def zero(self):
         return ScoreHigherTheBetter(0.0, self.eps)
 
+
 class Error(ScoreFunction):
+
     def __call__(self, ground_truth, predictions):
         y_pred_array = predictions.get_pred_index_array()
         ground_truth_pred_array = ground_truth.get_pred_index_array()
@@ -96,7 +108,9 @@ class Error(ScoreFunction):
     def zero(self):
         return ScoreLowerTheBetter(0.0, self.eps)
 
+
 class NegativeLogLikelihood(ScoreFunction):
+
     def __call__(self, ground_truth, predictions):
         y_probas_array = predictions.get_prediction_array()
         ground_truth_probas_array = ground_truth.get_prediction_array()
@@ -104,9 +118,11 @@ class NegativeLogLikelihood(ScoreFunction):
         y_probas_array_normalized = \
             y_probas_array / np.sum(y_probas_array, axis=1, keepdims=True)
         # Kaggle's rule
-        y_probas_array_limited = np.maximum(y_probas_array_normalized, 10 ** -15)
-        y_probas_array_limited = np.minimum(y_probas_array_normalized, 1 - 10 ** -15)
-        scores = - np.sum(np.log(y_probas_array_limited) * ground_truth_probas_array, 
+        y_probas_array_limited = np.maximum(
+            y_probas_array_normalized, 10 ** -15)
+        y_probas_array_limited = np.minimum(
+            y_probas_array_normalized, 1 - 10 ** -15)
+        scores = - np.sum(np.log(y_probas_array_limited) * ground_truth_probas_array,
                           axis=1)
         score = np.mean(scores)
         return ScoreLowerTheBetter(score)
@@ -114,7 +130,9 @@ class NegativeLogLikelihood(ScoreFunction):
     def zero(self):
         return ScoreLowerTheBetter(0.0, self.eps)
 
+
 class RMSE(ScoreFunction):
+
     def __call__(self, ground_truth_list, predictions):
         y_pred_array = predictions.get_predictions()
         score = np.sqrt(np.mean(np.square(ground_truth_list - y_pred_array)))
@@ -122,4 +140,3 @@ class RMSE(ScoreFunction):
 
     def zero(self):
         return ScoreLowerTheBetter(0.0, self.eps)
-

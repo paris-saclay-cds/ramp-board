@@ -7,7 +7,8 @@ import pandas as pd
 from importlib import import_module
 from sklearn.cross_validation import ShuffleSplit, train_test_split
 # menu
-import regression_prediction_type as prediction_type # menu polymorphism example
+# menu polymorphism example
+import regression_prediction_type as prediction_type
 import scores
 
 from .config_databoard import (
@@ -22,7 +23,7 @@ from .config_databoard import (
 
 sys.path.append(os.path.dirname(os.path.abspath(models_path)))
 
-# should be the same as the directory in ramp, and fab publish should also be 
+# should be the same as the directory in ramp, and fab publish should also be
 # called with the same name as parameter
 ramp_name = 'amadeus'
 # will be displayed on the web site
@@ -37,13 +38,15 @@ train_filename = os.path.join(public_data_path, 'train.csv')
 test_filename = os.path.join(private_data_path, 'test.csv')
 
 from multiprocessing import cpu_count
-n_CV = 2 if local_deployment else cpu_count() #n_processes
+n_CV = 2 if local_deployment else cpu_count()  # n_processes
 
 score = scores.RMSE()
+
 
 def read_data(df_filename):
     data = pd.read_csv(df_filename)
     return data
+
 
 def prepare_data():
     try:
@@ -62,8 +65,9 @@ def prepare_data():
     if not os.path.exists(private_data_path):
         os.mkdir(private_data_path)
 
-    df_train.to_csv(train_filename) 
+    df_train.to_csv(train_filename)
     df_test.to_csv(test_filename)
+
 
 def split_data():
     df_train = read_data(train_filename)
@@ -73,9 +77,10 @@ def split_data():
     X_test_df = df_test.drop(target_column_name, axis=1)
     y_test_array = df_test[target_column_name].values
     skf = ShuffleSplit(
-        y_train_array.shape[0], n_iter=n_CV, test_size=skf_test_size, 
+        y_train_array.shape[0], n_iter=n_CV, test_size=skf_test_size,
         random_state=random_state)
     return X_train_df, y_train_array, X_test_df, y_test_array, skf
+
 
 def train_model(module_path, X_df, y_array, skf_is):
     # Feature extraction
@@ -91,6 +96,7 @@ def train_model(module_path, X_df, y_array, skf_is):
     reg = regressor.Regressor()
     reg.fit(X_train_array, y_train_array)
     return fe, reg
+
 
 def test_model(trained_model, X_df, skf_is):
     fe, reg = trained_model

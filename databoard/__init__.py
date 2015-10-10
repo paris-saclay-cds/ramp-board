@@ -12,7 +12,7 @@ app.config['MAIL_DEBUG'] = app.debug
 app.config['MAIL_USERNAME'] = 'databoardmailer@gmail.com'
 app.config['MAIL_PASSWORD'] = 'peace27man'
 app.config['MAIL_DEFAULT_SENDER'] = ('Databoard', 'databoardmailer@gmail.com')
-app.config['MAIL_RECIPIENTS'] = '' #notification_recipients
+app.config['MAIL_RECIPIENTS'] = ''  # notification_recipients
 app.config['LOG_FILENAME'] = None  # if None, output to screen
 
 # app.debug_mode = True
@@ -25,7 +25,7 @@ logging.basicConfig(
 # else:
 #     mail_handler = SMTPHandler(mailhost=app.config['MAIL_SERVER'],
 #         fromaddr=app.config['MAIL_DEFAULT_SENDER'],
-#         toaddrs=app.config['MAIL_RECIPIENTS'], 
+#         toaddrs=app.config['MAIL_RECIPIENTS'],
 #         subject='Databoard error')
 #     mail_handler.setFormatter(logging.Formatter('''\
 #         Message type:       %(levelname)s
@@ -40,4 +40,3 @@ logging.basicConfig(
 #     logger = logging.getLogger('databoard')
 #     logger.setLevel(logging.ERROR)
 #     logger.addHandler(mail_handler)
-

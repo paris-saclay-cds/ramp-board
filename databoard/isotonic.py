@@ -142,6 +142,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
 
 
 class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
+
     """Isotonic regression model.
 
     The isotonic regression optimization problem is defined by::
@@ -218,6 +219,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     Correctness of Kruskal's algorithms for monotone regression with ties
     Leeuw, Psychometrica, 1977
     """
+
     def __init__(self, y_min=None, y_max=None, increasing=True,
                  out_of_bounds='nan'):
         self.y_min = y_min
@@ -258,7 +260,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             self.increasing_ = check_increasing(X, y)
         else:
             self.increasing_ = self.increasing
-        # If sample_weights is passed, removed zero-weight values and clean order
+        # If sample_weights is passed, removed zero-weight values and clean
+        # order
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
             mask = sample_weight > 0
@@ -269,7 +272,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         order_inv = np.argsort(order)
         X, y, sample_weight = [astype(array[order], np.float64, copy=False)
                                for array in [X, y, sample_weight]]
-        unique_X, unique_y, unique_sample_weight = _make_unique(X, y, sample_weight)
+        unique_X, unique_y, unique_sample_weight = _make_unique(
+            X, y, sample_weight)
         self.X_ = unique_X
         self.y_ = isotonic_regression(unique_y, unique_sample_weight, self.y_min,
                                       self.y_max, increasing=self.increasing_)

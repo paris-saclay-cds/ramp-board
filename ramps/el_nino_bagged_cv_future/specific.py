@@ -10,7 +10,8 @@ import pandas as pd
 from importlib import import_module
 from sklearn.cross_validation import ShuffleSplit
 # menu
-import regression_prediction_type as prediction_type # menu polymorphism example
+# menu polymorphism example
+import regression_prediction_type as prediction_type
 import scores
 import config_databoard
 
@@ -26,25 +27,27 @@ n_CV = config_databoard.get_ramp_field('num_cpus')
 
 en_lat_bottom = -5
 en_lat_top = 5
-en_lon_left = 360-170
-en_lon_right = 360-120
+en_lon_left = 360 - 170
+en_lon_right = 360 - 120
 n_burn_in = 120
 n_lookahead = 6
 
 #raw_filename = os.path.join(raw_data_path, 'data.csv')
-train_filename = os.path.join(config_databoard.public_data_path, 
-    'resampled_tas_Amon_CCSM4_piControl_r1i1p1_080001-130012.nc')
-test_filename = os.path.join(config_databoard.private_data_path, 
-    'resampled_tas_Amon_CCSM4_piControl_r2i1p1_095301-110812.nc')
+train_filename = os.path.join(config_databoard.public_data_path,
+                              'resampled_tas_Amon_CCSM4_piControl_r1i1p1_080001-130012.nc')
+test_filename = os.path.join(config_databoard.private_data_path,
+                             'resampled_tas_Amon_CCSM4_piControl_r2i1p1_095301-110812.nc')
 
 score = scores.RMSE()
 
+
 def get_enso_mean(tas):
-    return tas.loc[:, en_lat_bottom:en_lat_top, en_lon_left:en_lon_right].mean(dim=('lat','lon'))
+    return tas.loc[:, en_lat_bottom:en_lat_top, en_lon_left:en_lon_right].mean(dim=('lat', 'lon'))
+
 
 def read_data(xray_filename):
     temperatures_xray = xray.open_dataset(xray_filename, decode_times=False)
-    # ridiculous as it sounds, there is simply no way to convert a date starting 
+    # ridiculous as it sounds, there is simply no way to convert a date starting
     # with the year 800 into pd array
     temperatures_xray['time'] = pd.date_range(
         '1/1/1700', periods=temperatures_xray['time'].shape[0], freq='M') - \
@@ -55,36 +58,42 @@ def read_data(xray_filename):
     #temperatures_xray['target'] = target
     return temperatures_xray
 
+
 def prepare_data():
     pass
     # train and tes splits are given
+
 
 def get_train_data():
     X_train_xray = read_data(train_filename)
     y_train_array = X_train_xray['target'].values[n_burn_in:-n_lookahead]
     return X_train_xray, y_train_array
 
+
 def get_test_data():
     X_test_xray = read_data(test_filename)
     y_test_array = X_test_xray['target'].values[n_burn_in:-n_lookahead]
     return X_test_xray, y_test_array
+
 
 def get_check_data():
     X_test_xray = read_data(test_filename)
     y_test_array = X_test_xray['target'].values[n_burn_in:-n_lookahead]
     return X_test_xray, y_test_array
 
+
 def get_cv(y_train_array):
     print y_train_array.shape
     n = y_train_array.shape[0]
     cv_test_n = int(n * cv_test_size)
-    cv1 = ShuffleSplit(n - cv_test_n, n_iter=n_CV, 
-                      test_size=cv_bag_size, random_state=random_state)
+    cv1 = ShuffleSplit(n - cv_test_n, n_iter=n_CV,
+                       test_size=cv_bag_size, random_state=random_state)
     test_is = np.arange(n - cv_test_n, n)
     cv = []
     for train_is, _ in cv1:
         cv.append((train_is, test_is))
     return cv
+
 
 def check_model(module_path, X_xray, y_array, cv_is):
     check_index = 250
@@ -94,13 +103,15 @@ def check_model(module_path, X_xray, y_array, cv_is):
     X1 = ts_fe.transform(X_xray, n_burn_in, n_lookahead, cv_is)
     check_xray = X_xray.copy(deep=True)
     check_xray['tas'][n_burn_in + check_index:] += \
-        np.random.normal(0.0, 10.0, check_xray['tas'][n_burn_in + check_index:].shape)
+        np.random.normal(
+            0.0, 10.0, check_xray['tas'][n_burn_in + check_index:].shape)
     X2 = ts_fe.transform(check_xray, n_burn_in, n_lookahead, cv_is)
-    first_modified_index = np.argmax(np.not_equal(X1, X2)[:,0])
+    first_modified_index = np.argmax(np.not_equal(X1, X2)[:, 0])
     if first_modified_index < check_index:
         message = "The feature extractor looks into the future by {} months".format(
             check_index - first_modified_index)
         raise AssertionError(message)
+
 
 def train_model(module_path, X_xray, y_array, cv_is):
     X_xray = X_xray.copy(deep=True)
@@ -116,6 +127,7 @@ def train_model(module_path, X_xray, y_array, cv_is):
     reg = regressor.Regressor()
     reg.fit(X_train_array, y_train_array)
     return ts_fe, reg
+
 
 def test_model(trained_model, X_xray, cv_is):
     X_xray = X_xray.copy(deep=True)
