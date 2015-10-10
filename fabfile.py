@@ -1,4 +1,5 @@
 import os
+import glob
 import logging
 import numpy as np
 import pandas as pd
@@ -124,6 +125,10 @@ def print_db(table='models', state=None):
 def fetch():
     from databoard.fetch import fetch_models
     fetch_models()
+
+def add_models():
+    from databoard.fetch import add_models
+    add_models()
 
 
 def repeat_fetch(delay='60'):
@@ -510,3 +515,5 @@ def publish_data(ramp_index, local=False):
             ramp_index, 'train_user', 'train_server', 'train_root') + "/"
     print command2
     os.system(command2)
+
+

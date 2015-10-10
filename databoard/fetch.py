@@ -230,3 +230,77 @@ def fetch_models():
             logger.error('Unable to send email notifications for new models.')
     else:
         logger.debug('No new submission.')
+
+def add_models():
+    submission_paths = sorted(glob.glob(os.path.join(
+        config_databoard.submissions_path, '*/*')))
+
+    open(
+        os.path.join(config_databoard.models_path, '__init__.py'), 'a').close()
+
+    for submission_path in submission_paths:
+        team_path, tag_name = os.path.split(submission_path)
+        _, team_name = os.path.split(team_path)
+        tag_name_alias = get_tag_uid(team_name, tag_name)
+        team_model_path = os.path.join(config_databoard.models_path, team_name)
+        model_path = os.path.join(team_model_path, tag_name_alias)
+        submission_files = os.listdir(submission_path)
+        submission_files_listing = '|'.join(submission_files)
+        submission_times = [
+            os.path.getmtime(os.path.join(submission_path, submission_file)) 
+            for submission_file in submission_files]
+        submission_time = max(submission_times)
+
+        logger.info("Adding team={}, tag={}, alias={}".format(
+            team_name, tag_name, tag_name_alias))
+
+        if not os.path.exists(team_model_path):
+            os.mkdir(team_model_path)
+        open(os.path.join(team_model_path, '__init__.py'), 'a').close()
+
+        with shelve_database() as db:
+            # skip if the model is trained, tested, or ignore, otherwise,
+            # replace the entry with a new one
+            if tag_name_alias in db['models'].index:
+                if db['models'].loc[tag_name_alias, 'state'] in \
+                        ['tested', 'trained', 'ignore']:
+                    logger.info("Model is already in database, skipping")
+                    continue
+                elif db['models'].loc[tag_name_alias, 'state'] == 'error':
+                    # if the failed model timestamp has changed
+                    if db['models'].loc[tag_name_alias, 'timestamp'] < \
+                            submission_time:
+                        logger.info("Resubmitting failed model")
+                        # deleting it from the db
+                        db['models'].drop(tag_name_alias, inplace=True)
+                    else:
+                        logger.info("No new submission for failed model")
+                        continue
+                elif db['models'].loc[tag_name_alias, 'state'] == 'new':
+                    # we allow resubmission for new models
+                    db['models'].drop(tag_name_alias, inplace=True)
+                else:
+                    logger.error("You introduced a new state, please handle it")
+
+            # we can now add the new entry
+            new_entry = pd.DataFrame({
+                'team': team_name,
+                'model': tag_name,
+                'timestamp': submission_time,
+                'state': "new",
+                'listing': submission_files_listing,
+            }, index=[tag_name_alias])
+
+            db['models'] = db['models'].append(new_entry)
+
+            # clean up the model directory in case it's a resubmission
+            if os.path.exists(model_path):
+                shutil.rmtree(model_path)
+            os.mkdir(model_path)
+            open(os.path.join(model_path, '__init__.py'), 'a').close()
+
+            # copy the submission files into the model directory
+            for submission_file in submission_files:
+                src = os.path.join(submission_path, submission_file)
+                dst = os.path.join(model_path, submission_file)
+                shutil.copy2(src, dst)  # copying also metadata

@@ -18,11 +18,12 @@ tag_len_limit = 40
 # paths
 repos_path = os.path.join(root_path, 'teams_repos')
 ground_truth_path = os.path.join(root_path, 'ground_truth')
+models_path = os.path.join(root_path, 'models')
+submissions_path = os.path.join(root_path, 'submissions')
 data_path = os.path.join(root_path, 'data')
 raw_data_path = os.path.join(data_path, 'raw')
 public_data_path = os.path.join(data_path, 'public')
 private_data_path = os.path.join(data_path, 'private')
-models_path = os.path.join(root_path, 'models')
 
 cachedir = '.'
 
