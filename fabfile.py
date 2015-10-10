@@ -98,7 +98,7 @@ def setup():
     clear_registrants()
     # Flush joblib cache
     clear_cache()
-    todo: set up database
+    #todo: set up database
 
 def print_db(table='models', state=None):
     with shelve_database('c') as db:
@@ -107,6 +107,7 @@ def print_db(table='models', state=None):
             print '\n'.join('\t- {}'.format(t) for t in db)
             return
         df = db[table]
+    pd.set_option('display.max_rows', len(df))
     if not state:
         print df
     else:
@@ -137,6 +138,7 @@ def leaderboard(which='all', test=False, calibrate=False):
                     submissions['state'] == "trained",
                     submissions['state'] == "tested"], axis=0)]
         tested_models = submissions[submissions['state'] == "tested"]
+        pd.set_option('display.max_rows', len(trained_models))
         print trained_models
 
     if which in ('all', 'classical'):
