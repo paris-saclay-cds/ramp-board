@@ -8,7 +8,7 @@ if len(sys.argv) < 3:
     print "default : nan_representation=-999"
     sys.exit(0)
 
-if len(sys.argv)==4:
+if len(sys.argv) == 4:
     nan_repr = int(sys.argv[3])
 else:
     nan_repr = -999

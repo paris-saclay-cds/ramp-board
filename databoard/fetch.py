@@ -2,25 +2,23 @@
 # License: BSD 3 clause
 
 import os
-import sys
 import git
 import glob
 import shutil
 import logging
-import hashlib 
-import numpy as np
+import hashlib
 import pandas as pd
 
 from flask_mail import Mail
 from flask_mail import Message
 
 from databoard import app
-from .model import shelve_database, columns, ModelState
-from .generic import changedir
+from .model import shelve_database, columns
 import specific
 import config_databoard
 
 logger = logging.getLogger('databoard')
+
 
 def get_tag_uid(team_name, tag_name, **kwargs):
     sha_hasher = hashlib.sha1()
@@ -29,21 +27,28 @@ def get_tag_uid(team_name, tag_name, **kwargs):
     tag_name_alias = 'm{}'.format(sha_hasher.hexdigest())
     return tag_name_alias
 
+
 def send_mail_notif(submissions):
     with app.app_context():
         mail = Mail(app)
 
-        logger.info('Sending notification email to: {}'.format(', '.join(notification_recipients)))
-        msg = Message('New submissions in the ' + specific.hackaton_title + ' hackaton', 
-            reply_to='djalel.benbouzid@gmail.com')
+        logger.info('Sending notification email to: {}'.format(
+            ', '.join(notification_recipients)))
+        msg = Message('New submissions in the ' + specific.hackaton_title + ' hackaton',
+                      reply_to='djalel.benbouzid@gmail.com')
 
         msg.recipients = notification_recipients
 
-        body_message = '<b>Dataset</b>: {}<br/>'.format(specific.hackaton_title)
-        body_message += '<b>Server</b>: {}<br/>'.format(config_databoard.get_ramp_field('deploy_server'))
-        body_message += '<b>Port</b>: {}<br/>'.format(config_databoard.get_ramp_field('server_port'))
-        body_message += '<b>Path</b>: {}<br/>'.format(config_databoard.get_destination_path())
-        body_message += '<b>Num_CPUs</b>: {}<br/>'.format(config_databoard.get_ramp_field('num_cpus'))
+        body_message = '<b>Dataset</b>: {}<br/>'.format(
+            specific.hackaton_title)
+        body_message += '<b>Server</b>: {}<br/>'.format(
+            config_databoard.get_ramp_field('deploy_server'))
+        body_message += '<b>Port</b>: {}<br/>'.format(
+            config_databoard.get_ramp_field('server_port'))
+        body_message += '<b>Path</b>: {}<br/>'.format(
+            config_databoard.get_destination_path())
+        body_message += '<b>Num_CPUs</b>: {}<br/>'.format(
+            config_databoard.get_ramp_field('num_cpus'))
 
         body_message += 'New submissions: <br/><ul>'
         for team, tag in submissions:
@@ -69,9 +74,11 @@ def fetch_models():
     repo_paths = sorted(glob.glob(os.path.join(base_path, '*')))
 
     if not os.path.exists(config_databoard.models_path):
-        logger.warning("Models folder didn't exist. An empty folder was created.")
+        logger.warning(
+            "Models folder didn't exist. An empty folder was created.")
         os.mkdir(config_databoard.models_path)
-    open(os.path.join(config_databoard.models_path, '__init__.py'), 'a').close()
+    open(
+        os.path.join(config_databoard.models_path, '__init__.py'), 'a').close()
 
     new_submissions = set()  # a set of submission hashes
 
@@ -81,7 +88,7 @@ def fetch_models():
             db['models'] = pd.DataFrame(columns=columns)
         models = db['models']
         old_submissions = set(models.index)
-        old_failed_submissions = set(models[models['state'] == 'error'].index) 
+        old_failed_submissions = set(models[models['state'] == 'error'].index)
 
     for repo_path in repo_paths:
 
@@ -100,7 +107,7 @@ def fetch_models():
         for t in repo.tags:
             tag_name = t.name
             tag_name_alias = get_tag_uid(team_name, tag_name)
-            # We delete tags of failed submissions, so they 
+            # We delete tags of failed submissions, so they
             # can be refetched
             if tag_name_alias in old_failed_submissions:
                 logger.debug('Deleting local tag: {}'.format(tag_name))
@@ -115,7 +122,8 @@ def fetch_models():
         try:
             repo.remotes.origin.pull()
         except Exception as e:
-            logger.error('Unable to pull from repo. Possibly no connexion: \n{}'.format(e))
+            logger.error(
+                'Unable to pull from repo. Possibly no connexion: \n{}'.format(e))
 
         repo_path = os.path.join(config_databoard.models_path, team_name)
         if not os.path.exists(repo_path):
@@ -126,7 +134,7 @@ def fetch_models():
             logger.debug('No tag found for %s' % team_name)
 
         for t in repo.tags:
-            
+
             # FIXME: this huge try-except is a nightmare
             try:
                 tag_name = t.name
@@ -142,10 +150,11 @@ def fetch_models():
 
                 with shelve_database() as db:
 
-                    # skip if the model is trained, otherwise, replace the entry with a new one
+                    # skip if the model is trained, otherwise, replace the
+                    # entry with a new one
                     if tag_name_alias in db['models'].index:
                         if db['models'].loc[tag_name_alias, 'state'] in \
-                            ['tested', 'trained', 'ignore']:
+                                ['tested', 'trained', 'ignore']:
                             continue
                         elif db['models'].loc[tag_name_alias, 'state'] == 'error':
 
@@ -160,7 +169,6 @@ def fetch_models():
                             # default case
                             db['models'].drop(tag_name_alias, inplace=True)
 
-
                     # recursively copy the model files
                     try:
                         copy_git_tree(t.object.tree, model_path)
@@ -172,20 +180,24 @@ def fetch_models():
                     relative_path = os.path.join(team_name, tag_name_alias)
 
                     # listing the model files
-                    file_listing = [f for f in os.listdir(model_path) if os.path.isfile(os.path.join(model_path, f))]
+                    file_listing = [f for f in os.listdir(
+                        model_path) if os.path.isfile(os.path.join(model_path, f))]
 
                     # filtering useless files
-                    file_listing = filter(lambda f: not f.startswith('__'), file_listing)
-                    file_listing = filter(lambda f: not f.endswith('.pyc'), file_listing)
+                    file_listing = filter(
+                        lambda f: not f.startswith('__'), file_listing)
+                    file_listing = filter(
+                        lambda f: not f.endswith('.pyc'), file_listing)
                     # file_listing = filter(lambda f: not f.endswith('.csv'), file_listing)
-                    file_listing = filter(lambda f: not f.endswith('error.txt'), file_listing)
+                    file_listing = filter(
+                        lambda f: not f.endswith('error.txt'), file_listing)
                     file_listing = '|'.join(file_listing)
 
-                    # prepre a dataframe for the concatnation 
+                    # prepre a dataframe for the concatnation
                     new_entry = pd.DataFrame({
-                        'team': team_name, 
-                        'model': tag_name, 
-                        'timestamp': new_commit_time, 
+                        'team': team_name,
+                        'model': tag_name,
+                        'timestamp': new_commit_time,
                         'state': "new",
                         'listing': file_listing,
                     }, index=[tag_name_alias])
@@ -208,7 +220,8 @@ def fetch_models():
     with shelve_database() as db:
         df = db['models']
         logger.debug(df)
-        really_new_submissions = df.loc[new_submissions - old_submissions][['team', 'model']].values
+        really_new_submissions = df.loc[
+            new_submissions - old_submissions][['team', 'model']].values
 
     if len(really_new_submissions):
         try:

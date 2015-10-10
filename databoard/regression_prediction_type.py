@@ -4,7 +4,9 @@
 import csv
 import numpy as np
 
+
 class PredictionType:
+
     def __init__(self, prediction):
         self.y_pred = prediction
 
@@ -14,7 +16,9 @@ class PredictionType:
     def get_prediction(self):
         return self.y_pred
 
+
 class PredictionArrayType:
+
     def __init__(self, *args, **kwargs):
         if 'y_pred_array' in kwargs.keys():
             self.y_pred_array = kwargs['y_pred_array']
@@ -43,36 +47,37 @@ class PredictionArrayType:
         """Returns an array which can be combined by taking means"""
         return self.get_predictions()
 
-
-
-    def combine(self, indexes = []):
+    def combine(self, indexes=[]):
         # Not yet used
 
         # usually the class contains arrays corresponding to predictions
-        # for a set of different data points. Here we assume that it is 
+        # for a set of different data points. Here we assume that it is
         # a list of predictions produced by different functions on the same
         # data point. We return a single PrdictionType
 
-        #Just saving here in case we want to go back there how to 
-        #combine based on simply ranks, k = len(indexes)
+        # Just saving here in case we want to go back there how to
+        # combine based on simply ranks, k = len(indexes)
         #n = len(y_preds[0])
-        #n_ones = n * k - y_preds[indexes].sum() # number of zeros
-        if len(indexes) == 0: # we combine the full list
+        # n_ones = n * k - y_preds[indexes].sum() # number of zeros
+        if len(indexes) == 0:  # we combine the full list
             indexes = range(len(self.y_probas_array))
         combined_y_preds = self.y_preds_array.mean()
         combined_prediction = PredictionType(combined_y_preds)
         return combined_prediction
+
 
 def get_nan_combineable_predictions(num_points):
     predictions = np.empty(num_points, dtype=float)
     predictions.fill(np.nan)
     return predictions
 
+
 def get_y_pred_array(y_probas_array):
     return np.array([labels[y_probas.argmax()] for y_probas in y_probas_array])
 
-# also think about working with matrices of PredictionType instead of 
+# also think about working with matrices of PredictionType instead of
 # lists of PredictionArrayType
+
+
 def transpose(predictions_list):
     pass
-

@@ -62,7 +62,8 @@ host, port, password = '0.0.0.0', 50000, 'insects'
 
 def register_queues():
     available_jobs = Queue.Queue()
-    QueueManager.register('get_available_jobs', callable=lambda: available_jobs)
+    QueueManager.register(
+        'get_available_jobs', callable=lambda: available_jobs)
     finished_jobs = Queue.Queue()
     QueueManager.register('get_finished_jobs', callable=lambda: finished_jobs)
 
@@ -81,6 +82,7 @@ def serve_forever(host=host, port=port):
 
 
 class Logger(object):
+
     def __init__(self, fd, terminal):
         self.terminal = terminal
         self.log = fd
@@ -90,10 +92,11 @@ class Logger(object):
         self.log.write(message)
 
     def flush(self):
-        #this flush method is needed for python 3 compatibility.
-        #this handles the flush command by doing nothing.
-        #you might want to specify some extra behavior here.
+        # this flush method is needed for python 3 compatibility.
+        # this handles the flush command by doing nothing.
+        # you might want to specify some extra behavior here.
         pass
+
 
 def run_job(job_params, output_folder="."):
     title, job_id, method, args = job_params
@@ -131,6 +134,7 @@ def be_client_forever(host=host, port=port, output_folder="."):
         #status = (Parallel(n_jobs=1, backend='multiprocessing')( [ delayed(run_job)(job_params, output_folder) ] ))[0]
         status = run_job(job_params, output_folder)
         finished_jobs.put((job_id, status))
+
 
 def put_job(method, args, host=host, port=port, title=""):
     register_queues()
@@ -175,14 +179,16 @@ if __name__ == "__main__":
     parser.add_argument("mode", help="client|server")
     parser.add_argument("--host", help="host", default=host)
     parser.add_argument("--port", help="port", default=port, type=int)
-    parser.add_argument("--output-folder", help="output-folder", default=".", type=str)
+    parser.add_argument(
+        "--output-folder", help="output-folder", default=".", type=str)
 
     args = parser.parse_args()
     if len(sys.argv) <= 1:
         parser.print_help()
         sys.exit(0)
     if args.mode == "client":
-        be_client_forever(host=args.host, port=args.port, output_folder=args.output_folder)
+        be_client_forever(
+            host=args.host, port=args.port, output_folder=args.output_folder)
     elif args.mode == "server":
         serve_forever(host=args.host, port=args.port)
     else:

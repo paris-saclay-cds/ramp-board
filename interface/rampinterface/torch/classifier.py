@@ -15,8 +15,8 @@ class Classifier(BaseEstimator):
     interface_folder = "/home/mcherti/ramp/interface/rampinterface/torch"
 
     def __init__(self,
-                 data_filename=interface_folder+"/insects.t7",
-                 labels_filename=interface_folder+"/labels",
+                 data_filename=interface_folder + "/insects.t7",
+                 labels_filename=interface_folder + "/labels",
                  nb_examples=25433):
         self.data_filename = data_filename
         self.labels_filename = labels_filename
