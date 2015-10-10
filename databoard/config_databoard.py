@@ -28,7 +28,7 @@ cachedir = '.'
 
 is_parallelize = True # make it False if parallel training is not working
 is_parallelize_across_machines = True # make it True to use parallelism across machines
-timeout_parallelize_across_machines = 3600 # maximum number of seconds per model training for parallelize across machines
+timeout_parallelize_across_machines = 10800  # maximum number of seconds per model training for parallelize across machines
 is_pickle_trained_model = False # often doesn't work and takes a lot of disk space
 
 # Open ports in Stratuslab
@@ -78,7 +78,7 @@ ramp_df_columns = [
     'web_user', #  the username on the web_server
     'web_root', # the root dir of databoard on the web_server
     'server_port', #  the server port on the web_server
-    'cv_test_size', # 
+    'cv_test_size', #
     'random_state', #
 ]
 # ignore web* variables if train and web servers, users, roots are the same
@@ -101,16 +101,16 @@ ramp_df = ramp_df.append(pd.Series({
 
 ramp_df = ramp_df.append(pd.Series({
     'ramp_name' : 'pollenating_insects',
-    'train_server' : reims_server, 
+    'train_server' : reims_server,
     'train_user' : 'mcherti',
     'train_root' : '/home/mcherti/ramp_pollenating_insects',
     'num_cpus' : 10,
     'web_server' : vd_server,
     'web_user' : 'root',
     'web_root' : vd_root,
-    'server_port' : '2170', 
+    'server_port' : '2170',
     'cv_test_size' : 0.2,
-    'random_state' : 57, 
+    'random_state' : 57,
 }, name = 'pollenating_insects_1'))
 
 ramp_df = ramp_df.append(pd.Series({
