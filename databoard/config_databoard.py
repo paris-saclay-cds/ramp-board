@@ -113,6 +113,20 @@ ramp_df = ramp_df.append(pd.Series({
     'random_state' : 57, 
 }, name = 'pollenating_insects_1'))
 
+ramp_df = ramp_df.append(pd.Series({
+    'ramp_name' : 'pollenating_insects',
+    'train_server' : reims_server, 
+    'train_user' : 'mcherti',
+    'train_root' : '/home/mcherti/ramp_pollenating_insects',
+    'num_cpus' : 10,
+    'web_server' : vd_server,
+    'web_user' : 'root',
+    'web_root' : vd_root,
+    'server_port' : '2135', 
+    'cv_test_size' : 0.2,
+    'random_state' : 57, 
+}, name = 'pollenating_insects_test'))
+
 # TODO after insect ramp: clean up the old ramps
 ramp_df = ramp_df.append(pd.Series({
     'ramp_name' : 'el_nino',

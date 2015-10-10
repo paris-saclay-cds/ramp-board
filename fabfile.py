@@ -28,26 +28,17 @@ sys.setrecursionlimit(50000)
 #production = env.hosts[0]
 logger = logging.getLogger('databoard')
 
-
-def all():
-    fetch()
-    train_test()
-    leaderboard()
-
-def clear():
-    clear_cache()
-    clear_db()
-    clear_groundtruth()
-    # clear_registrants()
-
 def clear_cache():
     from sklearn.externals.joblib import Memory
+
+    logger.info('Flushing the joblib cache.')
     mem = Memory(cachedir=config_databoard.cachedir)
     mem.clear()
 
 def clear_db():
     from databoard.model import columns
     
+    logger.info('Clearing the database.')
     with shelve_database('c') as db:
         db.clear()
         db['models'] = pd.DataFrame(columns=columns)
@@ -59,9 +50,16 @@ def clear_registrants():
     # Prepare the teams repo submodules
     # logger.info('Init team repos git')
     # repo = Repo.init(config_databoard.repos_path)  # does nothing if already exists
-    print config_databoard.repos_path
-    shutil.rmtree(config_databoard.repos_path, ignore_errors=False)
+
+    # Remove the git repos of the teams
+    logger.info('Clearing the teams repositories.')
+    shutil.rmtree(config_databoard.repos_path, ignore_errors=True)
     os.mkdir(config_databoard.repos_path)
+
+    logger.info('Clearing the models directory.')
+    shutil.rmtree(config_databoard.models_path, ignore_errors=True)
+    os.mkdir(config_databoard.models_path)
+    open(os.path.join(config_databoard.models_path, '__init__.py'), 'a').close()
 
 def clear_pred_files():
     import glob
@@ -78,23 +76,6 @@ def clear_groundtruth():
     shutil.rmtree(config_databoard.ground_truth_path, ignore_errors=True)
     os.mkdir(config_databoard.ground_truth_path)
 
-def init_config():
-    pass
-    # TODO
-
-def print_db(table='models', state=None):
-    with shelve_database('c') as db:
-        if table not in db:
-            print('Select one of the following tables:')
-            print '\n'.join('\t- {}'.format(t) for t in db)
-            return
-        df = db[table]
-    if not state:
-        print df
-    else:
-        print df[df.state == state]
-
-
 def setup_ground_truth():
     from databoard.generic import setup_ground_truth
     from databoard.specific import prepare_data
@@ -110,45 +91,26 @@ def setup_ground_truth():
     logger.info('Setting up the groundtruth.')
     setup_ground_truth()
 
-def setup(wipeall=False):
-    from databoard.generic import setup_ground_truth
-    from databoard.specific import prepare_data
+def setup():
     
-    # Preparing the data set, typically public train/private held-out test cut
-    logger.info('Preparing the dataset.')
-    prepare_data()
-
-    logger.info('Removing the ground truth files.')
-    clear_groundtruth()
-
-    # Set up the ground truth predictions for the CV folds
-    logger.info('Setting up the groundtruth.')
     setup_ground_truth()
-    
-    logger.info('Clearing the database.')
     clear_db()
+    clear_registrants()
+    # Flush joblib cache
+    clear_cache()
+    todo: set up database
 
-    logger.info('Clearing the predictions.')
-    clear_pred_files()
-
-    if not os.path.exists(config_databoard.models_path):
-        os.mkdir(config_databoard.models_path)
-    open(os.path.join(config_databoard.models_path, '__init__.py'), 'a').close()
-
-    logger.info('Config init.')
-    init_config()
-
-    if wipeall:
-        # Remove the git repos of the teams
-        logger.info('Clearing the teams repositories.')
-        clear_registrants()
-
-        # Flush joblib cache
-        logger.info('Flushing the joblib cache.')
-        clear_cache()
-
-def clean_pyc():
-    local('find . -name "*.pyc" | xargs rm -f')
+def print_db(table='models', state=None):
+    with shelve_database('c') as db:
+        if table not in db:
+            print('Select one of the following tables:')
+            print '\n'.join('\t- {}'.format(t) for t in db)
+            return
+        df = db[table]
+    if not state:
+        print df
+    else:
+        print df[df.state == state]
 
 def fetch():
     from databoard.fetch import fetch_models
@@ -405,6 +367,26 @@ def serve():
 
 from importlib import import_module
 
+software = [
+    'fabfile.py',
+    'ramp_index.txt',
+    'databoard/config_databoard.py',
+    'databoard/__init__.py',
+    'databoard/fetch.py',
+    'databoard/generic.py',
+    'databoard/isotonic.py',
+    'databoard/leaderboard.py',
+    'databoard/machine_parallelism.py',
+    'databoard/model.py', #db model
+    'databoard/multiclass_prediction_type.py',
+    'databoard/regression_prediction_type.py',
+    'databoard/scores.py',
+    'databoard/train_test.py',
+    'databoard/views.py',
+    'databoard/static',
+    'databoard/templates',
+]
+
 def publish(ramp_index):
     ramp_name = config_databoard.get_ramp_field('ramp_name', ramp_index)
     local('')
@@ -418,24 +400,10 @@ def publish(ramp_index):
         f.write(ramp_index)
 
     command = "rsync"
-    exclude=[ '.DS_Store', 
-              'ground_truth', 
-              'data', 
-              'models', 
-              'ramps',
-              'user_test_model',
-              'shelve*',
-              '*.ipynb*',
-              '*.log',
-              '.git*',
-              '.gitignore',
-              '*.bak',
-              '*.pyc',
-              '*.sh',]
-    for lib in exclude:
-        command += " --exclude \"" + lib + "\""
-    command += " -pthrvz -c --rsh=\'ssh -i " + os.path.expanduser("~")
-    command += "/.ssh/datacamp/id_rsa -p 22 \' . "
+    command += " -pthrRvz -c --rsh=\'ssh -i " + os.path.expanduser("~")
+    command += "/.ssh/datacamp/id_rsa -p 22\' "
+    for file in software:
+        command += file + " " 
     if not config_databoard.is_same_web_and_train_servers(ramp_index):
         command1 = command
         command1 += config_databoard.get_ramp_field('web_user', ramp_index) + '@'
