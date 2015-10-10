@@ -34,6 +34,7 @@ timeout_parallelize_across_machines = 10800
 # often doesn't work and takes a lot of disk space
 is_pickle_trained_model = False
 
+local_root = '/tmp/databoard_local'  # for local publishing / testing
 # Open ports in Stratuslab
 # 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015,
 # 8080, 8081, 8095, 8188, 8443, 8444, 9002, 10339, 10636, 15000, 15001, 15002,
@@ -191,7 +192,7 @@ def get_ramp_field(field, ramp_index=None):
     """Normally only 'fab publish' will call it with the ramp_index
     specified, otherwise it's coming from ramp_index.txt"""
 
-    if ramp_index == None:
+    if ramp_index is None:
         with open("ramp_index.txt") as f:
             ramp_index = f.readline()
     ramp = ramp_df.loc[ramp_index]
@@ -215,6 +216,9 @@ def get_web_destination_path(ramp_index=None):
 
 
 def is_same_web_and_train_servers(ramp_index):
-    return (get_ramp_field('web_server', ramp_index) == get_ramp_field('train_server', ramp_index)
-            and get_ramp_field('web_user', ramp_index) == get_ramp_field('train_user', ramp_index)
-            and get_ramp_field('web_root', ramp_index) == get_ramp_field('root_user', ramp_index))
+    return (get_ramp_field('web_server', ramp_index) ==
+            get_ramp_field('train_server', ramp_index)
+            and get_ramp_field('web_user', ramp_index) ==
+            get_ramp_field('train_user', ramp_index)
+            and get_ramp_field('web_root', ramp_index) ==
+            get_ramp_field('root_user', ramp_index))
