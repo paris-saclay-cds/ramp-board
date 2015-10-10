@@ -134,7 +134,7 @@ def be_client_forever(host=host, port=port, output_folder="."):
 
 def put_job(method, args, host=host, port=port, title=""):
     register_queues()
-    job_id = str(uuid.uuid1())
+    job_id = str(uuid.uuid4())
     q = build_queue_manager(host=host, port=port)
     q.connect()
     available_jobs = q.get_available_jobs()
@@ -143,7 +143,7 @@ def put_job(method, args, host=host, port=port, title=""):
     return job_id
 
 
-def wait_for(job_ids, host=host, port=port, timeout=10000):
+def wait_for(job_ids, host=host, port=port, timeout=10000, finish_if_exception=False):
     t = time.time()
     job_status = dict()
     register_queues()
@@ -160,6 +160,8 @@ def wait_for(job_ids, host=host, port=port, timeout=10000):
         else:
             finished_jobs.put((job_id, status))
 
+        if finish_if_exception is True and isinstance(status, Exception):
+            break
         if len(job_ids) > 0 and int(time.time() - t) > timeout:
             raise TimeoutError()
 

@@ -49,11 +49,10 @@ def run_on_folds(method, full_model_path, cv, **kwargs):
                 job_ids.add(job_id)
             try:
                 job_status = machine_parallelism.wait_for_jobs_and_get_status(
-                    job_ids, timeout=config_databoard.timeout_parallelize_across_machines)
-
+                    job_ids, timeout=config_databoard.timeout_parallelize_across_machines,
+                    finish_if_exception=True)
             except machine_parallelism.TimeoutError:
                 raise
-
             for status in job_status.values():
                 if isinstance(status, Exception):
                     raise status
@@ -343,7 +342,7 @@ def run_models(orig_models_df, infinitive, past_participle, gerund, error_state,
             # TODO: put the error in the database instead of a file
             # Keep the model folder clean.
             with open(generic.get_f_name(full_model_path, '.', error_state, "txt"), 'w') as f:
-                error_msg = str(e)
+                error_msg = msg
                 cut_exception_text = error_msg.rfind('--->')
                 if cut_exception_text > 0:
                     error_msg = error_msg[cut_exception_text:]
