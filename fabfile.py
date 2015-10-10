@@ -414,7 +414,7 @@ def get_deployment_target(ramp_index, user, server, root):
         + config_databoard.get_destination_path(root, ramp_index=None)
 
 
-def publish(ramp_index, local=False):
+def publish(ramp_index, local=False, test=False):
     ramp_name = config_databoard.get_ramp_field('ramp_name', ramp_index)
     # TODO: check if ramp_name is the same as in
     #      'ramps/' + ramp_name + '/specific.py'
@@ -466,6 +466,26 @@ def publish(ramp_index, local=False):
     command2 += "/databoard/"
     print command2
     os.system(command2)
+
+    if test:
+        command = "rsync -pthrvz -c "
+        if not local:
+            command += "--rsh=\'ssh -i " + os.path.expanduser("~")
+            command += "/.ssh/datacamp/id_rsa -p 22\' "
+        command += " ramps/" + ramp_name + "/submissions "
+        if not config_databoard.is_same_web_and_train_servers(ramp_index) \
+                and not local:
+            command1 = command + get_deployment_target(
+                ramp_index, 'web_user', 'web_server', 'web_root')
+            print command1
+            os.system(command1)
+        if local:
+            command2 = command + config_databoard.local_root
+        else:
+            command2 = command + get_deployment_target(
+                ramp_index, 'train_user', 'train_server', 'train_root')
+        print command2
+        os.system(command2)
 
 
 # (re)publish data set from 'ramps/' + ramp_name + '/data'
