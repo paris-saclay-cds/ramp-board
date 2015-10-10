@@ -4,6 +4,7 @@ import hashlib
 import logging
 import numpy as np
 import pandas as pd
+import cPickle as pickle
 from contextlib import contextmanager
 
 from sklearn.externals.joblib import Memory
@@ -14,20 +15,22 @@ import specific
 mem = Memory(cachedir=config_databoard.cachedir)
 logger = logging.getLogger('databoard')
 
+
 def get_hash_string_from_indices(index_list):
     """We identify files output on cross validation (models, predictions)
     by hashing the point indices coming from an cv object.
 
     Parameters
     ----------
-    test_is : np.array, shape (size_of_set,)
+    index_list : np.array, shape (size_of_set,)
 
     Returns
     -------
     hash_string
     """
     hasher = hashlib.md5()
-    hasher.update(index_list)
+    dump = pickle.dumps(list(index_list))
+    hasher.update(dump)
     return hasher.hexdigest()
 
 def get_hash_string_from_path(path):
