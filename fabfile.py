@@ -477,7 +477,7 @@ def publish(ramp_index, local=False, test=False):
         if not local:
             command += "--rsh=\'ssh -i " + os.path.expanduser("~")
             command += "/.ssh/datacamp/id_rsa -p 22\' "
-        command += " ramps/" + ramp_name + "/submissions "
+        command += " ramps/" + ramp_name + "/teams_submissions "
         if not config_databoard.is_same_web_and_train_servers(ramp_index) \
                 and not local:
             command1 = command + get_deployment_target(
