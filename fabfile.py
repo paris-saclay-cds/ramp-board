@@ -414,12 +414,18 @@ software = [
 
 
 def get_deployment_target(ramp_index, user, server, root):
-    return config_databoard.get_ramp_field(user, ramp_index) + '@' \
-        + config_databoard.get_ramp_field(server, ramp_index) + ":" \
-        + config_databoard.get_destination_path(root, ramp_index=None)
+    deployment_target = ''
+    server_name = config_databoard.get_ramp_field(server, ramp_index)
+    user_name = config_databoard.get_ramp_field(user, ramp_index)
+    if server_name != 'localhost':
+        deployment_target += user_name + '@' + server_name + ':'
+    deployment_target += config_databoard.get_destination_path(
+        root, ramp_index=None)
+    print deployment_target
+    return deployment_target
 
 
-def publish(ramp_index, local=False, test=False):
+def publish(ramp_index, test=False):
     ramp_name = config_databoard.get_ramp_field('ramp_name', ramp_index)
     # TODO: check if ramp_name is the same as in
     #      'ramps/' + ramp_name + '/specific.py'
@@ -429,24 +435,20 @@ def publish(ramp_index, local=False, test=False):
     # the number of CPUs). generic.get_ramp_index() reads it in
     with open('ramp_index.txt', 'w') as f:
         f.write(ramp_index)
-
+    local = config_databoard.get_ramp_field('train_server') == 'localhost'
     command = "rsync -pthrRvz -c "
     if not local:
         command += "--rsh=\'ssh -i " + os.path.expanduser("~")
         command += "/.ssh/datacamp/id_rsa -p 22\' "
     for file in software:
         command += file + " "
-    if not config_databoard.is_same_web_and_train_servers(ramp_index) \
-            and not local:
+    if not config_databoard.is_same_web_and_train_servers(ramp_index):
         command1 = command + get_deployment_target(
             ramp_index, 'web_user', 'web_server', 'web_root')
         print command1
         os.system(command1)
-    if local:
-        command2 = command + config_databoard.local_root
-    else:
-        command2 = command + get_deployment_target(
-            ramp_index, 'train_user', 'train_server', 'train_root')
+    command2 = command + get_deployment_target(
+        ramp_index, 'train_user', 'train_server', 'train_root')
     print command2
     os.system(command2)
 
@@ -456,18 +458,14 @@ def publish(ramp_index, local=False, test=False):
         command += "--rsh=\'ssh -i " + os.path.expanduser("~")
         command += "/.ssh/datacamp/id_rsa -p 22\' "
     command += " ramps/" + ramp_name + "/specific.py "
-    if not config_databoard.is_same_web_and_train_servers(ramp_index) \
-            and not local:
+    if not config_databoard.is_same_web_and_train_servers(ramp_index):
         command1 = command + get_deployment_target(
             ramp_index, 'web_user', 'web_server', 'web_root')
         command1 += "/databoard/"
         print command1
         os.system(command1)
-    if local:
-        command2 = command + config_databoard.local_root
-    else:
-        command2 = command + get_deployment_target(
-            ramp_index, 'train_user', 'train_server', 'train_root')
+    command2 = command + get_deployment_target(
+        ramp_index, 'train_user', 'train_server', 'train_root')
     command2 += "/databoard/"
     print command2
     os.system(command2)
@@ -478,17 +476,13 @@ def publish(ramp_index, local=False, test=False):
             command += "--rsh=\'ssh -i " + os.path.expanduser("~")
             command += "/.ssh/datacamp/id_rsa -p 22\' "
         command += " ramps/" + ramp_name + "/teams_submissions "
-        if not config_databoard.is_same_web_and_train_servers(ramp_index) \
-                and not local:
+        if not config_databoard.is_same_web_and_train_servers(ramp_index):
             command1 = command + get_deployment_target(
                 ramp_index, 'web_user', 'web_server', 'web_root')
             print command1
             os.system(command1)
-        if local:
-            command2 = command + config_databoard.local_root
-        else:
-            command2 = command + get_deployment_target(
-                ramp_index, 'train_user', 'train_server', 'train_root')
+        command2 = command + get_deployment_target(
+            ramp_index, 'train_user', 'train_server', 'train_root')
         print command2
         os.system(command2)
 
@@ -502,18 +496,12 @@ def publish_data(ramp_index, local=False):
         command += "--rsh=\'ssh -i " + os.path.expanduser("~")
         command += "/.ssh/datacamp/id_rsa -p 22\' "
     command += 'ramps/' + ramp_name + '/data '
-    if not config_databoard.is_same_web_and_train_servers(ramp_index) \
-            and not local:
+    if not config_databoard.is_same_web_and_train_servers(ramp_index):
         command1 = command + get_deployment_target(
             ramp_index, 'web_user', 'web_server', 'web_root') + "/"
         print command1
         os.system(command1)
-    if local:
-        command2 = command + config_databoard.local_root
-    else:
-        command2 = command + get_deployment_target(
-            ramp_index, 'train_user', 'train_server', 'train_root') + "/"
+    command2 = command + get_deployment_target(
+        ramp_index, 'train_user', 'train_server', 'train_root') + "/"
     print command2
     os.system(command2)
-
-

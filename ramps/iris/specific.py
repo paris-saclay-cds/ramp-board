@@ -6,7 +6,7 @@ import sys
 import numpy as np
 import pandas as pd
 from importlib import import_module
-from sklearn.cross_validation import StratifiedShuffleSplit
+from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
 from sklearn.calibration import CalibratedClassifierCV
 # menu
 import scores
@@ -16,10 +16,11 @@ import config_databoard
 
 sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
 
-hackaton_title = 'IRIS'
-prediction_type.labels = ["setosa",  'versicolor',  "virginica"]
+hackaton_title = 'Iris classification (test)'
+prediction_type.labels = ['setosa', 'versicolor', 'virginica']
 
 cv_test_size = config_databoard.get_ramp_field('cv_test_size')
+held_out_test_size = 0.2
 random_state = config_databoard.get_ramp_field('random_state')
 n_CV = config_databoard.get_ramp_field('num_cpus')
 
@@ -28,8 +29,6 @@ train_filename = os.path.join(config_databoard.public_data_path, 'train.csv')
 test_filename = os.path.join(config_databoard.private_data_path, 'test.csv')
 
 score = scores.Accuracy()
-
-# X is a list of dicts, each dict is indexed by column
 
 
 def read_data(filename):
@@ -40,16 +39,11 @@ def read_data(filename):
 
 
 def prepare_data():
-    X_array, y_array = read_data(raw_filename)
-    cv = StratifiedShuffleSplit(
-        y_array, 1, test_size=0.2, random_state=random_state)
-    train_is, test_is = list(cv)[0]
-    X_train_array = X_array[train_is]
-    X_test_array = X_array[test_is]
-    y_train_array = y_array[train_is]
-    y_test_array = y_array[test_is]
-    np.savez(train_filename, X=X_train_array, y=y_train_array)
-    np.savez(test_filename, X=X_test_array, y=y_test_array)
+    df = pd.read_csv(raw_filename)
+    df_train, df_test = train_test_split(
+        df, test_size=held_out_test_size, random_state=random_state)
+    df_train.to_csv(train_filename)
+    df_test.to_csv(test_filename)
 
 
 def get_train_data():
@@ -63,8 +57,9 @@ def get_test_data():
 
 
 def get_cv(y_train_array):
-    cv = StratifiedShuffleSplit(y_train_array,
-                                n_iter=n_CV, test_size=cv_test_size, random_state=random_state)
+    cv = StratifiedShuffleSplit(
+        y_train_array, n_iter=n_CV, test_size=cv_test_size, 
+        random_state=random_state)
     return cv
 
 

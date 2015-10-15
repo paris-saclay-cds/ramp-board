@@ -29,13 +29,12 @@ cachedir = '.'
 
 is_parallelize = True  # make it False if parallel training is not working
 # make it True to use parallelism across machines
-is_parallelize_across_machines = True
+is_parallelize_across_machines = False
 # maximum number of seconds per model training for parallelize across machines
 timeout_parallelize_across_machines = 10800
 # often doesn't work and takes a lot of disk space
 is_pickle_trained_model = False
 
-local_root = '/tmp/databoard_local'  # for local publishing / testing
 # Open ports in Stratuslab
 # 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015,
 # 8080, 8081, 8095, 8188, 8443, 8444, 9002, 10339, 10636, 15000, 15001, 15002,
@@ -70,8 +69,9 @@ local_root = '/tmp/databoard_local'  # for local publishing / testing
 #server_name = debug_server if local_deployment else train_server
 
 vd_server = 'onevm-85.lal.in2p3.fr'
-vd_root = '/mnt/datacamp'
 reims_server = 'romeo1.univ-reims.fr'
+vd_root = '/mnt/datacamp'
+local_root = '/tmp/databoard_local'  # for local publishing / testing
 
 ramp_df_columns = [
     'ramp_name',  # for naming the library where the data and specific.py is
@@ -92,17 +92,17 @@ ramp_df = pd.DataFrame(columns=ramp_df_columns)
 
 ramp_df = ramp_df.append(pd.Series({
     'ramp_name': 'iris',
-    'train_server': "localhost",
-    'train_user': 'alex',
-    'train_root': '/tmp/ramp_iris',
-    'num_cpus': 1,
+    'train_server': 'localhost',
+    'train_user': '',
+    'train_root': local_root,
+    'num_cpus': 2,
     'web_server': 'localhost',
-    'web_user': 'root',
-    'web_root': 'localhost',
+    'web_user': '',
+    'web_root': local_root,
     'server_port': '8080',
     'cv_test_size': 0.2,
     'random_state': 57,
-}, name='iris'))
+}, name='iris_local_test'))
 
 ramp_df = ramp_df.append(pd.Series({
     'ramp_name': 'pollenating_insects',
@@ -188,7 +188,6 @@ notification_recipients.append("alexandre.gramfort@gmail.com")
 
 assert repos_path != 'models'
 
-
 def get_ramp_field(field, ramp_index=None):
     """Normally only 'fab publish' will call it with the ramp_index
     specified, otherwise it's coming from ramp_index.txt"""
@@ -204,8 +203,9 @@ def get_destination_path(root, ramp_index=None):
     destination_root = get_ramp_field(root, ramp_index)
     ramp_name = get_ramp_field('ramp_name', ramp_index)
     server_port = get_ramp_field('server_port', ramp_index)
-    return os.path.join(destination_root,
-                        "databoard_" + ramp_name + "_" + server_port)
+    destination_path = os.path.join(
+        destination_root, "databoard_" + ramp_name + "_" + server_port)
+    return destination_path
 
 
 def get_train_destination_path(ramp_index=None):
@@ -222,4 +222,4 @@ def is_same_web_and_train_servers(ramp_index):
             and get_ramp_field('web_user', ramp_index) ==
             get_ramp_field('train_user', ramp_index)
             and get_ramp_field('web_root', ramp_index) ==
-            get_ramp_field('root_user', ramp_index))
+            get_ramp_field('train_root', ramp_index))
