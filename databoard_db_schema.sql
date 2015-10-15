@@ -75,7 +75,7 @@ create table elementary_steps (
 -- The actual elementary models in a given pipeline
 create table pipeline_elements (
     pipeline_id              integer foreign key,
-    elementary_model_id      integer foreign key,
+    elementary_step_id       integer foreign key,
     order                    integer not null -- the order in which pipeline elements should be called
     is_mandatory             integer default 1 -- mandatory = 1, optional = 0 
 );
