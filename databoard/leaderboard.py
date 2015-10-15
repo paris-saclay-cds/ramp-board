@@ -350,7 +350,7 @@ def get_y_pred_array(y_probas_array):
     return np.array([specific.prediction_type.labels[y_probas.argmax()]
                      for y_probas in y_probas_array])
 
-from .isotonic import IsotonicRegression
+#from .isotonic import IsotonicRegression
 from sklearn.cross_validation import StratifiedShuffleSplit
 
 

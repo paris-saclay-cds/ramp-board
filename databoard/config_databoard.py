@@ -105,6 +105,20 @@ ramp_df = ramp_df.append(pd.Series({
 }, name='iris_local_test'))
 
 ramp_df = ramp_df.append(pd.Series({
+    'ramp_name': 'iris',
+    'train_server': vd_server,
+    'train_user': 'root',
+    'train_root': vd_root,
+    'num_cpus': 10,
+    'web_server': vd_server,
+    'web_user': 'root',
+    'web_root': vd_root,
+    'server_port': '8080',
+    'cv_test_size': 0.2,
+    'random_state': 57,
+}, name='iris_remote_test'))
+
+ramp_df = ramp_df.append(pd.Series({
     'ramp_name': 'pollenating_insects',
     'train_server': reims_server,
     'train_user': 'mcherti',
