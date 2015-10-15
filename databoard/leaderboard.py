@@ -83,8 +83,6 @@ def combine_predictions_list(predictions_list, indexes=[]):
         y_prediction_array=y_combined_array)
     return combined_predictions
 
-# TODO: should probably go to specific, or even output_type
-
 
 def get_ground_truth(ground_truth_f_name):
     return specific.prediction_type.PredictionArrayType(

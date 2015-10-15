@@ -505,3 +505,22 @@ def publish_data(ramp_index, local=False):
         ramp_index, 'train_user', 'train_server', 'train_root') + "/"
     print command2
     os.system(command2)
+
+
+def local_test():
+    import databoard.config_databoard as config_databoard  # to reset root_path
+    local_root = config_databoard.get_ramp_field(
+        'train_root', 'iris_local_test')
+    if os.path.exists(local_root):
+        os.system('rm -rf ' + local_root)
+    os.mkdir(local_root)
+    os.system('fab publish:iris_local_test,test=true')
+    os.system('fab publish_data:iris_local_test')
+    destination_path = config_databoard.get_train_destination_path(
+        'iris_local_test')
+    os.chdir(destination_path)
+    import databoard.config_databoard as config_databoard  # to reset root_path
+    os.system('fab setup')
+    os.system('fab add_models')
+    os.system('fab train_test')
+    os.system('fab leaderboard:test=true')
