@@ -6,6 +6,7 @@ import pandas as pd
 #import fabric.contrib.project as project
 from fabric.api import *
 from fabric.contrib.files import exists
+from fabric.state import connections
 from databoard.model import shelve_database, ModelState
 import databoard.config_databoard as config_databoard
 
@@ -125,6 +126,7 @@ def print_db(table='models', state=None):
 def fetch():
     from databoard.fetch import fetch_models
     fetch_models()
+
 
 def add_models():
     from databoard.fetch import add_models
@@ -489,7 +491,8 @@ def publish(ramp_index, test=False):
 
 # (re)publish data set from 'ramps/' + ramp_name + '/data'
 # fab setup_ground_truth should be run at the destination
-def publish_data(ramp_index, local=False):
+def publish_data(ramp_index):
+    local = config_databoard.get_ramp_field('train_server') == 'localhost'
     ramp_name = config_databoard.get_ramp_field('ramp_name', ramp_index)
     command = "rsync --delete -pthrvz -c "
     if not local:
@@ -506,21 +509,33 @@ def publish_data(ramp_index, local=False):
     print command2
     os.system(command2)
 
+def clear_destination_path(ramp_index):
+    if not config_databoard.is_same_web_and_train_servers(ramp_index):
+        destination_path = config_databoard.get_web_destination_path()
+        if os.path.exists(destination_path):
+            os.system('rm -rf ' + destination_path + '/*')
+        else:
+            os.mkdir(destination_path)
+    destination_path = config_databoard.get_train_destination_path()
+    if os.path.exists(destination_path):
+        os.system('rm -rf ' + destination_path + '/*')
+    else:
+        os.mkdir(destination_path)
 
-def local_test():
-    import databoard.config_databoard as config_databoard  # to reset root_path
-    local_root = config_databoard.get_ramp_field(
-        'train_root', 'iris_local_test')
-    if os.path.exists(local_root):
-        os.system('rm -rf ' + local_root)
-    os.mkdir(local_root)
-    os.system('fab publish:iris_local_test,test=true')
-    os.system('fab publish_data:iris_local_test')
-    destination_path = config_databoard.get_train_destination_path(
-        'iris_local_test')
-    os.chdir(destination_path)
-    import databoard.config_databoard as config_databoard  # to reset root_path
-    os.system('fab setup')
-    os.system('fab add_models')
-    os.system('fab train_test')
-    os.system('fab leaderboard:test=true')
+# For now, test is two-phased: 1) publish_test first, which is a publish
+# and publish_data that clears the destination first completely, and 2) 
+# go to the destination, and test_ramp there. It's because I don't know
+# how to make import path (for specific and user submission) run time. If 
+# everything is deployed from a database, we can have single test commands that
+# publish and 
+def publish_test(ramp_index):
+    clear_destination_path(ramp_index)
+    publish(ramp_index, test=True)
+    publish_data(ramp_index)
+
+
+def test_ramp():
+    setup()
+    add_models()
+    train_test()
+    leaderboard(test=True)
