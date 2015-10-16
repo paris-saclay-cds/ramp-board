@@ -29,56 +29,6 @@ create table team_members (
     join_timestamp           date default current_timestamp
 );
 
--- Should data sets be in the db or we should just store path? See the discussion
--- below, at the submissions table.
-create table data_sets (
-    data_set_id              integer primary key autoincrement not null,
-    data_set_name            text unique not null,
-    data_set_path            text not null
-);
-
--- Like specifying targets, label list (for classification), train-test cut, etc.
--- Should provide read_data, prepare_data, get_train_data, get_test_data, 
--- get_check_data (see el nino) of specific.
-create table data_setups (
-    data_setup_id            integer primary key autoincrement not null,
-    data_set_id              integer foreign key,
-    data_setup_code          text not null -- python code implementing the setup
-);
-
--- Should provide get_cv from specific. Should we actually store train/test
--- indices? See discussion at the submissions table.
-create table cvs (
-    cv_id                    integer primary key autoincrement not null,
-    cv_name                  text unique not null,
-    cv_code                  text not null -- python code implementing the cv
-);
-
-create table pipelines (
-    pipeline_id              integer primary key autoincrement not null,
-    pipeline_name            text unique not null
-);
-
--- The actual analytics steps of the pipelines, like classifier, 
--- ts_feature_extractor, calibrator, etc.
--- Eventually I could imagine an OO hierarchy here (models that specialize)
--- but for now it is a flat table
-create table elementary_steps (
-    elementary_step_id       integer primary key autoincrement not null,
-    elementary_step_name     text unique not null,
-    elementary_step_train    text not null, -- python code implementing the training of the pipeline element
-    elementary_step_test     text not null, -- python code implementing the testing of the pipeline element
-    elementary_step_check    text not null, -- python code implementing the checking of the pipeline element (see el Nino)
-    elementary_step_example  text -- optional python code implementing the pipeline element
-);
-
--- The actual elementary models in a given pipeline
-create table pipeline_elements (
-    pipeline_id              integer foreign key,
-    elementary_step_id       integer foreign key,
-    order                    integer not null -- the order in which pipeline elements should be called
-    is_mandatory             integer default 1 -- mandatory = 1, optional = 0 
-);
 
 -- Problem is a problem (challenge), ramp is an event (potentially extended in 
 -- length). Ie., we can repeat the same problem is several ramps.
@@ -86,10 +36,7 @@ create table problems (
     problem_id               integer primary key autoincrement not null,
     problem_name             text unique not null,
     problem_description      text not null, -- short description for website
-    data_setup_id            integer foreign key,
-    cv_id                    integer foreign key,
-    pipeline_id              integer foreign key,
-    prediction_type_id       integer foreign key,
+    problem_path             text not null, -- relative path to data, specific, etc.
     creation_timestamp       date default current_timestamp
 );
 
@@ -145,7 +92,7 @@ create table prediction_score_compatibility (
 -- For specifying which scores will appear in the leaderboard view
 create table ramp_score_types (
     ramp_id                  integer foreign key,
-    score_type_id             integer foreign key,
+    score_type_id            integer foreign key,
     ramp_score_name          text default null -- might want to overwrite score_name
 );
 
@@ -161,14 +108,6 @@ create table ramp_admins (
     signup_timestamp         date default current_timestamp
 );
 
-create table models (
-    model_id                 integer primary key autoincrement not null,
-    elementary_step_id       integer foreign key, -- the model type like "classifier"
-    team_id                  integer foreign key,
-    model_code               text not null, -- python class implementing the elementary_step
-    creation_timestamp       date default current_timestamp
-);
-
 -- Big question: should we put the predictions into the db? Lot of arrays. At 
 -- this point I'd keep the current setup: the path where the train, valid, test
 -- predictions are, are computed from the submission_id (since they are unique,
@@ -182,15 +121,9 @@ create table submissions (
     submission_id            integer primary key autoincrement not null,
     team_id                  integer foreign key, -- we repeat it here for easy join
     submission_state         integer default 0, -- new = 0, trained = 1, tested = 2, error = 3, evaluated = 4, ignore = 5
+    submission_path          text not null, -- path where the model is found
     submission_timestamp     date default, current_timestamp
     training_timestamp       date default null
-);
-
--- should check that user submits all mandatory elementary steps, and that the 
--- team_id of submission_id and model_id are the same
-create table submission_elements (
-    submission_id            integer foreign key,
-    model_id                 integer foreign key
 );
 
 -- Leaderboards would be views of a join on submission_scores, submissions, and
