@@ -91,6 +91,34 @@ ramp_df_columns = [
 ramp_df = pd.DataFrame(columns=ramp_df_columns)
 
 ramp_df = ramp_df.append(pd.Series({
+    'ramp_name': 'mortality_prediction',
+    'train_server': 'localhost',
+    'train_user': '',
+    'train_root': local_root,
+    'num_cpus': 2,
+    'web_server': 'localhost',
+    'web_user': '',
+    'web_root': local_root,
+    'server_port': '8080',
+    'cv_test_size': 0.2,
+    'random_state': 57,
+}, name='mortality_prediction_local_test'))
+
+ramp_df = ramp_df.append(pd.Series({
+    'ramp_name': 'mortality_prediction',
+    'train_server': vd_server,
+    'train_user': 'root',
+    'train_root': vd_root,
+    'num_cpus': 10,
+    'web_server': vd_server,
+    'web_user': 'root',
+    'web_root': vd_root,
+    'server_port': '2171',
+    'cv_test_size': 0.2,
+    'random_state': 57,
+}, name='mortality_prediction_remote_test'))
+
+ramp_df = ramp_df.append(pd.Series({
     'ramp_name': 'iris',
     'train_server': 'localhost',
     'train_user': '',
@@ -113,7 +141,7 @@ ramp_df = ramp_df.append(pd.Series({
     'web_server': vd_server,
     'web_user': 'root',
     'web_root': vd_root,
-    'server_port': '8080',
+    'server_port': '2171',
     'cv_test_size': 0.2,
     'random_state': 57,
 }, name='iris_remote_test'))
@@ -223,11 +251,11 @@ def get_destination_path(root, ramp_index=None):
 
 
 def get_train_destination_path(ramp_index=None):
-    return get_destination_path('train_root', ramp_index=None)
+    return get_destination_path('train_root', ramp_index)
 
 
 def get_web_destination_path(ramp_index=None):
-    return get_destination_path('web_root', ramp_index=None)
+    return get_destination_path('web_root', ramp_index)
 
 
 def is_same_web_and_train_servers(ramp_index):

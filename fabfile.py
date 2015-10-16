@@ -367,6 +367,8 @@ def kill(team, tag):
 
 def serve(port=None):
     from databoard import app
+    import databoard.views
+
     if port is None:
         server_port = int(config_databoard.get_ramp_field('server_port'))
     else:
@@ -509,25 +511,28 @@ def publish_data(ramp_index):
     print command2
     os.system(command2)
 
+
 def clear_destination_path(ramp_index):
     if not config_databoard.is_same_web_and_train_servers(ramp_index):
-        destination_path = config_databoard.get_web_destination_path()
+        destination_path = config_databoard.get_web_destination_path(ramp_index)
         if os.path.exists(destination_path):
             os.system('rm -rf ' + destination_path + '/*')
         else:
             os.mkdir(destination_path)
-    destination_path = config_databoard.get_train_destination_path()
+    destination_path = config_databoard.get_train_destination_path(ramp_index)
+    print destination_path
     if os.path.exists(destination_path):
         os.system('rm -rf ' + destination_path + '/*')
     else:
         os.mkdir(destination_path)
 
-# For now, test is two-phased: 1) publish_test first, which is a publish
-# and publish_data that clears the destination first completely, and 2) 
+
+# For now, test is two-phased: 1) publish_test<ramp_index> first, which is a 
+# publish and publish_data that clears the destination first completely, and 2) 
 # go to the destination, and test_ramp there. It's because I don't know
 # how to make import path (for specific and user submission) run time. If 
 # everything is deployed from a database, we can have single test commands that
-# publish and 
+# publish and test locally and remotely using fabric magic.
 def publish_test(ramp_index):
     clear_destination_path(ramp_index)
     publish(ramp_index, test=True)
