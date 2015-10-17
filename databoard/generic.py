@@ -32,7 +32,7 @@ def get_hash_string_from_indices(index_list):
 
 
 def get_hash_string_from_path(path):
-    """When running testing or leaderboard, instead of recreating the hash 
+    """When running testing or leaderboard, instead of recreating the hash
     strings from the cv, we just read them from the file names. This is more
     robust: only existing files will be opened when running those functions.
     On the other hand, model directories should be clean otherwise old dangling
@@ -66,18 +66,18 @@ def get_module_path(full_model_path):
 
 
 def get_full_model_path(tag_name_alias, model_df):
-    """Computing the full model path. 
+    """Computing the full model path.
 
     Parameters
     ----------
-    tag_name_alias : the hash string computed on the submission in 
+    tag_name_alias : the hash string computed on the submission in
         fetch.get_tag_uid. It usually comes from the index of the models table.
 
     model_df : an entry of the models table.
 
     Returns
     -------
-    full_model_path : of the form 
+    full_model_path : of the form
         <root_path>/models/<model_df['team']>/tag_name_alias
     """
     return os.path.join(

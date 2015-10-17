@@ -16,22 +16,24 @@ def get_predictions_list(models_df, subdir, hash_string):
     """Constructs a matrix of predictions (list of a vector of predictions, of
     type specific.prediction_type.PredictionArrayType) by reading predictions
     from the models directory, using the model indices stored in the models_df
-    data frame (filled in fatch.fetch_models), the subdir (e.g. "test", "valid"), 
-    and the hash string, representing the cv fold. When the prediction file is not 
-    there (eg because the model has not yet been tested), we set predictions to 
-    None. The list can be still used if that model is not needed (for example, 
-    not in best_index_list).
+    data frame (filled in fatch.fetch_models), the subdir (e.g. "test",
+    "valid"), and the hash string, representing the cv fold. When the
+    prediction file is not there (eg because the model has not yet been
+    tested), we set predictions to None. The list can be still used if that
+    model is not needed (for example, not in best_index_list).
 
 
     Parameters
     ----------
-    models_df : the data frame containing the model indices.
-    subdir : the subdirectory that contains the predictions (e.g. "test", "valid")
+    models_df :
+        the data frame containing the model indices.
+    subdir :
+        the subdirectory that contains the predictions (e.g. "test", "valid")
     hash_string : represents the cv fold
 
     Returns
     -------
-    predictions_list : a list of prediction arrays (of type 
+    predictions_list : a list of prediction arrays (of type
         specific.prediction_type.PredictionArrayType). Each element of the list
         is a array of predictions of a given model on the same data points.
     """
@@ -51,20 +53,20 @@ def get_predictions_list(models_df, subdir, hash_string):
 
 
 def combine_predictions_list(predictions_list, indexes=[]):
-    """Combines predictions by taking the mean of their 
-    get_combineable_predictions views. E.g. for regression it is the actual 
-    predictions, and for classification it is the probability array (which 
-    should be calibrated if we want the best performance). Called by 
-    best_combine (to construct ensembles using greedy forward selection), 
+    """Combines predictions by taking the mean of their
+    get_combineable_predictions views. E.g. for regression it is the actual
+    predictions, and for classification it is the probability array (which
+    should be calibrated if we want the best performance). Called by
+    best_combine (to construct ensembles using greedy forward selection),
     get_best_index_list (which re-does the combination after the best subset
     has been found), get_combined_test_predictions, make_combined_test_predictions
 
     Parameters
     ----------
-    predictions_list : a list of prediction arrays (of type 
+    predictions_list : a list of prediction arrays (of type
         specific.prediction_type.PredictionArrayType). Each element of the list
         is a array of predictions of a given model on the same data points.
-    indexes : the subset of models to be combined. If [], the full set is 
+    indexes : the subset of models to be combined. If [], the full set is
         combined.
 
     Returns
@@ -240,7 +242,7 @@ def calibrate(y_probas_array, ground_truth):
     fold1_is, fold2_is = list(cv)[0]
     folds = [(fold1_is, fold2_is), (fold2_is, fold1_is)]
     calibrator = IsotonicCalibrator()
-    #calibrator = NolearnCalibrator()
+    # calibrator = NolearnCalibrator()
     for fold_train_is, fold_test_is in folds:
         calibrator.fit(
             np.nan_to_num(y_probas_array[fold_train_is]), ground_truth[fold_train_is])
@@ -311,14 +313,14 @@ def best_combine(predictions_list, ground_truth, best_indexes):
     Parameters
     ----------
     y_preds : array-like, shape = [k_models, n_instances], binary
-    best_indexes : array-like, shape = [max k_models], a set of indices of 
+    best_indexes : array-like, shape = [max k_models], a set of indices of
         the current best model
     Returns
     -------
-    best_indexes : array-like, shape = [max k_models], a list of indices. If 
-    no model improving the input combination, the input index set is returned. 
-    otherwise the best model is added to the set. We could also return the 
-    combined prediction (for efficiency, so the combination would not have to 
+    best_indexes : array-like, shape = [max k_models], a list of indices. If
+    no model improving the input combination, the input index set is returned.
+    otherwise the best model is added to the set. We could also return the
+    combined prediction (for efficiency, so the combination would not have to
     be done each time; right now the algo is quadratic), but first I don't think
     any meaningful rules will be associative, in which case we should redo the
     combination from scratch each time the set changes.
@@ -366,15 +368,15 @@ class IsotonicCalibrator():
             class_indicator = np.array([1 if y == labels[class_index] else 0
                                         for y in y_list])
             # print "before"
-            #np.save("x", X_array[:,class_index])
-            #np.save("y", class_indicator)
-            #x = np.load("x.npy")
-            #y = np.load("y.npy")
+            # np.save("x", X_array[:,class_index])
+            # np.save("y", class_indicator)
+            # x = np.load("x.npy")
+            # y = np.load("y.npy")
             calibrator = IsotonicRegression(
                 y_min=0, y_max=1, out_of_bounds='clip')
             # print x
             # print y
-            #calibrator.fit(x, y)
+            # calibrator.fit(x, y)
             calibrator.fit(np.nan_to_num(X_array[:, class_index]),
                            class_indicator)
             # print "after"
@@ -403,7 +405,7 @@ from lasagne.layers import InputLayer
 from lasagne.layers import DropoutLayer
 from lasagne.nonlinearities import softmax
 from lasagne.updates import nesterov_momentum
-from nolearn.lasagne import NeuralNet
+# from nolearn.lasagne import NeuralNet
 
 
 class NolearnCalibrator(BaseEstimator):
@@ -770,9 +772,9 @@ def leaderboard_combination(orig_models_df, test=False):
             list(foldwise_best_predictions_list), np.repeat(
                 list(cv), num_bags, axis=0),
             np.repeat(hash_strings, num_bags), num_train)
-        #generic.logger.info("Score of \"means\" (cv bagging)")
-        #generic.logger.info("foldwise best validation score = {}".format(foldwise_best_score))
-        #generic.logger.info("foldwise combined validation score = {}".format(combined_score))
+        # generic.logger.info("Score of \"means\" (cv bagging)")
+        # generic.logger.info("foldwise best validation score = {}".format(foldwise_best_score))
+        # generic.logger.info("foldwise combined validation score = {}".format(combined_score))
         # generic.logger.info("============")
 
         # for hash_string in hash_strings:

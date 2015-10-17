@@ -7,3 +7,6 @@ GitPython>=0.3.6
 Flask>=0.10.1
 Flask-Shelve>=0.1.1
 Flask-Mail>=0.9.1
+theano
+lasagne
+nolearn

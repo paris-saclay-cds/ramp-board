@@ -247,7 +247,7 @@ def add_models():
         submission_files = os.listdir(submission_path)
         submission_files_listing = '|'.join(submission_files)
         submission_times = [
-            os.path.getmtime(os.path.join(submission_path, submission_file)) 
+            os.path.getmtime(os.path.join(submission_path, submission_file))
             for submission_file in submission_files]
         submission_time = max(submission_times)
 

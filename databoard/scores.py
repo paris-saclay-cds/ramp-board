@@ -1,5 +1,5 @@
 """All score classes have a score function taking a ground truth vector
-    and a prediction vector and returning a score; and a boolean 
+    and a prediction vector and returning a score; and a boolean
     higher_the_better."""
 
 # Author: Balazs Kegl

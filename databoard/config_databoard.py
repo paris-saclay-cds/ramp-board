@@ -1,9 +1,14 @@
 import os
-import socket
+# import socket
 import pandas as pd
-import numpy as np
+# import numpy as np
 from git import Repo
-from multiprocessing import cpu_count
+# from multiprocessing import cpu_count
+
+# XXX : this file should be called config
+# import databoard.config_databoard as config_databoard
+# to
+# from databoard import config
 
 # root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 root_path = '.'
@@ -229,6 +234,7 @@ notification_recipients.append("balazs.kegl@gmail.com")
 notification_recipients.append("alexandre.gramfort@gmail.com")
 
 assert repos_path != 'models'
+
 
 def get_ramp_field(field, ramp_index=None):
     """Normally only 'fab publish' will call it with the ramp_index
