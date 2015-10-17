@@ -514,8 +514,10 @@ def publish_data(ramp_index):
 
 def clear_destination_path(ramp_index):
     if not config_databoard.is_same_web_and_train_servers(ramp_index):
-        destination_path = config_databoard.get_web_destination_path(ramp_index)
-        destination_root = config_databoard.get_ramp_field('web_root', ramp_index)
+        destination_path = config_databoard.get_web_destination_path(
+            ramp_index)
+        destination_root = config_databoard.get_ramp_field(
+            'web_root', ramp_index)
         if os.path.exists(destination_path):
             os.system('rm -rf ' + destination_path + '/*')
         else:
@@ -523,7 +525,8 @@ def clear_destination_path(ramp_index):
                 os.mkdir(destination_root)
             os.mkdir(destination_path)
     destination_path = config_databoard.get_train_destination_path(ramp_index)
-    destination_root = config_databoard.get_ramp_field('train_root', ramp_index)
+    destination_root = config_databoard.get_ramp_field(
+        'train_root', ramp_index)
     if os.path.exists(destination_path):
         os.system('rm -rf ' + destination_path + '/*')
     else:
