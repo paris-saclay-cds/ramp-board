@@ -1,48 +1,37 @@
+# Author: Balazs Kegl
+# License: BSD 3 clause
+
 import os
 import sys
-import socket
 import numpy as np
 import pandas as pd
 from importlib import import_module
-from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
-from sklearn.calibration import CalibratedClassifierCV
+from sklearn.cross_validation import StratifiedShuffleSplit
 # menu
+import scores
 # menu polymorphism example
 import multiclass_prediction_type as prediction_type
-import scores
+import config_databoard
 
-from .config_databoard import (
-    local_deployment,
-    raw_data_path,
-    public_data_path,
-    private_data_path,
-    n_processes,
-    models_path,
-    root_path
-)
-
-sys.path.append(os.path.dirname(os.path.abspath(models_path)))
+sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
 
 hackaton_title = 'Kaggle Otto product classification'
 target_column_name = 'target'
-prediction_type.labels = ["Class_1", "Class_2", "Class_3", "Class_4", "Class_5",
-                          "Class_6", "Class_7", "Class_8", "Class_9"]
-#held_out_test_size = 0.7
-skf_test_size = 0.5
-random_state = 57
-#raw_filename = os.path.join(raw_data_path, 'data.csv')
-train_filename = os.path.join(public_data_path, 'train.csv')
-test_filename = os.path.join(private_data_path, 'test.csv')
+prediction_type.labels = ['Class_1', 'Class_2', 'Class_3', 'Class_4',
+                          'Class_5', 'Class_6', 'Class_7', 'Class_8',
+                          'Class_9']
 
-n_CV = 2 if local_deployment else 3 * n_processes
+cv_test_size = config_databoard.get_ramp_field('cv_test_size')
+random_state = config_databoard.get_ramp_field('random_state')
+n_CV = config_databoard.get_ramp_field('num_cpus')
 
-#score = scores.Accuracy()
-#score = scores.Error()
+train_filename = os.path.join(config_databoard.public_data_path, 'train.csv')
+test_filename = os.path.join(config_databoard.private_data_path, 'test.csv')
+
 score = scores.NegativeLogLikelihood()
-score.set_labels(prediction_type.labels)
+#score = scores.Accuracy()
 
 
-# X is a list of dicts, each dict is indexed by column
 def read_data(df_filename):
     df = pd.read_csv(df_filename, index_col=0)  # this drops the id actually
     y_array = df[target_column_name].values
@@ -55,17 +44,26 @@ def prepare_data():
     # train and tes splits are given
 
 
-def split_data():
+def get_train_data():
     X_train_dict, y_train_array = read_data(train_filename)
+    return X_train_dict, y_train_array
+
+
+def get_test_data():
     X_test_dict, y_test_array = read_data(test_filename)
-    skf = StratifiedShuffleSplit(y_train_array, n_iter=n_CV,
-                                 test_size=skf_test_size, random_state=random_state)
-    return X_train_dict, y_train_array, X_test_dict, y_test_array, skf
+    return X_test_dict, y_test_array
 
 
-def train_model(module_path, X_dict, y_array, skf_is):
+def get_cv(y_train_array):
+    cv = StratifiedShuffleSplit(
+        y_train_array, n_iter=n_CV, 
+        test_size=cv_test_size, random_state=random_state)
+    return cv
+
+
+def train_model(module_path, X_dict, y_array, cv_is):
     # Preparing the training set
-    train_is, _ = skf_is
+    train_is, _ = cv_is
     X_train_dict = [X_dict[i] for i in train_is]
     y_train_array = np.array([y_array[i] for i in train_is])
 
@@ -107,9 +105,9 @@ def train_model(module_path, X_dict, y_array, skf_is):
         return fe, clf
 
 
-def test_model(trained_model, X_dict, skf_is):
+def test_model(trained_model, X_dict, cv_is):
     # Preparing the test (or valid) set
-    _, test_is = skf_is
+    _, test_is = cv_is
     X_test_dict = [X_dict[i] for i in test_is]
 
     if len(trained_model) == 3:  # calibrated classifier
@@ -119,17 +117,12 @@ def test_model(trained_model, X_dict, skf_is):
         X_test_array = fe.transform(X_test_dict)
 
         # Classification
-        y_pred_array = clf.predict(X_test_array)
         y_probas_array = clf.predict_proba(X_test_array)
 
         # Calibration
         y_calib_probas_array = calib.predict_proba(y_probas_array)
-        # calibration can change the classification (the argmax class)
-        y_calib_pred_array = np.array([prediction_type.labels[y_probas.argmax()]
-                                       for y_probas in y_calib_probas_array])
-
         return prediction_type.PredictionArrayType(
-            y_pred_array=y_calib_pred_array, y_probas_array=y_calib_probas_array)
+            y_prediction_array=y_calib_probas_array)
 
     else:  # uncalibrated classifier
         fe, clf = trained_model
@@ -138,7 +131,6 @@ def test_model(trained_model, X_dict, skf_is):
         X_test_array = fe.transform(X_test_dict)
 
         # Classification
-        y_pred_array = clf.predict(X_test_array)
         y_probas_array = clf.predict_proba(X_test_array)
         return prediction_type.PredictionArrayType(
-            y_pred_array=y_pred_array, y_probas_array=y_probas_array)
+            y_prediction_array=y_probas_array)

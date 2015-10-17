@@ -167,17 +167,32 @@ ramp_df = ramp_df.append(pd.Series({
 
 ramp_df = ramp_df.append(pd.Series({
     'ramp_name': 'pollenating_insects',
-    'train_server': reims_server,
-    'train_user': 'mcherti',
-    'train_root': '/home/mcherti/ramp_pollenating_insects',
-    'num_cpus': 10,
-    'web_server': vd_server,
-    'web_user': 'root',
-    'web_root': vd_root,
-    'server_port': '2135',
+    'train_server': 'localhost',
+    'train_user': '',
+    'train_root': local_root,
+    'num_cpus': 2,
+    'web_server': 'localhost',
+    'web_user': '',
+    'web_root': local_root,
+    'server_port': '8080',
     'cv_test_size': 0.2,
     'random_state': 57,
-}, name='pollenating_insects_test'))
+}, name='pollenating_insects_local_test'))
+
+ramp_df = ramp_df.append(pd.Series({
+    'ramp_name': 'kaggle_otto',
+    'train_server': 'localhost',
+    'train_user': '',
+    'train_root': local_root,
+    'num_cpus': 2,
+    'web_server': 'localhost',
+    'web_user': '',
+    'web_root': local_root,
+    'server_port': '8080',
+    'cv_test_size': 0.2,
+    'random_state': 57,
+}, name='kaggle_otto_local_test'))
+
 
 # TODO after insect ramp: clean up the old ramps
 ramp_df = ramp_df.append(pd.Series({

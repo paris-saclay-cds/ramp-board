@@ -367,6 +367,8 @@ def kill(team, tag):
 
 def serve(port=None):
     from databoard import app
+    # loads url/function bindings through @app.route decorators
+    import databoard.views  # noqa
 
     if port is None:
         server_port = int(config.get_ramp_field('server_port'))

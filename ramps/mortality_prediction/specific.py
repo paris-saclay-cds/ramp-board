@@ -3,7 +3,6 @@
 
 import os
 import sys
-import numpy as np
 import pandas as pd
 from importlib import import_module
 from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
@@ -17,7 +16,7 @@ sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
 
 hackaton_title = 'Mortality prediction'
 prediction_type.labels = ['0.0', '1.0']
-target = 'TARGET'
+target_column_name = 'TARGET'
 
 cv_test_size = config_databoard.get_ramp_field('cv_test_size')
 held_out_test_size = 0.2
@@ -33,8 +32,8 @@ score = scores.Accuracy()
 
 def read_data(filename):
     data = pd.read_csv(filename)
-    y_array = data[target].values
-    X_array = data.drop([target], axis=1).values
+    y_array = data[target_column_name].values
+    X_array = data.drop([target_column_name], axis=1).values
     return X_array, y_array
 
 
@@ -75,4 +74,5 @@ def test_model(trained_model, X_array, cv_is):
     _, test_is = cv_is
     clf = trained_model
     y_probas_array = clf.predict_proba(X_array[test_is])
-    return prediction_type.PredictionArrayType(y_prediction_array=y_probas_array)
+    return prediction_type.PredictionArrayType(
+        y_prediction_array=y_probas_array)

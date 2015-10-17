@@ -6,7 +6,7 @@
 # License: BSD 3 clause
 
 import numpy as np
-from sklearn.metrics import accuracy_score, roc_curve, auc
+from sklearn.metrics import accuracy_score
 
 
 class ScoreObject(object):
@@ -103,7 +103,8 @@ class Error(ScoreFunction):
         y_pred_array = predictions.get_pred_index_array()
         ground_truth_pred_array = ground_truth.get_pred_index_array()
         return ScoreLowerTheBetter(
-            1 - accuracy_score(ground_truth_pred_array, y_pred_array), self.eps)
+            1 - accuracy_score(ground_truth_pred_array, y_pred_array),
+            self.eps)
 
     def zero(self):
         return ScoreLowerTheBetter(0.0, self.eps)
@@ -118,11 +119,12 @@ class NegativeLogLikelihood(ScoreFunction):
         y_probas_array_normalized = \
             y_probas_array / np.sum(y_probas_array, axis=1, keepdims=True)
         # Kaggle's rule
-        y_probas_array_limited = np.maximum(
+        y_probas_array_normalized = np.maximum(
             y_probas_array_normalized, 10 ** -15)
-        y_probas_array_limited = np.minimum(
+        y_probas_array_normalized = np.minimum(
             y_probas_array_normalized, 1 - 10 ** -15)
-        scores = - np.sum(np.log(y_probas_array_limited) * ground_truth_probas_array,
+        scores = - np.sum(np.log(y_probas_array_normalized) *
+                          ground_truth_probas_array,
                           axis=1)
         score = np.mean(scores)
         return ScoreLowerTheBetter(score)
