@@ -18,7 +18,7 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 test:
-	nosetests databoard
+	nosetests databoard/tests
 	fab publish_test:iris_local_test
 	cd /tmp/databoard_local/databoard_iris_8080
 	fab test_ramp

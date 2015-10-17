@@ -22,7 +22,8 @@ class PredictionArrayType(object):
             y_pred_index_array = kwargs['y_pred_index_array']
             self.y_probas_array = np.zeros(
                 (len(y_pred_index_array), len(labels)), dtype=np.float64)
-            for y_probas, label_index in zip(self.y_probas_array, y_pred_index_array):
+            for y_probas, label_index in \
+                    zip(self.y_probas_array, y_pred_index_array):
                 y_probas[label_index] = 1.0
         # should match the way the target is represented when y_test is saved
         elif 'ground_truth_f_name' in kwargs.keys():
@@ -45,8 +46,8 @@ class PredictionArrayType(object):
         type_of_label = type(labels[0])
         self.y_probas_array = np.zeros(
             (len(y_pred_label_array), len(labels)), dtype=np.float64)
-        for y_probas, label_list in zip(self.y_probas_array, y_pred_label_array):
-            num_positive_labels = len(label_list)
+        for y_probas, label_list in\
+                zip(self.y_probas_array, y_pred_label_array):
             label_list = map(type_of_label, label_list)
             for label in label_list:
                 y_probas[labels.index(label)] = 1.0 / len(label_list)
@@ -57,7 +58,6 @@ class PredictionArrayType(object):
 #            yield y_pred, y_probas
 
     def save_predictions(self, f_name):
-        num_classes = len(labels)
         with open(f_name, "w") as f:
             for y_probas in self.y_probas_array:
                 f.write(string.join(map(str, y_probas), ',') + '\n')
@@ -72,7 +72,7 @@ class PredictionArrayType(object):
     def get_pred_index_array(self):
         return np.argmax(self.y_probas_array, axis=1)
 
-    def combine(self, indexes=[]):
+    # def combine(self, indexes=[]):
         # Not yet used
 
         # usually the class contains arrays corresponding to predictions
@@ -82,14 +82,14 @@ class PredictionArrayType(object):
 
         # Just saving here in case we want to go back there how to
         # combine based on simply ranks, k = len(indexes)
-        #n = len(y_preds[0])
+        # n = len(y_preds[0])
         # n_ones = n * k - y_preds[indexes].sum() # number of zeros
-        if len(indexes) == 0:  # we combine the full list
-            indexes = range(len(self.y_probas_array))
-        combined_y_probas = self.y_probas_array.mean(axis=0)
-        combined_prediction = PredictionType((labels[0], combined_y_probas))
-        combined_prediction.make_consistent()
-        return combined_prediction
+        # if len(indexes) == 0:  # we combine the full list
+        #     indexes = range(len(self.y_probas_array))
+        # combined_y_probas = self.y_probas_array.mean(axis=0)
+        # combined_prediction = PredictionType((labels[0], combined_y_probas))
+        # combined_prediction.make_consistent()
+        # return combined_prediction
 
 
 def get_nan_combineable_predictions(num_points):
