@@ -354,7 +354,7 @@ def get_y_pred_array(y_probas_array):
 from sklearn.cross_validation import StratifiedShuffleSplit
 
 
-class IsotonicCalibrator():
+class IsotonicCalibrator(object):
 
     def __init__(self):
         pass

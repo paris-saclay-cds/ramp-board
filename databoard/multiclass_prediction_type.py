@@ -9,7 +9,7 @@ import numpy as np
 labels = []
 
 
-class PredictionArrayType:
+class PredictionArrayType(object):
 
     def __init__(self, *args, **kwargs):
         if 'y_prediction_array' in kwargs.keys():  # probability matrix

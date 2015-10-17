@@ -5,7 +5,7 @@ import csv
 import numpy as np
 
 
-class PredictionType:
+class PredictionType(object):
 
     def __init__(self, prediction):
         self.y_pred = prediction

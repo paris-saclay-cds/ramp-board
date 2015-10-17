@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.metrics import accuracy_score, roc_curve, auc
 
 
-class ScoreObject():
+class ScoreObject(object):
 
     def __init__(self, score, eps=10 ** -8):
         self.score = score
@@ -67,7 +67,7 @@ class ScoreHigherTheBetter(ScoreObject):
         return self.score > right.score + self.eps
 
 
-class ScoreFunction():
+class ScoreFunction(object):
 
     def __init__(self, eps=10 ** -8):
         self.eps = eps
