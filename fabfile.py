@@ -398,7 +398,7 @@ def serve(port=None):
 software = [
     'fabfile.py',
     'ramp_index.txt',
-    'databoard/config.py',
+    'databoard/config_databoard.py',
     'databoard/__init__.py',
     'databoard/fetch.py',
     'databoard/generic.py',
