@@ -1,5 +1,4 @@
 import os
-import glob
 import logging
 import numpy as np
 import pandas as pd
@@ -64,7 +63,8 @@ def clear_registrants():
     logger.info('Clearing the models directory.')
     shutil.rmtree(config_databoard.models_path, ignore_errors=True)
     os.mkdir(config_databoard.models_path)
-    open(os.path.join(config_databoard.models_path, '__init__.py'), 'a').close()
+    open(os.path.join(
+        config_databoard.models_path, '__init__.py'), 'a').close()
 
 
 def clear_pred_files():
@@ -79,7 +79,7 @@ def clear_pred_files():
 
 
 def clear_groundtruth():
-    import shutil    
+    import shutil
     shutil.rmtree(config_databoard.ground_truth_path, ignore_errors=True)
     os.mkdir(config_databoard.ground_truth_path)
 
@@ -160,8 +160,8 @@ def leaderboard(which='all', test=False, calibrate=False):
 
     if which in ('all', 'classical'):
         l1 = leaderboard_classical(trained_models, calibrate=calibrate)
-        # The following assignments only work because leaderboard_classical & co
-        # are idempotent.
+        # The following assignments only work because 
+        # leaderboard_classical & co are idempotent.
         # FIXME (potentially)
         with shelve_database() as db:
             db['leaderboard1'] = l1
@@ -515,15 +515,20 @@ def publish_data(ramp_index):
 def clear_destination_path(ramp_index):
     if not config_databoard.is_same_web_and_train_servers(ramp_index):
         destination_path = config_databoard.get_web_destination_path(ramp_index)
+        destination_root = config_databoard.get_ramp_field('web_root', ramp_index)
         if os.path.exists(destination_path):
             os.system('rm -rf ' + destination_path + '/*')
         else:
+            if not os.path.exists(destination_root):
+                os.mkdir(destination_root)
             os.mkdir(destination_path)
     destination_path = config_databoard.get_train_destination_path(ramp_index)
-    print destination_path
+    destination_root = config_databoard.get_ramp_field('train_root', ramp_index)
     if os.path.exists(destination_path):
         os.system('rm -rf ' + destination_path + '/*')
     else:
+        if not os.path.exists(destination_root):
+            os.mkdir(destination_root)
         os.mkdir(destination_path)
 
 
