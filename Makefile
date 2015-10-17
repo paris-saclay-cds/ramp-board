@@ -32,4 +32,3 @@ ctags:
 
 code-analysis:
 	flake8 databoard | grep -v __init__ | grep -v external
-	pylint -E -i y databoard/ -d E1103,E0611,E1101
