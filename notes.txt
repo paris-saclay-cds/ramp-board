@@ -1,0 +1,15 @@
+- move databoard/config_databoard.py to databoard/config.py
+- add proper setup.py
+- move tests in databoard/tests/ and make "nosetests databoard" work
+- fix all errors obtained with 
+flake8 databoard --ignore=E501,E211,E265
+or just "make code-analysis"
+- update readme.md to explain how to test locally
+- evaluate code coverage
+- remove old isotonic code. current sklearn should be fixed
+- add object should be defined with:
+class PredictionArrayType(object):
+not
+class PredictionArrayType:
+- web front end / flask should be isolated from the ML/leaderboard code
+- avoid the ramp_index.txt mess
