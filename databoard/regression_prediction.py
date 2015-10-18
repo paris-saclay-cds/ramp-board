@@ -29,7 +29,7 @@ class Prediction(BasePrediction):
         np.savetxt(self.y_proba, delimiter=',', fmt="%f")
 
     @property
-    def y_comp(self):
+    def y_comb(self):
         """Returns an array which can be combined by taking means"""
         return self.y_pred
 
