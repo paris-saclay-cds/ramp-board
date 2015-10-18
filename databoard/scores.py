@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.metrics import accuracy_score
 
 
-class ScoreObject(object):
+class Score(object):
 
     def __init__(self, score, eps=10 ** -8):
         self.score = score
@@ -17,13 +17,13 @@ class ScoreObject(object):
         self.dtype = np.dtype(np.float)
 
     def __add__(self, right):
-        return ScoreObject(self.score + right.score, self.eps)
+        return Score(self.score + right.score, self.eps)
 
     def __div__(self, divider):
-        return ScoreObject(self.score / divider, self.eps)
+        return Score(self.score / divider, self.eps)
 
     def __truediv__(self, divider):
-        return ScoreObject(self.score / divider, self.eps)
+        return Score(self.score / divider, self.eps)
 
     def __float__(self):
         return float(self.score)
@@ -37,13 +37,13 @@ class ScoreObject(object):
         return abs(self.score - right.score) <= self.eps
 
 
-class ScoreLowerTheBetter(ScoreObject):
+class ScoreLowerTheBetter(Score):
 
     def __init__(self, score, eps=10 ** -8):
-        ScoreObject.__init__(self, score, eps)
+        Score.__init__(self, score, eps)
 
     def __add__(self, right):
-        return ScoreObject(self.score + right.score, self.eps)
+        return Score(self.score + right.score, self.eps)
 
     def __lt__(self, right):
         return self.score > right.score + self.eps
@@ -52,13 +52,13 @@ class ScoreLowerTheBetter(ScoreObject):
         return self.score < right.score - self.eps
 
 
-class ScoreHigherTheBetter(ScoreObject):
+class ScoreHigherTheBetter(Score):
 
     def __init__(self, score, eps=10 ** -8):
-        ScoreObject.__init__(self, score, eps)
+        Score.__init__(self, score, eps)
 
     def __add__(self, right):
-        return ScoreObject(self.score + right.score, self.eps)
+        return Score(self.score + right.score, self.eps)
 
     def __lt__(self, right):
         return self.score < right.score - self.eps
