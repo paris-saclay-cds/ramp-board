@@ -1,7 +1,9 @@
 import logging
 
 from flask import Flask
-from logging.handlers import SMTPHandler
+from logging.handlers import SMTPHandler  # noqa
+
+__version__ = '0.1.dev'
 
 app = Flask('databoard')
 
