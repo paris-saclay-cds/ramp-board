@@ -21,6 +21,8 @@ test:
 	nosetests databoard/tests
 	fab publish_test:iris_local_test
 	cd /tmp/databoard_local/databoard_iris_8080; fab test_ramp
+	fab publish_test:boston_housing_local_test
+	cd /tmp/databoard_local/databoard_boston_housing_8080; fab test_ramp
 
 test-all: test
 	fab publish_test:mortality_prediction_local_test
