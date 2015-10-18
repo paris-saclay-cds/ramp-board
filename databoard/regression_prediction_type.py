@@ -1,53 +1,46 @@
 # Author: Balazs Kegl
 # License: BSD 3 clause
 
-import csv
 import numpy as np
-
-
-class PredictionType(object):
-
-    def __init__(self, prediction):
-        self.y_pred = prediction
-
-    def __str__(self):
-        return "y_pred = ".format(self.y_pred)
-
-    def get_prediction(self):
-        return self.y_pred
 
 
 class PredictionArrayType:
 
     def __init__(self, *args, **kwargs):
-        if 'y_pred_array' in kwargs.keys():
-            self.y_pred_array = kwargs['y_pred_array']
-        elif 'prediction_list' in kwargs.keys():
-            self.y_pred_array = np.array(
-                [prediction for prediction in kwargs['prediction_list']])
-        elif 'f_name' in kwargs.keys():
+        if 'y_prediction_array' in kwargs.keys():
+            self.y_prediction_array = kwargs['y_prediction_array']
+        # should match the way the target is represented when y_test is saved
+        elif 'ground_truth_f_name' in kwargs.keys():
             # loading from file
-            f_name = kwargs['f_name']
-            self.y_pred_array = np.genfromtxt(f_name)
-        elif 'y_combined_array' in kwargs.keys():
-            self.y_pred_array = kwargs['y_combined_array']
+            f_name = kwargs['ground_truth_f_name']
+            self.y_prediction_array = np.genfromtxt(f_name)
+        # should match save_prediction: representation of the target returned
+        # by specific.test_model
+        elif 'predictions_f_name' in kwargs.keys():
+            # loading from file
+            f_name = kwargs['predictions_f_name']
+            self.y_prediction_array = np.genfromtxt(f_name)
         else:
             raise ValueError("Unkonwn init argument, {}".format(kwargs))
 
     def save_predictions(self, f_name):
         with open(f_name, "w") as f:
-            for y_pred in self.y_pred_array:
-                f.write(str(y_pred))
+            for y_prediction in self.y_prediction_array:
+                f.write(str(y_prediction))
                 f.write("\n")
 
-    def get_predictions(self):
-        return self.y_pred_array
+    def get_prediction_array(self):
+        return self.y_prediction_array
 
     def get_combineable_predictions(self):
         """Returns an array which can be combined by taking means"""
-        return self.get_predictions()
+        return self.y_prediction_array
 
-    def combine(self, indexes=[]):
+#    def __iter__(self):
+#        for y_pred, y_probas in self.get_predictions():
+#            yield y_pred, y_probas
+
+    # def combine(self, indexes=[]):
         # Not yet used
 
         # usually the class contains arrays corresponding to predictions
@@ -57,23 +50,20 @@ class PredictionArrayType:
 
         # Just saving here in case we want to go back there how to
         # combine based on simply ranks, k = len(indexes)
-        #n = len(y_preds[0])
+        # n = len(y_preds[0])
         # n_ones = n * k - y_preds[indexes].sum() # number of zeros
-        if len(indexes) == 0:  # we combine the full list
-            indexes = range(len(self.y_probas_array))
-        combined_y_preds = self.y_preds_array.mean()
-        combined_prediction = PredictionType(combined_y_preds)
-        return combined_prediction
+        # if len(indexes) == 0:  # we combine the full list
+        #    indexes = range(len(self.y_probas_array))
+        # combined_y_preds = self.y_preds_array.mean()
+        # combined_prediction = PredictionType(combined_y_preds)
+        # return combined_prediction
 
 
 def get_nan_combineable_predictions(num_points):
-    predictions = np.empty(num_points, dtype=float)
-    predictions.fill(np.nan)
-    return predictions
+    y_prediction_array = np.empty(num_points, dtype=float)
+    y_prediction_array.fill(np.nan)
+    return y_prediction_array
 
-
-def get_y_pred_array(y_probas_array):
-    return np.array([labels[y_probas.argmax()] for y_probas in y_probas_array])
 
 # also think about working with matrices of PredictionType instead of
 # lists of PredictionArrayType

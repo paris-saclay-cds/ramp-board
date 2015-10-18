@@ -135,9 +135,10 @@ class NegativeLogLikelihood(ScoreFunction):
 
 class RMSE(ScoreFunction):
 
-    def __call__(self, ground_truth_list, predictions):
-        y_pred_array = predictions.get_predictions()
-        score = np.sqrt(np.mean(np.square(ground_truth_list - y_pred_array)))
+    def __call__(self, ground_truth, predictions):
+        y_pred_array = predictions.get_prediction_array()
+        ground_truth_array = ground_truth.get_prediction_array()
+        score = np.sqrt(np.mean(np.square(ground_truth_array - y_pred_array)))
         return ScoreLowerTheBetter(score)
 
     def zero(self):

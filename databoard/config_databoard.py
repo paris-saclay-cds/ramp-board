@@ -138,6 +138,20 @@ ramp_df = ramp_df.append(pd.Series({
 }, name='iris_local_test'))
 
 ramp_df = ramp_df.append(pd.Series({
+    'ramp_name': 'boston_housing',
+    'train_server': 'localhost',
+    'train_user': '',
+    'train_root': local_root,
+    'num_cpus': 2,
+    'web_server': 'localhost',
+    'web_user': '',
+    'web_root': local_root,
+    'server_port': '8080',
+    'cv_test_size': 0.2,
+    'random_state': 57,
+}, name='boston_housing_local_test'))
+
+ramp_df = ramp_df.append(pd.Series({
     'ramp_name': 'iris',
     'train_server': vd_server,
     'train_user': 'root',

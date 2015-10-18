@@ -136,7 +136,10 @@ def get_cv_bagging_score(predictions_list, cv, hash_strings, num_points):
             ground_truth_valid_list[i].get_prediction_array()
         # indices of points which appear at least in one test set
         # TODO: this is definitely multiclass only
-        valid_indexes = ~np.isnan(ground_truth_full_prediction_array)[:, 0]
+        if len(ground_truth_full_prediction_array.shape) == 1:
+            valid_indexes = ~np.isnan(ground_truth_full_prediction_array)
+        else:
+            valid_indexes = ~np.isnan(ground_truth_full_prediction_array)[:, 0]
         # computing score after each fold for info
         y_combined_array = np.nanmean(y_combineable_array_list[:i + 1], axis=0)
         combined_predictions = specific.prediction_type.PredictionArrayType(
