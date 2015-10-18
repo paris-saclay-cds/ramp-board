@@ -313,8 +313,8 @@ def best_combine(predictions_list, ground_truth, best_indexes):
     Parameters
     ----------
     y_preds : array-like, shape = [k_models, n_instances], binary
-    best_indexes : array-like, shape = [max k_models], a set of indices of
-        the current best model
+    best_indexes : array-like, shape = [max k_models]
+        A set of indices of the current best model
     Returns
     -------
     best_indexes : array-like, shape = [max k_models], a list of indices. If
