@@ -244,15 +244,33 @@ ramp_df = ramp_df.append(pd.Series({
 
 ramp_df = ramp_df.append(pd.Series({
     'ramp_name': 'el_nino_bagged_cv_future',
-    'train_server': vd_server,
-    'train_user': 'root',
-    'server_port': '3147',
-    'train_root': '/mnt/datacamp',
-    'num_cpus': 15,
+    'train_server': 'localhost',
+    'train_user': '',
+    'train_root': local_root,
+    'num_cpus': 2,
+    'web_server': 'localhost',
+    'web_user': '',
+    'web_root': local_root,
+    'server_port': '8080',
     'cv_test_size': 0.2,
     'cv_bag_size': 0.5,
     'random_state': 57,
-}, name='el_nino_colorado_bagged_cv_future'))
+}, name='el_nino_bagged_cv_future_local_test'))
+
+ramp_df = ramp_df.append(pd.Series({
+    'ramp_name': 'el_nino_block_cv',
+    'train_server': 'localhost',
+    'train_user': '',
+    'train_root': local_root,
+    'num_cpus': 2,
+    'web_server': 'localhost',
+    'web_user': '',
+    'web_root': local_root,
+    'server_port': '8080',
+    'cv_test_size': 0.2,
+    'cv_bag_size': 0.5,
+    'random_state': 57,
+}, name='el_nino_block_cv_local_test'))
 
 # otherwise integers will have float type, weird
 ramp_df[['num_cpus', 'random_state']] = ramp_df[
