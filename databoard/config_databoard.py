@@ -286,6 +286,20 @@ ramp_df = ramp_df.append(pd.Series({
     'random_state': 57,
 }, name='amadeus_local_test'))
 
+ramp_df = ramp_df.append(pd.Series({
+    'ramp_name': 'variable_stars',
+    'train_server': 'localhost',
+    'train_user': '',
+    'train_root': local_root,
+    'num_cpus': 2,
+    'web_server': 'localhost',
+    'web_user': '',
+    'web_root': local_root,
+    'server_port': '8080',
+    'cv_test_size': 0.2,
+    'random_state': 57,
+}, name='variable_stars_local_test'))
+
 # otherwise integers will have float type, weird
 ramp_df[['num_cpus', 'random_state']] = ramp_df[
     ['num_cpus', 'random_state']].astype(int)

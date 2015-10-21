@@ -82,9 +82,9 @@ def train_model(module_path, X_dict, y_array, cv_is):
         calib = calibrator.Calibrator()
 
         # Train/valid cut for holding out calibration set
-        skf = StratifiedShuffleSplit(
+        cv = StratifiedShuffleSplit(
             y_train_array, n_iter=1, test_size=0.1, random_state=57)
-        calib_train_is, calib_test_is = list(skf)[0]
+        calib_train_is, calib_test_is = list(cv)[0]
 
         X_train_train_array = X_train_array[calib_train_is]
         y_train_train_array = y_train_array[calib_train_is]
