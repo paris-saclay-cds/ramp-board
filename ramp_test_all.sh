@@ -5,7 +5,8 @@ fab publish_test:kaggle_otto_local_test
 fab publish_test:boston_housing_local_test
 fab publish_test:el_nino_block_cv_local_test
 fab publish_test:el_nino_bagged_cv_future_local_test
-ab publish_test:amadeus_local_test
+fab publish_test:amadeus_local_test
+fab publish_test:variable_stars_local_test
 
 cd /tmp/databoard_local/databoard_iris_8080
 fab test_ramp
@@ -22,4 +23,6 @@ fab test_ramp
 cd /tmp/databoard_local/databoard_el_nino_bagged_cv_future_8080
 fab test_ramp
 cd /tmp/databoard_local/databoard_amadeus_8080
+fab test_ramp
+cd /tmp/databoard_local/databoard_variable_stars_8080
 fab test_ramp
