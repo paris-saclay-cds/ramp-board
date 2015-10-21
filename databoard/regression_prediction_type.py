@@ -8,7 +8,7 @@ class PredictionArrayType:
 
     def __init__(self, *args, **kwargs):
         if 'y_prediction_array' in kwargs.keys():
-            self.y_prediction_array = kwargs['y_prediction_array']
+            self.y_prediction_array = np.array(kwargs['y_prediction_array'])
         # should match the way the target is represented when y_test is saved
         elif 'ground_truth_f_name' in kwargs.keys():
             # loading from file
