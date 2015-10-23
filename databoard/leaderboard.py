@@ -413,7 +413,7 @@ def leaderboard_combination(orig_models_df, test=False):
     models_df = orig_models_df.sort(columns='timestamp')
     normalized_counts = np.zeros(models_df.shape[0], dtype=float)
     integer_precentage_counts = []
-    
+
     if models_df.shape[0] != 0:
         _, y_train_array = specific.get_train_data()
         cv = specific.get_cv(y_train_array)
