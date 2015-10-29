@@ -26,28 +26,31 @@ def get_predictions_list(models_df, train_is, subdir, index_list=None):
 
     Parameters
     ----------
-    models_df :
+    models_df : DataFrame
         the data frame containing the model indices.
-    subdir :
+    subdir : str
         the subdirectory that contains the predictions (e.g. "test", "valid")
-    test_is : represents the cv fold
-
-    index_list : the subset of predictions to be returned. If None, the full
+    test_is : list of integers
+        represents the cv fold
+    index_list : None | list of integers
+        the subset of predictions to be returned. If None, the full
         set is combined.
+
     Returns
     -------
-    predictions_list : a list of prediction arrays (of type
-        specific.Predictions). Each element of the list
-        is a array of predictions of a given model on the same data points.
+    predictions_list : a list of instances of Predictions
+        Each element of the list is an instance of Predictions of a given model
+        on the same data points.
     """
-    if index_list is None:
-        index_list = range(len(models_df))
+    if index_list is not None:
+        model_df = models_df.iloc[index_list]
+
     predictions_list = []
-    selected_models_df = models_df.iloc[index_list]
-    for tag_name_alias, model_df in selected_models_df.iterrows():
-        full_model_path = generic.get_full_model_path(tag_name_alias, model_df)
-        hash_string = generic.get_hash_string_from_indices(train_is)
-        f_name = generic.get_f_name(full_model_path, subdir, hash_string)
+
+    for model_hash, model_df in models_df.iterrows():
+        full_model_path = generic.get_full_model_path(model_hash, model_df)
+        cv_hash = generic.get_hash_string_from_indices(train_is)
+        f_name = generic.get_f_name(full_model_path, subdir, cv_hash)
         try:
             predictions = generic.get_predictions(f_name)
         except IOError as e:
@@ -78,14 +81,15 @@ def combine_predictions_list(predictions_list, index_list=None):
 
     Returns
     -------
-    combined_predictions : a prediction array containing the combined
-        predictions
+    combined_predictions : instance of Predictions
+        a predictions instance containing the averaged predictions
     """
-
     if index_list is None:  # we combine the full list
         index_list = range(len(predictions_list))
+
     y_comb_list = np.array(
         [predictions_list[i].y_pred_comb for i in index_list])
+
     y_comb = np.nanmean(y_comb_list, axis=0)
     combined_predictions = specific.Predictions(y_pred=y_comb)
     return combined_predictions
@@ -111,7 +115,8 @@ def get_bagging_score(predictions_list, fast=False):
     predictions_list : a list of specific.Predictions,
         representing predictions on the test set.
 
-    fast : True means no construction of the bagging learning curve, only final
+    fast : bool
+        True means no construction of the bagging learning curve, only final
         score
 
     Returns
@@ -151,12 +156,14 @@ def get_cv_bagging_score(predictions_list, test_is_list):
     ----------
     predictions_list : a list of specific.Predictions,
         representing predictions on the (cross-)validation sets
+        for a single model
     test_is_list : a list of index lists, representing the indices of
         validation points in each fold
 
     Returns
     -------
-    score : the cv-bagged score
+    score : float
+        the cv-bagged score
     """
 
     true_predictions_train = generic.get_true_predictions_train()
@@ -176,7 +183,8 @@ def get_cv_bagging_score(predictions_list, test_is_list):
         fold_scores.append(fold_score)
         score = specific.score(
             true_predictions_train, combined_predictions, valid_indexes)
-        coverage = 1.0 * np.count_nonzero(valid_indexes) / n_samples
+        # XXX maybe use masked arrays rather than passing valid_indexes
+        coverage = np.count_nonzero(valid_indexes) / float(n_samples)
         generic.logger.info("Fold {}: score on fold = {}, combined score after"
                             " fold = {}, coverage = {:>3}%".format(
                                 i, fold_score, score,
@@ -222,6 +230,7 @@ def best_combine(predictions_list, true_predictions, best_index_list):
         combined_predictions = combine_predictions_list(
             predictions_list, np.append(best_index_list, i))
         new_score = specific.score(true_predictions, combined_predictions)
+        # new_score = specific.score(pred_true, pred_comb)
         # '>' is overloaded in score, so 'x > y' means 'x is better than y'
         if new_score > best_score:
             best_predictions = combined_predictions
@@ -241,7 +250,8 @@ def get_best_index_list(models_df, train_is, test_is,
 
     Parameters
     ----------
-    models_df : the models to combine
+    models_df : DataFrame
+        the models to combine
     train_is : the list of training indices
     test_is : the list of test indices
     selected_index_list : a list of model indices to combine (in case of
@@ -433,43 +443,44 @@ def leaderboard_combination(orig_models_df, test=False):
 
 
 def leaderboard_execution_times(models_df):
-    hash_strings = generic.get_cv_hash_string_list()
-    num_cv_folds = len(hash_strings)
+    cv_hash_strings = generic.get_cv_hash_string_list()
+    n_folds = len(cv_hash_strings)
     leaderboard = pd.DataFrame(index=models_df.index)
-    leaderboard['train time'] = np.zeros(models_df.shape[0])
+    n_models = models_df.shape[0]
+    leaderboard['train time'] = np.zeros(n_models)
     # we name it "test" (not "valid") bacause this is what it is from the
     # participant's point of view (ie, "public test")
-    leaderboard['test time'] = np.zeros(models_df.shape[0])
+    leaderboard['test time'] = np.zeros(n_models)
 
-    if models_df.shape[0] != 0:
-        for hash_string in hash_strings:
-            for idx, model_df in models_df.iterrows():
-                full_model_path = generic.get_full_model_path(idx, model_df)
+    if n_models > 0:
+        for cv_hash in cv_hash_strings:
+            for model_hash, model_df in models_df.iterrows():
+                model_path = generic.get_full_model_path(model_hash, model_df)
                 try:
                     with open(generic.get_train_time_f_name(
-                            full_model_path, hash_string), 'r') as f:
+                            model_path, cv_hash), 'r') as f:
                         leaderboard.loc[
-                            idx, 'train time'] += abs(float(f.read()))
+                            model_hash, 'train time'] += abs(float(f.read()))
                 except IOError:
                     generic.logger.debug(
                         "Can't open {}, setting training time to 0".format(
                             generic.get_train_time_f_name(
-                                full_model_path, hash_string)))
+                                model_path, cv_hash)))
                 try:
                     with open(generic.get_valid_time_f_name(
-                            full_model_path, hash_string), 'r') as f:
+                            model_path, cv_hash), 'r') as f:
                         leaderboard.loc[
-                            idx, 'test time'] += abs(float(f.read()))
+                            model_hash, 'test time'] += abs(float(f.read()))
                 except IOError:
                     generic.logger.debug(
                         "Can't open {}, setting testing time to 0".format(
                             generic.get_valid_time_f_name(
-                                full_model_path, hash_string)))
+                                model_path, cv_hash)))
 
     leaderboard['train time'] = map(
-        int, leaderboard['train time'] / num_cv_folds)
+        int, leaderboard['train time'] / n_folds)
     leaderboard['test time'] = map(
-        int, leaderboard['test time'] / num_cv_folds)
+        int, leaderboard['test time'] / n_folds)
     generic.logger.info("Classical leaderboard train times = {}".
                         format(leaderboard['train time'].values))
     generic.logger.info("Classical leaderboard valid times = {}".
