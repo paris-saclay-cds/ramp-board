@@ -83,15 +83,16 @@ class ScoreFunction(object):
 
 class Accuracy(ScoreFunction):
 
-    def __call__(self, ground_truth, predictions):
-        y_pred_array = predictions.get_pred_index_array()
-        ground_truth_pred_array = ground_truth.get_pred_index_array()
-        # print y_pred_array
-        # print ground_truth_pred_array
-        # print accuracy_score(ground_truth_pred_array, y_pred_array)
-        # print "\n"
+    def __call__(self, true_predictions, predictions, valid_indexes=None):
+        if valid_indexes is None:
+            y_pred_label_index = predictions.y_pred_label_index
+            y_true_label_index = true_predictions.y_pred_label_index
+        else:
+            y_pred_label_index = predictions.y_pred_label_index[valid_indexes]
+            y_true_label_index = \
+                true_predictions.y_pred_label_index[valid_indexes]
         return ScoreHigherTheBetter(
-            accuracy_score(ground_truth_pred_array, y_pred_array), self.eps)
+            accuracy_score(y_true_label_index, y_pred_label_index), self.eps)
 
     def zero(self):
         return ScoreHigherTheBetter(0.0, self.eps)
@@ -99,11 +100,16 @@ class Accuracy(ScoreFunction):
 
 class Error(ScoreFunction):
 
-    def __call__(self, ground_truth, predictions):
-        y_pred_array = predictions.get_pred_index_array()
-        ground_truth_pred_array = ground_truth.get_pred_index_array()
+    def __call__(self, true_predictions, predictions, valid_indexes=None):
+        if valid_indexes is None:
+            y_pred_label_index = predictions.y_pred_label_index
+            y_true_label_index = true_predictions.y_pred_label_index
+        else:
+            y_pred_label_index = predictions.y_pred_label_index[valid_indexes]
+            y_true_label_index = \
+                true_predictions.y_pred_label_index[valid_indexes]
         return ScoreLowerTheBetter(
-            1 - accuracy_score(ground_truth_pred_array, y_pred_array),
+            1 - accuracy_score(y_true_label_index, y_pred_label_index),
             self.eps)
 
     def zero(self):
@@ -112,19 +118,25 @@ class Error(ScoreFunction):
 
 class NegativeLogLikelihood(ScoreFunction):
 
-    def __call__(self, ground_truth, predictions):
-        y_probas_array = predictions.get_prediction_array()
-        ground_truth_probas_array = ground_truth.get_prediction_array()
+    def __call__(self, true_predictions, predictions, valid_indexes=None):
+        # We need valid_indexes because in cv bagging not all instances
+        # have valid predictions.
+        if valid_indexes is None:
+            y_proba = predictions.y_pred
+            y_true_proba = true_predictions.y_pred
+        else:
+            y_proba = predictions.y_pred[valid_indexes]
+            y_true_proba = true_predictions.y_pred[valid_indexes]
         # Normalize rows
-        y_probas_array_normalized = \
-            y_probas_array / np.sum(y_probas_array, axis=1, keepdims=True)
+        y_proba_normalized = \
+            y_proba / np.sum(y_proba, axis=1, keepdims=True)
         # Kaggle's rule
-        y_probas_array_normalized = np.maximum(
-            y_probas_array_normalized, 10 ** -15)
-        y_probas_array_normalized = np.minimum(
-            y_probas_array_normalized, 1 - 10 ** -15)
-        scores = - np.sum(np.log(y_probas_array_normalized) *
-                          ground_truth_probas_array,
+        y_proba_normalized = np.maximum(
+            y_proba_normalized, 10 ** -15)
+        y_proba_normalized = np.minimum(
+            y_proba_normalized, 1 - 10 ** -15)
+        scores = - np.sum(np.log(y_proba_normalized) *
+                          y_true_proba,
                           axis=1)
         score = np.mean(scores)
         return ScoreLowerTheBetter(score)
@@ -135,10 +147,14 @@ class NegativeLogLikelihood(ScoreFunction):
 
 class RMSE(ScoreFunction):
 
-    def __call__(self, ground_truth, predictions):
-        y_pred_array = predictions.get_prediction_array()
-        ground_truth_array = ground_truth.get_prediction_array()
-        score = np.sqrt(np.mean(np.square(ground_truth_array - y_pred_array)))
+    def __call__(self, true_predictions, predictions, valid_indexes=None):
+        if valid_indexes is None:
+            y_pred = predictions.y_pred
+            y_true = true_predictions.y_pred
+        else:
+            y_pred = predictions.y_pred[valid_indexes]
+            y_true = true_predictions.y_pred[valid_indexes]
+        score = np.sqrt(np.mean(np.square(y_true - y_pred)))
         return ScoreLowerTheBetter(score)
 
     def zero(self):

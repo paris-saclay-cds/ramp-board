@@ -79,30 +79,15 @@ def clear_pred_files():
             os.remove(fname)
 
 
-def clear_groundtruth():
-    import shutil
-    shutil.rmtree(config.ground_truth_path, ignore_errors=True)
-    os.mkdir(config.ground_truth_path)
-
-
-def setup_ground_truth():
-    from databoard.generic import setup_ground_truth
+def prepare_data():
     from databoard.specific import prepare_data
 
     # Preparing the data set, typically public train/private held-out test cut
     logger.info('Preparing the dataset.')
     prepare_data()
 
-    logger.info('Removing the ground truth files.')
-    clear_groundtruth()
-
-    # Set up the ground truth predictions for the CV folds
-    logger.info('Setting up the groundtruth.')
-    setup_ground_truth()
-
-
 def setup():
-    setup_ground_truth()
+    prepare_data()
     clear_db()
     clear_registrants()
     # Flush joblib cache
@@ -408,8 +393,8 @@ software = [
     'databoard/leaderboard.py',
     'databoard/machine_parallelism.py',
     'databoard/model.py',  # db model, TODO should be renamed
-    'databoard/multiclass_prediction_type.py',
-    'databoard/regression_prediction_type.py',
+    'databoard/multiclass_prediction.py',
+    'databoard/regression_prediction.py',
     'databoard/scores.py',
     'databoard/train_test.py',
     'databoard/views.py',
@@ -493,7 +478,7 @@ def publish(ramp_index, test=False):
 
 
 # (re)publish data set from 'ramps/' + ramp_name + '/data'
-# fab setup_ground_truth should be run at the destination
+# fab prepare_data should be run at the destination
 def publish_data(ramp_index):
     local = config.get_ramp_field('train_server') == 'localhost'
     ramp_name = config.get_ramp_field('ramp_name', ramp_index)

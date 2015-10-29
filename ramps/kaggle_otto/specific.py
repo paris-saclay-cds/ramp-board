@@ -10,16 +10,17 @@ from sklearn.cross_validation import StratifiedShuffleSplit
 # menu
 import scores
 # menu polymorphism example
-import multiclass_prediction_type as prediction_type
+import multiclass_prediction
+from .multiclass_prediction import Predictions
 import config_databoard
 
 sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
 
 hackaton_title = 'Kaggle Otto product classification'
 target_column_name = 'target'
-prediction_type.labels = ['Class_1', 'Class_2', 'Class_3', 'Class_4',
-                          'Class_5', 'Class_6', 'Class_7', 'Class_8',
-                          'Class_9']
+multiclass_prediction.labels = ['Class_1', 'Class_2', 'Class_3', 'Class_4',
+                                'Class_5', 'Class_6', 'Class_7', 'Class_8',
+                                'Class_9']
 
 cv_test_size = config_databoard.get_ramp_field('cv_test_size')
 random_state = config_databoard.get_ramp_field('random_state')
@@ -29,7 +30,7 @@ train_filename = os.path.join(config_databoard.public_data_path, 'train.csv')
 test_filename = os.path.join(config_databoard.private_data_path, 'test.csv')
 
 score = scores.NegativeLogLikelihood()
-#score = scores.Accuracy()
+# score = scores.Accuracy()
 
 
 def read_data(df_filename):
@@ -56,7 +57,7 @@ def get_test_data():
 
 def get_cv(y_train_array):
     cv = StratifiedShuffleSplit(
-        y_train_array, n_iter=n_CV, 
+        y_train_array, n_iter=n_CV,
         test_size=cv_test_size, random_state=random_state)
     return cv
 
@@ -121,8 +122,7 @@ def test_model(trained_model, X_dict, cv_is):
 
         # Calibration
         y_calib_probas_array = calib.predict_proba(y_probas_array)
-        return prediction_type.PredictionArrayType(
-            y_prediction_array=y_calib_probas_array)
+        return Predictions(y_pred=y_calib_probas_array)
 
     else:  # uncalibrated classifier
         fe, clf = trained_model
@@ -132,5 +132,4 @@ def test_model(trained_model, X_dict, cv_is):
 
         # Classification
         y_probas_array = clf.predict_proba(X_test_array)
-        return prediction_type.PredictionArrayType(
-            y_prediction_array=y_probas_array)
+        return Predictions(y_pred=y_probas_array)

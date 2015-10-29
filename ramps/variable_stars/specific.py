@@ -10,14 +10,15 @@ from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
 # menu
 import scores
 # menu polymorphism example
-import multiclass_prediction_type as prediction_type
+import multiclass_prediction
+from .multiclass_prediction import Predictions
 import config_databoard
 
 sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
 
 hackaton_title = 'Variable star type prediction'
 target_column_name = 'type'
-prediction_type.labels = [1.0, 2.0, 3.0, 4.0]
+multiclass_prediction.labels = [1.0, 2.0, 3.0, 4.0]
 held_out_test_size = 0.7
 cv_test_size = config_databoard.get_ramp_field('cv_test_size')
 random_state = config_databoard.get_ramp_field('random_state')
@@ -35,8 +36,8 @@ vf_test_filename = os.path.join(
     config_databoard.private_data_path, 'test_varlength_features.csv')
 
 score = scores.Accuracy()
-#score = scores.Error()
-#score = scores.NegativeLogLikelihood()
+# score = scores.Error()
+# score = scores.NegativeLogLikelihood()
 
 
 def csv_array_to_float(csv_array_string):
@@ -99,7 +100,7 @@ def get_test_data():
 
 def get_cv(y_train_array):
     cv = StratifiedShuffleSplit(
-        y_train_array, n_iter=n_CV, 
+        y_train_array, n_iter=n_CV,
         test_size=cv_test_size, random_state=random_state)
     return cv
 
@@ -149,7 +150,6 @@ def train_model(module_path, X_dict, y_array, cv_is):
         return fe, clf
 
 
-
 def test_model(trained_model, X_dict, cv_is):
     # Preparing the test (or valid) set
     _, test_is = cv_is
@@ -166,8 +166,7 @@ def test_model(trained_model, X_dict, cv_is):
 
         # Calibration
         y_calib_probas_array = calib.predict_proba(y_probas_array)
-        return prediction_type.PredictionArrayType(
-            y_prediction_array=y_calib_probas_array)
+        return Predictions(y_pred=y_calib_probas_array)
 
     else:  # uncalibrated classifier
         fe, clf = trained_model
@@ -177,6 +176,4 @@ def test_model(trained_model, X_dict, cv_is):
 
         # Classification
         y_probas_array = clf.predict_proba(X_test_array)
-        return prediction_type.PredictionArrayType(
-            y_prediction_array=y_probas_array)
-
+        return Predictions(y_pred=y_probas_array)

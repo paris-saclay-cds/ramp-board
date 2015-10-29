@@ -9,7 +9,7 @@ from sklearn.cross_validation import ShuffleSplit, train_test_split
 # menu
 import scores
 # menu polymorphism example
-import regression_prediction_type as prediction_type
+from .regression_prediction import Predictions
 import config_databoard
 
 sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
@@ -72,6 +72,5 @@ def train_model(module_path, X_array, y_array, cv_is):
 def test_model(trained_model, X_array, cv_is):
     _, test_is = cv_is
     reg = trained_model
-    y_prediction_array = reg.predict(X_array[test_is])
-    return prediction_type.PredictionArrayType(
-        y_prediction_array=y_prediction_array)
+    y_pred = reg.predict(X_array[test_is])
+    return Predictions(y_pred=y_pred)

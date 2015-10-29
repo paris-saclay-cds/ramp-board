@@ -2,77 +2,101 @@
 # License: BSD 3 clause
 
 import csv
+import string
 import numpy as np
-
-from .base_prediction import BasePrediction
 
 # Global static that should be set by specific (or somebody)
 labels = []
 
 
-class Prediction(BasePrediction):
+class Predictions(object):
 
-    def __init__(self, indices=None, y_pred=None, y_proba=None, y_true=None):
-        self.indices = indices
-        if y_pred is not None:  # probability matrix
-            self.y_proba = np.array(y_pred, dtype=np.float64)
-
-
-        # XXX : the rest I am lost
-        elif 'y_pred_label_array' in kwargs.keys():
-            y_pred_label_array = kwargs['y_pred_label_array']
-            self._init_from_pred_label_array(y_pred_label_array)
-        elif 'y_pred_index_array' in kwargs.keys():
-            y_pred_index_array = kwargs['y_pred_index_array']
-            self.y_probas_array = np.zeros(
-                (len(y_pred_index_array), len(labels)), dtype=np.float64)
-            for y_probas, label_index in \
-                    zip(self.y_probas_array, y_pred_index_array):
-                y_probas[label_index] = 1.0
-        # should match the way the target is represented when y_test is saved
-        elif 'ground_truth_f_name' in kwargs.keys():
-            # loading from ground truth file
-            f_name = kwargs['ground_truth_f_name']
+    def __init__(self, y_pred=None, y_pred_labels=None, y_pred_indexes=None,
+                 y_true=None, f_name=None, n_samples=None):
+        if y_pred is not None:
+            self.y_proba = y_pred
+        elif y_pred_labels is not None:
+            self._init_from_pred_labels(y_pred_labels)
+        # elif y_pred_indexes is not None:
+        #    # this is not yet multi-label
+        #    self.y_proba = np.zeros(
+        #        (len(y_pred_indexes), len(labels)), dtype=np.float64)
+        #    for ps_i, label_index in zip(self.y_proba, y_pred_indexes):
+        #        ps_i[label_index] = 1.0
+        elif y_true is not None:
+            self._init_from_pred_labels(y_true)
+        elif f_name is not None:
             with open(f_name) as f:
-                y_pred_label_array = list(csv.reader(f))
-            self._init_from_pred_label_array(y_pred_label_array)
-        # should match save_prediction: representation of the target returned
-        # by specific.test_model
-        elif 'predictions_f_name' in kwargs.keys():
-            f_name = kwargs['predictions_f_name']
-            with open(f_name) as f:
-                self.y_probas_array = np.array(
-                    list(csv.reader(f)), dtype=np.float64)
+                self.y_proba = np.array(list(csv.reader(f)), dtype=np.float64)
+        elif n_samples is not None:
+            self.y_proba = np.empty(
+                (n_samples, len(labels)), dtype=np.float64)
+            self.y_proba.fill(np.nan)
         else:
-            raise ValueError("Unkonwn init argument, {}".format(kwargs))
+            raise ValueError("Missing init argument: y_pred, y_pred_labels, "
+                             "y_pred_indexes, y_true, f_name, or n_samples")
 
-    def _init_from_pred_label_array(self, y_pred_label_array):
+    def _init_from_pred_labels(self, y_pred_labels):
         type_of_label = type(labels[0])
-        self.y_probas_array = np.zeros(
-            (len(y_pred_label_array), len(labels)), dtype=np.float64)
-        for y_probas, label_list in\
-                zip(self.y_probas_array, y_pred_label_array):
+        self.y_proba = np.zeros(
+            (len(y_pred_labels), len(labels)), dtype=np.float64)
+        for ps_i, label_list in zip(self.y_proba, y_pred_labels):
+            # converting single labels to list of labels, assumed below
+            if type(label_list) != np.ndarray and type(label_list) != list:
+                label_list = [label_list]
             label_list = map(type_of_label, label_list)
             for label in label_list:
-                y_probas[labels.index(label)] = 1.0 / len(label_list)
+                ps_i[labels.index(label)] = 1.0 / len(label_list)
+
+    def save_predictions(self, f_name):
+        with open(f_name, "w") as f:
+            for y_proba in self.y_proba:
+                f.write(string.join(map(str, y_proba), ',') + '\n')
+
+    def set_valid_predictions(self, predictions, test_is):
+        self.y_proba[test_is] = predictions.y_proba
 
     @property
-    def y_comb(self):
+    def valid_indexes(self):
+        return ~np.isnan(self.y_proba[:, 0])
+
+    @property
+    def y_pred(self):
+        return self.y_proba
+
+    @property
+    def y_pred_label_index(self):
+        """multi-class y_pred is the index of the predicted label"""
+        return np.argmax(self.y_proba, axis=1)
+
+    @property
+    def y_pred_label(self):
+        return labels[self.y_pred_label_index]
+
+    @property
+    def y_pred_comb(self):
         """Returns an array which can be combined by taking means"""
         return self.y_proba
 
-    def save(self, fname):
-        np.savetxt(self.y_proba, delimiter=',', fmt="%f")
-
     @property
-    def y(self):
-        return self.y_proba
+    def n_samples(self):
+        return len(self.y_proba)
 
-    def get_index_max(self):  # not super happy about this one
-        return np.argmax(self.y_proba, axis=1)
+    # def combine(self, indexes=[]):
+        # Not yet used
 
+        # usually the class contains arrays corresponding to predictions
+        # for a set of different data points. Here we assume that it is
+        # a list of predictions produced by different functions on the same
+        # data point. We return a single PrdictionType
 
-def get_nan_combineable_predictions(n_samples):
-    predictions = np.empty((n_samples, len(labels)), dtype=float)
-    predictions.fill(np.nan)
-    return predictions
+        # Just saving here in case we want to go back there how to
+        # combine based on simply ranks, k = len(indexes)
+        # n = len(y_preds[0])
+        # n_ones = n * k - y_preds[indexes].sum() # number of zeros
+        # if len(indexes) == 0:  # we combine the full list
+        #     indexes = range(len(self.y_proba_array))
+        # combined_y_proba = self.y_proba_array.mean(axis=0)
+        # combined_prediction = PredictionType((labels[0], combined_y_proba))
+        # combined_prediction.make_consistent()
+        # return combined_prediction

@@ -9,13 +9,14 @@ from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
 # menu
 import scores
 # menu polymorphism example
-import multiclass_prediction_type as prediction_type
+import multiclass_prediction
+from .multiclass_prediction import Predictions
 import config_databoard
 
 sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
 
 hackaton_title = 'Iris classification (test)'
-prediction_type.labels = ['setosa', 'versicolor', 'virginica']
+multiclass_prediction.labels = ['setosa', 'versicolor', 'virginica']
 target_column_name = 'species'
 
 cv_test_size = config_databoard.get_ramp_field('cv_test_size')
@@ -57,7 +58,7 @@ def get_test_data():
 
 def get_cv(y_train_array):
     cv = StratifiedShuffleSplit(
-        y_train_array, n_iter=n_CV, test_size=cv_test_size, 
+        y_train_array, n_iter=n_CV, test_size=cv_test_size,
         random_state=random_state)
     return cv
 
@@ -73,6 +74,5 @@ def train_model(module_path, X_array, y_array, cv_is):
 def test_model(trained_model, X_array, cv_is):
     _, test_is = cv_is
     clf = trained_model
-    y_probas_array = clf.predict_proba(X_array[test_is])
-    return prediction_type.PredictionArrayType(
-        y_prediction_array=y_probas_array)
+    y_proba = clf.predict_proba(X_array[test_is])
+    return Predictions(y_pred=y_proba)

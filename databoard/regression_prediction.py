@@ -3,38 +3,59 @@
 
 import numpy as np
 
-from .base_prediction import BasePrediction
 
+class Predictions:
 
-class Prediction(BasePrediction):
-
-    def __init__(self, indices=None, y_pred=None, y_proba=None, y_true=None):
+    def __init__(self, y_pred=None, y_true=None, f_name=None, n_samples=None):
         if y_pred is not None:
-            self.y_pred = y_pred
-
-        # XXX : after I am lost
-        elif 'prediction_list' in kwargs.keys():
-            self.y_pred_array = np.array(
-                [prediction for prediction in kwargs['prediction_list']])
-        elif 'f_name' in kwargs.keys():
+            self.y_pred = np.array(y_pred)
+        elif y_true is not None:
+            self.y_pred = np.array(y_true)
+        elif f_name is not None:
             # loading from file
-            f_name = kwargs['f_name']
-            self.y_pred_array = np.genfromtxt(f_name)
-        elif 'y_combined_array' in kwargs.keys():
-            self.y_pred_array = kwargs['y_combined_array']
+            self.y_pred = np.genfromtxt(f_name)
+        elif n_samples is not None:
+            self.y_pred = np.empty(n_samples, dtype=float)
+            self.y_pred.fill(np.nan)
         else:
-            raise ValueError("Unkonwn init argument, {}".format(kwargs))
+            raise ValueError("Missing init argument: y_pred, y_true, f_name "
+                             "or n_samples")
 
-    def save(self, f_name):
-        np.savetxt(self.y_proba, delimiter=',', fmt="%f")
+    def save_predictions(self, f_name):
+        with open(f_name, "w") as f:
+            for y_i in self.y_pred:
+                f.write(str(y_i) + '\n')
+
+    def set_valid_predictions(self, predictions, test_is):
+        self.y_pred[test_is] = predictions.y_pred
 
     @property
-    def y_comb(self):
+    def valid_indexes(self):
+        return ~np.isnan(self.y_pred)
+
+    @property
+    def y_pred_comb(self):
         """Returns an array which can be combined by taking means"""
         return self.y_pred
 
+    @property
+    def n_samples(self):
+        return len(self.y_pred)
 
-def get_nan_combineable_predictions(num_points):
-    predictions = np.empty(num_points, dtype=float)
-    predictions.fill(np.nan)
-    return predictions
+    # def combine(self, indexes=[]):
+        # Not yet used
+
+        # usually the class contains arrays corresponding to predictions
+        # for a set of different data points. Here we assume that it is
+        # a list of predictions produced by different functions on the same
+        # data point. We return a single PrdictionType
+
+        # Just saving here in case we want to go back there how to
+        # combine based on simply ranks, k = len(indexes)
+        # n = len(y_preds[0])
+        # n_ones = n * k - y_preds[indexes].sum() # number of zeros
+        # if len(indexes) == 0:  # we combine the full list
+        #    indexes = range(len(self.y_probas_array))
+        # combined_y_preds = self.y_preds_array.mean()
+        # combined_prediction = PredictionType(combined_y_preds)
+        # return combined_prediction

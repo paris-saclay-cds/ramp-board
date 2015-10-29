@@ -7,10 +7,9 @@ import xray
 import numpy as np
 import pandas as pd
 from importlib import import_module
-from sklearn.cross_validation import ShuffleSplit
 # menu
 # menu polymorphism example
-import regression_prediction_type as prediction_type
+from .regression_prediction import Predictions
 import scores
 import config_databoard
 
@@ -45,7 +44,7 @@ def get_enso_mean(tas):
 
 def read_data(xray_filename):
     temperatures_xray = xray.open_dataset(xray_filename, decode_times=False)
-    # ridiculous as it sounds, there is simply no way to convert a date 
+    # ridiculous as it sounds, there is simply no way to convert a date
     # starting with the year 800 into pd array
     temperatures_xray['time'] = pd.date_range(
         '1/1/1700', periods=temperatures_xray['time'].shape[0], freq='M') - \
@@ -135,5 +134,4 @@ def test_model(trained_model, X_xray, cv_is):
     _, test_is = cv_is
     X_test_array = np.array([X_array[i] for i in test_is])
     y_prediction_array = reg.predict(X_test_array)
-    return prediction_type.PredictionArrayType(
-        y_prediction_array=y_prediction_array)
+    return Predictions(y_pred=y_prediction_array)

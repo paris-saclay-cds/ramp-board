@@ -3,24 +3,22 @@
 
 import os
 import sys
-import socket
 import numpy as np
-import pandas as pd
 from importlib import import_module
 from sklearn.cross_validation import StratifiedShuffleSplit
-from sklearn.calibration import CalibratedClassifierCV
 # menu
 import scores
 # menu polymorphism example
-import multiclass_prediction_type as prediction_type
+import multiclass_prediction
+from .multiclass_prediction import Predictions
 import config_databoard
 
 sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
 
 hackaton_title = 'Pollenating insect classification'
-prediction_type.labels = [565,  654,  682,  687,  696,  715,  759,  833,  835,
-                          881,  952,  970,  971,  978,  995,  996, 1061, 1071]
-#held_out_test_size = 0.7
+multiclass_prediction.labels = [565, 654, 682, 687, 696, 715, 759, 833, 835,
+                                881, 952, 970, 971, 978, 995, 996, 1061, 1071]
+# held_out_test_size = 0.7
 
 cv_test_size = config_databoard.get_ramp_field('cv_test_size')
 random_state = config_databoard.get_ramp_field('random_state')
@@ -33,9 +31,8 @@ test_filename = os.path.join(
     config_databoard.private_data_path, 'test_64x64.npz')
 
 score = scores.Accuracy()
-#score = scores.Error()
-#score = scores.NegativeLogLikelihood()
-# score.set_labels(prediction_type.labels)
+# score = scores.Error()
+# score = scores.NegativeLogLikelihood()
 
 
 # X is a list of dicts, each dict is indexed by column
@@ -70,8 +67,9 @@ def get_test_data():
 
 
 def get_cv(y_train_array):
-    cv = StratifiedShuffleSplit(y_train_array,
-                                n_iter=n_CV, test_size=cv_test_size, random_state=random_state)
+    cv = StratifiedShuffleSplit(
+        y_train_array, n_iter=n_CV, test_size=cv_test_size,
+        random_state=random_state)
     return cv
 
 
@@ -105,4 +103,4 @@ def test_model(trained_model, X_array, cv_is):
     else:
         # default behavior
         y_probas_array = clf.predict_proba(X_test_array)
-    return prediction_type.PredictionArrayType(y_prediction_array=y_probas_array)
+    return Predictions(y_pred=y_probas_array)

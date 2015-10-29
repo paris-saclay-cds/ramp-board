@@ -10,7 +10,7 @@ from sklearn.cross_validation import ShuffleSplit, train_test_split
 # menu
 import scores
 # menu polymorphism example
-import regression_prediction_type as prediction_type
+from .regression_prediction import Predictions
 import config_databoard
 
 sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
@@ -43,7 +43,7 @@ def read_data(df_filename):
 def prepare_data():
     df = read_data(raw_filename)
     df = df.drop(drop_column_names, axis=1)
-    df[target_column_name] /= 0.5362 # for hiding the real number
+    df[target_column_name] /= 0.5362  # for hiding the real number
     df_train, df_test = train_test_split(
         df, test_size=held_out_test_size, random_state=random_state)
     df_train.to_csv(train_filename)
@@ -94,5 +94,4 @@ def test_model(trained_model, X_df, cv_is):
     _, test_is = cv_is
     X_test_array = np.array([X_array[i] for i in test_is])
     y_prediction_array = reg.predict(X_test_array)
-    return prediction_type.PredictionArrayType(
-        y_prediction_array=y_prediction_array)
+    return Predictions(y_pred=y_prediction_array)

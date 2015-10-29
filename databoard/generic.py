@@ -1,8 +1,6 @@
 import os
-import glob
 import hashlib
 import logging
-import numpy as np
 from contextlib import contextmanager
 
 from sklearn.externals.joblib import Memory
@@ -10,9 +8,11 @@ from sklearn.externals.joblib import Memory
 import config_databoard
 import specific
 
-mem = Memory(cachedir=config_databoard.cachedir)
+mem = Memory(cachedir=config_databoard.cachedir, verbose=0)
 logger = logging.getLogger('databoard')
 
+
+# TODO: wrap get_train_data here so we can mem_cache it
 
 def get_hash_string_from_indices(index_list):
     """We identify files output on cross validation (models, predictions)
@@ -20,7 +20,7 @@ def get_hash_string_from_indices(index_list):
 
     Parameters
     ----------
-    test_is : np.array, shape (size_of_set,)
+    index_list : np.array, shape (size_of_set,)
 
     Returns
     -------
@@ -29,6 +29,14 @@ def get_hash_string_from_indices(index_list):
     hasher = hashlib.md5()
     hasher.update(index_list)
     return hasher.hexdigest()
+
+
+def get_cv_hash_string_list():
+    _, y_train = specific.get_train_data()
+    cv = specific.get_cv(y_train)
+    train_is_list, _ = zip(*cv)
+    return [get_hash_string_from_indices(train_is)
+            for train_is in train_is_list]
 
 
 def get_hash_string_from_path(path):
@@ -121,22 +129,54 @@ def get_valid_time_f_name(full_model_path, hash_string):
     return get_f_name(full_model_path, "valid_time", hash_string)
 
 
-def get_ground_truth_valid_f_name(hash_string):
-    return get_f_name(
-        config_databoard.ground_truth_path, "ground_truth_valid", hash_string)
+@mem.cache
+def get_cv():
+    _, y_train = specific.get_train_data()
+    return specific.get_cv(y_train)
 
 
-def get_ground_truth_test_f_name():
-    return get_f_name(config_databoard.ground_truth_path, '.',
-                      "ground_truth_test")
+@mem.cache
+def get_train_is_list():
+    cv = get_cv()
+    return list(zip(*list(cv))[0])
 
 
-def get_hash_strings_from_ground_truth():
-    ground_truth_f_names = glob.glob(
-        config_databoard.ground_truth_path + "/ground_truth_valid/*")
-    hash_strings = [get_hash_string_from_path(path)
-                    for path in ground_truth_f_names]
-    return hash_strings
+@mem.cache
+def get_test_is_list():
+    cv = get_cv()
+    return list(zip(*list(cv))[1])
+
+
+@mem.cache
+def get_true_predictions_train():
+    _, y_train = specific.get_train_data()
+    return specific.Predictions(y_true=y_train)
+
+
+@mem.cache
+def get_true_predictions_test():
+    _, y_test = specific.get_test_data()
+    return specific.Predictions(y_true=y_test)
+
+
+@mem.cache
+def get_true_predictions_valid(test_is):
+    _, y_train = specific.get_train_data()
+    return specific.Predictions(y_true=y_train[test_is])
+
+
+@mem.cache
+def get_true_predictions_valid_list():
+    _, y_train = specific.get_train_data()
+    test_is_list = get_test_is_list()
+    true_predictions_valid_list = [specific.Predictions(
+        y_true=y_train[test_is]) for test_is in test_is_list]
+    return true_predictions_valid_list
+
+
+@mem.cache
+def get_predictions(f_name):
+    return specific.Predictions(f_name=f_name)
 
 
 @contextmanager
@@ -149,24 +189,3 @@ def changedir(dir_name):
         logger.error(e)
     finally:
         os.chdir(current_dir)
-
-
-def setup_ground_truth():
-    """
-    Setting up the GroundTruth subdir, saving y_test for each fold in cv.
-    File names are valid_<hash of the train index vector>.csv.
-    """
-    os.rmdir(config_databoard.ground_truth_path)  # cleanup the ground_truth
-    os.mkdir(config_databoard.ground_truth_path)
-    _, y_train = specific.get_train_data()
-    _, y_test = specific.get_test_data()
-    cv = specific.get_cv(y_train)
-    f_name_test = get_ground_truth_test_f_name()
-    np.savetxt(f_name_test, y_test, delimiter="\n", fmt='%s')
-
-    logger.debug('Ground truth files...')
-    for train_is, test_is in cv:
-        hash_string = get_hash_string_from_indices(train_is)
-        f_name_valid = get_ground_truth_valid_f_name(hash_string)
-        logger.debug(f_name_valid)
-        np.savetxt(f_name_valid, y_train[test_is], delimiter="\n", fmt='%s')
