@@ -12,28 +12,29 @@ import scores
 # menu polymorphism example
 import multiclass_prediction
 from .multiclass_prediction import Predictions
-import config_databoard
+from .config import config, models_path
+from .config import raw_data_path, public_data_path, private_data_path
 
-sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
+sys.path.append(os.path.dirname(os.path.abspath(models_path)))
 
 hackaton_title = 'Variable star type prediction'
 target_column_name = 'type'
 multiclass_prediction.labels = [1.0, 2.0, 3.0, 4.0]
 held_out_test_size = 0.7
-cv_test_size = config_databoard.get_ramp_field('cv_test_size')
-random_state = config_databoard.get_ramp_field('random_state')
-n_CV = config_databoard.get_ramp_field('n_cpus')
+cv_test_size = config.cv_test_size
+random_state = config.random_state
+n_CV = config.num_cpus
 
-raw_filename = os.path.join(config_databoard.raw_data_path, 'data.csv')
+raw_filename = os.path.join(raw_data_path, 'data.csv')
 vf_raw_filename = os.path.join(
-    config_databoard.raw_data_path, 'data_varlength_features.csv.gz')
+    raw_data_path, 'data_varlength_features.csv.gz')
 train_filename = os.path.join(
-    config_databoard.public_data_path, 'train.csv')
+    public_data_path, 'train.csv')
 vf_train_filename = os.path.join(
-    config_databoard.public_data_path, 'train_varlength_features.csv')
-test_filename = os.path.join(config_databoard.private_data_path, 'test.csv')
+    public_data_path, 'train_varlength_features.csv')
+test_filename = os.path.join(private_data_path, 'test.csv')
 vf_test_filename = os.path.join(
-    config_databoard.private_data_path, 'test_varlength_features.csv')
+    private_data_path, 'test_varlength_features.csv')
 
 score = scores.Accuracy()
 # score = scores.Error()

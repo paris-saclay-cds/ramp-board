@@ -12,10 +12,12 @@ import pandas as pd
 from flask_mail import Mail
 from flask_mail import Message
 
-from databoard import app
+from . import app
 from .model import shelve_database, columns
 import specific
-import config_databoard
+from .config import notification_recipients, config, models_path, repos_path
+from .config import submissions_path
+# import config_databoard
 
 logger = logging.getLogger('databoard')
 
@@ -42,13 +44,13 @@ def send_mail_notif(submissions):
         body_message = '<b>Dataset</b>: {}<br/>'.format(
             specific.hackaton_title)
         body_message += '<b>Server</b>: {}<br/>'.format(
-            config_databoard.get_ramp_field('deploy_server'))
+            config.deploy_server)
         body_message += '<b>Port</b>: {}<br/>'.format(
-            config_databoard.get_ramp_field('server_port'))
+            config.server_port)
         body_message += '<b>Path</b>: {}<br/>'.format(
-            config_databoard.get_destination_path())
+            config.get_destination_path())  # XXX buggy
         body_message += '<b>Num_CPUs</b>: {}<br/>'.format(
-            config_databoard.get_ramp_field('num_cpus'))
+            config.num_cpus)
 
         body_message += 'New submissions: <br/><ul>'
         for team, tag in submissions:
@@ -70,15 +72,14 @@ def copy_git_tree(tree, dest_folder):
 
 
 def fetch_models():
-    base_path = config_databoard.repos_path
-    repo_paths = sorted(glob.glob(os.path.join(base_path, '*')))
+    repo_paths = sorted(glob.glob(os.path.join(repos_path, '*')))
 
-    if not os.path.exists(config_databoard.models_path):
+    if not os.path.exists(models_path):
         logger.warning(
             "Models folder didn't exist. An empty folder was created.")
-        os.mkdir(config_databoard.models_path)
+        os.mkdir(models_path)
     open(
-        os.path.join(config_databoard.models_path, '__init__.py'), 'a').close()
+        os.path.join(models_path, '__init__.py'), 'a').close()
 
     new_submissions = set()  # a set of submission hashes
 
@@ -177,7 +178,7 @@ def fetch_models():
                     open(os.path.join(model_path, '__init__.py'), 'a').close()
 
                     new_submissions.add(model_hash)
-                    relative_path = os.path.join(team_name, model_hash)
+                    # relative_path = os.path.join(team_name, model_hash)
 
                     # listing the model files
                     file_listing = [f for f in os.listdir(
@@ -231,18 +232,18 @@ def fetch_models():
     else:
         logger.debug('No new submission.')
 
+
 def add_models():
-    submission_paths = sorted(glob.glob(os.path.join(
-        config_databoard.submissions_path, '*/*')))
+    submission_paths = sorted(glob.glob(os.path.join(submissions_path, '*/*')))
 
     open(
-        os.path.join(config_databoard.models_path, '__init__.py'), 'a').close()
+        os.path.join(models_path, '__init__.py'), 'a').close()
 
     for submission_path in submission_paths:
         team_path, tag_name = os.path.split(submission_path)
         _, team_name = os.path.split(team_path)
         model_hash = get_model_hash(team_name, tag_name)
-        team_model_path = os.path.join(config_databoard.models_path, team_name)
+        team_model_path = os.path.join(models_path, team_name)
         model_path = os.path.join(team_model_path, model_hash)
         submission_files = os.listdir(submission_path)
         submission_files_listing = '|'.join(submission_files)

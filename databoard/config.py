@@ -1,8 +1,5 @@
 import os
-import pandas as pd
-from git import Repo
 
-# root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 root_path = '.'
 
 tag_len_limit = 40
@@ -27,46 +24,52 @@ timeout_parallelize_across_machines = 10800
 # often doesn't work and takes a lot of disk space
 is_pickle_trained_model = False
 
+notification_recipients = []
+notification_recipients.append("balazs.kegl@gmail.com")
+notification_recipients.append("alexandre.gramfort@gmail.com")
+
 # Open ports in Stratuslab
 # 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015,
 # 8080, 8081, 8095, 8188, 8443, 8444, 9002, 10339, 10636, 15000, 15001, 15002,
 # 15003, 15004, 20000-25000.
 
 # amadeus
-#server_port = '8443'
-#dest_path = '/mnt/datacamp/databoard_06_8443_test'
+# server_port = '8443'
+# dest_path = '/mnt/datacamp/databoard_06_8443_test'
 
 # pollenating insects
-#server_port = '8444'
-#dest_path = '/mnt/datacamp/databoard_07_8444_test'
+# server_port = '8444'
+# dest_path = '/mnt/datacamp/databoard_07_8444_test'
 
 # el nino
-#server_port = '8188'
-#dest_path = '/mnt/datacamp/databoard_05_8188_test'
+# server_port = '8188'
+# dest_path = '/mnt/datacamp/databoard_05_8188_test'
 
 # kaggle otto with skf_test_size = 0.5
-#server_port = '8081'
-#dest_path = '/mnt/datacamp/databoard_04_8081_test'
+# server_port = '8081'
+# dest_path = '/mnt/datacamp/databoard_04_8081_test'
 
 # kaggle otto with skf_test_size = 0.2
-#server_port = '8095'
-#dest_path = '/mnt/datacamp/databoard_04_8095_test'
+# server_port = '8095'
+# dest_path = '/mnt/datacamp/databoard_04_8095_test'
 
 # variable star
-#server_port = '8080'
-#dest_path = '/mnt/datacamp/databoard_03_8080_test'
+# server_port = '8080'
+# dest_path = '/mnt/datacamp/databoard_03_8080_test'
 
-#debug_server = 'http://' + "localhost:{}".format(server_port)
-#train_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(server_port)
-#server_name = debug_server if local_deployment else train_server
+# debug_server = 'http://' + "localhost:{}".format(server_port)
+# train_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(server_port)
+# server_name = debug_server if local_deployment else train_server
 
 vd_server = 'onevm-85.lal.in2p3.fr'
 reims_server = 'romeo1.univ-reims.fr'
 vd_root = '/mnt/datacamp'
 local_root = '/tmp/databoard_local'  # for local publishing / testing
 
+
 class RampConfig(object):
-    def __init__(ramp_name, # for naming the library where the data and specific.py is
+    def __init__(self,
+                 ramp_name,  # for naming the library where the data and specific.py is
                  train_server,  # the server for training
                  train_user,  # the username on the train_server
                  train_root,  # the root dir of databoard on the train_server
@@ -89,45 +92,85 @@ class RampConfig(object):
         self.cv_test_size = cv_test_size
         self.random_state = random_state
 
-    def get_destination_path(self):
-        # XXX
-        destination_root = get_ramp_field(root, ramp_index)
-        ramp_name = get_ramp_field('ramp_name', ramp_index)
-        server_port = get_ramp_field('server_port', ramp_index)
+    def get_destination_path(self, root):
         destination_path = os.path.join(
-            destination_root, "databoard_" + ramp_name + "_" + server_port)
+            getattr(self, root), "databoard_" + self.ramp_name + "_" + self.server_port)
         return destination_path
 
     @property
     def train_destination_path(self):
-        return # XXX get_destination_path('train_root', ramp_index)
+        return self.get_destination_path('train_root')
 
     @property
-    def web_destination_path():
-        return # XXX get_destination_path('web_root', ramp_index)
+    def web_destination_path(self):
+        return self.get_destination_path('web_root')
+
+    def get_deployment_target(self, mode='web'):
+        deployment_target = ''
+        if mode == 'web':
+            user, server, root = 'web_user', 'web_server', 'web_root'
+        elif mode == 'train':
+            user, server, root = 'train_user', 'train_server', 'train_root'
+        else:
+            raise ValueError('mode ???')
+        if self.train_server != 'localhost':
+            deployment_target += user + '@' + getattr(self, server) + ':'
+        deployment_target += self.get_destination_path(root)
+        print deployment_target
+        return deployment_target
+
+    def is_same_web_and_train_servers(self):
+        return ((self.web_server == config.train_server)
+                and (self.web_user == self.train_user)
+                and (self.web_root == self.train_root))
 
 
-    def is_same_web_and_train_servers(ramp_index):
-        # XXX don't know what to do with this...
-        return (get_ramp_field('web_server', ramp_index) ==
-                get_ramp_field('train_server', ramp_index)
-                and get_ramp_field('web_user', ramp_index) ==
-                get_ramp_field('train_user', ramp_index)
-                and get_ramp_field('web_root', ramp_index) ==
-                get_ramp_field('train_root', ramp_index))
+ramps_configs = dict()
 
+local_kwargs = dict(train_server='localhost',
+                    train_user='',
+                    train_root=local_root,
+                    num_cpus=2,
+                    web_server='localhost',
+                    web_user='',
+                    web_root=local_root,
+                    server_port='8080',
+                    cv_test_size=0.2,
+                    random_state=57)
 
-ramps = dict()
+remote_kwargs = dict(
+    train_server=vd_server,
+    train_user='root',
+    train_root=vd_root,
+    num_cpus=10,
+    web_server=vd_server,
+    web_user='root',
+    web_root=vd_root,
+    server_port='2171',
+    cv_test_size=0.2,
+    random_state=57)
 
-ramps['iris_test'] = RampConfig(ramp_name='iris',
-                               train_server='localhost',
-                               train_user='',
-                               train_root=local_root,
-                               num_cpus=2,
-                               web_server='localhost',
-                               web_user='',
-                               web_root=local_root,
-                               server_port='8080',
-                               cv_test_size=0.2,
-                               random_state=57)
+reims_kwargs = dict(
+    train_server=reims_server,
+    train_user='mcherti',
+    train_root='/home/mcherti/ramp_pollenating_insects',
+    num_cpus=10,
+    web_server=vd_server,
+    web_user='root',
+    web_root=vd_root,
+    server_port='2170',
+    cv_test_size=0.2,
+    random_state=57)
 
+ramps_configs['iris'] = RampConfig(ramp_name='iris', **local_kwargs)
+ramps_configs['boston_housing'] = RampConfig(ramp_name='boston', **local_kwargs)
+ramps_configs['mortality_prediction'] = RampConfig(ramp_name='mortality_prediction', **remote_kwargs)
+ramps_configs['pollenating_insects'] = RampConfig(ramp_name='pollenating_insects', **reims_kwargs)
+ramps_configs['variable_stars'] = RampConfig(ramp_name='variable_stars', **local_kwargs)
+ramps_configs['amadeus'] = RampConfig(ramp_name='amadeus', **local_kwargs)
+ramps_configs['kaggle_otto'] = RampConfig(ramp_name='kaggle_otto', **local_kwargs)
+
+with open("ramp_index.txt") as f:
+    ramp_index = f.readline()
+
+config = ramps_configs[ramp_index]

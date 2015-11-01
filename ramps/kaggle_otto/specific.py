@@ -12,9 +12,10 @@ import scores
 # menu polymorphism example
 import multiclass_prediction
 from .multiclass_prediction import Predictions
-import config_databoard
+from .config import config, models_path
+from .config import public_data_path, private_data_path
 
-sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
+sys.path.append(os.path.dirname(os.path.abspath(models_path)))
 
 hackaton_title = 'Kaggle Otto product classification'
 target_column_name = 'target'
@@ -22,12 +23,12 @@ multiclass_prediction.labels = ['Class_1', 'Class_2', 'Class_3', 'Class_4',
                                 'Class_5', 'Class_6', 'Class_7', 'Class_8',
                                 'Class_9']
 
-cv_test_size = config_databoard.get_ramp_field('cv_test_size')
-random_state = config_databoard.get_ramp_field('random_state')
-n_CV = config_databoard.get_ramp_field('n_cpus')
+cv_test_size = config.cv_test_size
+random_state = config.random_state
+n_CV = config.num_cpus
 
-train_filename = os.path.join(config_databoard.public_data_path, 'train.csv')
-test_filename = os.path.join(config_databoard.private_data_path, 'test.csv')
+train_filename = os.path.join(public_data_path, 'train.csv')
+test_filename = os.path.join(private_data_path, 'test.csv')
 
 score = scores.NegativeLogLikelihood()
 # score = scores.Accuracy()

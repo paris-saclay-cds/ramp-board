@@ -1,14 +1,12 @@
+raise Exception('use config.py')
+
+
 import os
 # import socket
 import pandas as pd
 # import numpy as np
 from git import Repo
 # from multiprocessing import cpu_count
-
-# XXX : this file should be called config
-# import databoard.config_databoard as config_databoard
-# to
-# from databoard import config
 
 # root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 root_path = '.'
@@ -28,7 +26,7 @@ submissions_path = os.path.join(root_path, 'teams_submissions')
 data_path = os.path.join(root_path, 'data')
 raw_data_path = os.path.join(data_path, 'raw')
 # TODO: create them
-# TODO: use sklearn fetch 
+# TODO: use sklearn fetch
 # TODO: use jaberg's fetcher, MLData
 # TODO: everything local should be _
 public_data_path = os.path.join(data_path, 'public')

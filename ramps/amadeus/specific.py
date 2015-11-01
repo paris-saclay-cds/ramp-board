@@ -11,9 +11,10 @@ from sklearn.cross_validation import ShuffleSplit, train_test_split
 import scores
 # menu polymorphism example
 from .regression_prediction import Predictions
-import config_databoard
+from .config import config, models_path
+from .config import raw_data_path, public_data_path, private_data_path
 
-sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
+sys.path.append(os.path.dirname(os.path.abspath(models_path)))
 
 # should be the same as the directory in ramp, and fab publish should also be
 # called with the same name as parameter
@@ -23,14 +24,14 @@ hackaton_title = 'Number of passengers prediction'
 target_column_name = 'log_PAX'
 drop_column_names = ['PAX']
 
-cv_test_size = config_databoard.get_ramp_field('cv_test_size')
+cv_test_size = config.cv_test_size
 held_out_test_size = 0.2
-random_state = config_databoard.get_ramp_field('random_state')
-n_CV = config_databoard.get_ramp_field('n_cpus')
+random_state = config.random_state
+n_CV = config.num_cpus
 
-raw_filename = os.path.join(config_databoard.raw_data_path, 'data_amadeus.csv')
-train_filename = os.path.join(config_databoard.public_data_path, 'train.csv')
-test_filename = os.path.join(config_databoard.private_data_path, 'test.csv')
+raw_filename = os.path.join(raw_data_path, 'data_amadeus.csv')
+train_filename = os.path.join(public_data_path, 'train.csv')
+test_filename = os.path.join(private_data_path, 'test.csv')
 
 score = scores.RMSE()
 

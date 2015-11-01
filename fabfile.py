@@ -1,18 +1,18 @@
+# for pickling theano
+import sys
+sys.setrecursionlimit(50000)
+
 import os
 import logging
 import numpy as np
 import pandas as pd
+
 # import fabric.contrib.project as project
 # from fabric.api import *
 # from fabric.contrib.files import exists
 # from fabric.state import connections
-from databoard.model import shelve_database
-# from databoard.model import ModelState
-import databoard.config_databoard as config
 
-# for pickling theano
-import sys
-sys.setrecursionlimit(50000)
+# DON'T IMPORT ANYTHING FROM DATABOARD HERE !
 
 # Open ports in Stratuslab
 # 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015,
@@ -33,14 +33,16 @@ logger = logging.getLogger('databoard')
 
 def clear_cache():
     from sklearn.externals.joblib import Memory
+    from databoard.config import cachedir
 
     logger.info('Flushing the joblib cache.')
-    mem = Memory(cachedir=config.cachedir)
+    mem = Memory(cachedir=cachedir)
     mem.clear()
 
 
 def clear_db():
     from databoard.model import columns
+    from databoard.model import shelve_database
 
     logger.info('Clearing the database.')
     with shelve_database('c') as db:
@@ -52,26 +54,27 @@ def clear_db():
 
 def clear_registrants():
     import shutil
+    from databoard.config import repos_path, models_path
     # Prepare the teams repo submodules
     # logger.info('Init team repos git')
     # repo = Repo.init(config.repos_path)  # does nothing if already exists
 
     # Remove the git repos of the teams
     logger.info('Clearing the teams repositories.')
-    shutil.rmtree(config.repos_path, ignore_errors=True)
-    os.mkdir(config.repos_path)
+    shutil.rmtree(repos_path, ignore_errors=True)
+    os.mkdir(repos_path)
 
     logger.info('Clearing the models directory.')
-    shutil.rmtree(config.models_path, ignore_errors=True)
-    os.mkdir(config.models_path)
-    open(os.path.join(
-        config.models_path, '__init__.py'), 'a').close()
+    shutil.rmtree(models_path, ignore_errors=True)
+    os.mkdir(models_path)
+    open(os.path.join(models_path, '__init__.py'), 'a').close()
 
 
 def clear_pred_files():
     import glob
+    from databoard.config import models_path
     fnames = glob.glob(
-        os.path.join(config.models_path, '*', '*', '*', '*.csv'))
+        os.path.join(models_path, '*', '*', '*', '*.csv'))
 
     for fname in fnames:
         if os.path.exists(fname):
@@ -86,6 +89,7 @@ def prepare_data():
     logger.info('Preparing the dataset.')
     prepare_data()
 
+
 def setup():
     prepare_data()
     clear_db()
@@ -96,6 +100,8 @@ def setup():
 
 
 def print_db(table='models', state=None):
+    from databoard.model import shelve_database
+
     with shelve_database('c') as db:
         if table not in db:
             print('Select one of the following tables:')
@@ -128,6 +134,7 @@ def repeat_fetch(delay='60'):
 
 
 def leaderboard(which='all', test=False):
+    from databoard.model import shelve_database
     from databoard.leaderboard import (
         leaderboard_classical,
         leaderboard_combination,
@@ -170,6 +177,7 @@ def leaderboard(which='all', test=False):
 
 def check(state=False, tag=None, team=None):
     from databoard.train_test import check_models
+    from databoard.model import shelve_database
 
     with shelve_database() as db:
         models = db['models']
@@ -204,6 +212,7 @@ def check(state=False, tag=None, team=None):
 
 def train(state=False, tag=None, team=None):
     from databoard.train_test import train_and_valid_models
+    from databoard.model import shelve_database
 
     with shelve_database() as db:
         models = db['models']
@@ -238,6 +247,7 @@ def train(state=False, tag=None, team=None):
 
 def test(state=False, tag=None, team=None):
     from databoard.train_test import test_models
+    from databoard.model import shelve_database
 
     with shelve_database() as db:
         models = db['models']
@@ -272,6 +282,7 @@ def test(state=False, tag=None, team=None):
 
 def train_test(state=False, tag=None, team=None):
     from databoard.train_test import train_valid_and_test_models
+    from databoard.model import shelve_database
 
     with shelve_database() as db:
         models = db['models']
@@ -305,6 +316,8 @@ def train_test(state=False, tag=None, team=None):
 
 
 def change_state(from_state, to_state):
+    from databoard.model import shelve_database
+
     with shelve_database() as db:
         models = db['models']
     models = models[models['state'] == from_state]
@@ -315,6 +328,8 @@ def change_state(from_state, to_state):
 
 
 def set_state(team, tag, state):
+    from databoard.model import shelve_database
+
     with shelve_database() as db:
         models = db['models']
     models = models[np.logical_and(models['model'] == tag,
@@ -335,6 +350,7 @@ def kill(team, tag):
     import glob
     import signal
     from databoard.fetch import get_tag_uid
+    from databoard.config import config
 
     answer = 'y'
     while answer != 'y':
@@ -351,11 +367,12 @@ def kill(team, tag):
 
 def serve(port=None):
     from databoard import app
+    from databoard.config import config
     # loads url/function bindings through @app.route decorators
     import databoard.views  # noqa
 
     if port is None:
-        server_port = int(config.get_ramp_field('server_port'))
+        server_port = int(config.server_port)
     else:
         server_port = int(port)
     app.run(
@@ -384,7 +401,8 @@ def serve(port=None):
 software = [
     'fabfile.py',
     'ramp_index.txt',
-    'databoard/config_databoard.py',
+    # 'databoard/config_databoard.py',
+    'databoard/config.py',
     'databoard/__init__.py',
     'databoard/fetch.py',
     'databoard/generic.py',
@@ -402,44 +420,37 @@ software = [
 ]
 
 
-def get_deployment_target(ramp_index, user, server, root):
-    deployment_target = ''
-    server_name = config.get_ramp_field(server, ramp_index)
-    user_name = config.get_ramp_field(user, ramp_index)
-    if server_name != 'localhost':
-        deployment_target += user_name + '@' + server_name + ':'
-    deployment_target += config.get_destination_path(
-        root, ramp_index=None)
-    print deployment_target
-    return deployment_target
-
-
-def publish(ramp_index, test=False):
-    ramp_name = config.get_ramp_field('ramp_name', ramp_index)
-    # TODO: check if ramp_name is the same as in
-    #      'ramps/' + ramp_name + '/specific.py'
-
+def _save_ramp_index(ramp_index):
     # we save ramp_index in the main dir so the deplyment can query itself
     # for example, in serve (to get the port number) and sepcific (to get
     # the number of CPUs). generic.get_ramp_index() reads it in
     with open('ramp_index.txt', 'w') as f:
         f.write(ramp_index)
-    local = config.get_ramp_field('train_server') == 'localhost'
+
+
+def publish(ramp_index, test=False):
+    _save_ramp_index(ramp_index)
+
+    # don't import before saving the ramp_index.txt file
+    from databoard.config import config
+    ramp_name = config.ramp_name
+    # TODO: check if ramp_name is the same as in
+    #      'ramps/' + ramp_name + '/specific.py'
+
+    local = config.train_server == 'localhost'
     command = "rsync -pthrRvz -c "
     if not local:
         command += "--rsh=\'ssh -i " + os.path.expanduser("~")
         command += "/.ssh/datacamp/id_rsa -p 22\' "
     for file in software:
         command += file + " "
-    if not config.is_same_web_and_train_servers(ramp_index):
-        command1 = command + get_deployment_target(
-            ramp_index, 'web_user', 'web_server', 'web_root')
-        print command1
-        os.system(command1)
-    command2 = command + get_deployment_target(
-        ramp_index, 'train_user', 'train_server', 'train_root')
-    print command2
-    os.system(command2)
+
+    if not config.is_same_web_and_train_servers():
+        command += config.get_deployment_target('web')
+    else:
+        command += config.get_deployment_target('train')
+    print command
+    os.system(command)
 
     # rsyncing specific
     command = "rsync -pthrvz -c "
@@ -447,17 +458,14 @@ def publish(ramp_index, test=False):
         command += "--rsh=\'ssh -i " + os.path.expanduser("~")
         command += "/.ssh/datacamp/id_rsa -p 22\' "
     command += " ramps/" + ramp_name + "/specific.py "
-    if not config.is_same_web_and_train_servers(ramp_index):
-        command1 = command + get_deployment_target(
-            ramp_index, 'web_user', 'web_server', 'web_root')
-        command1 += "/databoard/"
-        print command1
-        os.system(command1)
-    command2 = command + get_deployment_target(
-        ramp_index, 'train_user', 'train_server', 'train_root')
-    command2 += "/databoard/"
-    print command2
-    os.system(command2)
+    if not config.is_same_web_and_train_servers():
+        command += config.get_deployment_target('web')
+        command += "/databoard/"
+    else:
+        command += config.get_deployment_target('train')
+        command += "/databoard/"
+    print command
+    os.system(command)
 
     if test:
         command = "rsync -pthrvz -c "
@@ -465,60 +473,55 @@ def publish(ramp_index, test=False):
             command += "--rsh=\'ssh -i " + os.path.expanduser("~")
             command += "/.ssh/datacamp/id_rsa -p 22\' "
         command += " ramps/" + ramp_name + "/teams_submissions "
-        if not config.is_same_web_and_train_servers(ramp_index):
-            command1 = command + get_deployment_target(
-                ramp_index, 'web_user', 'web_server', 'web_root')
-            print command1
-            os.system(command1)
-        command2 = command + get_deployment_target(
-            ramp_index, 'train_user', 'train_server', 'train_root')
-        print command2
-        os.system(command2)
+        if not config.is_same_web_and_train_servers():
+            command += config.get_deployment_target('web')
+        else:
+            command += config.get_deployment_target('train')
+        print command
+        os.system(command)
 
 
 # (re)publish data set from 'ramps/' + ramp_name + '/data'
 # fab prepare_data should be run at the destination
 def publish_data(ramp_index):
-    local = config.get_ramp_field('train_server') == 'localhost'
-    ramp_name = config.get_ramp_field('ramp_name', ramp_index)
+    from databoard.config import config
+    local = config.train_server == 'localhost'
+    ramp_name = config.ramp_name
     command = "rsync --delete -pthrvz -c "
     if not local:
         command += "--rsh=\'ssh -i " + os.path.expanduser("~")
         command += "/.ssh/datacamp/id_rsa -p 22\' "
     command += 'ramps/' + ramp_name + '/data '
-    if not config.is_same_web_and_train_servers(ramp_index):
-        command1 = command + get_deployment_target(
-            ramp_index, 'web_user', 'web_server', 'web_root') + "/"
-        print command1
-        os.system(command1)
-    command2 = command + get_deployment_target(
-        ramp_index, 'train_user', 'train_server', 'train_root') + "/"
-    print command2
-    os.system(command2)
+    if not config.is_same_web_and_train_servers():
+        command += config.get_deployment_target('web') + "/"
+    else:
+        command += config.get_deployment_target('train') + "/"
+    print command
+    os.system(command)
 
 
-def clear_destination_path(ramp_index):
-    if not config.is_same_web_and_train_servers(ramp_index):
-        # destination_path eg
-        # '/tmp/databoard_local/databoard_mortality_prediction_8080'
-        destination_path = config.get_web_destination_path(ramp_index)
-        destination_root = config.get_ramp_field(
-            'web_root', ramp_index)
-        if os.path.exists(destination_path):
-            os.system('rm -rf ' + destination_path + '/*')
-        else:
-            if not os.path.exists(destination_root):
-                os.mkdir(destination_root)
-            os.mkdir(destination_path)
-    destination_path = config.get_train_destination_path(ramp_index)
-    destination_root = config.get_ramp_field(
-        'train_root', ramp_index)
+def _clear_destination_path_aux(destination_path, destination_root):
     if os.path.exists(destination_path):
         os.system('rm -rf ' + destination_path + '/*')
     else:
         if not os.path.exists(destination_root):
             os.mkdir(destination_root)
         os.mkdir(destination_path)
+
+
+def clear_destination_path(ramp_index):
+    _save_ramp_index(ramp_index)  # todo before importing databoard
+
+    from databoard.config import config
+    if not config.is_same_web_and_train_servers():
+        # destination_path eg
+        # '/tmp/databoard_local/databoard_mortality_prediction_8080'
+        destination_path = config.web_destination_path
+        destination_root = config.web_root
+        _clear_destination_path_aux(destination_path, destination_root)
+    destination_path = config.train_destination_path
+    destination_root = config.train_root
+    _clear_destination_path_aux(destination_path, destination_root)
 
 
 # For now, test is two-phased: 1) publish_test<ramp_index> first, which is a

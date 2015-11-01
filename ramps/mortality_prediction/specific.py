@@ -11,22 +11,23 @@ import scores
 # menu polymorphism example
 import multiclass_prediction
 from .multiclass_prediction import Predictions
-import config_databoard
+from .config import config, models_path
+from .config import raw_data_path, public_data_path, private_data_path
 
-sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
+sys.path.append(os.path.dirname(os.path.abspath(models_path)))
 
 hackaton_title = 'Mortality prediction'
 multiclass_prediction.labels = ['0.0', '1.0']
 target_column_name = 'TARGET'
 
-cv_test_size = config_databoard.get_ramp_field('cv_test_size')
+cv_test_size = config.cv_test_size
 held_out_test_size = 0.2
-random_state = config_databoard.get_ramp_field('random_state')
-n_CV = config_databoard.get_ramp_field('n_cpus')
+random_state = config.random_state
+n_CV = config.num_cpus
 
-raw_filename = os.path.join(config_databoard.raw_data_path, 'data.csv')
-train_filename = os.path.join(config_databoard.public_data_path, 'train.csv')
-test_filename = os.path.join(config_databoard.private_data_path, 'test.csv')
+raw_filename = os.path.join(raw_data_path, 'data.csv')
+train_filename = os.path.join(public_data_path, 'train.csv')
+test_filename = os.path.join(private_data_path, 'test.csv')
 
 score = scores.Accuracy()
 

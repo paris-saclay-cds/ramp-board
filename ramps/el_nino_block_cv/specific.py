@@ -11,16 +11,17 @@ from importlib import import_module
 # menu polymorphism example
 from .regression_prediction import Predictions
 import scores
-import config_databoard
+from .config import config, models_path
+from .config import raw_data_path, public_data_path, private_data_path
 
-sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
+sys.path.append(os.path.dirname(os.path.abspath(models_path)))
 
 hackaton_title = 'El Nino prediction'
 target_column_name = 'target'
-cv_test_size = config_databoard.get_ramp_field('cv_test_size')
-cv_bag_size = config_databoard.get_ramp_field('cv_bag_size')
-random_state = config_databoard.get_ramp_field('random_state')
-n_CV = config_databoard.get_ramp_field('n_cpus')
+cv_test_size = config.cv_test_size
+cv_bag_size = config.cv_bag_size
+random_state = config.random_state
+n_CV = config.num_cpus
 
 en_lat_bottom = -5
 en_lat_top = 5
@@ -29,9 +30,9 @@ en_lon_right = 360 - 120
 n_burn_in = 120
 n_lookahead = 6
 
-train_filename = os.path.join(config_databoard.public_data_path,
+train_filename = os.path.join(public_data_path,
     'resampled_tas_Amon_CCSM4_piControl_r1i1p1_080001-130012.nc')
-test_filename = os.path.join(config_databoard.private_data_path,
+test_filename = os.path.join(private_data_path,
     'resampled_tas_Amon_CCSM4_piControl_r2i1p1_095301-110812.nc')
 
 score = scores.RMSE()

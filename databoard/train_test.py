@@ -7,12 +7,15 @@ import timeit
 
 from sklearn.externals.joblib import Parallel, delayed
 
-import config_databoard
+# import config_databoard
+from .config import config, is_parallelize, is_parallelize_across_machines
+from .config import timeout_parallelize_across_machines
+from .config import is_pickle_trained_model
 import generic
 import specific
 import machine_parallelism
 
-n_processes = config_databoard.get_ramp_field('n_cpus')
+n_processes = config.num_cpus
 
 
 def run_on_folds(method, full_model_path, cv, **kwargs):
@@ -34,8 +37,8 @@ def run_on_folds(method, full_model_path, cv, **kwargs):
     else:
         title = full_model_path.replace("/", "_")
 
-    if config_databoard.is_parallelize:
-        if config_databoard.is_parallelize_across_machines:
+    if is_parallelize:
+        if is_parallelize_across_machines:
             job_ids = set()
             for i, cv_is in enumerate(cv):
                 job_id = machine_parallelism.put_job(
@@ -43,7 +46,7 @@ def run_on_folds(method, full_model_path, cv, **kwargs):
                 job_ids.add(job_id)
             try:
                 job_status = machine_parallelism.wait_for_jobs_and_get_status(
-                    job_ids, timeout=config_databoard.timeout_parallelize_across_machines,
+                    job_ids, timeout=timeout_parallelize_across_machines,
                     finish_if_exception=True)
             except machine_parallelism.TimeoutError:
                 raise
@@ -131,7 +134,7 @@ def train_measure_and_pickle_on_fold(X_train, y_train, cv_is, full_model_path):
         X_train, y_train, cv_is, full_model_path)
     write_execution_time(generic.get_train_time_f_name(
         full_model_path, cv_hash), train_time)
-    if config_databoard.is_pickle_trained_model:
+    if is_pickle_trained_model:
         pickle_trained_model(generic.get_model_f_name(
             full_model_path, cv_hash), trained_model)
     return trained_model

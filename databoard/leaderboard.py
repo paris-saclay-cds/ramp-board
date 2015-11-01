@@ -6,11 +6,13 @@ import pandas as pd
 
 from sklearn.externals.joblib import Parallel, delayed
 
-import config_databoard
-import generic
+# import config_databoard
+from .config import config, is_parallelize  # change name of is_parallelize
+from .config import private_data_path
+import generic  # XXX
 import specific
 
-n_processes = config_databoard.get_ramp_field('n_cpus')
+n_processes = config.num_cpus
 
 
 def _get_predictions_list(models_df, train_is, subdir, index_list=None):
@@ -389,7 +391,7 @@ def _make_combined_test_prediction(models_df, best_index_lists):
     n_models = models_df.shape[0]
     if n_models > 0:
         train_is_list = generic.get_train_is_list()
-        if config_databoard.is_parallelize:
+        if is_parallelize:
             list_of_tuples = Parallel(n_jobs=n_processes, verbose=0)(delayed(
                 _get_combined_test_predictions_single_fold)(
                     models_df, train_is, best_index_list)
@@ -421,12 +423,12 @@ def _make_combined_test_prediction(models_df, best_index_lists):
         combined_combined_test_predictions = _combine_predictions_list(
             combined_test_predictions_list)
         combined_combined_test_predictions.save(
-            os.path.join(config_databoard.private_data_path,
+            os.path.join(private_data_path,
                          "foldwise_combined.npy"))
         combined_foldwise_best_test_predictions = _combine_predictions_list(
             foldwise_best_test_predictions_list)
         combined_foldwise_best_test_predictions.save(
-            os.path.join(config_databoard.private_data_path,
+            os.path.join(private_data_path,
                          "foldwise_best.npy"))
 
 
@@ -456,7 +458,7 @@ def leaderboard_classical(models_df, subdir="valid"):
         train_is_list = generic.get_train_is_list()
         test_is_list = generic.get_test_is_list()
 
-        if config_databoard.is_parallelize:
+        if is_parallelize:
             predictions_lists = Parallel(n_jobs=n_processes, verbose=0)(
                 delayed(_get_predictions_list)(
                     models_df, train_is, subdir=subdir)
@@ -520,7 +522,7 @@ def leaderboard_combination(orig_models_df, test=False):
         selected_index_lists = np.array([range(len(models_df))])
         cv = generic.get_cv()
         generic.logger.info("Combining models {}".format(selected_index_lists))
-        if config_databoard.is_parallelize:
+        if is_parallelize:
             list_of_tuples = Parallel(n_jobs=n_processes, verbose=0)(delayed(
                 _get_combined_predictions_single_fold)(
                     models_df, train_is, test_is, selected_index_list)
