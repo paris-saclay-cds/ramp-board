@@ -22,7 +22,7 @@ multiclass_prediction.labels = [1.0, 2.0, 3.0, 4.0]
 held_out_test_size = 0.7
 cv_test_size = config_databoard.get_ramp_field('cv_test_size')
 random_state = config_databoard.get_ramp_field('random_state')
-n_CV = config_databoard.get_ramp_field('num_cpus')
+n_CV = config_databoard.get_ramp_field('n_cpus')
 
 raw_filename = os.path.join(config_databoard.raw_data_path, 'data.csv')
 vf_raw_filename = os.path.join(

@@ -1,15 +1,14 @@
 # Author: Balazs Kegl
 # License: BSD 3 clause
 
-import csv
-import string
 import numpy as np
+from base_prediction import BasePrediction
 
 # Global static that should be set by specific (or somebody)
 labels = []
 
 
-class Predictions(object):
+class Predictions(BasePrediction):
 
     def __init__(self, y_pred=None, y_pred_labels=None, y_pred_indexes=None,
                  y_true=None, f_name=None, n_samples=None):
@@ -17,17 +16,10 @@ class Predictions(object):
             self.y_proba = y_pred
         elif y_pred_labels is not None:
             self._init_from_pred_labels(y_pred_labels)
-        # elif y_pred_indexes is not None:
-        #    # this is not yet multi-label
-        #    self.y_proba = np.zeros(
-        #        (len(y_pred_indexes), len(labels)), dtype=np.float64)
-        #    for ps_i, label_index in zip(self.y_proba, y_pred_indexes):
-        #        ps_i[label_index] = 1.0
         elif y_true is not None:
             self._init_from_pred_labels(y_true)
         elif f_name is not None:
-            with open(f_name) as f:
-                self.y_proba = np.array(list(csv.reader(f)), dtype=np.float64)
+            self.y_proba = np.load(f_name)
         elif n_samples is not None:
             self.y_proba = np.empty(
                 (n_samples, len(labels)), dtype=np.float64)
@@ -48,12 +40,7 @@ class Predictions(object):
             for label in label_list:
                 ps_i[labels.index(label)] = 1.0 / len(label_list)
 
-    def save_predictions(self, f_name):
-        with open(f_name, "w") as f:
-            for y_proba in self.y_proba:
-                f.write(string.join(map(str, y_proba), ',') + '\n')
-
-    def set_valid_predictions(self, predictions, test_is):
+    def set_valid_in_train(self, predictions, test_is):
         self.y_proba[test_is] = predictions.y_proba
 
     @property
@@ -77,10 +64,6 @@ class Predictions(object):
     def y_pred_comb(self):
         """Returns an array which can be combined by taking means"""
         return self.y_proba
-
-    @property
-    def n_samples(self):
-        return len(self.y_proba)
 
     # def combine(self, indexes=[]):
         # Not yet used

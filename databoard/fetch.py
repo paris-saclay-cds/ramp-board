@@ -20,12 +20,12 @@ import config_databoard
 logger = logging.getLogger('databoard')
 
 
-def get_tag_uid(team_name, tag_name, **kwargs):
+def get_model_hash(team_name, tag_name, **kwargs):
     sha_hasher = hashlib.sha1()
     sha_hasher.update(team_name)
     sha_hasher.update(tag_name)
-    tag_name_alias = 'm{}'.format(sha_hasher.hexdigest())
-    return tag_name_alias
+    model_hash = 'm{}'.format(sha_hasher.hexdigest())
+    return model_hash
 
 
 def send_mail_notif(submissions):
@@ -106,10 +106,10 @@ def fetch_models():
 
         for t in repo.tags:
             tag_name = t.name
-            tag_name_alias = get_tag_uid(team_name, tag_name)
+            model_hash = get_model_hash(team_name, tag_name)
             # We delete tags of failed submissions, so they
             # can be refetched
-            if tag_name_alias in old_failed_submissions:
+            if model_hash in old_failed_submissions:
                 logger.debug('Deleting local tag: {}'.format(tag_name))
                 repo.delete_tag(tag_name)
 
@@ -142,9 +142,9 @@ def fetch_models():
                 logger.debug('Tag name: {}'.format(tag_name))
 
                 # will serve as dataframe index
-                tag_name_alias = get_tag_uid(team_name, tag_name)
-                logger.debug('Tag alias: {}'.format(tag_name_alias))
-                model_path = os.path.join(repo_path, tag_name_alias)
+                model_hash = get_model_hash(team_name, tag_name)
+                logger.debug('Tag alias: {}'.format(model_hash))
+                model_path = os.path.join(repo_path, model_hash)
 
                 new_commit_time = t.commit.committed_date
 
@@ -152,22 +152,22 @@ def fetch_models():
 
                     # skip if the model is trained, otherwise, replace the
                     # entry with a new one
-                    if tag_name_alias in db['models'].index:
-                        if db['models'].loc[tag_name_alias, 'state'] in \
+                    if model_hash in db['models'].index:
+                        if db['models'].loc[model_hash, 'state'] in \
                                 ['tested', 'trained', 'ignore']:
                             continue
-                        elif db['models'].loc[tag_name_alias, 'state'] == 'error':
+                        elif db['models'].loc[model_hash, 'state'] == 'error':
 
                             # if the failed model timestamp has changed
-                            if db['models'].loc[tag_name_alias, 'timestamp'] < new_commit_time:
-                                db['models'].drop(tag_name_alias, inplace=True)
-                                old_failed_submissions.remove(tag_name_alias)
+                            if db['models'].loc[model_hash, 'timestamp'] < new_commit_time:
+                                db['models'].drop(model_hash, inplace=True)
+                                old_failed_submissions.remove(model_hash)
                             else:
-                                new_submissions.add(tag_name_alias)
+                                new_submissions.add(model_hash)
                                 continue
                         else:
                             # default case
-                            db['models'].drop(tag_name_alias, inplace=True)
+                            db['models'].drop(model_hash, inplace=True)
 
                     # recursively copy the model files
                     try:
@@ -176,8 +176,8 @@ def fetch_models():
                         continue
                     open(os.path.join(model_path, '__init__.py'), 'a').close()
 
-                    new_submissions.add(tag_name_alias)
-                    relative_path = os.path.join(team_name, tag_name_alias)
+                    new_submissions.add(model_hash)
+                    relative_path = os.path.join(team_name, model_hash)
 
                     # listing the model files
                     file_listing = [f for f in os.listdir(
@@ -200,10 +200,10 @@ def fetch_models():
                         'timestamp': new_commit_time,
                         'state': "new",
                         'listing': file_listing,
-                    }, index=[tag_name_alias])
+                    }, index=[model_hash])
 
                     # set a list into a cell
-                    # new_entry.set_value(tag_name_alias, 'listing', file_listing)
+                    # new_entry.set_value(model_hash, 'listing', file_listing)
                     db['models'] = db['models'].append(new_entry)
 
             except Exception as e:
@@ -241,9 +241,9 @@ def add_models():
     for submission_path in submission_paths:
         team_path, tag_name = os.path.split(submission_path)
         _, team_name = os.path.split(team_path)
-        tag_name_alias = get_tag_uid(team_name, tag_name)
+        model_hash = get_model_hash(team_name, tag_name)
         team_model_path = os.path.join(config_databoard.models_path, team_name)
-        model_path = os.path.join(team_model_path, tag_name_alias)
+        model_path = os.path.join(team_model_path, model_hash)
         submission_files = os.listdir(submission_path)
         submission_files_listing = '|'.join(submission_files)
         submission_times = [
@@ -252,7 +252,7 @@ def add_models():
         submission_time = max(submission_times)
 
         logger.info("Adding team={}, tag={}, alias={}".format(
-            team_name, tag_name, tag_name_alias))
+            team_name, tag_name, model_hash))
 
         if not os.path.exists(team_model_path):
             os.mkdir(team_model_path)
@@ -261,24 +261,24 @@ def add_models():
         with shelve_database() as db:
             # skip if the model is trained, tested, or ignore, otherwise,
             # replace the entry with a new one
-            if tag_name_alias in db['models'].index:
-                if db['models'].loc[tag_name_alias, 'state'] in \
+            if model_hash in db['models'].index:
+                if db['models'].loc[model_hash, 'state'] in \
                         ['tested', 'trained', 'ignore']:
                     logger.info("Model is already in database, skipping")
                     continue
-                elif db['models'].loc[tag_name_alias, 'state'] == 'error':
+                elif db['models'].loc[model_hash, 'state'] == 'error':
                     # if the failed model timestamp has changed
-                    if db['models'].loc[tag_name_alias, 'timestamp'] < \
+                    if db['models'].loc[model_hash, 'timestamp'] < \
                             submission_time:
                         logger.info("Resubmitting failed model")
                         # deleting it from the db
-                        db['models'].drop(tag_name_alias, inplace=True)
+                        db['models'].drop(model_hash, inplace=True)
                     else:
                         logger.info("No new submission for failed model")
                         continue
-                elif db['models'].loc[tag_name_alias, 'state'] == 'new':
+                elif db['models'].loc[model_hash, 'state'] == 'new':
                     # we allow resubmission for new models
-                    db['models'].drop(tag_name_alias, inplace=True)
+                    db['models'].drop(model_hash, inplace=True)
                 else:
                     logger.error("You introduced a new state, please handle it")
 
@@ -289,7 +289,7 @@ def add_models():
                 'timestamp': submission_time,
                 'state': "new",
                 'listing': submission_files_listing,
-            }, index=[tag_name_alias])
+            }, index=[model_hash])
 
             db['models'] = db['models'].append(new_entry)
 

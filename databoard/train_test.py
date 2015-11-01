@@ -4,24 +4,15 @@
 import os
 import pickle
 import timeit
-import hashlib
-import logging
-import numpy as np
-import pandas as pd
-from functools import partial
-from contextlib import contextmanager
 
 from sklearn.externals.joblib import Parallel, delayed
-from sklearn.externals.joblib import Memory
 
 import config_databoard
 import generic
 import specific
 import machine_parallelism
 
-n_processes = config_databoard.get_ramp_field('num_cpus')
-
-#@generic.mem.cache
+n_processes = config_databoard.get_ramp_field('n_cpus')
 
 
 def run_on_folds(method, full_model_path, cv, **kwargs):
@@ -33,7 +24,7 @@ def run_on_folds(method, full_model_path, cv, **kwargs):
     ----------
     method : the method to be run (train_valid_and_test_on_fold,
         train_and_valid_on_fold, test_on_fold)
-    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    full_model_path : of the form <root_path>/models/<team>/<model_hash>
     cv : a list of pairs of training and validation indices, identifying the
         folds
     """
@@ -60,8 +51,8 @@ def run_on_folds(method, full_model_path, cv, **kwargs):
                 if isinstance(status, Exception):
                     raise status
         else:
-            Parallel(n_jobs=n_processes, verbose=5)\
-                (delayed(method)(cv_is, full_model_path) for cv_is in cv)
+            Parallel(n_jobs=n_processes, verbose=5)(
+                delayed(method)(cv_is, full_model_path) for cv_is in cv)
     else:
         for cv_is in cv:
             method(cv_is, full_model_path)
@@ -94,7 +85,7 @@ def train_on_fold(X_train, y_train, cv_is, full_model_path):
     ----------
     X_train, y_train: training input data and labels
     cv_is : a pair of indices (train_train_is, valid_train_is)
-    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    full_model_path : of the form <root_path>/models/<team>/<model_hash>
 
     Returns
     -------
@@ -102,9 +93,9 @@ def train_on_fold(X_train, y_train, cv_is, full_model_path):
     train_time : the wall clock time of the train
      """
     valid_train_is, _ = cv_is
-    hash_string = generic.get_hash_string_from_indices(valid_train_is)
+    cv_hash = generic.get_cv_hash(valid_train_is)
 
-    generic.logger.info("Training on fold : %s" % hash_string)
+    generic.logger.info("Training on fold : %s" % cv_hash)
 
     # so to make it importable
     open(os.path.join(full_model_path, "__init__.py"), 'a').close()
@@ -120,29 +111,29 @@ def train_on_fold(X_train, y_train, cv_is, full_model_path):
 
 def train_measure_and_pickle_on_fold(X_train, y_train, cv_is, full_model_path):
     """Calls train_on_fold() to train on fold, writes execution time in
-    <full_model_path>/train_time/<hash_string>.csv and pickles the model
-    (if is_pickle_trained_model) into full_model_path>/model/<hash_string>.p
+    <full_model_path>/train_time/<cv_hash>.npy and pickles the model
+    (if is_pickle_trained_model) into full_model_path>/model/<cv_hash>.p
 
     Parameters
     ----------
     X_train, y_train: training input data and labels
     cv_is : a pair of indices (train_train_is, valid_train_is)
-    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    full_model_path : of the form <root_path>/models/<team>/<model_hash>
 
     Returns
     -------
     trained_model : the trained model, to be fed to specific.test_model
      """
     valid_train_is, _ = cv_is
-    hash_string = generic.get_hash_string_from_indices(valid_train_is)
+    cv_hash = generic.get_cv_hash(valid_train_is)
 
     trained_model, train_time = train_on_fold(
         X_train, y_train, cv_is, full_model_path)
     write_execution_time(generic.get_train_time_f_name(
-        full_model_path, hash_string), train_time)
+        full_model_path, cv_hash), train_time)
     if config_databoard.is_pickle_trained_model:
         pickle_trained_model(generic.get_model_f_name(
-            full_model_path, hash_string), trained_model)
+            full_model_path, cv_hash), trained_model)
     return trained_model
 
 
@@ -162,7 +153,7 @@ def test_trained_model(trained_model, X, cv_is=None):
         specific.test_model
     test_time : the wall clock time of the test
     """
-    if cv_is == None:
+    if cv_is is None:
         _, y_test = specific.get_test_data()
         cv_is = ([], range(len(y_test)))  # test on all points
     start = timeit.default_timer()
@@ -172,48 +163,49 @@ def test_trained_model(trained_model, X, cv_is=None):
     return test_model_output, test_time
 
 
-def test_trained_model_on_test(trained_model, X_test, hash_string, full_model_path):
+def test_trained_model_on_test(trained_model, X_test, cv_hash,
+                               full_model_path):
     """Tests a trained model on (holdout) X_test and outputs
-    the predictions into <full_model_path>/test/<hash_string>.csv.
+    the predictions into <full_model_path>/test/<cv_hash>.npy.
 
     Parameters
     ----------
     trained_model : a trained model, returned by specific.train_model()
     X_test : input (holdout test) data
-    hash_string : the fold identifier
-    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    cv_hash : the fold identifier
+    full_model_path : of the form <root_path>/models/<team>/<model_hash>
     """
-    generic.logger.info("Testing on fold : %s" % hash_string)
+    generic.logger.info("Testing on fold : %s" % cv_hash)
     # We ignore test time, it is measured when validating
     test_model_output, _ = test_trained_model(trained_model, X_test)
-    test_f_name = generic.get_test_f_name(full_model_path, hash_string)
-    test_model_output.save_predictions(test_f_name)
+    test_f_name = generic.get_test_f_name(full_model_path, cv_hash)
+    test_model_output.save(test_f_name)
 
 
 def test_trained_model_and_measure_on_valid(trained_model, X_train,
                                             cv_is, full_model_path):
     """Tests a trained model on a validation fold represented by cv_is,
-    outputs the predictions into <full_model_path>/valid/<hash_string>.csv and
-    the validation time into <full_model_path>/valid_time/<hash_string>.csv.
+    outputs the predictions into <full_model_path>/valid/<cv_hash>.npy and
+    the validation time into <full_model_path>/valid_time/<cv_hash>.npy.
 
     Parameters
     ----------
     trained_model : a trained model, returned by specific.train_model()
     X_train : input (training) data
     cv_is : a pair of indices (train_train_is, valid_train_is)
-    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    full_model_path : of the form <root_path>/models/<team>/<model_hash>
     """
     valid_train_is, _ = cv_is
-    hash_string = generic.get_hash_string_from_indices(valid_train_is)
+    cv_hash = generic.get_cv_hash(valid_train_is)
 
-    generic.logger.info("Validating on fold : %s" % hash_string)
+    generic.logger.info("Validating on fold : %s" % cv_hash)
 
     valid_model_output, valid_time = test_trained_model(
         trained_model, X_train, cv_is)
-    valid_f_name = generic.get_valid_f_name(full_model_path, hash_string)
-    valid_model_output.save_predictions(valid_f_name)
+    valid_f_name = generic.get_valid_f_name(full_model_path, cv_hash)
+    valid_model_output.save(valid_f_name)
     write_execution_time(generic.get_valid_time_f_name(
-        full_model_path, hash_string), valid_time)
+        full_model_path, cv_hash), valid_time)
 
 
 def test_on_fold(cv_is, full_model_path):
@@ -224,25 +216,26 @@ def test_on_fold(cv_is, full_model_path):
     Parameters
     ----------
     cv_is : a pair of indices (train_train_is, valid_train_is)
-    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    full_model_path : of the form <root_path>/models/<team>/<model_hash>
     """
 
     X_train, y_train = specific.get_train_data()
     X_test, _ = specific.get_test_data()
     valid_train_is, _ = cv_is
-    hash_string = generic.get_hash_string_from_indices(valid_train_is)
+    cv_hash = generic.get_cv_hash(valid_train_is)
 
     try:
-        generic.logger.info("Loading from pickle on fold : %s" % hash_string)
-        with open(generic.get_model_f_name(full_model_path, hash_string), 'r') as f:
+        generic.logger.info("Loading from pickle on fold : %s" % cv_hash)
+        with open(generic.get_model_f_name(
+            full_model_path, cv_hash), 'r') as f:
             trained_model = pickle.load(f)
     except IOError, e:  # no pickled model, retrain
-        generic.logger.info("No pickle, retraining on fold : %s" % hash_string)
+        generic.logger.info("No pickle, retraining on fold : %s" % cv_hash)
         trained_model = train_measure_and_pickle_on_fold(
             X_train, y_train, cv_is, full_model_path)
 
     test_trained_model_on_test(
-        trained_model, X_test, hash_string, full_model_path)
+        trained_model, X_test, cv_hash, full_model_path)
 
 
 def train_valid_and_test_on_fold(cv_is, full_model_path):
@@ -253,12 +246,12 @@ def train_valid_and_test_on_fold(cv_is, full_model_path):
     Parameters
     ----------
     cv_is : a pair of indices (train_train_is, valid_train_is)
-    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    full_model_path : of the form <root_path>/models/<team>/<model_hash>
     """
     X_train, y_train = specific.get_train_data()
     X_test, _ = specific.get_test_data()
     valid_train_is, valid_test_is = cv_is
-    hash_string = generic.get_hash_string_from_indices(valid_train_is)
+    cv_hash = generic.get_cv_hash(valid_train_is)
 
     trained_model = train_measure_and_pickle_on_fold(
         X_train, y_train, cv_is, full_model_path)
@@ -267,7 +260,7 @@ def train_valid_and_test_on_fold(cv_is, full_model_path):
         trained_model, X_train, cv_is, full_model_path)
 
     test_trained_model_on_test(
-        trained_model, X_test, hash_string, full_model_path)
+        trained_model, X_test, cv_hash, full_model_path)
 
 
 def train_and_valid_on_fold(cv_is, full_model_path):
@@ -278,11 +271,9 @@ def train_and_valid_on_fold(cv_is, full_model_path):
     Parameters
     ----------
     cv_is : a pair of indices (train_train_is, valid_train_is)
-    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    full_model_path : of the form <root_path>/models/<team>/<model_hash>
     """
     X_train, y_train = specific.get_train_data()
-    valid_train_is, valid_test_is = cv_is
-    hash_string = generic.get_hash_string_from_indices(valid_train_is)
 
     trained_model = train_measure_and_pickle_on_fold(
         X_train, y_train, cv_is, full_model_path)
@@ -297,7 +288,7 @@ def check_on_fold(cv_is, full_model_path):
     Parameters
     ----------
     cv_is : a pair of indices (train_train_is, valid_train_is)
-    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    full_model_path : of the form <root_path>/models/<team>/<model_hash>
     """
 
     X_check, y_check = specific.get_check_data()

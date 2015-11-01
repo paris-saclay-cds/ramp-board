@@ -21,7 +21,7 @@ target_column_name = 'target'
 cv_test_size = config_databoard.get_ramp_field('cv_test_size')
 cv_bag_size = config_databoard.get_ramp_field('cv_bag_size')
 random_state = config_databoard.get_ramp_field('random_state')
-n_CV = config_databoard.get_ramp_field('num_cpus')
+n_CV = config_databoard.get_ramp_field('n_cpus')
 
 en_lat_bottom = -5
 en_lat_top = 5

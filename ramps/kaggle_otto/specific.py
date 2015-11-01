@@ -24,7 +24,7 @@ multiclass_prediction.labels = ['Class_1', 'Class_2', 'Class_3', 'Class_4',
 
 cv_test_size = config_databoard.get_ramp_field('cv_test_size')
 random_state = config_databoard.get_ramp_field('random_state')
-n_CV = config_databoard.get_ramp_field('num_cpus')
+n_CV = config_databoard.get_ramp_field('n_cpus')
 
 train_filename = os.path.join(config_databoard.public_data_path, 'train.csv')
 test_filename = os.path.join(config_databoard.private_data_path, 'test.csv')

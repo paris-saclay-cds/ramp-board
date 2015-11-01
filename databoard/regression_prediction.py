@@ -2,9 +2,10 @@
 # License: BSD 3 clause
 
 import numpy as np
+from base_prediction import BasePrediction
 
 
-class Predictions:
+class Predictions(BasePrediction):
 
     def __init__(self, y_pred=None, y_true=None, f_name=None, n_samples=None):
         if y_pred is not None:
@@ -12,8 +13,7 @@ class Predictions:
         elif y_true is not None:
             self.y_pred = np.array(y_true)
         elif f_name is not None:
-            # loading from file
-            self.y_pred = np.genfromtxt(f_name)
+            self.y_pred = np.load(f_name)
         elif n_samples is not None:
             self.y_pred = np.empty(n_samples, dtype=float)
             self.y_pred.fill(np.nan)
@@ -21,12 +21,7 @@ class Predictions:
             raise ValueError("Missing init argument: y_pred, y_true, f_name "
                              "or n_samples")
 
-    def save_predictions(self, f_name):
-        with open(f_name, "w") as f:
-            for y_i in self.y_pred:
-                f.write(str(y_i) + '\n')
-
-    def set_valid_predictions(self, predictions, test_is):
+    def set_valid_in_train(self, predictions, test_is):
         self.y_pred[test_is] = predictions.y_pred
 
     @property
@@ -37,10 +32,6 @@ class Predictions:
     def y_pred_comb(self):
         """Returns an array which can be combined by taking means"""
         return self.y_pred
-
-    @property
-    def n_samples(self):
-        return len(self.y_pred)
 
     # def combine(self, indexes=[]):
         # Not yet used

@@ -127,7 +127,7 @@ def repeat_fetch(delay='60'):
         time.sleep(delay)
 
 
-def leaderboard(which='all', test=False, calibrate=False):
+def leaderboard(which='all', test=False):
     from databoard.leaderboard import (
         leaderboard_classical,
         leaderboard_combination,
@@ -145,15 +145,14 @@ def leaderboard(which='all', test=False, calibrate=False):
         print trained_models
 
     if which in ('all', 'classical'):
-        l1 = leaderboard_classical(trained_models, calibrate=calibrate)
+        l1 = leaderboard_classical(trained_models)
         # The following assignments only work because
         # leaderboard_classical & co are idempotent.
         # FIXME (potentially)
         with shelve_database() as db:
             db['leaderboard1'] = l1
             if test:
-                l_test = leaderboard_classical(
-                    tested_models, subdir="test", calibrate=calibrate)
+                l_test = leaderboard_classical(tested_models, subdir="test")
                 db['leaderboard_classical_test'] = l_test
 
     if which in ('all', 'combined'):
@@ -389,10 +388,10 @@ software = [
     'databoard/__init__.py',
     'databoard/fetch.py',
     'databoard/generic.py',
-    'databoard/isotonic.py',
     'databoard/leaderboard.py',
     'databoard/machine_parallelism.py',
     'databoard/model.py',  # db model, TODO should be renamed
+    'databoard/base_prediction.py',
     'databoard/multiclass_prediction.py',
     'databoard/regression_prediction.py',
     'databoard/scores.py',

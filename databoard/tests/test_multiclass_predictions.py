@@ -13,8 +13,8 @@ predictions = Predictions(y_pred=[ps_1, ps_2, ps_3])
 assert_array_equal(predictions.y_pred, [ps_1, ps_2, ps_3])
 assert_array_equal(predictions.y_pred_label_index, [0, 2, 1])
 
-predictions.save_predictions('/tmp/predictions.csv')
-loaded_predictions = Predictions(f_name='/tmp/predictions.csv')
+predictions.save('/tmp/predictions.npy')
+loaded_predictions = Predictions(f_name='/tmp/predictions.npy')
 assert_array_almost_equal(predictions.y_pred, loaded_predictions.y_pred)
 
 
@@ -44,8 +44,8 @@ assert_array_equal(predictions.y_pred, [[0, 1, 0], [1, 0, 0], [0, 0, 1]])
 assert_array_equal(predictions.y_pred_label_index, [1, 0, 2])
 
 
-predictions.save_predictions('/tmp/predictions.csv')
-loaded_predictions = Predictions(f_name='/tmp/predictions.csv')
+predictions.save('/tmp/predictions.npy')
+loaded_predictions = Predictions(f_name='/tmp/predictions.npy')
 assert_array_almost_equal(predictions.y_pred, loaded_predictions.y_pred)
 
 # y_pred_index_1 = 1
@@ -59,9 +59,9 @@ assert_array_almost_equal(predictions.y_pred, loaded_predictions.y_pred)
 #                    [[0, 1, 0], [1, 0, 0], [0, 0, 1]])
 # assert_array_equal(predictions.get_pred_index_array(), [1, 0, 2])
 
-# predictions.save_predictions('/tmp/predictions.csv')
+# predictions.save('/tmp/predictions.npy')
 # loaded_predictions = Predictions(
-#     predictions_f_name='/tmp/predictions.csv')
+#     predictions_f_name='/tmp/predictions.npy')
 # assert_array_almost_equal(predictions.y_pred,
 #                           loaded_predictions.y_pred)
 
@@ -69,8 +69,8 @@ assert_array_almost_equal(predictions.y_pred, loaded_predictions.y_pred)
 #                    [[0, 1, 0], [1, 0, 0], [0, 0, 1]])
 # assert_array_equal(predictions.get_pred_index_array(), [1, 0, 2])
 
-# predictions.save_predictions('/tmp/predictions.csv')
-# loaded_predictions = Predictions(f_name='/tmp/predictions.csv')
+# predictions.save('/tmp/predictions.npy')
+# loaded_predictions = Predictions(f_name='/tmp/predictions.npy')
 # assert_array_almost_equal(predictions.y_pred, loaded_predictions.y_pred)
 
 multiclass_prediction.labels = [1, 2, 3]
@@ -99,8 +99,8 @@ predictions = Predictions(
 assert_array_equal(predictions.y_pred, [[0, 1, 0], [1, 0, 0], [0, 0, 1]])
 assert_array_equal(predictions.y_pred_label_index, [1, 0, 2])
 
-predictions.save_predictions('/tmp/predictions.csv')
-loaded_predictions = Predictions(f_name='/tmp/predictions.csv')
+predictions.save('/tmp/predictions.npy')
+loaded_predictions = Predictions(f_name='/tmp/predictions.npy')
 assert_array_almost_equal(predictions.y_pred, loaded_predictions.y_pred)
 
 y_pred_label_1 = [1, 3]
@@ -117,6 +117,6 @@ assert_array_equal(predictions.y_pred,
 # in case of ties, argmax returns the index of the first max
 assert_array_equal(predictions.y_pred_label_index, [0, 1, 0])
 
-predictions.save_predictions('/tmp/predictions.csv')
-loaded_predictions = Predictions(f_name='/tmp/predictions.csv')
+predictions.save('/tmp/predictions.npy')
+loaded_predictions = Predictions(f_name='/tmp/predictions.npy')
 assert_array_almost_equal(predictions.y_pred, loaded_predictions.y_pred)

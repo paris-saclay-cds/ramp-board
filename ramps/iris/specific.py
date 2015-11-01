@@ -22,7 +22,7 @@ target_column_name = 'species'
 cv_test_size = config_databoard.get_ramp_field('cv_test_size')
 held_out_test_size = 0.2
 random_state = config_databoard.get_ramp_field('random_state')
-n_CV = config_databoard.get_ramp_field('num_cpus')
+n_CV = config_databoard.get_ramp_field('n_cpus')
 
 raw_filename = os.path.join(config_databoard.raw_data_path, 'iris.csv')
 train_filename = os.path.join(config_databoard.public_data_path, 'train.csv')

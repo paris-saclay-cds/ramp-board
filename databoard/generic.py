@@ -14,7 +14,7 @@ logger = logging.getLogger('databoard')
 
 # TODO: wrap get_train_data here so we can mem_cache it
 
-def get_hash_string_from_indices(index_list):
+def get_cv_hash(index_list):
     """We identify files output on cross validation (models, predictions)
     by hashing the point indices coming from an cv object.
 
@@ -24,38 +24,19 @@ def get_hash_string_from_indices(index_list):
 
     Returns
     -------
-    hash_string
+    cv_hash : string
     """
     hasher = hashlib.md5()
     hasher.update(index_list)
     return hasher.hexdigest()
 
 
-def get_cv_hash_string_list():
+def get_cv_hash_list():
     _, y_train = specific.get_train_data()
     cv = specific.get_cv(y_train)
     train_is_list, _ = zip(*cv)
-    return [get_hash_string_from_indices(train_is)
+    return [get_cv_hash(train_is)
             for train_is in train_is_list]
-
-
-def get_hash_string_from_path(path):
-    """When running testing or leaderboard, instead of recreating the hash
-    strings from the cv, we just read them from the file names. This is more
-    robust: only existing files will be opened when running those functions.
-    On the other hand, model directories should be clean otherwise old dangling
-    files will also be used. The file names are supposed to be
-    <subdir>/<hash_string>.<extension>
-
-    Parameters
-    ----------
-    path : string with the file name after the last '/'
-
-    Returns
-    -------
-    hash_string
-    """
-    return path.split('/')[-1].split('.')[-2]
 
 
 def get_module_path(full_model_path):
@@ -64,7 +45,7 @@ def get_module_path(full_model_path):
 
     Parameters
     ----------
-    full_model_path : of the form <root_path>/models/<team>/<tag_name_alias>
+    full_model_path : of the form <root_path>/models/<team>/<model_hash>
 
     Returns
     -------
@@ -73,12 +54,12 @@ def get_module_path(full_model_path):
     return full_model_path.lstrip('./').replace('/', '.')
 
 
-def get_full_model_path(tag_name_alias, model_df):
+def get_full_model_path(model_hash, model_df):
     """Computing the full model path.
 
     Parameters
     ----------
-    tag_name_alias : the hash string computed on the submission in
+    model_hash : the hash string computed on the submission in
         fetch.get_tag_uid. It usually comes from the index of the models table.
 
     model_df : an entry of the models table.
@@ -86,10 +67,10 @@ def get_full_model_path(tag_name_alias, model_df):
     Returns
     -------
     full_model_path : of the form
-        <root_path>/models/<model_df['team']>/tag_name_alias
+        <root_path>/models/<model_df['team']>/model_hash
     """
     return os.path.join(
-        config_databoard.models_path, model_df['team'], tag_name_alias)
+        config_databoard.models_path, model_df['team'], model_hash)
 
 
 def get_f_dir(full_model_path, subdir):
@@ -104,29 +85,29 @@ def get_f_dir(full_model_path, subdir):
     return dir
 
 
-def get_f_name(full_model_path, subdir, f_name, extension="csv"):
+def get_f_name(full_model_path, subdir, f_name, extension="npy"):
     return os.path.join(get_f_dir(full_model_path, subdir),
                         f_name + '.' + extension)
 
 
-def get_model_f_name(full_model_path, hash_string):
-    return get_f_name(full_model_path, "model", hash_string, "p")
+def get_model_f_name(full_model_path, cv_hash):
+    return get_f_name(full_model_path, "model", cv_hash, "p")
 
 
-def get_valid_f_name(full_model_path, hash_string):
-    return get_f_name(full_model_path, "valid", hash_string)
+def get_valid_f_name(full_model_path, cv_hash):
+    return get_f_name(full_model_path, "valid", cv_hash)
 
 
-def get_test_f_name(full_model_path, hash_string):
-    return get_f_name(full_model_path, "test", hash_string)
+def get_test_f_name(full_model_path, cv_hash):
+    return get_f_name(full_model_path, "test", cv_hash)
 
 
-def get_train_time_f_name(full_model_path, hash_string):
-    return get_f_name(full_model_path, "train_time", hash_string)
+def get_train_time_f_name(full_model_path, cv_hash):
+    return get_f_name(full_model_path, "train_time", cv_hash)
 
 
-def get_valid_time_f_name(full_model_path, hash_string):
-    return get_f_name(full_model_path, "valid_time", hash_string)
+def get_valid_time_f_name(full_model_path, cv_hash):
+    return get_f_name(full_model_path, "valid_time", cv_hash)
 
 
 @mem.cache
@@ -172,11 +153,6 @@ def get_true_predictions_valid_list():
     true_predictions_valid_list = [specific.Predictions(
         y_true=y_train[test_is]) for test_is in test_is_list]
     return true_predictions_valid_list
-
-
-@mem.cache
-def get_predictions(f_name):
-    return specific.Predictions(f_name=f_name)
 
 
 @contextmanager

@@ -22,7 +22,7 @@ multiclass_prediction.labels = [565, 654, 682, 687, 696, 715, 759, 833, 835,
 
 cv_test_size = config_databoard.get_ramp_field('cv_test_size')
 random_state = config_databoard.get_ramp_field('random_state')
-n_CV = config_databoard.get_ramp_field('num_cpus')
+n_CV = config_databoard.get_ramp_field('n_cpus')
 
 raw_filename = os.path.join(config_databoard.raw_data_path, 'data_64x64.npz')
 train_filename = os.path.join(

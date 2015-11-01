@@ -27,6 +27,10 @@ models_path = os.path.join(root_path, 'models')
 submissions_path = os.path.join(root_path, 'teams_submissions')
 data_path = os.path.join(root_path, 'data')
 raw_data_path = os.path.join(data_path, 'raw')
+# TODO: create them
+# TODO: use sklearn fetch 
+# TODO: use jaberg's fetcher, MLData
+# TODO: everything local should be _
 public_data_path = os.path.join(data_path, 'public')
 private_data_path = os.path.join(data_path, 'private')
 
@@ -83,7 +87,7 @@ ramp_df_columns = [
     'train_server',  # the server for training
     'train_user',  # the username on the train_server
     'train_root',  # the root dir of databoard on the train_server
-    'num_cpus',  # number of cpus on the train_server
+    'n_cpus',  # number of cpus on the train_server
     'web_server',  # the server for the web site (and possibly leaderboard)
     'web_user',  # the username on the web_server
     'web_root',  # the root dir of databoard on the web_server
@@ -100,7 +104,7 @@ ramp_df = ramp_df.append(pd.Series({
     'train_server': 'localhost',
     'train_user': '',
     'train_root': local_root,
-    'num_cpus': 2,
+    'n_cpus': 10,
     'web_server': 'localhost',
     'web_user': '',
     'web_root': local_root,
@@ -114,7 +118,7 @@ ramp_df = ramp_df.append(pd.Series({
     'train_server': vd_server,
     'train_user': 'root',
     'train_root': vd_root,
-    'num_cpus': 10,
+    'n_cpus': 10,
     'web_server': vd_server,
     'web_user': 'root',
     'web_root': vd_root,
@@ -128,7 +132,7 @@ ramp_df = ramp_df.append(pd.Series({
     'train_server': 'localhost',
     'train_user': '',
     'train_root': local_root,
-    'num_cpus': 10,
+    'n_cpus': 10,
     'web_server': 'localhost',
     'web_user': '',
     'web_root': local_root,
@@ -142,7 +146,7 @@ ramp_df = ramp_df.append(pd.Series({
     'train_server': 'localhost',
     'train_user': '',
     'train_root': local_root,
-    'num_cpus': 10,
+    'n_cpus': 10,
     'web_server': 'localhost',
     'web_user': '',
     'web_root': local_root,
@@ -156,7 +160,7 @@ ramp_df = ramp_df.append(pd.Series({
     'train_server': vd_server,
     'train_user': 'root',
     'train_root': vd_root,
-    'num_cpus': 10,
+    'n_cpus': 10,
     'web_server': vd_server,
     'web_user': 'root',
     'web_root': vd_root,
@@ -170,7 +174,7 @@ ramp_df = ramp_df.append(pd.Series({
     'train_server': reims_server,
     'train_user': 'mcherti',
     'train_root': '/home/mcherti/ramp_pollenating_insects',
-    'num_cpus': 10,
+    'n_cpus': 10,
     'web_server': vd_server,
     'web_user': 'root',
     'web_root': vd_root,
@@ -184,7 +188,7 @@ ramp_df = ramp_df.append(pd.Series({
     'train_server': 'localhost',
     'train_user': '',
     'train_root': local_root,
-    'num_cpus': 2,
+    'n_cpus': 2,
     'web_server': 'localhost',
     'web_user': '',
     'web_root': local_root,
@@ -198,7 +202,7 @@ ramp_df = ramp_df.append(pd.Series({
     'train_server': 'localhost',
     'train_user': '',
     'train_root': local_root,
-    'num_cpus': 2,
+    'n_cpus': 2,
     'web_server': 'localhost',
     'web_user': '',
     'web_root': local_root,
@@ -214,7 +218,7 @@ ramp_df = ramp_df.append(pd.Series({
     'train_server': vd_server,
     'train_user': 'root',
     'train_root': '/mnt/datacamp',
-    'num_cpus': 32,
+    'n_cpus': 32,
     'server_port': '9002',
     'cv_test_size': 0.5,
     'random_state': 57,
@@ -226,7 +230,7 @@ ramp_df = ramp_df.append(pd.Series({
     'train_user': 'root',
     'server_port': '10339',
     'train_root': '/mnt/datacamp',
-    'num_cpus': 15,
+    'n_cpus': 15,
     'cv_test_size': 0.5,
     'random_state': 57,
 }, name='el_nino_colorado'))
@@ -237,7 +241,7 @@ ramp_df = ramp_df.append(pd.Series({
     'train_user': 'root',
     'server_port': '5015',
     'train_root': '/mnt/datacamp',
-    'num_cpus': 15,
+    'n_cpus': 15,
     'cv_test_size': 0.5,
     'random_state': 57,
 }, name='el_nino_colorado_block_cv'))
@@ -247,7 +251,7 @@ ramp_df = ramp_df.append(pd.Series({
     'train_server': 'localhost',
     'train_user': '',
     'train_root': local_root,
-    'num_cpus': 2,
+    'n_cpus': 2,
     'web_server': 'localhost',
     'web_user': '',
     'web_root': local_root,
@@ -262,7 +266,7 @@ ramp_df = ramp_df.append(pd.Series({
     'train_server': 'localhost',
     'train_user': '',
     'train_root': local_root,
-    'num_cpus': 2,
+    'n_cpus': 2,
     'web_server': 'localhost',
     'web_user': '',
     'web_root': local_root,
@@ -277,7 +281,7 @@ ramp_df = ramp_df.append(pd.Series({
     'train_server': 'localhost',
     'train_user': '',
     'train_root': local_root,
-    'num_cpus': 2,
+    'n_cpus': 2,
     'web_server': 'localhost',
     'web_user': '',
     'web_root': local_root,
@@ -291,7 +295,7 @@ ramp_df = ramp_df.append(pd.Series({
     'train_server': 'localhost',
     'train_user': '',
     'train_root': local_root,
-    'num_cpus': 2,
+    'n_cpus': 2,
     'web_server': 'localhost',
     'web_user': '',
     'web_root': local_root,
@@ -301,8 +305,8 @@ ramp_df = ramp_df.append(pd.Series({
 }, name='variable_stars_local_test'))
 
 # otherwise integers will have float type, weird
-ramp_df[['num_cpus', 'random_state']] = ramp_df[
-    ['num_cpus', 'random_state']].astype(int)
+ramp_df[['n_cpus', 'random_state']] = ramp_df[
+    ['n_cpus', 'random_state']].astype(int)
 
 notification_recipients = []
 notification_recipients.append("balazs.kegl@gmail.com")
