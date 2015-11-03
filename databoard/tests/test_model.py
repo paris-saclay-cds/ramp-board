@@ -55,7 +55,11 @@ except MergeTeamError as e:
     assert e.value == 'Merge acceptor is not active'
 
 for user in session.query(User).order_by(User.user_id):
-    print user
+    print user, 'belongs to teams:'
+    for team in user.teams:
+        print '\t', team
 
 for team in session.query(Team).order_by(Team.team_id):
-    print team
+    print team, 'members:'
+    for member in team.members:
+        print '\t', member
