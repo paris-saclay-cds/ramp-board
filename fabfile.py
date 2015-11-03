@@ -1,12 +1,12 @@
 # for pickling theano
 import sys
-sys.setrecursionlimit(50000)
+#sys.setrecursionlimit(50000)
 
 import os
 import logging
 import numpy as np
 import pandas as pd
-
+from distutils.util import strtobool
 # import fabric.contrib.project as project
 # from fabric.api import *
 # from fabric.contrib.files import exists
@@ -31,7 +31,16 @@ import pandas as pd
 logger = logging.getLogger('databoard')
 
 
+def setup_db(echo='False'):
+    echo = strtobool(echo)
+    sys.path.insert(0, '')
+    from databoard.db.model import setup_db
+    setup_db('sqlite:///:memory:', echo)
+
+
 def clear_cache():
+    #print sys.path.insert(0, '')
+    print sys.path
     from sklearn.externals.joblib import Memory
     from databoard.config import cachedir
 
@@ -133,7 +142,8 @@ def repeat_fetch(delay='60'):
         time.sleep(delay)
 
 
-def leaderboard(which='all', test=False):
+def leaderboard(which='all', test='False'):
+    test = strtobool(test)
     from databoard.model import shelve_database
     from databoard.leaderboard import (
         leaderboard_classical,
@@ -428,7 +438,8 @@ def _save_ramp_index(ramp_index):
         f.write(ramp_index)
 
 
-def publish(ramp_index, test=False):
+def publish(ramp_index, test='False'):
+    test = strtobool(test)
     _save_ramp_index(ramp_index)
 
     # don't import before saving the ramp_index.txt file

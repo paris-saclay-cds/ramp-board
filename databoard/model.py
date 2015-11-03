@@ -22,3 +22,4 @@ def shelve_database(flag='c'):
         yield get_shelve(flag)
 
 ModelState = Enum('ModelState', 'new trained error')
+
