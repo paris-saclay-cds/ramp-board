@@ -163,7 +163,7 @@ reims_kwargs = dict(
     random_state=57)
 
 ramps_configs['iris'] = RampConfig(ramp_name='iris', **local_kwargs)
-ramps_configs['boston_housing'] = RampConfig(ramp_name='boston', **local_kwargs)
+ramps_configs['boston_housing'] = RampConfig(ramp_name='boston_housing', **local_kwargs)
 ramps_configs['mortality_prediction'] = RampConfig(ramp_name='mortality_prediction', **remote_kwargs)
 ramps_configs['pollenating_insects'] = RampConfig(ramp_name='pollenating_insects', **reims_kwargs)
 ramps_configs['variable_stars'] = RampConfig(ramp_name='variable_stars', **local_kwargs)

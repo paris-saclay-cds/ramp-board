@@ -1,5 +1,8 @@
 # for pickling theano
 import sys
+if '' not in sys.path:  # Balazs bug
+    sys.path.insert(0, '')
+
 #sys.setrecursionlimit(50000)
 
 import os
@@ -33,7 +36,6 @@ logger = logging.getLogger('databoard')
 
 def setup_db(echo='False'):
     echo = strtobool(echo)
-    sys.path.insert(0, '')
     from databoard.db.model import setup_db
     setup_db('sqlite:///:memory:', echo)
 
@@ -543,7 +545,7 @@ def clear_destination_path(ramp_index):
 # publish and test locally and remotely using fabric magic.
 def publish_test(ramp_index):
     clear_destination_path(ramp_index)
-    publish(ramp_index, test=True)
+    publish(ramp_index, test='True')
     publish_data(ramp_index)
 
 
@@ -551,4 +553,4 @@ def test_ramp():
     setup()
     add_models()
     train_test()
-    leaderboard(test=True)
+    leaderboard(test='True')
