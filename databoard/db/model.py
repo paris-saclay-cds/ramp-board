@@ -30,8 +30,8 @@ class User(DBBase):
     user_id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, unique=True)
     hashed_password = Column(String, nullable=False)
-    family_name = Column(String, nullable=False)
-    given_name = Column(String, nullable=False)
+    lastname = Column(String, nullable=False)
+    firstname = Column(String, nullable=False)
     email = Column(String, nullable=False, unique=True)
     linkedin_url = Column(String, default=None)
     twitter_url = Column(String, default=None)
@@ -42,18 +42,20 @@ class User(DBBase):
 
     admined_teams = relationship('Team', back_populates='admin')  # one-to-many
 
-    @property
-    def teams(self):
+    def get_teams(self):
         teams = session.query(Team).all()
         user_teams = []
         for team in teams:
-            if self in team.members:
+            if self in team.get_members():
                 user_teams.append(team)
         return user_teams
 
+    def get_n_teams(self):
+        return len(self.get_teams())
+
     def __repr__(self):
-        repr = 'User(name={}, family_name={}, given_name={}, email={})'.format(
-            self.name, self.family_name, self.given_name, self.email)
+        repr = 'User(name={}, lastname={}, firstname={}, email={})'.format(
+            self.name, self.lastname, self.firstname, self.email)
         return repr
 
 
@@ -74,27 +76,25 @@ class Team(DBBase):
     # one-to-many, ->ramp_teams
     submissions = relationship('Submission', backref="team")
 
-    @property
-    def members(self):
+    def get_members(self):
         members = []
         if self.initiator_team_id is not None:
             initiator = session.query(Team).get(self.initiator_team_id)
-            members.extend(initiator.members)
+            members.extend(initiator.get_members())
             acceptor = session.query(Team).get(self.acceptor_team_id)
-            members.extend(acceptor.members)
+            members.extend(acceptor.get_members())
         else:
             members.append(self.admin)
         return members
 
-    @property
-    def n_members(self):
-        return len(self.members)
+    def get_n_members(self):
+        return len(self.get_members())
 
     admin = relationship('User', back_populates='admined_teams')  # many-to-one
 
     def __repr__(self):
         repr = 'Team(name={}, admin_name={}, size={}, is_active={})'.format(
-            self.name, self.admin.name, self.n_members, self.is_active)
+            self.name, self.admin.name, self.get_n_members(), self.is_active)
         return repr
 
 
@@ -144,10 +144,10 @@ class NameClashError(Exception):
         return repr(self.value)
 
 
-def create_user(name, password, family_name, given_name, email):
+def create_user(name, password, lastname, firstname, email):
     hashed_password = get_hashed_password(password)
     user = User(name=name, hashed_password=hashed_password,
-                family_name=family_name, given_name=given_name, email=email)
+                lastname=lastname, firstname=firstname, email=email)
     # Creating default team with the same name as the user
     # user is admin of her own team
     team = Team(name=name, admin=user)
@@ -197,8 +197,8 @@ def merge_teams(name, initiator_name, acceptor_name):
     if not acceptor.is_active:
         raise MergeTeamError('Merge acceptor is not active')
 
-    n_members_initiator = initiator.n_members
-    n_members_acceptor = acceptor.n_members
+    n_members_initiator = initiator.get_n_members()
+    n_members_acceptor = acceptor.get_n_members()
     n_members_new = n_members_initiator + n_members_acceptor
     if n_members_new > max_members_per_team:
         raise MergeTeamError(
