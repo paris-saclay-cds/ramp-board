@@ -1,6 +1,11 @@
+from ..config import set_engine_and_session, get_session
+set_engine_and_session('sqlite:///:memory:', echo=False)
+session = get_session()
+
 from ..db.model import get_hashed_password, check_password,\
-    create_user, merge_teams, NameClashError, MergeTeamError, \
-    User, Team, session
+    create_user, merge_teams, NameClashError, MergeTeamError,\
+    DuplicateSubmissionError,\
+    User, Team, Submission, make_submission
 
 
 def test_password_hashing():
@@ -40,14 +45,16 @@ def test_create_user():
 
 
 def test_merge_teams():
-    merge_teams(name='kemfort', initiator_name='kegl', acceptor_name='agramfort')
+    merge_teams(
+        name='kemfort', initiator_name='kegl', acceptor_name='agramfort')
     merge_teams(
         name='mchezakci', initiator_name='mcherti', acceptor_name='akazakci')
     try:
-        merge_teams(
-            name='kemfezakci', initiator_name='kemfort', acceptor_name='mchezakci')
+        merge_teams(name='kemfezakci', initiator_name='kemfort',
+                    acceptor_name='mchezakci')
     except MergeTeamError as e:
-        assert e.value == 'Too big team: new team would be of size 4, the max is 3'
+        assert e.value == \
+            'Too big team: new team would be of size 4, the max is 3'
 
     try:
         merge_teams(
@@ -60,12 +67,70 @@ def test_merge_teams():
     except MergeTeamError as e:
         assert e.value == 'Merge acceptor is not active'
 
-for user in session.query(User).order_by(User.user_id):
-    print user, 'belongs to teams:'
-    for team in user.get_teams():
-        print '\t', team
+    # simulating that in a new ramp single-user teams are active again, so
+    # they can try to re-form eisting teams
+    session.query(Team).filter_by(name='akazakci').one().is_active = True
+    session.query(Team).filter_by(name='mcherti').one().is_active = True
+    session.commit()
+    try:
+        merge_teams(
+            name='akazarti', initiator_name='akazakci',
+            acceptor_name='mcherti')
+    except MergeTeamError as e:
+        assert e.value == \
+            'Team exists with the same members, team name = mchezakci'
+    # but it should go through if name is the same (even if initiator and
+    # acceptor are not the same)
+    merge_teams(
+        name='mchezakci', initiator_name='akazakci', acceptor_name='mcherti')
 
-for team in session.query(Team).order_by(Team.team_id):
-    print team, 'members:'
-    for member in team.get_members():
-        print '\t', member
+    session.query(Team).filter_by(name='akazakci').one().is_active = False
+    session.query(Team).filter_by(name='mcherti').one().is_active = False
+    session.commit()
+
+
+def test_make_submission():
+    make_submission('kemfort', 'rf')
+    make_submission('mchezakci', 'rf')
+    make_submission('kemfort', 'rf2')
+
+    # resubmitting 'new' is OK
+    make_submission('kemfort', 'rf')
+
+    team = session.query(Team).filter_by(name='kemfort').one()
+    submission = session.query(Submission).filter_by(
+        team=team, name='rf').one()
+
+    submission.trained_state = 'error'
+    session.commit()
+    # resubmitting 'error' is OK
+    make_submission('kemfort', 'rf')
+
+    submission.tested_state = 'error'
+    session.commit()
+    # resubmitting 'error' is OK
+    make_submission('kemfort', 'rf')
+
+    submission.trained_state = 'trained'
+    session.commit()
+    # resubmitting 'trained' is not OK
+    try:
+        make_submission('kemfort', 'rf')
+    except DuplicateSubmissionError as e:
+        assert e.value == 'Submission "rf" of team "kemfort" exists already'
+
+
+def test_print_db():
+    for user in session.query(User).order_by(User.user_id):
+        print user, 'belongs to teams:'
+        for team in user.get_teams():
+            print '\t', team
+
+    for team in session.query(Team).order_by(Team.team_id):
+        print team, 'members:'
+        for member in team.get_members():
+            print '\t', member
+
+    for submission in session.query(Submission).order_by(
+            Submission.submission_id):
+        print submission

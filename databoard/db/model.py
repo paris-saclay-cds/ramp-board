@@ -1,18 +1,14 @@
+import os
 import bcrypt
+import hashlib
 import datetime
-from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.orm import sessionmaker, relationship
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Enum, \
     DateTime, Boolean, UniqueConstraint
+from ..config import models_path, get_session, get_engine, DBBase
 
-
-engine = create_engine('sqlite:///:memory:', echo=False)
-Session = sessionmaker(bind=engine)
-session = Session()
-DBBase = declarative_base()
 
 # These should go in config, later into the ramps table
 max_members_per_team = 3  # except for users own team
@@ -20,8 +16,11 @@ opening_timestamp = None
 public_opening_timestamp = None  # before teams can see only their own scores
 closing_timestamp = None
 
-# We will allow one team change per ramp
 # We will need a ramp_id, user_id, team_id
+
+# so set engine before importing the file
+engine = get_engine()
+session = get_session()
 
 
 class User(DBBase):
@@ -44,11 +43,9 @@ class User(DBBase):
 
     def get_teams(self):
         teams = session.query(Team).all()
-        user_teams = []
         for team in teams:
             if self in team.get_members():
-                user_teams.append(team)
-        return user_teams
+                yield team
 
     def get_n_teams(self):
         return len(self.get_teams())
@@ -74,9 +71,9 @@ class Team(DBBase):
     is_active = Column(Boolean, default=True)  # ->ramp_teams
 
     # one-to-many, ->ramp_teams
-    submissions = relationship('Submission', backref="team")
+    submissions = relationship('Submission', back_populates='team')
 
-    def get_members(self):
+    def get_members_old(self):
         members = []
         if self.initiator_team_id is not None:
             initiator = session.query(Team).get(self.initiator_team_id)
@@ -87,8 +84,20 @@ class Team(DBBase):
             members.append(self.admin)
         return members
 
+    def get_members(self):
+        if self.initiator_team_id is not None:
+            initiator = session.query(Team).get(self.initiator_team_id)
+            # "yield from" in Python 3.3
+            for member in initiator.get_members():
+                yield member
+            acceptor = session.query(Team).get(self.acceptor_team_id)
+            for member in acceptor.get_members():
+                yield member
+        else:
+            yield self.admin
+
     def get_n_members(self):
-        return len(self.get_members())
+        return len(list(self.get_members()))
 
     admin = relationship('User', back_populates='admined_teams')  # many-to-one
 
@@ -104,7 +113,6 @@ class Submission(DBBase):
     submission_id = Column(Integer, primary_key=True)
     team_id = Column(Integer, ForeignKey('teams.team_id'), nullable=False)
     name = Column(String, nullable=False)
-    path = Column(String, nullable=False)
     submission_timestamp = Column(DateTime, default=datetime.datetime.utcnow)
     training_timestamp = Column(DateTime)
     scoring_timestamp = Column(DateTime)
@@ -114,11 +122,35 @@ class Submission(DBBase):
     train_time = Column(Integer, default=0)
     test_time = Column(Integer, default=0)
     trained_state = Column(Enum(
-        'new', 'trained', 'tested', 'error', 'ignore'), default='new')
-    scored_state = Column(Enum(
-        'train_scored', 'test_scored'), default=None)
+        'new', 'trained', 'error', 'scored', 'ignore'), default='new')
+    tested_state = Column(Enum(
+        'new', 'tested', 'scored', 'error'), default='new')
     is_valid = Column(Boolean, default=True)  # user can delete but we keep
     is_to_ensemble = Column(Boolean, default=True)  # we can forget bad models
+
+    team = relationship('Team', back_populates='submissions')  # one-to-many
+
+    UniqueConstraint(team_id, name)  # later also ramp_id
+
+    def _get_submission_hash(self):
+        sha_hasher = hashlib.sha1()
+        sha_hasher.update(self.team.name)
+        sha_hasher.update(self.name)
+        model_hash = 'm{}'.format(sha_hasher.hexdigest())
+        return model_hash
+
+    def get_submission_path(self, models_path=models_path):
+        submission_hash = self._get_submission_hash()
+        team_model_path = os.path.join(models_path, self.team.name)
+        submission_path = os.path.join(team_model_path, submission_hash)
+        return submission_path
+
+    def __repr__(self):
+        repr = 'Submission(team_name={}, name={}, '\
+            'trained_state={}, tested_state={})'.format(
+                self.team.name, self.name, self.trained_state,
+                self.tested_state)
+        return repr
 
 
 DBBase.metadata.create_all(engine)
@@ -197,6 +229,7 @@ def merge_teams(name, initiator_name, acceptor_name):
     if not acceptor.is_active:
         raise MergeTeamError('Merge acceptor is not active')
 
+    # Testing if team size is <= max_members_per_team
     n_members_initiator = initiator.get_n_members()
     n_members_acceptor = acceptor.get_n_members()
     n_members_new = n_members_initiator + n_members_acceptor
@@ -204,10 +237,25 @@ def merge_teams(name, initiator_name, acceptor_name):
         raise MergeTeamError(
             'Too big team: new team would be of size {}, the max is {}'.format(
                 n_members_new, max_members_per_team))
-    team = Team(name=name, admin=initiator.admin,
-                initiator_team_id=initiator.team_id,
-                acceptor_team_id=acceptor.team_id)
-    session.add(team)
+
+    members_initiator = initiator.get_members()
+    members_acceptor = acceptor.get_members()
+
+    # Testing if team (same members) exists under a different name. If the
+    # name is the same, we break. If the loop goes through, we add new team.
+    members_set = set(members_initiator).union(set(members_acceptor))
+    for team in session.query(Team):
+        if members_set == set(team.get_members()):
+            if name == team.name:
+                break  # ok, but don't add new team, just set them to inactive
+            raise MergeTeamError(
+                'Team exists with the same members, team name = {}'.format(
+                    team.name))
+    else:
+        team = Team(name=name, admin=initiator.admin,
+                    initiator_team_id=initiator.team_id,
+                    acceptor_team_id=acceptor.team_id)
+        session.add(team)
     initiator.is_active = False
     acceptor.is_active = False
     try:
@@ -219,3 +267,33 @@ def merge_teams(name, initiator_name, acceptor_name):
             raise NameClashError('team name is already in use')
         except NoResultFound:
             raise e
+
+
+class DuplicateSubmissionError(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+
+def make_submission(team_name, name):
+    team = session.query(Team).filter_by(name=team_name).one()
+    submission = session.query(Submission).filter_by(
+        name=name, team=team).one_or_none()
+    if submission is None:
+        submission = Submission(name=name, team=team)
+        session.add(submission)
+    else:
+        if submission.trained_state == 'new' or\
+                submission.trained_state == 'error' or\
+                submission.tested_state == 'error':
+            submission.trained_state = 'new'
+            submission.tested_state = 'new'
+        else:
+            raise DuplicateSubmissionError(
+                'Submission "{}" of team "{}" exists already'.format(
+                    name, team_name))
+
+    # We should copy files here
+    session.commit()

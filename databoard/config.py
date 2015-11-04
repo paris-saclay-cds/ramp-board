@@ -1,4 +1,30 @@
 import os
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+
+engine = None
+session = None
+
+
+# this shuold be called before model is imported
+def set_engine_and_session(_engine, echo=False):
+    global engine
+    global session
+    engine = create_engine(_engine, echo=echo)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    DBBase.metadata.create_all(engine)
+
+
+def get_engine():
+    return engine
+
+    
+def get_session():
+    return session
+
+DBBase = declarative_base()
 
 root_path = '.'
 
