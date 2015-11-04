@@ -5,7 +5,8 @@ session = get_session()
 from ..db.model import get_hashed_password, check_password,\
     create_user, merge_teams, NameClashError, MergeTeamError,\
     DuplicateSubmissionError,\
-    User, Team, Submission, make_submission
+    User, Team, Submission, make_submission,\
+    print_users, print_active_teams, print_submissions
 
 
 def test_password_hashing():
@@ -90,12 +91,12 @@ def test_merge_teams():
 
 
 def test_make_submission():
-    make_submission('kemfort', 'rf')
-    make_submission('mchezakci', 'rf')
-    make_submission('kemfort', 'rf2')
+    make_submission('kemfort', 'rf', 'classifier.py')
+    make_submission('mchezakci', 'rf', 'classifier.py')
+    make_submission('kemfort', 'rf2', 'classifier.py')
 
     # resubmitting 'new' is OK
-    make_submission('kemfort', 'rf')
+    make_submission('kemfort', 'rf', 'classifier.py')
 
     team = session.query(Team).filter_by(name='kemfort').one()
     submission = session.query(Submission).filter_by(
@@ -104,33 +105,23 @@ def test_make_submission():
     submission.trained_state = 'error'
     session.commit()
     # resubmitting 'error' is OK
-    make_submission('kemfort', 'rf')
+    make_submission('kemfort', 'rf', 'classifier.py')
 
     submission.tested_state = 'error'
     session.commit()
     # resubmitting 'error' is OK
-    make_submission('kemfort', 'rf')
+    make_submission('kemfort', 'rf', 'classifier.py')
 
     submission.trained_state = 'trained'
     session.commit()
     # resubmitting 'trained' is not OK
     try:
-        make_submission('kemfort', 'rf')
+        make_submission('kemfort', 'rf', 'classifier.py')
     except DuplicateSubmissionError as e:
         assert e.value == 'Submission "rf" of team "kemfort" exists already'
 
 
 def test_print_db():
-    for user in session.query(User).order_by(User.user_id):
-        print user, 'belongs to teams:'
-        for team in user.get_teams():
-            print '\t', team
-
-    for team in session.query(Team).order_by(Team.team_id):
-        print team, 'members:'
-        for member in team.get_members():
-            print '\t', member
-
-    for submission in session.query(Submission).order_by(
-            Submission.submission_id):
-        print submission
+    print_users()
+    print_active_teams()
+    print_submissions()

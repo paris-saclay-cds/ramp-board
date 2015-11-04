@@ -1,7 +1,6 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
 
 engine = None
 session = None
@@ -14,27 +13,25 @@ def set_engine_and_session(_engine, echo=False):
     engine = create_engine(_engine, echo=echo)
     Session = sessionmaker(bind=engine)
     session = Session()
-    DBBase.metadata.create_all(engine)
 
 
 def get_engine():
     return engine
 
-    
+
 def get_session():
     return session
-
-DBBase = declarative_base()
 
 root_path = '.'
 
 tag_len_limit = 40
 
 # paths
-repos_path = os.path.join(root_path, 'teams_repos')
+db_path = os.path.join(root_path, 'db')
+repos_path = os.path.join(root_path, 'git_submissions')
 ground_truth_path = os.path.join(root_path, 'ground_truth')
-models_path = os.path.join(root_path, 'models')
-submissions_path = os.path.join(root_path, 'teams_submissions')
+submissions_path = os.path.join(root_path, 'submissions')
+deposited_submissions_path = os.path.join(root_path, 'deposited_submissions')
 data_path = os.path.join(root_path, 'data')
 raw_data_path = os.path.join(data_path, 'raw')
 public_data_path = os.path.join(data_path, 'public')

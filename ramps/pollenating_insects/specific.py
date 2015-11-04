@@ -13,7 +13,7 @@ import multiclass_prediction
 from .multiclass_prediction import Predictions
 import config_databoard
 
-sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
+sys.path.append(os.path.dirname(os.path.abspath(config_databoard.submissions_path)))
 
 hackaton_title = 'Pollenating insect classification'
 multiclass_prediction.labels = [565, 654, 682, 687, 696, 715, 759, 833, 835,

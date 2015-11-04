@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from sklearn.externals.joblib import Memory
 
 # import config_databoard
-from .config import cachedir, models_path
+from .config import cachedir, submissions_path
 import specific
 
 mem = Memory(cachedir=cachedir, verbose=0)
@@ -70,7 +70,7 @@ def get_full_model_path(model_hash, model_df):
     full_model_path : of the form
         <root_path>/models/<model_df['team']>/model_hash
     """
-    return os.path.join(models_path, model_df['team'], model_hash)
+    return os.path.join(submissions_path, model_df['team'], model_hash)
 
 
 def get_f_dir(full_model_path, subdir):

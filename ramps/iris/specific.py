@@ -11,12 +11,12 @@ import scores
 # menu polymorphism example
 import multiclass_prediction
 from .multiclass_prediction import Predictions
-from .config import config, models_path, raw_data_path, public_data_path
+from .config import config, submissions_path, raw_data_path, public_data_path
 from .config import private_data_path
 # import config_databoard
 
-# sys.path.append(os.path.dirname(os.path.abspath(config_databoard.models_path)))
-sys.path.append(os.path.dirname(os.path.abspath(models_path)))
+# sys.path.append(os.path.dirname(os.path.abspath(config_databoard.submissions_path)))
+sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 hackaton_title = 'Iris classification (test)'
 multiclass_prediction.labels = ['setosa', 'versicolor', 'virginica']

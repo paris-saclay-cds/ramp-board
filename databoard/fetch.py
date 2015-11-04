@@ -15,17 +15,17 @@ from flask_mail import Message
 from . import app
 from .model import shelve_database, columns
 import specific
-from .config import notification_recipients, config, models_path, repos_path
-from .config import submissions_path
+from .config import notification_recipients, config, submissions_path, repos_path
+from .config import deposited_submissions_path, get_session
 # import config_databoard
 
 logger = logging.getLogger('databoard')
 
 
-def get_model_hash(team_name, tag_name, **kwargs):
+def get_model_hash(team_name, submission_name, **kwargs):
     sha_hasher = hashlib.sha1()
     sha_hasher.update(team_name)
-    sha_hasher.update(tag_name)
+    sha_hasher.update(submission_name)
     model_hash = 'm{}'.format(sha_hasher.hexdigest())
     return model_hash
 
@@ -74,12 +74,12 @@ def copy_git_tree(tree, dest_folder):
 def fetch_models():
     repo_paths = sorted(glob.glob(os.path.join(repos_path, '*')))
 
-    if not os.path.exists(models_path):
+    if not os.path.exists(submissions_path):
         logger.warning(
             "Models folder didn't exist. An empty folder was created.")
-        os.mkdir(models_path)
+        os.mkdir(submissions_path)
     open(
-        os.path.join(models_path, '__init__.py'), 'a').close()
+        os.path.join(submissions_path, '__init__.py'), 'a').close()
 
     new_submissions = set()  # a set of submission hashes
 
@@ -106,13 +106,13 @@ def fetch_models():
             continue
 
         for t in repo.tags:
-            tag_name = t.name
-            model_hash = get_model_hash(team_name, tag_name)
+            submission_name = t.name
+            model_hash = get_model_hash(team_name, submission_name)
             # We delete tags of failed submissions, so they
             # can be refetched
             if model_hash in old_failed_submissions:
-                logger.debug('Deleting local tag: {}'.format(tag_name))
-                repo.delete_tag(tag_name)
+                logger.debug('Deleting local tag: {}'.format(submission_name))
+                repo.delete_tag(submission_name)
 
         try:
             # just in case the working tree is dirty
@@ -126,7 +126,7 @@ def fetch_models():
             logger.error(
                 'Unable to pull from repo. Possibly no connexion: \n{}'.format(e))
 
-        repo_path = os.path.join(config_databoard.models_path, team_name)
+        repo_path = os.path.join(config_databoard.submissions_path, team_name)
         if not os.path.exists(repo_path):
             os.mkdir(repo_path)
         open(os.path.join(repo_path, '__init__.py'), 'a').close()
@@ -138,12 +138,12 @@ def fetch_models():
 
             # FIXME: this huge try-except is a nightmare
             try:
-                tag_name = t.name
-                # tag_name = tag_name.replace(' ', '_')
-                logger.debug('Tag name: {}'.format(tag_name))
+                submission_name = t.name
+                # submission_name = submission_name.replace(' ', '_')
+                logger.debug('Tag name: {}'.format(submission_name))
 
                 # will serve as dataframe index
-                model_hash = get_model_hash(team_name, tag_name)
+                model_hash = get_model_hash(team_name, submission_name)
                 logger.debug('Tag alias: {}'.format(model_hash))
                 model_path = os.path.join(repo_path, model_hash)
 
@@ -197,7 +197,7 @@ def fetch_models():
                     # prepre a dataframe for the concatnation
                     new_entry = pd.DataFrame({
                         'team': team_name,
-                        'model': tag_name,
+                        'model': submission_name,
                         'timestamp': new_commit_time,
                         'state': "new",
                         'listing': file_listing,
@@ -233,31 +233,62 @@ def fetch_models():
         logger.debug('No new submission.')
 
 
+from .db.model import get_hashed_password, check_password,\
+    create_user, merge_teams, NameClashError, MergeTeamError,\
+    DuplicateSubmissionError,\
+    User, Team, Submission, make_submission,\
+    print_users, print_active_teams, print_submissions
+
+
 def add_models():
-    submission_paths = sorted(glob.glob(os.path.join(submissions_path, '*/*')))
+    session = get_session()
+    deposited_submission_paths = sorted(
+        glob.glob(os.path.join(deposited_submissions_path, '*/*')))
 
     open(
-        os.path.join(models_path, '__init__.py'), 'a').close()
+        os.path.join(submissions_path, '__init__.py'), 'a').close()
 
-    for submission_path in submission_paths:
-        team_path, tag_name = os.path.split(submission_path)
-        _, team_name = os.path.split(team_path)
-        model_hash = get_model_hash(team_name, tag_name)
-        team_model_path = os.path.join(models_path, team_name)
-        model_path = os.path.join(team_model_path, model_hash)
-        submission_files = os.listdir(submission_path)
-        submission_files_listing = '|'.join(submission_files)
+    for deposited_submission_path in deposited_submission_paths:
+        deposited_team_path, submission_name = os.path.split(
+            deposited_submission_path)
+        _, team_name = os.path.split(deposited_team_path)
+        try:
+            create_user(name=team_name, password='bla', lastname='team_name',
+                        firstname='team_name', email='team_name@team_name.com')
+        except NameClashError:  # test user already in db, no problem
+            pass
+        deposited_files = os.listdir(deposited_submission_path)
+        # wil will have a separate table for this
+        submission_file_list = '|'.join(deposited_files)
+        submission = make_submission(
+            team_name, submission_name, submission_file_list)
+        team_path, submission_path = submission.get_submission_path()
+
+        if not os.path.exists(team_path):
+            os.mkdir(team_path)
+        open(os.path.join(team_path, '__init__.py'), 'a').close()
+        # clean up the model directory in case it's a resubmission
+        if os.path.exists(submission_path):
+            shutil.rmtree(submission_path)
+        os.mkdir(submission_path)
+        open(os.path.join(submission_path, '__init__.py'), 'a').close()
+
+        # copy the submission files into the model directory
+        for submission_file in deposited_files:
+            src = os.path.join(deposited_submission_path, submission_file)
+            dst = os.path.join(submission_path, submission_file)
+            shutil.copy2(src, dst)  # copying also metadata
+
+        logger.info("Adding submission={}".format(submission))
+
+        # The rest is the old db, should be deleted once new db is in place
+        model_hash = get_model_hash(team_name, submission_name)
         submission_times = [
-            os.path.getmtime(os.path.join(submission_path, submission_file))
-            for submission_file in submission_files]
+            os.path.getmtime(os.path.join(
+                deposited_submission_path, submission_file))
+            for submission_file in deposited_files]
         submission_time = max(submission_times)
 
-        logger.info("Adding team={}, tag={}, alias={}".format(
-            team_name, tag_name, model_hash))
-
-        if not os.path.exists(team_model_path):
-            os.mkdir(team_model_path)
-        open(os.path.join(team_model_path, '__init__.py'), 'a').close()
 
         with shelve_database() as db:
             # skip if the model is trained, tested, or ignore, otherwise,
@@ -286,22 +317,10 @@ def add_models():
             # we can now add the new entry
             new_entry = pd.DataFrame({
                 'team': team_name,
-                'model': tag_name,
+                'model': submission_name,
                 'timestamp': submission_time,
                 'state': "new",
-                'listing': submission_files_listing,
+                'listing': submission_file_list,
             }, index=[model_hash])
 
             db['models'] = db['models'].append(new_entry)
-
-            # clean up the model directory in case it's a resubmission
-            if os.path.exists(model_path):
-                shutil.rmtree(model_path)
-            os.mkdir(model_path)
-            open(os.path.join(model_path, '__init__.py'), 'a').close()
-
-            # copy the submission files into the model directory
-            for submission_file in submission_files:
-                src = os.path.join(submission_path, submission_file)
-                dst = os.path.join(model_path, submission_file)
-                shutil.copy2(src, dst)  # copying also metadata

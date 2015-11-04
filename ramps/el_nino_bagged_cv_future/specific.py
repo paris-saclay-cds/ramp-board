@@ -12,10 +12,10 @@ from sklearn.cross_validation import ShuffleSplit
 # menu polymorphism example
 from .regression_prediction import Predictions
 import scores
-from .config import config, models_path
+from .config import config, submissions_path
 # from .config import raw_data_path, public_data_path, private_data_path
 
-sys.path.append(os.path.dirname(os.path.abspath(models_path)))
+sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 hackaton_title = 'El Nino prediction'
 target_column_name = 'target'

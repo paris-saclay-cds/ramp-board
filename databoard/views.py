@@ -24,7 +24,7 @@ from databoard import app
 from .model import shelve_database
 from .generic import changedir
 from .specific import hackaton_title
-from .config import repos_path, tag_len_limit, models_path
+from .config import repos_path, tag_len_limit, submissions_path
 
 app.secret_key = os.urandom(24)
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
@@ -261,7 +261,7 @@ def show_private_leaderboard():
 @app.route('/models/<team>/<tag>/<filename>')
 @app.route('/models/<team>/<tag>/<filename>/raw')
 def view_model(team, tag, filename):
-    directory = os.path.join(models_path, team, tag)
+    directory = os.path.join(submissions_path, team, tag)
     directory = os.path.abspath(directory)
     archive_filename = 'archive.zip'
     archive_url = '/models/{}/{}/{}/raw'.format(

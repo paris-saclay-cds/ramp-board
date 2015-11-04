@@ -21,8 +21,8 @@ tag_len_limit = 40
 # paths
 repos_path = os.path.join(root_path, 'teams_repos')
 ground_truth_path = os.path.join(root_path, 'ground_truth')
-models_path = os.path.join(root_path, 'models')
-submissions_path = os.path.join(root_path, 'teams_submissions')
+submissions_path = os.path.join(root_path, 'models')
+deposited_submissions_path = os.path.join(root_path, 'teams_submissions')
 data_path = os.path.join(root_path, 'data')
 raw_data_path = os.path.join(data_path, 'raw')
 # TODO: create them

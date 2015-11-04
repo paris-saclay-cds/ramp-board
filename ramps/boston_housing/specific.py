@@ -10,10 +10,10 @@ from sklearn.cross_validation import ShuffleSplit, train_test_split
 import scores
 # menu polymorphism example
 from .regression_prediction import Predictions
-from .config import config, models_path, raw_data_path
+from .config import config, submissions_path, raw_data_path
 from .config import public_data_path, private_data_path
 
-sys.path.append(os.path.dirname(os.path.abspath(models_path)))
+sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 hackaton_title = 'Boston housing regression (test)'
 target_column_name = 'medv'

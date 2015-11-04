@@ -2,12 +2,18 @@ import os
 import bcrypt
 import hashlib
 import datetime
+from sqlalchemy.orm import relationship
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Enum, \
     DateTime, Boolean, UniqueConstraint
-from ..config import models_path, get_session, get_engine, DBBase
+from ..config import submissions_path
+
+from ..config import get_session, get_engine
+# so set engine (call config.set_engine_and_session) before importing model
+engine = get_engine()
+session = get_session()
 
 
 # These should go in config, later into the ramps table
@@ -18,9 +24,8 @@ closing_timestamp = None
 
 # We will need a ramp_id, user_id, team_id
 
-# so set engine before importing the file
-engine = get_engine()
-session = get_session()
+
+DBBase = declarative_base()
 
 
 class User(DBBase):
@@ -113,6 +118,7 @@ class Submission(DBBase):
     submission_id = Column(Integer, primary_key=True)
     team_id = Column(Integer, ForeignKey('teams.team_id'), nullable=False)
     name = Column(String, nullable=False)
+    file_list = Column(String, nullable=False)
     submission_timestamp = Column(DateTime, default=datetime.datetime.utcnow)
     training_timestamp = Column(DateTime)
     scoring_timestamp = Column(DateTime)
@@ -139,16 +145,16 @@ class Submission(DBBase):
         model_hash = 'm{}'.format(sha_hasher.hexdigest())
         return model_hash
 
-    def get_submission_path(self, models_path=models_path):
+    def get_submission_path(self, submissions_path=submissions_path):
         submission_hash = self._get_submission_hash()
-        team_model_path = os.path.join(models_path, self.team.name)
-        submission_path = os.path.join(team_model_path, submission_hash)
-        return submission_path
+        team_path = os.path.join(submissions_path, self.team.name)
+        submission_path = os.path.join(team_path, submission_hash)
+        return team_path, submission_path
 
     def __repr__(self):
-        repr = 'Submission(team_name={}, name={}, '\
+        repr = 'Submission(team_name={}, name={}, file_list={}, '\
             'trained_state={}, tested_state={})'.format(
-                self.team.name, self.name, self.trained_state,
+                self.team.name, self.name, self.file_list, self.trained_state,
                 self.tested_state)
         return repr
 
@@ -211,6 +217,7 @@ def create_user(name, password, lastname, firstname, email):
             raise NameClashError(message)
         else:
             raise e
+    return user
 
 
 class MergeTeamError(Exception):
@@ -267,6 +274,7 @@ def merge_teams(name, initiator_name, acceptor_name):
             raise NameClashError('team name is already in use')
         except NoResultFound:
             raise e
+    return team
 
 
 class DuplicateSubmissionError(Exception):
@@ -277,12 +285,12 @@ class DuplicateSubmissionError(Exception):
         return repr(self.value)
 
 
-def make_submission(team_name, name):
+def make_submission(team_name, name, file_list):
     team = session.query(Team).filter_by(name=team_name).one()
     submission = session.query(Submission).filter_by(
         name=name, team=team).one_or_none()
     if submission is None:
-        submission = Submission(name=name, team=team)
+        submission = Submission(name=name, team=team, file_list=file_list)
         session.add(submission)
     else:
         if submission.trained_state == 'new' or\
@@ -297,3 +305,27 @@ def make_submission(team_name, name):
 
     # We should copy files here
     session.commit()
+    return submission
+
+
+def print_users():
+    print('***************** List of users ****************')
+    for user in session.query(User).order_by(User.user_id):
+        print('{} belongs to teams:'.format(user))
+        for team in user.get_teams():
+            print('\t{}'.format(team))
+
+
+def print_active_teams():
+    print('***************** List of active teams ****************')
+    for team in session.query(Team).filter(Team.is_active):
+        print('{} members:'.format(team))
+        for member in team.get_members():
+            print('\t{}'.format(member))
+
+
+def print_submissions():
+    print('***************** List of submissions ****************')
+    for submission in session.query(Submission).order_by(
+            Submission.submission_id):
+        print submission

@@ -34,15 +34,11 @@ from distutils.util import strtobool
 logger = logging.getLogger('databoard')
 
 
-def setup_db(echo='False'):
-    echo = strtobool(echo)
-    from databoard.db.model import setup_db
-    setup_db('sqlite:///:memory:', echo)
+def create_test_db():
+    import databoard.db.create_test_db
 
 
 def clear_cache():
-    #print sys.path.insert(0, '')
-    print sys.path
     from sklearn.externals.joblib import Memory
     from databoard.config import cachedir
 
@@ -65,7 +61,7 @@ def clear_db():
 
 def clear_registrants():
     import shutil
-    from databoard.config import repos_path, models_path
+    from databoard.config import repos_path, submissions_path
     # Prepare the teams repo submodules
     # logger.info('Init team repos git')
     # repo = Repo.init(config.repos_path)  # does nothing if already exists
@@ -76,16 +72,16 @@ def clear_registrants():
     os.mkdir(repos_path)
 
     logger.info('Clearing the models directory.')
-    shutil.rmtree(models_path, ignore_errors=True)
-    os.mkdir(models_path)
-    open(os.path.join(models_path, '__init__.py'), 'a').close()
+    shutil.rmtree(submissions_path, ignore_errors=True)
+    os.mkdir(submissions_path)
+    open(os.path.join(submissions_path, '__init__.py'), 'a').close()
 
 
 def clear_pred_files():
     import glob
-    from databoard.config import models_path
+    from databoard.config import submissions_path
     fnames = glob.glob(
-        os.path.join(models_path, '*', '*', '*', '*.csv'))
+        os.path.join(submissions_path, '*', '*', '*', '*.csv'))
 
     for fname in fnames:
         if os.path.exists(fname):
@@ -369,7 +365,7 @@ def kill(team, tag):
         answer = raw_input('Sure? (y/n): ')
 
     pid_filenames = os.path.join(
-        config.models_path, team, get_tag_uid(team, tag), 'pid_*')
+        config.submissions_path, team, get_tag_uid(team, tag), 'pid_*')
     print pid_filenames
     for f in glob.glob(pid_filenames):
         with open(f) as pid_file:
@@ -429,6 +425,7 @@ software = [
     'databoard/views.py',
     'databoard/static',
     'databoard/templates',
+    'databoard/db',
 ]
 
 
@@ -485,7 +482,7 @@ def publish(ramp_index, test='False'):
         if not local:
             command += "--rsh=\'ssh -i " + os.path.expanduser("~")
             command += "/.ssh/datacamp/id_rsa -p 22\' "
-        command += " ramps/" + ramp_name + "/teams_submissions "
+        command += " ramps/" + ramp_name + "/deposited_submissions "
         if not config.is_same_web_and_train_servers():
             command += config.get_deployment_target('web')
         else:
@@ -550,6 +547,7 @@ def publish_test(ramp_index):
 
 
 def test_ramp():
+    create_test_db()
     setup()
     add_models()
     train_test()
