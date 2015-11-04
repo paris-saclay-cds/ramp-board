@@ -102,7 +102,9 @@ class RampConfig(object):
                  web_root,  # the root dir of databoard on the web_server
                  server_port,  # the server port on the web_server
                  cv_test_size,
-                 random_state):
+                 random_state,
+                 cv_bag_size=0,
+                 ):
         self.ramp_name = ramp_name
         self.train_server = train_server
         self.train_user = train_user
@@ -113,6 +115,7 @@ class RampConfig(object):
         self.web_root = web_root
         self.server_port = server_port
         self.cv_test_size = cv_test_size
+        self.cv_bag_size = cv_bag_size
         self.random_state = random_state
 
     def get_destination_path(self, root):
@@ -185,13 +188,16 @@ reims_kwargs = dict(
     cv_test_size=0.2,
     random_state=57)
 
-ramps_configs['iris'] = RampConfig(ramp_name='iris', **local_kwargs)
-ramps_configs['boston_housing'] = RampConfig(ramp_name='boston_housing', **local_kwargs)
-ramps_configs['mortality_prediction'] = RampConfig(ramp_name='mortality_prediction', **remote_kwargs)
-ramps_configs['pollenating_insects'] = RampConfig(ramp_name='pollenating_insects', **reims_kwargs)
-ramps_configs['variable_stars'] = RampConfig(ramp_name='variable_stars', **local_kwargs)
-ramps_configs['amadeus'] = RampConfig(ramp_name='amadeus', **local_kwargs)
-ramps_configs['kaggle_otto'] = RampConfig(ramp_name='kaggle_otto', **local_kwargs)
+ramps_configs['iris_local'] = RampConfig(ramp_name='iris', **local_kwargs)
+ramps_configs['boston_housing_local'] = RampConfig(ramp_name='boston_housing', **local_kwargs)
+
+ramps_configs['amadeus_local'] = RampConfig(ramp_name='amadeus', **local_kwargs)
+ramps_configs['el_nino_bagged_cv_future_local'] = RampConfig(ramp_name='el_nino_bagged_cv_future', **local_kwargs)
+ramps_configs['el_nino_block_cv_local'] = RampConfig(ramp_name='el_nino_block_cv', cv_bag_size=0.5, **local_kwargs)
+ramps_configs['kaggle_otto_local'] = RampConfig(ramp_name='kaggle_otto', **local_kwargs)
+ramps_configs['mortality_prediction_local'] = RampConfig(ramp_name='mortality_prediction', **local_kwargs)
+ramps_configs['pollenating_insects_local'] = RampConfig(ramp_name='pollenating_insects', **local_kwargs)
+ramps_configs['variable_stars_local'] = RampConfig(ramp_name='variable_stars', **local_kwargs)
 
 with open("ramp_index.txt") as f:
     ramp_index = f.readline()

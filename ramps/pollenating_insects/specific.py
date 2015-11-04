@@ -11,24 +11,23 @@ import scores
 # menu polymorphism example
 import multiclass_prediction
 from .multiclass_prediction import Predictions
-import config_databoard
+from .config import config, submissions_path
+from .config import raw_data_path, public_data_path, private_data_path
 
-sys.path.append(os.path.dirname(os.path.abspath(config_databoard.submissions_path)))
+sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 hackaton_title = 'Pollenating insect classification'
 multiclass_prediction.labels = [565, 654, 682, 687, 696, 715, 759, 833, 835,
                                 881, 952, 970, 971, 978, 995, 996, 1061, 1071]
 # held_out_test_size = 0.7
 
-cv_test_size = config_databoard.get_ramp_field('cv_test_size')
-random_state = config_databoard.get_ramp_field('random_state')
-n_CV = config_databoard.get_ramp_field('n_cpus')
+cv_test_size = config.cv_test_size
+random_state = config.random_state
+n_CV = config.num_cpus
 
-raw_filename = os.path.join(config_databoard.raw_data_path, 'data_64x64.npz')
-train_filename = os.path.join(
-    config_databoard.public_data_path, 'train_64x64.npz')
-test_filename = os.path.join(
-    config_databoard.private_data_path, 'test_64x64.npz')
+raw_filename = os.path.join(raw_data_path, 'data_64x64.npz')
+train_filename = os.path.join(public_data_path, 'train_64x64.npz')
+test_filename = os.path.join(private_data_path, 'test_64x64.npz')
 
 score = scores.Accuracy()
 # score = scores.Error()
