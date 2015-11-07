@@ -1,0 +1,4 @@
+include ramps/*/data/raw/*csv
+include ramps/*/*.py
+include Makefile
+include README.md

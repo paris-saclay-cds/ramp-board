@@ -2,8 +2,8 @@
 
 # Copyright (C) 2014-2015 Databoard developers
 
+import os.path as op
 import os
-from os import path as op
 
 import setuptools  # noqa; we are using a setuptools namespace
 from numpy.distutils.core import setup
@@ -27,7 +27,7 @@ MAINTAINER = 'Alexandre Gramfort'
 MAINTAINER_EMAIL = 'alexandre.gramfort@telecom-paristech.fr'
 URL = 'None'
 LICENSE = 'BSD (3-clause)'
-DOWNLOAD_URL = 'http://databoard'
+DOWNLOAD_URL = 'http://databoard'  # XXX : fix
 VERSION = version
 
 
@@ -57,4 +57,5 @@ if __name__ == "__main__":
                        'Operating System :: Unix',
                        'Operating System :: MacOS'],
           platforms='any',
-          packages=['databoard', 'databoard.tests'])
+          packages=['databoard', 'databoard.tests'],
+          scripts=['fabfile.py'])

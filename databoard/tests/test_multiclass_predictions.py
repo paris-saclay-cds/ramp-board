@@ -22,6 +22,7 @@ def test_save_load():
     predictions.save('/tmp/predictions.npy')
     loaded_predictions = Predictions(f_name='/tmp/predictions.npy')
     assert_array_almost_equal(predictions.y_pred, loaded_predictions.y_pred)
+    # XXX delete file afterwards and use the TempDir function from python
 
 
 def test_init_from_labels():

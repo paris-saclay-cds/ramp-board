@@ -12,4 +12,5 @@ joblib
 shelve_manager_local.ipynb
 data
 output
-
+dist
+databoard.egg-info
