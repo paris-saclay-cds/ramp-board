@@ -123,3 +123,12 @@ def test_print_db():
     model.print_users()
     model.print_active_teams()
     model.print_submissions()
+
+
+def test_leaderboard():
+    team = session.query(Team).filter_by(name='kemfort').one()
+    submissions = session.query(Submission).filter_by(team=team).all()
+    for submission in submissions:
+        submission.trained_state = 'scored'
+    print model.get_public_leaderboard()
+

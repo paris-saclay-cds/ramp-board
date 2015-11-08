@@ -155,16 +155,17 @@ class RampConfig(object):
 
 ramps_configs = dict()
 
-local_kwargs = dict(train_server='localhost',
-                    train_user='',
-                    train_root=local_root,
-                    num_cpus=2,
-                    web_server='localhost',
-                    web_user='',
-                    web_root=local_root,
-                    server_port='8080',
-                    cv_test_size=0.2,
-                    random_state=57,
+local_kwargs = dict(
+    train_server='localhost',
+    train_user='',
+    train_root=local_root,
+    num_cpus=2,
+    web_server='localhost',
+    web_user='',
+    web_root=local_root,
+    server_port='8080',
+    cv_test_size=0.2,
+    random_state=57,
 )
 
 vd_kwargs = dict(
@@ -209,9 +210,18 @@ ramps_configs['variable_stars_local'] = RampConfig(
     ramp_name='variable_stars', **local_kwargs)
 
 ramps_configs['iris_remote'] = RampConfig(
-    ramp_name='iris', 
+    ramp_name='iris',
     num_cpus=32,
     server_port='2171',
+    cv_test_size=0.2,
+    random_state=57,
+    **vd_kwargs
+)
+
+ramps_configs['mortality_prediction_remote'] = RampConfig(
+    ramp_name='mortality_prediction',
+    num_cpus=10,
+    server_port='2172',
     cv_test_size=0.2,
     random_state=57,
     **vd_kwargs

@@ -2,9 +2,12 @@ import os
 import bcrypt
 import hashlib
 import datetime
+import pandas as pd
+from collections import OrderedDict
 from sqlalchemy.orm import relationship
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Enum, \
     DateTime, Boolean, UniqueConstraint
@@ -78,17 +81,6 @@ class Team(DBBase):
     # one-to-many, ->ramp_teams
     submissions = relationship('Submission', back_populates='team')
 
-    def get_members_old(self):
-        members = []
-        if self.initiator_team_id is not None:
-            initiator = session.query(Team).get(self.initiator_team_id)
-            members.extend(initiator.get_members())
-            acceptor = session.query(Team).get(self.acceptor_team_id)
-            members.extend(acceptor.get_members())
-        else:
-            members.append(self.admin)
-        return members
-
     def get_members(self):
         if self.initiator_team_id is not None:
             initiator = session.query(Team).get(self.initiator_team_id)
@@ -127,16 +119,24 @@ class Submission(DBBase):
     contributivity = Column(Integer, default=0)
     train_time = Column(Integer, default=0)
     test_time = Column(Integer, default=0)
-    trained_state = Column(Enum(
-        'new', 'trained', 'error', 'scored', 'ignore'), default='new')
+    trained_state = Column(Enum('new', 'checked', 'trained', 'error', 'scored',
+                                'ignore'), default='new')
     tested_state = Column(Enum(
         'new', 'tested', 'scored', 'error'), default='new')
     is_valid = Column(Boolean, default=True)  # user can delete but we keep
     is_to_ensemble = Column(Boolean, default=True)  # we can forget bad models
-
+    notes = Column(String, default='') # eg, why is it disqualified
     team = relationship('Team', back_populates='submissions')  # one-to-many
 
     UniqueConstraint(team_id, name)  # later also ramp_id
+
+    @hybrid_property
+    def is_public_leaderboard(self):
+        return self.is_valid and self.trained_state == 'scored'
+
+    @hybrid_property
+    def is_private_leaderboard(self):
+        return self.is_valid and self.tested_state == 'scored'
 
     def _get_submission_hash(self):
         sha_hasher = hashlib.sha1()
@@ -306,6 +306,35 @@ def make_submission(team_name, name, file_list):
     # We should copy files here
     session.commit()
     return submission
+
+
+def get_public_leaderboard():
+    table_setup = OrderedDict([
+        ('team', Team.name),
+        ('submission', Submission.name),
+        ('score', Submission.valid_score),
+        ('contributivity', Submission.contributivity),
+        ('train time', Submission.train_time),
+        ('test time', Submission.test_time),
+        ('submitted at', Submission.submission_timestamp),
+    ])
+    table_header = table_setup.keys()
+    table_columns = table_setup.values()
+    join = session.query(Submission, Team, *table_columns).filter(
+        Team.team_id == Submission.team_id)
+    submissions = join.filter(Submission.is_public_leaderboard).all()
+    df = pd.DataFrame(zip(*zip(*submissions)[2:]), columns=table_header)
+
+    html_params = dict(
+        escape=False,
+        index=False,
+        max_cols=None,
+        max_rows=None,
+        justify='left',
+        classes=['ui', 'blue', 'celled', 'table', 'sortable']
+    )
+
+    return df.to_html(**html_params)
 
 
 def print_users():
