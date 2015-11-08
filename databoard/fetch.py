@@ -258,7 +258,7 @@ def add_models():
         except NameClashError:  # test user already in db, no problem
             pass
         deposited_files = os.listdir(deposited_submission_path)
-        # wil will have a separate table for this
+        # we will have a separate table for this
         submission_file_list = '|'.join(deposited_files)
         submission = make_submission(
             team_name, submission_name, submission_file_list)

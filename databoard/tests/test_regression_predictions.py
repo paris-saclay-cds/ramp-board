@@ -1,4 +1,7 @@
-from ..regression_prediction import Predictions
+import os
+import tempfile
+import os.path as op
+from databoard.regression_prediction import Predictions
 import numpy as np
 from numpy.testing import assert_equal, assert_array_equal
 
@@ -9,19 +12,16 @@ def test_init():
     assert_array_equal(predictions.y_pred, y_pred)
 
 
-def test_save():
+def test_save_and_load():
     y_pred = [0.7, 0.1, 0.2]
     predictions = Predictions(y_pred=y_pred)
-    predictions.save('/tmp/predictions.npy')
-
-
-def test_load():
-    y_pred = [0.7, 0.1, 0.2]
-    predictions = Predictions(y_pred=y_pred)
-    loaded_predictions = Predictions(f_name='/tmp/predictions.npy')
+    f_name = op.join(tempfile.gettempdir(), 'predictions.npy')
+    predictions.save(f_name)
+    loaded_predictions = Predictions(f_name=f_name)
     assert_array_equal(predictions.y_pred, loaded_predictions.y_pred)
     assert_equal(predictions.n_samples, 3)
     assert_array_equal(predictions.y_pred_comb, predictions.y_pred)
+    os.remove(f_name)
 
 
 def test_set_valid_in_train():

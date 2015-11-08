@@ -2,9 +2,9 @@
 # License: BSD 3 clause
 
 from numpy.testing import assert_equal
-from .. import scores
-from .. import multiclass_prediction
-from ..multiclass_prediction import Predictions
+import databoard.scores as scores
+import databoard.multiclass_prediction as multiclass_prediction
+from databoard.multiclass_prediction import Predictions
 
 
 def test_score_accuracy():

@@ -188,16 +188,24 @@ reims_kwargs = dict(
     cv_test_size=0.2,
     random_state=57)
 
-ramps_configs['iris_local'] = RampConfig(ramp_name='iris', **local_kwargs)
-ramps_configs['boston_housing_local'] = RampConfig(ramp_name='boston_housing', **local_kwargs)
-
-ramps_configs['amadeus_local'] = RampConfig(ramp_name='amadeus', **local_kwargs)
-ramps_configs['el_nino_bagged_cv_future_local'] = RampConfig(ramp_name='el_nino_bagged_cv_future', **local_kwargs)
-ramps_configs['el_nino_block_cv_local'] = RampConfig(ramp_name='el_nino_block_cv', cv_bag_size=0.5, **local_kwargs)
-ramps_configs['kaggle_otto_local'] = RampConfig(ramp_name='kaggle_otto', **local_kwargs)
-ramps_configs['mortality_prediction_local'] = RampConfig(ramp_name='mortality_prediction', **local_kwargs)
-ramps_configs['pollenating_insects_local'] = RampConfig(ramp_name='pollenating_insects', **local_kwargs)
-ramps_configs['variable_stars_local'] = RampConfig(ramp_name='variable_stars', **local_kwargs)
+ramps_configs['iris_local'] = RampConfig(
+    ramp_name='iris', **local_kwargs)
+ramps_configs['boston_housing_local'] = RampConfig(
+    ramp_name='boston_housing', **local_kwargs)
+ramps_configs['amadeus_local'] = RampConfig(
+    ramp_name='amadeus', **local_kwargs)
+ramps_configs['el_nino_bagged_cv_future_local'] = RampConfig(
+    ramp_name='el_nino_bagged_cv_future', **local_kwargs)
+ramps_configs['el_nino_block_cv_local'] = RampConfig(
+    ramp_name='el_nino_block_cv', cv_bag_size=0.5, **local_kwargs)
+ramps_configs['kaggle_otto_local'] = RampConfig(
+    ramp_name='kaggle_otto', **local_kwargs)
+ramps_configs['mortality_prediction_local'] = RampConfig(
+    ramp_name='mortality_prediction', **local_kwargs)
+ramps_configs['pollenating_insects_local'] = RampConfig(
+    ramp_name='pollenating_insects', **local_kwargs)
+ramps_configs['variable_stars_local'] = RampConfig(
+    ramp_name='variable_stars', **local_kwargs)
 
 with open("ramp_index.txt") as f:
     ramp_index = f.readline()
