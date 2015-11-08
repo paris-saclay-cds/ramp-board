@@ -7,8 +7,8 @@ import pandas as pd
 from sklearn.externals.joblib import Parallel, delayed
 
 # import config_databoard
-from .config import config, is_parallelize  # change name of is_parallelize
-from .config import private_data_path
+from databoard.config import config, is_parallelize  # change name of is_parallelize
+from databoard.config import private_data_path
 import generic  # XXX
 import specific
 

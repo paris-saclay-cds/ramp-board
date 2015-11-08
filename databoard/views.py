@@ -20,11 +20,11 @@ from flask import (
 )
 
 from databoard import app
-# from .model import columns, ModelState
-from .model import shelve_database
-from .generic import changedir
-from .specific import hackaton_title
-from .config import repos_path, tag_len_limit, submissions_path
+# from databoard.model import columns, ModelState
+from databoard.model import shelve_database
+from databoard.generic import changedir
+from databoard.specific import hackaton_title
+from databoard.config import repos_path, tag_len_limit, submissions_path
 
 app.secret_key = os.urandom(24)
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
@@ -137,9 +137,7 @@ def show_leaderboard():
         #     inplace=True)
 
     scores_columns = ['rank'] + common_columns + ['score']
-    if 'calib score' in lb.columns:
-        scores_columns += ['calib score']
-    scores_columns += ['contributivity', "train time", "test time"]
+    scores_columns += ['contributivity', 'train time', 'test time']
     lb_html = lb.to_html(
         columns=scores_columns, classes=sortable_table_classes, **html_params)
     new_html = new_models.to_html(

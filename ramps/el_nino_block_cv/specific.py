@@ -9,10 +9,10 @@ import pandas as pd
 from importlib import import_module
 # menu
 # menu polymorphism example
-from .regression_prediction import Predictions
-import scores
-from .config import config, submissions_path
-from .config import raw_data_path, public_data_path, private_data_path
+from databoard.regression_prediction import Predictions
+import databoard.scores as scores
+from databoard.config import config, submissions_path
+from databoard.config import raw_data_path, public_data_path, private_data_path
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
@@ -110,7 +110,7 @@ def check_model(module_path, X_xray, y_array, cv_is):
         raise AssertionError(message)
 
 
-def train_model(module_path, X_xray, y_array, cv_is):
+def train_submission(module_path, X_xray, y_array, cv_is):
     X_xray = X_xray.copy(deep=True)
     # Feature extraction
     feature_extractor = import_module('.ts_feature_extractor', module_path)
@@ -126,7 +126,7 @@ def train_model(module_path, X_xray, y_array, cv_is):
     return ts_fe, reg
 
 
-def test_model(trained_model, X_xray, cv_is):
+def test_submission(trained_model, X_xray, cv_is):
     X_xray = X_xray.copy(deep=True)
     ts_fe, reg = trained_model
     # Feature extraction

@@ -84,7 +84,7 @@ notification_recipients.append("alexandre.gramfort@gmail.com")
 # train_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(server_port)
 # server_name = debug_server if local_deployment else train_server
 
-vd_server = 'onevm-85.lal.in2p3.fr'
+vd_server = 'onevm-132.lal.in2p3.fr'
 reims_server = 'romeo1.univ-reims.fr'
 vd_root = '/mnt/datacamp'
 local_root = '/tmp/databoard_local'  # for local publishing / testing
@@ -120,7 +120,7 @@ class RampConfig(object):
 
     def get_destination_path(self, root):
         destination_path = os.path.join(
-            getattr(self, root), "databoard_" + self.ramp_name + "_" + self.server_port)
+            root, "databoard_" + self.ramp_name + "_" + self.server_port)
         return destination_path
 
     @property
@@ -136,11 +136,13 @@ class RampConfig(object):
         if mode == 'web':
             user, server, root = 'web_user', 'web_server', 'web_root'
         elif mode == 'train':
-            user, server, root = 'train_user', 'train_server', 'train_root'
+            user = self.train_user
+            server = self.train_server
+            root = self.train_root
         else:
             raise ValueError('mode ???')
         if self.train_server != 'localhost':
-            deployment_target += user + '@' + getattr(self, server) + ':'
+            deployment_target += user + '@' + server + ':'
         deployment_target += self.get_destination_path(root)
         print deployment_target
         return deployment_target
@@ -162,19 +164,17 @@ local_kwargs = dict(train_server='localhost',
                     web_root=local_root,
                     server_port='8080',
                     cv_test_size=0.2,
-                    random_state=57)
+                    random_state=57,
+)
 
-remote_kwargs = dict(
+vd_kwargs = dict(
     train_server=vd_server,
     train_user='root',
     train_root=vd_root,
-    num_cpus=10,
     web_server=vd_server,
     web_user='root',
     web_root=vd_root,
-    server_port='2171',
-    cv_test_size=0.2,
-    random_state=57)
+)
 
 reims_kwargs = dict(
     train_server=reims_server,
@@ -186,7 +186,8 @@ reims_kwargs = dict(
     web_root=vd_root,
     server_port='2170',
     cv_test_size=0.2,
-    random_state=57)
+    random_state=57,
+)
 
 ramps_configs['iris_local'] = RampConfig(
     ramp_name='iris', **local_kwargs)
@@ -206,6 +207,15 @@ ramps_configs['pollenating_insects_local'] = RampConfig(
     ramp_name='pollenating_insects', **local_kwargs)
 ramps_configs['variable_stars_local'] = RampConfig(
     ramp_name='variable_stars', **local_kwargs)
+
+ramps_configs['iris_remote'] = RampConfig(
+    ramp_name='iris', 
+    num_cpus=32,
+    server_port='2171',
+    cv_test_size=0.2,
+    random_state=57,
+    **vd_kwargs
+)
 
 with open("ramp_index.txt") as f:
     ramp_index = f.readline()

@@ -8,12 +8,12 @@ import pandas as pd
 from importlib import import_module
 from sklearn.cross_validation import StratifiedShuffleSplit, train_test_split
 # menu
-import scores
+import databoard.scores as scores
 # menu polymorphism example
-import multiclass_prediction
-from .multiclass_prediction import Predictions
-from .config import config, submissions_path
-from .config import raw_data_path, public_data_path, private_data_path
+import databoard.multiclass_prediction as multiclass_prediction
+from databoard.multiclass_prediction import Predictions
+from databoard.config import config, submissions_path
+from databoard.config import raw_data_path, public_data_path, private_data_path
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
@@ -106,7 +106,7 @@ def get_cv(y_train_array):
     return cv
 
 
-def train_model(module_path, X_dict, y_array, cv_is):
+def train_submission(module_path, X_dict, y_array, cv_is):
     # Preparing the training set
     train_is, _ = cv_is
     X_train_dict = [X_dict[i] for i in train_is]
@@ -151,7 +151,7 @@ def train_model(module_path, X_dict, y_array, cv_is):
         return fe, clf
 
 
-def test_model(trained_model, X_dict, cv_is):
+def test_submission(trained_model, X_dict, cv_is):
     # Preparing the test (or valid) set
     _, test_is = cv_is
     X_test_dict = [X_dict[i] for i in test_is]

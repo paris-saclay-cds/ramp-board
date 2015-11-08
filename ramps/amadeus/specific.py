@@ -8,11 +8,11 @@ import pandas as pd
 from importlib import import_module
 from sklearn.cross_validation import ShuffleSplit, train_test_split
 # menu
-import scores
+import databoard.scores as scores
 # menu polymorphism example
-from .regression_prediction import Predictions
-from .config import config, submissions_path
-from .config import raw_data_path, public_data_path, private_data_path
+from databoard.regression_prediction import Predictions
+from databoard.config import config, submissions_path
+from databoard.config import raw_data_path, public_data_path, private_data_path
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
@@ -71,7 +71,7 @@ def get_cv(y_train_array):
     return cv
 
 
-def train_model(module_path, X_df, y_array, cv_is):
+def train_submission(module_path, X_df, y_array, cv_is):
     # Feature extraction
     feature_extractor = import_module('.feature_extractor', module_path)
     fe = feature_extractor.FeatureExtractor()
@@ -87,7 +87,7 @@ def train_model(module_path, X_df, y_array, cv_is):
     return fe, reg
 
 
-def test_model(trained_model, X_df, cv_is):
+def test_submission(trained_model, X_df, cv_is):
     fe, reg = trained_model
     # Feature extraction
     X_array = fe.transform(X_df)

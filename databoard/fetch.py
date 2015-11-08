@@ -13,10 +13,10 @@ from flask_mail import Mail
 from flask_mail import Message
 
 from . import app
-from .model import shelve_database, columns
+from databoard.model import shelve_database, columns
 import specific
-from .config import notification_recipients, config, submissions_path, repos_path
-from .config import deposited_submissions_path, get_session
+from databoard.config import notification_recipients, config, submissions_path, repos_path
+from databoard.config import deposited_submissions_path, get_session
 # import config_databoard
 
 logger = logging.getLogger('databoard')

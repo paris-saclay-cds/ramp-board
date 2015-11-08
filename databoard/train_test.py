@@ -8,9 +8,9 @@ import timeit
 from sklearn.externals.joblib import Parallel, delayed
 
 # import config_databoard
-from .config import config, is_parallelize, is_parallelize_across_machines
-from .config import timeout_parallelize_across_machines
-from .config import is_pickle_trained_model
+from databoard.config import config, is_parallelize, is_parallelize_across_machines
+from databoard.config import timeout_parallelize_across_machines
+from databoard.config import is_pickle_trained_model
 import generic
 import specific
 import machine_parallelism
@@ -76,8 +76,8 @@ def pickle_trained_model(f_name, trained_model):
 
 
 def train_on_fold(X_train, y_train, cv_is, full_model_path):
-    """Trains the model on a single fold. Wrapper around specific.train_model().
-    It requires specific to contain a train_model function that takes the
+    """Trains the model on a single fold. Wrapper around specific.train_submission().
+    It requires specific to contain a train_submission function that takes the
     module_path, X_train, y_train, and an cv_is containing the train_train and
     valid_train indices. Most of the time it will simply train on
     X_train[valid_train] but in the case of time series it may do feature
@@ -92,7 +92,7 @@ def train_on_fold(X_train, y_train, cv_is, full_model_path):
 
     Returns
     -------
-    trained_model : the trained model, to be fed to specific.test_model
+    trained_model : the trained model, to be fed to specific.test_submission
     train_time : the wall clock time of the train
      """
     valid_train_is, _ = cv_is
@@ -105,7 +105,7 @@ def train_on_fold(X_train, y_train, cv_is, full_model_path):
     module_path = generic.get_module_path(full_model_path)
 
     start = timeit.default_timer()
-    trained_model = specific.train_model(module_path, X_train, y_train, cv_is)
+    trained_model = specific.train_submission(module_path, X_train, y_train, cv_is)
     end = timeit.default_timer()
     train_time = end - start
 
@@ -125,7 +125,7 @@ def train_measure_and_pickle_on_fold(X_train, y_train, cv_is, full_model_path):
 
     Returns
     -------
-    trained_model : the trained model, to be fed to specific.test_model
+    trained_model : the trained model, to be fed to specific.test_submission
      """
     valid_train_is, _ = cv_is
     cv_hash = generic.get_cv_hash(valid_train_is)
@@ -142,28 +142,28 @@ def train_measure_and_pickle_on_fold(X_train, y_train, cv_is, full_model_path):
 
 def test_trained_model(trained_model, X, cv_is=None):
     """Tests and times a trained model on a fold. If cv_is is None, tests
-    on the whole (holdout) set. Wrapper around specific.test_model()
+    on the whole (holdout) set. Wrapper around specific.test_submission()
 
     Parameters
     ----------
-    trained_model : a trained model, returned by specific.train_model()
+    trained_model : a trained model, returned by specific.train_submission()
     X : input data
     cv_is : a pair of indices (train_train_is, valid_train_is)
 
     Returns
     -------
-    test_model_output : the output of the tested model, returned by
-        specific.test_model
+    test_submission_output : the output of the tested model, returned by
+        specific.test_submission
     test_time : the wall clock time of the test
     """
     if cv_is is None:
         _, y_test = specific.get_test_data()
         cv_is = ([], range(len(y_test)))  # test on all points
     start = timeit.default_timer()
-    test_model_output = specific.test_model(trained_model, X, cv_is)
+    test_submission_output = specific.test_submission(trained_model, X, cv_is)
     end = timeit.default_timer()
     test_time = end - start
-    return test_model_output, test_time
+    return test_submission_output, test_time
 
 
 def test_trained_model_on_test(trained_model, X_test, cv_hash,
@@ -173,16 +173,16 @@ def test_trained_model_on_test(trained_model, X_test, cv_hash,
 
     Parameters
     ----------
-    trained_model : a trained model, returned by specific.train_model()
+    trained_model : a trained model, returned by specific.train_submission()
     X_test : input (holdout test) data
     cv_hash : the fold identifier
     full_model_path : of the form <root_path>/models/<team>/<model_hash>
     """
     generic.logger.info("Testing on fold : %s" % cv_hash)
     # We ignore test time, it is measured when validating
-    test_model_output, _ = test_trained_model(trained_model, X_test)
+    test_submission_output, _ = test_trained_model(trained_model, X_test)
     test_f_name = generic.get_test_f_name(full_model_path, cv_hash)
-    test_model_output.save(test_f_name)
+    test_submission_output.save(test_f_name)
 
 
 def test_trained_model_and_measure_on_valid(trained_model, X_train,
@@ -193,7 +193,7 @@ def test_trained_model_and_measure_on_valid(trained_model, X_train,
 
     Parameters
     ----------
-    trained_model : a trained model, returned by specific.train_model()
+    trained_model : a trained model, returned by specific.train_submission()
     X_train : input (training) data
     cv_is : a pair of indices (train_train_is, valid_train_is)
     full_model_path : of the form <root_path>/models/<team>/<model_hash>
@@ -364,12 +364,12 @@ def train_and_valid_models(orig_models_df):
                train_and_valid_on_fold)
 
 
-def train_valid_and_test_models(orig_models_df):
+def train_valid_and_test_submissions(orig_models_df):
     run_models(orig_models_df, "train/test", "tested", "training/testing", "error",
                train_valid_and_test_on_fold)
 
 
-def test_models(orig_models_df):
+def test_submissions(orig_models_df):
     run_models(orig_models_df, "test", "tested", "testing", "test_error",
                test_on_fold)
 

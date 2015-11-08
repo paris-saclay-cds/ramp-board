@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from sklearn.externals.joblib import Memory
 
 # import config_databoard
-from .config import cachedir, submissions_path
+from databoard.config import cachedir, submissions_path
 import specific
 
 mem = Memory(cachedir=cachedir, verbose=0)

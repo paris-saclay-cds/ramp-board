@@ -254,7 +254,7 @@ def train(state=False, tag=None, team=None):
 
 
 def test(state=False, tag=None, team=None):
-    from databoard.train_test import test_models
+    from databoard.train_test import test_submissions
     from databoard.model import shelve_database
 
     with shelve_database() as db:
@@ -280,7 +280,7 @@ def test(state=False, tag=None, team=None):
     if state != 'all':
         models = models[models.state == state]
 
-    test_models(models)
+    test_submissions(models)
 
     idx = models.index
 
@@ -289,7 +289,7 @@ def test(state=False, tag=None, team=None):
 
 
 def train_test(state=False, tag=None, team=None):
-    from databoard.train_test import train_valid_and_test_models
+    from databoard.train_test import train_valid_and_test_submissions
     from databoard.model import shelve_database
 
     with shelve_database() as db:
@@ -315,7 +315,7 @@ def train_test(state=False, tag=None, team=None):
     if state != 'all':
         models = models[models.state == state]
 
-    train_valid_and_test_models(models)
+    train_valid_and_test_submissions(models)
 
     idx = models.index
 
