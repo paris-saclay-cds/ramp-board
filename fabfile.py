@@ -1,8 +1,17 @@
-# for pickling theano
+from databoard.config import set_engine_and_session, get_session, get_engine
+set_engine_and_session('sqlite:///:memory:', echo=False)
+session = get_session()
+engine = get_engine()
+
+from databoard.db.model import DBBase
+
+DBBase.metadata.create_all(engine)
+
 import sys
 if '' not in sys.path:  # Balazs bug
     sys.path.insert(0, '')
 
+# for pickling theano
 #sys.setrecursionlimit(50000)
 
 import os
@@ -409,7 +418,6 @@ def serve(port=None):
 software = [
     'fabfile.py',
     'ramp_index.txt',
-    # 'databoard/config_databoard.py',
     'databoard/config.py',
     'databoard/__init__.py',
     'databoard/fetch.py',

@@ -125,11 +125,11 @@ class RampConfig(object):
 
     @property
     def train_destination_path(self):
-        return self.get_destination_path('train_root')
+        return self.get_destination_path(self.train_root)
 
     @property
     def web_destination_path(self):
-        return self.get_destination_path('web_root')
+        return self.get_destination_path(self.web_root)
 
     def get_deployment_target(self, mode='web'):
         deployment_target = ''
@@ -181,13 +181,9 @@ reims_kwargs = dict(
     train_server=reims_server,
     train_user='mcherti',
     train_root='/home/mcherti/ramp_pollenating_insects',
-    num_cpus=10,
     web_server=vd_server,
     web_user='root',
     web_root=vd_root,
-    server_port='2170',
-    cv_test_size=0.2,
-    random_state=57,
 )
 
 ramps_configs['iris_local'] = RampConfig(

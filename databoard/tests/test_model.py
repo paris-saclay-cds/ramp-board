@@ -1,9 +1,12 @@
-from databoard.config import set_engine_and_session, get_session
+from databoard.config import set_engine_and_session, get_session, get_engine
 set_engine_and_session('sqlite:///:memory:', echo=False)
 session = get_session()
+engine = get_engine()
 
 import databoard.db.model as model
-from databoard.db.model import Team, Submission
+from databoard.db.model import Team, Submission, DBBase
+
+DBBase.metadata.create_all(engine)
 
 
 def test_password_hashing():

@@ -159,9 +159,6 @@ class Submission(DBBase):
         return repr
 
 
-DBBase.metadata.create_all(engine)
-
-
 def get_hashed_password(plain_text_password):
     """Hash a password for the first time
     (Using bcrypt, the salt is saved into the hash itself)"""
@@ -323,6 +320,7 @@ def get_public_leaderboard():
     join = session.query(Submission, Team, *table_columns).filter(
         Team.team_id == Submission.team_id)
     submissions = join.filter(Submission.is_public_leaderboard).all()
+    # We transpose, get rid of Submission and Team, then retranspose
     df = pd.DataFrame(zip(*zip(*submissions)[2:]), columns=table_header)
 
     html_params = dict(
