@@ -15,11 +15,12 @@ from flask_mail import Message
 from . import app
 from databoard.model import shelve_database, columns
 import specific
-from databoard.config import notification_recipients, config, submissions_path, repos_path
-from databoard.config import deposited_submissions_path, get_session
-# import config_databoard
+from databoard.config import notification_recipients, submissions_path, repos_path
+from databoard.config import deposited_submissions_path
+import databoard.config as config
 
 logger = logging.getLogger('databoard')
+session = config.get_session()
 
 
 def get_model_hash(team_name, submission_name, **kwargs):
@@ -44,13 +45,13 @@ def send_mail_notif(submissions):
         body_message = '<b>Dataset</b>: {}<br/>'.format(
             specific.hackaton_title)
         body_message += '<b>Server</b>: {}<br/>'.format(
-            config.deploy_server)
+            config.config.deploy_server)
         body_message += '<b>Port</b>: {}<br/>'.format(
-            config.server_port)
+            config.config.server_port)
         body_message += '<b>Path</b>: {}<br/>'.format(
-            config.get_destination_path())  # XXX buggy
+            config.config.get_destination_path())  # XXX buggy
         body_message += '<b>Num_CPUs</b>: {}<br/>'.format(
-            config.num_cpus)
+            config.config.num_cpus)
 
         body_message += 'New submissions: <br/><ul>'
         for team, tag in submissions:
@@ -233,15 +234,12 @@ def fetch_models():
         logger.debug('No new submission.')
 
 
-from .db.model import get_hashed_password, check_password,\
-    create_user, merge_teams, NameClashError, MergeTeamError,\
-    DuplicateSubmissionError,\
-    User, Team, Submission, make_submission,\
-    print_users, print_active_teams, print_submissions
+from databoard.db.model_base import NameClashError
+import databoard.db.users as users
+import databoard.db.submissions as submissions
 
 
 def add_models():
-    session = get_session()
     deposited_submission_paths = sorted(
         glob.glob(os.path.join(deposited_submissions_path, '*/*')))
 
@@ -253,14 +251,15 @@ def add_models():
             deposited_submission_path)
         _, team_name = os.path.split(deposited_team_path)
         try:
-            create_user(name=team_name, password='bla', lastname='team_name',
-                        firstname='team_name', email='team_name@team_name.com')
+            users.create_user(
+                name=team_name, password='bla', lastname='team_name',
+                firstname='team_name', email='team_name@team_name.com')
         except NameClashError:  # test user already in db, no problem
             pass
         deposited_files = os.listdir(deposited_submission_path)
         # we will have a separate table for this
         submission_file_list = '|'.join(deposited_files)
-        submission = make_submission(
+        submission = submissions.make_submission(
             team_name, submission_name, submission_file_list)
         team_path, submission_path = submission.get_submission_path()
 

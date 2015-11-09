@@ -30,6 +30,7 @@ app.secret_key = os.urandom(24)
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 logger = logging.getLogger('databoard')
+session = config.get_session()
 
 
 def model_with_link(path_model):
