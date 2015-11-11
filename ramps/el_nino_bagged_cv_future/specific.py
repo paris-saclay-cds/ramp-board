@@ -12,17 +12,17 @@ from sklearn.cross_validation import ShuffleSplit
 # menu polymorphism example
 from databoard.regression_prediction import Predictions
 import databoard.scores as scores
-from databoard.config import config, submissions_path
+from databoard.config import config_object, submissions_path
 from databoard.config import public_data_path, private_data_path
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 hackaton_title = 'El Nino prediction'
 target_column_name = 'target'
-cv_test_size = config.cv_test_size
-cv_bag_size = config.cv_bag_size
-random_state = config.random_state
-n_CV = config.num_cpus
+cv_test_size = config_object.cv_test_size
+cv_bag_size = config_object.cv_bag_size
+random_state = config_object.random_state
+n_CV = config_object.num_cpus
 
 en_lat_bottom = -5
 en_lat_top = 5

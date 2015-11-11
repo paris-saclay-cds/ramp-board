@@ -1,33 +1,12 @@
 import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-engine = None
-session = None
-
-
-# this shuold be called before model is imported
-def set_engine_and_session(_engine, echo=False):
-    global engine
-    global session
-    engine = create_engine(_engine, echo=echo)
-    Session = sessionmaker(bind=engine)
-    session = Session()
-
-
-def get_engine():
-    return engine
-
-
-def get_session():
-    return session
 
 root_path = '.'
 
 tag_len_limit = 40
 
 # paths
-db_path = os.path.join(root_path, 'db')
+db_path = os.path.join(os.getcwd(), 'db')
+db_f_name = os.path.join(db_path, 'test.db')
 repos_path = os.path.join(root_path, 'git_submissions')
 ground_truth_path = os.path.join(root_path, 'ground_truth')
 submissions_path = os.path.join(root_path, 'submissions')
@@ -148,7 +127,7 @@ class RampConfig(object):
         return deployment_target
 
     def is_same_web_and_train_servers(self):
-        return ((self.web_server == config.train_server)
+        return ((self.web_server == self.train_server)
                 and (self.web_user == self.train_user)
                 and (self.web_root == self.train_root))
 
@@ -226,4 +205,4 @@ ramps_configs['mortality_prediction_remote'] = RampConfig(
 with open("ramp_index.txt") as f:
     ramp_index = f.readline()
 
-config = ramps_configs[ramp_index]
+config_object = ramps_configs[ramp_index]

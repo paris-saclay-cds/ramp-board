@@ -1,12 +1,3 @@
-from databoard.config import set_engine_and_session, get_session, get_engine
-set_engine_and_session('sqlite:///:memory:', echo=False)
-session = get_session()
-engine = get_engine()
-
-from databoard.db.model import DBBase
-
-DBBase.metadata.create_all(engine)
-
 import sys
 if '' not in sys.path:  # Balazs bug
     sys.path.insert(0, '')
@@ -41,10 +32,6 @@ from distutils.util import strtobool
 
 # production = env.hosts[0]
 logger = logging.getLogger('databoard')
-
-
-def create_test_db():
-    import databoard.db.create_test_db
 
 
 def clear_cache():
@@ -107,6 +94,9 @@ def prepare_data():
 
 
 def setup():
+    from databoard.db.remove_test_db import recreate_test_db
+
+    recreate_test_db()
     prepare_data()
     clear_db()
     clear_registrants()
@@ -367,14 +357,14 @@ def kill(team, tag):
     import glob
     import signal
     from databoard.fetch import get_tag_uid
-    from databoard.config import config
+    from databoard.config import config_object
 
     answer = 'y'
     while answer != 'y':
         answer = raw_input('Sure? (y/n): ')
 
     pid_filenames = os.path.join(
-        config.submissions_path, team, get_tag_uid(team, tag), 'pid_*')
+        config_object.submissions_path, team, get_tag_uid(team, tag), 'pid_*')
     print pid_filenames
     for f in glob.glob(pid_filenames):
         with open(f) as pid_file:
@@ -382,14 +372,17 @@ def kill(team, tag):
             os.kill(int(pid), signal.SIGKILL)
 
 
-def serve(port=None):
+def serve(port=None, test='False'):
+    test = strtobool(test)
     from databoard import app
-    from databoard.config import config
+    from databoard.config import config_object
     # loads url/function bindings through @app.route decorators
     import databoard.views  # noqa
 
+    if test:
+        pass
     if port is None:
-        server_port = int(config.server_port)
+        server_port = int(config_object.server_port)
     else:
         server_port = int(port)
     app.run(
@@ -433,7 +426,10 @@ software = [
     'databoard/views.py',
     'databoard/static',
     'databoard/templates',
-    'databoard/db',
+    'databoard/db/__init__.py',
+    'databoard/db/model.py',
+    'databoard/db/remove_test_db.py',
+    'databoard/db/tools.py',
 ]
 
 
@@ -450,12 +446,12 @@ def publish(ramp_index, test='False'):
     _save_ramp_index(ramp_index)
 
     # don't import before saving the ramp_index.txt file
-    from databoard.config import config
-    ramp_name = config.ramp_name
+    from databoard.config import config_object
+    ramp_name = config_object.ramp_name
     # TODO: check if ramp_name is the same as in
     #      'ramps/' + ramp_name + '/specific.py'
 
-    local = config.train_server == 'localhost'
+    local = config_object.train_server == 'localhost'
     command = "rsync -pthrRvz -c "
     if not local:
         command += "--rsh=\'ssh -i " + os.path.expanduser("~")
@@ -463,10 +459,10 @@ def publish(ramp_index, test='False'):
     for file in software:
         command += file + " "
 
-    if not config.is_same_web_and_train_servers():
-        command += config.get_deployment_target('web')
+    if not config_object.is_same_web_and_train_servers():
+        command += config_object.get_deployment_target('web')
     else:
-        command += config.get_deployment_target('train')
+        command += config_object.get_deployment_target('train')
     print command
     os.system(command)
 
@@ -476,11 +472,11 @@ def publish(ramp_index, test='False'):
         command += "--rsh=\'ssh -i " + os.path.expanduser("~")
         command += "/.ssh/datacamp/id_rsa -p 22\' "
     command += " ramps/" + ramp_name + "/specific.py "
-    if not config.is_same_web_and_train_servers():
-        command += config.get_deployment_target('web')
+    if not config_object.is_same_web_and_train_servers():
+        command += config_object.get_deployment_target('web')
         command += "/databoard/"
     else:
-        command += config.get_deployment_target('train')
+        command += config_object.get_deployment_target('train')
         command += "/databoard/"
     print command
     os.system(command)
@@ -491,10 +487,10 @@ def publish(ramp_index, test='False'):
             command += "--rsh=\'ssh -i " + os.path.expanduser("~")
             command += "/.ssh/datacamp/id_rsa -p 22\' "
         command += " ramps/" + ramp_name + "/deposited_submissions "
-        if not config.is_same_web_and_train_servers():
-            command += config.get_deployment_target('web')
+        if not config_object.is_same_web_and_train_servers():
+            command += config_object.get_deployment_target('web')
         else:
-            command += config.get_deployment_target('train')
+            command += config_object.get_deployment_target('train')
         print command
         os.system(command)
 
@@ -502,18 +498,18 @@ def publish(ramp_index, test='False'):
 # (re)publish data set from 'ramps/' + ramp_name + '/data'
 # fab prepare_data should be run at the destination
 def publish_data(ramp_index):
-    from databoard.config import config
-    local = config.train_server == 'localhost'
-    ramp_name = config.ramp_name
+    from databoard.config import config_object
+    local = config_object.train_server == 'localhost'
+    ramp_name = config_object.ramp_name
     command = "rsync --delete -pthrvz -c "
     if not local:
         command += "--rsh=\'ssh -i " + os.path.expanduser("~")
         command += "/.ssh/datacamp/id_rsa -p 22\' "
     command += 'ramps/' + ramp_name + '/data '
-    if not config.is_same_web_and_train_servers():
-        command += config.get_deployment_target('web') + "/"
+    if not config_object.is_same_web_and_train_servers():
+        command += config_object.get_deployment_target('web') + "/"
     else:
-        command += config.get_deployment_target('train') + "/"
+        command += config_object.get_deployment_target('train') + "/"
     print command
     os.system(command)
 
@@ -530,15 +526,15 @@ def _clear_destination_path_aux(destination_path, destination_root):
 def clear_destination_path(ramp_index):
     _save_ramp_index(ramp_index)  # todo before importing databoard
 
-    from databoard.config import config
-    if not config.is_same_web_and_train_servers():
+    from databoard.config import config_object
+    if not config_object.is_same_web_and_train_servers():
         # destination_path eg
         # '/tmp/databoard_local/databoard_mortality_prediction_8080'
-        destination_path = config.web_destination_path
-        destination_root = config.web_root
+        destination_path = config_object.web_destination_path
+        destination_root = config_object.web_root
         _clear_destination_path_aux(destination_path, destination_root)
-    destination_path = config.train_destination_path
-    destination_root = config.train_root
+    destination_path = config_object.train_destination_path
+    destination_root = config_object.train_root
     _clear_destination_path_aux(destination_path, destination_root)
 
 
@@ -555,7 +551,6 @@ def publish_test(ramp_index):
 
 
 def test_ramp():
-    create_test_db()
     setup()
     add_models()
     train_test()

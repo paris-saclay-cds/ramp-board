@@ -23,14 +23,14 @@ from databoard import app
 # from databoard.model import columns, ModelState
 from databoard.model import shelve_database
 from databoard.generic import changedir
-from databoard.specific import hackaton_title
+from specific import hackaton_title
 from databoard.config import repos_path, tag_len_limit, submissions_path
+import databoard.config as config
 
 app.secret_key = os.urandom(24)
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 logger = logging.getLogger('databoard')
-session = config.get_session()
 
 
 def model_with_link(path_model):
@@ -97,18 +97,18 @@ def show_leaderboard():
     error_columns = common_columns + ['error']
 
     with shelve_database() as db:
-        submissions = db['models']
-        submissions['commit'] = map(
-            timestamp_to_time, submissions['timestamp'])
+        submissions_ = db['models']
+        submissions_['commit'] = map(
+            timestamp_to_time, submissions_['timestamp'])
         # 'inner' means intersection of the indices
 
-        lb = submissions.join(db['leaderboard1'], how='inner').\
+        lb = submissions_.join(db['leaderboard1'], how='inner').\
             join(db['leaderboard2'], how='inner').\
             join(db['leaderboard_execution_times'], how='inner')
-        failed = submissions[submissions.state == "error"]
-        new_models = submissions[submissions.state == "new"]
+        failed = submissions_[submissions_.state == "error"]
+        new_models = submissions_[submissions_.state == "new"]
 
-    if len(submissions) == 0:  # or len(l1) == 0 or len(l2) == 0:
+    if len(submissions_) == 0:  # or len(l1) == 0 or len(l2) == 0:
         # flash('No models submitted yet.')
         return redirect(url_for('list_teams_repos'))
 
@@ -152,6 +152,8 @@ def show_leaderboard():
 
     # if new_models.shape[0] == 0:
     #     new_html = None
+    import databoard.db.tools as db_tools
+    lb_html = db_tools.get_public_leaderboard()
 
     if '_' in request.path:
         return jsonify(leaderboard=lb_html,

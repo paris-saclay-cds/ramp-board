@@ -11,7 +11,7 @@ from sklearn.cross_validation import ShuffleSplit, train_test_split
 import databoard.scores as scores
 # menu polymorphism example
 from databoard.regression_prediction import Predictions
-from databoard.config import config, submissions_path
+from databoard.config import config_object, submissions_path
 from databoard.config import raw_data_path, public_data_path, private_data_path
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
@@ -24,10 +24,10 @@ hackaton_title = 'Number of passengers prediction'
 target_column_name = 'log_PAX'
 drop_column_names = ['PAX']
 
-cv_test_size = config.cv_test_size
+cv_test_size = config_object.cv_test_size
 held_out_test_size = 0.2
-random_state = config.random_state
-n_CV = config.num_cpus
+random_state = config_object.random_state
+n_CV = config_object.num_cpus
 
 raw_filename = os.path.join(raw_data_path, 'data_amadeus.csv')
 train_filename = os.path.join(public_data_path, 'train.csv')

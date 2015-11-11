@@ -20,7 +20,6 @@ from databoard.config import deposited_submissions_path
 import databoard.config as config
 
 logger = logging.getLogger('databoard')
-session = config.get_session()
 
 
 def get_model_hash(team_name, submission_name, **kwargs):
@@ -234,9 +233,8 @@ def fetch_models():
         logger.debug('No new submission.')
 
 
-from databoard.db.model_base import NameClashError
-import databoard.db.users as users
-import databoard.db.submissions as submissions
+from databoard.db.model import NameClashError, db
+import databoard.db.tools as db_tools
 
 
 def add_models():
@@ -251,7 +249,7 @@ def add_models():
             deposited_submission_path)
         _, team_name = os.path.split(deposited_team_path)
         try:
-            users.create_user(
+            db_tools.create_user(
                 name=team_name, password='bla', lastname='team_name',
                 firstname='team_name', email='team_name@team_name.com')
         except NameClashError:  # test user already in db, no problem
@@ -259,7 +257,7 @@ def add_models():
         deposited_files = os.listdir(deposited_submission_path)
         # we will have a separate table for this
         submission_file_list = '|'.join(deposited_files)
-        submission = submissions.make_submission(
+        submission = db_tools.make_submission(
             team_name, submission_name, submission_file_list)
         team_path, submission_path = submission.get_submission_path()
 
@@ -272,7 +270,8 @@ def add_models():
         os.mkdir(submission_path)
         open(os.path.join(submission_path, '__init__.py'), 'a').close()
 
-        # copy the submission files into the model directory
+        # copy the submission files into the model directory, should all this
+        # probably go to Submission
         for submission_file in deposited_files:
             src = os.path.join(deposited_submission_path, submission_file)
             dst = os.path.join(submission_path, submission_file)

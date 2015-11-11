@@ -7,13 +7,13 @@ import pandas as pd
 from sklearn.externals.joblib import Parallel, delayed
 
 # import config_databoard
+from databoard.config import config_object
 import databoard.config as config
 import databoard.generic as generic
-import databoard.specific as specific
+import specific
 
 
-n_processes = config.config.num_cpus
-session = config.get_session()
+n_processes = config_object.num_cpus
 
 
 def _get_predictions_list(models_df, train_is, subdir, index_list=None):

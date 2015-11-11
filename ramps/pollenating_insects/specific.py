@@ -11,7 +11,7 @@ import databoard.scores as scores
 # menu polymorphism example
 import databoard.multiclass_prediction as multiclass_prediction
 from databoard.multiclass_prediction import Predictions
-from databoard.config import config, submissions_path
+from databoard.config import config_object, submissions_path
 from databoard.config import raw_data_path, public_data_path, private_data_path
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
@@ -21,9 +21,9 @@ multiclass_prediction.labels = [565, 654, 682, 687, 696, 715, 759, 833, 835,
                                 881, 952, 970, 971, 978, 995, 996, 1061, 1071]
 # held_out_test_size = 0.7
 
-cv_test_size = config.cv_test_size
-random_state = config.random_state
-n_CV = config.num_cpus
+cv_test_size = config_object.cv_test_size
+random_state = config_object.random_state
+n_CV = config_object.num_cpus
 
 raw_filename = os.path.join(raw_data_path, 'data_64x64.npz')
 train_filename = os.path.join(public_data_path, 'train_64x64.npz')
