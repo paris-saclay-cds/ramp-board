@@ -24,8 +24,9 @@ from databoard import app
 from databoard.model import shelve_database
 from databoard.generic import changedir
 from specific import hackaton_title
-from databoard.config import repos_path, tag_len_limit, submissions_path
+from databoard.config import repos_path, submissions_path
 import databoard.config as config
+import databoard.db.tools as db_tools
 
 app.secret_key = os.urandom(24)
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
@@ -79,9 +80,14 @@ def list_teams_repos():
     return render_template('list.html', submodules=repo_list, ramp_title=hackaton_title)
 
 
-@app.route("/_leaderboard")
 @app.route("/leaderboard")
-def show_leaderboard():
+def show_leaderboard_old():
+    leaderbord_html = db_tools.get_public_leaderboard()
+    return render_template(
+        'leaderboard.html', leaderboard=leaderbord_html, 
+        ramp_title=hackaton_title)
+
+def show_leaderboard_old():
     html_params = dict(escape=False,
                        index=False,
                        max_cols=None,
@@ -153,6 +159,12 @@ def show_leaderboard():
     # if new_models.shape[0] == 0:
     #     new_html = None
     import databoard.db.tools as db_tools
+    db_tools.print_users()
+    db_tools.print_active_teams()
+    db_tools.print_submissions()
+    submissions = db_tools.get_submissions()
+    for submission in submissions:
+        submission.trained_state = 'scored'
     lb_html = db_tools.get_public_leaderboard()
 
     if '_' in request.path:
@@ -259,54 +271,71 @@ def show_private_leaderboard():
                                ramp_title=hackaton_title)
 
 
-@app.route('/models/<team>/<tag>/<filename>')
-@app.route('/models/<team>/<tag>/<filename>/raw')
-def view_model(team, tag, filename):
-    directory = os.path.join(submissions_path, team, tag)
-    directory = os.path.abspath(directory)
-    archive_filename = 'archive.zip'
-    archive_url = '/models/{}/{}/{}/raw'.format(
-        team, tag, os.path.basename(archive_filename))
+@app.route('/submissions/<team_name>/<summission_hash>/<f_name>')
+@app.route('/submissions/<team_name>/<summission_hash>/<f_name>/raw')
+def view_model(team_name, summission_hash, f_name):
+    """Rendering submission codes using templates/submission.html. The code of 
+    f_name is displayed in the left panel, the list of submissions files
+    is in the right panel. Clicking on a file will show that file (using
+    the same template). Clicking on the name on the top will download the file
+    itself (managed in the template). Clicking on "Archive" will zip all 
+    the submission files and download them (managed here).
 
-    if filename == 'error':
-        filename += '.txt'
-    if filename == archive_filename:
-        with shelve_database() as db:
-            listing = db['models'].loc[tag, 'listing'].split('|')
-        with changedir(directory):
-            with ZipFile(archive_filename, 'w') as archive:
-                for f in listing:
-                    archive.write(f)
+
+    Parameters
+    ----------
+    team_name : string
+        The team.name of the submission.
+    summission_hash : string
+        The hash_ of the submission.
+    f_name : string
+        The name of the submission file
+
+    Returns
+    -------
+    leaderboard : html string
+        The rendered submission.html page.
+    """
+    from databoard.db.model import db, Team, Submission
+
+    team = db.session.query(Team).filter_by(name=team_name).one()
+    submission = db.session.query(Submission).filter_by(
+        team=team, hash_=summission_hash).one()
+    submission_abspath = os.path.abspath(submission.relative_path)
+    archive_filename = 'archive.zip'
 
     if request.path.split('/')[-1] == 'raw':
-        return send_from_directory(directory,
-                                   filename,
-                                   as_attachment=True,
-                                   attachment_filename='{}_{}_{}'.format(
-                                       team, tag[:6], filename),
-                                   mimetype='application/octet-stream')
+        with changedir(submission_abspath):
+            with ZipFile(archive_filename, 'w') as archive:
+                for submission_file in submission.submission_files:
+                    archive.write(submission_file.name)
 
-    model_url = request.path.rstrip('/') + '/raw'
-    model_file = os.path.join(directory, filename)
-    if not os.path.exists(model_file):
+        return send_from_directory(
+            submission_abspath, f_name, as_attachment=True,
+            attachment_filename='{}_{}_{}'.format(
+                team_name, summission_hash[:6], f_name),
+            mimetype='application/octet-stream')
+
+    archive_url = '/submissions/{}/{}/{}/raw'.format(
+        team_name, summission_hash, os.path.basename(archive_filename))
+
+    submission_url = request.path.rstrip('/') + '/raw'
+    submission_f_name = os.path.join(submission_abspath, f_name)
+    if not os.path.exists(submission_f_name):
         return redirect(url_for('show_leaderboard'))
 
-    with open(model_file) as f:
+    with open(submission_f_name) as f:
         code = f.read()
-    with shelve_database() as db:
-        models = db['models']
-        listing = models.loc[tag, 'listing'].split('|')
-        model_name = models.loc[tag, 'model']
 
     return render_template(
-        'model.html',
+        'submission.html',
         code=code,
-        model_url=model_url,
-        listing=listing,
+        submission_url=submission_url,
+        submission_f_names=submission.submission_f_names,
         archive_url=archive_url,
-        filename=filename,
-        model_name=model_name,
-        team_name=team,
+        f_name=f_name,
+        submission_name=submission.name,
+        team_name=team.name,
         ramp_title=hackaton_title)
 
 

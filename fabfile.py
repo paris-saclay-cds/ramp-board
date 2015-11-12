@@ -141,6 +141,18 @@ def repeat_fetch(delay='60'):
 
 def leaderboard(which='all', test='False'):
     test = strtobool(test)
+
+    import databoard.db.tools as db_tools
+    from databoard.db.model import db, Submission
+    #submissions = db.session.query(Submission).filter(
+    #    Submission.state == 'trained').all()
+    submissions = db.session.query(Submission).all()
+    db_tools.set_train_times(submissions)
+    if test:
+        submissions = db.session.query(Submission).filter(
+            Submission.state == 'tested').all()
+        db_tools.set_test_times(submissions)
+
     from databoard.model import shelve_database
     from databoard.leaderboard import (
         leaderboard_classical,

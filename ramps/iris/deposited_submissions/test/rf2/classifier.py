@@ -8,7 +8,7 @@ class Classifier(BaseEstimator):
 
     def fit(self, X, y):
         self.clf = RandomForestClassifier(
-            n_estimators=10, max_leaf_nodes=5, random_state=61)
+            n_estimators=1000, max_leaf_nodes=5, random_state=61)
         self.clf.fit(X, y)
 
 

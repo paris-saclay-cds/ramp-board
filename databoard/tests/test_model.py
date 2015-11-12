@@ -93,32 +93,34 @@ def test_merge_teams():
 
 
 def test_make_submission():
-    db_tools.make_submission('kemfort', 'rf', 'classifier.py')
-    db_tools.make_submission('mchezakci', 'rf', 'classifier.py')
-    db_tools.make_submission('kemfort', 'rf2', 'classifier.py')
+    db_tools.make_submission('kemfort', 'rf', ['classifier.py'])
+    db_tools.make_submission('mchezakci', 'rf', ['classifier.py'])
+    db_tools.make_submission('kemfort', 'rf2', ['classifier.py'])
 
     # resubmitting 'new' is OK
-    db_tools.make_submission('kemfort', 'rf', 'classifier.py')
+    db_tools.make_submission('kemfort', 'rf', ['classifier.py'])
 
     team = db.session.query(Team).filter_by(name='kemfort').one()
     submission = db.session.query(Submission).filter_by(
         team=team, name='rf').one()
 
-    submission.trained_state = 'error'
+    submission.state = 'train_error'
     db.session.commit()
     # resubmitting 'error' is OK
-    db_tools.make_submission('kemfort', 'rf', 'classifier.py')
+    db_tools.make_submission(
+        'kemfort', 'rf', ['classifier.py', 'feature_extractor.py'])
 
-    submission.tested_state = 'error'
+    submission.state = 'test_error'
     db.session.commit()
     # resubmitting 'error' is OK
-    db_tools.make_submission('kemfort', 'rf', 'classifier.py')
+    db_tools.make_submission(
+        'kemfort', 'rf', ['calibrator.py', 'classifier.py'])
 
     submission.trained_state = 'trained'
     db.session.commit()
     # resubmitting 'trained' is not OK
     try:
-        db_tools.make_submission('kemfort', 'rf', 'classifier.py')
+        db_tools.make_submission('kemfort', 'rf', ['classifier.py'])
     except db_tools.DuplicateSubmissionError as e:
         assert e.value == 'Submission "rf" of team "kemfort" exists already'
 
@@ -133,6 +135,6 @@ def test_leaderboard():
     team = db.session.query(Team).filter_by(name='kemfort').one()
     submissions = db.session.query(Submission).filter_by(team=team).all()
     for submission in submissions:
-        submission.trained_state = 'scored'
+        submission.state = 'train_scored'
     print db_tools.get_public_leaderboard()
 

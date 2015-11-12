@@ -568,6 +568,7 @@ def leaderboard_combination(orig_models_df, test=False):
     return leaderboard.sort(columns=['contributivity'], ascending=False)
 
 
+# old, to be deleted once db is migrated
 def leaderboard_execution_times(models_df):
     """Computes train and test times (in second) for models in models_df. If
     train_test haven't saved them in the right files, it puts the times to
@@ -577,6 +578,69 @@ def leaderboard_execution_times(models_df):
     Parameters
     ----------
     models_df : DataFrame
+        The models to score.
+
+    Returns
+    -------
+    leaderboard : DataFrame
+        A DataFrame with a two columns called 'train time' and 'test_time',
+        indexed by models_df.
+    """
+    cv_hash_list = generic.get_cv_hash_list()
+    n_folds = len(cv_hash_list)
+    leaderboard = pd.DataFrame(index=models_df.index)
+    n_models = models_df.shape[0]
+    leaderboard['train time'] = np.zeros(n_models)
+    # we name it "test" (not "valid") bacause this is what it is from the
+    # participant's point of view (ie, "public test")
+    leaderboard['test time'] = np.zeros(n_models)
+
+    if n_models > 0:
+        for cv_hash in cv_hash_list:
+            for model_hash, model_df in models_df.iterrows():
+                full_model_path = generic.get_full_model_path(
+                    model_hash, model_df)
+                try:
+                    with open(generic.get_train_time_f_name(
+                            full_model_path, cv_hash), 'r') as f:
+                        leaderboard.loc[
+                            model_hash, 'train time'] += abs(float(f.read()))
+                except IOError:
+                    generic.logger.debug(
+                        "Can't open {}, setting training time to 0".format(
+                            generic.get_train_time_f_name(
+                                full_model_path, cv_hash)))
+                try:
+                    with open(generic.get_valid_time_f_name(
+                            full_model_path, cv_hash), 'r') as f:
+                        leaderboard.loc[
+                            model_hash, 'test time'] += abs(float(f.read()))
+                except IOError:
+                    generic.logger.debug(
+                        "Can't open {}, setting testing time to 0".format(
+                            generic.get_valid_time_f_name(
+                                full_model_path, cv_hash)))
+
+    leaderboard['train time'] = map(
+        int, leaderboard['train time'] / n_folds)
+    leaderboard['test time'] = map(
+        int, leaderboard['test time'] / n_folds)
+    generic.logger.info("Classical leaderboard train times = {}".
+                        format(leaderboard['train time'].values))
+    generic.logger.info("Classical leaderboard valid times = {}".
+                        format(leaderboard['test time'].values))
+    return leaderboard
+
+
+def set_eaderboard_execution_times(submissions):
+    """Computes train and test times (in second) for models in models_df. If
+    train_test haven't saved them in the right files, it puts the times to
+    zero. It returns the times in a data frame, indexed by models_df.index (so
+    it can be joined to models_df).
+
+    Parameters
+    ----------
+    submissions : list of Submission
         The models to score.
 
     Returns

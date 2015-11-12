@@ -254,12 +254,10 @@ def add_models():
                 firstname='team_name', email='team_name@team_name.com')
         except NameClashError:  # test user already in db, no problem
             pass
-        deposited_files = os.listdir(deposited_submission_path)
-        # we will have a separate table for this
-        submission_file_list = '|'.join(deposited_files)
+        deposited_f_name_list = os.listdir(deposited_submission_path)
         submission = db_tools.make_submission(
-            team_name, submission_name, submission_file_list)
-        team_path, submission_path = submission.get_submission_path()
+            team_name, submission_name, deposited_f_name_list)
+        team_path, submission_path = submission.get_paths()
 
         if not os.path.exists(team_path):
             os.mkdir(team_path)
@@ -272,9 +270,9 @@ def add_models():
 
         # copy the submission files into the model directory, should all this
         # probably go to Submission
-        for submission_file in deposited_files:
-            src = os.path.join(deposited_submission_path, submission_file)
-            dst = os.path.join(submission_path, submission_file)
+        for submission_f_name in deposited_f_name_list:
+            src = os.path.join(deposited_submission_path, submission_f_name)
+            dst = os.path.join(submission_path, submission_f_name)
             shutil.copy2(src, dst)  # copying also metadata
 
         logger.info("Adding submission={}".format(submission))
@@ -284,9 +282,8 @@ def add_models():
         submission_times = [
             os.path.getmtime(os.path.join(
                 deposited_submission_path, submission_file))
-            for submission_file in deposited_files]
+            for submission_file in deposited_f_name_list]
         submission_time = max(submission_times)
-
 
         with shelve_database() as db:
             # skip if the model is trained, tested, or ignore, otherwise,
@@ -318,7 +315,7 @@ def add_models():
                 'model': submission_name,
                 'timestamp': submission_time,
                 'state': "new",
-                'listing': submission_file_list,
+                'listing': 'bla',
             }, index=[model_hash])
 
             db['models'] = db['models'].append(new_entry)
