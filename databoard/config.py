@@ -109,6 +109,10 @@ class RampConfig(object):
     def web_destination_path(self):
         return self.get_destination_path(self.web_root)
 
+    @property
+    def ramp_module_specific(self):
+        return 'databoard.ramps.' + self.ramp_name + '.specific'
+
     def get_deployment_target(self, mode='web'):
         deployment_target = ''
         if mode == 'web':

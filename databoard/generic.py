@@ -5,9 +5,10 @@ from contextlib import contextmanager
 
 from sklearn.externals.joblib import Memory
 
-# import config_databoard
+import databoard.config as config
 from databoard.config import cachedir, submissions_path
-import specific
+
+from importlib import import_module
 
 mem = Memory(cachedir=cachedir, verbose=0)
 logger = logging.getLogger('databoard')
@@ -33,6 +34,9 @@ def get_cv_hash(index_list):
 
 
 def get_cv_hash_list():
+    print config.config_object.ramp_module_specific
+    #specific = import_module(config.config_object.ramp_module_specific)'databoard.ramps.iris.specific'
+    specific = import_module('databoard.ramps.iris.specific')
     _, y_train = specific.get_train_data()
     cv = specific.get_cv(y_train)
     train_is_list, _ = zip(*cv)
@@ -112,6 +116,7 @@ def get_valid_time_f_name(full_model_path, cv_hash):
 
 @mem.cache
 def get_cv():
+    specific = import_module('.specific', config.config_object.ramp_module_specific)
     _, y_train = specific.get_train_data()
     return specific.get_cv(y_train)
 
@@ -130,24 +135,28 @@ def get_test_is_list():
 
 @mem.cache
 def get_true_predictions_train():
+    specific = import_module('.specific', config.config_object.ramp_module_specific)
     _, y_train = specific.get_train_data()
     return specific.Predictions(y_true=y_train)
 
 
 @mem.cache
 def get_true_predictions_test():
+    specific = import_module('.specific', config.config_object.ramp_module_specific)
     _, y_test = specific.get_test_data()
     return specific.Predictions(y_true=y_test)
 
 
 @mem.cache
 def get_true_predictions_valid(test_is):
+    specific = import_module('.specific', config.config_object.ramp_module_specific)
     _, y_train = specific.get_train_data()
     return specific.Predictions(y_true=y_train[test_is])
 
 
 @mem.cache
 def get_true_predictions_valid_list():
+    specific = import_module('.specific', config.config_object.ramp_module_specific)
     _, y_train = specific.get_train_data()
     test_is_list = get_test_is_list()
     true_predictions_valid_list = [specific.Predictions(

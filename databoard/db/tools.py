@@ -1,6 +1,5 @@
 import bcrypt
 import pandas as pd
-from collections import OrderedDict
 from databoard.db.model import db, User, Team, Submission, SubmissionFile
 from databoard.db.model import NameClashError, MergeTeamError,\
     DuplicateSubmissionError, max_members_per_team
@@ -308,7 +307,7 @@ def set_test_times(submissions):
     db.session.commit()
 
 
-def run_submissions(submissions, before_state, after, gerund, error_state, method):
+def run_submissions(before_state, after_state, error_state, doing, method):
     """The master method that runs different pipelines (train+valid,
     train+valid+test, test).
 
@@ -325,11 +324,9 @@ def run_submissions(submissions, before_state, after, gerund, error_state, metho
     method : the method to be run (train_and_valid_on_fold,
         train_valid_and_test_on_fold, test_on_fold)
     """
-    models_df = orig_models_df.sort("timestamp")
-
-    if models_df.shape[0] == 0:
-        generic.logger.info("No models to {}.".format(infinitive))
-        return
+    submissions = db.session.query(Submission).filter(
+        Submission.state == before_state).filter(
+        Submission.is_valid).all()
 
     generic.logger.info("Reading data")
     X_train, y_train = specific.get_train_data()
