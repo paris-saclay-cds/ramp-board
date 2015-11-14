@@ -16,11 +16,8 @@ from databoard.config import raw_data_path, public_data_path, private_data_path
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
-# should be the same as the directory in ramp, and fab publish should also be
-# called with the same name as parameter
-ramp_name = 'amadeus'
 # will be displayed on the web site
-hackaton_title = 'Number of passengers prediction'
+ramp_title = 'Number of passengers prediction'
 target_column_name = 'log_PAX'
 drop_column_names = ['PAX']
 

@@ -3,7 +3,7 @@ if '' not in sys.path:  # Balazs bug
     sys.path.insert(0, '')
 
 # for pickling theano
-#sys.setrecursionlimit(50000)
+# sys.setrecursionlimit(50000)
 
 import os
 import logging
@@ -86,11 +86,12 @@ def clear_pred_files():
 
 
 def prepare_data():
-    from databoard.specific import prepare_data
+    import databoard.config as config
+    specific = config.config_object.specific
 
     # Preparing the data set, typically public train/private held-out test cut
     logger.info('Preparing the dataset.')
-    prepare_data()
+    specific.prepare_data()
 
 
 def setup():
@@ -300,6 +301,12 @@ def test(state=False, tag=None, team=None):
 
 
 def train_test(state=False, tag=None, team=None):
+    from databoard.db.tools import train_valid_and_test_submissions
+
+    train_valid_and_test_submissions()
+
+
+def train_test_old(state=False, tag=None, team=None):
     from databoard.train_test import train_valid_and_test_submissions
     from databoard.model import shelve_database
 
@@ -423,25 +430,25 @@ def serve(port=None, test='False'):
 software = [
     'fabfile.py',
     'ramp_index.txt',
-    'databoard/config.py',
-    'databoard/__init__.py',
-    'databoard/fetch.py',
-    'databoard/generic.py',
-    'databoard/leaderboard.py',
-    'databoard/machine_parallelism.py',
-    'databoard/model.py',  # db model, TODO should be renamed
-    'databoard/base_prediction.py',
-    'databoard/multiclass_prediction.py',
-    'databoard/regression_prediction.py',
-    'databoard/scores.py',
-    'databoard/train_test.py',
-    'databoard/views.py',
+    #'databoard/config.py',
+    #'databoard/__init__.py',
+    #'databoard/fetch.py',
+    #'databoard/generic.py',
+    #'databoard/leaderboard.py',
+    #'databoard/machine_parallelism.py',
+    #'databoard/model.py',  # db model, TODO should be renamed
+    #'databoard/base_prediction.py',
+    #'databoard/multiclass_prediction.py',
+    #'databoard/regression_prediction.py',
+    #'databoard/scores.py',
+    #'databoard/train_test.py',
+    #'databoard/views.py',
     'databoard/static',
     'databoard/templates',
-    'databoard/db/__init__.py',
-    'databoard/db/model.py',
-    'databoard/db/remove_test_db.py',
-    'databoard/db/tools.py',
+    #'databoard/db/__init__.py',
+    #'databoard/db/model.py',
+    #'databoard/db/remove_test_db.py',
+    #'databoard/db/tools.py',
 ]
 
 
@@ -478,6 +485,20 @@ def publish(ramp_index, test='False'):
     print command
     os.system(command)
 
+    if test:
+        command = "rsync -pthrvz -c "
+        if not local:
+            command += "--rsh=\'ssh -i " + os.path.expanduser("~")
+            command += "/.ssh/datacamp/id_rsa -p 22\' "
+        command += " ramps/" + ramp_name + "/deposited_submissions "
+        if not config_object.is_same_web_and_train_servers():
+            command += config_object.get_deployment_target('web')
+        else:
+            command += config_object.get_deployment_target('train')
+        print command
+        os.system(command)
+
+"""
     # rsyncing specific
     command = "rsync -pthrvz -c "
     if not local:
@@ -492,19 +513,8 @@ def publish(ramp_index, test='False'):
         command += "/databoard/"
     print command
     os.system(command)
+"""
 
-    if test:
-        command = "rsync -pthrvz -c "
-        if not local:
-            command += "--rsh=\'ssh -i " + os.path.expanduser("~")
-            command += "/.ssh/datacamp/id_rsa -p 22\' "
-        command += " ramps/" + ramp_name + "/deposited_submissions "
-        if not config_object.is_same_web_and_train_servers():
-            command += config_object.get_deployment_target('web')
-        else:
-            command += config_object.get_deployment_target('train')
-        print command
-        os.system(command)
 
 
 # (re)publish data set from 'ramps/' + ramp_name + '/data'

@@ -14,7 +14,6 @@ from flask_mail import Message
 
 from . import app
 from databoard.model import shelve_database, columns
-import specific
 from databoard.config import notification_recipients, submissions_path, repos_path
 from databoard.config import deposited_submissions_path
 import databoard.config as config
@@ -31,6 +30,8 @@ def get_model_hash(team_name, submission_name, **kwargs):
 
 
 def send_mail_notif(submissions):
+    specific = config.config_object.specific
+
     with app.app_context():
         mail = Mail(app)
 
@@ -126,7 +127,7 @@ def fetch_models():
             logger.error(
                 'Unable to pull from repo. Possibly no connexion: \n{}'.format(e))
 
-        repo_path = os.path.join(config_databoard.submissions_path, team_name)
+        repo_path = os.path.join(config.submissions_path, team_name)
         if not os.path.exists(repo_path):
             os.mkdir(repo_path)
         open(os.path.join(repo_path, '__init__.py'), 'a').close()
@@ -233,7 +234,7 @@ def fetch_models():
         logger.debug('No new submission.')
 
 
-from databoard.db.model import NameClashError, db
+from databoard.db.model import NameClashError
 import databoard.db.tools as db_tools
 
 

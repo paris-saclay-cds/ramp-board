@@ -15,7 +15,7 @@ from databoard.config import public_data_path, private_data_path
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
-hackaton_title = 'Boston housing regression (test)'
+ramp_title = 'Boston housing regression (test)'
 target_column_name = 'medv'
 
 cv_test_size = config_object.cv_test_size

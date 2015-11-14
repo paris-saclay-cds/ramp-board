@@ -16,7 +16,7 @@ from databoard.config import raw_data_path, public_data_path, private_data_path
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
-hackaton_title = 'El Nino prediction'
+ramp_title = 'El Nino prediction'
 target_column_name = 'target'
 cv_test_size = config_object.cv_test_size
 cv_bag_size = config_object.cv_bag_size

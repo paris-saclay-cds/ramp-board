@@ -1,13 +1,16 @@
 import bcrypt
 import pandas as pd
+from sklearn.externals.joblib import Parallel, delayed
+
 from databoard.db.model import db, User, Team, Submission, SubmissionFile
 from databoard.db.model import NameClashError, MergeTeamError,\
     DuplicateSubmissionError, max_members_per_team
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
+import databoard.config as config
 import databoard.generic as generic
-
+import databoard.train_test as train_test
 
 def date_time_format(date_time):
     return date_time.strftime('%a %Y-%m-%d %H:%M:%S')
@@ -307,7 +310,8 @@ def set_test_times(submissions):
     db.session.commit()
 
 
-def run_submissions(before_state, after_state, error_state, doing, method):
+def run_submissions(before_state, after_state, error_state, doing, method,
+                    force_run=False):
     """The master method that runs different pipelines (train+valid,
     train+valid+test, test).
 
@@ -324,40 +328,45 @@ def run_submissions(before_state, after_state, error_state, doing, method):
     method : the method to be run (train_and_valid_on_fold,
         train_valid_and_test_on_fold, test_on_fold)
     """
-    submissions = db.session.query(Submission).filter(
-        Submission.state == before_state).filter(
-        Submission.is_valid).all()
+    specific = config.config_object.specific
 
-    generic.logger.info("Reading data")
+    if force_run:
+        submissions = db.session.query(Submission).filter(
+            Submission.state != 'ignore').filter(
+            Submission.is_valid).all()
+    else:
+        submissions = db.session.query(Submission).filter(
+            Submission.state == before_state).filter(
+            Submission.is_valid).all()
+
+    generic.logger.info('Reading data')
     X_train, y_train = specific.get_train_data()
     cv = specific.get_cv(y_train)
 
-    for idx, model_df in models_df.iterrows():
-        if model_df['state'] in ["ignore"]:
-            continue
-
-        full_model_path = generic.get_full_model_path(idx, model_df)
-
-        generic.logger.info("{} : {}/{}".format(
-            str.capitalize(gerund), model_df['team'], model_df['model']))
-
+    for submission in submissions:
+        generic.logger.info('{} : {}/{}'.format(
+            str.capitalize(doing), submission.team.name, submission.name))
         try:
-            run_on_folds(
-                method, full_model_path, cv, team=model_df["team"], tag=model_df["model"])
-            # failed_models.drop(idx, axis=0, inplace=True)
-            orig_models_df.loc[idx, 'state'] = past_participle
+            train_test.run_on_folds(
+                method, submission.relative_path, cv,
+                team_name=submission.team.name,
+                submission_name=submission.name)
+            submission.state = after_state
         except Exception, e:
-            orig_models_df.loc[idx, 'state'] = error_state
-            if hasattr(e, "traceback"):
+            # TODO: better error handling, concrete methods should 
+            # set correct states, here we dont know whether train or test
+            submission.state = error_state
+            if hasattr(e, 'traceback'):
                 msg = str(e.traceback)
             else:
                 msg = repr(e)
-            generic.logger.error("{} failed with exception: \n{}".format(
-                str.capitalize(gerund), msg))
+            generic.logger.error('{} failed with exception: \n{}'.format(
+                str.capitalize(doing), msg))
 
             # TODO: put the error in the database instead of a file
             # Keep the model folder clean.
-            with open(generic.get_f_name(full_model_path, '.', error_state, "txt"), 'w') as f:
+            with open(generic.get_f_name(submission.relative_path, '.',
+                                         error_state, 'txt'), 'w') as f:
                 error_msg = msg
                 cut_exception_text = error_msg.rfind('--->')
                 if cut_exception_text > 0:
@@ -365,24 +374,29 @@ def run_submissions(before_state, after_state, error_state, doing, method):
                 f.write("{}".format(error_msg))
 
 
-def train_and_valid_models(orig_models_df):
-    run_models(orig_models_df, "train", "trained", "training", "error",
-               train_and_valid_on_fold)
+def train_and_valid_submissions():
+    run_submissions(
+        'new', 'trained', 'training_error', 'training',
+        train_test.train_and_valid_on_fold)
 
 
-def train_valid_and_test_submissions(orig_models_df):
-    run_models(orig_models_df, "train/test", "tested", "training/testing", "error",
-               train_valid_and_test_on_fold)
+def train_valid_and_test_submissions():
+    run_submissions(
+        'new', 'tested', 'training_error', 'training/testing',
+        train_test.train_valid_and_test_on_fold)
 
 
-def test_submissions(orig_models_df):
-    run_models(orig_models_df, "test", "tested", "testing", "test_error",
-               test_on_fold)
+def test_submissions():
+    run_submissions(
+        'trained', 'tested', 'testing_error', 'testing',
+        train_test.test_on_fold)
 
 
-def check_models(orig_models_df):
-    run_models(orig_models_df, "check", "new", "checking", "error",
-               check_on_fold)
+# TODO: fix check models: everybody should implement it, default = nothing
+def check_submissions():
+    run_submissions(
+        'new', 'checked', 'checking_error', 'checking',
+        train_test.check_on_fold)
 
 
 def print_submissions():

@@ -125,8 +125,8 @@ class Submission(db.Model):
     test_time = db.Column(db.Integer, default=0)
     # evaluate right after train/test, so no need for 'scored' states
     state = db.Column(db.Enum('new', 'checked', 'trained', 'tested',
-        'train_scored', 'test_scored', 'check_error', 'train_error', 
-        'test_error', 'unit_test_error', 'ignore'),
+        'train_scored', 'test_scored', 'checking_error', 'training_error',
+        'testing_error', 'unit_testing_error', 'ignore'),
         default='new')
     is_valid = db.Column(
         db.Boolean, default=True)  # user can delete but we keep

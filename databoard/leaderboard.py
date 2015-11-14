@@ -10,7 +10,6 @@ from sklearn.externals.joblib import Parallel, delayed
 from databoard.config import config_object
 import databoard.config as config
 import databoard.generic as generic
-import specific
 
 
 n_processes = config_object.num_cpus
@@ -45,6 +44,8 @@ def _get_predictions_list(models_df, train_is, subdir, index_list=None):
         Each element of the list is an instance of Predictions of a given model
         on the same data points.
     """
+    specific = config.config_object.specific
+
     if index_list is not None:
         model_df = models_df.iloc[index_list]
 
@@ -101,6 +102,8 @@ def _combine_predictions_list(predictions_list, index_list=None):
     combined_predictions : instance of Predictions
         A predictions instance containing the combined (averaged) predictions.
     """
+    specific = config.config_object.specific
+
     if index_list is None:  # we combine the full list
         index_list = range(len(predictions_list))
 
@@ -141,6 +144,8 @@ def _get_bagging_score(predictions_list, fast=False):
     score : float
         The bagged score.
     """
+    specific = config.config_object.specific
+
     # When we have submission id in Predictions, we should get the team and
     # submission from the db
     true_predictions = generic.get_true_predictions_test()
@@ -185,6 +190,7 @@ def _get_cv_bagging_score(predictions_list, test_is_list):
     score : float
         The cv-bagged score.
     """
+    specific = config.config_object.specific
 
     true_predictions_train = generic.get_true_predictions_train()
     true_predictions_valid_list = generic.get_true_predictions_valid_list()
@@ -246,6 +252,8 @@ def _get_next_best_single_fold(predictions_list, true_predictions,
         Indices of the models in the new combination. If the same as input,
         no models wer found improving the score.
     """
+    specific = config.config_object.specific
+
     best_predictions = _combine_predictions_list(
         predictions_list, best_index_list)
     best_score = specific.score(true_predictions, best_predictions)
@@ -296,6 +304,8 @@ def _get_combined_predictions_single_fold(models_df, train_is, test_is,
     combined_predictions : instance of Predictions
         The predictions of the combined model.
     """
+    specific = config.config_object.specific
+
     if selected_index_list is None:
         selected_index_list = np.arange(len(models_df))
     true_predictions = generic.get_true_predictions_valid(test_is)
@@ -578,69 +588,6 @@ def leaderboard_execution_times(models_df):
     Parameters
     ----------
     models_df : DataFrame
-        The models to score.
-
-    Returns
-    -------
-    leaderboard : DataFrame
-        A DataFrame with a two columns called 'train time' and 'test_time',
-        indexed by models_df.
-    """
-    cv_hash_list = generic.get_cv_hash_list()
-    n_folds = len(cv_hash_list)
-    leaderboard = pd.DataFrame(index=models_df.index)
-    n_models = models_df.shape[0]
-    leaderboard['train time'] = np.zeros(n_models)
-    # we name it "test" (not "valid") bacause this is what it is from the
-    # participant's point of view (ie, "public test")
-    leaderboard['test time'] = np.zeros(n_models)
-
-    if n_models > 0:
-        for cv_hash in cv_hash_list:
-            for model_hash, model_df in models_df.iterrows():
-                full_model_path = generic.get_full_model_path(
-                    model_hash, model_df)
-                try:
-                    with open(generic.get_train_time_f_name(
-                            full_model_path, cv_hash), 'r') as f:
-                        leaderboard.loc[
-                            model_hash, 'train time'] += abs(float(f.read()))
-                except IOError:
-                    generic.logger.debug(
-                        "Can't open {}, setting training time to 0".format(
-                            generic.get_train_time_f_name(
-                                full_model_path, cv_hash)))
-                try:
-                    with open(generic.get_valid_time_f_name(
-                            full_model_path, cv_hash), 'r') as f:
-                        leaderboard.loc[
-                            model_hash, 'test time'] += abs(float(f.read()))
-                except IOError:
-                    generic.logger.debug(
-                        "Can't open {}, setting testing time to 0".format(
-                            generic.get_valid_time_f_name(
-                                full_model_path, cv_hash)))
-
-    leaderboard['train time'] = map(
-        int, leaderboard['train time'] / n_folds)
-    leaderboard['test time'] = map(
-        int, leaderboard['test time'] / n_folds)
-    generic.logger.info("Classical leaderboard train times = {}".
-                        format(leaderboard['train time'].values))
-    generic.logger.info("Classical leaderboard valid times = {}".
-                        format(leaderboard['test time'].values))
-    return leaderboard
-
-
-def set_eaderboard_execution_times(submissions):
-    """Computes train and test times (in second) for models in models_df. If
-    train_test haven't saved them in the right files, it puts the times to
-    zero. It returns the times in a data frame, indexed by models_df.index (so
-    it can be joined to models_df).
-
-    Parameters
-    ----------
-    submissions : list of Submission
         The models to score.
 
     Returns

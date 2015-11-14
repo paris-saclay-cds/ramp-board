@@ -23,8 +23,7 @@ from databoard import app
 # from databoard.model import columns, ModelState
 from databoard.model import shelve_database
 from databoard.generic import changedir
-from specific import hackaton_title
-from databoard.config import repos_path, submissions_path
+from databoard.config import repos_path
 import databoard.config as config
 import databoard.db.tools as db_tools
 
@@ -64,6 +63,8 @@ def timestamp_to_time(timestamp):
 @app.route("/")
 @app.route("/register")
 def list_teams_repos():
+    specific = config.config_object.specific
+
     RepoInfo = namedtuple('RepoInfo', 'name url')
     dir_list = filter(lambda x: not os.path.basename(x).startswith(
         '.'), os.listdir(repos_path))
@@ -77,17 +78,23 @@ def list_teams_repos():
         except Exception as e:
             logger.error(
                 'Error when listing the repository: {}\n{}'.format(f, e))
-    return render_template('list.html', submodules=repo_list, ramp_title=hackaton_title)
+    return render_template('list.html', submodules=repo_list, 
+                           ramp_title=specific.ramp_title)
 
 
 @app.route("/leaderboard")
-def show_leaderboard_old():
+def show_leaderboard():
+    specific = config.config_object.specific
+
     leaderbord_html = db_tools.get_public_leaderboard()
     return render_template(
-        'leaderboard.html', leaderboard=leaderbord_html, 
-        ramp_title=hackaton_title)
+        'leaderboard.html', leaderboard=leaderbord_html,
+        ramp_title=specific.ramp_title)
+
 
 def show_leaderboard_old():
+    specific = config.config_object.specific
+
     html_params = dict(escape=False,
                        index=False,
                        max_cols=None,
@@ -176,7 +183,7 @@ def show_leaderboard_old():
                                leaderboard=lb_html,
                                failed_models=failed_html,
                                new_models=new_html,
-                               ramp_title=hackaton_title)
+                               ramp_title=specific.ramp_title)
 
 # FIXME Djalel: I just copy-pasted this a la Robi. Could be factorized with
 # previous function I suppose
@@ -186,6 +193,8 @@ def show_leaderboard_old():
 @app.route("/_privateleaderboard")
 @app.route("/privateleaderboard")
 def show_private_leaderboard():
+    specific = config.config_object.specific
+
     html_params = dict(escape=False,
                        index=False,
                        max_cols=None,
@@ -268,17 +277,17 @@ def show_private_leaderboard():
                                leaderboard=lb_html,
                                failed_models=failed_html,
                                new_models=new_html,
-                               ramp_title=hackaton_title)
+                               ramp_title=specific.ramp_title)
 
 
 @app.route('/submissions/<team_name>/<summission_hash>/<f_name>')
 @app.route('/submissions/<team_name>/<summission_hash>/<f_name>/raw')
 def view_model(team_name, summission_hash, f_name):
-    """Rendering submission codes using templates/submission.html. The code of 
+    """Rendering submission codes using templates/submission.html. The code of
     f_name is displayed in the left panel, the list of submissions files
     is in the right panel. Clicking on a file will show that file (using
     the same template). Clicking on the name on the top will download the file
-    itself (managed in the template). Clicking on "Archive" will zip all 
+    itself (managed in the template). Clicking on "Archive" will zip all
     the submission files and download them (managed here).
 
 
@@ -297,6 +306,7 @@ def view_model(team_name, summission_hash, f_name):
         The rendered submission.html page.
     """
     from databoard.db.model import db, Team, Submission
+    specific = config.config_object.specific
 
     team = db.session.query(Team).filter_by(name=team_name).one()
     submission = db.session.query(Submission).filter_by(
@@ -336,7 +346,7 @@ def view_model(team_name, summission_hash, f_name):
         f_name=f_name,
         submission_name=submission.name,
         team_name=team.name,
-        ramp_title=hackaton_title)
+        ramp_title=specific.ramp_title)
 
 
 @app.route("/add/", methods=("POST",))

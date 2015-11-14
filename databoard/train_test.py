@@ -11,10 +11,58 @@ from sklearn.externals.joblib import Parallel, delayed
 from databoard.config import config_object
 import databoard.config as config
 import databoard.generic as generic
-import specific
-import machine_parallelism
+import databoard.machine_parallelism as machine_parallelism
 
 n_processes = config_object.num_cpus
+
+
+def run_on_folds_new(method, submission_path, cv, **kwargs):
+    """Runs various combinations of train, validate, and test on all folds.
+    If is_parallelize is True, it will launch the jobs in parallel on different
+    cores.
+
+    Parameters
+    ----------
+    method : the method to be run (train_valid_and_test_on_fold,
+        train_and_valid_on_fold, test_on_fold)
+    submission_path : of the form <root_path>/models/<team>/<model_hash>
+    cv : a list of pairs of training and validation indices, identifying the
+        folds
+    """
+
+    if 'team_name' in kwargs and 'submission_name' in kwargs:
+        title = '{0}_{1}'.format(
+            kwargs['team_name'], kwargs['submission_name'])
+    else:
+        title = submission_path.replace("/", "_")
+
+    n_processes = config.config_object.num_cpus
+
+    if config.is_parallelize:
+        # Should be re-tested
+        if config.is_parallelize_across_machines:
+            job_ids = set()
+            for i, cv_is in enumerate(cv):
+                job_id = machine_parallelism.put_job(
+                    method, (cv_is, submission_path),
+                    title=title + "_cv{0}".format(i))
+                job_ids.add(job_id)
+            try:
+                job_status = machine_parallelism.wait_for_jobs_and_get_status(
+                    job_ids,
+                    timeout=config.timeout_parallelize_across_machines,
+                    finish_if_exception=True)
+            except machine_parallelism.TimeoutError:
+                raise
+            for status in job_status.values():
+                if isinstance(status, Exception):
+                    raise status
+        else:
+            Parallel(n_jobs=n_processes, verbose=5)(
+                delayed(method)(cv_is, submission_path) for cv_is in cv)
+    else:
+        for cv_is in cv:
+            method(cv_is, submission_path)
 
 
 def run_on_folds(method, full_model_path, cv, **kwargs):
@@ -41,11 +89,13 @@ def run_on_folds(method, full_model_path, cv, **kwargs):
             job_ids = set()
             for i, cv_is in enumerate(cv):
                 job_id = machine_parallelism.put_job(
-                    method, (cv_is, full_model_path), title=title + "_cv{0}".format(i))
+                    method, (cv_is, full_model_path),
+                    title=title + "_cv{0}".format(i))
                 job_ids.add(job_id)
             try:
                 job_status = machine_parallelism.wait_for_jobs_and_get_status(
-                    job_ids, timeout=config.timeout_parallelize_across_machines,
+                    job_ids,
+                    timeout=config.timeout_parallelize_across_machines,
                     finish_if_exception=True)
             except machine_parallelism.TimeoutError:
                 raise
@@ -75,9 +125,10 @@ def pickle_trained_model(f_name, trained_model):
 
 
 def train_on_fold(X_train, y_train, cv_is, full_model_path):
-    """Trains the model on a single fold. Wrapper around specific.train_submission().
+    """Trains the model on a single fold. Wrapper around
+    specific.train_submission().
     It requires specific to contain a train_submission function that takes the
-    module_path, X_train, y_train, and an cv_is containing the train_train and
+    module_path, X_train, y_train, and a cv_is containing the train_train and
     valid_train indices. Most of the time it will simply train on
     X_train[valid_train] but in the case of time series it may do feature
     extraction on the full file (using always the past). Training time is
@@ -93,7 +144,9 @@ def train_on_fold(X_train, y_train, cv_is, full_model_path):
     -------
     trained_model : the trained model, to be fed to specific.test_submission
     train_time : the wall clock time of the train
-     """
+    """
+    specific = config.config_object.specific
+
     valid_train_is, _ = cv_is
     cv_hash = generic.get_cv_hash(valid_train_is)
 
@@ -104,7 +157,8 @@ def train_on_fold(X_train, y_train, cv_is, full_model_path):
     module_path = generic.get_module_path(full_model_path)
 
     start = timeit.default_timer()
-    trained_model = specific.train_submission(module_path, X_train, y_train, cv_is)
+    trained_model = specific.train_submission(
+        module_path, X_train, y_train, cv_is)
     end = timeit.default_timer()
     train_time = end - start
 
@@ -155,6 +209,7 @@ def test_trained_model(trained_model, X, cv_is=None):
         specific.test_submission
     test_time : the wall clock time of the test
     """
+    specific = config.config_object.specific
     if cv_is is None:
         _, y_test = specific.get_test_data()
         cv_is = ([], range(len(y_test)))  # test on all points
@@ -220,6 +275,7 @@ def test_on_fold(cv_is, full_model_path):
     cv_is : a pair of indices (train_train_is, valid_train_is)
     full_model_path : of the form <root_path>/models/<team>/<model_hash>
     """
+    specific = config.config_object.specific
 
     X_train, y_train = specific.get_train_data()
     X_test, _ = specific.get_test_data()
@@ -229,9 +285,9 @@ def test_on_fold(cv_is, full_model_path):
     try:
         generic.logger.info("Loading from pickle on fold : %s" % cv_hash)
         with open(generic.get_model_f_name(
-            full_model_path, cv_hash), 'r') as f:
+                full_model_path, cv_hash), 'r') as f:
             trained_model = pickle.load(f)
-    except IOError, e:  # no pickled model, retrain
+    except IOError:  # no pickled model, retrain
         generic.logger.info("No pickle, retraining on fold : %s" % cv_hash)
         trained_model = train_measure_and_pickle_on_fold(
             X_train, y_train, cv_is, full_model_path)
@@ -250,6 +306,8 @@ def train_valid_and_test_on_fold(cv_is, full_model_path):
     cv_is : a pair of indices (train_train_is, valid_train_is)
     full_model_path : of the form <root_path>/models/<team>/<model_hash>
     """
+    specific = config.config_object.specific
+
     X_train, y_train = specific.get_train_data()
     X_test, _ = specific.get_test_data()
     valid_train_is, valid_test_is = cv_is
@@ -275,6 +333,8 @@ def train_and_valid_on_fold(cv_is, full_model_path):
     cv_is : a pair of indices (train_train_is, valid_train_is)
     full_model_path : of the form <root_path>/models/<team>/<model_hash>
     """
+    specific = config.config_object.specific
+
     X_train, y_train = specific.get_train_data()
 
     trained_model = train_measure_and_pickle_on_fold(
@@ -292,6 +352,7 @@ def check_on_fold(cv_is, full_model_path):
     cv_is : a pair of indices (train_train_is, valid_train_is)
     full_model_path : of the form <root_path>/models/<team>/<model_hash>
     """
+    specific = config.config_object.specific
 
     X_check, y_check = specific.get_check_data()
     module_path = generic.get_module_path(full_model_path)
@@ -315,6 +376,8 @@ def run_models(orig_models_df, infinitive, past_participle, gerund, error_state,
     method : the method to be run (train_and_valid_on_fold,
         train_valid_and_test_on_fold, test_on_fold)
     """
+    specific = config.config_object.specific
+
     models_df = orig_models_df.sort("timestamp")
 
     if models_df.shape[0] == 0:

@@ -16,7 +16,7 @@ from databoard.config import raw_data_path, public_data_path, private_data_path
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
-hackaton_title = 'Mortality prediction'
+ramp_title = 'Mortality prediction'
 multiclass_prediction.labels = ['0.0', '1.0']
 target_column_name = 'TARGET'
 

@@ -104,17 +104,18 @@ def test_make_submission():
     submission = db.session.query(Submission).filter_by(
         team=team, name='rf').one()
 
-    submission.state = 'train_error'
+    submission.state = 'training_error'
     db.session.commit()
     # resubmitting 'error' is OK
     db_tools.make_submission(
         'kemfort', 'rf', ['classifier.py', 'feature_extractor.py'])
 
-    submission.state = 'test_error'
+    submission.state = 'testing_error'
     db.session.commit()
     # resubmitting 'error' is OK
     db_tools.make_submission(
         'kemfort', 'rf', ['calibrator.py', 'classifier.py'])
+    # at this point the submission has all three files
 
     submission.trained_state = 'trained'
     db.session.commit()
@@ -137,4 +138,3 @@ def test_leaderboard():
     for submission in submissions:
         submission.state = 'train_scored'
     print db_tools.get_public_leaderboard()
-

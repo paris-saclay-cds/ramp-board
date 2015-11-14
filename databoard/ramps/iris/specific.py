@@ -18,7 +18,7 @@ from databoard.config import private_data_path
 # sys.path.append(os.path.dirname(os.path.abspath(config_databoard.submissions_path)))
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
-hackaton_title = 'Iris classification (test)'
+ramp_title = 'Iris classification (test)'
 multiclass_prediction.labels = ['setosa', 'versicolor', 'virginica']
 target_column_name = 'species'
 

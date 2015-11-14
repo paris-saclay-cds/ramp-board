@@ -17,7 +17,7 @@ from databoard.config import raw_data_path, public_data_path, private_data_path
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
-hackaton_title = 'Variable star type prediction'
+ramp_title = 'Variable star type prediction'
 target_column_name = 'type'
 multiclass_prediction.labels = [1.0, 2.0, 3.0, 4.0]
 held_out_test_size = 0.7

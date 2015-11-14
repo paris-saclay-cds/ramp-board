@@ -15,4 +15,3 @@ class BasePrediction(object):
     @property
     def n_samples(self):
         return len(self.y_pred)
-

@@ -131,7 +131,7 @@ def be_client_forever(host=host, port=port, output_folder="."):
         job_params = available_jobs.get()
         _, job_id, _, _ = job_params
         # run it as a separate process
-        #status = (Parallel(n_jobs=1, backend='multiprocessing')( [ delayed(run_job)(job_params, output_folder) ] ))[0]
+        # status = (Parallel(n_jobs=1, backend='multiprocessing')( [ delayed(run_job)(job_params, output_folder) ] ))[0]
         status = run_job(job_params, output_folder)
         finished_jobs.put((job_id, status))
 

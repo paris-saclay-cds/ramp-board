@@ -17,7 +17,7 @@ from databoard.config import public_data_path, private_data_path
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
-hackaton_title = 'Kaggle Otto product classification'
+ramp_title = 'Kaggle Otto product classification'
 target_column_name = 'target'
 multiclass_prediction.labels = ['Class_1', 'Class_2', 'Class_3', 'Class_4',
                                 'Class_5', 'Class_6', 'Class_7', 'Class_8',

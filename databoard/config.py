@@ -1,4 +1,5 @@
 import os
+from importlib import import_module
 
 root_path = '.'
 
@@ -59,7 +60,8 @@ notification_recipients.append("alexandre.gramfort@gmail.com")
 # dest_path = '/mnt/datacamp/databoard_03_8080_test'
 
 # debug_server = 'http://' + "localhost:{}".format(server_port)
-# train_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(server_port)
+# train_server = 'http://' + socket.gethostname() + ".lal.in2p3.fr:{}".format(
+#    server_port)
 # server_name = debug_server if local_deployment else train_server
 
 vd_server = 'onevm-132.lal.in2p3.fr'
@@ -70,12 +72,14 @@ local_root = '/tmp/databoard_local'  # for local publishing / testing
 
 class RampConfig(object):
     def __init__(self,
-                 ramp_name,  # for naming the library where the data and specific.py is
+                 ramp_name,
+                 # for naming the library where the data and specific.py is
                  train_server,  # the server for training
                  train_user,  # the username on the train_server
                  train_root,  # the root dir of databoard on the train_server
                  num_cpus,  # number of cpus on the train_server
-                 web_server,  # the server for the web site (and possibly leaderboard)
+                 web_server,
+                 # the server for the web site (and possibly leaderboard)
                  web_user,  # the username on the web_server
                  web_root,  # the root dir of databoard on the web_server
                  server_port,  # the server port on the web_server
@@ -110,8 +114,9 @@ class RampConfig(object):
         return self.get_destination_path(self.web_root)
 
     @property
-    def ramp_module_specific(self):
-        return 'databoard.ramps.' + self.ramp_name + '.specific'
+    def specific(self):
+        return import_module(
+            '.specific', 'databoard.ramps.' + self.ramp_name)
 
     def get_deployment_target(self, mode='web'):
         deployment_target = ''
