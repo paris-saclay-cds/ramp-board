@@ -1,11 +1,15 @@
 import os
-import string
+import zlib
 import hashlib
 import datetime
+import numpy as np
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.types import TypeDecorator, LargeBinary
 import databoard.config as config
+import databoard.generic as generic
+import databoard.train_test as train_test
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + config.db_f_name
@@ -16,6 +20,16 @@ max_members_per_team = 3  # except for users own team
 opening_timestamp = None
 public_opening_timestamp = None  # before teams can see only their own scores
 closing_timestamp = None
+
+
+class NumpyType(TypeDecorator):
+    impl = LargeBinary
+
+    def process_bind_param(self, value, dialect):
+        return zlib.compress(value.dumps())
+
+    def process_result_value(self, value, dialect):
+        return np.loads(zlib.decompress(value))
 
 
 class User(db.Model):
@@ -178,6 +192,50 @@ class Submission(db.Model):
                 self.team.name, self.name, self.submission_files,
                 self.state, self.train_time)
         return repr
+
+    def run_method_on_folds(self, after_state, error_state, doing, method, cv):
+        generic.logger.info('{} : {}/{}'.format(
+            str.capitalize(doing), self.team.name, self.name))
+        try:
+            train_test.run_method_on_folds(self, method, cv)
+            self.state = after_state
+        except Exception, e:
+            # TODO: better error handling, concrete methods should 
+            # set correct states, here we dont know whether train or test
+            self.state = error_state
+            if hasattr(e, 'traceback'):
+                msg = str(e.traceback)
+            else:
+                msg = repr(e)
+            generic.logger.error('{} failed with exception: \n{}'.format(
+                str.capitalize(doing), msg))
+
+            # TODO: put the error in the database instead of a file
+            # Keep the model folder clean.
+            with open(generic.get_f_name(self.relative_path, '.',
+                                         error_state, 'txt'), 'w') as f:
+                error_msg = msg
+                cut_exception_text = error_msg.rfind('--->')
+                if cut_exception_text > 0:
+                    error_msg = error_msg[cut_exception_text:]
+                f.write("{}".format(error_msg))
+
+
+class CVFold(db.Model):
+    __tablename__ = 'cv_folds'
+
+    id_ = db.Column(db.Integer, primary_key=True)
+    train_is = db.Column(NumpyType, nullable=False)
+    test_is = db.Column(NumpyType, nullable=False)
+
+    def __repr__(self):
+        repr = 'CVFold(train_is={}, test_is={}'.format(
+            self.train_is, self.test_is)
+        return repr
+
+
+# Training set table
+# TrainedSubmission table, connecting a training set, submission, and a CVFold
 
 
 class NameClashError(Exception):

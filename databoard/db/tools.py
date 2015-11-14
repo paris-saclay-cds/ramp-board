@@ -1,8 +1,8 @@
 import bcrypt
 import pandas as pd
-from sklearn.externals.joblib import Parallel, delayed
 
-from databoard.db.model import db, User, Team, Submission, SubmissionFile
+from databoard.db.model import db, User, Team, Submission, SubmissionFile,\
+    CVFold
 from databoard.db.model import NameClashError, MergeTeamError,\
     DuplicateSubmissionError, max_members_per_team
 from sqlalchemy.exc import IntegrityError
@@ -11,6 +11,7 @@ from sqlalchemy.orm.exc import NoResultFound
 import databoard.config as config
 import databoard.generic as generic
 import databoard.train_test as train_test
+
 
 def date_time_format(date_time):
     return date_time.strftime('%a %Y-%m-%d %H:%M:%S')
@@ -278,8 +279,8 @@ def set_train_times(submissions):
                     submission_path, cv_hash), 'r') as f:
                 train_time += abs(float(f.read()))
         train_time = int(round(train_time / n_folds))
-        #submission.train_time = train_time
-        #submission.train_state = 'scored'
+        # submission.train_time = train_time
+        # submission.train_state = 'scored'
         setattr(submission, 'train_time', train_time)
         submission.state = 'train_scored'
     db.session.commit()
@@ -344,34 +345,8 @@ def run_submissions(before_state, after_state, error_state, doing, method,
     cv = specific.get_cv(y_train)
 
     for submission in submissions:
-        generic.logger.info('{} : {}/{}'.format(
-            str.capitalize(doing), submission.team.name, submission.name))
-        try:
-            train_test.run_on_folds(
-                method, submission.relative_path, cv,
-                team_name=submission.team.name,
-                submission_name=submission.name)
-            submission.state = after_state
-        except Exception, e:
-            # TODO: better error handling, concrete methods should 
-            # set correct states, here we dont know whether train or test
-            submission.state = error_state
-            if hasattr(e, 'traceback'):
-                msg = str(e.traceback)
-            else:
-                msg = repr(e)
-            generic.logger.error('{} failed with exception: \n{}'.format(
-                str.capitalize(doing), msg))
-
-            # TODO: put the error in the database instead of a file
-            # Keep the model folder clean.
-            with open(generic.get_f_name(submission.relative_path, '.',
-                                         error_state, 'txt'), 'w') as f:
-                error_msg = msg
-                cut_exception_text = error_msg.rfind('--->')
-                if cut_exception_text > 0:
-                    error_msg = error_msg[cut_exception_text:]
-                f.write("{}".format(error_msg))
+        submission.run_method_on_folds(
+            after_state, error_state, doing, method, cv)
 
 
 def train_and_valid_submissions():
@@ -404,3 +379,13 @@ def print_submissions():
     for submission in db.session.query(Submission).order_by(
             Submission.id_):
         print submission
+
+
+######################### CVFold ###########################
+
+
+def add_cv(cv):
+    for train_is, test_is in cv:
+        cv_fold = CVFold(train_is=train_is, test_is=test_is)
+        db.session.add(cv_fold)
+    db.session.commit()

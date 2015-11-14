@@ -1,5 +1,6 @@
+from numpy.testing import assert_array_equal
 from databoard.db.model import db, NameClashError, MergeTeamError
-from databoard.db.model import Team, Submission
+from databoard.db.model import Team, Submission, CVFold
 import databoard.db.tools as db_tools
 
 
@@ -77,7 +78,7 @@ def test_merge_teams():
     db.session.commit()
     try:
         db_tools.merge_teams(
-            name='akazarti', initiator_name='akazakci', 
+            name='akazarti', initiator_name='akazakci',
             acceptor_name='mcherti')
     except MergeTeamError as e:
         assert e.value == \
@@ -138,3 +139,16 @@ def test_leaderboard():
     for submission in submissions:
         submission.state = 'train_scored'
     print db_tools.get_public_leaderboard()
+
+
+def test_cv_folds():
+    from sklearn.cross_validation import ShuffleSplit
+    cv = ShuffleSplit(30, n_iter=10, test_size=0.5, random_state=57)
+    db_tools.add_cv(cv)
+    cv_folds = db.session.query(CVFold)
+    for cv_fold_1, cv_fold_2 in zip(cv, cv_folds):
+        train_is, test_is = cv_fold_1
+        # print cv_fold_1
+        # print cv_fold_2
+        assert_array_equal(train_is, cv_fold_2.train_is)
+        assert_array_equal(test_is, cv_fold_2.test_is)
