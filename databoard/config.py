@@ -18,13 +18,13 @@ private_data_path = os.path.join(data_path, 'private')
 
 cachedir = '.'
 
-is_parallelize = True  # make it False if parallel training is not working
+is_parallelize = False  # make it False if parallel training is not working
 # make it True to use parallelism across machines
 is_parallelize_across_machines = False
 # maximum number of seconds per model training for parallelize across machines
 timeout_parallelize_across_machines = 10800
 # often doesn't work and takes a lot of disk space
-is_pickle_trained_model = False
+is_pickle_trained_submission = False
 
 notification_recipients = []
 notification_recipients.append("balazs.kegl@gmail.com")

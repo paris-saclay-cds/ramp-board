@@ -14,7 +14,7 @@ logger = logging.getLogger('databoard')
 # TODO: wrap get_train_data here so we can mem_cache it
 
 def get_cv_hash(index_list):
-    """We identify files output on cross validation (models, predictions)
+    """We identify files output on cross validation (submissions, predictions)
     by hashing the point indices coming from an cv object.
 
     Parameters
@@ -40,41 +40,41 @@ def get_cv_hash_list():
             for train_is in train_is_list]
 
 
-def get_module_path(full_model_path):
-    """Computing importable module path (/s replaced by .s) from the full model
+def get_module_path(submission_path):
+    """Computing importable module path (/s replaced by .s) from the full submission
     path.
 
     Parameters
     ----------
-    full_model_path : of the form <root_path>/models/<team>/<model_hash>
+    submission_path : of the form <root_path>/submissions/<team>/<submission_hash>
 
     Returns
     -------
     module_path
     """
-    return full_model_path.lstrip('./').replace('/', '.')
+    return submission_path.lstrip('./').replace('/', '.')
 
 
-def get_full_model_path(model_hash, model_df):
-    """Computing the full model path.
+def get_submission_path(submission_hash, submission_df):
+    """Computing the full submission path.
 
     Parameters
     ----------
-    model_hash : the hash string computed on the submission in
-        fetch.get_tag_uid. It usually comes from the index of the models table.
+    submission_hash : the hash string computed on the submission in
+        fetch.get_tag_uid. It usually comes from the index of the submissions table.
 
-    model_df : an entry of the models table.
+    submission_df : an entry of the submissions table.
 
     Returns
     -------
-    full_model_path : of the form
-        <root_path>/models/<model_df['team']>/model_hash
+    submission_path : of the form
+        <root_path>/submissions/<submission_df['team']>/submission_hash
     """
-    return os.path.join(config.submissions_path, model_df['team'], model_hash)
+    return os.path.join(config.submissions_path, submission_df['team'], submission_hash)
 
 
-def get_f_dir(full_model_path, subdir):
-    dir = os.path.join(full_model_path, subdir)
+def get_f_dir(submission_path, subdir):
+    dir = os.path.join(submission_path, subdir)
     if not os.path.exists(dir):
         try:
             os.mkdir(dir)
@@ -85,29 +85,29 @@ def get_f_dir(full_model_path, subdir):
     return dir
 
 
-def get_f_name(full_model_path, subdir, f_name, extension="npy"):
-    return os.path.join(get_f_dir(full_model_path, subdir),
+def get_f_name(submission_path, subdir, f_name, extension="npy"):
+    return os.path.join(get_f_dir(submission_path, subdir),
                         f_name + '.' + extension)
 
 
-def get_model_f_name(full_model_path, cv_hash):
-    return get_f_name(full_model_path, "model", cv_hash, "p")
+def get_submission_f_name(submission_path, cv_hash):
+    return get_f_name(submission_path, "submission", cv_hash, "p")
 
 
-def get_valid_f_name(full_model_path, cv_hash):
-    return get_f_name(full_model_path, "valid", cv_hash)
+def get_valid_f_name(submission_path, cv_hash):
+    return get_f_name(submission_path, "valid", cv_hash)
 
 
-def get_test_f_name(full_model_path, cv_hash):
-    return get_f_name(full_model_path, "test", cv_hash)
+def get_test_f_name(submission_path, cv_hash):
+    return get_f_name(submission_path, "test", cv_hash)
 
 
-def get_train_time_f_name(full_model_path, cv_hash):
-    return get_f_name(full_model_path, "train_time", cv_hash)
+def get_train_time_f_name(submission_path, cv_hash):
+    return get_f_name(submission_path, "train_time", cv_hash)
 
 
-def get_valid_time_f_name(full_model_path, cv_hash):
-    return get_f_name(full_model_path, "valid_time", cv_hash)
+def get_valid_time_f_name(submission_path, cv_hash):
+    return get_f_name(submission_path, "valid_time", cv_hash)
 
 
 @mem.cache

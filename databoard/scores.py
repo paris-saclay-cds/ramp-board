@@ -80,6 +80,15 @@ class ScoreFunction(object):
     def set_eps(self, eps):
         self.eps = eps
 
+    def convert(self, x):
+        if self.higher_the_better:
+            return ScoreHigherTheBetter(x, self.eps)
+        else:
+            return ScoreLowerTheBetter(x, self.eps)
+
+    def revert(self, x):
+        return x.score
+
 
 class Accuracy(ScoreFunction):
 

@@ -87,11 +87,16 @@ def clear_pred_files():
 
 def prepare_data():
     import databoard.config as config
+    import databoard.db.tools as db_tools
     specific = config.config_object.specific
 
     # Preparing the data set, typically public train/private held-out test cut
     logger.info('Preparing the dataset.')
     specific.prepare_data()
+    logger.info('Adding CV folds.')
+    _, y_train = specific.get_train_data()
+    cv = specific.get_cv(y_train)
+    db_tools.add_cv_folds(cv)
 
 
 def setup():
@@ -576,4 +581,4 @@ def test_ramp():
     setup()
     add_models()
     train_test()
-    leaderboard(test='True')
+    # leaderboard(test='True')

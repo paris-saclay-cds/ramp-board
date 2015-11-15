@@ -106,9 +106,8 @@ def get_cv(y_train_array):
     return cv
 
 
-def train_submission(module_path, X_dict, y_array, cv_is):
+def train_submission(module_path, X_dict, y_array, train_is):
     # Preparing the training set
-    train_is, _ = cv_is
     X_train_dict = [X_dict[i] for i in train_is]
     y_train_array = np.array([y_array[i] for i in train_is])
 
@@ -151,9 +150,8 @@ def train_submission(module_path, X_dict, y_array, cv_is):
         return fe, clf
 
 
-def test_submission(trained_model, X_dict, cv_is):
+def test_submission(trained_model, X_dict, test_is):
     # Preparing the test (or valid) set
-    _, test_is = cv_is
     X_test_dict = [X_dict[i] for i in test_is]
 
     if len(trained_model) == 3:  # calibrated classifier

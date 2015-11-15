@@ -68,14 +68,13 @@ def get_cv(y_train_array):
     return cv
 
 
-def train_submission(module_path, X_df, y_array, cv_is):
+def train_submission(module_path, X_df, y_array, train_is):
     # Feature extraction
     feature_extractor = import_module('.feature_extractor', module_path)
     fe = feature_extractor.FeatureExtractor()
     fe.fit(X_df, y_array)
     X_array = fe.transform(X_df)
     # Regression
-    train_is, _ = cv_is
     X_train_array = np.array([X_array[i] for i in train_is])
     y_train_array = np.array([y_array[i] for i in train_is])
     regressor = import_module('.regressor', module_path)
@@ -84,12 +83,11 @@ def train_submission(module_path, X_df, y_array, cv_is):
     return fe, reg
 
 
-def test_submission(trained_model, X_df, cv_is):
+def test_submission(trained_model, X_df, test_is):
     fe, reg = trained_model
     # Feature extraction
     X_array = fe.transform(X_df)
     # Regression
-    _, test_is = cv_is
     X_test_array = np.array([X_array[i] for i in test_is])
     y_prediction_array = reg.predict(X_test_array)
     return Predictions(y_pred=y_prediction_array)

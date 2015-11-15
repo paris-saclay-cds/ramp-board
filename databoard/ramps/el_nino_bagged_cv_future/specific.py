@@ -1,5 +1,7 @@
 # Author: Balazs Kegl
 # License: BSD 3 clause
+############### TODO: change all submissions so feature extractor
+############## doesn't receive cv_is
 
 import os
 import sys
@@ -110,14 +112,13 @@ def check_model(module_path, X_xray, y_array, cv_is):
         raise AssertionError(message)
 
 
-def train_submission(module_path, X_xray, y_array, cv_is):
+def train_submission(module_path, X_xray, y_array, train_is):
     X_xray = X_xray.copy(deep=True)
     # Feature extraction
     feature_extractor = import_module('.ts_feature_extractor', module_path)
     ts_fe = feature_extractor.FeatureExtractor()
-    X_array = ts_fe.transform(X_xray, n_burn_in, n_lookahead, cv_is)
+    X_array = ts_fe.transform(X_xray, n_burn_in, n_lookahead)
     # Regression
-    train_is, _ = cv_is
     X_train_array = np.array([X_array[i] for i in train_is])
     y_train_array = np.array([y_array[i] for i in train_is])
     regressor = import_module('.regressor', module_path)
@@ -126,13 +127,12 @@ def train_submission(module_path, X_xray, y_array, cv_is):
     return ts_fe, reg
 
 
-def test_submission(trained_model, X_xray, cv_is):
+def test_submission(trained_model, X_xray, test_is):
     X_xray = X_xray.copy(deep=True)
     ts_fe, reg = trained_model
     # Feature extraction
     X_array = ts_fe.transform(X_xray, n_burn_in, n_lookahead, cv_is)
     # Regression
-    _, test_is = cv_is
     X_test_array = np.array([X_array[i] for i in test_is])
     y_prediction_array = reg.predict(X_test_array)
     return Predictions(y_pred=y_prediction_array)

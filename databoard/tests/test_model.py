@@ -1,5 +1,8 @@
+import os
+import databoard.config as config
 from numpy.testing import assert_array_equal
-from databoard.db.model import db, NameClashError, MergeTeamError
+from databoard.db.model import db, NameClashError, MergeTeamError,\
+    MissingSubmissionFile
 from databoard.db.model import Team, Submission, CVFold
 import databoard.db.tools as db_tools
 
@@ -93,10 +96,43 @@ def test_merge_teams():
     db.session.commit()
 
 
+def test_set_config_to_test():
+    config.config_object.ramp_name = 'iris'
+    origin_path = os.path.join('ramps', config.config_object.ramp_name)
+    config.root_path = os.path.join('.')
+    tests_path = os.path.join('databoard', 'tests')
+
+    config.raw_data_path = os.path.join(origin_path, 'data', 'raw')
+    config.public_data_path = os.path.join(tests_path, 'data', 'public')
+    config.private_data_path = os.path.join(tests_path, 'data', 'private')
+    config.submissions_d_name = 'test_submissions'
+    config.submissions_path = os.path.join(
+        config.root_path, config.submissions_d_name)
+    config.deposited_submissions_path = os.path.join(
+        origin_path, 'deposited_submissions')
+    config.config_object.num_cpus = 3
+
+
+def test_add_cv_folds():
+    specific = config.config_object.specific
+    specific.prepare_data()
+    _, y_train = specific.get_train_data()
+    cv = specific.get_cv(y_train)
+    db_tools.add_cv_folds(cv)
+    cv_folds = db.session.query(CVFold)
+    for cv_fold_1, cv_fold_2 in zip(cv, cv_folds):
+        train_is, test_is = cv_fold_1
+        # print cv_fold_1
+        # print cv_fold_2
+        assert_array_equal(train_is, cv_fold_2.train_is)
+        assert_array_equal(test_is, cv_fold_2.test_is)
+
+
 def test_make_submission():
     db_tools.make_submission('kemfort', 'rf', ['classifier.py'])
     db_tools.make_submission('mchezakci', 'rf', ['classifier.py'])
     db_tools.make_submission('kemfort', 'rf2', ['classifier.py'])
+    db_tools.print_submissions()
 
     # resubmitting 'new' is OK
     db_tools.make_submission('kemfort', 'rf', ['classifier.py'])
@@ -109,16 +145,15 @@ def test_make_submission():
     db.session.commit()
     # resubmitting 'error' is OK
     db_tools.make_submission(
-        'kemfort', 'rf', ['classifier.py', 'feature_extractor.py'])
+        'kemfort', 'rf', ['classifier.py'])
 
     submission.state = 'testing_error'
     db.session.commit()
     # resubmitting 'error' is OK
     db_tools.make_submission(
-        'kemfort', 'rf', ['calibrator.py', 'classifier.py'])
-    # at this point the submission has all three files
+        'kemfort', 'rf', ['classifier.py'])
 
-    submission.trained_state = 'trained'
+    submission.state = 'trained'
     db.session.commit()
     # resubmitting 'trained' is not OK
     try:
@@ -126,29 +161,35 @@ def test_make_submission():
     except db_tools.DuplicateSubmissionError as e:
         assert e.value == 'Submission "rf" of team "kemfort" exists already'
 
+    submission.state = 'testing_error'
+    db.session.commit()
+    # submitting non-existing file
+    try:
+        db_tools.make_submission('kemfort', 'rf', ['feature_extractor.py'])
+    except MissingSubmissionFile as e:
+        assert e.value == 'kemfort/rf/feature_extractor.py: ./test_submissions/kemfort/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae/feature_extractor.py'
+
+
+# TODO: test all kinds of error states
+def test_train_test_submission():
+    submissions = db.session.query(Submission).all()
+    for submission in submissions:
+        db_tools.train_test_submission(submission)
+
 
 def test_print_db():
+    print '\n'
     db_tools.print_users()
+    print '\n'
     db_tools.print_active_teams()
+    print '\n'
     db_tools.print_submissions()
 
 
 def test_leaderboard():
-    team = db.session.query(Team).filter_by(name='kemfort').one()
-    submissions = db.session.query(Submission).filter_by(team=team).all()
+    print '\n'
+    print('***************** Leaderboard ****************')
+    submissions = db.session.query(Submission).all()
     for submission in submissions:
         submission.state = 'train_scored'
     print db_tools.get_public_leaderboard()
-
-
-def test_cv_folds():
-    from sklearn.cross_validation import ShuffleSplit
-    cv = ShuffleSplit(30, n_iter=10, test_size=0.5, random_state=57)
-    db_tools.add_cv(cv)
-    cv_folds = db.session.query(CVFold)
-    for cv_fold_1, cv_fold_2 in zip(cv, cv_folds):
-        train_is, test_is = cv_fold_1
-        # print cv_fold_1
-        # print cv_fold_2
-        assert_array_equal(train_is, cv_fold_2.train_is)
-        assert_array_equal(test_is, cv_fold_2.test_is)

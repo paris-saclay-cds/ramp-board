@@ -1,8 +1,9 @@
+import os
 import bcrypt
 import pandas as pd
 
 from databoard.db.model import db, User, Team, Submission, SubmissionFile,\
-    CVFold
+    CVFold, SubmissionOnCVFold
 from databoard.db.model import NameClashError, MergeTeamError,\
     DuplicateSubmissionError, max_members_per_team
 from sqlalchemy.exc import IntegrityError
@@ -22,7 +23,7 @@ def date_time_format(date_time):
 def get_user_teams(user):
     teams = db.session.query(Team).all()
     for team in teams:
-        if team in get_team_members(team):
+        if user in get_team_members(team):
             yield team
 
 
@@ -169,24 +170,31 @@ def print_active_teams():
             print('\t{}'.format(member))
 
 
-######################### Teams ###########################
-
-
-def get_submissions():
-    return db.session.query(Submission).all()
+######################### Submissions ###########################
 
 
 def make_submission(team_name, name, f_name_list):
+    # TODO: to call unit tests on submitted files. Those that are found
+    # in the table that describes the workflow. For the rest just check
+    # maybe size 
     team = db.session.query(Team).filter_by(name=team_name).one()
     submission = db.session.query(Submission).filter_by(
         name=name, team=team).one_or_none()
+    cv_folds = db.session.query(CVFold).all()
     if submission is None:
         submission = Submission(name=name, team=team)
+        # Adding submission files
         for f_name in f_name_list:
             submission_file = SubmissionFile(
                 name=f_name, submission=submission)
             db.session.add(submission_file)
         db.session.add(submission)
+        # Adding (empty) submission on cv folds
+        for cv_fold in cv_folds:
+            submission_on_cv_fold = SubmissionOnCVFold(
+                submission=submission, cv_fold=cv_fold)
+            db.session.add(submission_on_cv_fold)
+        db.session.commit()
     else:
         # We allow resubmit for new or failing submissions
         if submission.state == 'new' or 'error' in submission.state:
@@ -202,15 +210,39 @@ def make_submission(team_name, name, f_name_list):
                 # else copy the file should be there
                 # right now we don't delete files that were not resubmitted,
                 # allowing partial resubmission
+
+            # Updating submission on cv folds
+            submission_on_cv_folds = db.session.query(
+                SubmissionOnCVFold).filter(
+                    SubmissionOnCVFold.submission == submission).all()
+            for submission_on_cv_fold in submission_on_cv_folds:
+                # couldn't figure out how to reset to default values
+                db.session.delete(submission_on_cv_fold)
+                db.session.add(submission_on_cv_fold)
+            db.session.commit()
+#            for cv_fold in cv_folds:
+#                submission_on_cv_fold = SubmissionOnCVFold(
+#                    submission=submission, cv_fold=cv_fold)
+#                db.session.add(submission_on_cv_fold)
+#            db.session.commit()
         else:
             raise DuplicateSubmissionError(
                 'Submission "{}" of team "{}" exists already'.format(
                     name, team_name))
 
     # We should copy files here
-    db.session.commit()
-    print submission
     return submission
+
+
+def train_test_submission(submission):
+    specific = config.config_object.specific
+    X_train, y_train = specific.get_train_data()
+    X_test, y_test = specific.get_test_data()
+    for submission_on_cv_fold in submission.on_cv_folds:
+        trained_submission = submission_on_cv_fold.train(X_train, y_train)
+        db.session.commit()
+        submission_on_cv_fold.test(X_test, y_test, trained_submission)
+        db.session.commit()
 
 
 def get_public_leaderboard():
@@ -229,7 +261,7 @@ def get_public_leaderboard():
         Submission.is_public_leaderboard).all()
     columns = ['team',
                'submission',
-               'score',
+               'valid score',
                'contributivity',
                'train time',
                'test time',
@@ -238,10 +270,10 @@ def get_public_leaderboard():
         {column: value for column, value in zip(
             columns, [team.name,
                       submission.name_with_link,
-                      submission.valid_score,
+                      round(submission.valid_score_cv_mean, 2),
                       submission.contributivity,
-                      submission.train_time,
-                      submission.test_time,
+                      int(submission.train_time_cv_mean + 0.5),
+                      int(submission.valid_time_cv_mean + 0.5),
                       date_time_format(submission.submission_timestamp)])}
         for submission, team in submissions_teams
     ]
@@ -256,59 +288,6 @@ def get_public_leaderboard():
     )
     leaderboard_html = leaderboard_df.to_html(**html_params)
     return leaderboard_html
-
-
-def set_train_times(submissions):
-    """Computes train times (in second) for submissions in submissions
-    and sets them in the db.
-
-    Parameters
-    ----------
-    submissions : list of Submission
-        The submissions to score.
-
-    """
-    cv_hash_list = generic.get_cv_hash_list()
-    n_folds = len(cv_hash_list)
-
-    for submission in submissions:
-        train_time = 0.0
-        for cv_hash in cv_hash_list:
-            _, submission_path = submission.get_paths()
-            with open(generic.get_train_time_f_name(
-                    submission_path, cv_hash), 'r') as f:
-                train_time += abs(float(f.read()))
-        train_time = int(round(train_time / n_folds))
-        # submission.train_time = train_time
-        # submission.train_state = 'scored'
-        setattr(submission, 'train_time', train_time)
-        submission.state = 'train_scored'
-    db.session.commit()
-
-
-def set_test_times(submissions):
-    """Computes test times (in second) for submissions in submissions
-    and sets them in the db.
-
-    Parameters
-    ----------
-    submissions : list of Submission
-        The submissions to score.
-
-    """
-    cv_hash_list = generic.get_cv_hash_list()
-    n_folds = len(cv_hash_list)
-
-    for submission in submissions:
-        test_time = 0.0
-        for cv_hash in cv_hash_list:
-            _, submission_path = submission.get_submission_path()
-            with open(generic.get_test_time_f_name(
-                    submission_path, cv_hash), 'r') as f:
-                test_time += abs(float(f.read()))
-        submission.test_time = round(test_time / n_folds)
-        submission.test_state = 'scored'
-    db.session.commit()
 
 
 def run_submissions(before_state, after_state, error_state, doing, method,
@@ -329,8 +308,6 @@ def run_submissions(before_state, after_state, error_state, doing, method,
     method : the method to be run (train_and_valid_on_fold,
         train_valid_and_test_on_fold, test_on_fold)
     """
-    specific = config.config_object.specific
-
     if force_run:
         submissions = db.session.query(Submission).filter(
             Submission.state != 'ignore').filter(
@@ -341,12 +318,11 @@ def run_submissions(before_state, after_state, error_state, doing, method,
             Submission.is_valid).all()
 
     generic.logger.info('Reading data')
-    X_train, y_train = specific.get_train_data()
-    cv = specific.get_cv(y_train)
+    cv_folds = db.session.query(CVFold)
 
     for submission in submissions:
         submission.run_method_on_folds(
-            after_state, error_state, doing, method, cv)
+            after_state, error_state, doing, method, cv_folds)
 
 
 def train_and_valid_submissions():
@@ -376,15 +352,26 @@ def check_submissions():
 
 def print_submissions():
     print('***************** List of submissions ****************')
-    for submission in db.session.query(Submission).order_by(
-            Submission.id_):
+    submissions = db.session.query(Submission).order_by(Submission.id_).all()
+    for submission in submissions:
         print submission
+        submission_on_cv_folds = db.session.query(SubmissionOnCVFold).filter(
+            SubmissionOnCVFold.submission == submission).all()
+        for submission_on_cv_fold in submission_on_cv_folds:
+            print '\t' + str(submission_on_cv_fold)
+
+
+def print_cv_folds():
+    print('***************** CV folds ****************')
+    cv_folds = db.session.query(CVFold).all()
+    for i, cv_fold in enumerate(cv_folds):
+        print i, cv_fold
 
 
 ######################### CVFold ###########################
 
 
-def add_cv(cv):
+def add_cv_folds(cv):
     for train_is, test_is in cv:
         cv_fold = CVFold(train_is=train_is, test_is=test_is)
         db.session.add(cv_fold)
