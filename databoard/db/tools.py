@@ -43,12 +43,10 @@ def check_password(plain_text_password, hashed_password):
     return bcrypt.checkpw(plain_text_password, hashed_password)
 
 
-def create_user(name, password, lastname, firstname, email,
-                is_validated=False):
+def create_user(name, password, lastname, firstname, email):
     hashed_password = get_hashed_password(password)
     user = User(name=name, hashed_password=hashed_password,
-                lastname=lastname, firstname=firstname, email=email,
-                is_validated=is_validated)
+                lastname=lastname, firstname=firstname, email=email)
     # Creating default team with the same name as the user
     # user is admin of her own team
     team = Team(name=name, admin=user)
@@ -84,7 +82,8 @@ def create_user(name, password, lastname, firstname, email,
 
 
 def validate_user(user):
-    user.is_validated = True
+    # from 'asked' to 'user'
+    user.access_level = 'user'
 
 
 def print_users():
@@ -234,17 +233,6 @@ def make_submission(team_name, name, f_name_list):
     return submission
 
 
-def train_test_submission(submission):
-    specific = config.config_object.specific
-    X_train, y_train = specific.get_train_data()
-    X_test, y_test = specific.get_test_data()
-    for submission_on_cv_fold in submission.on_cv_folds:
-        trained_submission = submission_on_cv_fold.train(X_train, y_train)
-        db.session.commit()
-        submission_on_cv_fold.test(X_test, y_test, trained_submission)
-        db.session.commit()
-
-
 def get_public_leaderboard():
     """
     Returns
@@ -288,66 +276,6 @@ def get_public_leaderboard():
     )
     leaderboard_html = leaderboard_df.to_html(**html_params)
     return leaderboard_html
-
-
-def run_submissions(before_state, after_state, error_state, doing, method,
-                    force_run=False):
-    """The master method that runs different pipelines (train+valid,
-    train+valid+test, test).
-
-    Parameters
-    ----------
-    submissions : list of Submission
-        The list of the models that should be run.
-    infinitive, past_participle, gerund : three forms of the action naming
-        to be run. Like train, trained, training. Besides message strings,
-        past_participle is used for the final state of a successful run
-        (trained, tested)
-    error_state : the state we get in after an unsuccesful run. The error
-        message is saved in <error_state>.txt, to be rendered on the web site
-    method : the method to be run (train_and_valid_on_fold,
-        train_valid_and_test_on_fold, test_on_fold)
-    """
-    if force_run:
-        submissions = db.session.query(Submission).filter(
-            Submission.state != 'ignore').filter(
-            Submission.is_valid).all()
-    else:
-        submissions = db.session.query(Submission).filter(
-            Submission.state == before_state).filter(
-            Submission.is_valid).all()
-
-    generic.logger.info('Reading data')
-    cv_folds = db.session.query(CVFold)
-
-    for submission in submissions:
-        submission.run_method_on_folds(
-            after_state, error_state, doing, method, cv_folds)
-
-
-def train_and_valid_submissions():
-    run_submissions(
-        'new', 'trained', 'training_error', 'training',
-        train_test.train_and_valid_on_fold)
-
-
-def train_valid_and_test_submissions():
-    run_submissions(
-        'new', 'tested', 'training_error', 'training/testing',
-        train_test.train_valid_and_test_on_fold)
-
-
-def test_submissions():
-    run_submissions(
-        'trained', 'tested', 'testing_error', 'testing',
-        train_test.test_on_fold)
-
-
-# TODO: fix check models: everybody should implement it, default = nothing
-def check_submissions():
-    run_submissions(
-        'new', 'checked', 'checking_error', 'checking',
-        train_test.check_on_fold)
 
 
 def print_submissions():

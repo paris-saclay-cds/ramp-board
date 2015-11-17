@@ -110,7 +110,7 @@ def test_set_config_to_test():
         config.root_path, config.submissions_d_name)
     config.deposited_submissions_path = os.path.join(
         origin_path, 'deposited_submissions')
-    config.config_object.num_cpus = 3
+    config.config_object.n_cpus = 3
 
 
 def test_add_cv_folds():
@@ -174,7 +174,11 @@ def test_make_submission():
 def test_train_test_submission():
     submissions = db.session.query(Submission).all()
     for submission in submissions:
-        db_tools.train_test_submission(submission)
+        submission.train_test()
+        submission.train_test()
+        submission.train_test(force_retrain_test=True)
+        config.is_parallelize = True
+        submission.train_test(force_retrain_test=True)
 
 
 def test_print_db():
