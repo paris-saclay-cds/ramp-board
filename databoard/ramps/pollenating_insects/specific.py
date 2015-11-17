@@ -23,7 +23,7 @@ multiclass_prediction.labels = [565, 654, 682, 687, 696, 715, 759, 833, 835,
 
 cv_test_size = config_object.cv_test_size
 random_state = config_object.random_state
-n_CV = config_object.num_cpus
+n_CV = config_object.n_cpus
 
 raw_filename = os.path.join(raw_data_path, 'data_64x64.npz')
 train_filename = os.path.join(public_data_path, 'train_64x64.npz')

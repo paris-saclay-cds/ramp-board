@@ -24,7 +24,7 @@ drop_column_names = ['PAX']
 cv_test_size = config_object.cv_test_size
 held_out_test_size = 0.2
 random_state = config_object.random_state
-n_CV = config_object.num_cpus
+n_CV = config_object.n_cpus
 
 raw_filename = os.path.join(raw_data_path, 'data_amadeus.csv')
 train_filename = os.path.join(public_data_path, 'train.csv')

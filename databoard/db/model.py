@@ -302,16 +302,15 @@ class Submission(db.Model):
         X_test, y_test = specific.get_test_data()
         if config.is_parallelize:
             # this throws DetachedInstanceError
-            #Parallel(n_jobs=config.config_object.n_cpus, verbose=5)(
-            #    delayed(train_submission_on_cv_fold)(
-            #        X_train, y_train, force_retrain_test,
-            #        submission_on_cv_fold)
-            #    for submission_on_cv_fold in self.on_cv_folds)
-            # this throws TypeError: can't pickle instancemethod objects
             Parallel(n_jobs=config.config_object.n_cpus, verbose=5)(
-                delayed(submission_on_cv_fold.train)(
-                    X_train, y_train, force_retrain_test)
-                for submission_on_cv_fold in self.on_cv_folds)
+                delayed(train_submission_on_cv_fold)(
+                    X_train, y_train, force_retrain_test, self, cv_i)
+                for cv_i, _ in enumerate(self.on_cv_folds))
+            # this throws TypeError: can't pickle instancemethod objects
+            #Parallel(n_jobs=config.config_object.n_cpus, verbose=5)(
+            #    delayed(submission_on_cv_fold.train)(
+            #        X_train, y_train, force_retrain_test)
+            #    for submission_on_cv_fold in self.on_cv_folds)
         else:
             for submission_on_cv_fold in self.on_cv_folds:
                 trained_submission = submission_on_cv_fold.train(
@@ -321,8 +320,10 @@ class Submission(db.Model):
 
 
 # For parallel call
-def train_submission_on_cv_fold(X_train, y_train, force_retrain_test, cv_fold):
-    return cv_fold.train(X_train, y_train, force_retrain_test)
+def train_submission_on_cv_fold(X_train, y_train, force_retrain_test, 
+                                submission, cv_i):
+    return submission.on_cv_folds[cv_i].train(
+        X_train, y_train, force_retrain_test)
 
 
 class CVFold(db.Model):

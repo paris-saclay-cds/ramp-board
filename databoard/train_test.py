@@ -14,7 +14,7 @@ import databoard.generic as generic
 import databoard.machine_parallelism as machine_parallelism
 from databoard.db.model import SubmissionOnCVFold
 
-n_processes = config_object.num_cpus
+n_processes = config_object.n_cpus
 
 
 def run_method_on_folds(submission, method, cv_folds, **kwargs):

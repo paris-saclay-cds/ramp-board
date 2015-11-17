@@ -22,7 +22,7 @@ target_column_name = 'target'
 cv_test_size = config_object.cv_test_size
 cv_bag_size = config_object.cv_bag_size
 random_state = config_object.random_state
-n_CV = config_object.num_cpus
+n_CV = config_object.n_cpus
 
 en_lat_bottom = -5
 en_lat_top = 5

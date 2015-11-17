@@ -25,7 +25,7 @@ multiclass_prediction.labels = ['Class_1', 'Class_2', 'Class_3', 'Class_4',
 
 cv_test_size = config_object.cv_test_size
 random_state = config_object.random_state
-n_CV = config_object.num_cpus
+n_CV = config_object.n_cpus
 
 train_filename = os.path.join(public_data_path, 'train.csv')
 test_filename = os.path.join(private_data_path, 'test.csv')

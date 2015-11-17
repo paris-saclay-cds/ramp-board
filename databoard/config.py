@@ -77,7 +77,7 @@ class RampConfig(object):
                  train_server,  # the server for training
                  train_user,  # the username on the train_server
                  train_root,  # the root dir of databoard on the train_server
-                 num_cpus,  # number of cpus on the train_server
+                 n_cpus,  # number of cpus on the train_server
                  web_server,
                  # the server for the web site (and possibly leaderboard)
                  web_user,  # the username on the web_server
@@ -91,7 +91,7 @@ class RampConfig(object):
         self.train_server = train_server
         self.train_user = train_user
         self.train_root = train_root
-        self.num_cpus = num_cpus
+        self.n_cpus = n_cpus
         self.web_server = web_server
         self.web_user = web_user
         self.web_root = web_root
@@ -146,7 +146,7 @@ local_kwargs = dict(
     train_server='localhost',
     train_user='',
     train_root=local_root,
-    num_cpus=2,
+    n_cpus=2,
     web_server='localhost',
     web_user='',
     web_root=local_root,
@@ -194,7 +194,7 @@ ramps_configs['variable_stars_local'] = RampConfig(
 
 ramps_configs['iris_remote'] = RampConfig(
     ramp_name='iris',
-    num_cpus=32,
+    n_cpus=32,
     server_port='2171',
     cv_test_size=0.2,
     random_state=57,
@@ -203,7 +203,7 @@ ramps_configs['iris_remote'] = RampConfig(
 
 ramps_configs['mortality_prediction_remote'] = RampConfig(
     ramp_name='mortality_prediction',
-    num_cpus=10,
+    n_cpus=10,
     server_port='2172',
     cv_test_size=0.2,
     random_state=57,
