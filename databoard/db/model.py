@@ -1,18 +1,16 @@
 import os
 import zlib
 import string
-import timeit
-import logging
 import hashlib
 import datetime
 import numpy as np
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.hybrid import hybrid_property
-from sklearn.externals.joblib import Parallel, delayed
 
 import databoard.config as config
 import databoard.generic as generic
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + config.db_f_name
@@ -24,8 +22,6 @@ max_members_per_team = 3  # except for users own team
 opening_timestamp = None
 public_opening_timestamp = None  # before teams can see only their own scores
 closing_timestamp = None
-
-logger = logging.getLogger('databoard')
 
 # Training set table
 # Problem table
@@ -92,6 +88,7 @@ class User(db.Model):
     twitter_url = db.Column(db.String, default=None)
     facebook_url = db.Column(db.String, default=None)
     google_url = db.Column(db.String, default=None)
+    is_want_news = db.Column(db.Boolean, default=None)
     access_level = db.Column(db.Enum(
         'admin', 'user', 'asked'), default='asked')  # 'asked' needs approval
     signup_timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
@@ -293,38 +290,6 @@ class Submission(db.Model):
             self.state, self.train_time_cv_mean)
         return repr
 
-    def train_test(self, force_retrain_test=False):
-        if force_retrain_test:
-            logger.info('Forced retraining/testing {}'.format(self))
-
-        specific = config.config_object.specific
-        X_train, y_train = specific.get_train_data()
-        X_test, y_test = specific.get_test_data()
-        if config.is_parallelize:
-            # this throws DetachedInstanceError
-            Parallel(n_jobs=config.config_object.n_cpus, verbose=5)(
-                delayed(train_submission_on_cv_fold)(
-                    X_train, y_train, force_retrain_test, self, cv_i)
-                for cv_i, _ in enumerate(self.on_cv_folds))
-            # this throws TypeError: can't pickle instancemethod objects
-            #Parallel(n_jobs=config.config_object.n_cpus, verbose=5)(
-            #    delayed(submission_on_cv_fold.train)(
-            #        X_train, y_train, force_retrain_test)
-            #    for submission_on_cv_fold in self.on_cv_folds)
-        else:
-            for submission_on_cv_fold in self.on_cv_folds:
-                trained_submission = submission_on_cv_fold.train(
-                    X_train, y_train, force_retrain_test)
-                submission_on_cv_fold.test(
-                    X_test, y_test, trained_submission, force_retrain_test)
-
-
-# For parallel call
-def train_submission_on_cv_fold(X_train, y_train, force_retrain_test, 
-                                submission, cv_i):
-    return submission.on_cv_folds[cv_i].train(
-        X_train, y_train, force_retrain_test)
-
 
 class CVFold(db.Model):
     """Created when the ramp is set up. Storing train and test folds, more
@@ -369,6 +334,7 @@ class SubmissionOnCVFold(db.Model):
         'CVFold', backref=db.backref('submissions_on_cv_fold'))
 
     # prediction on the full training set, including train and valid points
+    # properties train_predictions and valid_predictions will make the slicing
     full_train_predictions = db.Column(PredictionType, default=None)
     test_predictions = db.Column(PredictionType, default=None)
     train_time = db.Column(db.Float, default=0.0)
@@ -386,118 +352,6 @@ class SubmissionOnCVFold(db.Model):
     # later also ramp_id or data_id
     db.UniqueConstraint(submission_id, cv_fold_id)
 
-    def _make_error_message(self, e):
-        """log_msg is the full error what we print into logger.error. error_msg
-        is what we save and display to the user. Ideally error_msg is the part
-        of the code that is related to the user submission.
-        """
-        if hasattr(e, 'traceback'):
-            log_msg = str(e.traceback)
-        else:
-            log_msg = repr(e)
-        error_msg = log_msg
-        cut_exception_text = error_msg.rfind('--->')
-        if cut_exception_text > 0:
-            error_msg = error_msg[cut_exception_text:]
-        return log_msg, error_msg
-
-    def train(self, X, y, force_retrain=False):
-        if self.state not in ['new', 'checked'] and not force_retrain:
-            if 'error' in self.state:
-                logger.error('Trying to train failed {} on {}'.format(
-                    self.submission, self.cv_fold))
-            else:
-                logger.info('Already trained {} on {}'.format(
-                    self.submission, self.cv_fold))
-            return
-
-        # so to make it importable, TODO: should go to make_submission
-        #open(os.path.join(self.submission.path, '__init__.py'), 'a').close()
-
-        train_is = self.cv_fold.train_is
-        test_is = self.cv_fold.test_is
-        specific = config.config_object.specific
-
-        logger.info('Training {} on {}'.format(
-            self.submission, self.cv_fold))
-        start = timeit.default_timer()
-        try:
-            trained_submission = specific.train_submission(
-                self.submission.module, X, y, train_is)
-            self.state = 'trained'
-        except Exception, e:
-            self.state = 'training_error'
-            log_msg, self.error_msg = self._make_error_message(e)
-            logger.error(
-                'Training {} on {} failed with exception: \n{}'.format(
-                    self.submission, self.cv_fold, log_msg))
-            db.session.commit()
-            return
-        end = timeit.default_timer()
-        self.train_time = end - start
-
-        logger.info('Validating {} on {}'.format(
-            self.submission, self.cv_fold))
-        start = timeit.default_timer()
-        try:
-            self.full_train_predictions = specific.test_submission(  # Predictions
-                trained_submission, X, range(len(y)))
-            self.state = 'validated'
-        except Exception, e:
-            self.state = 'validating_error'
-            log_msg, self.error_msg = self._make_error_message(e)
-            logger.error(
-                'Validating {} on {} failed with exception: \n{}'.format(
-                    self.submission, self.cv_fold, log_msg))
-            db.session.commit()
-            return
-        end = timeit.default_timer()
-        self.valid_time = end - start
-
-        true_full_train_predictions = generic.get_true_predictions_train()
-        self.train_score = specific.score(
-            true_full_train_predictions, self.full_train_predictions, train_is)
-        self.valid_score = specific.score(
-            true_full_train_predictions, self.full_train_predictions, test_is)
-        db.session.commit()
-        return trained_submission
-
-    def test(self, X, y, trained_submission, force_retest=False):
-        if self.state not in ['new', 'checked', 'trained', 'validated']\
-                and not force_retest:
-            if 'error' in self.state:
-                logger.error('Trying to test failed {} on {}'.format(
-                    self.submission, self.cv_fold))
-            else:
-                logger.info('Already tested {} on {}'.format(
-                    self.submission, self.cv_fold))
-            return
-
-        specific = config.config_object.specific
-
-        logger.info('Testing {} on {}'.format(
-            self.submission, self.cv_fold))
-        start = timeit.default_timer()
-        try:
-            self.test_predictions = specific.test_submission(  # Predictions type
-                trained_submission, X, range(len(y)))
-            self.state = 'tested'
-        except Exception, e:
-            self.state = 'testing_error'
-            log_msg, self.error_msg = self._make_error_message(e)
-            logger.error(
-                'Testing {} on {} failed with exception: \n{}'.format(
-                    self.submission, self.cv_fold, log_msg))
-            db.session.commit()
-            return
-        end = timeit.default_timer()
-        self.test_time = end - start
-
-        true_test_predictions = generic.get_true_predictions_test()
-        self.test_score = specific.score(
-            true_test_predictions, self.test_predictions)
-        db.session.commit()
-
     def __repr__(self):
         repr = 'state = {}, valid_score = {}, test_score = {}'.format(
             self.state, self.valid_score, self.test_score)
@@ -514,6 +368,73 @@ class SubmissionOnCVFold(db.Model):
         specific = config.config_object.specific
         return specific.Predictions(
             y_pred=self.full_train_predictions.y_pred[self.cv_fold.test_is])
+
+    def compute_train_scores(self):
+        specific = config.config_object.specific
+        true_full_train_predictions = generic.get_true_predictions_train()
+        self.train_score = specific.score(
+            true_full_train_predictions, self.full_train_predictions,
+            self.cv_fold.train_is)
+        db.session.commit()
+
+    def compute_valid_scores(self):
+        specific = config.config_object.specific
+        true_full_train_predictions = generic.get_true_predictions_train()
+        self.valid_score = specific.score(
+            true_full_train_predictions, self.full_train_predictions,
+            self.cv_fold.test_is)
+        db.session.commit()
+
+    def compute_test_scores(self):
+        specific = config.config_object.specific
+        true_test_predictions = generic.get_true_predictions_test()
+        self.test_score = specific.score(
+            true_test_predictions, self.test_predictions)
+        db.session.commit()
+
+    def update(self, detached_submission_on_cv_fold):
+        """From trained DetachedSubmissionOnCVFold."""
+        self.state = detached_submission_on_cv_fold.state
+        if 'error' in self.state:
+            self.error_msg = detached_submission_on_cv_fold.error_msg
+        else:
+            if self.state in ['trained', 'validated', 'tested']:
+                self.train_time = detached_submission_on_cv_fold.train_time
+            if self.state in ['validated', 'tested']:
+                self.valid_time = detached_submission_on_cv_fold.valid_time
+                self.full_train_predictions =\
+                    detached_submission_on_cv_fold.full_train_predictions
+                self.compute_train_scores()
+                self.compute_valid_scores()
+            if self.state in ['tested']:
+                self.test_time = detached_submission_on_cv_fold.test_time
+                self.test_predictions =\
+                    detached_submission_on_cv_fold.test_predictions
+                self.compute_test_scores()
+        db.session.commit()
+
+
+class DetachedSubmissionOnCVFold(object):
+
+    def __init__(self, submission_on_cv_fold):
+        self.train_is = submission_on_cv_fold.cv_fold.train_is
+        self.test_is = submission_on_cv_fold.cv_fold.test_is
+        self.full_train_predictions = submission_on_cv_fold.full_train_predictions
+        self.test_predictions = submission_on_cv_fold.test_predictions
+        self.state = submission_on_cv_fold.state
+        self.name = submission_on_cv_fold.submission.team.name + '/'\
+            + submission_on_cv_fold.submission.name
+        self.module = submission_on_cv_fold.submission.module
+        self.error_msg = submission_on_cv_fold.error_msg
+        self.train_time = submission_on_cv_fold.train_time
+        self.valid_time = submission_on_cv_fold.valid_time
+        self.test_time = submission_on_cv_fold.test_time
+        self.trained_submission = None
+
+    def __repr__(self):
+        repr = 'Submission({}) on fold {}'.format(
+            self.name, str(self.train_is)[:10])
+        return repr
 
 
 class NameClashError(Exception):

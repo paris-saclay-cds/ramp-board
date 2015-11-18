@@ -1,20 +1,23 @@
-import os
 import bcrypt
+import timeit
+import logging
 import pandas as pd
+from sklearn.externals.joblib import Parallel, delayed
 
 from databoard.db.model import db, User, Team, Submission, SubmissionFile,\
-    CVFold, SubmissionOnCVFold
+    CVFold, SubmissionOnCVFold, DetachedSubmissionOnCVFold
 from databoard.db.model import NameClashError, MergeTeamError,\
     DuplicateSubmissionError, max_members_per_team
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 import databoard.config as config
-import databoard.generic as generic
-import databoard.train_test as train_test
 
 
-def date_time_format(date_time):
+logger = logging.getLogger('databoard')
+
+
+def _date_time_format(date_time):
     return date_time.strftime('%a %Y-%m-%d %H:%M:%S')
 
 
@@ -64,7 +67,7 @@ def create_user(name, password, lastname, firstname, email):
             # We only check for team names if username is not in db
             try:
                 db.session.query(Team).filter_by(name=name).one()
-                db.message += 'username is already in use as a team name'
+                message += 'username is already in use as a team name'
             except NoResultFound:
                 pass
         try:
@@ -175,7 +178,7 @@ def print_active_teams():
 def make_submission(team_name, name, f_name_list):
     # TODO: to call unit tests on submitted files. Those that are found
     # in the table that describes the workflow. For the rest just check
-    # maybe size 
+    # maybe size
     team = db.session.query(Team).filter_by(name=team_name).one()
     submission = db.session.query(Submission).filter_by(
         name=name, team=team).one_or_none()
@@ -233,6 +236,153 @@ def make_submission(team_name, name, f_name_list):
     return submission
 
 
+# For parallel call
+def train_test_submission(submission, force_retrain_test=False):
+    """We do it here so it's dockerizable."""
+    detached_submission_on_cv_folds = [
+        DetachedSubmissionOnCVFold(submission_on_cv_fold)
+        for submission_on_cv_fold in submission.on_cv_folds]
+
+    if force_retrain_test:
+        logger.info('Forced retraining/testing {}'.format(submission))
+
+    specific = config.config_object.specific
+    X_train, y_train = specific.get_train_data()
+    X_test, y_test = specific.get_test_data()
+    if config.is_parallelize:
+        # We are using 'threading' so train_test_submission_on_cv_fold
+        # updates the detached submission_on_cv_fold objects. If it doesn't
+        # work, we can go back to multiprocessing and
+        detached_submission_on_cv_folds = Parallel(
+            n_jobs=config.config_object.n_cpus, verbose=5)(
+            delayed(train_test_submission_on_cv_fold)(
+                submission_on_cv_fold, X_train, y_train, X_test, y_test,
+                force_retrain_test)
+            for submission_on_cv_fold in detached_submission_on_cv_folds)
+    else:
+        for submission_on_cv_fold in detached_submission_on_cv_folds:
+            train_test_submission_on_cv_fold(
+                submission_on_cv_fold, X_train, y_train, X_test, y_test,
+                force_retrain_test)
+    for detached_submission_on_cv_fold, submission_on_cv_fold in\
+            zip(detached_submission_on_cv_folds, submission.on_cv_folds):
+        submission_on_cv_fold.update(detached_submission_on_cv_fold)
+
+
+def _make_error_message(e):
+    """log_msg is the full error what we print into logger.error. error_msg
+    is what we save and display to the user. Ideally error_msg is the part
+    of the code that is related to the user submission.
+    """
+    if hasattr(e, 'traceback'):
+        log_msg = str(e.traceback)
+    else:
+        log_msg = repr(e)
+    error_msg = log_msg
+    # TODO: It the user calls something in his classifier, that part of the
+    # stack is lost. We should make this more intelligent.
+    cut_exception_text = error_msg.rfind('--->')
+    if cut_exception_text > 0:
+        error_msg = error_msg[cut_exception_text:]
+    return log_msg, error_msg
+
+
+def train_test_submission_on_cv_fold(submission_on_cv_fold, X_train, y_train,
+                                     X_test, y_test, force_retrain_test=False):
+    train_submission_on_cv_fold(submission_on_cv_fold, X_train, y_train,
+                                force_retrain=force_retrain_test)
+    test_submission_on_cv_fold(submission_on_cv_fold, X_test, y_test,
+                               force_retest=force_retrain_test)
+    # When called in a single thread, we don't need the return value,
+    # submission_on_cv_fold is modified in place. When called in parallel
+    # multiprocessing mode, however, copies are made when the function is 
+    # called, so we have to explicitly return the modified object (so it is
+    # ercopied into the original object)
+    return submission_on_cv_fold
+
+
+def train_submission_on_cv_fold(submission_on_cv_fold, X, y,
+                                force_retrain=False):
+    if submission_on_cv_fold.state not in ['new', 'checked']\
+            and not force_retrain:
+        if 'error' in submission_on_cv_fold.state:
+            logger.error('Trying to train failed {}'.format(
+                submission_on_cv_fold))
+        else:
+            logger.info('Already trained {}'.format(submission_on_cv_fold))
+        return
+
+    # so to make it importable, TODO: should go to make_submission
+    # open(os.path.join(self.submission.path, '__init__.py'), 'a').close()
+
+    train_is = submission_on_cv_fold.train_is
+    specific = config.config_object.specific
+
+    logger.info('Training {}'.format(submission_on_cv_fold))
+    start = timeit.default_timer()
+    try:
+        submission_on_cv_fold.trained_submission = specific.train_submission(
+            submission_on_cv_fold.module, X, y, train_is)
+        submission_on_cv_fold.state = 'trained'
+    except Exception, e:
+        submission_on_cv_fold.state = 'training_error'
+        log_msg, submission_on_cv_fold.error_msg = _make_error_message(e)
+        logger.error(
+            'Training {} failed with exception: \n{}'.format(
+                submission_on_cv_fold, log_msg))
+        return
+    end = timeit.default_timer()
+    submission_on_cv_fold.train_time = end - start
+
+    logger.info('Validating {}'.format(submission_on_cv_fold))
+    start = timeit.default_timer()
+    try:
+        submission_on_cv_fold.full_train_predictions =\
+            specific.test_submission(
+                submission_on_cv_fold.trained_submission, X, range(len(y)))
+        submission_on_cv_fold.state = 'validated'
+    except Exception, e:
+        submission_on_cv_fold.state = 'validating_error'
+        log_msg, submission_on_cv_fold.error_msg = _make_error_message(e)
+        logger.error(
+            'Validating {} failed with exception: \n{}'.format(
+                submission_on_cv_fold, log_msg))
+        return
+    end = timeit.default_timer()
+    submission_on_cv_fold.valid_time = end - start
+
+
+def test_submission_on_cv_fold(submission_on_cv_fold, X, y,
+                               force_retest=False):
+    if submission_on_cv_fold.state not in\
+            ['new', 'checked', 'trained', 'validated'] and not force_retest:
+        if 'error' in submission_on_cv_fold.state:
+            logger.error('Trying to test failed {}'.format(
+                submission_on_cv_fold))
+        else:
+            logger.info('Already tested {}'.format(submission_on_cv_fold))
+        return
+
+    specific = config.config_object.specific
+
+    logger.info('Testing {}'.format(submission_on_cv_fold))
+    start = timeit.default_timer()
+    try:
+        submission_on_cv_fold.test_predictions = specific.test_submission(
+            submission_on_cv_fold.trained_submission, X, range(len(y)))
+        submission_on_cv_fold.state = 'tested'
+    except Exception, e:
+        submission_on_cv_fold.state = 'testing_error'
+        log_msg, submission_on_cv_fold.error_msg = _make_error_message(e)
+        logger.error(
+            'Testing {} failed with exception: \n{}'.format(
+                submission_on_cv_fold, log_msg))
+        raise e
+        return
+    end = timeit.default_timer()
+    submission_on_cv_fold.test_time = end - start
+
+
 def get_public_leaderboard():
     """
     Returns
@@ -262,7 +412,7 @@ def get_public_leaderboard():
                       submission.contributivity,
                       int(submission.train_time_cv_mean + 0.5),
                       int(submission.valid_time_cv_mean + 0.5),
-                      date_time_format(submission.submission_timestamp)])}
+                      _date_time_format(submission.submission_timestamp)])}
         for submission, team in submissions_teams
     ]
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)

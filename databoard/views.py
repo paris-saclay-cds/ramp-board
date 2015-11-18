@@ -311,7 +311,7 @@ def view_model(team_name, summission_hash, f_name):
     team = db.session.query(Team).filter_by(name=team_name).one()
     submission = db.session.query(Submission).filter_by(
         team=team, hash_=summission_hash).one()
-    submission_abspath = os.path.abspath(submission.relative_path)
+    submission_abspath = os.path.abspath(submission.path)
     archive_filename = 'archive.zip'
 
     if request.path.split('/')[-1] == 'raw':
