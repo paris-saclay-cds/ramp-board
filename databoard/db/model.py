@@ -469,7 +469,7 @@ def _get_next_best_single_fold(predictions_list, true_predictions,
 
 class CVFold(db.Model):
     """Created when the ramp is set up. Storing train and test folds, more
-    precisely: train and tes indices. Shuold be related to the data set
+    precisely: train and test indices. Should be related to the data set
     and the ramp (that defines the cv). """
 
     __tablename__ = 'cv_folds'
@@ -509,7 +509,7 @@ class CVFold(db.Model):
         ]
         true_predictions = generic.get_true_predictions_valid(self.test_is)
         # TODO: maybe this can be simplified. Don't need to get down
-        # to submission level.
+        # to prediction level.
         predictions_list = [submission.valid_predictions
                             for submission in selected_submissions]
         valid_scores = [submission.valid_score
@@ -650,6 +650,11 @@ class SubmissionOnCVFold(db.Model):
 
 
 class DetachedSubmissionOnCVFold(object):
+    """This class is a copy of SubmissionOnCVFold, all the fields we need in
+    train and test. It's because SQLAlchemy objects don't persist through
+    multiprocessing jobs. Maybe eliminated if we do the parallelization
+    differently, though I doubt it.
+    """
 
     def __init__(self, submission_on_cv_fold):
         self.train_is = submission_on_cv_fold.cv_fold.train_is
