@@ -1,6 +1,7 @@
 import bcrypt
 import timeit
 import logging
+import datetime
 import pandas as pd
 from sklearn.externals.joblib import Parallel, delayed
 
@@ -267,6 +268,10 @@ def train_test_submission(submission, force_retrain_test=False):
     for detached_submission_on_cv_fold, submission_on_cv_fold in\
             zip(detached_submission_on_cv_folds, submission.on_cv_folds):
         submission_on_cv_fold.update(detached_submission_on_cv_fold)
+    submission.training_timestamp = datetime.datetime.utcnow()
+    submission.compute_test_score_cv_bag()
+    submission.compute_valid_score_cv_bag()
+    db.session.commit()
 
 
 def _make_error_message(e):
@@ -383,6 +388,36 @@ def test_submission_on_cv_fold(submission_on_cv_fold, X, y,
     submission_on_cv_fold.test_time = end - start
 
 
+def compute_contributivity(force_ensemble=False):
+    """Computes contributivity leaderboard scores.
+
+    Parameters
+    ----------
+    force_ensemble : boolean
+        To force include deleted models.
+    """
+    logger.info('Combining models')
+    cv_folds = db.session.query(CVFold).all()
+    # The following should go into config, we'll get there when we have a
+    # lot of models.
+    # One of Caruana's trick: bag the models
+    # selected_index_lists = np.array([random.sample(
+    #    range(len(models_df)), int(0.8*models_df.shape[0]))
+    #    for _ in range(n_bags)])
+    # Or you can select a subset
+    # selected_index_lists = np.array([[24, 26, 28, 31]])
+    # Or just take everybody
+    # Now all of this should be handled by submission.is_to_ensemble parameter
+    # It would also make more sense to bag differently in eah fold, see the
+    # comment in cv_fold.get_combined_predictions
+
+    for cv_fold in cv_folds:
+        cv_fold.compute_contributivity(force_ensemble)
+    submissions = db.session.query(Submission).all()
+    for submissions in submissions:
+        submissions.set_contributivity()
+
+
 def get_public_leaderboard():
     """
     Returns
@@ -408,8 +443,8 @@ def get_public_leaderboard():
         {column: value for column, value in zip(
             columns, [team.name,
                       submission.name_with_link,
-                      round(submission.valid_score_cv_mean, 2),
-                      submission.contributivity,
+                      round(submission.valid_score_cv_bag, 2),
+                      int(100 * submission.contributivity + 0.5),
                       int(submission.train_time_cv_mean + 0.5),
                       int(submission.valid_time_cv_mean + 0.5),
                       _date_time_format(submission.submission_timestamp)])}
@@ -433,10 +468,24 @@ def print_submissions():
     submissions = db.session.query(Submission).order_by(Submission.id_).all()
     for submission in submissions:
         print submission
+        print('\tvalid_score_cv_mean = {0:.2f}'.format(
+            submission.valid_score_cv_mean))
+        print '\tvalid_score_cv_bag = {0:.2f}'.format(
+            float(submission.valid_score_cv_bag))
+        print '\tvalid_score_cv_bags = {}'.format(
+            submission.valid_score_cv_bags)
+        print '\ttest_score_cv_mean = {0:.2f}'.format(
+            submission.test_score_cv_mean)
+        print '\ttest_score_cv_bag = {0:.2f}'.format(
+            float(submission.test_score_cv_bag))
+        print '\ttest_score_cv_bags = {}'.format(
+            submission.test_score_cv_bags)
+
+        print '\tcv folds'
         submission_on_cv_folds = db.session.query(SubmissionOnCVFold).filter(
             SubmissionOnCVFold.submission == submission).all()
         for submission_on_cv_fold in submission_on_cv_folds:
-            print '\t' + str(submission_on_cv_fold)
+            print '\t\t' + str(submission_on_cv_fold)
 
 
 def print_cv_folds():

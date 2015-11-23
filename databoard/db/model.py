@@ -88,10 +88,11 @@ class User(db.Model):
     twitter_url = db.Column(db.String, default=None)
     facebook_url = db.Column(db.String, default=None)
     google_url = db.Column(db.String, default=None)
-    is_want_news = db.Column(db.Boolean, default=None)
+    is_want_news = db.Column(db.Boolean, default=True)
     access_level = db.Column(db.Enum(
         'admin', 'user', 'asked'), default='asked')  # 'asked' needs approval
-    signup_timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    signup_timestamp = db.Column(
+        db.DateTime, default=datetime.datetime.utcnow())
 
     def __str__(self):
         str_ = 'User({}, admined=['.format(self.name)
@@ -128,7 +129,7 @@ class Team(db.Model):
         'Team', primaryjoin=('Team.acceptor_id == Team.id_'), uselist=False)
 
     creation_timestamp = db.Column(
-        db.DateTime, default=datetime.datetime.utcnow)
+        db.DateTime, default=datetime.datetime.utcnow())
     is_active = db.Column(db.Boolean, default=True)  # ->ramp_teams
 
     def __str__(self):
@@ -180,6 +181,56 @@ class SubmissionFile(db.Model):
             self.name, self.path)
 
 
+def _combine_predictions_list(predictions_list, index_list=None):
+    """Combines predictions by taking the mean of their
+    get_combineable_predictions views. E.g. for regression it is the actual
+    predictions, and for classification it is the probability array (which
+    should be calibrated if we want the best performance). Called both for
+    combining one submission on cv folds (a single model that is trained on
+    different folds) and several models on a single fold.
+    Called by
+    _get_bagging_score : which combines bags of the same model, trained on
+        different folds, on the heldout test set
+    _get_cv_bagging_score : which combines cv-bags of the same model, trained
+        on different folds, on the training set
+    _get_next_best_single_fold : which does one step of the greedy forward
+        selection (of different models) on a single fold
+    _get_combined_predictions_single_fold : which does the full loop of greedy
+        forward selection (of different models), until improvement, on a single
+        fold
+    _get_combined_test_predictions_single_fold : which computes the combination
+        (constructed on the cv valid set) on the holdout test set, on a single
+        fold
+    _get_combined_test_predictions : which combines the foldwise combined
+        and foldwise best test predictions into a single megacombination
+
+    Parameters
+    ----------
+    predictions_list : list of instances of Predictions
+        Each element of the list is an instance of Predictions of a given model
+        on the same data points.
+    index_list : None | list of integers
+        The subset of predictions to be combined. If None, the full set is
+        combined.
+
+    Returns
+    -------
+    combined_predictions : instance of Predictions
+        A predictions instance containing the combined (averaged) predictions.
+    """
+    specific = config.config_object.specific
+
+    if index_list is None:  # we combine the full list
+        index_list = range(len(predictions_list))
+
+    y_comb_list = np.array(
+        [predictions_list[i].y_pred_comb for i in index_list])
+
+    y_comb = np.nanmean(y_comb_list, axis=0)
+    combined_predictions = specific.Predictions(y_pred=y_comb)
+    return combined_predictions
+
+
 class Submission(db.Model):
     """An abstract (untrained) submission."""
 
@@ -194,7 +245,7 @@ class Submission(db.Model):
     name = db.Column(db.String(20), nullable=False)
     hash_ = db.Column(db.String, nullable=False)
     submission_timestamp = db.Column(
-        db.DateTime, default=datetime.datetime.utcnow)
+        db.DateTime, default=datetime.datetime.utcnow())
     training_timestamp = db.Column(db.DateTime)
     scoring_timestamp = db.Column(db.DateTime)
 
@@ -202,6 +253,11 @@ class Submission(db.Model):
     # SubmissionToTrain
     valid_score_cv_bag = db.Column(ScoreType, default=0.0)  # cv
     test_score_cv_bag = db.Column(ScoreType, default=0.0)  # holdout
+    # we store the partial scores so to see the saturation and
+    # overfitting as the number of cv folds grow
+    valid_score_cv_bags = db.Column(NumpyType, default=None)
+    test_score_cv_bags = db.Column(NumpyType, default=None)
+
     contributivity = db.Column(db.Float, default=0.0)
 
     # evaluate right after train/test, so no need for 'scored' states
@@ -212,8 +268,10 @@ class Submission(db.Model):
         default='new')
     is_valid = db.Column(
         db.Boolean, default=True)  # user can delete but we keep
+    # We can forget bad models.
+    # If false, don't combine and set contributivity to zero
     is_to_ensemble = db.Column(
-        db.Boolean, default=True)  # we can forget bad models
+        db.Boolean, default=True)
     notes = db.Column(db.String, default='')  # eg, why is it disqualified
 
     db.UniqueConstraint(team_id, name)  # later also ramp_id
@@ -227,6 +285,16 @@ class Submission(db.Model):
         # We considered using the id, but then it will be given away in the
         # url which is maybe not a good idea.
         self.hash_ = 'm{}'.format(sha_hasher.hexdigest())
+
+    def __str__(self):
+        return 'Submission({}/{})'.format(self.team.name, self.name)
+
+    def __repr__(self):
+        repr = '''Submission(team_name={}, name={}, files={},
+                  state={}, train_time={})'''.format(
+            self.team.name, self.name, self.files,
+            self.state, self.train_time_cv_mean)
+        return repr
 
     @hybrid_property
     def is_public_leaderboard(self):
@@ -280,15 +348,123 @@ class Submission(db.Model):
         submission_path = os.path.join(team_path, self.hash_)
         return team_path, submission_path
 
-    def __str__(self):
-        return 'Submission({}/{})'.format(self.team.name, self.name)
+    def compute_valid_score_cv_bag(self):
+        """Cv-bags cv_fold.valid_predictions using _combine_predictions_list.
+        The predictions in predictions_list[i] belong to those indicated
+        by self.on_cv_folds[i].test_is.
+        """
+        specific = config.config_object.specific
 
-    def __repr__(self):
-        repr = '''Submission(team_name={}, name={}, files={},
-                  state={}, train_time={})'''.format(
-            self.team.name, self.name, self.files,
-            self.state, self.train_time_cv_mean)
-        return repr
+        true_predictions_train = generic.get_true_predictions_train()
+        predictions_list = [submission_on_cv_fold.valid_predictions for
+                            submission_on_cv_fold in self.on_cv_folds]
+        n_samples = true_predictions_train.n_samples
+        y_comb = np.array([specific.Predictions(n_samples=n_samples)
+                           for _ in predictions_list])
+        valid_score_cv_bags = []
+        # We crashed here because smebody output a matrix in predict proba with
+        # 4 times more rows. We should check this in train_test
+        for i, submission_on_cv_fold in enumerate(self.on_cv_folds):
+            test_is = submission_on_cv_fold.cv_fold.test_is
+            y_comb[i].set_valid_in_train(predictions_list[i], test_is)
+            combined_predictions = _combine_predictions_list(y_comb[:i + 1])
+            valid_indexes = combined_predictions.valid_indexes
+            valid_score_cv_bags.append(specific.score(
+                true_predictions_train, combined_predictions, valid_indexes))
+            # XXX maybe use masked arrays rather than passing valid_indexes
+        self.valid_score_cv_bags = valid_score_cv_bags
+        self.valid_score_cv_bag = self.valid_score_cv_bags[-1]
+        db.session.commit()
+
+    def compute_test_score_cv_bag(self):
+        """Bags cv_fold.test_predictions using _combine_predictions_list, and
+        stores the score of the bagged predictor in test_score_cv_bag. The
+        scores of partial combinations are stored in test_score_cv_bags.
+        This is for assessing the bagging learning curve, which is useful for
+        setting the number of cv folds to its optimal value (in case the RAMP
+        is competitive, say, to win a Kaggle challenge; although it's kinda
+        stupid since in those RAMPs we don't have a test file, so the learning
+        curves should be assessed in compute_valid_score_cv_bag on the
+        (cross-)validation sets).
+        """
+        specific = config.config_object.specific
+
+        # When we have submission id in Predictions, we should get the team and
+        # submission from the db
+        true_predictions = generic.get_true_predictions_test()
+        predictions_list = [submission_on_cv_fold.test_predictions for
+                            submission_on_cv_fold in self.on_cv_folds]
+        combined_predictions_list = [
+            _combine_predictions_list(predictions_list[:i + 1]) for
+            i in range(len(predictions_list))]
+        self.test_score_cv_bags = [
+            specific.score(true_predictions, combined_predictions) for
+            combined_predictions in combined_predictions_list]
+        self.test_score_cv_bag = self.test_score_cv_bags[-1]
+        db.session.commit()
+
+    # contributivity could be a property but then we could not query on it
+    def set_contributivity(self):
+        # we share a unit of 1. among folds
+        unit_contributivity = 1. / len(self.on_cv_folds)
+        self.contributivity = 0.0
+        for submission_on_cv_fold in self.on_cv_folds:
+            self.contributivity +=\
+                unit_contributivity * submission_on_cv_fold.contributivity
+
+
+def _get_next_best_single_fold(predictions_list, true_predictions,
+                               best_index_list):
+    """Finds the model that minimizes the score if added to
+    predictions_list[best_index_list]. If there is no model improving the input
+    combination, the input best_index_list is returned. Otherwise the best
+    model is added to the list. We could also return the combined prediction
+    (for efficiency, so the combination would not have to be done each time;
+    right now the algo is quadratic), but I don't think any meaningful
+    rule will be associative, in which case we should redo the combination from
+    scratch each time the set changes. Since now combination = mean, we could
+    maintain the sum and the number of models, but it would be a bit bulky.
+    We'll see how this evolves.
+
+    Parameters
+    ----------
+    predictions_list : list of instances of Predictions
+        Each element of the list is an instance of Predictions of a model
+        on the same (cross-validation valid) data points.
+    true_predictions : instance of Predictions
+        The ground truth.
+    best_index_list : list of integers
+        Indices of the current best model.
+
+    Returns
+    -------
+    best_index_list : list of integers
+        Indices of the models in the new combination. If the same as input,
+        no models wer found improving the score.
+    """
+    specific = config.config_object.specific
+
+    best_predictions = _combine_predictions_list(
+        predictions_list, best_index_list)
+    best_score = specific.score(true_predictions, best_predictions)
+    best_index = -1
+    # Combination with replacement, what Caruana suggests. Basically, if a
+    # model is added several times, it's upweighted, leading to
+    # integer-weighted ensembles
+    for i in range(len(predictions_list)):
+        combined_predictions = _combine_predictions_list(
+            predictions_list, np.append(best_index_list, i))
+        new_score = specific.score(true_predictions, combined_predictions)
+        # new_score = specific.score(pred_true, pred_comb)
+        # '>' is overloaded in score, so 'x > y' means 'x is better than y'
+        if new_score > best_score:
+            best_predictions = combined_predictions
+            best_index = i
+            best_score = new_score
+    if best_index > -1:
+        return np.append(best_index_list, best_index)
+    else:
+        return best_index_list
 
 
 class CVFold(db.Model):
@@ -303,8 +479,61 @@ class CVFold(db.Model):
     test_is = db.Column(NumpyType, nullable=False)
 
     def __repr__(self):
-        repr = 'fold {}'.format(self.train_is)[:15]
+        repr = 'fold {}'.format(self.train_is)[:15],
         return repr
+
+    def compute_contributivity(self, force_ensemble=False):
+        """Constructs the best model combination on a single fold, using greedy
+        forward selection. See
+        http://www.cs.cornell.edu/~caruana/ctp/ct.papers/
+        caruana.icml04.icdm06long.pdf.
+        Then sets foldwise contributivity.
+
+        Parameters
+        ----------
+        force_ensemble : boolean
+            To force include deleted models
+        """
+        # we drop "_on_fold" here from the suffix of all submissions_on_fold
+
+        # The submissions must have is_to_ensemble set to True. It is for
+        # fogetting models. Users can also delete models in which case
+        # we make is_valid false. We then only use these models if
+        # force_ensemble is True.
+        # We can further bag here which should be handled in config (or
+        # ramp table.) Or we could bag in _get_next_best_single_fold
+        selected_submissions = [
+            submission for submission in self.submissions
+            if (submission.submission.is_valid or force_ensemble) and
+            submission.submission.is_to_ensemble
+        ]
+        true_predictions = generic.get_true_predictions_valid(self.test_is)
+        # TODO: maybe this can be simplified. Don't need to get down
+        # to submission level.
+        predictions_list = [submission.valid_predictions
+                            for submission in selected_submissions]
+        valid_scores = [submission.valid_score
+                        for submission in selected_submissions]
+        best_prediction_index = np.argmax(valid_scores)
+        # best_submission = predictions_list[best_prediction_index]
+        best_index_list = np.array([best_prediction_index])
+        improvement = True
+        max_len_best_index_list = 80  # should be a config parameter
+        while improvement and len(best_index_list) < max_len_best_index_list:
+            old_best_index_list = best_index_list
+            best_index_list = _get_next_best_single_fold(
+                predictions_list, true_predictions, best_index_list)
+            improvement = len(best_index_list) != len(old_best_index_list)
+        # reset
+        for submission in selected_submissions:
+            submission.best = False
+            submission.contributivity = 0.0
+        # set
+        selected_submissions[best_index_list[0]].best = True
+        # we share a unit of 1. among the contributive submissions
+        unit_contributivity = 1. / len(best_index_list)
+        for i in best_index_list:
+            selected_submissions[i].contributivity += unit_contributivity
 
 
 # TODO: rename submission to workflow and submitted file to workflow_element
@@ -331,7 +560,11 @@ class SubmissionOnCVFold(db.Model):
     cv_fold_id = db.Column(
         db.Integer, db.ForeignKey('cv_folds.id_'), nullable=False)
     cv_fold = db.relationship(
-        'CVFold', backref=db.backref('submissions_on_cv_fold'))
+        'CVFold', backref=db.backref('submissions'))
+
+    # filled by cv_fold.get_combined_predictions
+    contributivity = db.Column(db.Float, default=0.0)
+    best = db.Column(db.Boolean, default=False)
 
     # prediction on the full training set, including train and valid points
     # properties train_predictions and valid_predictions will make the slicing
@@ -353,8 +586,10 @@ class SubmissionOnCVFold(db.Model):
     db.UniqueConstraint(submission_id, cv_fold_id)
 
     def __repr__(self):
-        repr = 'state = {}, valid_score = {}, test_score = {}'.format(
-            self.state, self.valid_score, self.test_score)
+        repr = 'state = {}, valid_score = {}, test_score = {}, c = {}'\
+            ', best = {}'.format(
+                self.state, self.valid_score, self.test_score,
+                self.contributivity, self.best)
         return repr
 
     @property
@@ -419,7 +654,8 @@ class DetachedSubmissionOnCVFold(object):
     def __init__(self, submission_on_cv_fold):
         self.train_is = submission_on_cv_fold.cv_fold.train_is
         self.test_is = submission_on_cv_fold.cv_fold.test_is
-        self.full_train_predictions = submission_on_cv_fold.full_train_predictions
+        self.full_train_predictions =\
+            submission_on_cv_fold.full_train_predictions
         self.test_predictions = submission_on_cv_fold.test_predictions
         self.state = submission_on_cv_fold.state
         self.name = submission_on_cv_fold.submission.team.name + '/'\
