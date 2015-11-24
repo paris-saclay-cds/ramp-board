@@ -171,15 +171,13 @@ def test_make_submission():
 
 
 # TODO: test all kinds of error states
-def test_train_test_submissions():
-    submissions = db.session.query(Submission).all()
-    for submission in submissions:
-        config.is_parallelize = False
-        db_tools.train_test_submission(submission)
-        #db_tools.train_test_submission(submission)
-        #db_tools.train_test_submission(submission, force_retrain_test=True)
-        #config.is_parallelize = True
-        #db_tools.train_test_submission(submission, force_retrain_test=True)
+def train_test_submissions():
+    config.is_parallelize = False
+    db_tools.train_test_submissions()
+    db_tools.train_test_submissions()
+    db_tools.train_test_submissions(force_retrain_test=True)
+    config.is_parallelize = True
+    db_tools.train_test_submissions(force_retrain_test=True)
 
 
 def test_compute_contributivity():

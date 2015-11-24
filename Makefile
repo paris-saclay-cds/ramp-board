@@ -19,33 +19,33 @@ inplace:
 
 test:
 	nosetests databoard/tests
-	# fab publish_test:iris_local
-	# cd /tmp/databoard_local/databoard_iris_8080; fab test_ramp
+	fab publish_test:iris_local
+	cd /tmp/databoard_iris_8080; fab test_ramp
 
 	# fab publish_test:boston_housing_local
-	# cd /tmp/databoard_local/databoard_boston_housing_8080; fab test_ramp
+	# cd /tmp/databoard_boston_housing_8080; fab test_ramp
 
 test-all: test
 	fab publish_test:amadeus_local
-	cd /tmp/databoard_local/databoard_amadeus_8080; fab test_ramp
+	cd /tmp/databoard_amadeus_8080; fab test_ramp
 
 	fab publish_test:el_nino_bagged_cv_future_local
-	cd /tmp/databoard_local/databoard_el_nino_bagged_cv_future_8080; fab test_ramp
+	cd /tmp/databoard_el_nino_bagged_cv_future_8080; fab test_ramp
 
 	fab publish_test:el_nino_block_cv_local
-	cd /tmp/databoard_local/databoard_el_nino_block_cv_8080; fab test_ramp
+	cd /tmp/databoard_el_nino_block_cv_8080; fab test_ramp
 
 	fab publish_test:kaggle_otto_local
-	cd /tmp/databoard_local/databoard_kaggle_otto_8080; fab test_ramp
+	cd /tmp/databoard_kaggle_otto_8080; fab test_ramp
 
 	fab publish_test:mortality_prediction_local
-	cd /tmp/databoard_local/databoard_mortality_prediction_8080; fab test_ramp
+	cd /tmp/databoard_mortality_prediction_8080; fab test_ramp
 
 	fab publish_test:pollenating_insects_local
-	cd /tmp/databoard_local/databoard_pollenating_insects_8080; fab test_ramp
+	cd /tmp/databoard_pollenating_insects_8080; fab test_ramp
 
 	fab publish_test:variable_stars_local
-	cd /tmp/databoard_local/databoard_variable_stars_8080; fab test_ramp
+	cd /tmp/databoard_variable_stars_8080; fab test_ramp
 
 trailing-spaces:
 	find databoard -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;

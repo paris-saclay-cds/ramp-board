@@ -251,9 +251,9 @@ def add_models():
         _, team_name = os.path.split(deposited_team_path)
         try:
             db_tools.create_user(
-                name=team_name, password='bla', lastname='team_name',
-                firstname='team_name', email='team_name@team_name.com')
-        except NameClashError:  # test user already in db, no problem
+                name=team_name, password='bla', lastname=team_name,
+                firstname=team_name, email=team_name + '@team_name.com')
+        except NameClashError as e:  # test user already in db, no problem
             pass
         deposited_f_name_list = os.listdir(deposited_submission_path)
         submission = db_tools.make_submission(
@@ -277,46 +277,3 @@ def add_models():
             shutil.copy2(src, dst)  # copying also metadata
 
         logger.info("Adding submission={}".format(submission))
-
-        # The rest is the old db, should be deleted once new db is in place
-        model_hash = get_model_hash(team_name, submission_name)
-        submission_times = [
-            os.path.getmtime(os.path.join(
-                deposited_submission_path, submission_file))
-            for submission_file in deposited_f_name_list]
-        submission_time = max(submission_times)
-
-        with shelve_database() as db:
-            # skip if the model is trained, tested, or ignore, otherwise,
-            # replace the entry with a new one
-            if model_hash in db['models'].index:
-                if db['models'].loc[model_hash, 'state'] in \
-                        ['tested', 'trained', 'ignore']:
-                    logger.info("Model is already in database, skipping")
-                    continue
-                elif db['models'].loc[model_hash, 'state'] == 'error':
-                    # if the failed model timestamp has changed
-                    if db['models'].loc[model_hash, 'timestamp'] < \
-                            submission_time:
-                        logger.info("Resubmitting failed model")
-                        # deleting it from the db
-                        db['models'].drop(model_hash, inplace=True)
-                    else:
-                        logger.info("No new submission for failed model")
-                        continue
-                elif db['models'].loc[model_hash, 'state'] == 'new':
-                    # we allow resubmission for new models
-                    db['models'].drop(model_hash, inplace=True)
-                else:
-                    logger.error("You introduced a new state, please handle it")
-
-            # we can now add the new entry
-            new_entry = pd.DataFrame({
-                'team': team_name,
-                'model': submission_name,
-                'timestamp': submission_time,
-                'state': "new",
-                'listing': 'bla',
-            }, index=[model_hash])
-
-            db['models'] = db['models'].append(new_entry)

@@ -18,7 +18,7 @@ private_data_path = os.path.join(data_path, 'private')
 
 cachedir = '.'
 
-is_parallelize = False  # make it False if parallel training is not working
+is_parallelize = True  # make it False if parallel training is not working
 # make it True to use parallelism across machines
 is_parallelize_across_machines = False
 # maximum number of seconds per model training for parallelize across machines
@@ -67,7 +67,7 @@ notification_recipients.append("alexandre.gramfort@gmail.com")
 vd_server = 'onevm-132.lal.in2p3.fr'
 reims_server = 'romeo1.univ-reims.fr'
 vd_root = '/mnt/datacamp'
-local_root = '/tmp/databoard_local'  # for local publishing / testing
+local_root = '/tmp'  # for local publishing / testing
 
 
 class RampConfig(object):

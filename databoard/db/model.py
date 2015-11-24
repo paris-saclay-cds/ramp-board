@@ -168,9 +168,9 @@ class SubmissionFile(db.Model):
     def __init__(self, name, submission):
         self.name = name
         self.submission = submission
-        if not os.path.isfile(self.path):
-            raise MissingSubmissionFile('{}/{}/{}: {}'.format(
-                submission.team.name, submission.name, name, self.path))
+        #if not os.path.isfile(self.path):
+        #    raise MissingSubmissionFile('{}/{}/{}: {}'.format(
+        #        submission.team.name, submission.name, name, self.path))
 
     @hybrid_property
     def path(self):

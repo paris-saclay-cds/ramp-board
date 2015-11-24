@@ -99,12 +99,11 @@ def prepare_data():
     db_tools.add_cv_folds(cv)
 
 
-def setup():
+def test_setup():
     from databoard.db.remove_test_db import recreate_test_db
 
     recreate_test_db()
     prepare_data()
-    clear_db()
     clear_registrants()
     # Flush joblib cache
     clear_cache()
@@ -306,9 +305,10 @@ def test(state=False, tag=None, team=None):
 
 
 def train_test(state=False, tag=None, team=None):
-    from databoard.db.tools import train_valid_and_test_submissions
-
-    train_valid_and_test_submissions()
+    from databoard.db.tools import train_test_submissions
+    from databoard.db.tools import compute_contributivity
+    train_test_submissions()
+    compute_contributivity()
 
 
 def train_test_old(state=False, tag=None, team=None):
@@ -578,7 +578,7 @@ def publish_test(ramp_index):
 
 
 def test_ramp():
-    setup()
+    test_setup()
     add_models()
     train_test()
     # leaderboard(test='True')

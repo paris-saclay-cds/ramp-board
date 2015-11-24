@@ -237,6 +237,12 @@ def make_submission(team_name, name, f_name_list):
     return submission
 
 
+def train_test_submissions(force_retrain_test=False):
+    submissions = db.session.query(Submission).all()
+    for this_submission in submissions:
+        train_test_submission(this_submission, force_retrain_test)
+
+
 # For parallel call
 def train_test_submission(submission, force_retrain_test=False):
     """We do it here so it's dockerizable."""
@@ -250,6 +256,8 @@ def train_test_submission(submission, force_retrain_test=False):
     specific = config.config_object.specific
     X_train, y_train = specific.get_train_data()
     X_test, y_test = specific.get_test_data()
+
+    # Parallel, dict
     if config.is_parallelize:
         # We are using 'threading' so train_test_submission_on_cv_fold
         # updates the detached submission_on_cv_fold objects. If it doesn't
@@ -261,6 +269,7 @@ def train_test_submission(submission, force_retrain_test=False):
                 force_retrain_test)
             for submission_on_cv_fold in detached_submission_on_cv_folds)
     else:
+        # detached_submission_on_cv_folds = []
         for submission_on_cv_fold in detached_submission_on_cv_folds:
             train_test_submission_on_cv_fold(
                 submission_on_cv_fold, X_train, y_train, X_test, y_test,
@@ -418,8 +427,8 @@ def compute_contributivity(force_ensemble=False):
     for cv_fold in cv_folds:
         cv_fold.compute_contributivity(force_ensemble)
     submissions = db.session.query(Submission).all()
-    for submissions in submissions:
-        submissions.set_contributivity()
+    for submission in submissions:
+        submission.set_contributivity()
     db.session.commit()
 
 
