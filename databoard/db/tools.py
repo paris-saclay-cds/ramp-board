@@ -271,6 +271,10 @@ def train_test_submission(submission, force_retrain_test=False):
     submission.training_timestamp = datetime.datetime.utcnow()
     submission.compute_test_score_cv_bag()
     submission.compute_valid_score_cv_bag()
+    states = [submission_on_cv_fold.state
+              for submission_on_cv_fold in submission.on_cv_folds]
+    if all(state in ['tested'] for state in states):
+        submission.state = 'tested'
     db.session.commit()
 
 
@@ -416,6 +420,7 @@ def compute_contributivity(force_ensemble=False):
     submissions = db.session.query(Submission).all()
     for submissions in submissions:
         submissions.set_contributivity()
+    db.session.commit()
 
 
 def get_public_leaderboard():
@@ -429,12 +434,15 @@ def get_public_leaderboard():
     # so first we make the join then we extract the class members,
     # including @property members (that can't be compiled into
     # SQL queries)
+#    submissions_teams = db.session.query(Submission, Team).filter(
+#        Team.id_ == Submission.team_id).filter(
+#        Submission.is_public_leaderboard).all()
     submissions_teams = db.session.query(Submission, Team).filter(
-        Team.id_ == Submission.team_id).filter(
-        Submission.is_public_leaderboard).all()
+        Team.id_ == Submission.team_id).order_by(
+            Submission.valid_score_cv_bag.desc()).all()
     columns = ['team',
                'submission',
-               'valid score',
+               'score',
                'contributivity',
                'train time',
                'test time',
@@ -468,6 +476,7 @@ def print_submissions():
     submissions = db.session.query(Submission).order_by(Submission.id_).all()
     for submission in submissions:
         print submission
+        print('\tstate = {}'.format(submission.state))
         print('\tvalid_score_cv_mean = {0:.2f}'.format(
             submission.valid_score_cv_mean))
         print '\tvalid_score_cv_bag = {0:.2f}'.format(
@@ -480,7 +489,6 @@ def print_submissions():
             float(submission.test_score_cv_bag))
         print '\ttest_score_cv_bags = {}'.format(
             submission.test_score_cv_bags)
-
         print '\tcv folds'
         submission_on_cv_folds = db.session.query(SubmissionOnCVFold).filter(
             SubmissionOnCVFold.submission == submission).all()

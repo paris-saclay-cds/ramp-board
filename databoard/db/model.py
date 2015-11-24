@@ -231,6 +231,12 @@ def _combine_predictions_list(predictions_list, index_list=None):
     return combined_predictions
 
 
+# evaluate right after train/test, so no need for 'scored' states
+submission_states = db.Enum(
+    'new', 'checked', 'checking_error', 'trained', 'training_error',
+    'validated', 'validating_error', 'tested', 'testing_error')
+
+
 class Submission(db.Model):
     """An abstract (untrained) submission."""
 
@@ -260,18 +266,12 @@ class Submission(db.Model):
 
     contributivity = db.Column(db.Float, default=0.0)
 
-    # evaluate right after train/test, so no need for 'scored' states
-    state = db.Column(db.Enum(
-        'new', 'checked', 'trained', 'tested',
-        'train_scored', 'test_scored', 'checking_error', 'training_error',
-        'testing_error', 'unit_testing_error', 'ignore'),
-        default='new')
-    is_valid = db.Column(
-        db.Boolean, default=True)  # user can delete but we keep
+    state = db.Column(submission_states, default='new')
+    # user can delete but we keep
+    is_valid = db.Column(db.Boolean, default=True)
     # We can forget bad models.
     # If false, don't combine and set contributivity to zero
-    is_to_ensemble = db.Column(
-        db.Boolean, default=True)
+    is_to_ensemble = db.Column(db.Boolean, default=True)
     notes = db.Column(db.String, default='')  # eg, why is it disqualified
 
     db.UniqueConstraint(team_id, name)  # later also ramp_id
@@ -298,7 +298,12 @@ class Submission(db.Model):
 
     @hybrid_property
     def is_public_leaderboard(self):
-        return self.is_valid and self.state == 'train_scored'
+        return self.is_valid and self.state in [
+            'trained', 'validated', 'tested']
+
+    @hybrid_property
+    def is_private_leaderboard(self):
+        return self.is_valid and self.state in ['tested']
 
     @property
     def path(self):
@@ -576,10 +581,7 @@ class SubmissionOnCVFold(db.Model):
     train_score = db.Column(ScoreType, default=0.0)
     valid_score = db.Column(ScoreType, default=0.0)
     test_score = db.Column(ScoreType, default=0.0)
-    state = db.Column(db.Enum(
-        'new', 'checked', 'checking_error', 'trained', 'training_error',
-        'validated', 'validating_error', 'tested', 'testing_error'),
-        default='new')
+    state = db.Column(submission_states, default='new')
     error_msg = db.Column(db.String, default='')
 
     # later also ramp_id or data_id

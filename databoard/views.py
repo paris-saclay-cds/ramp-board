@@ -279,9 +279,8 @@ def show_private_leaderboard():
                                new_models=new_html,
                                ramp_title=specific.ramp_title)
 
-
-@app.route('/submissions/<team_name>/<summission_hash>/<f_name>')
-@app.route('/submissions/<team_name>/<summission_hash>/<f_name>/raw')
+@app.route("/submissions/<team_name>/<summission_hash>/<f_name>")
+@app.route("/submissions/<team_name>/<summission_hash>/<f_name>/raw")
 def view_model(team_name, summission_hash, f_name):
     """Rendering submission codes using templates/submission.html. The code of
     f_name is displayed in the left panel, the list of submissions files

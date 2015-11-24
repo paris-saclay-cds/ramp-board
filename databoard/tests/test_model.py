@@ -176,10 +176,10 @@ def test_train_test_submissions():
     for submission in submissions:
         config.is_parallelize = False
         db_tools.train_test_submission(submission)
-        db_tools.train_test_submission(submission)
-        db_tools.train_test_submission(submission, force_retrain_test=True)
-        config.is_parallelize = True
-        db_tools.train_test_submission(submission, force_retrain_test=True)
+        #db_tools.train_test_submission(submission)
+        #db_tools.train_test_submission(submission, force_retrain_test=True)
+        #config.is_parallelize = True
+        #db_tools.train_test_submission(submission, force_retrain_test=True)
 
 
 def test_compute_contributivity():
@@ -198,7 +198,4 @@ def test_print_db():
 def test_leaderboard():
     print '\n'
     print('***************** Leaderboard ****************')
-    submissions = db.session.query(Submission).all()
-    for submission in submissions:
-        submission.state = 'train_scored'
     print db_tools.get_public_leaderboard()
