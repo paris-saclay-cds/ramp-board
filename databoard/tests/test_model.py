@@ -204,3 +204,6 @@ def test_leaderboard():
     print('*********** Leaderboard of kegl ***********')
     print db_tools.get_public_leaderboard(
         user=User.query.filter_by(name='kegl').one())
+    print('*********** Failing submissions of kegl ***********')
+    print db_tools.get_failed_submissions(
+        user=User.query.filter_by(name='kegl').one())

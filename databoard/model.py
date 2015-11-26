@@ -275,6 +275,7 @@ class Submission(db.Model):
     contributivity = db.Column(db.Float, default=0.0)
 
     state = db.Column(submission_states, default='new')
+    error_msg = db.Column(db.String, default='')
     # user can delete but we keep
     is_valid = db.Column(db.Boolean, default=True)
     # We can forget bad models.
@@ -305,15 +306,22 @@ class Submission(db.Model):
         return repr
 
     @hybrid_property
+    def is_error(self):
+        return (self.state == 'training_error') |\
+            (self.state == 'checking_error') |\
+            (self.state == 'validating_error') |\
+            (self.state == 'testing_error')
+
+    @hybrid_property
     def is_public_leaderboard(self):
-        # 'in <list>' doesn't work in hybrid property
-        return self.is_valid and (
-            self.state == 'trained' or self.state == 'validated'
-            or self.state == 'tested')
+        return self.is_valid & (
+            (self.state == 'trained') |
+            (self.state == 'validated') |
+            (self.state == 'tested'))
 
     @hybrid_property
     def is_private_leaderboard(self):
-        return self.is_valid and self.state == 'tested'
+        return self.is_valid & (self.state == 'tested')
 
     @property
     def path(self):
@@ -332,6 +340,11 @@ class Submission(db.Model):
     @property
     def name_with_link(self):
         return '<a href="' + self.files[0].path + '">' + self.name + '</a>'
+
+    @property
+    def state_with_link(self):
+        return '<a href="' + self.path + os.path.sep + 'error.txt"' + '>' +\
+            self.state + '</a>'
 
     @property
     def train_score_cv_mean(self):
@@ -564,7 +577,7 @@ class CVFold(db.Model):
         predictions_list = [submission.valid_predictions
                             for submission in selected_submissions]
         valid_scores = [submission.valid_score
-                       for submission in selected_submissions]
+                        for submission in selected_submissions]
         best_prediction_index = np.argmax(valid_scores)
         # best_submission = predictions_list[best_prediction_index]
         best_index_list = np.array([best_prediction_index])

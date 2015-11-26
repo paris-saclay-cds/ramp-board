@@ -106,11 +106,12 @@ def login():
 @app.route("/user", methods=['GET', 'POST'])
 @fl.login_required
 def user():
-    print current_user
     leaderbord_html = db_tools.get_public_leaderboard(user=current_user)
-    # team_names = [team.name for team in db_tools.get_user_teams(current_user)]
-    return render_template('leaderboard.html', 
+    failed_submissions_html = db_tools.get_failed_submissions(
+        user=current_user)
+    return render_template('leaderboard.html',
                            leaderboard=leaderbord_html,
+                           failed_submissions=failed_submissions_html,
                            ramp_title=config.config_object.specific.ramp_title)
 
 
@@ -123,11 +124,11 @@ def logout():
     return redirect(flask.url_for('login'))
 
 
-@app.route("/teams/<team_name>")
-@fl.login_required
-def team(team_name):
-    return render_template('team.html',
-                           ramp_title=config.config_object.specific.ramp_title)
+# @app.route("/teams/<team_name>")
+# @fl.login_required
+# def team(team_name):
+#     return render_template('team.html',
+#                            ramp_title=config.config_object.specific.ramp_title)
 
 
 @app.route("/leaderboard")
@@ -163,7 +164,7 @@ def view_model(team_name, summission_hash, f_name):
 
     Returns
     -------
-    leaderboard : html string
+     : html string
         The rendered submission.html page.
     """
     specific = config.config_object.specific
@@ -204,6 +205,48 @@ def view_model(team_name, summission_hash, f_name):
         submission_f_names=submission.f_names,
         archive_url=archive_url,
         f_name=f_name,
+        submission_name=submission.name,
+        team_name=team.name,
+        ramp_title=specific.ramp_title)
+
+
+@app.route("/submissions/<team_name>/<summission_hash>/error.txt")
+def view_submission_error(team_name, summission_hash):
+    """Rendering submission codes using templates/submission.html. The code of
+    f_name is displayed in the left panel, the list of submissions files
+    is in the right panel. Clicking on a file will show that file (using
+    the same template). Clicking on the name on the top will download the file
+    itself (managed in the template). Clicking on "Archive" will zip all
+    the submission files and download them (managed here).
+
+
+    Parameters
+    ----------
+    team_name : string
+        The team.name of the submission.
+    summission_hash : string
+        The hash_ of the submission.
+
+    Returns
+    -------
+     : html string
+        The rendered submission_error.html page.
+    """
+    specific = config.config_object.specific
+
+    team = Team.query.filter_by(name=team_name).one()
+    submission = Submission.query.filter_by(
+        team=team, hash_=summission_hash).one()
+    submission_abspath = os.path.abspath(submission.path)
+
+    submission_url = request.path.rstrip('/') + '/raw'
+
+    return render_template(
+        'submission_error.html',
+        error_msg=submission.error_msg,
+        submission_state=submission.state,
+        submission_url=submission_url,
+        submission_f_names=submission.f_names,
         submission_name=submission.name,
         team_name=team.name,
         ramp_title=specific.ramp_title)

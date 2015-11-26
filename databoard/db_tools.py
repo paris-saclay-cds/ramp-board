@@ -221,7 +221,7 @@ def make_submission(team_name, name, f_name_list):
 
             # Updating submission on cv folds
             submission_on_cv_folds = SubmissionOnCVFold.query.filter(
-                    SubmissionOnCVFold.submission == submission).all()
+                SubmissionOnCVFold.submission == submission).all()
             for submission_on_cv_fold in submission_on_cv_folds:
                 # couldn't figure out how to reset to default values
                 db.session.delete(submission_on_cv_fold)
@@ -314,7 +314,7 @@ def train_test_submission_on_cv_fold(submission_on_cv_fold, X_train, y_train,
                                    force_retest=force_retrain_test)
     # When called in a single thread, we don't need the return value,
     # submission_on_cv_fold is modified in place. When called in parallel
-    # multiprocessing mode, however, copies are made when the function is 
+    # multiprocessing mode, however, copies are made when the function is
     # called, so we have to explicitly return the modified object (so it is
     # ercopied into the original object)
     return submission_on_cv_fold
@@ -472,8 +472,7 @@ def get_public_leaderboard(team_name=None, user=None):
             submissions_teams += db.session.query(Submission, Team).filter(
                 Team.id == Submission.team_id).filter(
                 Team.name == team_name).filter(
-                Submission.is_public_leaderboard).filter(
-                Team.name == team_name).order_by(
+                Submission.is_public_leaderboard).order_by(
                 Submission.valid_score_cv_bag.desc()).all()
     else:
         submissions_teams = db.session.query(Submission, Team).filter(
@@ -496,6 +495,44 @@ def get_public_leaderboard(team_name=None, user=None):
                       int(submission.train_time_cv_mean + 0.5),
                       int(submission.valid_time_cv_mean + 0.5),
                       _date_time_format(submission.submission_timestamp)])}
+        for submission, team in submissions_teams
+    ]
+    leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
+    html_params = dict(
+        escape=False,
+        index=False,
+        max_cols=None,
+        max_rows=None,
+        justify='left',
+        classes=['ui', 'blue', 'celled', 'table', 'sortable']
+    )
+    leaderboard_html = leaderboard_df.to_html(**html_params)
+    return leaderboard_html
+
+
+def get_failed_submissions(user):
+    """
+    Returns
+    -------
+    leaderboard_html : html string
+    """
+    submissions_teams = []
+    for team_name in [team.name for team in get_user_teams(user)]:
+        submissions_teams += db.session.query(Submission, Team).filter(
+            Team.id == Submission.team_id).filter(
+            Team.name == team_name).filter(
+            Submission.is_error).order_by(
+            Submission.submission_timestamp).all()
+    columns = ['team',
+               'submission',
+               'submitted at (UTC)',
+               'error']
+    leaderboard_dict_list = [
+        {column: value for column, value in zip(
+            columns, [team.name,
+                      submission.name_with_link,
+                      _date_time_format(submission.submission_timestamp),
+                      submission.state_with_link])}
         for submission, team in submissions_teams
     ]
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
