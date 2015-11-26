@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+
+{% with messages = get_flashed_messages() %}
+
+{% if messages %}
+<div id="formerror" class="ui modal">
+    <div class="header">
+        Login error
+    </div>
+    <div class="content">
+        {% for message in messages %}
+        <div class="description">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    <div class="actions">
+        <div class="ui button">Close</div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(function(){
+        $('#formerror.modal')
+            .modal('setting', 'transition', 'Fade Up')
+            .modal('show')
+        ;
+    });
+</script>
+{% endif %}
+{% endwith %}
+<h3 class="ui horizontal header divider">Login</h3> 
+ <!-- style="padding-bottom: 20px " -->
+<form class="ui form" method="post" action="" name="login">
+    {{ form.hidden_tag() }}
+    <div class="one field">
+        <div class="required field">
+            <label>Username</label>
+            {{ form.user_name(laceholder="username") }}
+            {% for error in form.user_name.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div class="required field">
+            <label>Password</label>
+            {{ form.password(placeholder="password") }}
+            {% for error in form.password.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+<!--        
+        <div class="required field">
+            <label>Remember me</label>
+            {{ form.remember_me }}
+        </div>
+-->
+        <input type="submit" value="Login" class="ui submit button">
+    </div>
+</form>
+{% endblock %}

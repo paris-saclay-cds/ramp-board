@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+
+<h3 class="ui horizontal header divider">My teams</h3> 
+ <!-- style="padding-bottom: 20px " -->
+{% for team_name in team_names %}
+  <h3><a href="{{ url_for('.team', team_name=team_name) }}">{{ team_name }}</a></h3>
+{% endfor %}
+{% endblock %}

@@ -4,10 +4,11 @@ import logging
 import datetime
 import pandas as pd
 from sklearn.externals.joblib import Parallel, delayed
+from databoard import db
 
-from databoard.db.model import db, User, Team, Submission, SubmissionFile,\
-    CVFold, SubmissionOnCVFold, DetachedSubmissionOnCVFold
-from databoard.db.model import NameClashError, MergeTeamError,\
+from databoard.model import User, Team, Submission, SubmissionFile,\
+    CVFold, SubmissionOnCVFold, DetachedSubmissionOnCVFold,\
+    NameClashError, MergeTeamError,\
     DuplicateSubmissionError, max_members_per_team
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
@@ -16,6 +17,7 @@ import databoard.config as config
 
 
 logger = logging.getLogger('databoard')
+pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 
 def _date_time_format(date_time):
@@ -25,7 +27,7 @@ def _date_time_format(date_time):
 ######################### Users ###########################
 
 def get_user_teams(user):
-    teams = db.session.query(Team).all()
+    teams = Team.query.all()
     for team in teams:
         if user in get_team_members(team):
             yield team
@@ -62,17 +64,17 @@ def create_user(name, password, lastname, firstname, email):
         db.session.rollback()
         message = ''
         try:
-            db.session.query(User).filter_by(name=name).one()
+            User.query.filter_by(name=name).one()
             message += 'username is already in use'
         except NoResultFound:
             # We only check for team names if username is not in db
             try:
-                db.session.query(Team).filter_by(name=name).one()
+                Team.query.filter_by(name=name).one()
                 message += 'username is already in use as a team name'
             except NoResultFound:
                 pass
         try:
-            db.session.query(User).filter_by(email=email).one()
+            User.query.filter_by(email=email).one()
             if len(message) > 0:
                 message += ' and '
             message += 'email is already in use'
@@ -82,6 +84,8 @@ def create_user(name, password, lastname, firstname, email):
             raise NameClashError(message)
         else:
             raise e
+    logger.info('Creating {}'.format(user))
+    logger.info('Creating {}'.format(team))
     return user
 
 
@@ -92,7 +96,7 @@ def validate_user(user):
 
 def print_users():
     print('***************** List of users ****************')
-    for user in db.session.query(User).order_by(User.id_):
+    for user in User.query.order_by(User.id):
         print('{} belongs to teams:'.format(user))
         for team in get_user_teams(user):
             print('\t{}'.format(team))
@@ -117,8 +121,8 @@ def get_n_team_members(team):
 
 
 def merge_teams(name, initiator_name, acceptor_name):
-    initiator = db.session.query(Team).filter_by(name=initiator_name).one()
-    acceptor = db.session.query(Team).filter_by(name=acceptor_name).one()
+    initiator = Team.query.filter_by(name=initiator_name).one()
+    acceptor = Team.query.filter_by(name=acceptor_name).one()
     if not initiator.is_active:
         raise MergeTeamError('Merge initiator is not active')
     if not acceptor.is_active:
@@ -140,7 +144,7 @@ def merge_teams(name, initiator_name, acceptor_name):
     # Testing if team (same members) exists under a different name. If the
     # name is the same, we break. If the loop goes through, we add new team.
     members_set = set(members_initiator).union(set(members_acceptor))
-    for team in db.session.query(Team):
+    for team in Team.query:
         if members_set == set(get_team_members(team)):
             if name == team.name:
                 break  # ok, but don't add new team, just set them to inactive
@@ -158,16 +162,17 @@ def merge_teams(name, initiator_name, acceptor_name):
     except IntegrityError as e:
         db.session.rollback()
         try:
-            db.session.query(Team).filter_by(name=name).one()
+            Team.query.filter_by(name=name).one()
             raise NameClashError('team name is already in use')
         except NoResultFound:
             raise e
+    logger.info('Merging {} and {} into {}'.format(initiator, acceptor, team))
     return team
 
 
 def print_active_teams():
     print('***************** List of active teams ****************')
-    for team in db.session.query(Team).filter(Team.is_active):
+    for team in Team.query.filter(Team.is_active):
         print('{} members:'.format(team))
         for member in get_team_members(team):
             print('\t{}'.format(member))
@@ -180,10 +185,10 @@ def make_submission(team_name, name, f_name_list):
     # TODO: to call unit tests on submitted files. Those that are found
     # in the table that describes the workflow. For the rest just check
     # maybe size
-    team = db.session.query(Team).filter_by(name=team_name).one()
-    submission = db.session.query(Submission).filter_by(
+    team = Team.query.filter_by(name=team_name).one()
+    submission = Submission.query.filter_by(
         name=name, team=team).one_or_none()
-    cv_folds = db.session.query(CVFold).all()
+    cv_folds = CVFold.query.all()
     if submission is None:
         submission = Submission(name=name, team=team)
         # Adding submission files
@@ -204,7 +209,7 @@ def make_submission(team_name, name, f_name_list):
             submission.state = 'new'
             # Updating existing files or adding new if not in list
             for f_name in f_name_list:
-                submission_file = db.session.query(SubmissionFile).filter_by(
+                submission_file = SubmissionFile.query.filter_by(
                     name=f_name, submission=submission).one_or_none()
                 if submission_file is None:
                     submission_file = SubmissionFile(
@@ -215,8 +220,7 @@ def make_submission(team_name, name, f_name_list):
                 # allowing partial resubmission
 
             # Updating submission on cv folds
-            submission_on_cv_folds = db.session.query(
-                SubmissionOnCVFold).filter(
+            submission_on_cv_folds = SubmissionOnCVFold.query.filter(
                     SubmissionOnCVFold.submission == submission).all()
             for submission_on_cv_fold in submission_on_cv_folds:
                 # couldn't figure out how to reset to default values
@@ -238,9 +242,8 @@ def make_submission(team_name, name, f_name_list):
 
 
 def train_test_submissions(force_retrain_test=False):
-    submissions = db.session.query(Submission).all()
-    for this_submission in submissions:
-        train_test_submission(this_submission, force_retrain_test)
+    for submission in Submission.query.all():
+        train_test_submission(submission, force_retrain_test)
 
 
 # For parallel call
@@ -278,12 +281,9 @@ def train_test_submission(submission, force_retrain_test=False):
             zip(detached_submission_on_cv_folds, submission.on_cv_folds):
         submission_on_cv_fold.update(detached_submission_on_cv_fold)
     submission.training_timestamp = datetime.datetime.utcnow()
+    submission.set_state_after_training()
     submission.compute_test_score_cv_bag()
     submission.compute_valid_score_cv_bag()
-    states = [submission_on_cv_fold.state
-              for submission_on_cv_fold in submission.on_cv_folds]
-    if all(state in ['tested'] for state in states):
-        submission.state = 'tested'
     db.session.commit()
 
 
@@ -309,8 +309,9 @@ def train_test_submission_on_cv_fold(submission_on_cv_fold, X_train, y_train,
                                      X_test, y_test, force_retrain_test=False):
     train_submission_on_cv_fold(submission_on_cv_fold, X_train, y_train,
                                 force_retrain=force_retrain_test)
-    test_submission_on_cv_fold(submission_on_cv_fold, X_test, y_test,
-                               force_retest=force_retrain_test)
+    if 'error' not in submission_on_cv_fold.state:
+        test_submission_on_cv_fold(submission_on_cv_fold, X_test, y_test,
+                                   force_retest=force_retrain_test)
     # When called in a single thread, we don't need the return value,
     # submission_on_cv_fold is modified in place. When called in parallel
     # multiprocessing mode, however, copies are made when the function is 
@@ -355,10 +356,19 @@ def train_submission_on_cv_fold(submission_on_cv_fold, X, y,
     logger.info('Validating {}'.format(submission_on_cv_fold))
     start = timeit.default_timer()
     try:
-        submission_on_cv_fold.full_train_predictions =\
-            specific.test_submission(
-                submission_on_cv_fold.trained_submission, X, range(len(y)))
-        submission_on_cv_fold.state = 'validated'
+        predictions = specific.test_submission(
+            submission_on_cv_fold.trained_submission, X, range(len(y)))
+        if predictions.n_samples == len(y):
+            submission_on_cv_fold.full_train_predictions = predictions
+            submission_on_cv_fold.state = 'validated'
+        else:
+            submission_on_cv_fold.error_msg = 'Wrong output dimension in ' +\
+                'predict: {} instead of {}'.format(
+                    predictions.n_samples, len(y))
+            submission_on_cv_fold.state = 'validating_error'
+            logger.error(
+                'Validating {} failed with exception: \n{}'.format(
+                    submission_on_cv_fold.error_msg))
     except Exception, e:
         submission_on_cv_fold.state = 'validating_error'
         log_msg, submission_on_cv_fold.error_msg = _make_error_message(e)
@@ -367,7 +377,7 @@ def train_submission_on_cv_fold(submission_on_cv_fold, X, y,
                 submission_on_cv_fold, log_msg))
         return
     end = timeit.default_timer()
-    submission_on_cv_fold.valid_time = end - start
+    submission_on_cv_fold.validtime = end - start
 
 
 def test_submission_on_cv_fold(submission_on_cv_fold, X, y,
@@ -386,16 +396,25 @@ def test_submission_on_cv_fold(submission_on_cv_fold, X, y,
     logger.info('Testing {}'.format(submission_on_cv_fold))
     start = timeit.default_timer()
     try:
-        submission_on_cv_fold.test_predictions = specific.test_submission(
+        predictions = specific.test_submission(
             submission_on_cv_fold.trained_submission, X, range(len(y)))
-        submission_on_cv_fold.state = 'tested'
+        if predictions.n_samples == len(y):
+            submission_on_cv_fold.test_predictions = predictions
+            submission_on_cv_fold.state = 'tested'
+        else:
+            submission_on_cv_fold.error_msg = 'Wrong output dimension in ' +\
+                'predict: {} instead of {}'.format(
+                    predictions.n_samples, len(y))
+            submission_on_cv_fold.state = 'testing_error'
+            logger.error(
+                'Testing {} failed with exception: \n{}'.format(
+                    submission_on_cv_fold.error_msg))
     except Exception, e:
         submission_on_cv_fold.state = 'testing_error'
         log_msg, submission_on_cv_fold.error_msg = _make_error_message(e)
         logger.error(
             'Testing {} failed with exception: \n{}'.format(
                 submission_on_cv_fold, log_msg))
-        raise e
         return
     end = timeit.default_timer()
     submission_on_cv_fold.test_time = end - start
@@ -410,7 +429,6 @@ def compute_contributivity(force_ensemble=False):
         To force include deleted models.
     """
     logger.info('Combining models')
-    cv_folds = db.session.query(CVFold).all()
     # The following should go into config, we'll get there when we have a
     # lot of models.
     # One of Caruana's trick: bag the models
@@ -424,15 +442,14 @@ def compute_contributivity(force_ensemble=False):
     # It would also make more sense to bag differently in eah fold, see the
     # comment in cv_fold.get_combined_predictions
 
-    for cv_fold in cv_folds:
+    for cv_fold in CVFold.query.all():
         cv_fold.compute_contributivity(force_ensemble)
-    submissions = db.session.query(Submission).all()
-    for submission in submissions:
+    for submission in Submission.query.all():
         submission.set_contributivity()
     db.session.commit()
 
 
-def get_public_leaderboard():
+def get_public_leaderboard(team_name=None, user=None):
     """
     Returns
     -------
@@ -443,11 +460,25 @@ def get_public_leaderboard():
     # so first we make the join then we extract the class members,
     # including @property members (that can't be compiled into
     # SQL queries)
-#    submissions_teams = db.session.query(Submission, Team).filter(
-#        Team.id_ == Submission.team_id).filter(
-#        Submission.is_public_leaderboard).all()
-    submissions_teams = db.session.query(Submission, Team).filter(
-        Team.id_ == Submission.team_id).order_by(
+    if team_name is not None:
+        submissions_teams = db.session.query(Submission, Team).filter(
+            Team.id == Submission.team_id).filter(
+            Submission.is_public_leaderboard).filter(
+            Team.name == team_name).order_by(
+            Submission.valid_score_cv_bag.desc()).all()
+    elif user is not None:
+        submissions_teams = []
+        for team_name in [team.name for team in get_user_teams(user)]:
+            submissions_teams += db.session.query(Submission, Team).filter(
+                Team.id == Submission.team_id).filter(
+                Team.name == team_name).filter(
+                Submission.is_public_leaderboard).filter(
+                Team.name == team_name).order_by(
+                Submission.valid_score_cv_bag.desc()).all()
+    else:
+        submissions_teams = db.session.query(Submission, Team).filter(
+            Team.id == Submission.team_id).filter(
+            Submission.is_public_leaderboard).order_by(
             Submission.valid_score_cv_bag.desc()).all()
     columns = ['team',
                'submission',
@@ -482,8 +513,7 @@ def get_public_leaderboard():
 
 def print_submissions():
     print('***************** List of submissions ****************')
-    submissions = db.session.query(Submission).order_by(Submission.id_).all()
-    for submission in submissions:
+    for submission in Submission.query.order_by(Submission.id).all():
         print submission
         print('\tstate = {}'.format(submission.state))
         print('\tvalid_score_cv_mean = {0:.2f}'.format(
@@ -507,8 +537,7 @@ def print_submissions():
 
 def print_cv_folds():
     print('***************** CV folds ****************')
-    cv_folds = db.session.query(CVFold).all()
-    for i, cv_fold in enumerate(cv_folds):
+    for i, cv_fold in enumerate(CVFold.query.all()):
         print i, cv_fold
 
 

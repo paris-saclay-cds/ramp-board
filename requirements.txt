@@ -6,9 +6,14 @@ Fabric>=1.10.1
 GitPython>=0.3.6
 Flask>=0.10.1
 Flask-Shelve>=0.1.1
+Flask-Login>=0.3.2
+Flask-Openid>=1.2.5
 Flask-Mail>=0.9.1
 Flask-SQLAlchemy>=2.1
+Flask-Wtf>=0.12
+Flask-Migrate>=1.6.0
 sqlalchemy>=1.0.9
+sqlalchemy-migrate>=0.10.0
 theano
 lasagne
 nolearn

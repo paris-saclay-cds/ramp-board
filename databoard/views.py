@@ -4,33 +4,33 @@ import os
 import logging
 import os.path
 import datetime
-import pandas as pd
 
 from git import Repo
 from zipfile import ZipFile
-from collections import namedtuple
-from flask import (
-    request,
-    redirect,
-    url_for,
-    render_template,
-    send_from_directory,
-    flash,
-    jsonify,
-)
+from flask import request, redirect, url_for, render_template,\
+    send_from_directory, flash, session, g
+from flask.ext.login import current_user, login_required
+from sqlalchemy.orm.exc import NoResultFound
 
-from databoard import app
-# from databoard.model import columns, ModelState
-from databoard.model import shelve_database
+import flask
+import flask.ext.login as fl
+from databoard import app, db, login_manager
 from databoard.generic import changedir
 from databoard.config import repos_path
 import databoard.config as config
-import databoard.db.tools as db_tools
+import databoard.db_tools as db_tools
+from databoard.model import User, Team, Submission
+from databoard.forms import LoginForm
+#from app import app, db, lm, oid
 
 app.secret_key = os.urandom(24)
-pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 logger = logging.getLogger('databoard')
+
+
+@login_manager.user_loader
+def load_user(id):
+    return User.query.get(int(id))
 
 
 def model_with_link(path_model):
@@ -57,39 +57,85 @@ def error_local_to_url(path):
 
 
 def timestamp_to_time(timestamp):
-    return datetime.datetime.fromtimestamp(int(timestamp)).strftime('%Y-%m-%d %H:%M:%S')
+    return datetime.datetime.fromtimestamp(int(timestamp)).strftime(
+        '%Y-%m-%d %H:%M:%S')
+
+# TODO: get_auth_token() 
+# https://flask-login.readthedocs.org/en/latest/#flask.ext.login.LoginManager.user_loader
 
 
-@app.route("/")
-@app.route("/register")
-def list_teams_repos():
-    specific = config.config_object.specific
+@app.before_request
+def before_request():
+    g.user = current_user  # so templates can access user
 
-    RepoInfo = namedtuple('RepoInfo', 'name url')
-    dir_list = filter(lambda x: not os.path.basename(x).startswith(
-        '.'), os.listdir(repos_path))
-    get_repo_url = lambda f: Repo(os.path.join(
-        repos_path, f)).config_reader().get_value('remote "origin"', 'url')
 
-    repo_list = []
-    for f in dir_list:
+@app.route("/", methods=['GET', 'POST'])
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    # If there is already a user logged in, don't let another log in
+    if current_user.is_authenticated:
+        session['logged_in'] = True
+        return redirect(url_for('user'))
+
+    form = LoginForm()
+    if form.validate_on_submit():
         try:
-            repo_list.append(RepoInfo(f, get_repo_url(f)))
-        except Exception as e:
-            logger.error(
-                'Error when listing the repository: {}\n{}'.format(f, e))
-    return render_template('list.html', submodules=repo_list, 
-                           ramp_title=specific.ramp_title)
+            user = User.query.filter_by(name=form.user_name.data).one()
+        except NoResultFound:
+            flask.flash('{} does not exist.'.format(form.user_name.data))
+            return flask.redirect(flask.url_for('login'))
+        if not db_tools.check_password(
+                form.password.data, user.hashed_password):
+            flask.flash('Wrong password')
+            return flask.redirect(flask.url_for('login'))
+        fl.login_user(user)  # , remember=form.remember_me.data)
+        session['logged_in'] = True
+        logger.info('{} is logged in'.format(current_user))
+        # next = flask.request.args.get('next')
+        # next_is_valid should check if the user has valid
+        # permission to access the `next` url
+        #if not fl.next_is_valid(next):
+        #    return flask.abort(400)
+
+        return flask.redirect(flask.url_for('user'))
+    return render_template('login.html',
+                           ramp_title=config.config_object.specific.ramp_title,
+                           form=form)
+
+
+@app.route("/user", methods=['GET', 'POST'])
+@fl.login_required
+def user():
+    print current_user
+    leaderbord_html = db_tools.get_public_leaderboard(user=current_user)
+    # team_names = [team.name for team in db_tools.get_user_teams(current_user)]
+    return render_template('leaderboard.html', 
+                           leaderboard=leaderbord_html,
+                           ramp_title=config.config_object.specific.ramp_title)
+
+
+@app.route("/logout")
+@fl.login_required
+def logout():
+    session['logged_in'] = False
+    logger.info('{} is logged out'.format(current_user))
+    fl.logout_user()
+    return redirect(flask.url_for('login'))
+
+
+@app.route("/teams/<team_name>")
+@fl.login_required
+def team(team_name):
+    return render_template('team.html',
+                           ramp_title=config.config_object.specific.ramp_title)
 
 
 @app.route("/leaderboard")
 def show_leaderboard():
-    specific = config.config_object.specific
-
     leaderbord_html = db_tools.get_public_leaderboard()
     return render_template(
         'leaderboard.html', leaderboard=leaderbord_html,
-        ramp_title=specific.ramp_title)
+        ramp_title=config.config_object.specific.ramp_title)
 
 
 # TODO: private leaderboard
@@ -120,11 +166,10 @@ def view_model(team_name, summission_hash, f_name):
     leaderboard : html string
         The rendered submission.html page.
     """
-    from databoard.db.model import db, Team, Submission
     specific = config.config_object.specific
 
-    team = db.session.query(Team).filter_by(name=team_name).one()
-    submission = db.session.query(Submission).filter_by(
+    team = Team.query.filter_by(name=team_name).one()
+    submission = Submission.query.filter_by(
         team=team, hash_=summission_hash).one()
     submission_abspath = os.path.abspath(submission.path)
     archive_filename = 'archive.zip'

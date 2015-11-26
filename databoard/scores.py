@@ -103,6 +103,7 @@ class Accuracy(ScoreFunction):
         return ScoreHigherTheBetter(
             accuracy_score(y_true_label_index, y_pred_label_index), self.eps)
 
+    @property
     def zero(self):
         return ScoreHigherTheBetter(0.0, self.eps)
 
@@ -121,6 +122,7 @@ class Error(ScoreFunction):
             1 - accuracy_score(y_true_label_index, y_pred_label_index),
             self.eps)
 
+    @property
     def zero(self):
         return ScoreLowerTheBetter(0.0, self.eps)
 
@@ -150,6 +152,7 @@ class NegativeLogLikelihood(ScoreFunction):
         score = np.mean(scores)
         return ScoreLowerTheBetter(score)
 
+    @property
     def zero(self):
         return ScoreLowerTheBetter(0.0, self.eps)
 
@@ -166,5 +169,6 @@ class RMSE(ScoreFunction):
         score = np.sqrt(np.mean(np.square(y_true - y_pred)))
         return ScoreLowerTheBetter(score)
 
+    @property
     def zero(self):
         return ScoreLowerTheBetter(0.0, self.eps)

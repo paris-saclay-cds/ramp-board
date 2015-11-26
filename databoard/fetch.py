@@ -12,11 +12,13 @@ import pandas as pd
 from flask_mail import Mail
 from flask_mail import Message
 
-from . import app
-from databoard.model import shelve_database, columns
-from databoard.config import notification_recipients, submissions_path, repos_path
-from databoard.config import deposited_submissions_path
+from databoard import app
+from databoard.model_shelve import shelve_database, columns
+from databoard.config import notification_recipients, submissions_path,\
+    repos_path, deposited_submissions_path
 import databoard.config as config
+from databoard.model import NameClashError
+import databoard.db_tools as db_tools
 
 logger = logging.getLogger('databoard')
 
@@ -234,10 +236,6 @@ def fetch_models():
         logger.debug('No new submission.')
 
 
-from databoard.db.model import NameClashError
-import databoard.db.tools as db_tools
-
-
 def add_models():
     deposited_submission_paths = sorted(
         glob.glob(os.path.join(deposited_submissions_path, '*/*')))
@@ -253,7 +251,7 @@ def add_models():
             db_tools.create_user(
                 name=team_name, password='bla', lastname=team_name,
                 firstname=team_name, email=team_name + '@team_name.com')
-        except NameClashError as e:  # test user already in db, no problem
+        except NameClashError:  # test user already in db, no problem
             pass
         deposited_f_name_list = os.listdir(deposited_submission_path)
         submission = db_tools.make_submission(

@@ -27,6 +27,12 @@
               <div class="three wide column">
                 <h2 class="ui orange header">{{ ramp_title }}</h2>
               </div>
+              <div class="three wide column">
+                {% if session.logged_in %}
+                  <a href="{{ url_for('user') }}">{{ current_user.name }}</a><BR>
+                  <a href="{{ url_for('logout') }}">log out</a>
+                {% endif %}
+                </div>  
             </div>
             <!-- <div class="ui menu">
               <a class="active item">

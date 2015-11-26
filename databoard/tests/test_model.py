@@ -1,13 +1,14 @@
 import os
+
 import databoard.config as config
 from numpy.testing import assert_array_equal
-from databoard.db.model import db, NameClashError, MergeTeamError,\
-    MissingSubmissionFile
-from databoard.db.model import Team, Submission, CVFold
-import databoard.db.tools as db_tools
+from databoard import db
+from databoard.model import NameClashError, MergeTeamError,\
+    MissingSubmissionFile, Team, Submission, CVFold, User
+import databoard.db_tools as db_tools
 
 
-from databoard.db.remove_test_db import recreate_test_db
+from databoard.remove_test_db import recreate_test_db
 
 
 def test_recreate_test_db():
@@ -76,8 +77,8 @@ def test_merge_teams():
 
     # simulating that in a new ramp single-user teams are active again, so
     # they can try to re-form eisting teams
-    db.session.query(Team).filter_by(name='akazakci').one().is_active = True
-    db.session.query(Team).filter_by(name='mcherti').one().is_active = True
+    Team.query.filter_by(name='akazakci').one().is_active = True
+    Team.query.filter_by(name='mcherti').one().is_active = True
     db.session.commit()
     try:
         db_tools.merge_teams(
@@ -91,8 +92,8 @@ def test_merge_teams():
     db_tools.merge_teams(
         name='mchezakci', initiator_name='akazakci', acceptor_name='mcherti')
 
-    db.session.query(Team).filter_by(name='akazakci').one().is_active = False
-    db.session.query(Team).filter_by(name='mcherti').one().is_active = False
+    Team.query.filter_by(name='akazakci').one().is_active = False
+    Team.query.filter_by(name='mcherti').one().is_active = False
     db.session.commit()
 
 
@@ -132,26 +133,25 @@ def test_make_submission():
     db_tools.make_submission('kemfort', 'rf', ['classifier.py'])
     db_tools.make_submission('mchezakci', 'rf', ['classifier.py'])
     db_tools.make_submission('kemfort', 'rf2', ['classifier.py'])
+    db_tools.make_submission('kemfort', 'training_error', ['classifier.py'])
+    db_tools.make_submission('kemfort', 'validating_error', ['classifier.py'])
     db_tools.print_submissions()
 
     # resubmitting 'new' is OK
     db_tools.make_submission('kemfort', 'rf', ['classifier.py'])
 
-    team = db.session.query(Team).filter_by(name='kemfort').one()
-    submission = db.session.query(Submission).filter_by(
-        team=team, name='rf').one()
+    team = Team.query.filter_by(name='kemfort').one()
+    submission = Submission.query.filter_by(team=team, name='rf').one()
 
     submission.state = 'training_error'
     db.session.commit()
     # resubmitting 'error' is OK
-    db_tools.make_submission(
-        'kemfort', 'rf', ['classifier.py'])
+    db_tools.make_submission('kemfort', 'rf', ['classifier.py'])
 
     submission.state = 'testing_error'
     db.session.commit()
     # resubmitting 'error' is OK
-    db_tools.make_submission(
-        'kemfort', 'rf', ['classifier.py'])
+    db_tools.make_submission('kemfort', 'rf', ['classifier.py'])
 
     submission.state = 'trained'
     db.session.commit()
@@ -167,7 +167,9 @@ def test_make_submission():
     try:
         db_tools.make_submission('kemfort', 'rf', ['feature_extractor.py'])
     except MissingSubmissionFile as e:
-        assert e.value == 'kemfort/rf/feature_extractor.py: ./test_submissions/kemfort/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae/feature_extractor.py'
+        assert e.value == 'kemfort/rf/feature_extractor.py: ' +\
+            './test_submissions/kemfort/' +\
+            'm3af2c986ca68d1598e93f653c0c0ae4b5e3449ae/feature_extractor.py'
 
 
 # TODO: test all kinds of error states
@@ -197,3 +199,8 @@ def test_leaderboard():
     print '\n'
     print('***************** Leaderboard ****************')
     print db_tools.get_public_leaderboard()
+    print('*********** Leaderboard of kemfort ***********')
+    print db_tools.get_public_leaderboard(team_name='kemfort')
+    print('*********** Leaderboard of kegl ***********')
+    print db_tools.get_public_leaderboard(
+        user=User.query.filter_by(name='kegl').one())

@@ -44,8 +44,8 @@ def clear_cache():
 
 
 def clear_db():
-    from databoard.model import columns
-    from databoard.model import shelve_database
+    from databoard.model_shelve import columns
+    from databoard.model_shelve import shelve_database
 
     logger.info('Clearing the database.')
     with shelve_database('c') as db:
@@ -87,7 +87,7 @@ def clear_pred_files():
 
 def prepare_data():
     import databoard.config as config
-    import databoard.db.tools as db_tools
+    import databoard.db_tools as db_tools
     specific = config.config_object.specific
 
     # Preparing the data set, typically public train/private held-out test cut
@@ -100,7 +100,7 @@ def prepare_data():
 
 
 def test_setup():
-    from databoard.db.remove_test_db import recreate_test_db
+    from databoard.remove_test_db import recreate_test_db
 
     recreate_test_db()
     prepare_data()
@@ -111,7 +111,7 @@ def test_setup():
 
 
 def print_db(table='models', state=None):
-    from databoard.model import shelve_database
+    from databoard.model_shelve import shelve_database
 
     with shelve_database('c') as db:
         if table not in db:
@@ -144,64 +144,9 @@ def repeat_fetch(delay='60'):
         time.sleep(delay)
 
 
-def leaderboard(which='all', test='False'):
-    test = strtobool(test)
-
-    import databoard.db.tools as db_tools
-    from databoard.db.model import db, Submission
-    #submissions = db.session.query(Submission).filter(
-    #    Submission.state == 'trained').all()
-    submissions = db.session.query(Submission).all()
-    db_tools.set_train_times(submissions)
-    if test:
-        submissions = db.session.query(Submission).filter(
-            Submission.state == 'tested').all()
-        db_tools.set_test_times(submissions)
-
-    from databoard.model import shelve_database
-    from databoard.leaderboard import (
-        leaderboard_classical,
-        leaderboard_combination,
-        leaderboard_execution_times,
-    )
-
-    with shelve_database() as db:
-        submissions = db['models']
-        trained_models = submissions[
-            np.any([submissions['state'] == "test_error",
-                    submissions['state'] == "trained",
-                    submissions['state'] == "tested"], axis=0)]
-        tested_models = submissions[submissions['state'] == "tested"]
-        pd.set_option('display.max_rows', len(trained_models))
-        print trained_models
-
-    if which in ('all', 'classical'):
-        l1 = leaderboard_classical(trained_models)
-        # The following assignments only work because
-        # leaderboard_classical & co are idempotent.
-        # FIXME (potentially)
-        with shelve_database() as db:
-            db['leaderboard1'] = l1
-            if test:
-                l_test = leaderboard_classical(tested_models, subdir="test")
-                db['leaderboard_classical_test'] = l_test
-
-    if which in ('all', 'combined'):
-        l2 = leaderboard_combination(trained_models, test)
-        # FIXME: same as above
-        with shelve_database() as db:
-            db['leaderboard2'] = l2
-
-    if which in ('all', 'times'):
-        l_times = leaderboard_execution_times(trained_models)
-        # FIXME: same as above
-        with shelve_database() as db:
-            db['leaderboard_execution_times'] = l_times
-
-
 def check(state=False, tag=None, team=None):
     from databoard.train_test import check_models
-    from databoard.model import shelve_database
+    from databoard.model_shelve import shelve_database
 
     with shelve_database() as db:
         models = db['models']
@@ -236,7 +181,7 @@ def check(state=False, tag=None, team=None):
 
 def train(state=False, tag=None, team=None):
     from databoard.train_test import train_and_valid_models
-    from databoard.model import shelve_database
+    from databoard.model_shelve import shelve_database
 
     with shelve_database() as db:
         models = db['models']
@@ -271,7 +216,7 @@ def train(state=False, tag=None, team=None):
 
 def test(state=False, tag=None, team=None):
     from databoard.train_test import test_submissions
-    from databoard.model import shelve_database
+    from databoard.model_shelve import shelve_database
 
     with shelve_database() as db:
         models = db['models']
@@ -305,45 +250,12 @@ def test(state=False, tag=None, team=None):
 
 
 def train_test(state=False, tag=None, team=None):
-    from databoard.db.tools import train_test_submissions
-    from databoard.db.tools import compute_contributivity
+    from databoard.db_tools import train_test_submissions
+    from databoard.db_tools import compute_contributivity
     train_test_submissions()
     compute_contributivity()
 
 
-def train_test_old(state=False, tag=None, team=None):
-    from databoard.train_test import train_valid_and_test_submissions
-    from databoard.model import shelve_database
-
-    with shelve_database() as db:
-        models = db['models']
-
-    if tag is not None:
-        models = models[models.model == tag]
-        state = 'all'  # force train all the selected models
-        if len(models) == 0:
-            print('No existing model with the tag: {}'.format(tag))
-            return
-
-    if team is not None:
-        models = models[models.team == team]
-        state = 'all'  # force train all the selected models
-        if len(models) == 0:
-            print('No existing model with the team: {}'.format(tag))
-            return
-
-    if not state:
-        state = 'new'
-
-    if state != 'all':
-        models = models[models.state == state]
-
-    train_valid_and_test_submissions(models)
-
-    idx = models.index
-
-    with shelve_database() as db:
-        db['models'].loc[idx, :] = models
 
 
 def change_state(from_state, to_state):
@@ -359,7 +271,7 @@ def change_state(from_state, to_state):
 
 
 def set_state(team, tag, state):
-    from databoard.model import shelve_database
+    from databoard.model_shelve import shelve_database
 
     with shelve_database() as db:
         models = db['models']
@@ -578,7 +490,10 @@ def publish_test(ramp_index):
 
 
 def test_ramp():
+    from databoard.tests.test_model import test_create_user, test_merge_teams
     test_setup()
-    add_models()
+    test_create_user()  # kegl, agramfort, akazakci, mcherti, pwd = 'bla'
+    test_merge_teams()  # kemfort, mkezakci
+    add_models()  # will create user and team 'test'
     train_test()
     # leaderboard(test='True')

@@ -1,23 +1,20 @@
 import logging
 
 from flask import Flask
+from flask.ext.login import LoginManager
+from flask.ext.sqlalchemy import SQLAlchemy
 from logging.handlers import SMTPHandler  # noqa
 
 __version__ = '0.1.dev'
 
+
 app = Flask('databoard')
-
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_DEBUG'] = app.debug
-app.config['MAIL_USERNAME'] = 'databoardmailer@gmail.com'
-app.config['MAIL_PASSWORD'] = 'peace27man'
-app.config['MAIL_DEFAULT_SENDER'] = ('Databoard', 'databoardmailer@gmail.com')
-app.config['MAIL_RECIPIENTS'] = ''  # notification_recipients
-app.config['LOG_FILENAME'] = None  # if None, output to screen
-
+app.config.from_object('databoard.config')
 # app.debug_mode = True
+db = SQLAlchemy(app)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 # if app.debug:
 logging.basicConfig(
@@ -42,3 +39,5 @@ logging.basicConfig(
 #     logger = logging.getLogger('databoard')
 #     logger.setLevel(logging.ERROR)
 #     logger.addHandler(mail_handler)
+
+from databoard import views, model  # noqa

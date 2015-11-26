@@ -4,8 +4,6 @@ from importlib import import_module
 root_path = '.'
 
 # paths
-db_path = os.path.join(os.getcwd(), 'db')
-db_f_name = os.path.join(db_path, 'test.db')
 repos_path = os.path.join(root_path, 'git_submissions')
 ground_truth_path = os.path.join(root_path, 'ground_truth')
 submissions_d_name = 'submissions'
@@ -214,3 +212,22 @@ with open("ramp_index.txt") as f:
     ramp_index = f.readline()
 
 config_object = ramps_configs[ramp_index]
+
+db_path = os.path.join(os.getcwd(), 'db')
+db_f_name = os.path.join(db_path, 'databoard.db')
+db_migrate_dir = os.path.join(db_path, 'db_repository')
+MAIL_SERVER = 'smtp.gmail.com'
+MAIL_PORT = 587
+MAIL_USE_TLS = True
+MAIL_DEBUG = False
+MAIL_USERNAME = 'databoardmailer@gmail.com'
+MAIL_PASSWORD = 'peace27man'
+MAIL_DEFAULT_SENDER = ('Databoard', 'databoardmailer@gmail.com')
+MAIL_RECIPIENTS = ''  # notification_recipients
+LOG_FILENAME = None  # if None, output to screen
+WTF_CSRF_ENABLED = True
+SECRET_KEY = 'eroigudsfojbn;lk'
+SQLALCHEMY_TRACK_MODIFICATIONS = True
+SQLALCHEMY_DATABASE_URI = 'sqlite:///' + db_f_name
+SQLALCHEMY_MIGRATE_REPO = db_migrate_dir
+
