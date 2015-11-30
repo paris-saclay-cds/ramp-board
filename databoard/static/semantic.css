@@ -307,7 +307,7 @@ select,
 textarea {
   color: inherit;
   /* 1 */
-  font: inherit;
+  font: Monaco;
   /* 2 */
   margin: 0;
   /* 3 */

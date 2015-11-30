@@ -253,25 +253,5 @@ def add_models():
                 firstname=team_name, email=team_name + '@team_name.com')
         except NameClashError:  # test user already in db, no problem
             pass
-        deposited_f_name_list = os.listdir(deposited_submission_path)
-        submission = db_tools.make_submission(
-            team_name, submission_name, deposited_f_name_list)
-        team_path, submission_path = submission.get_paths()
-
-        if not os.path.exists(team_path):
-            os.mkdir(team_path)
-        open(os.path.join(team_path, '__init__.py'), 'a').close()
-        # clean up the model directory in case it's a resubmission
-        if os.path.exists(submission_path):
-            shutil.rmtree(submission_path)
-        os.mkdir(submission_path)
-        open(os.path.join(submission_path, '__init__.py'), 'a').close()
-
-        # copy the submission files into the model directory, should all this
-        # probably go to Submission
-        for submission_f_name in deposited_f_name_list:
-            src = os.path.join(deposited_submission_path, submission_f_name)
-            dst = os.path.join(submission_path, submission_f_name)
-            shutil.copy2(src, dst)  # copying also metadata
-
-        logger.info("Adding submission={}".format(submission))
+        db_tools.make_submission_and_copy_all_files(
+            team_name, submission_name, deposited_submission_path)

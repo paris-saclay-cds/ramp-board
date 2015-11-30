@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+{% if messages %}
+<div id="formerror" class="ui modal">
+    {% for category, message in messages %}
+        <div class="header">
+            {{ category }}
+        </div>
+        <div class="content">
+            <div class="description">
+                {{ message }}
+            </div>
+        </div>
+    {% endfor %}
+    <div class="actions">
+        <div class="ui button">Close</div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(function(){
+        $('#formerror.modal')
+            .modal('setting', 'transition', 'Fade Up')
+            .modal('show')
+        ;
+    });
+</script>
+{% endif %}
+{% endwith %}
+<h3 class="ui horizontal header divider grey">Sandbox</h3>
+<div class="ui stackable two column grid">
+    <div class="twelve wide column">
+        <h4 class="ui horizontal header divider grey">{{ f_name }}</h4>
+        <form class="ui form" method="post" action="" name="save">
+            {{ code_form.hidden_tag() }}
+            <div class="one field">
+                <div>
+                    {{ code_form.code(cols="80", rows="50")|safe }}
+                </div>
+                <input type="submit" value="Save" class="ui submit button">
+            </div>
+        </form>
+    </div>
+    <div class="four wide column">
+        <div class="ui sticky">
+        <h4 class="ui horizontal header divider grey">File list</h4>
+            {% for f in submission_f_names %}
+            <div class="ui fluid card">
+                <div class="content">
+                    <div class="description">
+                        {% if f==f_name %}
+                        <i class="file grey icon"></i>{{f}}
+                        {% else %}
+                        <a href="/sandbox/{{ f }}"><i class="file grey icon"></i>{{ f }}</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            <form class="ui form" method="post" action="" name="submit">
+                {{ submit_form.hidden_tag() }}
+                <div class="one field">
+                    <div class="required field">
+                        <label>Submission name</label>
+                        {{ submit_form.submission_name }}
+                    </div>
+                    <input type="submit" value="Submit" class="ui submit button">
+                </div>
+            </form>
+         </div>
+    </div>
+</div>  
+{% endblock %}

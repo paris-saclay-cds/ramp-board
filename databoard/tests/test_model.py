@@ -11,6 +11,25 @@ import databoard.db_tools as db_tools
 from databoard.remove_test_db import recreate_test_db
 
 
+def test_set_config_to_test():
+    config.config_object.ramp_name = 'iris'
+    origin_path = os.path.join('ramps', config.config_object.ramp_name)
+    config.root_path = os.path.join('.')
+    tests_path = os.path.join('databoard', 'tests')
+
+    config.raw_data_path = os.path.join(origin_path, 'data', 'raw')
+    config.public_data_path = os.path.join(tests_path, 'data', 'public')
+    config.private_data_path = os.path.join(tests_path, 'data', 'private')
+    config.submissions_d_name = 'test_submissions'
+    config.submissions_path = os.path.join(
+        config.root_path, config.submissions_d_name)
+    config.deposited_submissions_path = os.path.join(
+        origin_path, config.deposited_submissions_d_name)
+    config.sandbox_path = os.path.join(
+        origin_path, config.sandbox_d_name)
+    config.config_object.n_cpus = 3
+
+
 def test_recreate_test_db():
     recreate_test_db()
 
@@ -20,6 +39,21 @@ def test_password_hashing():
     hashed_password = db_tools.get_hashed_password(plain_text_password)
     assert db_tools.check_password(plain_text_password, hashed_password)
     assert not db_tools.check_password("hjst3789ep;ocikaqji", hashed_password)
+
+
+def test_add_cv_folds():
+    specific = config.config_object.specific
+    specific.prepare_data()
+    _, y_train = specific.get_train_data()
+    cv = specific.get_cv(y_train)
+    db_tools.add_cv_folds(cv)
+    cv_folds = db.session.query(CVFold)
+    for cv_fold_1, cv_fold_2 in zip(cv, cv_folds):
+        train_is, test_is = cv_fold_1
+        # print cv_fold_1
+        # print cv_fold_2
+        assert_array_equal(train_is, cv_fold_2.train_is)
+        assert_array_equal(test_is, cv_fold_2.test_is)
 
 
 def test_create_user():
@@ -95,38 +129,6 @@ def test_merge_teams():
     Team.query.filter_by(name='akazakci').one().is_active = False
     Team.query.filter_by(name='mcherti').one().is_active = False
     db.session.commit()
-
-
-def test_set_config_to_test():
-    config.config_object.ramp_name = 'iris'
-    origin_path = os.path.join('ramps', config.config_object.ramp_name)
-    config.root_path = os.path.join('.')
-    tests_path = os.path.join('databoard', 'tests')
-
-    config.raw_data_path = os.path.join(origin_path, 'data', 'raw')
-    config.public_data_path = os.path.join(tests_path, 'data', 'public')
-    config.private_data_path = os.path.join(tests_path, 'data', 'private')
-    config.submissions_d_name = 'test_submissions'
-    config.submissions_path = os.path.join(
-        config.root_path, config.submissions_d_name)
-    config.deposited_submissions_path = os.path.join(
-        origin_path, 'deposited_submissions')
-    config.config_object.n_cpus = 3
-
-
-def test_add_cv_folds():
-    specific = config.config_object.specific
-    specific.prepare_data()
-    _, y_train = specific.get_train_data()
-    cv = specific.get_cv(y_train)
-    db_tools.add_cv_folds(cv)
-    cv_folds = db.session.query(CVFold)
-    for cv_fold_1, cv_fold_2 in zip(cv, cv_folds):
-        train_is, test_is = cv_fold_1
-        # print cv_fold_1
-        # print cv_fold_2
-        assert_array_equal(train_is, cv_fold_2.train_is)
-        assert_array_equal(test_is, cv_fold_2.test_is)
 
 
 def test_make_submission():

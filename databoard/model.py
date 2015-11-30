@@ -1,6 +1,5 @@
 import os
 import zlib
-import string
 import hashlib
 import datetime
 import numpy as np
@@ -13,7 +12,8 @@ import databoard.generic as generic
 
 max_members_per_team = 3  # except for users own team
 opening_timestamp = None
-public_opening_timestamp = None  # before teams can see only their own scores
+# before teams can see only their own scores
+public_opening_timestamp = datetime.datetime(2015, 12, 3, 14, 0, 0)
 closing_timestamp = None
 
 # Training set table
@@ -103,9 +103,10 @@ class User(db.Model):
             return str(self.id)  # python 3
 
     def __str__(self):
-        str_ = 'User({}, admined=['.format(self.name)
-        str_ += string.join([team.name for team in self.admined_teams], ', ')
-        str_ += '])'
+        str_ = 'User({})'.format(self.name)
+#        str_ = 'User({}, admined=['.format(self.name)
+#        str_ += string.join([team.name for team in self.admined_teams], ', ')
+#        str_ += '])'
         return str_
 
     def __repr__(self):
@@ -140,8 +141,10 @@ class Team(db.Model):
         db.DateTime, default=datetime.datetime.utcnow())
     is_active = db.Column(db.Boolean, default=True)  # ->ramp_teams
 
+    last_submission_name = db.Column(db.String, default=None)
+
     def __str__(self):
-        str_ = 'Team({}, admin={})'.format(self.name, self.admin.name)
+        str_ = 'Team({})'.format(self.name)
         return str_
 
     def __repr__(self):
@@ -176,13 +179,23 @@ class SubmissionFile(db.Model):
     def __init__(self, name, submission):
         self.name = name
         self.submission = submission
-        #if not os.path.isfile(self.path):
-        #    raise MissingSubmissionFile('{}/{}/{}: {}'.format(
-        #        submission.team.name, submission.name, name, self.path))
+        # We comment this out because copying happens after submission
+        # if not os.path.isfile(self.path):
+        #     raise MissingSubmissionFile('{}/{}/{}: {}'.format(
+        #         submission.team.name, submission.name, name, self.path))
 
     @hybrid_property
     def path(self):
         return self.submission.path + os.path.sep + self.name
+
+    def get_code(self):
+        with open(self.path) as f:
+            code = f.read()
+        return code
+
+    def set_code(self, code):
+        with open(self.path, 'w') as f:
+            f.write(code)
 
     def __repr__(self):
         return 'SubmissionFile(name={}, path={})'.format(
@@ -474,6 +487,9 @@ class Submission(db.Model):
             self.state = 'testing_error'
             i = states.index('testing_error')
             self.error_msg = self.on_cv_folds[i].error_msg
+        if 'error' not in self.state:
+            self.error_msg = ''
+
 
 
 def _get_next_best_single_fold(predictions_list, true_predictions,

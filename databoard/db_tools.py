@@ -1,3 +1,5 @@
+import os
+import shutil
 import bcrypt
 import timeit
 import logging
@@ -20,7 +22,7 @@ logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 
-def _date_time_format(date_time):
+def date_time_format(date_time):
     return date_time.strftime('%a %Y-%m-%d %H:%M:%S')
 
 
@@ -31,6 +33,12 @@ def get_user_teams(user):
     for team in teams:
         if user in get_team_members(team):
             yield team
+
+def get_active_user_team(user):
+    teams = Team.query.all()
+    for team in teams:
+        if user in get_team_members(team) and team.is_active:
+            return team
 
 
 def get_n_user_teams(user):
@@ -86,6 +94,9 @@ def create_user(name, password, lastname, firstname, email):
             raise e
     logger.info('Creating {}'.format(user))
     logger.info('Creating {}'.format(team))
+    # submitting the starting kit for default team
+    make_submission_and_copy_all_files(
+        name, config.sandbox_d_name, config.sandbox_path)
     return user
 
 
@@ -94,12 +105,21 @@ def validate_user(user):
     user.access_level = 'user'
 
 
+def get_sandbox(user):
+    team = get_active_user_team(user)
+    submission = Submission.query.filter(
+        team.id == Submission.team_id).filter(
+        Submission.name == config.sandbox_d_name).one()
+    return submission
+
+
 def print_users():
     print('***************** List of users ****************')
     for user in User.query.order_by(User.id):
         print('{} belongs to teams:'.format(user))
         for team in get_user_teams(user):
             print('\t{}'.format(team))
+        print('Sandbox = {}'.format(get_sandbox(user)))
 
 
 ######################### Teams ###########################
@@ -167,6 +187,9 @@ def merge_teams(name, initiator_name, acceptor_name):
         except NoResultFound:
             raise e
     logger.info('Merging {} and {} into {}'.format(initiator, acceptor, team))
+    # submitting the starting kit for merged team
+    make_submission_and_copy_all_files(
+        name, config.sandbox_d_name, config.sandbox_path)
     return team
 
 
@@ -188,6 +211,7 @@ def make_submission(team_name, name, f_name_list):
     team = Team.query.filter_by(name=team_name).one()
     submission = Submission.query.filter_by(
         name=name, team=team).one_or_none()
+    print submission
     cv_folds = CVFold.query.all()
     if submission is None:
         submission = Submission(name=name, team=team)
@@ -202,6 +226,7 @@ def make_submission(team_name, name, f_name_list):
             submission_on_cv_fold = SubmissionOnCVFold(
                 submission=submission, cv_fold=cv_fold)
             db.session.add(submission_on_cv_fold)
+        team.last_submission_name = name
         db.session.commit()
     else:
         # We allow resubmit for new or failing submissions
@@ -222,10 +247,15 @@ def make_submission(team_name, name, f_name_list):
             # Updating submission on cv folds
             submission_on_cv_folds = SubmissionOnCVFold.query.filter(
                 SubmissionOnCVFold.submission == submission).all()
-            for submission_on_cv_fold in submission_on_cv_folds:
+            for submission_on_cv_fold in submission.on_cv_folds:
                 # couldn't figure out how to reset to default values
                 db.session.delete(submission_on_cv_fold)
+            db.session.commit()
+            for cv_fold in cv_folds:
+                submission_on_cv_fold = SubmissionOnCVFold(
+                    submission=submission, cv_fold=cv_fold)
                 db.session.add(submission_on_cv_fold)
+            team.last_submission_name = name
             db.session.commit()
 #            for cv_fold in cv_folds:
 #                submission_on_cv_fold = SubmissionOnCVFold(
@@ -241,8 +271,54 @@ def make_submission(team_name, name, f_name_list):
     return submission
 
 
-def train_test_submissions(force_retrain_test=False):
-    for submission in Submission.query.all():
+def make_submission_and_copy_all_files(team_name, new_submission_name,
+                                       deposited_submission_path):
+    """Called from create_user(), merge_teams(), and fetch.add_models()."""
+    deposited_f_name_list = os.listdir(deposited_submission_path)
+    make_submission_and_copy_from_file_list(
+        team_name, new_submission_name, deposited_submission_path,
+        deposited_f_name_list)
+
+
+def make_submission_and_copy_from_sandbox(team_name, new_submission_name,
+                                          sandbox_submission):
+    """Called from view.sandbox()."""
+    make_submission_and_copy_from_file_list(
+        team_name, new_submission_name, sandbox_submission.path, 
+        sandbox_submission.f_names)
+
+
+def make_submission_and_copy_from_file_list(team_name, new_submission_name,
+                                            submission_path, f_name_list):
+    submission = make_submission(
+        team_name, new_submission_name, f_name_list)
+    team_path, new_submission_path = submission.get_paths(
+        config.submissions_path)
+
+    if not os.path.exists(team_path):
+        os.mkdir(team_path)
+    open(os.path.join(team_path, '__init__.py'), 'a').close()
+    # clean up the model directory in case it's a resubmission
+    if os.path.exists(new_submission_path):
+        shutil.rmtree(new_submission_path)
+    os.mkdir(new_submission_path)
+    open(os.path.join(new_submission_path, '__init__.py'), 'a').close()
+
+    # copy the submission files into the model directory, should all this
+    # probably go to Submission
+    for f_name in f_name_list:
+        src = os.path.join(submission_path, f_name)
+        dst = os.path.join(new_submission_path, f_name)
+        shutil.copy2(src, dst)  # copying also metadata
+        logger.info('Copying {} to {}'.format(src, dst))
+
+    logger.info("Adding submission={}".format(submission))
+
+
+def train_test_submissions(submissions=None, force_retrain_test=False):
+    if submissions is None:
+        submissions = Submission.query.order_by(Submission.id).all()
+    for submission in submissions:
         train_test_submission(submission, force_retrain_test)
 
 
@@ -464,6 +540,7 @@ def get_public_leaderboard(team_name=None, user=None):
         submissions_teams = db.session.query(Submission, Team).filter(
             Team.id == Submission.team_id).filter(
             Submission.is_public_leaderboard).filter(
+            Submission.name != config.sandbox_d_name).filter(
             Team.name == team_name).order_by(
             Submission.valid_score_cv_bag.desc()).all()
     elif user is not None:
@@ -472,12 +549,14 @@ def get_public_leaderboard(team_name=None, user=None):
             submissions_teams += db.session.query(Submission, Team).filter(
                 Team.id == Submission.team_id).filter(
                 Team.name == team_name).filter(
+                Submission.name != config.sandbox_d_name).filter(
                 Submission.is_public_leaderboard).order_by(
                 Submission.valid_score_cv_bag.desc()).all()
     else:
         submissions_teams = db.session.query(Submission, Team).filter(
             Team.id == Submission.team_id).filter(
-            Submission.is_public_leaderboard).order_by(
+            Submission.is_public_leaderboard).filter(
+            Submission.name != config.sandbox_d_name).order_by(
             Submission.valid_score_cv_bag.desc()).all()
     columns = ['team',
                'submission',
@@ -494,7 +573,7 @@ def get_public_leaderboard(team_name=None, user=None):
                       int(100 * submission.contributivity + 0.5),
                       int(submission.train_time_cv_mean + 0.5),
                       int(submission.valid_time_cv_mean + 0.5),
-                      _date_time_format(submission.submission_timestamp)])}
+                      date_time_format(submission.submission_timestamp)])}
         for submission, team in submissions_teams
     ]
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
@@ -508,6 +587,54 @@ def get_public_leaderboard(team_name=None, user=None):
     )
     leaderboard_html = leaderboard_df.to_html(**html_params)
     return leaderboard_html
+
+
+def get_new_submissions(user):
+    """
+    Returns
+    -------
+    leaderboard_html : html string
+    """
+    submissions_teams = []
+    for team_name in [team.name for team in get_user_teams(user)]:
+        submissions_teams += db.session.query(Submission, Team).filter(
+            Team.id == Submission.team_id).filter(
+            Team.name == team_name).filter(
+            Submission.state == 'new').order_by(
+            Submission.submission_timestamp).all()
+    columns = ['team',
+               'submission',
+               'submitted at (UTC)']
+    leaderboard_dict_list = [
+        {column: value for column, value in zip(
+            columns, [team.name,
+                      submission.name_with_link,
+                      date_time_format(submission.submission_timestamp)])}
+        for submission, team in submissions_teams
+    ]
+    leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
+    html_params = dict(
+        escape=False,
+        index=False,
+        max_cols=None,
+        max_rows=None,
+        justify='left',
+        classes=['ui', 'blue', 'celled', 'table', 'sortable']
+    )
+    leaderboard_html = leaderboard_df.to_html(**html_params)
+    return leaderboard_html
+
+
+def get_team_submissions(team_name, submission_name=None):
+    team = Team.query.filter(Team.name == team_name).one()
+    if submission_name is None:    
+        submissions = Submission.query.filter(
+            team.id == Submission.team_id).all()
+    else:
+        submissions = Submission.query.filter(
+            team.id == Submission.team_id).filter(
+            submission_name == Submission.name).all()
+    return submissions
 
 
 def get_failed_submissions(user):
@@ -531,7 +658,7 @@ def get_failed_submissions(user):
         {column: value for column, value in zip(
             columns, [team.name,
                       submission.name_with_link,
-                      _date_time_format(submission.submission_timestamp),
+                      date_time_format(submission.submission_timestamp),
                       submission.state_with_link])}
         for submission, team in submissions_teams
     ]
@@ -548,9 +675,11 @@ def get_failed_submissions(user):
     return leaderboard_html
 
 
-def print_submissions():
+def print_submissions(submissions=None):
+    if submissions is None:
+        submissions = Submission.query.order_by(Submission.id).all()
     print('***************** List of submissions ****************')
-    for submission in Submission.query.order_by(Submission.id).all():
+    for submission in submissions:
         print submission
         print('\tstate = {}'.format(submission.state))
         print('\tvalid_score_cv_mean = {0:.2f}'.format(
@@ -565,6 +694,7 @@ def print_submissions():
             float(submission.test_score_cv_bag))
         print '\ttest_score_cv_bags = {}'.format(
             submission.test_score_cv_bags)
+        print('\tpath = {}'.format(submission.path))
         print '\tcv folds'
         submission_on_cv_folds = db.session.query(SubmissionOnCVFold).filter(
             SubmissionOnCVFold.submission == submission).all()

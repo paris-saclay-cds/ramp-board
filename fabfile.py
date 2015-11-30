@@ -249,13 +249,36 @@ def test(state=False, tag=None, team=None):
         db['models'].loc[idx, :] = models
 
 
-def train_test(state=False, tag=None, team=None):
-    from databoard.db_tools import train_test_submissions
+def train_test(t=None, s=None):
+    team_name = t
+    submission_name = s
+
+    from databoard.db_tools import train_test_submissions, get_team_submissions
     from databoard.db_tools import compute_contributivity
-    train_test_submissions()
+
+    if team_name is None:
+        train_test_submissions()  # All
+    else:
+        if submission_name is None:
+            train_test_submissions(get_team_submissions(team_name))
+        else:
+            train_test_submissions(
+                get_team_submissions(team_name, submission_name))
     compute_contributivity()
 
 
+def print_submissions(t=None, s=None):
+    team_name = t
+    submission_name = s
+
+    from databoard.db_tools import print_submissions, get_team_submissions
+    if team_name is None:
+        print_submissions()  # All
+    else:
+        if submission_name is None:
+            print_submissions(get_team_submissions(team_name))
+        else:
+            print_submissions(get_team_submissions(team_name, submission_name))
 
 
 def change_state(from_state, to_state):
@@ -322,8 +345,9 @@ def serve(port=None, test='False'):
     else:
         server_port = int(port)
     app.run(
-        debug=True,
+        debug=False,
         port=server_port,
+        use_reloader=False,
         host='0.0.0.0')
 
 
@@ -382,7 +406,8 @@ def publish(ramp_index, test='False'):
     _save_ramp_index(ramp_index)
 
     # don't import before saving the ramp_index.txt file
-    from databoard.config import config_object
+    from databoard.config import config_object, deposited_submissions_d_name,\
+        sandbox_d_name
     ramp_name = config_object.ramp_name
     # TODO: check if ramp_name is the same as in
     #      'ramps/' + ramp_name + '/specific.py'
@@ -394,7 +419,18 @@ def publish(ramp_index, test='False'):
         command += "/.ssh/datacamp/id_rsa -p 22\' "
     for file in software:
         command += file + " "
+    if not config_object.is_same_web_and_train_servers():
+        command += config_object.get_deployment_target('web')
+    else:
+        command += config_object.get_deployment_target('train')
+    print command
+    os.system(command)
 
+    command = "rsync -pthrvz -c "
+    if not local:
+        command += "--rsh=\'ssh -i " + os.path.expanduser("~")
+        command += "/.ssh/datacamp/id_rsa -p 22\' "
+    command += " ramps/" + ramp_name + '/' + sandbox_d_name + ' '
     if not config_object.is_same_web_and_train_servers():
         command += config_object.get_deployment_target('web')
     else:
@@ -407,7 +443,8 @@ def publish(ramp_index, test='False'):
         if not local:
             command += "--rsh=\'ssh -i " + os.path.expanduser("~")
             command += "/.ssh/datacamp/id_rsa -p 22\' "
-        command += " ramps/" + ramp_name + "/deposited_submissions "
+        command += " ramps/" + ramp_name + '/' +\
+            deposited_submissions_d_name + ' '
         if not config_object.is_same_web_and_train_servers():
             command += config_object.get_deployment_target('web')
         else:

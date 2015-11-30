@@ -8,7 +8,11 @@ repos_path = os.path.join(root_path, 'git_submissions')
 ground_truth_path = os.path.join(root_path, 'ground_truth')
 submissions_d_name = 'submissions'
 submissions_path = os.path.join(root_path, submissions_d_name)
-deposited_submissions_path = os.path.join(root_path, 'deposited_submissions')
+deposited_submissions_d_name = 'deposited_submissions'
+deposited_submissions_path = os.path.join(
+    root_path, deposited_submissions_d_name)
+sandbox_d_name = 'sandbox'
+sandbox_path = os.path.join(root_path, sandbox_d_name)
 data_path = os.path.join(root_path, 'data')
 raw_data_path = os.path.join(data_path, 'raw')
 public_data_path = os.path.join(data_path, 'public')

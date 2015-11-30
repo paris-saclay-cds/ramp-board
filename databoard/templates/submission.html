@@ -27,14 +27,16 @@ onload="prettyPrint()"
             <span><i class="angle right grey icon"></i></span>
             {{ submission_name }} 
             <span><i class="angle right grey icon"></i></span>
-            <a href="{{submission_url}}"><i class="download grey icon"></i>{{f_name}}</a>
+            <a href="{{ submission_url }}"><i class="download grey icon"></i>{{ f_name }}</a>
             </h4>
-        <pre class="prettyprint linenums">{{code}}</pre>
+        <pre class="prettyprint linenums">{{ code }}</pre>
     </div>
     {% if submission_f_names and f_name != 'error.txt' %}
     <div class="four wide column">
         <div class="ui sticky">
-        <h4 class="ui horizontal header divider grey"><a href="{{archive_url}}"><i class="folder open grey icon"></i>Archive</a></h4>
+        <h4 class="ui horizontal header divider grey"><a href="import/{{ f_name }}">Import it to my sandbox</a></h4>
+        Be careful: this will overwrite any unsubmitted changes (so even changes that you have saved but not yet submitted) in your sandbox.
+        <h4 class="ui horizontal header divider grey">File list</h4>
             {% for f in submission_f_names %}
             <div class="ui fluid card">
                 <div class="content">
@@ -42,7 +44,7 @@ onload="prettyPrint()"
                         {% if f==f_name %}
                         <i class="file grey icon"></i>{{f}}
                         {% else %}
-                        <a href="{{f}}"><i class="file grey icon"></i>{{f}}</a>
+                        <a href="{{ f }}"><i class="file grey icon"></i>{{ f }}</a>
                         {% endif %}
                     </div>
                 </div>

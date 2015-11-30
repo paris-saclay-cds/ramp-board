@@ -11,7 +11,7 @@
     <body {% block bodyoptions %}{% endblock %}>
         <div id="header">
             {% block header %}
-            <div class="ui two column middle aligned grid" style="padding:20px">
+            <div class="ui three column middle aligned grid" style="padding:20px">
               <div class="five wide column">
                 <a href='/'>
                   <h2 class="ui blue header">
@@ -24,13 +24,15 @@
                 </a>
               </div>
               <!-- <div class="ui vertical fitted divider"></div> -->
-              <div class="three wide column">
+              <div class="six wide column">
                 <h2 class="ui orange header">{{ ramp_title }}</h2>
               </div>
-              <div class="three wide column">
+              <div class="five wide right aligned column">
                 {% if session.logged_in %}
-                  <a href="{{ url_for('user') }}">{{ current_user.name }}</a><BR>
-                  <a href="{{ url_for('logout') }}">log out</a>
+                  <a href="{{ url_for('user') }}">my submissions</a><br>
+                  <a href="{{ url_for('sandbox') }}">new submission</a><br>
+                  <a href="{{ url_for('leaderboard') }}">leaderboard</a><br>
+                  <a href="{{ url_for('logout') }}">log out</a><br>
                 {% endif %}
                 </div>  
             </div>

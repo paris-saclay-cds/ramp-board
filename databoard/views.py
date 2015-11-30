@@ -1,6 +1,6 @@
 import os
 # import sys
-# import shutil
+import shutil
 import logging
 import os.path
 import datetime
@@ -19,8 +19,9 @@ from databoard.generic import changedir
 from databoard.config import repos_path
 import databoard.config as config
 import databoard.db_tools as db_tools
-from databoard.model import User, Team, Submission
-from databoard.forms import LoginForm
+from databoard.model import User, Team, Submission, public_opening_timestamp,\
+    DuplicateSubmissionError
+from databoard.forms import LoginForm, CodeForm, SubmitForm
 #from app import app, db, lm, oid
 
 app.secret_key = os.urandom(24)
@@ -103,15 +104,62 @@ def login():
                            form=form)
 
 
+@app.route("/sandbox", methods=['GET', 'POST'])
+@app.route("/sandbox/<f_name>", methods=['GET', 'POST'])
+@fl.login_required
+def sandbox(f_name=None):
+    sandbox_submission = db_tools.get_sandbox(current_user)
+    team = db_tools.get_active_user_team(current_user)
+    if f_name is None:
+        f_name = sandbox_submission.f_names[0]
+    submission_file = next((file for file in sandbox_submission.files
+                            if file.name == f_name), None)
+    code_form = CodeForm(code=submission_file.get_code())
+    submit_form = SubmitForm(submission_name=team.last_submission_name)
+    if code_form.validate_on_submit() and code_form.code.data:
+        logger.info('{} saved {}'.format(current_user, f_name))
+        submission_file.set_code(code_form.code.data)
+        flask.flash('{} saved {} for team {}.'.format(
+            current_user, f_name, db_tools.get_active_user_team(current_user)),
+            category='File saved')
+        return flask.redirect(flask.url_for('sandbox', f_name=f_name))
+    if submit_form.validate_on_submit() and submit_form.submission_name.data:
+        new_submission_name = submit_form.submission_name.data
+        try:
+            db_tools.make_submission_and_copy_from_sandbox(
+                team.name, new_submission_name, sandbox_submission)
+        except DuplicateSubmissionError:
+            flask.flash(
+                'Submission {} already exists. Please change the name.'.format(
+                    new_submission_name))
+            return flask.redirect(flask.url_for('sandbox', f_name=f_name))
+        logger.info('{} submitted {} for team {}.'.format(
+            current_user, new_submission_name, team))
+        flask.flash('{} submitted {} for team {}.'.format(
+            current_user, new_submission_name, team),
+            category='Submission')
+        return flask.redirect(flask.url_for('user'))
+    return render_template('sandbox.html',
+                           ramp_title=config.config_object.specific.ramp_title,
+                           f_name=f_name,
+                           submission_f_names=sandbox_submission.f_names,
+                           code_form=code_form,
+                           submit_form=submit_form)
+
+
 @app.route("/user", methods=['GET', 'POST'])
 @fl.login_required
 def user():
     leaderbord_html = db_tools.get_public_leaderboard(user=current_user)
     failed_submissions_html = db_tools.get_failed_submissions(
         user=current_user)
+    new_submissions_html = db_tools.get_new_submissions(
+        user=current_user)
     return render_template('leaderboard.html',
+                           leaderboard_title='Trained submissions',
                            leaderboard=leaderbord_html,
                            failed_submissions=failed_submissions_html,
+                           new_submissions=new_submissions_html,
                            ramp_title=config.config_object.specific.ramp_title)
 
 
@@ -132,11 +180,17 @@ def logout():
 
 
 @app.route("/leaderboard")
-def show_leaderboard():
+def leaderboard():
+    if public_opening_timestamp > datetime.datetime.utcnow():
+        return render_template('leaderboard_closed.html',
+                               date_time=db_tools.date_time_format(
+                                   public_opening_timestamp),
+                               ramp_title=config.config_object.specific.ramp_title)
     leaderbord_html = db_tools.get_public_leaderboard()
-    return render_template(
-        'leaderboard.html', leaderboard=leaderbord_html,
-        ramp_title=config.config_object.specific.ramp_title)
+    return render_template('leaderboard.html',
+                           leaderboard_title='Leaderboard',
+                           leaderboard=leaderbord_html,
+                           ramp_title=config.config_object.specific.ramp_title)
 
 
 # TODO: private leaderboard
@@ -144,6 +198,7 @@ def show_leaderboard():
 
 @app.route("/submissions/<team_name>/<summission_hash>/<f_name>")
 @app.route("/submissions/<team_name>/<summission_hash>/<f_name>/raw")
+@fl.login_required
 def view_model(team_name, summission_hash, f_name):
     """Rendering submission codes using templates/submission.html. The code of
     f_name is displayed in the left panel, the list of submissions files
@@ -210,7 +265,25 @@ def view_model(team_name, summission_hash, f_name):
         ramp_title=specific.ramp_title)
 
 
+@app.route("/submissions/<team_name>/<summission_hash>/import/<f_name>")
+@fl.login_required
+def import_file(team_name, summission_hash, f_name):
+    """Importing file into sandbox."""
+    sandbox_submission = db_tools.get_sandbox(current_user)
+    team = Team.query.filter_by(name=team_name).one()
+    submission = Submission.query.filter_by(
+        team=team, hash_=summission_hash).one()
+
+    src = os.path.join(submission.path, f_name)
+    dst = os.path.join(sandbox_submission.path, f_name)
+    shutil.copy2(src, dst)  # copying also metadata
+    logger.info('Copying {} to {}'.format(src, dst))
+    return flask.redirect(flask.url_for('sandbox', f_name=f_name))
+#    return render_template()
+
+
 @app.route("/submissions/<team_name>/<summission_hash>/error.txt")
+@fl.login_required
 def view_submission_error(team_name, summission_hash):
     """Rendering submission codes using templates/submission.html. The code of
     f_name is displayed in the left panel, the list of submissions files
@@ -237,7 +310,6 @@ def view_submission_error(team_name, summission_hash):
     team = Team.query.filter_by(name=team_name).one()
     submission = Submission.query.filter_by(
         team=team, hash_=summission_hash).one()
-    submission_abspath = os.path.abspath(submission.path)
 
     submission_url = request.path.rstrip('/') + '/raw'
 
