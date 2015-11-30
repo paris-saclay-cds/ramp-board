@@ -13,7 +13,7 @@ import databoard.generic as generic
 max_members_per_team = 3  # except for users own team
 opening_timestamp = None
 # before teams can see only their own scores
-public_opening_timestamp = datetime.datetime(2015, 12, 3, 14, 0, 0)
+public_opening_timestamp = datetime.datetime(2014, 12, 3, 14, 0, 0)
 closing_timestamp = None
 
 # Training set table

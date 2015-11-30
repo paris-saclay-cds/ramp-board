@@ -525,7 +525,7 @@ def compute_contributivity(force_ensemble=False):
     db.session.commit()
 
 
-def get_public_leaderboard(team_name=None, user=None):
+def get_public_leaderboard(team_name=None, user=None, is_open_code=True):
     """
     Returns
     -------
@@ -568,7 +568,8 @@ def get_public_leaderboard(team_name=None, user=None):
     leaderboard_dict_list = [
         {column: value for column, value in zip(
             columns, [team.name,
-                      submission.name_with_link,
+                      submission.name_with_link if is_open_code
+                      else submission.name,
                       round(submission.valid_score_cv_bag, 2),
                       int(100 * submission.contributivity + 0.5),
                       int(submission.train_time_cv_mean + 0.5),

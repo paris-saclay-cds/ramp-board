@@ -34,29 +34,6 @@ def load_user(id):
     return User.query.get(int(id))
 
 
-def model_with_link(path_model):
-    print path_model
-    path, model, listing = path_model.split('+++++!*****')
-
-    filename = listing.split('|')[0]
-    filename_path = '/models/{}/{}'.format(path, filename)
-
-    # if the tag name is too long, shrink it.
-    if len(model) > tag_len_limit:
-        model_trucated = model[:tag_len_limit] + '[...]'
-        link = '<a href="{0}" class="popup" data-content="{1}">{2}</a>'.format(
-            filename_path, model, model_trucated)
-    else:
-        link = '<a href="{0}">{1}</a>'.format(filename_path, model)
-    return link
-
-
-def error_local_to_url(path):
-    filename = '/models/%s/error' % (path)
-    link = '<a href="{0}">Error</a>'.format(filename)
-    return link
-
-
 def timestamp_to_time(timestamp):
     return datetime.datetime.fromtimestamp(int(timestamp)).strftime(
         '%Y-%m-%d %H:%M:%S')
@@ -181,16 +158,26 @@ def logout():
 
 @app.route("/leaderboard")
 def leaderboard():
-    if public_opening_timestamp > datetime.datetime.utcnow():
-        return render_template('leaderboard_closed.html',
-                               date_time=db_tools.date_time_format(
+#    if public_opening_timestamp > datetime.datetime.utcnow():
+#        return render_template('leaderboard_closed.html',
+#                               date_time=db_tools.date_time_format(
+#                                   public_opening_timestamp),
+#                               ramp_title=config.config_object.specific.ramp_title)
+    is_open_code = public_opening_timestamp < datetime.datetime.utcnow()
+    leaderbord_html = db_tools.get_public_leaderboard(
+        is_open_code=is_open_code)
+    if is_open_code:
+        return render_template('leaderboard.html',
+                               leaderboard_title='Leaderboard',
+                               leaderboard=leaderbord_html,
+                               ramp_title=config.config_object.specific.ramp_title)
+    else:
+        return render_template('leaderboard.html',
+                               leaderboard_title='Leaderboard',
+                               leaderboard=leaderbord_html,
+                               opening_date_time=db_tools.date_time_format(
                                    public_opening_timestamp),
                                ramp_title=config.config_object.specific.ramp_title)
-    leaderbord_html = db_tools.get_public_leaderboard()
-    return render_template('leaderboard.html',
-                           leaderboard_title='Leaderboard',
-                           leaderboard=leaderbord_html,
-                           ramp_title=config.config_object.specific.ramp_title)
 
 
 # TODO: private leaderboard
@@ -268,13 +255,13 @@ def view_model(team_name, summission_hash, f_name):
 @app.route("/submissions/<team_name>/<summission_hash>/import/<f_name>")
 @fl.login_required
 def import_file(team_name, summission_hash, f_name):
-    """Importing file into sandbox."""
+    """Importing submisison file into sandbox."""
     sandbox_submission = db_tools.get_sandbox(current_user)
-    team = Team.query.filter_by(name=team_name).one()
-    submission = Submission.query.filter_by(
-        team=team, hash_=summission_hash).one()
+    team_from = Team.query.filter_by(name=team_name).one()
+    submission_from = Submission.query.filter_by(
+        team=team_from, hash_=summission_hash).one()
 
-    src = os.path.join(submission.path, f_name)
+    src = os.path.join(submission_from.path, f_name)
     dst = os.path.join(sandbox_submission.path, f_name)
     shutil.copy2(src, dst)  # copying also metadata
     logger.info('Copying {} to {}'.format(src, dst))
