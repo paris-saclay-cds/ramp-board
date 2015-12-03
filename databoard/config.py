@@ -1,4 +1,5 @@
 import os
+import datetime
 from importlib import import_module
 
 root_path = '.'
@@ -27,17 +28,19 @@ is_parallelize_across_machines = False
 timeout_parallelize_across_machines = 10800
 # often doesn't work and takes a lot of disk space
 is_pickle_trained_submission = False
-
-notification_recipients = []
-notification_recipients.append("balazs.kegl@gmail.com")
-notification_recipients.append("alexandre.gramfort@gmail.com")
+min_duration_between_submissions = 900  # seconds
+max_members_per_team = 3  # except for users own team
+opening_timestamp = datetime.datetime(2015, 12, 3, 12, 30, 0)
+# before links to submissions in leaderboard are not alive
+public_opening_timestamp = datetime.datetime(2015, 12, 3, 14, 0, 0)
+closing_timestamp = None
 
 # Open ports in Stratuslab
 # 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015,
 # 8080, 8081, 8095, 8188, 8443, 8444, 9002, 10339, 10636, 15000, 15001, 15002,
 # 15003, 15004, 20000-25000.
 
-# amadeus
+# air_passengers
 # server_port = '8443'
 # dest_path = '/mnt/datacamp/databoard_06_8443_test'
 
@@ -133,8 +136,23 @@ class RampConfig(object):
         if self.train_server != 'localhost':
             deployment_target += user + '@' + server + ':'
         deployment_target += self.get_destination_path(root)
-        print deployment_target
         return deployment_target
+
+    def get_software_target(self, mode='web'):
+        software_target = ''
+        if mode == 'web':
+            user, server, root = 'web_user', 'web_server', 'web_root'
+        elif mode == 'train':
+            user = self.train_user
+            server = self.train_server
+            root = self.train_root
+        else:
+            raise ValueError('mode ???')
+        if self.train_server != 'localhost':
+            software_target += user + '@' + server + ':'
+        software_target += '/mnt/databoard/databoard-0.1.dev0/'
+        print software_target
+        return software_target
 
     def is_same_web_and_train_servers(self):
         return ((self.web_server == self.train_server)
@@ -175,16 +193,16 @@ reims_kwargs = dict(
     web_root=vd_root,
 )
 
-ramps_configs['iris_local'] = RampConfig(
-    ramp_name='iris', **local_kwargs)
 ramps_configs['boston_housing_local'] = RampConfig(
     ramp_name='boston_housing', **local_kwargs)
-ramps_configs['amadeus_local'] = RampConfig(
-    ramp_name='amadeus', **local_kwargs)
+ramps_configs['air_passengers_local'] = RampConfig(
+    ramp_name='air_passengers', **local_kwargs)
 ramps_configs['el_nino_bagged_cv_future_local'] = RampConfig(
     ramp_name='el_nino_bagged_cv_future', **local_kwargs)
 ramps_configs['el_nino_block_cv_local'] = RampConfig(
     ramp_name='el_nino_block_cv', cv_bag_size=0.5, **local_kwargs)
+ramps_configs['iris_local'] = RampConfig(
+    ramp_name='iris', **local_kwargs)
 ramps_configs['kaggle_otto_local'] = RampConfig(
     ramp_name='kaggle_otto', **local_kwargs)
 ramps_configs['mortality_prediction_local'] = RampConfig(
@@ -205,8 +223,18 @@ ramps_configs['iris_remote'] = RampConfig(
 
 ramps_configs['mortality_prediction_remote'] = RampConfig(
     ramp_name='mortality_prediction',
+    n_cpus=5,
+#    server_port='5001',
+    server_port='2811',
+    cv_test_size=0.5,
+    random_state=57,
+    **vd_kwargs
+)
+
+ramps_configs['air_passengers_remote'] = RampConfig(
+    ramp_name='air_passengers',
     n_cpus=10,
-    server_port='2172',
+    server_port='3147',
     cv_test_size=0.2,
     random_state=57,
     **vd_kwargs
@@ -222,10 +250,11 @@ db_f_name = os.path.join(db_path, 'databoard.db')
 db_migrate_dir = os.path.join(db_path, 'db_repository')
 MAIL_SERVER = 'smtp.gmail.com'
 MAIL_PORT = 587
-MAIL_USE_TLS = True
-MAIL_DEBUG = False
+#MAIL_USE_TLS = False
+#MAIL_USE_SSL = True
+#MAIL_DEBUG = False
 MAIL_USERNAME = 'databoardmailer@gmail.com'
-MAIL_PASSWORD = 'peace27man'
+MAIL_PASSWORD = 'fly18likeacar'
 MAIL_DEFAULT_SENDER = ('Databoard', 'databoardmailer@gmail.com')
 MAIL_RECIPIENTS = ''  # notification_recipients
 LOG_FILENAME = None  # if None, output to screen
@@ -234,4 +263,6 @@ SECRET_KEY = 'eroigudsfojbn;lk'
 SQLALCHEMY_TRACK_MODIFICATIONS = True
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + db_f_name
 SQLALCHEMY_MIGRATE_REPO = db_migrate_dir
-
+ADMIN_MAILS = ['balazs.kegl@gmail.com', 
+               'alexandre.gramfort@telecom-paristech.fr',
+               'mehdi@cherti.name']

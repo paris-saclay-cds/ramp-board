@@ -3,13 +3,14 @@ import os
 import shutil
 import logging
 import os.path
+import smtplib
 import datetime
 
 from git import Repo
 from zipfile import ZipFile
 from flask import request, redirect, url_for, render_template,\
     send_from_directory, flash, session, g
-from flask.ext.login import current_user, login_required
+from flask.ext.login import current_user, login_required, AnonymousUserMixin
 from sqlalchemy.orm.exc import NoResultFound
 
 import flask
@@ -19,8 +20,8 @@ from databoard.generic import changedir
 from databoard.config import repos_path
 import databoard.config as config
 import databoard.db_tools as db_tools
-from databoard.model import User, Team, Submission, public_opening_timestamp,\
-    DuplicateSubmissionError
+from databoard.model import User, Team, Submission,\
+    DuplicateSubmissionError, TooEarlySubmissionError
 from databoard.forms import LoginForm, CodeForm, SubmitForm
 #from app import app, db, lm, oid
 
@@ -66,7 +67,7 @@ def login():
                 form.password.data, user.hashed_password):
             flask.flash('Wrong password')
             return flask.redirect(flask.url_for('login'))
-        fl.login_user(user)  # , remember=form.remember_me.data)
+        fl.login_user(user, remember=True)  # , remember=form.remember_me.data)
         session['logged_in'] = True
         logger.info('{} is logged in'.format(current_user))
         # next = flask.request.args.get('next')
@@ -76,26 +77,65 @@ def login():
         #    return flask.abort(400)
 
         return flask.redirect(flask.url_for('user'))
-    return render_template('login.html',
-                           ramp_title=config.config_object.specific.ramp_title,
-                           form=form)
+    return render_template(
+        'login.html',
+        ramp_title=config.config_object.specific.ramp_title,
+        form=form,
+        opening_date_time=db_tools.date_time_format(config.opening_timestamp),
+        public_opening_date_time=db_tools.date_time_format(
+            config.public_opening_timestamp),
+        min_duration_between_submissions='{} minutes'.format(
+            config.min_duration_between_submissions / 60)
+    )
+
+
+def send_submission_mails(user, submission, team):
+    #  later can be joined to the ramp admins
+    recipient_list = config.ADMIN_MAILS
+    gmail_user = config.MAIL_USERNAME
+    gmail_pwd = config.MAIL_PASSWORD
+    smtpserver = smtplib.SMTP(config.MAIL_SERVER, config.MAIL_PORT)
+    smtpserver.ehlo()
+    smtpserver.starttls()
+    smtpserver.ehlo
+    smtpserver.login(gmail_user, gmail_pwd)
+    subject = 'fab train_test:t={},s={}'.format(team.name, submission.name)
+    header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
+        recipient_list, gmail_user, subject)
+    body = 'user = {}\nramp = {}\nserver = {}\nsubmission dir = {}\n'.format(
+        user,
+        config.config_object.ramp_name,
+        config.config_object.get_deployment_target(mode='train'),
+        submission.path)
+    for recipient in recipient_list:
+        smtpserver.sendmail(gmail_user, recipient, header + body)
 
 
 @app.route("/sandbox", methods=['GET', 'POST'])
 @app.route("/sandbox/<f_name>", methods=['GET', 'POST'])
 @fl.login_required
 def sandbox(f_name=None):
+    if current_user.access_level != 'admin' and\
+            datetime.datetime.utcnow() < config.opening_timestamp:
+        flask.flash('Submission will open at (UTC) {}'.format(
+            db_tools.date_time_format(config.opening_timestamp)))
+        return flask.redirect(flask.url_for('login'))
+
     sandbox_submission = db_tools.get_sandbox(current_user)
     team = db_tools.get_active_user_team(current_user)
     if f_name is None:
-        f_name = sandbox_submission.f_names[0]
+        f_name = sandbox_submission.f_names[-1]  # should be decided by the table
     submission_file = next((file for file in sandbox_submission.files
                             if file.name == f_name), None)
     code_form = CodeForm(code=submission_file.get_code())
     submit_form = SubmitForm(submission_name=team.last_submission_name)
     if code_form.validate_on_submit() and code_form.code.data:
         logger.info('{} saved {}'.format(current_user, f_name))
-        submission_file.set_code(code_form.code.data)
+        try:
+            submission_file.set_code(code_form.code.data)
+        except Exception as e:
+            flask.flash('Error: {}'.format(e))
+            return flask.redirect(flask.url_for('sandbox', f_name=f_name))
         flask.flash('{} saved {} for team {}.'.format(
             current_user, f_name, db_tools.get_active_user_team(current_user)),
             category='File saved')
@@ -103,17 +143,27 @@ def sandbox(f_name=None):
     if submit_form.validate_on_submit() and submit_form.submission_name.data:
         new_submission_name = submit_form.submission_name.data
         try:
-            db_tools.make_submission_and_copy_from_sandbox(
+            new_submission_name.encode('ascii')
+        except Exception as e:
+            flask.flash('Error: {}'.format(e))
+            return flask.redirect(flask.url_for('sandbox', f_name=f_name))
+        try:
+            new_submission = db_tools.make_submission_and_copy_from_sandbox(
                 team.name, new_submission_name, sandbox_submission)
         except DuplicateSubmissionError:
             flask.flash(
                 'Submission {} already exists. Please change the name.'.format(
                     new_submission_name))
             return flask.redirect(flask.url_for('sandbox', f_name=f_name))
+        except TooEarlySubmissionError as e:
+            flask.flash(e.value)
+            return flask.redirect(flask.url_for('sandbox', f_name=f_name))
+
         logger.info('{} submitted {} for team {}.'.format(
-            current_user, new_submission_name, team))
+            current_user, new_submission.name, team))
+        send_submission_mails(current_user, new_submission, team)
         flask.flash('{} submitted {} for team {}.'.format(
-            current_user, new_submission_name, team),
+            current_user, new_submission.name, team),
             category='Submission')
         return flask.redirect(flask.url_for('user'))
     return render_template('sandbox.html',
@@ -163,21 +213,27 @@ def leaderboard():
 #                               date_time=db_tools.date_time_format(
 #                                   public_opening_timestamp),
 #                               ramp_title=config.config_object.specific.ramp_title)
-    is_open_code = public_opening_timestamp < datetime.datetime.utcnow()
+    is_open_code = False
+    if current_user.is_authenticated and current_user.access_level == 'admin':
+        is_open_code = True
+    if config.public_opening_timestamp < datetime.datetime.utcnow():
+        is_open_code = True
     leaderbord_html = db_tools.get_public_leaderboard(
         is_open_code=is_open_code)
     if is_open_code:
-        return render_template('leaderboard.html',
-                               leaderboard_title='Leaderboard',
-                               leaderboard=leaderbord_html,
-                               ramp_title=config.config_object.specific.ramp_title)
+        return render_template(
+            'leaderboard.html',
+            leaderboard_title='Leaderboard',
+            leaderboard=leaderbord_html,
+            ramp_title=config.config_object.specific.ramp_title)
     else:
-        return render_template('leaderboard.html',
-                               leaderboard_title='Leaderboard',
-                               leaderboard=leaderbord_html,
-                               opening_date_time=db_tools.date_time_format(
-                                   public_opening_timestamp),
-                               ramp_title=config.config_object.specific.ramp_title)
+        return render_template(
+            'leaderboard.html',
+            leaderboard_title='Leaderboard',
+            leaderboard=leaderbord_html,
+            opening_date_time=db_tools.date_time_format(
+                config.public_opening_timestamp),
+            ramp_title=config.config_object.specific.ramp_title)
 
 
 # TODO: private leaderboard
@@ -214,6 +270,8 @@ def view_model(team_name, summission_hash, f_name):
     team = Team.query.filter_by(name=team_name).one()
     submission = Submission.query.filter_by(
         team=team, hash_=summission_hash).one()
+    logger.info('{} is looking at {}/{}/{}'.format(
+        current_user, team, submission, f_name))
     submission_abspath = os.path.abspath(submission.path)
     archive_filename = 'archive.zip'
 
@@ -239,7 +297,6 @@ def view_model(team_name, summission_hash, f_name):
 
     with open(submission_f_name) as f:
         code = f.read()
-
     return render_template(
         'submission.html',
         code=code,
@@ -260,6 +317,8 @@ def import_file(team_name, summission_hash, f_name):
     team_from = Team.query.filter_by(name=team_name).one()
     submission_from = Submission.query.filter_by(
         team=team_from, hash_=summission_hash).one()
+    logger.info('{} is importing {}/{}/{}'.format(
+        current_user, team_from, submission_from, f_name))
 
     src = os.path.join(submission_from.path, f_name)
     dst = os.path.join(sandbox_submission.path, f_name)

@@ -17,16 +17,16 @@ from databoard.config import raw_data_path, public_data_path, private_data_path
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 # will be displayed on the web site
-ramp_title = 'Number of passengers prediction'
+ramp_title = 'Number of air passengers prediction'
 target_column_name = 'log_PAX'
-drop_column_names = ['PAX']
+drop_column_names = []
 
 cv_test_size = config_object.cv_test_size
 held_out_test_size = 0.2
 random_state = config_object.random_state
 n_CV = config_object.n_cpus
 
-raw_filename = os.path.join(raw_data_path, 'data_amadeus.csv')
+raw_filename = os.path.join(raw_data_path, 'data.csv')
 train_filename = os.path.join(public_data_path, 'train.csv')
 test_filename = os.path.join(private_data_path, 'test.csv')
 
@@ -41,7 +41,6 @@ def read_data(df_filename):
 def prepare_data():
     df = read_data(raw_filename)
     df = df.drop(drop_column_names, axis=1)
-    df[target_column_name] /= 0.5362  # for hiding the real number
     df_train, df_test = train_test_split(
         df, test_size=held_out_test_size, random_state=random_state)
     df_train.to_csv(train_filename)

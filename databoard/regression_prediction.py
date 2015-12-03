@@ -20,6 +20,10 @@ class Predictions(BasePrediction):
         else:
             raise ValueError("Missing init argument: y_pred, y_true, f_name "
                              "or n_samples")
+        shape = self.y_pred.shape
+        if len(shape) != 1:
+            raise ValueError('Multiclass y_proba should be 1-dimensional, '
+                             'instead it is {}-dimensional'.format(len(shape)))
 
     def set_valid_in_train(self, predictions, test_is):
         self.y_pred[test_is] = predictions.y_pred

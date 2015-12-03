@@ -12,6 +12,7 @@ from databoard.remove_test_db import recreate_test_db
 
 
 def test_set_config_to_test():
+    config.min_duration_between_submissions = 0
     config.config_object.ramp_name = 'iris'
     origin_path = os.path.join('ramps', config.config_object.ramp_name)
     config.root_path = os.path.join('.')
@@ -57,18 +58,27 @@ def test_add_cv_folds():
 
 
 def test_create_user():
+    #db_tools.add_users_from_file('databoard/tests/data/users_to_add.csv')
     db_tools.create_user(
         name='kegl', password='bla', lastname='Kegl',
-        firstname='Balazs', email='balazs.kegl@gmail.com')
+        firstname='Balazs', email='balazs.kegl@gmail.com',
+        access_level='admin')
     db_tools.create_user(
         name='agramfort', password='bla', lastname='Gramfort',
-        firstname='Alexandre', email='alexandre.gramfort@gmail.com')
+        firstname='Alexandre', email='alexandre.gramfort@gmail.com',
+        access_level='admin')
     db_tools.create_user(
         name='akazakci', password='bla', lastname='Akin',
-        firstname='Kazakci', email='osmanakin@gmail.com')
+        firstname='Kazakci', email='osmanakin@gmail.com',
+        access_level='user')
     db_tools.create_user(
         name='mcherti', password='bla', lastname='Cherti',
-        firstname='Mehdi', email='mehdicherti@gmail.com')
+        firstname='Mehdi', email='mehdicherti@gmail.com',
+        access_level='admin')
+    db_tools.create_user(
+        name='djabbz', password='bla', lastname='Benbouzid',
+        firstname='Djalel', email='djalel.benbouzid@gmail.com',
+        access_level='user')
 
     try:
         db_tools.create_user(

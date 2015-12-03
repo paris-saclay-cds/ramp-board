@@ -23,8 +23,8 @@ descr = """databoard."""
 
 DISTNAME = 'databoard'
 DESCRIPTION = descr
-MAINTAINER = 'Alexandre Gramfort'
-MAINTAINER_EMAIL = 'alexandre.gramfort@telecom-paristech.fr'
+MAINTAINER = 'Balazs Kegl'
+MAINTAINER_EMAIL = 'balazs.kegl@gmail.com'
 URL = 'None'
 LICENSE = 'BSD (3-clause)'
 DOWNLOAD_URL = 'http://databoard'  # XXX : fix
@@ -60,8 +60,8 @@ if __name__ == "__main__":
           packages=[
               'databoard',
               'databoard.tests',
-              'databoard.db',
-              'databoard.ramps.amadeus',
+              'databoard.ramps',
+              'databoard.ramps.air_passengers',
               'databoard.ramps.boston_housing',
               'databoard.ramps.el_nino_bagged_cv_future',
               'databoard.ramps.el_nino_block_cv',

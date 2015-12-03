@@ -14,7 +14,7 @@ from flask_mail import Message
 
 from databoard import app
 from databoard.model_shelve import shelve_database, columns
-from databoard.config import notification_recipients, submissions_path,\
+from databoard.config import submissions_path,\
     repos_path, deposited_submissions_path
 import databoard.config as config
 from databoard.model import NameClashError
@@ -29,39 +29,6 @@ def get_model_hash(team_name, submission_name, **kwargs):
     sha_hasher.update(submission_name)
     model_hash = 'm{}'.format(sha_hasher.hexdigest())
     return model_hash
-
-
-def send_mail_notif(submissions):
-    specific = config.config_object.specific
-
-    with app.app_context():
-        mail = Mail(app)
-
-        logger.info('Sending notification email to: {}'.format(
-            ', '.join(notification_recipients)))
-        msg = Message('New submissions in the ' + specific.hackaton_title + ' hackaton',
-                      reply_to='djalel.benbouzid@gmail.com')
-
-        msg.recipients = notification_recipients
-
-        body_message = '<b>Dataset</b>: {}<br/>'.format(
-            specific.hackaton_title)
-        body_message += '<b>Server</b>: {}<br/>'.format(
-            config.config.deploy_server)
-        body_message += '<b>Port</b>: {}<br/>'.format(
-            config.config.server_port)
-        body_message += '<b>Path</b>: {}<br/>'.format(
-            config.config.get_destination_path())  # XXX buggy
-        body_message += '<b>Num_CPUs</b>: {}<br/>'.format(
-            config.config.num_cpus)
-
-        body_message += 'New submissions: <br/><ul>'
-        for team, tag in submissions:
-            body_message += '<li><b>{}</b>: {}</li>'.format(team, tag)
-        body_message += '</ul>'
-        msg.html = body_message
-
-        mail.send(msg)
 
 
 def copy_git_tree(tree, dest_folder):

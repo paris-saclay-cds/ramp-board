@@ -2,16 +2,18 @@ import os
 import shutil
 import bcrypt
 import timeit
+import smtplib
 import logging
 import datetime
 import pandas as pd
+import xkcdpass.xkcd_password as xp
 from sklearn.externals.joblib import Parallel, delayed
 from databoard import db
 
 from databoard.model import User, Team, Submission, SubmissionFile,\
     CVFold, SubmissionOnCVFold, DetachedSubmissionOnCVFold,\
-    NameClashError, MergeTeamError,\
-    DuplicateSubmissionError, max_members_per_team
+    NameClashError, MergeTeamError, TooEarlySubmissionError,\
+    DuplicateSubmissionError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -33,6 +35,7 @@ def get_user_teams(user):
     for team in teams:
         if user in get_team_members(team):
             yield team
+
 
 def get_active_user_team(user):
     teams = Team.query.all()
@@ -57,10 +60,60 @@ def check_password(plain_text_password, hashed_password):
     return bcrypt.checkpw(plain_text_password, hashed_password)
 
 
-def create_user(name, password, lastname, firstname, email):
+def add_users_from_file(users_to_add_f_name):
+    # For now just saves the passwords and returns the pandas dataframe.
+    users_to_add = pd.read_csv(users_to_add_f_name)
+    words = xp.locate_wordfile()
+    mywords = xp.generate_wordlist(wordfile=words, min_length=4, max_length=6)
+    users_to_add['password'] = [xp.generate_xkcdpassword(mywords, numwords=4)
+                                for name in users_to_add['name']]
+    # temporarily while we don't implement pwd recovery
+    users_to_add.to_csv(users_to_add_f_name + '.w_pwd')
+    return users_to_add
+
+
+def send_password_mails(users_to_add_f_name):
+    #  later can be joined to the ramp admins
+    gmail_user = config.MAIL_USERNAME
+    gmail_pwd = config.MAIL_PASSWORD
+    smtpserver = smtplib.SMTP(config.MAIL_SERVER, config.MAIL_PORT)
+    smtpserver.ehlo()
+    smtpserver.starttls()
+    smtpserver.ehlo
+    smtpserver.login(gmail_user, gmail_pwd)
+
+    users_to_add = pd.read_csv(users_to_add_f_name)
+    subject = '{} RAMP information'.format(
+        config.config_object.specific.ramp_title)
+    for _, u in users_to_add.iterrows():
+        logger.info('Sending mail to {}'.format(u['email']))
+        header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
+            u['email'], gmail_user, subject)
+        body = 'Dear {},\n\n'.format(u['firstname'])
+        body += 'Here is your login and other information for the {} RAMP:\n\n'.format(
+            config.config_object.specific.ramp_title)
+        body += 'username: {}\n'.format(u['name'])
+        body += 'password: {}\n'.format(u['password'])
+        body += 'submission site: http://{}:{}\n'.format(
+            config.config_object.web_server, config.config_object.server_port)
+        if config.opening_timestamp is not None:
+            body += 'opening at (UTC) {}\n'.format(
+                date_time_format(config.opening_timestamp))
+        if config.public_opening_timestamp is not None:
+            body += 'opening of the collaborative phase at (UTC) {}\n'.format(
+                date_time_format(config.public_opening_timestamp))
+        if config.closing_timestamp is not None:
+            body += 'closing at (UTC) {}\n'.format(
+                date_time_format(config.closing_timestamp))
+        smtpserver.sendmail(gmail_user, u['email'], header + body)
+
+
+def create_user(name, password, lastname, firstname, email,
+                access_level='user', hidden_notes=''):
     hashed_password = get_hashed_password(password)
     user = User(name=name, hashed_password=hashed_password,
-                lastname=lastname, firstname=firstname, email=email)
+                lastname=lastname, firstname=firstname, email=email,
+                access_level=access_level, hidden_notes=hidden_notes)
     # Creating default team with the same name as the user
     # user is admin of her own team
     team = Team(name=name, admin=user)
@@ -153,10 +206,10 @@ def merge_teams(name, initiator_name, acceptor_name):
     n_members_initiator = get_n_team_members(initiator)
     n_members_acceptor = get_n_team_members(acceptor)
     n_members_new = n_members_initiator + n_members_acceptor
-    if n_members_new > max_members_per_team:
+    if n_members_new > config.max_members_per_team:
         raise MergeTeamError(
             'Too big team: new team would be of size {}, the max is {}'.format(
-                n_members_new, max_members_per_team))
+                n_members_new, config.max_members_per_team))
 
     members_initiator = get_team_members(initiator)
     members_acceptor = get_team_members(acceptor)
@@ -203,6 +256,22 @@ def print_active_teams():
 
 ######################### Submissions ###########################
 
+def set_state(team_name, submission_name, state):
+    team = Team.query.filter_by(name=team_name).one()
+    submission = Submission.query.filter_by(
+        name=submission_name, team=team).one()
+    submission.set_state(state)
+    db.session.commit()
+
+
+def delete_submission(team_name, submission_name):
+    team = Team.query.filter_by(name=team_name).one()
+    submission = Submission.query.filter_by(
+        name=submission_name, team=team).one()
+    shutil.rmtree(submission.path)
+    db.session.delete(submission)
+    db.session.commit()
+
 
 def make_submission(team_name, name, f_name_list):
     # TODO: to call unit tests on submitted files. Those that are found
@@ -211,9 +280,23 @@ def make_submission(team_name, name, f_name_list):
     team = Team.query.filter_by(name=team_name).one()
     submission = Submission.query.filter_by(
         name=name, team=team).one_or_none()
-    print submission
     cv_folds = CVFold.query.all()
     if submission is None:
+        # Checking is submission is too early
+        all_submissions = Submission.query.filter_by(team=team).order_by(
+            Submission.submission_timestamp).all()
+        last_submission = None if len(all_submissions) == 0 \
+            else all_submissions[-1]
+        if last_submission is not None and\
+                last_submission.name != config.sandbox_d_name:
+            now = datetime.datetime.utcnow()
+            last = last_submission.submission_timestamp
+            min_diff = config.min_duration_between_submissions
+            diff = (now - last).total_seconds()
+            if diff < min_diff:
+                raise TooEarlySubmissionError(
+                    'You need to wait {} more seconds until next submission'
+                    .format(int(min_diff - diff)))
         submission = Submission(name=name, team=team)
         # Adding submission files
         for f_name in f_name_list:
@@ -226,12 +309,14 @@ def make_submission(team_name, name, f_name_list):
             submission_on_cv_fold = SubmissionOnCVFold(
                 submission=submission, cv_fold=cv_fold)
             db.session.add(submission_on_cv_fold)
+        # for remembering it in the sandbox view
         team.last_submission_name = name
         db.session.commit()
     else:
         # We allow resubmit for new or failing submissions
-        if submission.state == 'new' or 'error' in submission.state:
+        if submission.state == 'new' or submission.is_error:
             submission.state = 'new'
+            submission.submission_timestamp = datetime.datetime.utcnow()
             # Updating existing files or adding new if not in list
             for f_name in f_name_list:
                 submission_file = SubmissionFile.query.filter_by(
@@ -245,8 +330,6 @@ def make_submission(team_name, name, f_name_list):
                 # allowing partial resubmission
 
             # Updating submission on cv folds
-            submission_on_cv_folds = SubmissionOnCVFold.query.filter(
-                SubmissionOnCVFold.submission == submission).all()
             for submission_on_cv_fold in submission.on_cv_folds:
                 # couldn't figure out how to reset to default values
                 db.session.delete(submission_on_cv_fold)
@@ -257,11 +340,6 @@ def make_submission(team_name, name, f_name_list):
                 db.session.add(submission_on_cv_fold)
             team.last_submission_name = name
             db.session.commit()
-#            for cv_fold in cv_folds:
-#                submission_on_cv_fold = SubmissionOnCVFold(
-#                    submission=submission, cv_fold=cv_fold)
-#                db.session.add(submission_on_cv_fold)
-#            db.session.commit()
         else:
             raise DuplicateSubmissionError(
                 'Submission "{}" of team "{}" exists already'.format(
@@ -275,7 +353,7 @@ def make_submission_and_copy_all_files(team_name, new_submission_name,
                                        deposited_submission_path):
     """Called from create_user(), merge_teams(), and fetch.add_models()."""
     deposited_f_name_list = os.listdir(deposited_submission_path)
-    make_submission_and_copy_from_file_list(
+    return make_submission_and_copy_from_file_list(
         team_name, new_submission_name, deposited_submission_path,
         deposited_f_name_list)
 
@@ -283,8 +361,8 @@ def make_submission_and_copy_all_files(team_name, new_submission_name,
 def make_submission_and_copy_from_sandbox(team_name, new_submission_name,
                                           sandbox_submission):
     """Called from view.sandbox()."""
-    make_submission_and_copy_from_file_list(
-        team_name, new_submission_name, sandbox_submission.path, 
+    return make_submission_and_copy_from_file_list(
+        team_name, new_submission_name, sandbox_submission.path,
         sandbox_submission.f_names)
 
 
@@ -313,6 +391,7 @@ def make_submission_and_copy_from_file_list(team_name, new_submission_name,
         logger.info('Copying {} to {}'.format(src, dst))
 
     logger.info("Adding submission={}".format(submission))
+    return submission
 
 
 def train_test_submissions(submissions=None, force_retrain_test=False):
@@ -445,6 +524,7 @@ def train_submission_on_cv_fold(submission_on_cv_fold, X, y,
             logger.error(
                 'Validating {} failed with exception: \n{}'.format(
                     submission_on_cv_fold.error_msg))
+            return
     except Exception, e:
         submission_on_cv_fold.state = 'validating_error'
         log_msg, submission_on_cv_fold.error_msg = _make_error_message(e)
@@ -518,11 +598,23 @@ def compute_contributivity(force_ensemble=False):
     # It would also make more sense to bag differently in eah fold, see the
     # comment in cv_fold.get_combined_predictions
 
+    combined_predictions_list = []
+    test_is_list = []
     for cv_fold in CVFold.query.all():
-        cv_fold.compute_contributivity(force_ensemble)
+        combined_predictions = cv_fold.compute_contributivity(force_ensemble)
+        combined_predictions_list.append(combined_predictions)
+        test_is_list.append(cv_fold.test_is)
     for submission in Submission.query.all():
         submission.set_contributivity()
     db.session.commit()
+
+    from model import _get_valid_score_cv_bags
+    # if there are no predictions to combine, it crashed
+    combined_predictions_list = [c for c in combined_predictions_list
+                                 if c is not None]
+    if len(combined_predictions_list) > 0:
+        logger.info('Combined combined valid score = {}'.format(
+            _get_valid_score_cv_bags(combined_predictions_list, test_is_list)))
 
 
 def get_public_leaderboard(team_name=None, user=None, is_open_code=True):
@@ -570,7 +662,7 @@ def get_public_leaderboard(team_name=None, user=None, is_open_code=True):
             columns, [team.name,
                       submission.name_with_link if is_open_code
                       else submission.name,
-                      round(submission.valid_score_cv_bag, 2),
+                      round(submission.valid_score_cv_bag, 3),
                       int(100 * submission.contributivity + 0.5),
                       int(submission.train_time_cv_mean + 0.5),
                       int(submission.valid_time_cv_mean + 0.5),
@@ -628,7 +720,7 @@ def get_new_submissions(user):
 
 def get_team_submissions(team_name, submission_name=None):
     team = Team.query.filter(Team.name == team_name).one()
-    if submission_name is None:    
+    if submission_name is None:
         submissions = Submission.query.filter(
             team.id == Submission.team_id).all()
     else:
@@ -683,6 +775,8 @@ def print_submissions(submissions=None):
     for submission in submissions:
         print submission
         print('\tstate = {}'.format(submission.state))
+        print('\tcontributivity = {0:.2f}'.format(
+            submission.contributivity))
         print('\tvalid_score_cv_mean = {0:.2f}'.format(
             submission.valid_score_cv_mean))
         print '\tvalid_score_cv_bag = {0:.2f}'.format(

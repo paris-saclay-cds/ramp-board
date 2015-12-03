@@ -9,13 +9,6 @@ from databoard import db
 import databoard.config as config
 import databoard.generic as generic
 
-
-max_members_per_team = 3  # except for users own team
-opening_timestamp = None
-# before teams can see only their own scores
-public_opening_timestamp = datetime.datetime(2014, 12, 3, 14, 0, 0)
-closing_timestamp = None
-
 # Training set table
 # Problem table
 # Ramp table that connects all (training set, problem, cv, specific)
@@ -85,12 +78,22 @@ class User(db.Model):
     is_want_news = db.Column(db.Boolean, default=True)
     access_level = db.Column(db.Enum(
         'admin', 'user', 'asked'), default='asked')  # 'asked' needs approval
-    signup_timestamp = db.Column(
-        db.DateTime, default=datetime.datetime.utcnow())
+    signup_timestamp = db.Column(db.DateTime, nullable=False)
 
     # Flask-Login fields
     is_authenticated = db.Column(db.Boolean, default=True)
     is_active = db.Column(db.Boolean, default=True)
+
+    def __init__(self, name, hashed_password, lastname, firstname, email,
+                 access_level='user', hidden_notes=''):
+        self.name = name
+        self.hashed_password = hashed_password
+        self.lastname = lastname
+        self.firstname = firstname
+        self.email = email
+        self.access_level = access_level
+        self.hidden_notes = hidden_notes
+        self.signup_timestamp = datetime.datetime.utcnow()
 
     @property
     def is_anonymous(self):
@@ -137,11 +140,17 @@ class Team(db.Model):
     acceptor = db.relationship(
         'Team', primaryjoin=('Team.acceptor_id == Team.id'), uselist=False)
 
-    creation_timestamp = db.Column(
-        db.DateTime, default=datetime.datetime.utcnow())
+    creation_timestamp = db.Column(db.DateTime, nullable=False)
     is_active = db.Column(db.Boolean, default=True)  # ->ramp_teams
 
     last_submission_name = db.Column(db.String, default=None)
+
+    def __init__(self, name, admin, initiator=None, acceptor=None):
+        self.name = name
+        self.admin = admin
+        self.initiator = initiator
+        self.acceptor = acceptor
+        self.creation_timestamp = datetime.datetime.utcnow()
 
     def __str__(self):
         str_ = 'Team({})'.format(self.name)
@@ -171,7 +180,9 @@ class SubmissionFile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     submission_id = db.Column(
         db.Integer, db.ForeignKey('submissions.id'), nullable=False)
-    submission = db.relationship('Submission', backref=db.backref('files'))
+    submission = db.relationship(
+        'Submission', backref=db.backref(
+            'files', cascade="all, delete-orphan"))
     name = db.Column(db.String, nullable=False)
 
     db.UniqueConstraint(submission_id, name)
@@ -194,6 +205,7 @@ class SubmissionFile(db.Model):
         return code
 
     def set_code(self, code):
+        code.encode('ascii')  # to raise an exception if code is not ascii
         with open(self.path, 'w') as f:
             f.write(code)
 
@@ -252,6 +264,27 @@ def _combine_predictions_list(predictions_list, index_list=None):
     return combined_predictions
 
 
+def _get_valid_score_cv_bags(predictions_list, test_is_list):
+    specific = config.config_object.specific
+
+    true_predictions_train = generic.get_true_predictions_train()
+
+    n_samples = true_predictions_train.n_samples
+    y_comb = np.array([specific.Predictions(n_samples=n_samples)
+                       for _ in predictions_list])
+    valid_score_cv_bags = []
+    # We crashed here because smebody output a matrix in predict proba
+    # with 4 times more rows. We should check this in train_test
+    for i, test_is in enumerate(test_is_list):
+        y_comb[i].set_valid_in_train(predictions_list[i], test_is)
+        combined_predictions = _combine_predictions_list(y_comb[:i + 1])
+        valid_indexes = combined_predictions.valid_indexes
+        valid_score_cv_bags.append(specific.score(
+            true_predictions_train, combined_predictions, valid_indexes))
+        # XXX maybe use masked arrays rather than passing valid_indexes
+    return valid_score_cv_bags
+
+
 # evaluate right after train/test, so no need for 'scored' states
 submission_states = db.Enum(
     'new', 'checked', 'checking_error', 'trained', 'training_error',
@@ -269,12 +302,10 @@ class Submission(db.Model):
     # one-to-many, ->ramp_teams
     team = db.relationship('Team', backref=db.backref('submissions'))
 
-    name = db.Column(db.String(20), nullable=False)
+    name = db.Column(db.String(20, convert_unicode=True), nullable=False)
     hash_ = db.Column(db.String, nullable=False)
-    submission_timestamp = db.Column(
-        db.DateTime, default=datetime.datetime.utcnow())
+    submission_timestamp = db.Column(db.DateTime, nullable=False)
     training_timestamp = db.Column(db.DateTime)
-    scoring_timestamp = db.Column(db.DateTime)
 
     # These are cv-bagged scores. Individual scores are found in
     # SubmissionToTrain
@@ -302,11 +333,12 @@ class Submission(db.Model):
         self.name = name
         self.team = team
         sha_hasher = hashlib.sha1()
-        sha_hasher.update(self.team.name)
-        sha_hasher.update(self.name)
+        sha_hasher.update(self.team.name.encode('utf-8'))
+        sha_hasher.update(self.name.encode('utf-8'))
         # We considered using the id, but then it will be given away in the
         # url which is maybe not a good idea.
         self.hash_ = 'm{}'.format(sha_hasher.hexdigest())
+        self.submission_timestamp = datetime.datetime.utcnow()
 
     def __str__(self):
         return 'Submission({}/{})'.format(self.team.name, self.name)
@@ -328,7 +360,6 @@ class Submission(db.Model):
     @hybrid_property
     def is_public_leaderboard(self):
         return self.is_valid & (
-            (self.state == 'trained') |
             (self.state == 'validated') |
             (self.state == 'tested'))
 
@@ -384,6 +415,11 @@ class Submission(db.Model):
         return np.array(
             [ts.test_time for ts in self.submission_on_cv_folds]).mean()
 
+    def set_state(self, state):
+        self.state = state
+        for submission_on_cv_fold in self.on_cv_folds:
+            submission_on_cv_fold.state = state
+
     def get_paths(self, submissions_path=config.submissions_path):
         team_path = os.path.join(submissions_path, self.team.name)
         submission_path = os.path.join(team_path, self.hash_)
@@ -396,27 +432,13 @@ class Submission(db.Model):
         """
         specific = config.config_object.specific
 
-        if 'error' not in self.state:
-            true_predictions_train = generic.get_true_predictions_train()
+        if self.is_public_leaderboard:
             predictions_list = [submission_on_cv_fold.valid_predictions for
                                 submission_on_cv_fold in self.on_cv_folds]
-            n_samples = true_predictions_train.n_samples
-            y_comb = np.array([specific.Predictions(n_samples=n_samples)
-                               for _ in predictions_list])
-            valid_score_cv_bags = []
-            # We crashed here because smebody output a matrix in predict proba
-            # with 4 times more rows. We should check this in train_test
-            for i, submission_on_cv_fold in enumerate(self.on_cv_folds):
-                test_is = submission_on_cv_fold.cv_fold.test_is
-                y_comb[i].set_valid_in_train(predictions_list[i], test_is)
-                combined_predictions = _combine_predictions_list(
-                    y_comb[:i + 1])
-                valid_indexes = combined_predictions.valid_indexes
-                valid_score_cv_bags.append(specific.score(
-                    true_predictions_train, combined_predictions,
-                    valid_indexes))
-                # XXX maybe use masked arrays rather than passing valid_indexes
-            self.valid_score_cv_bags = valid_score_cv_bags
+            test_is_list = [submission_on_cv_fold.cv_fold.test_is for
+                            submission_on_cv_fold in self.on_cv_folds]
+            self.valid_score_cv_bags = _get_valid_score_cv_bags(
+                predictions_list, test_is_list)
             self.valid_score_cv_bag = self.valid_score_cv_bags[-1]
         else:
             self.valid_score_cv_bag = specific.score.zero
@@ -436,7 +458,7 @@ class Submission(db.Model):
         """
         specific = config.config_object.specific
 
-        if 'error' not in self.state:
+        if self.is_private_leaderboard:
             # When we have submission id in Predictions, we should get the
             # team and submission from the db
             true_predictions = generic.get_true_predictions_test()
@@ -457,7 +479,7 @@ class Submission(db.Model):
     # contributivity could be a property but then we could not query on it
     def set_contributivity(self):
         self.contributivity = 0.0
-        if 'error' not in self.state:
+        if self.is_public_leaderboard:
             # we share a unit of 1. among folds
             unit_contributivity = 1. / len(self.on_cv_folds)
             for submission_on_cv_fold in self.on_cv_folds:
@@ -466,6 +488,7 @@ class Submission(db.Model):
         db.session.commit()
 
     def set_state_after_training(self):
+        self.training_timestamp = datetime.datetime.utcnow()
         states = [submission_on_cv_fold.state
                   for submission_on_cv_fold in self.on_cv_folds]
         if all(state in ['tested'] for state in states):
@@ -489,7 +512,6 @@ class Submission(db.Model):
             self.error_msg = self.on_cv_folds[i].error_msg
         if 'error' not in self.state:
             self.error_msg = ''
-
 
 
 def _get_next_best_single_fold(predictions_list, true_predictions,
@@ -573,27 +595,30 @@ class CVFold(db.Model):
         force_ensemble : boolean
             To force include deleted models
         """
-        # we drop "_on_fold" here from the suffix of all submissions_on_fold
-
         # The submissions must have is_to_ensemble set to True. It is for
         # fogetting models. Users can also delete models in which case
         # we make is_valid false. We then only use these models if
         # force_ensemble is True.
         # We can further bag here which should be handled in config (or
         # ramp table.) Or we could bag in _get_next_best_single_fold
-        selected_submissions = [
-            submission for submission in self.submissions
-            if (submission.submission.is_valid or force_ensemble)
-            and submission.submission.is_to_ensemble
-            and 'error' not in submission.state
+        selected_submissions_on_fold = [
+            submission_on_fold for submission_on_fold in self.submissions
+            if (submission_on_fold.submission.is_valid or force_ensemble)
+            and submission_on_fold.submission.is_to_ensemble
+            and submission_on_fold.is_public_leaderboard
+            and submission_on_fold.submission.name != config.sandbox_d_name
         ]
+        if len(selected_submissions_on_fold) == 0:
+            return None
         true_predictions = generic.get_true_predictions_valid(self.test_is)
         # TODO: maybe this can be simplified. Don't need to get down
         # to prediction level.
-        predictions_list = [submission.valid_predictions
-                            for submission in selected_submissions]
-        valid_scores = [submission.valid_score
-                        for submission in selected_submissions]
+        predictions_list = [
+            submission_on_fold.valid_predictions
+            for submission_on_fold in selected_submissions_on_fold]
+        valid_scores = [
+            submission_on_fold.valid_score
+            for submission_on_fold in selected_submissions_on_fold]
         best_prediction_index = np.argmax(valid_scores)
         # best_submission = predictions_list[best_prediction_index]
         best_index_list = np.array([best_prediction_index])
@@ -605,15 +630,18 @@ class CVFold(db.Model):
                 predictions_list, true_predictions, best_index_list)
             improvement = len(best_index_list) != len(old_best_index_list)
         # reset
-        for submission in selected_submissions:
-            submission.best = False
-            submission.contributivity = 0.0
+        for submission_on_fold in selected_submissions_on_fold:
+            submission_on_fold.best = False
+            submission_on_fold.contributivity = 0.0
         # set
-        selected_submissions[best_index_list[0]].best = True
+        selected_submissions_on_fold[best_index_list[0]].best = True
         # we share a unit of 1. among the contributive submissions
         unit_contributivity = 1. / len(best_index_list)
         for i in best_index_list:
-            selected_submissions[i].contributivity += unit_contributivity
+            selected_submissions_on_fold[i].contributivity +=\
+                unit_contributivity
+
+        return _combine_predictions_list(predictions_list, best_index_list)
 
 
 # TODO: rename submission to workflow and submitted file to workflow_element
@@ -635,7 +663,8 @@ class SubmissionOnCVFold(db.Model):
     submission_id = db.Column(
         db.Integer, db.ForeignKey('submissions.id'), nullable=False)
     submission = db.relationship(
-        'Submission', backref=db.backref('on_cv_folds'))
+        'Submission', backref=db.backref('on_cv_folds',
+                                         cascade="all, delete-orphan"))
 
     cv_fold_id = db.Column(
         db.Integer, db.ForeignKey('cv_folds.id'), nullable=False)
@@ -668,6 +697,17 @@ class SubmissionOnCVFold(db.Model):
                 self.state, self.valid_score, self.test_score,
                 self.contributivity, self.best)
         return repr
+
+    @hybrid_property
+    def is_public_leaderboard(self):
+        return (self.state == 'validated') | (self.state == 'tested')
+
+    @hybrid_property
+    def is_error(self):
+        return (self.state == 'training_error') |\
+            (self.state == 'checking_error') |\
+            (self.state == 'validating_error') |\
+            (self.state == 'testing_error')
 
     @property
     def train_predictions(self):
@@ -707,7 +747,7 @@ class SubmissionOnCVFold(db.Model):
     def update(self, detached_submission_on_cv_fold):
         """From trained DetachedSubmissionOnCVFold."""
         self.state = detached_submission_on_cv_fold.state
-        if 'error' in self.state:
+        if self.is_error:
             self.error_msg = detached_submission_on_cv_fold.error_msg
         else:
             if self.state in ['trained', 'validated', 'tested']:
@@ -736,6 +776,9 @@ class DetachedSubmissionOnCVFold(object):
     def __init__(self, submission_on_cv_fold):
         self.train_is = submission_on_cv_fold.cv_fold.train_is
         self.test_is = submission_on_cv_fold.cv_fold.test_is
+        self.full_train_predictions =\
+            submission_on_cv_fold.full_train_predictions
+        self.test_predictions = submission_on_cv_fold.test_predictions
         self.full_train_predictions =\
             submission_on_cv_fold.full_train_predictions
         self.test_predictions = submission_on_cv_fold.test_predictions
@@ -772,6 +815,14 @@ class MergeTeamError(Exception):
 
 
 class DuplicateSubmissionError(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+
+class TooEarlySubmissionError(Exception):
     def __init__(self, value):
         self.value = value
 

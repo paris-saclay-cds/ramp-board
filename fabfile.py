@@ -34,6 +34,7 @@ from distutils.util import strtobool
 logger = logging.getLogger('databoard')
 
 
+
 def clear_cache():
     from sklearn.externals.joblib import Memory
     from databoard.config import cachedir
@@ -249,21 +250,28 @@ def test(state=False, tag=None, team=None):
         db['models'].loc[idx, :] = models
 
 
-def train_test(t=None, s=None):
+def train_test(t=None, s=None, force='False'):
+    force = strtobool(force)
     team_name = t
     submission_name = s
 
     from databoard.db_tools import train_test_submissions, get_team_submissions
-    from databoard.db_tools import compute_contributivity
 
     if team_name is None:
-        train_test_submissions()  # All
+        train_test_submissions(force_retrain_test=force)  # All
     else:
         if submission_name is None:
-            train_test_submissions(get_team_submissions(team_name))
+            train_test_submissions(
+                get_team_submissions(team_name), force_retrain_test=force)
         else:
             train_test_submissions(
-                get_team_submissions(team_name, submission_name))
+                get_team_submissions(
+                    team_name, submission_name), force_retrain_test=force)
+    compute_contributivity()
+
+
+def compute_contributivity():
+    from databoard.db_tools import compute_contributivity
     compute_contributivity()
 
 
@@ -281,35 +289,20 @@ def print_submissions(t=None, s=None):
             print_submissions(get_team_submissions(team_name, submission_name))
 
 
-def change_state(from_state, to_state):
-    from databoard.model import shelve_database
+def set_state(t, s, state):
+    team_name = t
+    submission_name = s
 
-    with shelve_database() as db:
-        models = db['models']
-    models = models[models['state'] == from_state]
-
-    idx = models.index
-    with shelve_database() as db:
-        db['models'].loc[idx, 'state'] = to_state
+    from databoard.db_tools import set_state
+    set_state(team_name, submission_name, state)
 
 
-def set_state(team, tag, state):
-    from databoard.model_shelve import shelve_database
+def delete_submission(t, s):
+    team_name = t
+    submission_name = s
 
-    with shelve_database() as db:
-        models = db['models']
-    models = models[np.logical_and(models['model'] == tag,
-                                   models['team'] == team)]
-
-    if len(models) > 1:
-        print "ambiguous selection"
-        return
-    if len(models) == 0:
-        print "no model found"
-        return
-    idx = models.index
-    with shelve_database() as db:
-        db['models'].loc[idx, 'state'] = state
+    from databoard.db_tools import delete_submission
+    delete_submission(team_name, submission_name)
 
 
 def kill(team, tag):
@@ -368,28 +361,54 @@ def serve(port=None, test='False'):
 
 # from importlib import import_module
 
-software = [
+
+ramp_deployment = [
     'fabfile.py',
     'ramp_index.txt',
-    #'databoard/config.py',
-    #'databoard/__init__.py',
-    #'databoard/fetch.py',
-    #'databoard/generic.py',
-    #'databoard/leaderboard.py',
-    #'databoard/machine_parallelism.py',
-    #'databoard/model.py',  # db model, TODO should be renamed
-    #'databoard/base_prediction.py',
-    #'databoard/multiclass_prediction.py',
-    #'databoard/regression_prediction.py',
-    #'databoard/scores.py',
-    #'databoard/train_test.py',
-    #'databoard/views.py',
+]
+
+software = [
+    'databoard/__init__.py',
+    'databoard/base_prediction.py',
+    'databoard/config.py',
+    'databoard/db_tools.py',
+    'databoard/fetch.py',
+    'databoard/forms.py',
+    'databoard/generic.py',
+    'databoard/leaderboard.py',
+    'databoard/machine_parallelism.py',
+    'databoard/model.py',
+    'databoard/multiclass_prediction.py',
+    'databoard/regression_prediction.py',
+    'databoard/remove_test_db.py',
+    'databoard/scores.py',
+    'databoard/train_test.py',
+    'databoard/views.py',
+    'databoard/ramps/__init__.py',
+    'databoard/ramps/air_passengers/__init__.py',
+    'databoard/ramps/air_passengers/specific.py',
+    'databoard/ramps/boston_housing/__init__.py',
+    'databoard/ramps/boston_housing/specific.py',
+    'databoard/ramps/el_nino_bagged_cv_future/__init__.py',
+    'databoard/ramps/el_nino_bagged_cv_future/specific.py',
+    'databoard/ramps/el_nino_block_cv/__init__.py',
+    'databoard/ramps/el_nino_block_cv/specific.py',
+    'databoard/ramps/iris/__init__.py',
+    'databoard/ramps/iris/specific.py',
+    'databoard/ramps/kaggle_otto/__init__.py',
+    'databoard/ramps/kaggle_otto/specific.py',
+    'databoard/ramps/mortality_prediction/__init__.py',
+    'databoard/ramps/mortality_prediction/specific.py',
+    'databoard/ramps/pollenating_insects/__init__.py',
+    'databoard/ramps/pollenating_insects/specific.py',
+    'databoard/ramps/variable_stars/__init__.py',
+    'databoard/ramps/variable_stars/specific.py',
+    'databoard/tests/test_model.py',
+    'databoard/tests/test_multiclass_predictions.py',
+    'databoard/tests/test_regression_predictions.py',
+    'databoard/tests/test_scores.py',
     'databoard/static',
     'databoard/templates',
-    #'databoard/db/__init__.py',
-    #'databoard/db/model.py',
-    #'databoard/db/remove_test_db.py',
-    #'databoard/db/tools.py',
 ]
 
 
@@ -412,12 +431,13 @@ def publish(ramp_index, test='False'):
     # TODO: check if ramp_name is the same as in
     #      'ramps/' + ramp_name + '/specific.py'
 
+    # publishing ramp_deployment
     local = config_object.train_server == 'localhost'
     command = "rsync -pthrRvz -c "
     if not local:
         command += "--rsh=\'ssh -i " + os.path.expanduser("~")
         command += "/.ssh/datacamp/id_rsa -p 22\' "
-    for file in software:
+    for file in ramp_deployment:
         command += file + " "
     if not config_object.is_same_web_and_train_servers():
         command += config_object.get_deployment_target('web')
@@ -437,6 +457,20 @@ def publish(ramp_index, test='False'):
         command += config_object.get_deployment_target('train')
     print command
     os.system(command)
+
+    # publishing software
+    if not local:
+        command = "rsync -pthrRvz -c "
+        command += "--rsh=\'ssh -i " + os.path.expanduser("~")
+        command += "/.ssh/datacamp/id_rsa -p 22\' "
+        for file in software:
+            command += file + " "
+        if not config_object.is_same_web_and_train_servers():
+            command += config_object.get_software_target('web')
+        else:
+            command += config_object.get_software_target('train')
+        print command
+        os.system(command)
 
     if test:
         command = "rsync -pthrvz -c "
@@ -527,10 +561,41 @@ def publish_test(ramp_index):
 
 
 def test_ramp():
+    import databoard.config as config
     from databoard.tests.test_model import test_create_user, test_merge_teams
+    min_duration_between_submissions = config.min_duration_between_submissions
+    config.min_duration_between_submissions = 0
     test_setup()
     test_create_user()  # kegl, agramfort, akazakci, mcherti, pwd = 'bla'
     test_merge_teams()  # kemfort, mkezakci
     add_models()  # will create user and team 'test'
     train_test()
+    config.min_duration_between_submissions = min_duration_between_submissions
     # leaderboard(test='True')
+
+
+def create_user(name, password, lastname, firstname, email, 
+                access_level='user', hidden_notes=''):
+    from databoard.config import sandbox_d_name
+    from databoard.db_tools import create_user
+    create_user(
+        name, password, lastname, firstname, email, access_level, hidden_notes)
+    train_test(t=name, s=sandbox_d_name)
+
+
+def add_users_from_file(users_to_add_f_name):
+    from databoard.db_tools import add_users_from_file
+    from databoard.remove_test_db import recreate_test_db
+    from databoard.config import sandbox_d_name
+
+    test_setup()
+    users_to_add = add_users_from_file(users_to_add_f_name)
+
+    for _, u in users_to_add.iterrows():
+        print u
+        create_user(u['name'], u['password'], u['lastname'], u['firstname'],
+                    u['email'], u['access_level'], u['hidden_notes'])
+
+def send_password_mails(users_to_add_f_name):
+    from databoard.db_tools import send_password_mails
+    send_password_mails(users_to_add_f_name)

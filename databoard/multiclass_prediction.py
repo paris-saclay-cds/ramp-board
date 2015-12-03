@@ -25,8 +25,16 @@ class Predictions(BasePrediction):
                 (n_samples, len(labels)), dtype=np.float64)
             self.y_proba.fill(np.nan)
         else:
-            raise ValueError("Missing init argument: y_pred, y_pred_labels, "
-                             "y_pred_indexes, y_true, f_name, or n_samples")
+            raise ValueError('Missing init argument: y_pred, y_pred_labels, '
+                             'y_pred_indexes, y_true, f_name, or n_samples)')
+        shape = self.y_proba.shape
+        if len(shape) != 2:
+            raise ValueError('Multiclass y_proba should be 2-dimensional, '
+                             'instead it is {}-dimensional'.format(len(shape)))
+        #if shape[1] != len(labels):
+        #    raise ValueError('Vectors in multiclass y_proba should be '
+        #                     '{}-dimensional, instead they are {}-dimensional'.
+        #                     format(len(labels), shape[1]))
 
     def _init_from_pred_labels(self, y_pred_labels):
         type_of_label = type(labels[0])
