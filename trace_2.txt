@@ -1,0 +1,51 @@
+Traceback (most recent call last):
+  File "/mnt/datacamp/anaconda/lib/python2.7/SocketServer.py", line 295, in _handle_request_noblock
+    self.process_request(request, client_address)
+  File "/mnt/datacamp/anaconda/lib/python2.7/SocketServer.py", line 321, in process_request
+    self.finish_request(request, client_address)
+  File "/mnt/datacamp/anaconda/lib/python2.7/SocketServer.py", line 334, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/mnt/datacamp/anaconda/lib/python2.7/SocketServer.py", line 655, in __init__
+    self.handle()
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/werkzeug/serving.py", line 203, in handle
+    rv = BaseHTTPRequestHandler.handle(self)
+  File "/mnt/datacamp/anaconda/lib/python2.7/BaseHTTPServer.py", line 340, in handle
+    self.handle_one_request()
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/werkzeug/serving.py", line 238, in handle_one_request
+    return self.run_wsgi()
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/werkzeug/serving.py", line 180, in run_wsgi
+    execute(self.server.app)
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/werkzeug/serving.py", line 168, in execute
+    application_iter = app(environ, start_response)
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/flask/app.py", line 1836, in __call__
+    return self.wsgi_app(environ, start_response)
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/flask/app.py", line 1817, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/flask/app.py", line 1475, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/flask/app.py", line 1461, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "/mnt/databoard/databoard-0.1.dev0/databoard/views.py", line 222, in leaderboard
+    is_open_code=is_open_code)
+  File "/mnt/databoard/databoard-0.1.dev0/databoard/db_tools.py", line 670, in get_public_leaderboard
+    for submission, team in submissions_teams
+  File "/mnt/databoard/databoard-0.1.dev0/databoard/model.py", line 407, in train_time_cv_mean
+    return np.array([ts.train_time for ts in self.on_cv_folds]).mean()
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/sqlalchemy/orm/attributes.py", line 237, in __get__
+    return self.impl.get(instance_state(instance), dict_)
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/sqlalchemy/orm/attributes.py", line 583, in get
+    value = self.callable_(state, passive)
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/sqlalchemy/orm/strategies.py", line 532, in _load_for_state
+    return self._emit_lazyload(session, state, ident_key, passive)
+  File "<string>", line 1, in <lambda>
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/sqlalchemy/orm/strategies.py", line 602, in _emit_lazyload
+    result = q.all()
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/sqlalchemy/orm/query.py", line 2423, in all
+    return list(self)
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/sqlalchemy/orm/loading.py", line 67, in instances
+    fetch = cursor.fetchall()
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/sqlalchemy/engine/result.py", line 962, in fetchall
+    l = self.process_rows(self._fetchall_impl())
+  File "/mnt/datacamp/anaconda/lib/python2.7/site-packages/sqlalchemy/engine/result.py", line 913, in _fetchall_impl
+    return self.cursor.fetchall()
+KeyboardInterrupt
