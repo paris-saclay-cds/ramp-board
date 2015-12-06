@@ -440,6 +440,8 @@ def train_test_submission(submission, force_retrain_test=False):
     submission.compute_test_score_cv_bag()
     submission.compute_valid_score_cv_bag()
     db.session.commit()
+    logger.info('valid_score = {}'.format(submission.valid_score_cv_bag))
+    logger.info('test_score = {}'.format(submission.test_score_cv_bag))
 
 
 def _make_error_message(e):
@@ -601,6 +603,7 @@ def compute_contributivity(force_ensemble=False):
     combined_predictions_list = []
     test_is_list = []
     for cv_fold in CVFold.query.all():
+        logger.info('{}'.format(cv_fold))
         combined_predictions = cv_fold.compute_contributivity(force_ensemble)
         combined_predictions_list.append(combined_predictions)
         test_is_list.append(cv_fold.test_is)
@@ -633,8 +636,7 @@ def get_public_leaderboard(team_name=None, user=None, is_open_code=True):
             Team.id == Submission.team_id).filter(
             Submission.is_public_leaderboard).filter(
             Submission.name != config.sandbox_d_name).filter(
-            Team.name == team_name).order_by(
-            Submission.valid_score_cv_bag.desc()).all()
+            Team.name == team_name).all()
     elif user is not None:
         submissions_teams = []
         for team_name in [team.name for team in get_user_teams(user)]:
@@ -642,14 +644,13 @@ def get_public_leaderboard(team_name=None, user=None, is_open_code=True):
                 Team.id == Submission.team_id).filter(
                 Team.name == team_name).filter(
                 Submission.name != config.sandbox_d_name).filter(
-                Submission.is_public_leaderboard).order_by(
-                Submission.valid_score_cv_bag.desc()).all()
+                Submission.is_public_leaderboard).all()
     else:
         submissions_teams = db.session.query(Submission, Team).filter(
             Team.id == Submission.team_id).filter(
             Submission.is_public_leaderboard).filter(
-            Submission.name != config.sandbox_d_name).order_by(
-            Submission.valid_score_cv_bag.desc()).all()
+            Submission.name != config.sandbox_d_name).all()
+
     columns = ['team',
                'submission',
                'score',
@@ -661,7 +662,7 @@ def get_public_leaderboard(team_name=None, user=None, is_open_code=True):
         {column: value for column, value in zip(
             columns, [team.name,
                       submission.name_with_link if is_open_code
-                      else submission.name,
+                      else submission.name[:20],
                       round(submission.valid_score_cv_bag, 3),
                       int(100 * submission.contributivity + 0.5),
                       int(submission.train_time_cv_mean + 0.5),
@@ -670,6 +671,7 @@ def get_public_leaderboard(team_name=None, user=None, is_open_code=True):
         for submission, team in submissions_teams
     ]
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
+    leaderboard_df = leaderboard_df.sort('contributivity', ascending=False)
     html_params = dict(
         escape=False,
         index=False,
@@ -682,19 +684,71 @@ def get_public_leaderboard(team_name=None, user=None, is_open_code=True):
     return leaderboard_html
 
 
-def get_new_submissions(user):
+def get_private_leaderboard():
     """
     Returns
     -------
     leaderboard_html : html string
     """
-    submissions_teams = []
-    for team_name in [team.name for team in get_user_teams(user)]:
-        submissions_teams += db.session.query(Submission, Team).filter(
+
+    submissions_teams = db.session.query(Submission, Team).filter(
+        Team.id == Submission.team_id).filter(
+        Submission.is_private_leaderboard).filter(
+        Submission.name != config.sandbox_d_name).all()
+
+    columns = ['team',
+               'submission',
+               'public score',
+               'private score',
+               'contributivity',
+               'train time',
+               'test time',
+               'submitted at (UTC)']
+    leaderboard_dict_list = [
+        {column: value for column, value in zip(
+            columns, [team.name,
+                      submission.name_with_link,
+                      round(submission.valid_score_cv_bag, 3),
+                      round(submission.test_score_cv_bag, 3),
+                      int(100 * submission.contributivity + 0.5),
+                      int(submission.train_time_cv_mean + 0.5),
+                      int(submission.valid_time_cv_mean + 0.5),
+                      date_time_format(submission.submission_timestamp)])}
+        for submission, team in submissions_teams
+    ]
+    leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
+    leaderboard_df = leaderboard_df.sort('contributivity', ascending=False)
+    html_params = dict(
+        escape=False,
+        index=False,
+        max_cols=None,
+        max_rows=None,
+        justify='left',
+        classes=['ui', 'blue', 'celled', 'table', 'sortable']
+    )
+    leaderboard_html = leaderboard_df.to_html(**html_params)
+    return leaderboard_html
+
+
+def get_new_submissions(user=None):
+    """
+    Returns
+    -------
+    leaderboard_html : html string
+    """
+    if user is None:
+        submissions_teams = db.session.query(Submission, Team).filter(
             Team.id == Submission.team_id).filter(
-            Team.name == team_name).filter(
             Submission.state == 'new').order_by(
             Submission.submission_timestamp).all()
+    else:
+        submissions_teams = []
+        for team_name in [team.name for team in get_user_teams(user)]:
+            submissions_teams += db.session.query(Submission, Team).filter(
+                Team.id == Submission.team_id).filter(
+                Team.name == team_name).filter(
+                Submission.state == 'new').order_by(
+                Submission.submission_timestamp).all()
     columns = ['team',
                'submission',
                'submitted at (UTC)']
@@ -730,19 +784,39 @@ def get_team_submissions(team_name, submission_name=None):
     return submissions
 
 
-def get_failed_submissions(user):
+def get_submissions_of_state(state):
+    return Submission.query.filter(Submission.state == state).all()
+
+
+def get_earliest_new_submission():
+    new_submissions = Submission.query.filter_by(
+        Submission.state == 'new').order_by(
+        Submission.submission_timestamp).all()
+    if len(new_submissions) == 0:
+        return None
+    else:
+        return new_submissions[0]
+
+
+def get_failed_submissions(user=None):
     """
     Returns
     -------
     leaderboard_html : html string
     """
-    submissions_teams = []
-    for team_name in [team.name for team in get_user_teams(user)]:
-        submissions_teams += db.session.query(Submission, Team).filter(
+    if user is None:
+        submissions_teams = db.session.query(Submission, Team).filter(
             Team.id == Submission.team_id).filter(
-            Team.name == team_name).filter(
             Submission.is_error).order_by(
             Submission.submission_timestamp).all()
+    else:
+        submissions_teams = []
+        for team_name in [team.name for team in get_user_teams(user)]:
+            submissions_teams += db.session.query(Submission, Team).filter(
+                Team.id == Submission.team_id).filter(
+                Team.name == team_name).filter(
+                Submission.is_error).order_by(
+                Submission.submission_timestamp).all()
     columns = ['team',
                'submission',
                'submitted at (UTC)',

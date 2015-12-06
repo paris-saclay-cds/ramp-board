@@ -1,6 +1,7 @@
 import os
 import zlib
 import hashlib
+import logging
 import datetime
 import numpy as np
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -14,6 +15,8 @@ import databoard.generic as generic
 # Ramp table that connects all (training set, problem, cv, specific)
 # specific should be cut at least into problem-specific, data and cv-specific,
 # and ramp (event) specific files
+
+logger = logging.getLogger('databoard')
 
 
 class NumpyType(db.TypeDecorator):
@@ -32,16 +35,13 @@ class ScoreType(db.TypeDecorator):
     """ Storing score types (with redefined comparators)."""
     impl = db.Float
 
+    # going into the db
     def process_bind_param(self, value, dialect):
-        if type(value) == float:
-            return value
-        else:
-            specific = config.config_object.specific
-            return specific.score.revert(value)
+        return float(value)
 
+    # going out of the db
     def process_result_value(self, value, dialect):
-        specific = config.config_object.specific
-        return specific.score.convert(value)
+        return config.config_object.specific.score.convert(value)
 
 
 class PredictionType(db.TypeDecorator):
@@ -383,7 +383,8 @@ class Submission(db.Model):
 
     @property
     def name_with_link(self):
-        return '<a href="' + self.files[0].path + '">' + self.name + '</a>'
+        # TODO: file order!
+        return '<a href="' + self.files[-1].path + '">' + self.name[:20] + '</a>'
 
     @property
     def state_with_link(self):
@@ -546,7 +547,7 @@ def _get_next_best_single_fold(predictions_list, true_predictions,
     specific = config.config_object.specific
 
     best_predictions = _combine_predictions_list(
-        predictions_list, best_index_list)
+        predictions_list, index_list=best_index_list)
     best_score = specific.score(true_predictions, best_predictions)
     best_index = -1
     # Combination with replacement, what Caruana suggests. Basically, if a
@@ -554,7 +555,7 @@ def _get_next_best_single_fold(predictions_list, true_predictions,
     # integer-weighted ensembles
     for i in range(len(predictions_list)):
         combined_predictions = _combine_predictions_list(
-            predictions_list, np.append(best_index_list, i))
+            predictions_list, index_list=np.append(best_index_list, i))
         new_score = specific.score(true_predictions, combined_predictions)
         # new_score = specific.score(pred_true, pred_comb)
         # '>' is overloaded in score, so 'x > y' means 'x is better than y'
@@ -563,9 +564,9 @@ def _get_next_best_single_fold(predictions_list, true_predictions,
             best_index = i
             best_score = new_score
     if best_index > -1:
-        return np.append(best_index_list, best_index)
+        return np.append(best_index_list, best_index), best_score
     else:
-        return best_index_list
+        return best_index_list, best_score
 
 
 class CVFold(db.Model):
@@ -580,8 +581,7 @@ class CVFold(db.Model):
     test_is = db.Column(NumpyType, nullable=False)
 
     def __repr__(self):
-        repr = 'fold {}'.format(self.train_is)[:15],
-        return repr
+        return 'fold {}'.format(self.train_is)[:15]
 
     def compute_contributivity(self, force_ensemble=False):
         """Constructs the best model combination on a single fold, using greedy
@@ -623,12 +623,12 @@ class CVFold(db.Model):
         # best_submission = predictions_list[best_prediction_index]
         best_index_list = np.array([best_prediction_index])
         improvement = True
-        max_len_best_index_list = 80  # should be a config parameter
-        while improvement and len(best_index_list) < max_len_best_index_list:
+        while improvement and len(best_index_list) < config.max_n_ensemble:
             old_best_index_list = best_index_list
-            best_index_list = _get_next_best_single_fold(
+            best_index_list, score = _get_next_best_single_fold(
                 predictions_list, true_predictions, best_index_list)
             improvement = len(best_index_list) != len(old_best_index_list)
+            logger.info('\t{}: {}'.format(best_index_list, score))
         # reset
         for submission_on_fold in selected_submissions_on_fold:
             submission_on_fold.best = False
@@ -641,7 +641,8 @@ class CVFold(db.Model):
             selected_submissions_on_fold[i].contributivity +=\
                 unit_contributivity
 
-        return _combine_predictions_list(predictions_list, best_index_list)
+        return _combine_predictions_list(
+            predictions_list, index_list=best_index_list)
 
 
 # TODO: rename submission to workflow and submitted file to workflow_element

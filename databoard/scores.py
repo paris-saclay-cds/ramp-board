@@ -80,15 +80,6 @@ class ScoreFunction(object):
     def set_eps(self, eps):
         self.eps = eps
 
-    def convert(self, x):
-        if self.higher_the_better:
-            return ScoreHigherTheBetter(x, self.eps)
-        else:
-            return ScoreLowerTheBetter(x, self.eps)
-
-    def revert(self, x):
-        return x.score
-
 
 class Accuracy(ScoreFunction):
 
@@ -106,6 +97,10 @@ class Accuracy(ScoreFunction):
     @property
     def zero(self):
         return ScoreHigherTheBetter(0.0, self.eps)
+
+    @staticmethod
+    def convert(x):
+        return ScoreHigherTheBetter(x)
 
 
 class Error(ScoreFunction):
@@ -125,6 +120,10 @@ class Error(ScoreFunction):
     @property
     def zero(self):
         return ScoreLowerTheBetter(0.0, self.eps)
+
+    @staticmethod
+    def convert(x):
+        return ScoreLowerTheBetter(x)
 
 
 class NegativeLogLikelihood(ScoreFunction):
@@ -156,6 +155,10 @@ class NegativeLogLikelihood(ScoreFunction):
     def zero(self):
         return ScoreLowerTheBetter(0.0, self.eps)
 
+    @staticmethod
+    def convert(x):
+        return ScoreLowerTheBetter(x)
+
 
 class RMSE(ScoreFunction):
 
@@ -171,4 +174,8 @@ class RMSE(ScoreFunction):
 
     @property
     def zero(self):
-        return ScoreLowerTheBetter(0.0, self.eps)
+        return ScoreLowerTheBetter(0.0)
+
+    @staticmethod
+    def convert(x):
+        return ScoreLowerTheBetter(x)

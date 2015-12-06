@@ -13,7 +13,7 @@ class Predictions(BasePrediction):
     def __init__(self, y_pred=None, y_pred_labels=None, y_pred_indexes=None,
                  y_true=None, f_name=None, n_samples=None):
         if y_pred is not None:
-            self.y_proba = y_pred
+            self.y_proba = np.array(y_pred)
         elif y_pred_labels is not None:
             self._init_from_pred_labels(y_pred_labels)
         elif y_true is not None:

@@ -22,8 +22,8 @@ test:
 	fab publish_test:iris_local
 	cd /tmp/databoard_iris_8080; fab test_ramp
 
-	# fab publish_test:boston_housing_local
-	# cd /tmp/databoard_boston_housing_8080; fab test_ramp
+	fab publish_test:boston_housing_local
+	cd /tmp/databoard_boston_housing_8080; fab test_ramp
 
 test-all: test
 	fab publish_test:amadeus_local

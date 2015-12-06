@@ -8,7 +8,7 @@ class Regressor(BaseEstimator):
 
     def fit(self, X, y):
         self.reg = RandomForestRegressor(
-            n_estimators=10, max_leaf_nodes=5)
+            n_estimators=10, max_leaf_nodes=2, random_state=61)
         self.reg.fit(X, y)
 
     def predict(self, X):

@@ -208,32 +208,56 @@ def logout():
 
 @app.route("/leaderboard")
 def leaderboard():
-#    if public_opening_timestamp > datetime.datetime.utcnow():
-#        return render_template('leaderboard_closed.html',
-#                               date_time=db_tools.date_time_format(
-#                                   public_opening_timestamp),
-#                               ramp_title=config.config_object.specific.ramp_title)
-    is_open_code = False
-    if current_user.is_authenticated and current_user.access_level == 'admin':
-        is_open_code = True
-    if config.public_opening_timestamp < datetime.datetime.utcnow():
-        is_open_code = True
-    leaderbord_html = db_tools.get_public_leaderboard(
-        is_open_code=is_open_code)
-    if is_open_code:
-        return render_template(
-            'leaderboard.html',
-            leaderboard_title='Leaderboard',
-            leaderboard=leaderbord_html,
-            ramp_title=config.config_object.specific.ramp_title)
+    if current_user.is_authenticated:
+        if current_user.access_level == 'admin':
+            leaderbord_html = db_tools.get_public_leaderboard()
+            failed_submissions_html = db_tools.get_failed_submissions()
+            new_submissions_html = db_tools.get_new_submissions()
+            return render_template(
+                'leaderboard.html',
+                leaderboard_title='Leaderboard',
+                leaderboard=leaderbord_html,
+                failed_submissions=failed_submissions_html,
+                new_submissions=new_submissions_html,
+                ramp_title=config.config_object.specific.ramp_title)
+        else:
+            if config.public_opening_timestamp < datetime.datetime.utcnow():
+                leaderbord_html = db_tools.get_public_leaderboard()
+                return render_template(
+                    'leaderboard.html',
+                    leaderboard_title='Leaderboard',
+                    leaderboard=leaderbord_html,
+                    ramp_title=config.config_object.specific.ramp_title)
+            else:
+                leaderbord_html = db_tools.get_public_leaderboard(
+                    is_open_code=False)
+                return render_template(
+                    'leaderboard.html',
+                    leaderboard_title='Leaderboard',
+                    leaderboard=leaderbord_html,
+                    opening_date_time=db_tools.date_time_format(
+                        config.public_opening_timestamp),
+                    ramp_title=config.config_object.specific.ramp_title)
     else:
+        leaderbord_html = db_tools.get_public_leaderboard(is_open_code=False)
         return render_template(
             'leaderboard.html',
             leaderboard_title='Leaderboard',
             leaderboard=leaderbord_html,
-            opening_date_time=db_tools.date_time_format(
-                config.public_opening_timestamp),
             ramp_title=config.config_object.specific.ramp_title)
+
+
+@app.route("/private_leaderboard")
+def private_leaderboard():
+    if not current_user.is_authenticated or\
+            current_user.access_level != 'admin':
+        return redirect(url_for('leaderboard'))
+    leaderbord_html = db_tools.get_private_leaderboard()
+    return render_template(
+        'leaderboard.html',
+        leaderboard_title='Private leaderboard',
+        leaderboard=leaderbord_html,
+        ramp_title=config.config_object.specific.ramp_title)
 
 
 # TODO: private leaderboard
@@ -293,7 +317,7 @@ def view_model(team_name, summission_hash, f_name):
     submission_url = request.path.rstrip('/') + '/raw'
     submission_f_name = os.path.join(submission_abspath, f_name)
     if not os.path.exists(submission_f_name):
-        return redirect(url_for('show_leaderboard'))
+        return redirect(url_for('leaderboard'))
 
     with open(submission_f_name) as f:
         code = f.read()

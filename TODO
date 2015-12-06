@@ -10,6 +10,7 @@ max submission name size
 add precision for score (per ramp)
 a being_trained boolean so we can output the next job to train, also taking into consideration that we should not take a model of somebody if her other model is being trained. It can be tricky is we manually kill jobs.
 debug mode should raise the training/valid/test errors so we see the stack and set is_parallel to False
+status of the queue
 Didier's ideas:
   1) He wants to submit through git. What I understand is that he basically wants an API, not a web interface. 
   2) He pointed to us to jenkins: https://jenkins-ci.org/ for the engineering details of launching untrusted code in safe mode. That's what they use for automating their testing: gitlab and jenkins.

@@ -7,8 +7,6 @@ if '' not in sys.path:  # Balazs bug
 
 import os
 import logging
-import numpy as np
-import pandas as pd
 from distutils.util import strtobool
 # import fabric.contrib.project as project
 # from fabric.api import *
@@ -34,7 +32,6 @@ from distutils.util import strtobool
 logger = logging.getLogger('databoard')
 
 
-
 def clear_cache():
     from sklearn.externals.joblib import Memory
     from databoard.config import cachedir
@@ -44,16 +41,18 @@ def clear_cache():
     mem.clear()
 
 
-def clear_db():
-    from databoard.model_shelve import columns
-    from databoard.model_shelve import shelve_database
+def prepare_data():
+    import databoard.config as config
+    import databoard.db_tools as db_tools
+    specific = config.config_object.specific
 
-    logger.info('Clearing the database.')
-    with shelve_database('c') as db:
-        db.clear()
-        db['models'] = pd.DataFrame(columns=columns)
-        db['leaderboard1'] = pd.DataFrame(columns=['score'])
-        db['leaderboard2'] = pd.DataFrame(columns=['contributivity'])
+    # Preparing the data set, typically public train/private held-out test cut
+    logger.info('Preparing the dataset.')
+    specific.prepare_data()
+    logger.info('Adding CV folds.')
+    _, y_train = specific.get_train_data()
+    cv = specific.get_cv(y_train)
+    db_tools.add_cv_folds(cv)
 
 
 def clear_registrants():
@@ -74,32 +73,6 @@ def clear_registrants():
     open(os.path.join(submissions_path, '__init__.py'), 'a').close()
 
 
-def clear_pred_files():
-    import glob
-    from databoard.config import submissions_path
-    fnames = glob.glob(
-        os.path.join(submissions_path, '*', '*', '*', '*.csv'))
-
-    for fname in fnames:
-        if os.path.exists(fname):
-            logger.info("Removing {}".format(fname))
-            os.remove(fname)
-
-
-def prepare_data():
-    import databoard.config as config
-    import databoard.db_tools as db_tools
-    specific = config.config_object.specific
-
-    # Preparing the data set, typically public train/private held-out test cut
-    logger.info('Preparing the dataset.')
-    specific.prepare_data()
-    logger.info('Adding CV folds.')
-    _, y_train = specific.get_train_data()
-    cv = specific.get_cv(y_train)
-    db_tools.add_cv_folds(cv)
-
-
 def test_setup():
     from databoard.remove_test_db import recreate_test_db
 
@@ -111,143 +84,9 @@ def test_setup():
     # todo: set up database
 
 
-def print_db(table='models', state=None):
-    from databoard.model_shelve import shelve_database
-
-    with shelve_database('c') as db:
-        if table not in db:
-            print('Select one of the following tables:')
-            print '\n'.join('\t- {}'.format(t) for t in db)
-            return
-        df = db[table]
-    pd.set_option('display.max_rows', len(df))
-    if not state:
-        print df
-    else:
-        print df[df.state == state]
-
-
-def fetch():
-    from databoard.fetch import fetch_models
-    fetch_models()
-
-
 def add_models():
     from databoard.fetch import add_models
     add_models()
-
-
-def repeat_fetch(delay='60'):
-    import time
-    while True:
-        fetch()
-        delay = int(os.getenv('FETCH_DELAY', delay))
-        time.sleep(delay)
-
-
-def check(state=False, tag=None, team=None):
-    from databoard.train_test import check_models
-    from databoard.model_shelve import shelve_database
-
-    with shelve_database() as db:
-        models = db['models']
-
-    if tag is not None:
-        models = models[models.model == tag]
-        state = 'all'  # force train all the selected models
-        if len(models) == 0:
-            print('No existing model with the tag: {}'.format(tag))
-            return
-
-    if team is not None:
-        models = models[models.team == team]
-        state = 'all'  # force train all the selected models
-        if len(models) == 0:
-            print('No existing model with the team: {}'.format(tag))
-            return
-
-    if not state:
-        state = 'new'
-
-    if state != 'all':
-        models = models[models.state == state]
-
-    check_models(models)
-
-    idx = models.index
-
-    with shelve_database() as db:
-        db['models'].loc[idx, :] = models
-
-
-def train(state=False, tag=None, team=None):
-    from databoard.train_test import train_and_valid_models
-    from databoard.model_shelve import shelve_database
-
-    with shelve_database() as db:
-        models = db['models']
-
-    if tag is not None:
-        models = models[models.model == tag]
-        state = 'all'  # force train all the selected models
-        if len(models) == 0:
-            print('No existing model with the tag: {}'.format(tag))
-            return
-
-    if team is not None:
-        models = models[models.team == team]
-        state = 'all'  # force train all the selected models
-        if len(models) == 0:
-            print('No existing model with the team: {}'.format(tag))
-            return
-
-    if not state:
-        state = 'new'
-
-    if state != 'all':
-        models = models[models.state == state]
-
-    train_and_valid_models(models)
-
-    idx = models.index
-
-    with shelve_database() as db:
-        db['models'].loc[idx, :] = models
-
-
-def test(state=False, tag=None, team=None):
-    from databoard.train_test import test_submissions
-    from databoard.model_shelve import shelve_database
-
-    with shelve_database() as db:
-        models = db['models']
-
-    if tag is not None:
-        models = models[models.model == tag]
-        state = 'all'  # force train all the selected models
-        if len(models) == 0:
-            print('No existing model with the tag: {}'.format(tag))
-            return
-
-    if team is not None:
-        models = models[models.team == team]
-        state = 'all'  # force train all the selected models
-        if len(models) == 0:
-            print('No existing model with the team: {}'.format(tag))
-            return
-
-    if not state:
-        state = 'trained'
-
-    if state != 'all':
-        models = models[models.state == state]
-
-    test_submissions(models)
-
-    idx = models.index
-
-    with shelve_database() as db:
-        db['models'].loc[idx, :] = models
 
 
 def train_test(t=None, s=None, force='False'):
@@ -270,23 +109,48 @@ def train_test(t=None, s=None, force='False'):
     compute_contributivity()
 
 
+def train_test_earliest_new():
+    # it's not so simple: when submission is being trained, it's still new.
+    from databoard.db_tools import train_test_submission,\
+        get_earliest_new_submission
+
+    submission = get_earliest_new_submission()
+    if submission is not None:
+        train_test_submission(submission)
+    else:
+        print('No new submissions')
+
+
 def compute_contributivity():
     from databoard.db_tools import compute_contributivity
     compute_contributivity()
 
 
-def print_submissions(t=None, s=None):
+def print_submissions(t=None, s=None, state=None):
     team_name = t
     submission_name = s
 
-    from databoard.db_tools import print_submissions, get_team_submissions
-    if team_name is None:
+    from databoard.db_tools import print_submissions, get_team_submissions,\
+        get_submissions_of_state
+    if team_name is None and state is None:
         print_submissions()  # All
     else:
-        if submission_name is None:
+        if submission_name is None and state is None:
             print_submissions(get_team_submissions(team_name))
-        else:
+        elif state is None:
             print_submissions(get_team_submissions(team_name, submission_name))
+        else:
+            print_submissions(get_submissions_of_state(state))
+
+
+def print_active_teams():
+    from databoard.db_tools import print_active_teams
+    print_active_teams()
+
+
+def print_users():
+    from databoard.db_tools import print_users
+    print_users()
 
 
 def set_state(t, s, state):
@@ -341,7 +205,8 @@ def serve(port=None, test='False'):
         debug=False,
         port=server_port,
         use_reloader=False,
-        host='0.0.0.0')
+        host='0.0.0.0',
+        processes=1000)
 
 
 # TODO: fill up the following functions so to easily deploy

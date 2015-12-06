@@ -30,6 +30,7 @@ timeout_parallelize_across_machines = 10800
 is_pickle_trained_submission = False
 min_duration_between_submissions = 900  # seconds
 max_members_per_team = 3  # except for users own team
+max_n_ensemble = 80  # max number of submissions in Caruana's ensemble
 opening_timestamp = datetime.datetime(2015, 12, 3, 12, 30, 0)
 # before links to submissions in leaderboard are not alive
 public_opening_timestamp = datetime.datetime(2015, 12, 3, 14, 0, 0)
