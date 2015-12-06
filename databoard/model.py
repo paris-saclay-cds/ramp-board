@@ -264,25 +264,25 @@ def _combine_predictions_list(predictions_list, index_list=None):
     return combined_predictions
 
 
-def _get_valid_score_cv_bags(predictions_list, test_is_list):
+def _get_score_cv_bags(predictions_list, true_predictions, test_is_list=None):
     specific = config.config_object.specific
 
-    true_predictions_train = generic.get_true_predictions_train()
+    if test_is_list is None:  # we combine the full list
+        test_is_list = [range(len(predictions.y_pred))
+                        for predictions in predictions_list]
 
-    n_samples = true_predictions_train.n_samples
+    n_samples = true_predictions.n_samples
     y_comb = np.array([specific.Predictions(n_samples=n_samples)
                        for _ in predictions_list])
-    valid_score_cv_bags = []
-    # We crashed here because smebody output a matrix in predict proba
-    # with 4 times more rows. We should check this in train_test
+    score_cv_bags = []
     for i, test_is in enumerate(test_is_list):
         y_comb[i].set_valid_in_train(predictions_list[i], test_is)
         combined_predictions = _combine_predictions_list(y_comb[:i + 1])
         valid_indexes = combined_predictions.valid_indexes
-        valid_score_cv_bags.append(specific.score(
-            true_predictions_train, combined_predictions, valid_indexes))
+        score_cv_bags.append(specific.score(
+            true_predictions, combined_predictions, valid_indexes))
         # XXX maybe use masked arrays rather than passing valid_indexes
-    return valid_score_cv_bags
+    return score_cv_bags
 
 
 # evaluate right after train/test, so no need for 'scored' states
@@ -432,14 +432,15 @@ class Submission(db.Model):
         by self.on_cv_folds[i].test_is.
         """
         specific = config.config_object.specific
+        true_predictions_train = generic.get_true_predictions_train()
 
         if self.is_public_leaderboard:
             predictions_list = [submission_on_cv_fold.valid_predictions for
                                 submission_on_cv_fold in self.on_cv_folds]
             test_is_list = [submission_on_cv_fold.cv_fold.test_is for
                             submission_on_cv_fold in self.on_cv_folds]
-            self.valid_score_cv_bags = _get_valid_score_cv_bags(
-                predictions_list, test_is_list)
+            self.valid_score_cv_bags = _get_score_cv_bags(
+                predictions_list, true_predictions_train, test_is_list)
             self.valid_score_cv_bag = self.valid_score_cv_bags[-1]
         else:
             self.valid_score_cv_bag = specific.score.zero
@@ -640,7 +641,6 @@ class CVFold(db.Model):
         for i in best_index_list:
             selected_submissions_on_fold[i].contributivity +=\
                 unit_contributivity
-
         return _combine_predictions_list(
             predictions_list, index_list=best_index_list)
 

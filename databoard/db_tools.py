@@ -600,24 +600,144 @@ def compute_contributivity(force_ensemble=False):
     # It would also make more sense to bag differently in eah fold, see the
     # comment in cv_fold.get_combined_predictions
 
+    true_predictions_train = generic.get_true_predictions_train()
+    true_predictions_test = generic.get_true_predictions_test()
+
     combined_predictions_list = []
+    best_predictions_list = []
+    combined_test_predictions_list = []
+    best_test_predictions_list = []
     test_is_list = []
     for cv_fold in CVFold.query.all():
         logger.info('{}'.format(cv_fold))
-        combined_predictions = cv_fold.compute_contributivity(force_ensemble)
+#        combined_predictions = cv_fold.compute_contributivity(force_ensemble)
+        combined_predictions, best_predictions,\
+            combined_test_predictions, best_test_predictions =\
+            compute_contributivity_on_fold(cv_fold, force_ensemble)
         combined_predictions_list.append(combined_predictions)
+        best_predictions_list.append(best_predictions)
+        combined_test_predictions_list.append(combined_test_predictions)
+        best_test_predictions_list.append(best_test_predictions)
         test_is_list.append(cv_fold.test_is)
     for submission in Submission.query.all():
         submission.set_contributivity()
     db.session.commit()
-
-    from model import _get_valid_score_cv_bags
+    from model import _get_score_cv_bags
     # if there are no predictions to combine, it crashed
     combined_predictions_list = [c for c in combined_predictions_list
                                  if c is not None]
     if len(combined_predictions_list) > 0:
         logger.info('Combined combined valid score = {}'.format(
-            _get_valid_score_cv_bags(combined_predictions_list, test_is_list)))
+            _get_score_cv_bags(combined_predictions_list,
+                               true_predictions_train, test_is_list)))
+
+    best_predictions_list = [c for c in best_predictions_list
+                             if c is not None]
+    if len(best_predictions_list) > 0:
+        logger.info('Combined foldwise best valid score = {}'.format(
+            _get_score_cv_bags(best_predictions_list,
+                               true_predictions_train, test_is_list)))
+
+    combined_test_predictions_list = [c for c in combined_test_predictions_list
+                                      if c is not None]
+    if len(combined_test_predictions_list) > 0:
+        logger.info('Combined combined test score = {}'.format(
+            _get_score_cv_bags(combined_test_predictions_list,
+                               true_predictions_test)))
+
+    best_test_predictions_list = [c for c in best_test_predictions_list
+                                  if c is not None]
+    if len(best_test_predictions_list) > 0:
+        logger.info('Combined foldwise best test score = {}'.format(
+            _get_score_cv_bags(best_test_predictions_list,
+                               true_predictions_test)))
+
+
+# TODO: check if it helps with the db lock, then clean up
+from databoard.model import _combine_predictions_list,\
+    _get_next_best_single_fold
+import databoard.generic as generic
+import numpy as np
+
+
+def compute_contributivity_on_fold(cv_fold, force_ensemble=False):
+    """Constructs the best model combination on a single fold, using greedy
+    forward selection with replacement. See
+    http://www.cs.cornell.edu/~caruana/ctp/ct.papers/
+    caruana.icml04.icdm06long.pdf.
+    Then sets foldwise contributivity.
+
+    Parameters
+    ----------
+    force_ensemble : boolean
+        To force include deleted models
+    """
+    # The submissions must have is_to_ensemble set to True. It is for
+    # fogetting models. Users can also delete models in which case
+    # we make is_valid false. We then only use these models if
+    # force_ensemble is True.
+    # We can further bag here which should be handled in config (or
+    # ramp table.) Or we could bag in _get_next_best_single_fold
+
+    # this is the bottleneck
+    selected_submissions_on_fold = [
+        submission_on_fold for submission_on_fold in cv_fold.submissions
+        if (submission_on_fold.submission.is_valid or force_ensemble)
+        and submission_on_fold.submission.is_to_ensemble
+        and submission_on_fold.is_public_leaderboard
+        and submission_on_fold.submission.name != config.sandbox_d_name
+    ]
+    if len(selected_submissions_on_fold) == 0:
+        return None
+    true_predictions = generic.get_true_predictions_valid(cv_fold.test_is)
+    # TODO: maybe this can be simplified. Don't need to get down
+    # to prediction level.
+    predictions_list = [
+        submission_on_fold.valid_predictions
+        for submission_on_fold in selected_submissions_on_fold]
+    valid_scores = [
+        submission_on_fold.valid_score
+        for submission_on_fold in selected_submissions_on_fold]
+    best_prediction_index = np.argmax(valid_scores)
+    best_index_list = np.array([best_prediction_index])
+    improvement = True
+    while improvement and len(best_index_list) < config.max_n_ensemble:
+        old_best_index_list = best_index_list
+        best_index_list, score = _get_next_best_single_fold(
+            predictions_list, true_predictions, best_index_list)
+        improvement = len(best_index_list) != len(old_best_index_list)
+        logger.info('\t{}: {}'.format(best_index_list, score))
+    # reset
+    for submission_on_fold in selected_submissions_on_fold:
+        submission_on_fold.best = False
+        submission_on_fold.contributivity = 0.0
+    # set
+    selected_submissions_on_fold[best_index_list[0]].best = True
+    # we share a unit of 1. among the contributive submissions
+    unit_contributivity = 1. / len(best_index_list)
+    for i in best_index_list:
+        selected_submissions_on_fold[i].contributivity +=\
+            unit_contributivity
+    combined_predictions = _combine_predictions_list(
+        predictions_list, index_list=best_index_list)
+    best_predictions = predictions_list[best_index_list[0]]
+
+    test_predictions_list = [
+        submission_on_fold.test_predictions
+        for submission_on_fold in selected_submissions_on_fold
+    ]
+    if any(test_predictions_list) is None:
+        logger.error("Can't compute combined test score," +
+                     " some submissions are untested.")
+        combined_test_predictions = None
+        best_test_predictions = None
+    else:
+        combined_test_predictions = _combine_predictions_list(
+            test_predictions_list, index_list=best_index_list)
+        best_test_predictions = test_predictions_list[best_index_list[0]]
+
+    return combined_predictions, best_predictions,\
+        combined_test_predictions, best_test_predictions
 
 
 def get_public_leaderboard(team_name=None, user=None, is_open_code=True):
