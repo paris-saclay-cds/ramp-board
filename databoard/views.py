@@ -20,7 +20,7 @@ from databoard.generic import changedir
 from databoard.config import repos_path
 import databoard.config as config
 import databoard.db_tools as db_tools
-from databoard.model import User, Team, Submission,\
+from databoard.model import User, Team, Submission, FileType,\
     DuplicateSubmissionError, TooEarlySubmissionError
 from databoard.forms import LoginForm, CodeForm, SubmitForm
 #from app import app, db, lm, oid
@@ -123,10 +123,12 @@ def sandbox(f_name=None):
 
     sandbox_submission = db_tools.get_sandbox(current_user)
     team = db_tools.get_active_user_team(current_user)
+    file_types = FileType.query.order_by(FileType.id).all()
+    f_names = [file_type.name for file_type in file_types]
     if f_name is None:
-        f_name = sandbox_submission.f_names[-1]  # should be decided by the table
+        f_name = f_names[0]
     submission_file = next((file for file in sandbox_submission.files
-                            if file.name == f_name), None)
+                            if file.file_type.name == f_name), None)
     code_form = CodeForm(code=submission_file.get_code())
     submit_form = SubmitForm(submission_name=team.last_submission_name)
     if code_form.validate_on_submit() and code_form.code.data:
@@ -169,7 +171,7 @@ def sandbox(f_name=None):
     return render_template('sandbox.html',
                            ramp_title=config.config_object.specific.ramp_title,
                            f_name=f_name,
-                           submission_f_names=sandbox_submission.f_names,
+                           submission_f_names=f_names,
                            code_form=code_form,
                            submit_form=submit_form)
 

@@ -70,7 +70,7 @@ def test_add_cv_folds():
 def test_create_user():
     # db_tools.add_users_from_file('databoard/tests/data/users_to_add.csv')
     db_tools.create_user(
-        name='kegl', password='bla', lastname='Kegl',
+        name='kegl', password='wine fulcra kook homy', lastname='Kegl',
         firstname='Balazs', email='balazs.kegl@gmail.com',
         access_level='admin')
     db_tools.create_user(

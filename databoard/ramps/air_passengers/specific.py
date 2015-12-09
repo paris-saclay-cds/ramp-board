@@ -32,6 +32,15 @@ test_filename = os.path.join(private_data_path, 'test.csv')
 
 score = scores.RMSE()
 
+file_types = [
+    {'name': 'regressor.py', 'type': 'python', 'is_editable': True,
+     'max_size': None},
+    {'name': 'feature_extractor.py', 'type': 'python', 'is_editable': True,
+     'max_size': None},
+    {'name': 'external_data.csv', 'type': 'csv', 'is_editable': False,
+     'max_size': None},
+]
+
 
 def read_data(df_filename):
     data = pd.read_csv(df_filename)

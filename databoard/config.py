@@ -28,7 +28,7 @@ is_parallelize_across_machines = False
 timeout_parallelize_across_machines = 10800
 # often doesn't work and takes a lot of disk space
 is_pickle_trained_submission = False
-min_duration_between_submissions = 900  # seconds
+min_duration_between_submissions = 0 # 900  # seconds
 max_members_per_team = 3  # except for users own team
 max_n_ensemble = 80  # max number of submissions in Caruana's ensemble
 opening_timestamp = datetime.datetime(2015, 12, 3, 12, 30, 0)

@@ -176,6 +176,11 @@ class FileType(db.Model):
     is_editable = db.Column(db.Boolean, default=True)
     max_size = db.Column(db.Integer, default=None)
 
+    def __repr__(self):
+        repr = 'FileType(name={}, type={}, is_editable={}, max_size={})'.format(
+            self.name, self.type, self.is_editable, self.max_size)
+        return repr
+
 
 # TODO: we shuold have a SubmissionFileType table, describing the type
 # of files we are expecting for a given RAMP. Fast unit test should be set up
@@ -197,23 +202,25 @@ class SubmissionFile(db.Model):
         'Submission', backref=db.backref(
             'files', cascade="all, delete-orphan"))
     # we keep name for now for migration
-    name = db.Column(db.String, nullable=False)
+    # name = db.Column(db.String, nullable=False)
 
     file_type_id = db.Column(
         db.Integer, db.ForeignKey('file_types.id'), nullable=False)
     file_type = db.relationship(
         'FileType', backref=db.backref('submission_files'))
 
-    db.UniqueConstraint(submission_id, name)
+    # name = db.Column(db.String, nullable=False, unique=True)
+
+    #db.UniqueConstraint(submission_id, file_type_id, name='sf_constraint')
 
     def __init__(self, file_type, name, submission):
         self.file_type = file_type
-        self.name = name
+        # self.name = name
         self.submission = submission
 
     @hybrid_property
     def path(self):
-        return self.submission.path + os.path.sep + self.name
+        return self.submission.path + os.path.sep + self.file_type.name
 
     def get_code(self):
         with open(self.path) as f:
@@ -226,8 +233,8 @@ class SubmissionFile(db.Model):
             f.write(code)
 
     def __repr__(self):
-        return 'SubmissionFile(name={}, path={})'.format(
-            self.name, self.path)
+        return 'SubmissionFile(type={}, path={})'.format(
+            self.file_type, self.path)
 
 
 def combine_predictions_list(predictions_list, index_list=None):
@@ -343,7 +350,7 @@ class Submission(db.Model):
     is_to_ensemble = db.Column(db.Boolean, default=True)
     notes = db.Column(db.String, default='')  # eg, why is it disqualified
 
-    db.UniqueConstraint(team_id, name)  # later also ramp_id
+    db.UniqueConstraint(team_id, name, name='ts_constraint')  # later also ramp_id
 
     def __init__(self, name, team):
         self.name = name
@@ -647,7 +654,7 @@ class SubmissionOnCVFold(db.Model):
     error_msg = db.Column(db.String, default='')
 
     # later also ramp_id or data_id
-    db.UniqueConstraint(submission_id, cv_fold_id)
+    db.UniqueConstraint(submission_id, cv_fold_id, name='sc_constraint')
 
     def __repr__(self):
         repr = 'state = {}, valid_score = {}, test_score = {}, c = {}'\
