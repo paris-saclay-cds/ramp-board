@@ -148,8 +148,8 @@ def sandbox(f_name=None):
             flask.flash('Error: {}'.format(e))
             return flask.redirect(flask.url_for('sandbox', f_name=f_name))
         try:
-            new_submission = db_tools.make_submission_and_copy_from_sandbox(
-                team.name, new_submission_name, sandbox_submission)
+            new_submission = db_tools.make_submission_and_copy_files(
+                team.name, new_submission_name, sandbox_submission.path)
         except DuplicateSubmissionError:
             flask.flash(
                 'Submission {} already exists. Please change the name.'.format(

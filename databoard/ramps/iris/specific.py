@@ -11,7 +11,8 @@ import databoard.scores as scores
 # menu polymorphism example
 import databoard.multiclass_prediction as multiclass_prediction
 from databoard.multiclass_prediction import Predictions
-from databoard.config import config_object, submissions_path, raw_data_path, public_data_path
+from databoard.config import config_object, submissions_path, raw_data_path,\
+    public_data_path
 from databoard.config import private_data_path
 # import config_databoard
 
@@ -32,6 +33,13 @@ train_filename = os.path.join(public_data_path, 'train.csv')
 test_filename = os.path.join(private_data_path, 'test.csv')
 
 score = scores.Accuracy()
+
+file_types = [
+    {'name': 'classifier.py', 'type': 'python', 'is_editable': True,
+     'max_size': None},
+    {'name': 'comments.txt', 'type': 'text', 'is_editable': True,
+     'max_size': None},
+]
 
 
 def read_data(filename):

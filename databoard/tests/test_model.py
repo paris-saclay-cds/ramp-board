@@ -4,7 +4,7 @@ import databoard.config as config
 from numpy.testing import assert_array_equal
 from databoard import db
 from databoard.model import NameClashError, MergeTeamError,\
-    MissingSubmissionFile, Team, Submission, CVFold, User
+    Team, Submission, CVFold, User
 import databoard.db_tools as db_tools
 
 
@@ -42,6 +42,16 @@ def test_password_hashing():
     assert not db_tools.check_password("hjst3789ep;ocikaqji", hashed_password)
 
 
+def test_setup_problem():
+    file_types = [
+        {'name': 'classifier.py', 'type': 'python', 'is_editable': True,
+         'max_size': None},
+    ]
+    db_tools.setup_problem(file_types)
+    # to check what happens when files are already there
+    db_tools.setup_problem(file_types)
+
+
 def test_add_cv_folds():
     specific = config.config_object.specific
     specific.prepare_data()
@@ -58,7 +68,7 @@ def test_add_cv_folds():
 
 
 def test_create_user():
-    #db_tools.add_users_from_file('databoard/tests/data/users_to_add.csv')
+    # db_tools.add_users_from_file('databoard/tests/data/users_to_add.csv')
     db_tools.create_user(
         name='kegl', password='bla', lastname='Kegl',
         firstname='Balazs', email='balazs.kegl@gmail.com',
@@ -142,15 +152,15 @@ def test_merge_teams():
 
 
 def test_make_submission():
-    db_tools.make_submission('kemfort', 'rf', ['classifier.py'])
-    db_tools.make_submission('mchezakci', 'rf', ['classifier.py'])
-    db_tools.make_submission('kemfort', 'rf2', ['classifier.py'])
-    db_tools.make_submission('kemfort', 'training_error', ['classifier.py'])
-    db_tools.make_submission('kemfort', 'validating_error', ['classifier.py'])
+    db_tools.make_submission('kemfort', 'rf')
+    db_tools.make_submission('mchezakci', 'rf')
+    db_tools.make_submission('kemfort', 'rf2')
+    db_tools.make_submission('kemfort', 'training_error')
+    db_tools.make_submission('kemfort', 'validating_error')
     db_tools.print_submissions()
 
     # resubmitting 'new' is OK
-    db_tools.make_submission('kemfort', 'rf', ['classifier.py'])
+    db_tools.make_submission('kemfort', 'rf')
 
     team = Team.query.filter_by(name='kemfort').one()
     submission = Submission.query.filter_by(team=team, name='rf').one()
@@ -158,30 +168,32 @@ def test_make_submission():
     submission.state = 'training_error'
     db.session.commit()
     # resubmitting 'error' is OK
-    db_tools.make_submission('kemfort', 'rf', ['classifier.py'])
+    db_tools.make_submission('kemfort', 'rf')
 
     submission.state = 'testing_error'
     db.session.commit()
     # resubmitting 'error' is OK
-    db_tools.make_submission('kemfort', 'rf', ['classifier.py'])
+    db_tools.make_submission('kemfort', 'rf')
 
     submission.state = 'trained'
     db.session.commit()
     # resubmitting 'trained' is not OK
     try:
-        db_tools.make_submission('kemfort', 'rf', ['classifier.py'])
+        db_tools.make_submission('kemfort', 'rf')
     except db_tools.DuplicateSubmissionError as e:
         assert e.value == 'Submission "rf" of team "kemfort" exists already'
 
     submission.state = 'testing_error'
     db.session.commit()
     # submitting non-existing file
-    try:
-        db_tools.make_submission('kemfort', 'rf', ['feature_extractor.py'])
-    except MissingSubmissionFile as e:
-        assert e.value == 'kemfort/rf/feature_extractor.py: ' +\
-            './test_submissions/kemfort/' +\
-            'm3af2c986ca68d1598e93f653c0c0ae4b5e3449ae/feature_extractor.py'
+    # try:
+    #     db_tools.make_submission_and_copy_files(
+    #         'kemfort', 'rf', 'test_submissions/kemfort/' +
+    #         'm3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
+    # except MissingSubmissionFileError as e:
+    #     assert e.value == 'kemfort/rf/feature_extractor.py: ' +\
+    #         './test_submissions/kemfort/' +\
+    #         'm3af2c986ca68d1598e93f653c0c0ae4b5e3449ae/feature_extractor.py'
 
 
 # TODO: test all kinds of error states

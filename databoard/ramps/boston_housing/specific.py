@@ -29,6 +29,13 @@ test_filename = os.path.join(private_data_path, 'test.csv')
 
 score = scores.RMSE()
 
+file_types = [
+    {'name': 'regressor.py', 'type': 'python', 'is_editable': True,
+     'max_size': None},
+    {'name': 'comments.txt', 'type': 'text', 'is_editable': True,
+     'max_size': None},
+]
+
 
 def read_data(filename, index_col=None):
     data = pd.read_csv(filename, index_col=index_col)

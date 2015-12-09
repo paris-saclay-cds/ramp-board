@@ -220,5 +220,5 @@ def add_models():
                 firstname=team_name, email=team_name + '@team_name.com')
         except NameClashError:  # test user already in db, no problem
             pass
-        db_tools.make_submission_and_copy_all_files(
+        db_tools.make_submission_and_copy_files(
             team_name, submission_name, deposited_submission_path)

@@ -164,6 +164,19 @@ class Team(db.Model):
         return repr
 
 
+# We will order files according to their ids
+class FileType(db.Model):
+    __tablename__ = 'file_types'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False, unique=True)
+    type = db.Column(db.String, nullable=False)
+    # the follwoing two should go into the per-event table
+    # since they can change event by event
+    is_editable = db.Column(db.Boolean, default=True)
+    max_size = db.Column(db.Integer, default=None)
+
+
 # TODO: we shuold have a SubmissionFileType table, describing the type
 # of files we are expecting for a given RAMP. Fast unit test should be set up
 # there, and each file should be unit tested right after submission.
@@ -183,17 +196,20 @@ class SubmissionFile(db.Model):
     submission = db.relationship(
         'Submission', backref=db.backref(
             'files', cascade="all, delete-orphan"))
+    # we keep name for now for migration
     name = db.Column(db.String, nullable=False)
+
+    file_type_id = db.Column(
+        db.Integer, db.ForeignKey('file_types.id'), nullable=False)
+    file_type = db.relationship(
+        'FileType', backref=db.backref('submission_files'))
 
     db.UniqueConstraint(submission_id, name)
 
-    def __init__(self, name, submission):
+    def __init__(self, file_type, name, submission):
+        self.file_type = file_type
         self.name = name
         self.submission = submission
-        # We comment this out because copying happens after submission
-        # if not os.path.isfile(self.path):
-        #     raise MissingSubmissionFile('{}/{}/{}: {}'.format(
-        #         submission.team.name, submission.name, name, self.path))
 
     @hybrid_property
     def path(self):
@@ -214,7 +230,7 @@ class SubmissionFile(db.Model):
             self.name, self.path)
 
 
-def _combine_predictions_list(predictions_list, index_list=None):
+def combine_predictions_list(predictions_list, index_list=None):
     """Combines predictions by taking the mean of their
     get_combineable_predictions views. E.g. for regression it is the actual
     predictions, and for classification it is the probability array (which
@@ -226,7 +242,7 @@ def _combine_predictions_list(predictions_list, index_list=None):
         different folds, on the heldout test set
     _get_cv_bagging_score : which combines cv-bags of the same model, trained
         on different folds, on the training set
-    _get_next_best_single_fold : which does one step of the greedy forward
+    get_next_best_single_fold : which does one step of the greedy forward
         selection (of different models) on a single fold
     _get_combined_predictions_single_fold : which does the full loop of greedy
         forward selection (of different models), until improvement, on a single
@@ -277,7 +293,7 @@ def _get_score_cv_bags(predictions_list, true_predictions, test_is_list=None):
     score_cv_bags = []
     for i, test_is in enumerate(test_is_list):
         y_comb[i].set_valid_in_train(predictions_list[i], test_is)
-        combined_predictions = _combine_predictions_list(y_comb[:i + 1])
+        combined_predictions = combine_predictions_list(y_comb[:i + 1])
         valid_indexes = combined_predictions.valid_indexes
         score_cv_bags.append(specific.score(
             true_predictions, combined_predictions, valid_indexes))
@@ -384,7 +400,8 @@ class Submission(db.Model):
     @property
     def name_with_link(self):
         # TODO: file order!
-        return '<a href="' + self.files[-1].path + '">' + self.name[:20] + '</a>'
+        return '<a href="' + self.files[-1].path + '">' + self.name[:20] +\
+            '</a>'
 
     @property
     def state_with_link(self):
@@ -427,7 +444,7 @@ class Submission(db.Model):
         return team_path, submission_path
 
     def compute_valid_score_cv_bag(self):
-        """Cv-bags cv_fold.valid_predictions using _combine_predictions_list.
+        """Cv-bags cv_fold.valid_predictions using combine_predictions_list.
         The predictions in predictions_list[i] belong to those indicated
         by self.on_cv_folds[i].test_is.
         """
@@ -448,7 +465,7 @@ class Submission(db.Model):
         db.session.commit()
 
     def compute_test_score_cv_bag(self):
-        """Bags cv_fold.test_predictions using _combine_predictions_list, and
+        """Bags cv_fold.test_predictions using combine_predictions_list, and
         stores the score of the bagged predictor in test_score_cv_bag. The
         scores of partial combinations are stored in test_score_cv_bags.
         This is for assessing the bagging learning curve, which is useful for
@@ -467,7 +484,7 @@ class Submission(db.Model):
             predictions_list = [submission_on_cv_fold.test_predictions for
                                 submission_on_cv_fold in self.on_cv_folds]
             combined_predictions_list = [
-                _combine_predictions_list(predictions_list[:i + 1]) for
+                combine_predictions_list(predictions_list[:i + 1]) for
                 i in range(len(predictions_list))]
             self.test_score_cv_bags = [
                 specific.score(true_predictions, combined_predictions) for
@@ -516,8 +533,8 @@ class Submission(db.Model):
             self.error_msg = ''
 
 
-def _get_next_best_single_fold(predictions_list, true_predictions,
-                               best_index_list):
+def get_next_best_single_fold(predictions_list, true_predictions,
+                              best_index_list):
     """Finds the model that minimizes the score if added to
     predictions_list[best_index_list]. If there is no model improving the input
     combination, the input best_index_list is returned. Otherwise the best
@@ -547,7 +564,7 @@ def _get_next_best_single_fold(predictions_list, true_predictions,
     """
     specific = config.config_object.specific
 
-    best_predictions = _combine_predictions_list(
+    best_predictions = combine_predictions_list(
         predictions_list, index_list=best_index_list)
     best_score = specific.score(true_predictions, best_predictions)
     best_index = -1
@@ -555,7 +572,7 @@ def _get_next_best_single_fold(predictions_list, true_predictions,
     # model is added several times, it's upweighted, leading to
     # integer-weighted ensembles
     for i in range(len(predictions_list)):
-        combined_predictions = _combine_predictions_list(
+        combined_predictions = combine_predictions_list(
             predictions_list, index_list=np.append(best_index_list, i))
         new_score = specific.score(true_predictions, combined_predictions)
         # new_score = specific.score(pred_true, pred_comb)
@@ -583,66 +600,6 @@ class CVFold(db.Model):
 
     def __repr__(self):
         return 'fold {}'.format(self.train_is)[:15]
-
-    def compute_contributivity(self, force_ensemble=False):
-        """Constructs the best model combination on a single fold, using greedy
-        forward selection. See
-        http://www.cs.cornell.edu/~caruana/ctp/ct.papers/
-        caruana.icml04.icdm06long.pdf.
-        Then sets foldwise contributivity.
-
-        Parameters
-        ----------
-        force_ensemble : boolean
-            To force include deleted models
-        """
-        # The submissions must have is_to_ensemble set to True. It is for
-        # fogetting models. Users can also delete models in which case
-        # we make is_valid false. We then only use these models if
-        # force_ensemble is True.
-        # We can further bag here which should be handled in config (or
-        # ramp table.) Or we could bag in _get_next_best_single_fold
-        selected_submissions_on_fold = [
-            submission_on_fold for submission_on_fold in self.submissions
-            if (submission_on_fold.submission.is_valid or force_ensemble)
-            and submission_on_fold.submission.is_to_ensemble
-            and submission_on_fold.is_public_leaderboard
-            and submission_on_fold.submission.name != config.sandbox_d_name
-        ]
-        if len(selected_submissions_on_fold) == 0:
-            return None
-        true_predictions = generic.get_true_predictions_valid(self.test_is)
-        # TODO: maybe this can be simplified. Don't need to get down
-        # to prediction level.
-        predictions_list = [
-            submission_on_fold.valid_predictions
-            for submission_on_fold in selected_submissions_on_fold]
-        valid_scores = [
-            submission_on_fold.valid_score
-            for submission_on_fold in selected_submissions_on_fold]
-        best_prediction_index = np.argmax(valid_scores)
-        # best_submission = predictions_list[best_prediction_index]
-        best_index_list = np.array([best_prediction_index])
-        improvement = True
-        while improvement and len(best_index_list) < config.max_n_ensemble:
-            old_best_index_list = best_index_list
-            best_index_list, score = _get_next_best_single_fold(
-                predictions_list, true_predictions, best_index_list)
-            improvement = len(best_index_list) != len(old_best_index_list)
-            logger.info('\t{}: {}'.format(best_index_list, score))
-        # reset
-        for submission_on_fold in selected_submissions_on_fold:
-            submission_on_fold.best = False
-            submission_on_fold.contributivity = 0.0
-        # set
-        selected_submissions_on_fold[best_index_list[0]].best = True
-        # we share a unit of 1. among the contributive submissions
-        unit_contributivity = 1. / len(best_index_list)
-        for i in best_index_list:
-            selected_submissions_on_fold[i].contributivity +=\
-                unit_contributivity
-        return _combine_predictions_list(
-            predictions_list, index_list=best_index_list)
 
 
 # TODO: rename submission to workflow and submitted file to workflow_element
@@ -831,7 +788,7 @@ class TooEarlySubmissionError(Exception):
         return repr(self.value)
 
 
-class MissingSubmissionFile(Exception):
+class MissingSubmissionFileError(Exception):
     def __init__(self, value):
         self.value = value
 

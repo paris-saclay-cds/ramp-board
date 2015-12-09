@@ -5,19 +5,22 @@ import timeit
 import smtplib
 import logging
 import datetime
+import numpy as np
 import pandas as pd
 import xkcdpass.xkcd_password as xp
 from sklearn.externals.joblib import Parallel, delayed
 from databoard import db
 
-from databoard.model import User, Team, Submission, SubmissionFile,\
+from databoard.model import User, Team, Submission, SubmissionFile, FileType,\
     CVFold, SubmissionOnCVFold, DetachedSubmissionOnCVFold,\
     NameClashError, MergeTeamError, TooEarlySubmissionError,\
-    DuplicateSubmissionError
+    DuplicateSubmissionError, MissingSubmissionFileError,\
+    combine_predictions_list, get_next_best_single_fold
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 import databoard.config as config
+import databoard.generic as generic
 
 
 logger = logging.getLogger('databoard')
@@ -108,6 +111,20 @@ def send_password_mails(users_to_add_f_name):
         smtpserver.sendmail(gmail_user, u['email'], header + body)
 
 
+def setup_problem(file_types):
+    for file_type_dict in file_types:
+        name = file_type_dict['name']
+        type = file_type_dict['type']
+        is_editable = file_type_dict['is_editable']
+        max_size = file_type_dict['max_size']
+        file_type = FileType.query.filter_by(name=name).one_or_none()
+        if file_type is None:
+            file_type = FileType(name=name, type=type,
+                                 is_editable=is_editable, max_size=max_size)
+            db.session.add(file_type)
+    db.session.commit()
+
+
 def create_user(name, password, lastname, firstname, email,
                 access_level='user', hidden_notes=''):
     hashed_password = get_hashed_password(password)
@@ -148,7 +165,7 @@ def create_user(name, password, lastname, firstname, email,
     logger.info('Creating {}'.format(user))
     logger.info('Creating {}'.format(team))
     # submitting the starting kit for default team
-    make_submission_and_copy_all_files(
+    make_submission_and_copy_files(
         name, config.sandbox_d_name, config.sandbox_path)
     return user
 
@@ -241,7 +258,7 @@ def merge_teams(name, initiator_name, acceptor_name):
             raise e
     logger.info('Merging {} and {} into {}'.format(initiator, acceptor, team))
     # submitting the starting kit for merged team
-    make_submission_and_copy_all_files(
+    make_submission_and_copy_files(
         name, config.sandbox_d_name, config.sandbox_path)
     return team
 
@@ -273,7 +290,7 @@ def delete_submission(team_name, submission_name):
     db.session.commit()
 
 
-def make_submission(team_name, name, f_name_list):
+def make_submission(team_name, name):
     # TODO: to call unit tests on submitted files. Those that are found
     # in the table that describes the workflow. For the rest just check
     # maybe size
@@ -281,6 +298,7 @@ def make_submission(team_name, name, f_name_list):
     submission = Submission.query.filter_by(
         name=name, team=team).one_or_none()
     cv_folds = CVFold.query.all()
+    file_types = FileType.query.all()
     if submission is None:
         # Checking is submission is too early
         all_submissions = Submission.query.filter_by(team=team).order_by(
@@ -299,9 +317,10 @@ def make_submission(team_name, name, f_name_list):
                     .format(int(min_diff - diff)))
         submission = Submission(name=name, team=team)
         # Adding submission files
-        for f_name in f_name_list:
+        for file_type in file_types:
             submission_file = SubmissionFile(
-                name=f_name, submission=submission)
+                file_type=file_type, name=file_type.name,
+                submission=submission)
             db.session.add(submission_file)
         db.session.add(submission)
         # Adding (empty) submission on cv folds
@@ -318,12 +337,13 @@ def make_submission(team_name, name, f_name_list):
             submission.state = 'new'
             submission.submission_timestamp = datetime.datetime.utcnow()
             # Updating existing files or adding new if not in list
-            for f_name in f_name_list:
+            for file_type in file_types:
                 submission_file = SubmissionFile.query.filter_by(
-                    name=f_name, submission=submission).one_or_none()
+                    file_type=file_type, submission=submission).one_or_none()
                 if submission_file is None:
                     submission_file = SubmissionFile(
-                        name=f_name, submission=submission)
+                        file_type=file_type, name=file_type.name,
+                        submission=submission)
                     db.session.add(submission_file)
                 # else copy the file should be there
                 # right now we don't delete files that were not resubmitted,
@@ -349,27 +369,19 @@ def make_submission(team_name, name, f_name_list):
     return submission
 
 
-def make_submission_and_copy_all_files(team_name, new_submission_name,
-                                       deposited_submission_path):
-    """Called from create_user(), merge_teams(), and fetch.add_models()."""
-    deposited_f_name_list = os.listdir(deposited_submission_path)
-    return make_submission_and_copy_from_file_list(
-        team_name, new_submission_name, deposited_submission_path,
-        deposited_f_name_list)
+def make_submission_and_copy_files(team_name, new_submission_name,
+                                   from_submission_path):
+    """Called from create_user(), merge_teams(), fetch.add_models(),
+    view.sandbox()."""
+    deposited_f_name_list = os.listdir(from_submission_path)
+    file_types = FileType.query.all()
+    f_name_list = [file_type.name for file_type in file_types]
+    for f_name in f_name_list:
+        if f_name not in deposited_f_name_list:
+            raise MissingSubmissionFileError('{}/{}/{}: {}'.format(
+                team_name, new_submission_name, f_name, from_submission_path))
 
-
-def make_submission_and_copy_from_sandbox(team_name, new_submission_name,
-                                          sandbox_submission):
-    """Called from view.sandbox()."""
-    return make_submission_and_copy_from_file_list(
-        team_name, new_submission_name, sandbox_submission.path,
-        sandbox_submission.f_names)
-
-
-def make_submission_and_copy_from_file_list(team_name, new_submission_name,
-                                            submission_path, f_name_list):
-    submission = make_submission(
-        team_name, new_submission_name, f_name_list)
+    submission = make_submission(team_name, new_submission_name)
     team_path, new_submission_path = submission.get_paths(
         config.submissions_path)
 
@@ -385,7 +397,7 @@ def make_submission_and_copy_from_file_list(team_name, new_submission_name,
     # copy the submission files into the model directory, should all this
     # probably go to Submission
     for f_name in f_name_list:
-        src = os.path.join(submission_path, f_name)
+        src = os.path.join(from_submission_path, f_name)
         dst = os.path.join(new_submission_path, f_name)
         shutil.copy2(src, dst)  # copying also metadata
         logger.info('Copying {} to {}'.format(src, dst))
@@ -610,7 +622,6 @@ def compute_contributivity(force_ensemble=False):
     test_is_list = []
     for cv_fold in CVFold.query.all():
         logger.info('{}'.format(cv_fold))
-#        combined_predictions = cv_fold.compute_contributivity(force_ensemble)
         combined_predictions, best_predictions,\
             combined_test_predictions, best_test_predictions =\
             compute_contributivity_on_fold(cv_fold, force_ensemble)
@@ -653,13 +664,6 @@ def compute_contributivity(force_ensemble=False):
                                true_predictions_test)))
 
 
-# TODO: check if it helps with the db lock, then clean up
-from databoard.model import _combine_predictions_list,\
-    _get_next_best_single_fold
-import databoard.generic as generic
-import numpy as np
-
-
 def compute_contributivity_on_fold(cv_fold, force_ensemble=False):
     """Constructs the best model combination on a single fold, using greedy
     forward selection with replacement. See
@@ -677,7 +681,7 @@ def compute_contributivity_on_fold(cv_fold, force_ensemble=False):
     # we make is_valid false. We then only use these models if
     # force_ensemble is True.
     # We can further bag here which should be handled in config (or
-    # ramp table.) Or we could bag in _get_next_best_single_fold
+    # ramp table.) Or we could bag in get_next_best_single_fold
 
     # this is the bottleneck
     selected_submissions_on_fold = [
@@ -703,7 +707,7 @@ def compute_contributivity_on_fold(cv_fold, force_ensemble=False):
     improvement = True
     while improvement and len(best_index_list) < config.max_n_ensemble:
         old_best_index_list = best_index_list
-        best_index_list, score = _get_next_best_single_fold(
+        best_index_list, score = get_next_best_single_fold(
             predictions_list, true_predictions, best_index_list)
         improvement = len(best_index_list) != len(old_best_index_list)
         logger.info('\t{}: {}'.format(best_index_list, score))
@@ -718,7 +722,7 @@ def compute_contributivity_on_fold(cv_fold, force_ensemble=False):
     for i in best_index_list:
         selected_submissions_on_fold[i].contributivity +=\
             unit_contributivity
-    combined_predictions = _combine_predictions_list(
+    combined_predictions = combine_predictions_list(
         predictions_list, index_list=best_index_list)
     best_predictions = predictions_list[best_index_list[0]]
 
@@ -732,7 +736,7 @@ def compute_contributivity_on_fold(cv_fold, force_ensemble=False):
         combined_test_predictions = None
         best_test_predictions = None
     else:
-        combined_test_predictions = _combine_predictions_list(
+        combined_test_predictions = combine_predictions_list(
             test_predictions_list, index_list=best_index_list)
         best_test_predictions = test_predictions_list[best_index_list[0]]
 

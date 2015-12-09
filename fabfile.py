@@ -53,6 +53,7 @@ def prepare_data():
     _, y_train = specific.get_train_data()
     cv = specific.get_cv(y_train)
     db_tools.add_cv_folds(cv)
+    db_tools.setup_problem(specific.file_types)
 
 
 def clear_registrants():
