@@ -2,9 +2,7 @@
 TeamsRepos
 teams_repos
 .DS_Store
-last_trained_timestamp.py
 *.csv
-models
 joblib
 *.log
 *.lock
@@ -14,3 +12,7 @@ data
 output
 dist
 databoard.egg-info
+user_batches
+old_stuff
+.coverage
+

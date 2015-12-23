@@ -23,11 +23,13 @@ drop_column_names = []
 
 cv_test_size = config_object.cv_test_size
 held_out_test_size = 0.2
+public_train_size = 0.2
 random_state = config_object.random_state
 n_CV = config_object.n_cpus
 
 raw_filename = os.path.join(raw_data_path, 'data.csv')
-train_filename = os.path.join(public_data_path, 'train.csv')
+public_train_filename = os.path.join(public_data_path, 'public_train.csv')
+train_filename = os.path.join(private_data_path, 'train.csv')
 test_filename = os.path.join(private_data_path, 'test.csv')
 
 score = scores.RMSE()
@@ -52,8 +54,11 @@ def prepare_data():
     df = df.drop(drop_column_names, axis=1)
     df_train, df_test = train_test_split(
         df, test_size=held_out_test_size, random_state=random_state)
-    df_train.to_csv(train_filename)
-    df_test.to_csv(test_filename)
+    df_public_train, df_private_train = train_test_split(
+        df_train, train_size=public_train_size, random_state=random_state)
+    df_public_train.to_csv(public_train_filename, index=False)
+    df_private_train.to_csv(train_filename, index=False)
+    df_test.to_csv(test_filename, index=False)
 
 
 def get_train_data():

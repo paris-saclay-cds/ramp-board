@@ -209,13 +209,14 @@ class SubmissionFile(db.Model):
     file_type = db.relationship(
         'FileType', backref=db.backref('submission_files'))
 
-    # name = db.Column(db.String, nullable=False, unique=True)
+    # we keep it for now because of migration issues
+    name = db.Column(db.String, nullable=True, unique=False)
 
     #db.UniqueConstraint(submission_id, file_type_id, name='sf_constraint')
 
     def __init__(self, file_type, name, submission):
         self.file_type = file_type
-        # self.name = name
+        self.name = name  # we keep it for now because of migration issues
         self.submission = submission
 
     @hybrid_property
@@ -628,13 +629,14 @@ class SubmissionOnCVFold(db.Model):
     submission_id = db.Column(
         db.Integer, db.ForeignKey('submissions.id'), nullable=False)
     submission = db.relationship(
-        'Submission', backref=db.backref('on_cv_folds',
-                                         cascade="all, delete-orphan"))
+        'Submission', backref=db.backref(
+            'on_cv_folds', cascade="all, delete-orphan"))
 
     cv_fold_id = db.Column(
         db.Integer, db.ForeignKey('cv_folds.id'), nullable=False)
     cv_fold = db.relationship(
-        'CVFold', backref=db.backref('submissions'))
+        'CVFold', backref=db.backref(
+            'submissions', cascade="all, delete-orphan"))
 
     # filled by cv_fold.get_combined_predictions
     contributivity = db.Column(db.Float, default=0.0)

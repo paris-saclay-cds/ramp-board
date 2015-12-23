@@ -28,13 +28,13 @@ is_parallelize_across_machines = False
 timeout_parallelize_across_machines = 10800
 # often doesn't work and takes a lot of disk space
 is_pickle_trained_submission = False
-min_duration_between_submissions = 0 # 900  # seconds
+min_duration_between_submissions = 900  # seconds
 max_members_per_team = 3  # except for users own team
 max_n_ensemble = 80  # max number of submissions in Caruana's ensemble
 opening_timestamp = datetime.datetime(2015, 12, 3, 12, 30, 0)
 # before links to submissions in leaderboard are not alive
 public_opening_timestamp = datetime.datetime(2015, 12, 3, 14, 0, 0)
-closing_timestamp = None
+closing_timestamp = datetime.datetime(2015, 12, 15, 14, 0, 0)
 
 # Open ports in Stratuslab
 # 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015,
@@ -237,6 +237,15 @@ ramps_configs['air_passengers_remote'] = RampConfig(
     n_cpus=10,
     server_port='3147',
     cv_test_size=0.2,
+    random_state=57,
+    **vd_kwargs
+)
+
+ramps_configs['air_passengers_remote2'] = RampConfig(
+    ramp_name='air_passengers',
+    n_cpus=10,
+    server_port='5010',
+    cv_test_size=0.5,
     random_state=57,
     **vd_kwargs
 )

@@ -251,8 +251,10 @@ def leaderboard():
 
 @app.route("/private_leaderboard")
 def private_leaderboard():
-    if not current_user.is_authenticated or\
-            current_user.access_level != 'admin':
+    if ((not current_user.is_authenticated
+         or current_user.access_level != 'admin')
+        and (config.closing_timestamp is None or
+             config.closing_timestamp > datetime.datetime.utcnow())):
         return redirect(url_for('leaderboard'))
     leaderbord_html = db_tools.get_private_leaderboard()
     return render_template(
@@ -260,9 +262,6 @@ def private_leaderboard():
         leaderboard_title='Private leaderboard',
         leaderboard=leaderbord_html,
         ramp_title=config.config_object.specific.ramp_title)
-
-
-# TODO: private leaderboard
 
 
 @app.route("/submissions/<team_name>/<summission_hash>/<f_name>")
@@ -305,7 +304,7 @@ def view_model(team_name, summission_hash, f_name):
         with changedir(submission_abspath):
             with ZipFile(archive_filename, 'w') as archive:
                 for submission_file in submission.submission_files:
-                    archive.write(submission_file.name)
+                    archive.write(submission_file.file_type.name)
 
         return send_from_directory(
             submission_abspath, f_name, as_attachment=True,

@@ -1,20 +1,20 @@
 TODO
-Also save when submitting.
-Merge teams.
-Maybe register the submitter user, not only team
-add filename preferences, filename table
-leaderboards asc/desc
-admin view of leaderboard should also contain new and failed models.
-parallel contributivity
-max submission name size
-add precision for score (per ramp)
-a being_trained boolean so we can output the next job to train, also taking into consideration that we should not take a model of somebody if her other model is being trained. It can be tricky is we manually kill jobs.
-debug mode should raise the training/valid/test errors so we see the stack and set is_parallel to False
-status of the queue
+- Also save when submitting. Or put all editing windows on the sandbox page. No save just submit. And large files (like csv) should be uneditable and uploadeable from the sandbox, and downloadeable from the view_submission views. Must add filename preferences and filename table.
+- Merge teams.
+- Maybe register the submitter user, not only team
+- Parallel contributivity. Or at least make it not lock the db. It seems that the real bottleneck is iterating through submissions (both in CV in in Submission) in the db
+- max submission name size
+- add precision for score (per ramp)
+- a being_trained boolean so we can output the next job to train, also taking into consideration that we should not take a model of somebody if her other model is being trained. It can be tricky is we manually kill jobs.
+- debug mode should raise the training/valid/test errors so we see the stack and set is_parallel to False
+- status of the queue
+- write a scheduler using psutil
+- use pairwise test on CVs to mark approximate significance on the leaderboard
 Didier's ideas:
   1) He wants to submit through git. What I understand is that he basically wants an API, not a web interface. 
   2) He pointed to us to jenkins: https://jenkins-ci.org/ for the engineering details of launching untrusted code in safe mode. That's what they use for automating their testing: gitlab and jenkins.
   3) He want spark integration.
-  4) A general idea I didn't think of: we could have a fast evaluation using a subset of the data and a subset of the folds. Gradually increasing the number of folds when the server is less busy. So they don't have to wait an hour for running their code, or wait for other's jobs to finish. This is actually manageable. 
+  4) A general idea I didn't think of: we could have a fast evaluation using a subset of the data and a subset of the folds. Gradually increasing the number of folds when the server is less busy. So they don't have to wait an hour for running their code, or wait for other's jobs to finish. This is actually manageable. We could also provide learning cruves to the user, the score vs n_samples function. We just need to handle different size of CV folds in CVFold and SubmissionOnCVFold, and add a numerical field n_samples to the CVFold which would make it possible to properly handle the
+  different averages in CVFold. In the leaderboard then we could gradually adjust the small-sample estimates by regressing the large-sample scores on the small sample scores. Use color codes to warn users that certain scores are preliminary. This couls also be a unit test essentially.
 Fab helpers:
     get the path for a given submission to look at files

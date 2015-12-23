@@ -28,7 +28,7 @@ pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 
 def date_time_format(date_time):
-    return date_time.strftime('%a %Y-%m-%d %H:%M:%S')
+    return date_time.strftime('%Y-%m-%d %H:%M:%S %a')
 
 
 ######################### Users ###########################
@@ -290,6 +290,13 @@ def delete_submission(team_name, submission_name):
     db.session.commit()
 
 
+def make_submission_on_cv_folds(cv_folds, submission):
+    for cv_fold in cv_folds:
+        submission_on_cv_fold = SubmissionOnCVFold(
+            submission=submission, cv_fold=cv_fold)
+        db.session.add(submission_on_cv_fold)
+
+
 def make_submission(team_name, name):
     # TODO: to call unit tests on submitted files. Those that are found
     # in the table that describes the workflow. For the rest just check
@@ -323,11 +330,7 @@ def make_submission(team_name, name):
                 submission=submission)
             db.session.add(submission_file)
         db.session.add(submission)
-        # Adding (empty) submission on cv folds
-        for cv_fold in cv_folds:
-            submission_on_cv_fold = SubmissionOnCVFold(
-                submission=submission, cv_fold=cv_fold)
-            db.session.add(submission_on_cv_fold)
+        make_submission_on_cv_folds(cv_folds, submission)
         # for remembering it in the sandbox view
         team.last_submission_name = name
         db.session.commit()
@@ -354,11 +357,7 @@ def make_submission(team_name, name):
                 # couldn't figure out how to reset to default values
                 db.session.delete(submission_on_cv_fold)
             db.session.commit()
-            for cv_fold in cv_folds:
-                submission_on_cv_fold = SubmissionOnCVFold(
-                    submission=submission, cv_fold=cv_fold)
-                db.session.add(submission_on_cv_fold)
-            team.last_submission_name = name
+            make_submission_on_cv_folds(cv_folds, submission)
             db.session.commit()
         else:
             raise DuplicateSubmissionError(
@@ -408,7 +407,8 @@ def make_submission_and_copy_files(team_name, new_submission_name,
 
 def train_test_submissions(submissions=None, force_retrain_test=False):
     if submissions is None:
-        submissions = Submission.query.order_by(Submission.id).all()
+        submissions = Submission.query.filter(
+            Submission.name != 'sandbox').order_by(Submission.id).all()
     for submission in submissions:
         train_test_submission(submission, force_retrain_test)
 
@@ -1002,6 +1002,22 @@ def print_cv_folds():
 
 
 ######################### CVFold ###########################
+
+def reset_cv_folds():
+    """Changing the CV scheme without deleting the submissions."""
+    cv_folds = CVFold.query.all()
+    for cv_fold in cv_folds:
+        db.session.delete(cv_fold)
+    db.session.commit()
+    specific = config.config_object.specific
+    _, y_train = specific.get_train_data()
+    cv = specific.get_cv(y_train)
+    add_cv_folds(cv)
+    cv_folds = CVFold.query.all()
+    submissions = Submission.query.all()
+    for submission in submissions:
+        make_submission_on_cv_folds(cv_folds, submission)
+    db.session.commit()
 
 
 def add_cv_folds(cv):

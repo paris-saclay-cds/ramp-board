@@ -28,10 +28,14 @@ n_CV = config_object.n_cpus
 raw_filename = os.path.join(raw_data_path, 'data.csv')
 vf_raw_filename = os.path.join(
     raw_data_path, 'data_varlength_features.csv.gz')
+public_train_filename = os.path.join(
+    public_data_path, 'public_train.csv')
+vf_public_train_filename = os.path.join(
+    public_data_path, 'public_train_varlength_features.csv')
 train_filename = os.path.join(
-    public_data_path, 'train.csv')
+    private_data_path, 'train.csv')
 vf_train_filename = os.path.join(
-    public_data_path, 'train_varlength_features.csv')
+    private_data_path, 'train_varlength_features.csv')
 test_filename = os.path.join(private_data_path, 'test.csv')
 vf_test_filename = os.path.join(
     private_data_path, 'test_varlength_features.csv')
@@ -39,6 +43,15 @@ vf_test_filename = os.path.join(
 score = scores.Accuracy()
 # score = scores.Error()
 # score = scores.NegativeLogLikelihood()
+
+file_types = [
+    {'name': 'classifier.py', 'type': 'python', 'is_editable': True,
+     'max_size': None},
+    {'name': 'feature_extractor.py', 'type': 'python', 'is_editable': True,
+     'max_size': None},
+    {'name': 'calibrator.py', 'type': 'python', 'is_editable': True,
+     'max_size': None},
+]
 
 
 def csv_array_to_float(csv_array_string):
@@ -75,17 +88,26 @@ def prepare_data():
     vf_raw = pd.read_csv(vf_raw_filename, index_col=0, compression='gzip')
     vf_raw = vf_raw.loc[index_list]
     vf = vf_raw.applymap(csv_array_to_float)
-    df_train, df_test, vf_train, vf_test = train_test_split(
+    df_public_train, df_test, vf_public_train, vf_test = train_test_split(
         df, vf, test_size=held_out_test_size, random_state=random_state)
 
-    df_train = pd.DataFrame(df_train, columns=df.columns)
-    df_test = pd.DataFrame(df_test, columns=df.columns)
-    df_train.to_csv(train_filename, index=True)
-    df_test.to_csv(test_filename, index=True)
+    df_public_train = pd.DataFrame(df_public_train, columns=df.columns)
+    df_public_train.to_csv(public_train_filename, index=True)
+    vf_public_train = pd.DataFrame(vf_public_train, columns=vf.columns)
+    vf_public_train.to_csv(vf_public_train_filename, index=True)
 
+    df_train, df_test, vf_train, vf_test = train_test_split(
+        df_test, vf_test, test_size=held_out_test_size, 
+        random_state=random_state)
+
+    df_train = pd.DataFrame(df_train, columns=df.columns)
+    df_train.to_csv(train_filename, index=True)
     vf_train = pd.DataFrame(vf_train, columns=vf.columns)
-    vf_test = pd.DataFrame(vf_test, columns=vf.columns)
     vf_train.to_csv(vf_train_filename, index=True)
+
+    df_test = pd.DataFrame(df_test, columns=df.columns)
+    df_test.to_csv(test_filename, index=True)
+    vf_test = pd.DataFrame(vf_test, columns=vf.columns)
     vf_test.to_csv(vf_test_filename, index=True)
 
 
@@ -117,62 +139,41 @@ def train_submission(module_path, X_dict, y_array, train_is):
     fe.fit(X_train_dict, y_train_array)
     X_train_array = fe.transform(X_train_dict)
 
+    # Train/valid cut for holding out calibration set
+    cv = StratifiedShuffleSplit(
+        y_train_array, n_iter=1, test_size=0.1, random_state=57)
+    calib_train_is, calib_test_is = list(cv)[0]
+
+    X_train_train_array = X_train_array[calib_train_is]
+    y_train_train_array = y_train_array[calib_train_is]
+    X_calib_train_array = X_train_array[calib_test_is]
+    y_calib_train_array = y_train_array[calib_test_is]
+
     # Classification
     classifier = import_module('.classifier', module_path)
     clf = classifier.Classifier()
+    clf.fit(X_train_train_array, y_train_train_array)
 
     # Calibration
-    try:
-        calibrator = import_module('.calibrator', module_path)
-        calib = calibrator.Calibrator()
-
-        # Train/valid cut for holding out calibration set
-        cv = StratifiedShuffleSplit(
-            y_train_array, n_iter=1, test_size=0.1, random_state=57)
-        calib_train_is, calib_test_is = list(cv)[0]
-
-        X_train_train_array = X_train_array[calib_train_is]
-        y_train_train_array = y_train_array[calib_train_is]
-        X_calib_train_array = X_train_array[calib_test_is]
-        y_calib_train_array = y_train_array[calib_test_is]
-
-        # Classification
-        clf = classifier.Classifier()
-        clf.fit(X_train_train_array, y_train_train_array)
-
-        # Calibration
-        y_probas_array = clf.predict_proba(X_calib_train_array)
-        calib.fit(y_probas_array, y_calib_train_array)
-        return fe, clf, calib
-    except ImportError:
-        # Classification
-        clf.fit(X_train_array, y_train_array)
-        return fe, clf
+    calibrator = import_module('.calibrator', module_path)
+    calib = calibrator.Calibrator()
+    y_probas_array = clf.predict_proba(X_calib_train_array)
+    calib.fit(y_probas_array, y_calib_train_array)
+    return fe, clf, calib
 
 
 def test_submission(trained_model, X_dict, test_is):
     # Preparing the test (or valid) set
     X_test_dict = [X_dict[i] for i in test_is]
 
-    if len(trained_model) == 3:  # calibrated classifier
-        fe, clf, calib = trained_model
+    fe, clf, calib = trained_model
 
-        # Feature extraction
-        X_test_array = fe.transform(X_test_dict)
+    # Feature extraction
+    X_test_array = fe.transform(X_test_dict)
 
-        # Classification
-        y_probas_array = clf.predict_proba(X_test_array)
+    # Classification
+    y_probas_array = clf.predict_proba(X_test_array)
 
-        # Calibration
-        y_calib_probas_array = calib.predict_proba(y_probas_array)
-        return Predictions(y_pred=y_calib_probas_array)
-
-    else:  # uncalibrated classifier
-        fe, clf = trained_model
-
-        # Feature extraction
-        X_test_array = fe.transform(X_test_dict)
-
-        # Classification
-        y_probas_array = clf.predict_proba(X_test_array)
-        return Predictions(y_pred=y_probas_array)
+    # Calibration
+    y_calib_probas_array = calib.predict_proba(y_probas_array)
+    return Predictions(y_pred=y_calib_probas_array)
