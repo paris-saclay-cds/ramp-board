@@ -42,6 +42,8 @@ def copy_git_tree(tree, dest_folder):
 
 
 def fetch_models():
+    """For now this is unused, we keep it in case we want to add back 
+    the git fetch feature."""
     repo_paths = sorted(glob.glob(os.path.join(repos_path, '*')))
 
     if not os.path.exists(submissions_path):

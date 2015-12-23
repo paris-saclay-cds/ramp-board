@@ -32,11 +32,6 @@ from distutils.util import strtobool
 logger = logging.getLogger('databoard')
 
 
-def migrate():
-    from migrate import migrate_file_type
-    migrate_file_type()
-
-
 def clear_cache():
     from sklearn.externals.joblib import Memory
     from databoard.config import cachedir
