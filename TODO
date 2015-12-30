@@ -13,8 +13,10 @@ TODO
 Didier's ideas:
   1) He wants to submit through git. What I understand is that he basically wants an API, not a web interface. 
   2) He pointed to us to jenkins: https://jenkins-ci.org/ for the engineering details of launching untrusted code in safe mode. That's what they use for automating their testing: gitlab and jenkins.
-  3) He want spark integration.
+  3) He wants spark integration.
   4) A general idea I didn't think of: we could have a fast evaluation using a subset of the data and a subset of the folds. Gradually increasing the number of folds when the server is less busy. So they don't have to wait an hour for running their code, or wait for other's jobs to finish. This is actually manageable. We could also provide learning cruves to the user, the score vs n_samples function. We just need to handle different size of CV folds in CVFold and SubmissionOnCVFold, and add a numerical field n_samples to the CVFold which would make it possible to properly handle the
   different averages in CVFold. In the leaderboard then we could gradually adjust the small-sample estimates by regressing the large-sample scores on the small sample scores. Use color codes to warn users that certain scores are preliminary. This couls also be a unit test essentially.
 Fab helpers:
     get the path for a given submission to look at files
+Security:
+   When code is not open, close view models othrwise they mey guess our hash function and type it into the url.

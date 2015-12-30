@@ -18,8 +18,8 @@ onload="prettyPrint()"
     {% set left_col_width = 'sixteen' %}
 {% endif %}
 
-<div class="ui stackable two column grid">
-    <div class="{{ left_col_width }} wide column">
+<div class="ui stackable one column grid">
+    <div class="sixteen wide column">
         <h4 class="ui horizontal header divider grey">
             <a href="/leaderboard"><i class="dashboard grey icon"></i>Leaderboard</a>
             <span><i class="angle right grey icon"></i></span>
@@ -31,22 +31,6 @@ onload="prettyPrint()"
             </h4>
         <pre class="prettyprint linenums">{{ error_msg }}</pre>
     </div>
-    {% if submission_f_names %}
-    <div class="four wide column">
-        <div class="ui sticky">
-        <h4 class="ui horizontal header divider grey"></h4>
-            {% for f in submission_f_names %}
-            <div class="ui fluid card">
-                <div class="content">
-                    <div class="description">
-                        <a href="{{ f }}"><i class="file grey icon"></i>{{ f }}</a>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
 </div> 
 
 {% endblock %}

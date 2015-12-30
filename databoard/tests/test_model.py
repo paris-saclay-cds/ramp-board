@@ -43,13 +43,11 @@ def test_password_hashing():
 
 
 def test_setup_problem():
-    file_types = [
-        {'name': 'classifier.py', 'type': 'python', 'is_editable': True,
-         'max_size': None},
+    db_tools.setup_workflow_element_types()
+    workflow_elements = [
+        {'name': 'classifier'},
     ]
-    db_tools.setup_problem(file_types)
-    # to check what happens when files are already there
-    db_tools.setup_problem(file_types)
+    db_tools.setup_problem(workflow_elements)
 
 
 def test_add_cv_folds():
@@ -152,15 +150,27 @@ def test_merge_teams():
 
 
 def test_make_submission():
-    db_tools.make_submission('kemfort', 'rf')
-    db_tools.make_submission('mchezakci', 'rf')
-    db_tools.make_submission('kemfort', 'rf2')
-    db_tools.make_submission('kemfort', 'training_error')
-    db_tools.make_submission('kemfort', 'validating_error')
+    db_tools.make_submission(
+        'kemfort', 'rf',
+        'test_submissions/kemfort/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
+    db_tools.make_submission(
+        'mchezakci', 'rf',
+        'test_submissions/mchezakci/mfcee225579956cac0717ca38e7e4b529b28679cf')
+    db_tools.make_submission(
+        'kemfort', 'rf2',
+        'test_submissions/kemfort/ma971cc83c886aaaad37d25029e7718c00ac3b4cd')
+    db_tools.make_submission(
+        'kemfort', 'training_error',
+        'test_submissions/kemfort/mb5fa97067800c9c4c376b4d5beea3fd8a5db72c0')
+    db_tools.make_submission(
+        'kemfort', 'validating_error',
+        'test_submissions/kemfort/mde194f09b58f6e519b334908862351138b302bd2')
     db_tools.print_submissions()
 
     # resubmitting 'new' is OK
-    db_tools.make_submission('kemfort', 'rf')
+    db_tools.make_submission(
+        'kemfort', 'rf',
+        'test_submissions/kemfort/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
 
     team = Team.query.filter_by(name='kemfort').one()
     submission = Submission.query.filter_by(team=team, name='rf').one()
@@ -168,18 +178,24 @@ def test_make_submission():
     submission.state = 'training_error'
     db.session.commit()
     # resubmitting 'error' is OK
-    db_tools.make_submission('kemfort', 'rf')
+    db_tools.make_submission(
+        'kemfort', 'rf',
+        'test_submissions/kemfort/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
 
     submission.state = 'testing_error'
     db.session.commit()
     # resubmitting 'error' is OK
-    db_tools.make_submission('kemfort', 'rf')
+    db_tools.make_submission(
+        'kemfort', 'rf',
+        'test_submissions/kemfort/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
 
     submission.state = 'trained'
     db.session.commit()
     # resubmitting 'trained' is not OK
     try:
-        db_tools.make_submission('kemfort', 'rf')
+        db_tools.make_submission(
+            'kemfort', 'rf',
+            'test_submissions/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
     except db_tools.DuplicateSubmissionError as e:
         assert e.value == 'Submission "rf" of team "kemfort" exists already'
 

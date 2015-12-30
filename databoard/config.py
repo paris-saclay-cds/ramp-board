@@ -28,13 +28,13 @@ is_parallelize_across_machines = False
 timeout_parallelize_across_machines = 10800
 # often doesn't work and takes a lot of disk space
 is_pickle_trained_submission = False
-min_duration_between_submissions = 900  # seconds
+min_duration_between_submissions = 22 * 60 * 60
 max_members_per_team = 3  # except for users own team
 max_n_ensemble = 80  # max number of submissions in Caruana's ensemble
-opening_timestamp = datetime.datetime(2015, 12, 3, 12, 30, 0)
+opening_timestamp = datetime.datetime(2015, 12, 30, 20, 0, 0)
 # before links to submissions in leaderboard are not alive
-public_opening_timestamp = datetime.datetime(2015, 12, 3, 14, 0, 0)
-closing_timestamp = datetime.datetime(2015, 12, 15, 14, 0, 0)
+public_opening_timestamp = datetime.datetime(2016, 1, 6, 20, 0, 0)
+closing_timestamp = datetime.datetime(2017, 1, 8, 14, 0, 0)
 
 # Open ports in Stratuslab
 # 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015,
@@ -70,7 +70,7 @@ closing_timestamp = datetime.datetime(2015, 12, 15, 14, 0, 0)
 #    server_port)
 # server_name = debug_server if local_deployment else train_server
 
-vd_server = 'onevm-132.lal.in2p3.fr'
+vd_server = 'onevm-226.lal.in2p3.fr'
 reims_server = 'romeo1.univ-reims.fr'
 vd_root = '/mnt/datacamp'
 local_root = '/tmp'  # for local publishing / testing
@@ -151,7 +151,8 @@ class RampConfig(object):
             raise ValueError('mode ???')
         if self.train_server != 'localhost':
             software_target += user + '@' + server + ':'
-        software_target += '/mnt/databoard/databoard-0.1.dev0/'
+#        software_target += '/mnt/databoard/databoard-0.1.dev0/'
+        software_target += '/mnt/datacamp/code/'
         print software_target
         return software_target
 
@@ -222,10 +223,18 @@ ramps_configs['iris_remote'] = RampConfig(
     **vd_kwargs
 )
 
+ramps_configs['variable_stars_remote'] = RampConfig(
+    ramp_name='variable_stars',
+    n_cpus=5,
+    server_port='8080',
+    cv_test_size=0.5,
+    random_state=57,
+    **vd_kwargs
+)
+
 ramps_configs['mortality_prediction_remote'] = RampConfig(
     ramp_name='mortality_prediction',
     n_cpus=5,
-#    server_port='5001',
     server_port='2811',
     cv_test_size=0.5,
     random_state=57,
@@ -267,6 +276,8 @@ MAIL_USERNAME = 'databoardmailer@gmail.com'
 MAIL_PASSWORD = 'fly18likeacar'
 MAIL_DEFAULT_SENDER = ('Databoard', 'databoardmailer@gmail.com')
 MAIL_RECIPIENTS = ''  # notification_recipients
+# abs max upload file size, to throw 413, before saving it
+MAX_CONTENT_LENGTH = 1024 * 1024 * 1024
 LOG_FILENAME = None  # if None, output to screen
 WTF_CSRF_ENABLED = True
 SECRET_KEY = 'eroigudsfojbn;lk'

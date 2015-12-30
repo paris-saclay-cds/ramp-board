@@ -29,11 +29,9 @@ test_filename = os.path.join(private_data_path, 'test.csv')
 
 score = scores.RMSE()
 
-file_types = [
-    {'name': 'regressor.py', 'type': 'python', 'is_editable': True,
-     'max_size': None},
-    {'name': 'comments.txt', 'type': 'text', 'is_editable': True,
-     'max_size': None},
+workflow_element_types = [
+    {'name': 'regressor'},
+    {'name': 'comments'},
 ]
 
 

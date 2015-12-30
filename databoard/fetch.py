@@ -13,7 +13,6 @@ from flask_mail import Mail
 from flask_mail import Message
 
 from databoard import app
-from databoard.model_shelve import shelve_database, columns
 from databoard.config import submissions_path,\
     repos_path, deposited_submissions_path
 import databoard.config as config

@@ -11,11 +11,17 @@ import xkcdpass.xkcd_password as xp
 from sklearn.externals.joblib import Parallel, delayed
 from databoard import db
 
-from databoard.model import User, Team, Submission, SubmissionFile, FileType,\
+from databoard.model import User, Team, Submission, SubmissionFile,\
+    SubmissionFileType, SubmissionFileTypeExtension, WorkflowElementType,\
+    WorkflowElement, Extension,\
     CVFold, SubmissionOnCVFold, DetachedSubmissionOnCVFold,\
+    UserInteraction,\
     NameClashError, MergeTeamError, TooEarlySubmissionError,\
     DuplicateSubmissionError, MissingSubmissionFileError,\
-    combine_predictions_list, get_next_best_single_fold
+    MissingExtensionError,\
+    combine_predictions_list, get_next_best_single_fold,\
+    get_active_user_team, get_user_teams, get_n_team_members,\
+    get_team_members
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -33,24 +39,6 @@ def date_time_format(date_time):
 
 ######################### Users ###########################
 
-def get_user_teams(user):
-    teams = Team.query.all()
-    for team in teams:
-        if user in get_team_members(team):
-            yield team
-
-
-def get_active_user_team(user):
-    teams = Team.query.all()
-    for team in teams:
-        if user in get_team_members(team) and team.is_active:
-            return team
-
-
-def get_n_user_teams(user):
-    return len(get_user_teams(user))
-
-
 def get_hashed_password(plain_text_password):
     """Hash a password for the first time
     (Using bcrypt, the salt is saved into the hash itself)"""
@@ -66,12 +54,15 @@ def check_password(plain_text_password, hashed_password):
 def add_users_from_file(users_to_add_f_name):
     # For now just saves the passwords and returns the pandas dataframe.
     users_to_add = pd.read_csv(users_to_add_f_name)
-    words = xp.locate_wordfile()
-    mywords = xp.generate_wordlist(wordfile=words, min_length=4, max_length=6)
-    users_to_add['password'] = [xp.generate_xkcdpassword(mywords, numwords=4)
-                                for name in users_to_add['name']]
-    # temporarily while we don't implement pwd recovery
-    users_to_add.to_csv(users_to_add_f_name + '.w_pwd')
+    if users_to_add_f_name.split('.')[-1] != 'w_pwd':
+        words = xp.locate_wordfile()
+        mywords = xp.generate_wordlist(
+            wordfile=words, min_length=4, max_length=6)
+        users_to_add['password'] = [
+            xp.generate_xkcdpassword(mywords, numwords=4)
+            for name in users_to_add['name']]
+        # temporarily while we don't implement pwd recovery
+        users_to_add.to_csv(users_to_add_f_name + '.w_pwd')
     return users_to_add
 
 
@@ -111,17 +102,75 @@ def send_password_mails(users_to_add_f_name):
         smtpserver.sendmail(gmail_user, u['email'], header + body)
 
 
-def setup_problem(file_types):
-    for file_type_dict in file_types:
-        name = file_type_dict['name']
-        type = file_type_dict['type']
-        is_editable = file_type_dict['is_editable']
-        max_size = file_type_dict['max_size']
-        file_type = FileType.query.filter_by(name=name).one_or_none()
-        if file_type is None:
-            file_type = FileType(name=name, type=type,
-                                 is_editable=is_editable, max_size=max_size)
-            db.session.add(file_type)
+def setup_workflow_element_types():
+    extension_names = ['py', 'R', 'txt', 'csv']
+    for name in extension_names:
+        extension = Extension.query.filter_by(name=name).one_or_none()
+        if extension is None:
+            db.session.add(Extension(name=name))
+    db.session.commit()
+
+    submission_file_types = [
+        ('code', True, 10 ** 5),
+        ('text', True, 10 ** 5),
+        ('data', False, 10 ** 8)
+    ]
+    for (name, is_editable, max_size) in submission_file_types:
+        submission_file_type = SubmissionFileType.query.filter_by(
+            name=name).one_or_none()
+        if submission_file_type is None:
+            db.session.add(SubmissionFileType(
+                name=name, is_editable=is_editable, max_size=max_size))
+    db.session.commit()
+
+    submission_file_type_extensions = [
+        ('code', 'py'),
+        ('code', 'R'),
+        ('text', 'txt'),
+        ('data', 'csv')
+    ]
+    for (type_name, extension_name) in submission_file_type_extensions:
+        submission_file_type = SubmissionFileType.query.filter_by(
+            name=type_name).one()
+        extension = Extension.query.filter_by(name=extension_name).one()
+        type_extension = SubmissionFileTypeExtension.query.filter_by(
+            type=submission_file_type, extension=extension).one_or_none()
+        if type_extension is None:
+            db.session.add(SubmissionFileTypeExtension(
+                type=submission_file_type, extension=extension))
+    db.session.commit()
+
+    workflow_element_types = [
+        ('feature_extractor', 'code'),
+        ('ts_feature_extractor', 'code'),
+        ('imputer', 'code'),
+        ('classifier', 'code'),
+        ('regressor', 'code'),
+        ('calibrator', 'code'),
+        ('comments', 'text'),
+        ('external_data', 'data'),
+    ]
+    for name, type_name in workflow_element_types:
+        submission_file_type = SubmissionFileType.query.filter_by(
+            name=type_name).one()
+        workflow_element_type = WorkflowElementType.query.filter_by(
+            name=name, type=submission_file_type).one_or_none()
+        if workflow_element_type is None:
+            db.session.add(WorkflowElementType(
+                name=name, type=submission_file_type))
+    db.session.commit()
+
+
+def setup_problem(workflow_elements):
+    for workflow_element_dict in workflow_elements:
+        name = workflow_element_dict['name']
+        try:
+            type = workflow_element_dict['type']
+            workflow_element = WorkflowElement(
+                name=type, name_in_workflow=name)
+        except KeyError:
+            workflow_element = WorkflowElement(name=name)
+        db.session.add(workflow_element)
     db.session.commit()
 
 
@@ -195,21 +244,6 @@ def print_users():
 ######################### Teams ###########################
 
 
-def get_team_members(team):
-    if team.initiator is not None:
-        # "yield from" in Python 3.3
-        for member in get_team_members(team.initiator):
-            yield member
-        for member in get_team_members(team.acceptor):
-            yield member
-    else:
-        yield team.admin
-
-
-def get_n_team_members(team):
-    return len(list(get_team_members(team)))
-
-
 def merge_teams(name, initiator_name, acceptor_name):
     initiator = Team.query.filter_by(name=initiator_name).one()
     acceptor = Team.query.filter_by(name=acceptor_name).one()
@@ -237,7 +271,10 @@ def merge_teams(name, initiator_name, acceptor_name):
     for team in Team.query:
         if members_set == set(get_team_members(team)):
             if name == team.name:
-                break  # ok, but don't add new team, just set them to inactive
+                # ok, but don't add new team, just set them to inactive
+                initiator.is_active = False
+                acceptor.is_active = False
+                return team 
             raise MergeTeamError(
                 'Team exists with the same members, team name = {}'.format(
                     team.name))
@@ -297,17 +334,17 @@ def make_submission_on_cv_folds(cv_folds, submission):
         db.session.add(submission_on_cv_fold)
 
 
-def make_submission(team_name, name):
+def make_submission(team_name, submission_name, submission_path):
     # TODO: to call unit tests on submitted files. Those that are found
     # in the table that describes the workflow. For the rest just check
     # maybe size
     team = Team.query.filter_by(name=team_name).one()
     submission = Submission.query.filter_by(
-        name=name, team=team).one_or_none()
+        name=submission_name, team=team).one_or_none()
     cv_folds = CVFold.query.all()
-    file_types = FileType.query.all()
+    workflow_elements = WorkflowElement.query.all()
     if submission is None:
-        # Checking is submission is too early
+        # Checking if submission is too early
         all_submissions = Submission.query.filter_by(team=team).order_by(
             Submission.submission_timestamp).all()
         last_submission = None if len(all_submissions) == 0 \
@@ -322,47 +359,81 @@ def make_submission(team_name, name):
                 raise TooEarlySubmissionError(
                     'You need to wait {} more seconds until next submission'
                     .format(int(min_diff - diff)))
-        submission = Submission(name=name, team=team)
-        # Adding submission files
-        for file_type in file_types:
-            submission_file = SubmissionFile(
-                file_type=file_type, name=file_type.name,
-                submission=submission)
-            db.session.add(submission_file)
+        submission = Submission(name=submission_name, team=team)
         db.session.add(submission)
-        make_submission_on_cv_folds(cv_folds, submission)
-        # for remembering it in the sandbox view
-        team.last_submission_name = name
-        db.session.commit()
     else:
         # We allow resubmit for new or failing submissions
-        if submission.state == 'new' or submission.is_error:
+        if submission.name != config.sandbox_d_name and\
+                (submission.state == 'new' or submission.is_error):
             submission.state = 'new'
             submission.submission_timestamp = datetime.datetime.utcnow()
-            # Updating existing files or adding new if not in list
-            for file_type in file_types:
-                submission_file = SubmissionFile.query.filter_by(
-                    file_type=file_type, submission=submission).one_or_none()
-                if submission_file is None:
-                    submission_file = SubmissionFile(
-                        file_type=file_type, name=file_type.name,
-                        submission=submission)
-                    db.session.add(submission_file)
-                # else copy the file should be there
-                # right now we don't delete files that were not resubmitted,
-                # allowing partial resubmission
-
-            # Updating submission on cv folds
             for submission_on_cv_fold in submission.on_cv_folds:
                 # couldn't figure out how to reset to default values
                 db.session.delete(submission_on_cv_fold)
-            db.session.commit()
-            make_submission_on_cv_folds(cv_folds, submission)
-            db.session.commit()
         else:
             raise DuplicateSubmissionError(
                 'Submission "{}" of team "{}" exists already'.format(
-                    name, team_name))
+                    submission_name, team_name))
+
+    deposited_f_name_list = os.listdir(submission_path)
+    # TODO: more error checking
+    deposited_types = [f_name.split('.')[0]
+                       for f_name in deposited_f_name_list]
+    deposited_extensions = [f_name.split('.')[1]
+                            for f_name in deposited_f_name_list]
+    for workflow_element in workflow_elements:
+        # We find all files with matching names to workflow_element.name.
+        # If none found, raise error.
+        # Then look for one that has a legal extension. If none found, 
+        # raise error. If there are several ones, for now we use the first 
+        # matching file.
+
+        name = workflow_element.name
+        i_names = [i for i in range(len(deposited_types)) 
+                   if deposited_types[i] == name]
+        if len(i_names) == 0:
+            db.session.rollback()
+            raise MissingSubmissionFileError('{}/{}/{}: {}'.format(
+                team_name, submission_name, name, submission_path))
+
+        for i_name in i_names:
+            extension_name = deposited_extensions[i_name]
+            extension = Extension.query.filter_by(
+                name=extension_name).one_or_none()
+            if extension is not None:
+                break
+        else:
+            db.session.rollback()
+            extensions = [deposited_extensions[i_name] for i_name in i_names]
+            extensions = extensions.join(",")
+            for i_name in i_names:
+                extensions.append(deposited_extensions[i_name])
+            raise MissingExtensionError('{}/{}/{}/{}: {}'.format(
+                team_name, submission_name, name, extensions, submission_path))
+
+        # maybe it's a resubmit
+        submission_file = SubmissionFile.query.filter_by(
+            workflow_element=workflow_element,
+            submission=submission).one_or_none()
+        # TODO: handle if resubmitted file changed extension
+        if submission_file is None:
+            submission_file_type = SubmissionFileType.query.filter_by(
+                name=workflow_element.file_type).one()
+            type_extension = SubmissionFileTypeExtension.query.filter_by(
+                type=submission_file_type, extension=extension).one()
+            submission_file = SubmissionFile(
+                submission=submission, workflow_element=workflow_element,
+                submission_file_type_extension=type_extension)
+#            submission_file = SubmissionFile(
+#                submission=submission, name=name,
+#                extension_name=extension_name)
+            db.session.add(submission_file)
+
+    db.session.commit()  # to enact db.session.delete(submission_on_cv_fold)
+    make_submission_on_cv_folds(cv_folds, submission)
+    # for remembering it in the sandbox view
+    team.last_submission_name = submission_name
+    db.session.commit()
 
     # We should copy files here
     return submission
@@ -372,15 +443,9 @@ def make_submission_and_copy_files(team_name, new_submission_name,
                                    from_submission_path):
     """Called from create_user(), merge_teams(), fetch.add_models(),
     view.sandbox()."""
-    deposited_f_name_list = os.listdir(from_submission_path)
-    file_types = FileType.query.all()
-    f_name_list = [file_type.name for file_type in file_types]
-    for f_name in f_name_list:
-        if f_name not in deposited_f_name_list:
-            raise MissingSubmissionFileError('{}/{}/{}: {}'.format(
-                team_name, new_submission_name, f_name, from_submission_path))
 
-    submission = make_submission(team_name, new_submission_name)
+    submission = make_submission(
+        team_name, new_submission_name, from_submission_path)
     team_path, new_submission_path = submission.get_paths(
         config.submissions_path)
 
@@ -395,7 +460,7 @@ def make_submission_and_copy_files(team_name, new_submission_name,
 
     # copy the submission files into the model directory, should all this
     # probably go to Submission
-    for f_name in f_name_list:
+    for f_name in submission.f_names:
         src = os.path.join(from_submission_path, f_name)
         dst = os.path.join(new_submission_path, f_name)
         shutil.copy2(src, dst)  # copying also metadata
@@ -432,6 +497,7 @@ def train_test_submission(submission, force_retrain_test=False):
         # We are using 'threading' so train_test_submission_on_cv_fold
         # updates the detached submission_on_cv_fold objects. If it doesn't
         # work, we can go back to multiprocessing and
+        print config.config_object.n_cpus
         detached_submission_on_cv_folds = Parallel(
             n_jobs=config.config_object.n_cpus, verbose=5)(
             delayed(train_test_submission_on_cv_fold)(
@@ -625,6 +691,10 @@ def compute_contributivity(force_ensemble=False):
         combined_predictions, best_predictions,\
             combined_test_predictions, best_test_predictions =\
             compute_contributivity_on_fold(cv_fold, force_ensemble)
+        # TODO: if we do asynchron CVs, this has to be revisited
+        if combined_predictions is None:
+            logger.info('No submissions to combine')
+            return
         combined_predictions_list.append(combined_predictions)
         best_predictions_list.append(best_predictions)
         combined_test_predictions_list.append(combined_test_predictions)
@@ -692,7 +762,8 @@ def compute_contributivity_on_fold(cv_fold, force_ensemble=False):
         and submission_on_fold.submission.name != config.sandbox_d_name
     ]
     if len(selected_submissions_on_fold) == 0:
-        return None
+        print 'bla'
+        return None, None, None, None
     true_predictions = generic.get_true_predictions_valid(cv_fold.test_is)
     # TODO: maybe this can be simplified. Don't need to get down
     # to prediction level.
@@ -863,7 +934,8 @@ def get_new_submissions(user=None):
     if user is None:
         submissions_teams = db.session.query(Submission, Team).filter(
             Team.id == Submission.team_id).filter(
-            Submission.state == 'new').order_by(
+            Submission.state == 'new').filter(
+            Submission.name != config.sandbox_d_name).order_by(
             Submission.submission_timestamp).all()
     else:
         submissions_teams = []
@@ -871,7 +943,8 @@ def get_new_submissions(user=None):
             submissions_teams += db.session.query(Submission, Team).filter(
                 Team.id == Submission.team_id).filter(
                 Team.name == team_name).filter(
-                Submission.state == 'new').order_by(
+                Submission.state == 'new').filter(
+                Submission.name != config.sandbox_d_name).order_by(
                 Submission.submission_timestamp).all()
     columns = ['team',
                'submission',
@@ -1025,3 +1098,24 @@ def add_cv_folds(cv):
         cv_fold = CVFold(train_is=train_is, test_is=test_is)
         db.session.add(cv_fold)
     db.session.commit()
+
+
+#################### User interactions #####################
+
+def add_user_interaction(**kwargs):
+    user_interaction = UserInteraction(**kwargs)
+    db.session.add(user_interaction)
+    db.session.commit()
+
+
+def print_user_interactions():
+    print('*********** User interactions ****************')
+    for user_interaction in UserInteraction.query.all():
+        print date_time_format(user_interaction.timestamp),\
+            user_interaction.user, user_interaction.interaction
+        if user_interaction.submission_file_diff is not None:
+            print user_interaction.submission_file_diff
+        if user_interaction.submission_file_similarity is not None:
+            print user_interaction.submission_file_similarity
+        if user_interaction.submission is not None:
+            print user_interaction.submission

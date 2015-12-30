@@ -34,8 +34,6 @@ onload="prettyPrint()"
     {% if submission_f_names and f_name != 'error.txt' %}
     <div class="four wide column">
         <div class="ui sticky">
-        <h4 class="ui horizontal header divider grey"><a href="import/{{ f_name }}">Import it to my sandbox</a></h4>
-        Be careful: this will overwrite any unsubmitted changes (so even changes that you have saved but not yet submitted) in your sandbox.
         <h4 class="ui horizontal header divider grey">File list</h4>
             {% for f in submission_f_names %}
             <div class="ui fluid card">
@@ -50,7 +48,23 @@ onload="prettyPrint()"
                 </div>
             </div>
             {% endfor %}
+        <h4 class="ui horizontal header divider grey">Import it to my sandbox</h4><p>
+        Be careful: this will overwrite any unsubmitted changes (so even changes that you have saved but not yet submitted) in your sandbox.
         </div>
+        <form class="ui form" method="post" action="" name="import">
+            {{ import_form.hidden_tag() }}
+            <!--<div class="one field">
+                <div class="required field">
+                    <label>Bla</label>
+                    {% for f in import_form.files %}
+                        <input type="checkbox" id="{{f}}" name="{{f}}" value="{{f}}">
+                        <a href="{{ f }}"><i class="file grey icon"></i>{{ f }}</a>
+                    {% endfor %}
+                </div>
+            </div>-->
+            {{ import_form.selected_f_names }}
+            <input type="submit" value="Import to my sandbox" class="ui submit button">
+        </form>
     </div>
     {% endif %}
 </div> 

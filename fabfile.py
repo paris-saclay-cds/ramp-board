@@ -53,7 +53,8 @@ def prepare_data():
     _, y_train = specific.get_train_data()
     cv = specific.get_cv(y_train)
     db_tools.add_cv_folds(cv)
-    db_tools.setup_problem(specific.file_types)
+    db_tools.setup_workflow_element_types()
+    db_tools.setup_problem(specific.workflow_element_types)
 
 
 def clear_registrants():
@@ -125,6 +126,11 @@ def train_test_earliest_new():
 def compute_contributivity():
     from databoard.db_tools import compute_contributivity
     compute_contributivity()
+
+
+def print_user_interactions():
+    from databoard.db_tools import print_user_interactions
+    print_user_interactions()
 
 
 def print_submissions(t=None, s=None, state=None):
@@ -241,14 +247,12 @@ software = [
     'databoard/fetch.py',
     'databoard/forms.py',
     'databoard/generic.py',
-    'databoard/leaderboard.py',
     'databoard/machine_parallelism.py',
     'databoard/model.py',
     'databoard/multiclass_prediction.py',
     'databoard/regression_prediction.py',
     'databoard/remove_test_db.py',
     'databoard/scores.py',
-    'databoard/train_test.py',
     'databoard/views.py',
     'databoard/ramps/__init__.py',
     'databoard/ramps/air_passengers/__init__.py',
@@ -269,6 +273,7 @@ software = [
     'databoard/ramps/pollenating_insects/specific.py',
     'databoard/ramps/variable_stars/__init__.py',
     'databoard/ramps/variable_stars/specific.py',
+    'databoard/tests/__init__.py',
     'databoard/tests/test_model.py',
     'databoard/tests/test_multiclass_predictions.py',
     'databoard/tests/test_regression_predictions.py',

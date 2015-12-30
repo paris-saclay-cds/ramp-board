@@ -4,6 +4,7 @@ import hashlib
 import logging
 import datetime
 import numpy as np
+from flask import request
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from databoard import db
@@ -164,28 +165,165 @@ class Team(db.Model):
         return repr
 
 
-# We will order files according to their ids
-class FileType(db.Model):
-    __tablename__ = 'file_types'
+def get_team_members(team):
+    if team.initiator is not None:
+        # "yield from" in Python 3.3
+        for member in get_team_members(team.initiator):
+            yield member
+        for member in get_team_members(team.acceptor):
+            yield member
+    else:
+        yield team.admin
+
+
+def get_n_team_members(team):
+    return len(list(get_team_members(team)))
+
+
+def get_user_teams(user):
+    teams = Team.query.all()
+    for team in teams:
+        if user in get_team_members(team):
+            yield team
+
+
+def get_active_user_team(user):
+    teams = Team.query.all()
+    for team in teams:
+        if user in get_team_members(team) and team.is_active:
+            return team
+
+
+def get_n_user_teams(user):
+    return len(get_user_teams(user))
+
+
+class SubmissionFileType(db.Model):
+    __tablename__ = 'submission_file_types'
 
     id = db.Column(db.Integer, primary_key=True)
+    # eg. 'code', 'text', 'data'
     name = db.Column(db.String, nullable=False, unique=True)
-    type = db.Column(db.String, nullable=False)
-    # the follwoing two should go into the per-event table
-    # since they can change event by event
     is_editable = db.Column(db.Boolean, default=True)
     max_size = db.Column(db.Integer, default=None)
 
+
+class Extension(db.Model):
+    __tablename__ = 'extensions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    # eg. 'py', 'csv', 'R'
+    name = db.Column(db.String, nullable=False, unique=True)
+
+
+# many-to-many connection between SubmissionFileType and Extension
+class SubmissionFileTypeExtension(db.Model):
+    __tablename__ = 'submission_file_type_extensions'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    type_id = db.Column(
+        db.Integer, db.ForeignKey('submission_file_types.id'), nullable=False)
+    type = db.relationship(
+        'SubmissionFileType', backref=db.backref('extensions'))
+
+    extension_id = db.Column(
+        db.Integer, db.ForeignKey('extensions.id'), nullable=False)
+    extension = db.relationship(
+        'Extension', backref=db.backref('submission_file_types'))
+
+    db.UniqueConstraint(type_id, extension_id, name='we_constraint')
+
+    @property
+    def file_type(self):
+        return self.type.name
+
+    @property
+    def extension_name(self):
+        return self.extension.name
+
+
+class WorkflowElementType(db.Model):
+    __tablename__ = 'workflow_element_types'
+
+    id = db.Column(db.Integer, primary_key=True)
+    # file name without extension
+    # eg, regressor, classifier, external_data
+    name = db.Column(db.String, nullable=False, unique=True)
+
+    # eg, code, text, data
+    type_id = db.Column(
+        db.Integer, db.ForeignKey('submission_file_types.id'), nullable=False)
+    type = db.relationship(
+        'SubmissionFileType', backref=db.backref('workflow_element_types'))
+
     def __repr__(self):
-        repr = 'FileType(name={}, type={}, is_editable={}, max_size={})'.format(
-            self.name, self.type, self.is_editable, self.max_size)
+        repr = 'WorkflowElementType(name={}, type={}, is_editable={}, max_size={})'.format(
+            self.name, self.type.name, self.type.is_editable,
+            self.type.max_size)
         return repr
 
+    @property
+    def file_type(self):
+        return self.type.name
 
-# TODO: we shuold have a SubmissionFileType table, describing the type
-# of files we are expecting for a given RAMP. Fast unit test should be set up
-# there, and each file should be unit tested right after submission.
-# We should have a max_size attribute that we could set when setting up ramps.
+    @property
+    def is_editable(self):
+        return self.type.is_editable
+
+    @property
+    def max_size(self):
+        return self.type.max_size
+
+
+# RAMP or problem id should come in here. Or even better: workflow id which
+# will then belong to RAMP or problem.
+# In lists we will order files according to their ids
+class WorkflowElement(db.Model):
+    __tablename__ = 'workflow_elements'
+
+    id = db.Column(db.Integer, primary_key=True)
+    # Normally name will be the same as workflow_element_type.type.name,
+    # unless specified otherwise. It's because in more complex workflows
+    # the same type can occur more then once. self.type below will always
+    # refer to workflow_element_type.type.name
+    name = db.Column(db.String, nullable=False, unique=True)
+
+    workflow_element_type_id = db.Column(
+        db.Integer, db.ForeignKey('workflow_element_types.id'),
+        nullable=False)
+    workflow_element_type = db.relationship(
+        'WorkflowElementType', backref=db.backref('submission_files'))
+
+    def __init__(self, name, name_in_workflow=None):
+        self.workflow_element_type = WorkflowElementType.query.filter_by(
+            name=name).one()
+        if name_in_workflow is None:
+            self.name = name
+        else:
+            self.name = name_in_workflow
+
+    # e.g. 'regression', 'external_data'. Normally == name
+    @property
+    def type(self):
+        return self.workflow_element_type.name
+
+    @property
+    def file_type(self):
+        return self.workflow_element_type.file_type
+
+    @property
+    def is_editable(self):
+        return self.workflow_element_type.is_editable
+
+    @property
+    def max_size(self):
+        return self.workflow_element_type.max_size
+
+
+# TODO: we should have a SubmissionWorkflowElementType table, describing the
+# type of files we are expecting for a given RAMP. Fast unit test should be
+# set up there, and each file should be unit tested right after submission.
 # Kozmetics: erhaps mark which file the leaderboard link should point to (right
 # now it is set to the first file in the list which is arbitrary).
 # We will also have to handle auxiliary files (like csvs or other classes).
@@ -199,29 +337,52 @@ class SubmissionFile(db.Model):
     submission_id = db.Column(
         db.Integer, db.ForeignKey('submissions.id'), nullable=False)
     submission = db.relationship(
-        'Submission', backref=db.backref(
-            'files', cascade="all, delete-orphan"))
-    # we keep name for now for migration
-    # name = db.Column(db.String, nullable=False)
+        'Submission',
+        backref=db.backref('files', cascade="all, delete-orphan"))
 
-    file_type_id = db.Column(
-        db.Integer, db.ForeignKey('file_types.id'), nullable=False)
-    file_type = db.relationship(
-        'FileType', backref=db.backref('submission_files'))
+    # e.g. 'regression', 'external_data'
+    workflow_element_id = db.Column(
+        db.Integer, db.ForeignKey('workflow_elements.id'),
+        nullable=False)
+    workflow_element = db.relationship(
+        'WorkflowElement', backref=db.backref('submission_files'))
 
-    # we keep it for now because of migration issues
-    name = db.Column(db.String, nullable=True, unique=False)
+    # e.g., ('code', 'py'), ('data', 'csv')
+    submission_file_type_extension_id = db.Column(
+        db.Integer, db.ForeignKey('submission_file_type_extensions.id'),
+        nullable=False)
+    submission_file_type_extension = db.relationship(
+        'SubmissionFileTypeExtension', backref=db.backref('submission_files'))
 
-    #db.UniqueConstraint(submission_id, file_type_id, name='sf_constraint')
+    # eg, 'py'
+    @property
+    def is_editable(self):
+        return self.workflow_element.is_editable
 
-    def __init__(self, file_type, name, submission):
-        self.file_type = file_type
-        self.name = name  # we keep it for now because of migration issues
-        self.submission = submission
+    # eg, 'py'
+    @property
+    def extension(self):
+        return self.submission_file_type_extension.extension.name
 
-    @hybrid_property
+    # eg, 'regressor'
+    @property
+    def type(self):
+        return self.workflow_element.type
+
+    # eg, 'regressor', Normally same as type, except when type appears more
+    # than once in workflow
+    @property
+    def name(self):
+        return self.workflow_element.name
+
+    # Complete file name, eg, 'regressor.py'
+    @property
+    def f_name(self):
+        return self.type + '.' + self.extension
+
+    @property
     def path(self):
-        return self.submission.path + os.path.sep + self.file_type.name
+        return self.submission.path + os.path.sep + self.f_name
 
     def get_code(self):
         with open(self.path) as f:
@@ -234,8 +395,8 @@ class SubmissionFile(db.Model):
             f.write(code)
 
     def __repr__(self):
-        return 'SubmissionFile(type={}, path={})'.format(
-            self.file_type, self.path)
+        return 'SubmissionFile(name={}, type={}, extension={}, path={})'.format(
+            self.name, self.type, self.extension, self.path)
 
 
 def combine_predictions_list(predictions_list, index_list=None):
@@ -351,7 +512,8 @@ class Submission(db.Model):
     is_to_ensemble = db.Column(db.Boolean, default=True)
     notes = db.Column(db.String, default='')  # eg, why is it disqualified
 
-    db.UniqueConstraint(team_id, name, name='ts_constraint')  # later also ramp_id
+    # later also ramp_id
+    db.UniqueConstraint(team_id, name, name='ts_constraint')
 
     def __init__(self, name, team):
         self.name = name
@@ -403,12 +565,12 @@ class Submission(db.Model):
 
     @property
     def f_names(self):
-        return [file.name for file in self.files]
+        return [file.f_name for file in self.files]
 
     @property
     def name_with_link(self):
         # TODO: file order!
-        return '<a href="' + self.files[-1].path + '">' + self.name[:20] +\
+        return '<a href="' + self.files[0].path + '">' + self.name[:20] +\
             '</a>'
 
     @property
@@ -765,6 +927,49 @@ class DetachedSubmissionOnCVFold(object):
         return repr
 
 
+class UserInteraction(db.Model):
+    __tablename__ = 'user_interactions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    interaction = db.Column(db.String, nullable=False)
+    note = db.Column(db.String, default=None)
+    submission_file_diff = db.Column(db.String, default=None)
+    submission_file_similarity = db.Column(db.Float, default=None)
+    ip = db.Column(db.String, default=None)
+
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('user_interactions'))
+
+    team_id = db.Column(
+        db.Integer, db.ForeignKey('teams.id'))
+    team = db.relationship('Team', backref=db.backref('user_interactions'))
+
+    submission_id = db.Column(
+        db.Integer, db.ForeignKey('submissions.id'))
+    submission = db.relationship(
+        'Submission', backref=db.backref('user_interactions'))
+
+    submission_file_id = db.Column(
+        db.Integer, db.ForeignKey('submission_files.id'))
+    submission_file = db.relationship(
+        'SubmissionFile', backref=db.backref('user_interactions'))
+
+    def __init__(self, user, interaction, note=None, submission=None,
+                 submission_file=None, diff=None, similarity=None):
+        self.timestamp = datetime.datetime.utcnow()
+        self.interaction = interaction
+        self.user = user
+        self.team = get_active_user_team(user)
+        self.ip = request.environ['REMOTE_ADDR']
+        self.note = note
+        self.submission = submission
+        self.submission_file = submission_file
+        self.submission_file_diff = diff
+        self.submission_file_similarity = similarity
+
+
 class NameClashError(Exception):
     def __init__(self, value):
         self.value = value
@@ -798,6 +1003,14 @@ class TooEarlySubmissionError(Exception):
 
 
 class MissingSubmissionFileError(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+
+class MissingExtensionError(Exception):
     def __init__(self, value):
         self.value = value
 

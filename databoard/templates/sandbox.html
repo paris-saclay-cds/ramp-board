@@ -31,47 +31,60 @@
 {% endif %}
 {% endwith %}
 <h3 class="ui horizontal header divider grey">Sandbox</h3>
+You can either edit and save the code in the left column or upload the files in the right column. You can also import code from other submissions when the <a href="/leaderboard">leaderboard</a> links are open. <p>
 <div class="ui stackable two column grid">
-    <div class="twelve wide column">
-        <h4 class="ui horizontal header divider grey">{{ f_name }}</h4>
+    <div class="ten wide column">
         <form class="ui form" method="post" action="" name="save">
             {{ code_form.hidden_tag() }}
             <div class="one field">
-                <div>
-                    {{ code_form.code(cols="80", rows="50")|safe }}
-                </div>
+                {% for name_code in code_form.names_codes %}
+                    <h4 class="ui horizontal header divider grey">{{ name_code[0] }}</h4>
+                    <div>
+                    <textarea cols="80" id="{{ name_code[0] }}" name="{{ name_code[0] }}" rows="50">{{ name_code[1] }}</textarea>
+                    </div>
+                {% endfor %}
+                <h4 class="ui horizontal header divider grey">Save files</h4>
                 <input type="submit" value="Save" class="ui submit button">
             </div>
         </form>
     </div>
-    <div class="four wide column">
+    <div class="six wide column">
         <div class="ui sticky">
+        <p>
         <h4 class="ui horizontal header divider grey">File list</h4>
-            {% for f in submission_f_names %}
+            {% for f in submission_names %}
             <div class="ui fluid card">
                 <div class="content">
                     <div class="description">
-                        {% if f==f_name %}
-                        <i class="file grey icon"></i>{{f}}
-                        {% else %}
-                        <a href="/sandbox/{{ f }}"><i class="file grey icon"></i>{{ f }}</a>
-                        {% endif %}
+                        <i class="file grey icon"></i>{{ f }}
                     </div>
                 </div>
             </div>
             {% endfor %}
+        </div>
+        <p>
+        <div class="ui sticky">
+        <h4 class="ui horizontal header divider grey">Upload file</h4>
+            <form class="ui form" action="" method="post" enctype="multipart/form-data">
+                {{ upload_form.hidden_tag() }}
+                <input type="file" name="file" class="ui submit button">
+                <input type="submit" value="Upload" class="ui upload button">
+            </form>
+        </div>
+        <div class="ui sticky">
+        <h4 class="ui horizontal header divider grey">Submit</h4>
             <form class="ui form" method="post" action="" name="submit">
                 {{ submit_form.hidden_tag() }}
                 <div class="one field">
                     <div class="required field">
-                        <label>Submission name</label>
+                        <label>Submission name (between 4 and 20 characters)</label> 
                         {{ submit_form.submission_name }}
                     </div>
                     Don't forget to save the file before submitting.
                     <input type="submit" value="Submit" class="ui submit button">
                 </div>
             </form>
-         </div>
+        </div>
     </div>
 </div>  
 {% endblock %}

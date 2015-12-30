@@ -44,13 +44,10 @@ score = scores.Accuracy()
 # score = scores.Error()
 # score = scores.NegativeLogLikelihood()
 
-file_types = [
-    {'name': 'classifier.py', 'type': 'python', 'is_editable': True,
-     'max_size': None},
-    {'name': 'feature_extractor.py', 'type': 'python', 'is_editable': True,
-     'max_size': None},
-    {'name': 'calibrator.py', 'type': 'python', 'is_editable': True,
-     'max_size': None},
+workflow_element_types = [
+    {'name': 'classifier'},
+    {'name': 'feature_extractor'},
+    {'name': 'calibrator'},
 ]
 
 
@@ -97,7 +94,7 @@ def prepare_data():
     vf_public_train.to_csv(vf_public_train_filename, index=True)
 
     df_train, df_test, vf_train, vf_test = train_test_split(
-        df_test, vf_test, test_size=held_out_test_size, 
+        df_test, vf_test, test_size=held_out_test_size,
         random_state=random_state)
 
     df_train = pd.DataFrame(df_train, columns=df.columns)

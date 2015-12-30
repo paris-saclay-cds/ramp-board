@@ -1,6 +1,12 @@
 from flask.ext.wtf import Form
-from wtforms import StringField, PasswordField, validators
-from wtforms.widgets import TextArea
+from wtforms import StringField, PasswordField, SelectMultipleField, validators
+from wtforms.widgets import ListWidget, CheckboxInput
+from flask_wtf.file import FileField
+
+
+class MultiCheckboxField(SelectMultipleField):
+    widget = ListWidget(prefix_label=False)
+    option_widget = CheckboxInput()
 
 
 class LoginForm(Form):
@@ -10,8 +16,16 @@ class LoginForm(Form):
 
 
 class CodeForm(Form):
-    code = StringField(u'Text', widget=TextArea())
+    names_codes = []
 
 
 class SubmitForm(Form):
     submission_name = StringField('submission_name', [validators.Required()])
+
+
+class ImportForm(Form):
+    selected_f_names = MultiCheckboxField('selected_f_names')
+
+
+class UploadForm(Form):
+    file = FileField('file')
