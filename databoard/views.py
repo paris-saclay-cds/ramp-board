@@ -258,7 +258,7 @@ def sandbox():
 
         logger.info('{} submitted {} for team {}.'.format(
             current_user, new_submission.name, team))
-        #send_submission_mails(current_user, new_submission, team)
+        send_submission_mails(current_user, new_submission, team)
         flask.flash('{} submitted {} for team {}.'.format(
             current_user, new_submission.name, team),
             category='Submission')
@@ -315,9 +315,9 @@ def logout():
 
 @app.route("/leaderboard")
 def leaderboard():
-    db_tools.add_user_interaction(
-        user=current_user, interaction='looking at leaderboard')
     if current_user.is_authenticated:
+        db_tools.add_user_interaction(
+            user=current_user, interaction='looking at leaderboard')
         if current_user.access_level == 'admin':
             leaderbord_html = db_tools.get_public_leaderboard()
             failed_submissions_html = db_tools.get_failed_submissions()

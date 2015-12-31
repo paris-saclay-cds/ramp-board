@@ -866,7 +866,8 @@ def get_public_leaderboard(team_name=None, user=None, is_open_code=True):
         for submission, team in submissions_teams
     ]
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
-    leaderboard_df = leaderboard_df.sort('contributivity', ascending=False)
+    leaderboard_df = leaderboard_df.sort_values(
+        'contributivity', ascending=False)
     html_params = dict(
         escape=False,
         index=False,
@@ -912,7 +913,8 @@ def get_private_leaderboard():
         for submission, team in submissions_teams
     ]
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
-    leaderboard_df = leaderboard_df.sort('contributivity', ascending=False)
+    leaderboard_df = leaderboard_df.sort_values(
+        'contributivity', ascending=False)
     html_params = dict(
         escape=False,
         index=False,
