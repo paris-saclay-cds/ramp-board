@@ -1,4 +1,15 @@
 {% extends "base.html" %}
+{% block head %}
+    {{ super() }}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/codemirror.min.css" type="text/css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/theme/railscasts.min.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/codemirror.min.js"></script>
+    <script type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/mode/python/python.min.js"></script>
+    <script type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/addon/selection/active-line.min.js"></script>
+{% endblock %}
 {% block title %}Login{% endblock %}
 {% block content %}
 
@@ -86,5 +97,16 @@ You can either edit and save the code in the left column or upload the files in 
             </form>
         </div>
     </div>
-</div>  
+</div>
+
+{% for name_code in code_form.names_codes %}
+  <script>
+    var editor = CodeMirror.fromTextArea(document.getElementById("{{ name_code[0] }}"), {
+      lineNumbers: true,
+      mode: "python",
+      theme: "railscasts",
+      styleActiveLine: true
+    });
+  </script>
+{% endfor %}
 {% endblock %}
