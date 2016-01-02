@@ -29,6 +29,11 @@
 
         .cm-s-railscasts .CodeMirror-matchingbracket { text-decoration: underline; color: white !important;}
         .cm-s-railscasts .CodeMirror-activeline-background { background: #303040; }
+
+        .CodeMirror {
+          height: 30em;
+        }
+
     </style>
     <script type="text/javascript"
     src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/codemirror.min.js"></script>
@@ -78,7 +83,7 @@ You can either edit and save the code in the left column or upload the files in 
                 {% for name_code in code_form.names_codes %}
                     <h4 class="ui horizontal header divider grey">{{ name_code[0] }}</h4>
                     <div>
-                    <textarea cols="80" id="{{ name_code[0] }}" name="{{ name_code[0] }}" rows="50">{{ name_code[1] }}</textarea>
+                    <textarea cols="80" id="{{ name_code[0] }}" name="{{ name_code[0] }}">{{ name_code[1] }}</textarea>
                     </div>
                 {% endfor %}
                 <h4 class="ui horizontal header divider grey">Save files</h4>
