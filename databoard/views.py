@@ -372,6 +372,20 @@ def private_leaderboard():
         ramp_title=config.config_object.specific.ramp_title)
 
 
+@app.route("/user_interactions")
+@fl.login_required
+def user_interactions():
+    if not current_user.is_authenticated\
+            or current_user.access_level != 'admin':
+        return redirect(url_for('leaderboard'))
+    user_interactions_html = db_tools.get_user_interactions()
+    return render_template(
+        'user_interactions.html',
+        user_interactions_title='User interactions',
+        user_interactions=user_interactions_html,
+        ramp_title=config.config_object.specific.ramp_title)
+
+
 @app.route("/submissions/<team_name>/<summission_hash>/<f_name>",
            methods=['GET', 'POST'])
 @fl.login_required
@@ -462,7 +476,7 @@ def view_model(team_name, summission_hash, f_name):
             dst = os.path.join(sandbox_submission.path, f_name)
             shutil.copy2(src, dst)  # copying also metadata
             logger.info('Copying {} to {}'.format(src, dst))
-            
+
             workflow_element = WorkflowElement.query.filter_by(
                 name=f_name.split('.')[0]).one()
             submission_file = SubmissionFile.query.filter_by(
@@ -531,6 +545,19 @@ def view_submission_error(team_name, summission_hash):
         submission_name=submission.name,
         team_name=team.name,
         ramp_title=specific.ramp_title)
+
+
+@app.route("/submissions/diff_bef24208a45043059/<id>")
+@fl.login_required
+def submission_file_diff(id):
+    if not current_user.is_authenticated\
+            or current_user.access_level != 'admin':
+        return redirect(url_for('leaderboard'))
+    user_interaction = UserInteraction.query.filter_by(id=id).one()
+    return render_template(
+        'submission_file_diff.html',
+        diff=user_interaction.submission_file_diff,
+        ramp_title=config.config_object.specific.ramp_title)
 
 
 @app.route("/add/", methods=("POST",))

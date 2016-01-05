@@ -29,6 +29,7 @@ def test_set_config_to_test():
     config.sandbox_path = os.path.join(
         origin_path, config.sandbox_d_name)
     config.config_object.n_cpus = 3
+    config.is_send_trained_mails = False
 
 
 def test_recreate_test_db():

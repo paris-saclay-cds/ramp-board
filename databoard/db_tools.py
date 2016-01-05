@@ -274,7 +274,7 @@ def merge_teams(name, initiator_name, acceptor_name):
                 # ok, but don't add new team, just set them to inactive
                 initiator.is_active = False
                 acceptor.is_active = False
-                return team 
+                return team
             raise MergeTeamError(
                 'Team exists with the same members, team name = {}'.format(
                     team.name))
@@ -384,12 +384,12 @@ def make_submission(team_name, submission_name, submission_path):
     for workflow_element in workflow_elements:
         # We find all files with matching names to workflow_element.name.
         # If none found, raise error.
-        # Then look for one that has a legal extension. If none found, 
-        # raise error. If there are several ones, for now we use the first 
+        # Then look for one that has a legal extension. If none found,
+        # raise error. If there are several ones, for now we use the first
         # matching file.
 
         name = workflow_element.name
-        i_names = [i for i in range(len(deposited_types)) 
+        i_names = [i for i in range(len(deposited_types))
                    if deposited_types[i] == name]
         if len(i_names) == 0:
             db.session.rollback()
@@ -470,6 +470,30 @@ def make_submission_and_copy_files(team_name, new_submission_name,
     return submission
 
 
+def send_trained_mails(submission):
+    if config.is_send_trained_mails:
+        try:
+            users = get_team_members(submission.team)
+            recipient_list = [user.email for user in users]
+            gmail_user = config.MAIL_USERNAME
+            gmail_pwd = config.MAIL_PASSWORD
+            smtpserver = smtplib.SMTP(config.MAIL_SERVER, config.MAIL_PORT)
+            smtpserver.ehlo()
+            smtpserver.starttls()
+            smtpserver.ehlo
+            smtpserver.login(gmail_user, gmail_pwd)
+            subject = 'submission {} was trained at {}'.format(
+                submission.name, date_time_format(
+                    submission.training_timestamp))
+            header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
+                recipient_list, gmail_user, subject)
+            body = ''
+            for recipient in recipient_list:
+                smtpserver.sendmail(gmail_user, recipient, header + body)
+        except Exception as e:
+            logger.error('Mailing error: {}'.format(e))
+
+
 def train_test_submissions(submissions=None, force_retrain_test=False):
     if submissions is None:
         submissions = Submission.query.filter(
@@ -497,7 +521,8 @@ def train_test_submission(submission, force_retrain_test=False):
         # We are using 'threading' so train_test_submission_on_cv_fold
         # updates the detached submission_on_cv_fold objects. If it doesn't
         # work, we can go back to multiprocessing and
-        print config.config_object.n_cpus
+        logger.info('Number of processes = {}'.format(
+            config.config_object.n_cpus))
         detached_submission_on_cv_folds = Parallel(
             n_jobs=config.config_object.n_cpus, verbose=5)(
             delayed(train_test_submission_on_cv_fold)(
@@ -520,6 +545,8 @@ def train_test_submission(submission, force_retrain_test=False):
     db.session.commit()
     logger.info('valid_score = {}'.format(submission.valid_score_cv_bag))
     logger.info('test_score = {}'.format(submission.test_score_cv_bag))
+
+    send_trained_mails(submission)
 
 
 def _make_error_message(e):
@@ -613,7 +640,7 @@ def train_submission_on_cv_fold(submission_on_cv_fold, X, y,
                 submission_on_cv_fold, log_msg))
         return
     end = timeit.default_timer()
-    submission_on_cv_fold.validtime = end - start
+    submission_on_cv_fold.valid_time = end - start
 
 
 def test_submission_on_cv_fold(submission_on_cv_fold, X, y,
@@ -1121,3 +1148,78 @@ def print_user_interactions():
             print user_interaction.submission_file_similarity
         if user_interaction.submission is not None:
             print user_interaction.submission
+
+
+def get_user_interactions():
+    """
+    Returns
+    -------
+    user_interactions_html : html string
+    """
+
+    user_interactions = UserInteraction.query.all()
+
+    columns = ['timestamp (UTC)',
+               'user',
+               'team',
+               'interaction',
+               'submission',
+               'file',
+               'code similarity',
+               'diff']
+
+    def submission_name(user_interaction):
+        submission = user_interaction.submission
+        if submission is None:
+            return ''
+        else:
+            return submission.team.name + '/' + submission.name_with_link
+
+    def submission_file_name(user_interaction):
+        submission_file = user_interaction.submission_file
+        if submission_file is None:
+            return ''
+        else:
+            return submission_file.name_with_link
+
+    def submission_similarity(user_interaction):
+        similarity = user_interaction.submission_file_similarity
+        if similarity is None:
+            return ''
+        else:
+            return str(round(similarity, 2))
+
+    def submission_diff_with_link(user_interaction):
+        diff_link = user_interaction.submission_file_diff_link
+        if diff_link is None:
+            return ''
+        else:
+            return '<a href="' + diff_link + '">diff</a>'
+
+    user_interactions_dict_list = [
+        {column: value for column, value in zip(
+            columns, [date_time_format(user_interaction.timestamp),
+                      user_interaction.user.name,
+                      user_interaction.team.name,
+                      user_interaction.interaction,
+                      submission_name(user_interaction),
+                      submission_file_name(user_interaction),
+                      submission_similarity(user_interaction),
+                      submission_diff_with_link(user_interaction)
+                      ])}
+        for user_interaction in user_interactions
+    ]
+    user_interactions_df = pd.DataFrame(
+        user_interactions_dict_list, columns=columns)
+    user_interactions_df = user_interactions_df.sort_values(
+        'timestamp (UTC)', ascending=False)
+    html_params = dict(
+        escape=False,
+        index=False,
+        max_cols=None,
+        max_rows=None,
+        justify='left',
+        classes=['ui', 'blue', 'celled', 'table', 'sortable']
+    )
+    user_interactions_html = user_interactions_df.to_html(**html_params)
+    return user_interactions_html

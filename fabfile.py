@@ -32,6 +32,12 @@ from distutils.util import strtobool
 logger = logging.getLogger('databoard')
 
 
+def reset_cv_folds():
+    """Changing the CV scheme without deleting the submissions."""
+    import databoard.db_tools as db_tools
+    db_tools.reset_cv_folds()
+
+
 def clear_cache():
     from sklearn.externals.joblib import Memory
     from databoard.config import cachedir
@@ -240,6 +246,10 @@ ramp_deployment = [
 ]
 
 software = [
+    'fabfile.py',
+    'setup.py',
+    'requirements.txt',
+    'README.md',
     'databoard/__init__.py',
     'databoard/base_prediction.py',
     'databoard/config.py',

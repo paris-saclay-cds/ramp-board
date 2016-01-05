@@ -35,6 +35,7 @@ opening_timestamp = datetime.datetime(2015, 12, 30, 20, 0, 0)
 # before links to submissions in leaderboard are not alive
 public_opening_timestamp = datetime.datetime(2016, 1, 6, 20, 0, 0)
 closing_timestamp = datetime.datetime(2017, 1, 8, 14, 0, 0)
+is_send_trained_mails = True
 
 # Open ports in Stratuslab
 # 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015,
@@ -70,10 +71,13 @@ closing_timestamp = datetime.datetime(2017, 1, 8, 14, 0, 0)
 #    server_port)
 # server_name = debug_server if local_deployment else train_server
 
-vd_server = 'onevm-226.lal.in2p3.fr'
+vd_server = 'onevm-189.lal.in2p3.fr'
 reims_server = 'romeo1.univ-reims.fr'
-vd_root = '/mnt/datacamp'
+vd_root = '/mnt/databoard'
 local_root = '/tmp'  # for local publishing / testing
+
+appstat_server = 'lx.lal.in2p3.fr'
+appstat_root = '/exp/appstat/cherti/databoard'
 
 
 class RampConfig(object):
@@ -152,7 +156,7 @@ class RampConfig(object):
         if self.train_server != 'localhost':
             software_target += user + '@' + server + ':'
 #        software_target += '/mnt/databoard/databoard-0.1.dev0/'
-        software_target += '/mnt/datacamp/code/'
+        software_target += self.train_root + '/code/'
         print software_target
         return software_target
 
@@ -184,6 +188,15 @@ vd_kwargs = dict(
     web_server=vd_server,
     web_user='root',
     web_root=vd_root,
+)
+
+appstat_kwargs = dict(
+    train_server=appstat_server,
+    train_user='cherti',
+    train_root=appstat_root,
+    web_server=appstat_server,
+    web_user='cherti',
+    web_root=appstat_root,
 )
 
 reims_kwargs = dict(
@@ -225,11 +238,20 @@ ramps_configs['iris_remote'] = RampConfig(
 
 ramps_configs['variable_stars_remote'] = RampConfig(
     ramp_name='variable_stars',
-    n_cpus=5,
+    n_cpus=18,
     server_port='8080',
     cv_test_size=0.5,
     random_state=57,
     **vd_kwargs
+)
+
+ramps_configs['variable_stars_appstat'] = RampConfig(
+    ramp_name='variable_stars',
+    n_cpus=5,
+    server_port='8080',
+    cv_test_size=0.5,
+    random_state=57,
+    **appstat_kwargs
 )
 
 ramps_configs['variable_stars_test_remote'] = RampConfig(
@@ -293,6 +315,6 @@ SECRET_KEY = 'eroigudsfojbn;lk'
 SQLALCHEMY_TRACK_MODIFICATIONS = True
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + db_f_name
 SQLALCHEMY_MIGRATE_REPO = db_migrate_dir
-ADMIN_MAILS = ['balazs.kegl@gmail.com', 
+ADMIN_MAILS = ['balazs.kegl@gmail.com',
                'alexandre.gramfort@telecom-paristech.fr',
                'mehdi@cherti.name']

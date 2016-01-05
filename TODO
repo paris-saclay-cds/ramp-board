@@ -10,6 +10,7 @@ TODO
 - status of the queue
 - write a scheduler using psutil
 - use pairwise test on CVs to mark approximate significance on the leaderboard
+- don't allow resubmit during training
 Didier's ideas:
   1) He wants to submit through git. What I understand is that he basically wants an API, not a web interface. 
   2) He pointed to us to jenkins: https://jenkins-ci.org/ for the engineering details of launching untrusted code in safe mode. That's what they use for automating their testing: gitlab and jenkins.

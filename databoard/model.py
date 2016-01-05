@@ -382,7 +382,11 @@ class SubmissionFile(db.Model):
 
     @property
     def path(self):
-        return self.submission.path + os.path.sep + self.f_name
+        return os.path.join(self.submission.path, self.f_name)
+
+    @property
+    def name_with_link(self):
+        return '<a href="' + self.path + '">' + self.name[:20] + '</a>'
 
     def get_code(self):
         with open(self.path) as f:
@@ -569,13 +573,12 @@ class Submission(db.Model):
 
     @property
     def name_with_link(self):
-        # TODO: file order!
         return '<a href="' + self.files[0].path + '">' + self.name[:20] +\
             '</a>'
 
     @property
     def state_with_link(self):
-        return '<a href="' + self.path + os.path.sep + 'error.txt"' + '>' +\
+        return '<a href="' + os.path.join(self.path, 'error.txt') + '">' +\
             self.state + '</a>'
 
     @property
@@ -741,7 +744,11 @@ def get_next_best_single_fold(predictions_list, true_predictions,
     # Combination with replacement, what Caruana suggests. Basically, if a
     # model is added several times, it's upweighted, leading to
     # integer-weighted ensembles
-    for i in range(len(predictions_list)):
+    r = np.arange(len(predictions_list))
+    # Randomization doesn't matter, only in case of exact equality.
+    # np.random.shuffle(r)
+    # print r
+    for i in r:
         combined_predictions = combine_predictions_list(
             predictions_list, index_list=np.append(best_index_list, i))
         new_score = specific.score(true_predictions, combined_predictions)
@@ -968,6 +975,13 @@ class UserInteraction(db.Model):
         self.submission_file = submission_file
         self.submission_file_diff = diff
         self.submission_file_similarity = similarity
+
+    @property
+    def submission_file_diff_link(self):
+        if self.submission_file_diff is None:
+            return None
+        return os.path.join(
+            config.submissions_path, 'diff_bef24208a45043059', str(self.id))
 
 
 class NameClashError(Exception):
