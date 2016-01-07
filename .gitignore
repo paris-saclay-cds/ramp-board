@@ -15,4 +15,5 @@ databoard.egg-info
 user_batches
 old_stuff
 .coverage
+ramps/*/old_submissions
 

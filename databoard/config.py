@@ -28,7 +28,7 @@ is_parallelize_across_machines = False
 timeout_parallelize_across_machines = 10800
 # often doesn't work and takes a lot of disk space
 is_pickle_trained_submission = False
-min_duration_between_submissions = 20 * 60 * 60
+min_duration_between_submissions = 15 * 60
 max_members_per_team = 3  # except for users own team
 max_n_ensemble = 80  # max number of submissions in Caruana's ensemble
 opening_timestamp = datetime.datetime(2015, 12, 30, 20, 0, 0)
@@ -36,6 +36,8 @@ opening_timestamp = datetime.datetime(2015, 12, 30, 20, 0, 0)
 public_opening_timestamp = datetime.datetime(2016, 1, 6, 20, 0, 0)
 closing_timestamp = datetime.datetime(2017, 1, 8, 14, 0, 0)
 is_send_trained_mails = True
+
+score_precision = 3
 
 # Open ports in Stratuslab
 # 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015,
@@ -73,11 +75,11 @@ is_send_trained_mails = True
 
 vd_server = 'onevm-189.lal.in2p3.fr'
 reims_server = 'romeo1.univ-reims.fr'
-vd_root = '/mnt/databoard'
+vd_root = '/mnt/datacamp'
 local_root = '/tmp'  # for local publishing / testing
 
 appstat_server = 'lx.lal.in2p3.fr'
-appstat_root = '/exp/appstat/cherti/databoard'
+appstat_root = '/exp/appstat/cherti/datacamp'
 
 
 class RampConfig(object):
@@ -238,7 +240,7 @@ ramps_configs['iris_remote'] = RampConfig(
 
 ramps_configs['variable_stars_remote'] = RampConfig(
     ramp_name='variable_stars',
-    n_cpus=18,
+    n_cpus=5,
     server_port='8080',
     cv_test_size=0.5,
     random_state=57,

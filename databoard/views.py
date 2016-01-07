@@ -315,6 +315,24 @@ def logout():
 
 @app.route("/leaderboard")
 def leaderboard():
+    try:
+        with open('combined_combined_valid_score.txt', 'r') as f:
+            combined_combined_valid_score = f.readline()
+    except Exception:
+        combined_combined_valid_score = ''
+
+    try:
+        with open('combined_combined_test_score.txt', 'r') as f:
+            combined_combined_test_score = f.readline()
+    except Exception:
+        combined_combined_test_score = ''
+
+    leaderboard_kwargs = dict(
+        leaderboard_title='Leaderboard',
+        ramp_title=config.config_object.specific.ramp_title,
+        combined_combined_valid_score=combined_combined_valid_score
+    )
+
     if current_user.is_authenticated:
         db_tools.add_user_interaction(
             user=current_user, interaction='looking at leaderboard')
@@ -324,36 +342,33 @@ def leaderboard():
             new_submissions_html = db_tools.get_new_submissions()
             return render_template(
                 'leaderboard.html',
-                leaderboard_title='Leaderboard',
                 leaderboard=leaderbord_html,
                 failed_submissions=failed_submissions_html,
                 new_submissions=new_submissions_html,
-                ramp_title=config.config_object.specific.ramp_title)
+                combined_combined_test_score=combined_combined_test_score,
+                **leaderboard_kwargs)
         else:
             if config.public_opening_timestamp < datetime.datetime.utcnow():
                 leaderbord_html = db_tools.get_public_leaderboard()
                 return render_template(
                     'leaderboard.html',
-                    leaderboard_title='Leaderboard',
                     leaderboard=leaderbord_html,
-                    ramp_title=config.config_object.specific.ramp_title)
+                    **leaderboard_kwargs)
             else:
                 leaderbord_html = db_tools.get_public_leaderboard(
                     is_open_code=False)
                 return render_template(
                     'leaderboard.html',
-                    leaderboard_title='Leaderboard',
                     leaderboard=leaderbord_html,
                     opening_date_time=db_tools.date_time_format(
                         config.public_opening_timestamp),
-                    ramp_title=config.config_object.specific.ramp_title)
+                    **leaderboard_kwargs)
     else:
         leaderbord_html = db_tools.get_public_leaderboard(is_open_code=False)
         return render_template(
             'leaderboard.html',
-            leaderboard_title='Leaderboard',
             leaderboard=leaderbord_html,
-            ramp_title=config.config_object.specific.ramp_title)
+            **leaderboard_kwargs)
 
 
 @app.route("/private_leaderboard")
@@ -364,12 +379,28 @@ def private_leaderboard():
         and (config.closing_timestamp is None or
              config.closing_timestamp > datetime.datetime.utcnow())):
         return redirect(url_for('leaderboard'))
+
+    try:
+        with open('combined_combined_valid_score.txt', 'r') as f:
+            combined_combined_valid_score = f.readline()
+    except Exception:
+        combined_combined_valid_score = ''
+
+    try:
+        with open('combined_combined_test_score.txt', 'r') as f:
+            combined_combined_test_score = f.readline()
+    except Exception:
+        combined_combined_test_score = ''
+
     leaderbord_html = db_tools.get_private_leaderboard()
     return render_template(
         'leaderboard.html',
         leaderboard_title='Private leaderboard',
         leaderboard=leaderbord_html,
-        ramp_title=config.config_object.specific.ramp_title)
+        ramp_title=config.config_object.specific.ramp_title,
+        combined_combined_valid_score=combined_combined_valid_score,
+        combined_combined_test_score=combined_combined_test_score
+    )
 
 
 @app.route("/user_interactions")
@@ -383,7 +414,8 @@ def user_interactions():
         'user_interactions.html',
         user_interactions_title='User interactions',
         user_interactions=user_interactions_html,
-        ramp_title=config.config_object.specific.ramp_title)
+        ramp_title=config.config_object.specific.ramp_title
+    )
 
 
 @app.route("/submissions/<team_name>/<summission_hash>/<f_name>",
@@ -534,7 +566,7 @@ def view_submission_error(team_name, summission_hash):
 
     db_tools.add_user_interaction(
         user=current_user, interaction='looking at error',
-        submission = submission)
+        submission=submission)
 
     return render_template(
         'submission_error.html',

@@ -735,9 +735,16 @@ def compute_contributivity(force_ensemble=False):
     combined_predictions_list = [c for c in combined_predictions_list
                                  if c is not None]
     if len(combined_predictions_list) > 0:
-        logger.info('Combined combined valid score = {}'.format(
-            _get_score_cv_bags(combined_predictions_list,
-                               true_predictions_train, test_is_list)))
+        scores = _get_score_cv_bags(
+            combined_predictions_list, true_predictions_train,
+            test_is_list)
+        logger.info('Combined combined valid score = {}'.format(scores))
+        with open('combined_combined_valid_score.txt', 'w') as f:
+            f.write(str(round(scores[-1], config.score_precision)))
+            # TODO: should go into db
+    else:
+        with open('combined_combined_valid_score.txt', 'w') as f:
+            f.write('')  # TODO: should go into db
 
     best_predictions_list = [c for c in best_predictions_list
                              if c is not None]
@@ -749,9 +756,14 @@ def compute_contributivity(force_ensemble=False):
     combined_test_predictions_list = [c for c in combined_test_predictions_list
                                       if c is not None]
     if len(combined_test_predictions_list) > 0:
-        logger.info('Combined combined test score = {}'.format(
-            _get_score_cv_bags(combined_test_predictions_list,
-                               true_predictions_test)))
+        scores = _get_score_cv_bags(
+            combined_test_predictions_list, true_predictions_test)
+        logger.info('Combined combined test score = {}'.format(scores))
+        with open('combined_combined_test_score.txt', 'w') as f:
+            f.write(str(round(scores[-1], config.score_precision)))
+    else:
+        with open('combined_combined_test_score.txt', 'w') as f:
+            f.write('')  # TODO: should go into db
 
     best_test_predictions_list = [c for c in best_test_predictions_list
                                   if c is not None]
@@ -885,7 +897,8 @@ def get_public_leaderboard(team_name=None, user=None, is_open_code=True):
             columns, [team.name,
                       submission.name_with_link if is_open_code
                       else submission.name[:20],
-                      round(submission.valid_score_cv_bag, 3),
+                      round(submission.valid_score_cv_bag, 
+                            config.score_precision),
                       int(100 * submission.contributivity + 0.5),
                       int(submission.train_time_cv_mean + 0.5),
                       int(submission.valid_time_cv_mean + 0.5),
@@ -931,8 +944,10 @@ def get_private_leaderboard():
         {column: value for column, value in zip(
             columns, [team.name,
                       submission.name_with_link,
-                      round(submission.valid_score_cv_bag, 3),
-                      round(submission.test_score_cv_bag, 3),
+                      round(submission.valid_score_cv_bag,
+                            config.score_precision),
+                      round(submission.test_score_cv_bag,
+                            config.score_precision),
                       int(100 * submission.contributivity + 0.5),
                       int(submission.train_time_cv_mean + 0.5),
                       int(submission.valid_time_cv_mean + 0.5),

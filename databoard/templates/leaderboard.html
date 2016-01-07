@@ -133,6 +133,12 @@ return i;
 <div class="ui stackable two column grid">
   <div class="one column row">
     <div class="column">
+    {% if combined_combined_valid_score and combined_combined_valid_score != '' %}
+      <h4>Combined score: {{ combined_combined_valid_score }}</h4>
+    {% endif %}    
+    {% if combined_combined_test_score and combined_combined_test_score != '' %}
+      <h4>Combined test score: {{ combined_combined_test_score }}</h4>
+    {% endif %}    
     {% if opening_date_time %}
       <h3 class="ui horizontal header divider">{{ leaderboard_title }}, code links will open at (UTC) {{ opening_date_time }}</h3>
     {% else %}
