@@ -5,6 +5,7 @@
 # Author: Balazs Kegl
 # License: BSD 3 clause
 
+import sys
 import numpy as np
 from sklearn.metrics import accuracy_score
 
@@ -21,6 +22,12 @@ class Score(object):
 
     def __div__(self, divider):
         return Score(self.score / divider, self.eps)
+
+    def __mul__(self, multiplier):
+        return Score(self.score * multiplier.score, self.eps)
+
+    def __sub__(self, diffand):
+        return Score(self.score - diffand.score, self.eps)
 
     def __truediv__(self, divider):
         return Score(self.score / divider, self.eps)
@@ -119,7 +126,7 @@ class Error(ScoreFunction):
 
     @property
     def zero(self):
-        return ScoreLowerTheBetter(0.0, self.eps)
+        return ScoreLowerTheBetter(1.0, self.eps)
 
     @staticmethod
     def convert(x):
@@ -153,7 +160,7 @@ class NegativeLogLikelihood(ScoreFunction):
 
     @property
     def zero(self):
-        return ScoreLowerTheBetter(0.0, self.eps)
+        return ScoreLowerTheBetter(float('inf'), self.eps)
 
     @staticmethod
     def convert(x):
@@ -174,7 +181,7 @@ class RMSE(ScoreFunction):
 
     @property
     def zero(self):
-        return ScoreLowerTheBetter(0.0)
+        return ScoreLowerTheBetter(sys.float_info.max)
 
     @staticmethod
     def convert(x):

@@ -188,6 +188,7 @@ def get_user_teams(user):
 
 
 def get_active_user_team(user):
+    # There should always be an active user team, if not, throw an exception
     teams = Team.query.all()
     for team in teams:
         if user in get_team_members(team) and team.is_active:
@@ -603,13 +604,53 @@ class Submission(db.Model):
 
     @property
     def test_time_cv_mean(self):
-        return np.array(
-            [ts.test_time for ts in self.submission_on_cv_folds]).mean()
+        return np.array([ts.test_time for ts in self.on_cv_folds]).mean()
+
+    @property
+    def train_score_cv_std(self):
+        return np.array([ts.train_score for ts in self.on_cv_folds]).std()
+
+    @property
+    def valid_score_cv_std(self):
+        return np.array([ts.valid_score for ts in self.on_cv_folds]).std()
+
+    @property
+    def test_score_cv_std(self):
+        return np.array([ts.test_score for ts in self.on_cv_folds]).std()
+
+    @property
+    def train_time_cv_std(self):
+        return np.array([ts.train_time for ts in self.on_cv_folds]).std()
+
+    @property
+    def valid_time_cv_std(self):
+        return np.array([ts.valid_time for ts in self.on_cv_folds]).std()
+
+    @property
+    def test_time_cv_std(self):
+        return np.array([ts.test_time for ts in self.on_cv_folds]).std()
 
     def set_state(self, state):
         self.state = state
         for submission_on_cv_fold in self.on_cv_folds:
             submission_on_cv_fold.state = state
+
+    def reset(self):
+        specific = config.config_object.specific
+        self.valid_score_cv_bag = specific.score.zero
+        self.test_score_cv_bag = specific.score.zero
+        self.valid_score_cv_bags = None
+        self.test_score_cv_bags = None
+        self.contributivity = 0.0
+        self.state = 'new'
+        self.error_msg = ''
+
+    def set_error(self, error, error_msg):
+        self.reset()
+        self.state = error
+        self.error_msg = error_msg
+        for submission_on_cv_fold in self.on_cv_folds:
+            submission_on_cv_fold.set_error(error, error_msg)
 
     def get_paths(self, submissions_path=config.submissions_path):
         team_path = os.path.join(submissions_path, self.team.name)
@@ -669,7 +710,7 @@ class Submission(db.Model):
         db.session.commit()
 
     # contributivity could be a property but then we could not query on it
-    def set_contributivity(self):
+    def set_contributivity(self, is_commit=True):
         self.contributivity = 0.0
         if self.is_public_leaderboard:
             # we share a unit of 1. among folds
@@ -677,7 +718,8 @@ class Submission(db.Model):
             for submission_on_cv_fold in self.on_cv_folds:
                 self.contributivity +=\
                     unit_contributivity * submission_on_cv_fold.contributivity
-        db.session.commit()
+        if is_commit:
+            db.session.commit()
 
     def set_state_after_training(self):
         self.training_timestamp = datetime.datetime.utcnow()
@@ -856,6 +898,26 @@ class SubmissionOnCVFold(db.Model):
         specific = config.config_object.specific
         return specific.Predictions(
             y_pred=self.full_train_predictions.y_pred[self.cv_fold.test_is])
+
+    def reset(self):
+        specific = config.config_object.specific
+        self.contributivity = 0.0
+        self.best = False
+        self.full_train_predictions = None
+        self.test_predictions = None
+        self.train_time = 0.0
+        self.valid_time = 0.0
+        self.test_time = 0.0
+        self.train_score = specific.score.zero
+        self.valid_score = specific.score.zero
+        self.test_score = specific.score.zero
+        self.state = 'new'
+        self.error_msg = ''
+
+    def set_error(self, error, error_msg):
+        self.reset()
+        self.state = error
+        self.error_msg = error_msg
 
     def compute_train_scores(self):
         specific = config.config_object.specific

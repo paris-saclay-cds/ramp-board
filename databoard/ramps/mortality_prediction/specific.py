@@ -31,6 +31,10 @@ test_filename = os.path.join(private_data_path, 'test.csv')
 
 score = scores.Accuracy()
 
+workflow_element_types = [
+    {'name': 'classifier'},
+]
+
 
 def read_data(filename):
     data = pd.read_csv(filename)

@@ -71,7 +71,7 @@ def read_data(static_filename, variable_filename):
     variable_df = pd.read_csv(variable_filename, index_col=0)
     X_variable_dict = variable_df.applymap(
         csv_array_to_float).to_dict(orient='records')
-    X_dict = [merge_two_dicts(d_inst, v_inst)
+    X_dict = [pd.Series(merge_two_dicts(d_inst, v_inst))
               for d_inst, v_inst in zip(X_static_dict, X_variable_dict)]
     return X_dict, y_array
 

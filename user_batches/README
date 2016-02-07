@@ -1,8 +1,0 @@
-create users_to_add.csv in a new dir
-rsync it to the server, eg
-rsync -Rultv user_batches/dssp_20151203/users_to_add.csv root@onevm-132.lal.in2p3.fr:/mnt/datacamp/databoard_air_passengers_3147/
-go there, run
-fab add_users_from_file:user_batches/dssp_20151203/users_to_add.csv
-it'll created the db file and
-user_batches/dssp_20151203/users_to_add.csv.w_pwd
-fab send_password_mails:user_batches/dssp_20151203/users_to_add.csv.w_pwd

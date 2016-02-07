@@ -6,6 +6,7 @@ if '' not in sys.path:  # Balazs bug
 # sys.setrecursionlimit(50000)
 
 import os
+import pandas as pd
 import logging
 from distutils.util import strtobool
 # import fabric.contrib.project as project
@@ -97,14 +98,18 @@ def add_models():
     add_models()
 
 
-def train_test(t=None, s=None, force='False'):
+def train_test(t=None, s=None, state=None, force='False'):
     force = strtobool(force)
     team_name = t
     submission_name = s
 
-    from databoard.db_tools import train_test_submissions, get_team_submissions
+    from databoard.db_tools import train_test_submissions,\
+        get_team_submissions, get_submissions_of_state
 
-    if team_name is None:
+    if state is not None:
+        train_test_submissions(
+            get_submissions_of_state(state), force_retrain_test=force)
+    elif team_name is None:
         train_test_submissions(force_retrain_test=force)  # All
     else:
         if submission_name is None:
@@ -385,7 +390,6 @@ def publish(ramp_index, test='False'):
 """
 
 
-
 # (re)publish data set from 'ramps/' + ramp_name + '/data'
 # fab prepare_data should be run at the destination
 def publish_data(ramp_index):
@@ -455,7 +459,7 @@ def test_ramp():
     # leaderboard(test='True')
 
 
-def create_user(name, password, lastname, firstname, email, 
+def create_user(name, password, lastname, firstname, email,
                 access_level='user', hidden_notes=''):
     from databoard.config import sandbox_d_name
     from databoard.db_tools import create_user
@@ -464,19 +468,48 @@ def create_user(name, password, lastname, firstname, email,
     train_test(t=name, s=sandbox_d_name)
 
 
-def add_users_from_file(users_to_add_f_name):
-    from databoard.db_tools import add_users_from_file
-    from databoard.remove_test_db import recreate_test_db
-    from databoard.config import sandbox_d_name
+def generate_single_password():
+    from databoard.db_tools import generate_single_password
+    print generate_single_password()
+
+
+def generate_passwords(users_to_add_f_name, password_f_name):
+    from databoard.db_tools import generate_passwords
+    print generate_passwords(users_to_add_f_name, password_f_name)
+
+
+def add_users_from_file(users_to_add_f_name, password_f_name):
+    """Users whould be the same in the same order in the two files."""
 
     test_setup()
-    users_to_add = add_users_from_file(users_to_add_f_name)
-
+    users_to_add = pd.read_csv(users_to_add_f_name)
+    passwords = pd.read_csv(password_f_name)
+    users_to_add['password'] = passwords['password']
     for _, u in users_to_add.iterrows():
         print u
         create_user(u['name'], u['password'], u['lastname'], u['firstname'],
                     u['email'], u['access_level'], u['hidden_notes'])
 
-def send_password_mails(users_to_add_f_name):
+
+def send_password_mail(user_name, password):
+    from databoard.db_tools import send_password_mail
+    send_password_mail(user_name, password)
+
+
+def send_password_mails(password_f_name, port=None):
     from databoard.db_tools import send_password_mails
-    send_password_mails(users_to_add_f_name)
+    send_password_mails(password_f_name, port)
+
+
+def set_error(t, s, error_msg, error='training_error'):
+    from databoard.db_tools import set_error
+    set_error(t, s, error, error_msg)
+
+
+def get_top_score_per_user(f_name=None):
+    from databoard.db_tools import get_top_score_per_user
+    from databoard.config import public_opening_timestamp
+    if f_name is None:
+        print get_top_score_per_user(public_opening_timestamp)
+    else:
+        get_top_score_per_user(public_opening_timestamp).to_csv(f_name)

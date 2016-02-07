@@ -220,7 +220,8 @@ def sandbox():
                 diff=diff, similarity=similarity)
         else:
             db_tools.add_user_interaction(
-                user=current_user, interaction='upload')
+                user=current_user, interaction='upload',
+                submission_file=submission_file)
 
         return flask.redirect(request.referrer)
         # TODO: handle different extensions for the same workflow element
@@ -258,7 +259,8 @@ def sandbox():
 
         logger.info('{} submitted {} for team {}.'.format(
             current_user, new_submission.name, team))
-        send_submission_mails(current_user, new_submission, team)
+        if config.is_send_submitted_mails:
+            send_submission_mails(current_user, new_submission, team)
         flask.flash('{} submitted {} for team {}.'.format(
             current_user, new_submission.name, team),
             category='Submission')
@@ -392,6 +394,8 @@ def private_leaderboard():
     except Exception:
         combined_combined_test_score = ''
 
+    db_tools.add_user_interaction(
+        user=current_user, interaction='looking at private leaderboard')
     leaderbord_html = db_tools.get_private_leaderboard()
     return render_template(
         'leaderboard.html',
@@ -533,9 +537,9 @@ def view_model(team_name, summission_hash, f_name):
         import_form=import_form)
 
 
-@app.route("/submissions/<team_name>/<summission_hash>/error.txt")
+@app.route("/submissions/<team_name>/<submission_hash>/error.txt")
 @fl.login_required
-def view_submission_error(team_name, summission_hash):
+def view_submission_error(team_name, submission_hash):
     """Rendering submission codes using templates/submission.html. The code of
     f_name is displayed in the left panel, the list of submissions files
     is in the right panel. Clicking on a file will show that file (using
@@ -548,7 +552,7 @@ def view_submission_error(team_name, summission_hash):
     ----------
     team_name : string
         The team.name of the submission.
-    summission_hash : string
+    submission_hash : string
         The hash_ of the submission.
 
     Returns
@@ -560,7 +564,7 @@ def view_submission_error(team_name, summission_hash):
 
     team = Team.query.filter_by(name=team_name).one()
     submission = Submission.query.filter_by(
-        team=team, hash_=summission_hash).one()
+        team=team, hash_=submission_hash).one()
 
     submission_url = request.path.rstrip('/') + '/raw'
 

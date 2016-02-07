@@ -51,23 +51,32 @@ def check_password(plain_text_password, hashed_password):
     return bcrypt.checkpw(plain_text_password, hashed_password)
 
 
-def add_users_from_file(users_to_add_f_name):
-    # For now just saves the passwords and returns the pandas dataframe.
-    users_to_add = pd.read_csv(users_to_add_f_name)
-    if users_to_add_f_name.split('.')[-1] != 'w_pwd':
+def generate_single_password(mywords=None):
+    if mywords is None:
         words = xp.locate_wordfile()
         mywords = xp.generate_wordlist(
             wordfile=words, min_length=4, max_length=6)
-        users_to_add['password'] = [
-            xp.generate_xkcdpassword(mywords, numwords=4)
-            for name in users_to_add['name']]
-        # temporarily while we don't implement pwd recovery
-        users_to_add.to_csv(users_to_add_f_name + '.w_pwd')
-    return users_to_add
+    return xp.generate_xkcdpassword(mywords, numwords=4)
 
 
-def send_password_mails(users_to_add_f_name):
-    #  later can be joined to the ramp admins
+def generate_passwords(users_to_add_f_name, password_f_name):
+    users_to_add = pd.read_csv(users_to_add_f_name)
+    words = xp.locate_wordfile()
+    mywords = xp.generate_wordlist(wordfile=words, min_length=4, max_length=6)
+    users_to_add['password'] = [
+        generate_single_password(mywords) for name in users_to_add['name']]
+    # temporarily while we don't implement pwd recovery
+    users_to_add[['name', 'password']].to_csv(password_f_name)
+
+
+def send_password_mail(user_name, password, port=None):
+    """Also resets password. If port is None, use
+    config.config_object.server_port."""
+
+    user = User.query.filter_by(name=user_name).one()
+    user.hashed_password = get_hashed_password(password)
+    db.session.commit()
+
     gmail_user = config.MAIL_USERNAME
     gmail_pwd = config.MAIL_PASSWORD
     smtpserver = smtplib.SMTP(config.MAIL_SERVER, config.MAIL_PORT)
@@ -76,30 +85,44 @@ def send_password_mails(users_to_add_f_name):
     smtpserver.ehlo
     smtpserver.login(gmail_user, gmail_pwd)
 
-    users_to_add = pd.read_csv(users_to_add_f_name)
+    logger.info('Sending mail to {}'.format(user.email))
     subject = '{} RAMP information'.format(
         config.config_object.specific.ramp_title)
-    for _, u in users_to_add.iterrows():
-        logger.info('Sending mail to {}'.format(u['email']))
-        header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
-            u['email'], gmail_user, subject)
-        body = 'Dear {},\n\n'.format(u['firstname'])
-        body += 'Here is your login and other information for the {} RAMP:\n\n'.format(
-            config.config_object.specific.ramp_title)
-        body += 'username: {}\n'.format(u['name'])
-        body += 'password: {}\n'.format(u['password'])
+    header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
+        user.email, gmail_user, subject)
+    body = 'Dear {},\n\n'.format(user.firstname)
+    body += 'Here is your login and other information for the {} RAMP:\n\n'.format(
+        config.config_object.specific.ramp_title)
+    body += 'username: {}\n'.format(user.name)
+    body += 'password: {}\n'.format(password)
+
+    if port is None:
         body += 'submission site: http://{}:{}\n'.format(
             config.config_object.web_server, config.config_object.server_port)
-        if config.opening_timestamp is not None:
-            body += 'opening at (UTC) {}\n'.format(
-                date_time_format(config.opening_timestamp))
-        if config.public_opening_timestamp is not None:
-            body += 'opening of the collaborative phase at (UTC) {}\n'.format(
-                date_time_format(config.public_opening_timestamp))
-        if config.closing_timestamp is not None:
-            body += 'closing at (UTC) {}\n'.format(
-                date_time_format(config.closing_timestamp))
-        smtpserver.sendmail(gmail_user, u['email'], header + body)
+    elif port == '80':
+        body += 'submission site: http://{}\n'.format(
+            config.config_object.web_server)
+    else:
+        body += 'submission site: http://{}:{}\n'.format(
+            config.config_object.web_server, port)
+
+    if config.opening_timestamp is not None:
+        body += 'opening at (UTC) {}\n'.format(
+            date_time_format(config.opening_timestamp))
+    if config.public_opening_timestamp is not None:
+        body += 'opening of the collaborative phase at (UTC) {}\n'.format(
+            date_time_format(config.public_opening_timestamp))
+    if config.closing_timestamp is not None:
+        body += 'closing at (UTC) {}\n'.format(
+            date_time_format(config.closing_timestamp))
+    smtpserver.sendmail(gmail_user, user.email, header + body)
+
+
+def send_password_mails(password_f_name, port):
+    passwords = pd.read_csv(password_f_name)
+
+    for _, u in passwords.iterrows():
+        send_password_mail(u['name'], u['password'], port)
 
 
 def setup_workflow_element_types():
@@ -529,15 +552,18 @@ def train_test_submission(submission, force_retrain_test=False):
                 submission_on_cv_fold, X_train, y_train, X_test, y_test,
                 force_retrain_test)
             for submission_on_cv_fold in detached_submission_on_cv_folds)
+        for detached_submission_on_cv_fold, submission_on_cv_fold in\
+                zip(detached_submission_on_cv_folds, submission.on_cv_folds):
+            submission_on_cv_fold.update(detached_submission_on_cv_fold)
     else:
         # detached_submission_on_cv_folds = []
-        for submission_on_cv_fold in detached_submission_on_cv_folds:
+        for detached_submission_on_cv_fold, submission_on_cv_fold in\
+                zip(detached_submission_on_cv_folds, submission.on_cv_folds):
             train_test_submission_on_cv_fold(
-                submission_on_cv_fold, X_train, y_train, X_test, y_test,
+                detached_submission_on_cv_fold, 
+                X_train, y_train, X_test, y_test,
                 force_retrain_test)
-    for detached_submission_on_cv_fold, submission_on_cv_fold in\
-            zip(detached_submission_on_cv_folds, submission.on_cv_folds):
-        submission_on_cv_fold.update(detached_submission_on_cv_fold)
+            submission_on_cv_fold.update(detached_submission_on_cv_fold)
     submission.training_timestamp = datetime.datetime.utcnow()
     submission.set_state_after_training()
     submission.compute_test_score_cv_bag()
@@ -728,7 +754,7 @@ def compute_contributivity(force_ensemble=False):
         best_test_predictions_list.append(best_test_predictions)
         test_is_list.append(cv_fold.test_is)
     for submission in Submission.query.all():
-        submission.set_contributivity()
+        submission.set_contributivity(is_commit=False)
     db.session.commit()
     from model import _get_score_cv_bags
     # if there are no predictions to combine, it crashed
@@ -801,7 +827,6 @@ def compute_contributivity_on_fold(cv_fold, force_ensemble=False):
         and submission_on_fold.submission.name != config.sandbox_d_name
     ]
     if len(selected_submissions_on_fold) == 0:
-        print 'bla'
         return None, None, None, None
     true_predictions = generic.get_true_predictions_valid(cv_fold.test_is)
     # TODO: maybe this can be simplified. Don't need to get down
@@ -897,7 +922,7 @@ def get_public_leaderboard(team_name=None, user=None, is_open_code=True):
             columns, [team.name,
                       submission.name_with_link if is_open_code
                       else submission.name[:20],
-                      round(submission.valid_score_cv_bag, 
+                      round(submission.valid_score_cv_bag,
                             config.score_precision),
                       int(100 * submission.contributivity + 0.5),
                       int(submission.train_time_cv_mean + 0.5),
@@ -934,11 +959,17 @@ def get_private_leaderboard():
 
     columns = ['team',
                'submission',
-               'public score',
-               'private score',
+               'public bag',
+               'public mean',
+               'public std',
+               'private bag',
+               'private mean',
+               'private std',
                'contributivity',
                'train time',
+               'trt std',
                'test time',
+               'tet std',
                'submitted at (UTC)']
     leaderboard_dict_list = [
         {column: value for column, value in zip(
@@ -946,11 +977,21 @@ def get_private_leaderboard():
                       submission.name_with_link,
                       round(submission.valid_score_cv_bag,
                             config.score_precision),
+                      round(submission.valid_score_cv_mean,
+                            config.score_precision),
+                      round(submission.valid_score_cv_std,
+                            config.score_precision + 1),
                       round(submission.test_score_cv_bag,
                             config.score_precision),
+                      round(submission.test_score_cv_mean,
+                            config.score_precision),
+                      round(submission.test_score_cv_std,
+                            config.score_precision + 1),
                       int(100 * submission.contributivity + 0.5),
-                      int(submission.train_time_cv_mean + 0.5),
-                      int(submission.valid_time_cv_mean + 0.5),
+                      round(submission.train_time_cv_mean),
+                      round(submission.train_time_cv_std),
+                      round(submission.valid_time_cv_mean),
+                      round(submission.valid_time_cv_std),
                       date_time_format(submission.submission_timestamp)])}
         for submission, team in submissions_teams
     ]
@@ -1031,7 +1072,7 @@ def get_submissions_of_state(state):
 
 def get_earliest_new_submission():
     new_submissions = Submission.query.filter_by(
-        Submission.state == 'new').order_by(
+        state='new').order_by(
         Submission.submission_timestamp).all()
     if len(new_submissions) == 0:
         return None
@@ -1112,13 +1153,59 @@ def print_submissions(submissions=None):
             print '\t\t' + str(submission_on_cv_fold)
 
 
+def set_error(team_name, submission_name, error, error_msg):
+    team = Team.query.filter_by(name=team_name).one()
+    submission = Submission.query.filter_by(
+        team=team, name=submission_name).one()
+    submission.set_error(error, error_msg)
+    db.session.commit()
+
+
+def get_top_score_of_user(user, closing_timestamp):
+    """Returns the bagged test score of the submission with the best bagged
+    valid score, from among all the submissions of the user, before 
+    closing_timestamp.
+    """
+    team = get_active_user_team(user)
+    submissions = Submission.query.filter_by(team=team).filter(
+        Submission.is_private_leaderboard).all()
+    best_valid_score = config.config_object.specific.score.zero
+    best_test_score = config.config_object.specific.score.zero
+    for submission in submissions:
+        if submission.valid_score_cv_bag > best_valid_score:
+            best_valid_score = submission.valid_score_cv_bag
+            best_test_score = submission.test_score_cv_bag
+    return best_test_score
+
+
+def get_top_score_per_user(closing_timestamp=None):
+    if closing_timestamp is None:
+        closing_timestamp = datetime.datetime.utcnow()
+    users = db.session.query(User).all()
+    columns = ['name',
+               'score']
+    top_score_per_user_dict = [
+        {column: value for column, value in zip(
+            columns, [user.name,
+                      get_top_score_of_user(user, closing_timestamp)])
+        }
+        for user in users
+    ]
+    top_score_per_user_dict_df = pd.DataFrame(
+        top_score_per_user_dict, columns=columns)
+    top_score_per_user_dict_df = top_score_per_user_dict_df.sort_values('name')
+    return top_score_per_user_dict_df
+    
+
+
+######################### CVFold ###########################
+
+
 def print_cv_folds():
     print('***************** CV folds ****************')
     for i, cv_fold in enumerate(CVFold.query.all()):
         print i, cv_fold
 
-
-######################### CVFold ###########################
 
 def reset_cv_folds():
     """Changing the CV scheme without deleting the submissions."""

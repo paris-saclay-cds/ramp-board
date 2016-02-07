@@ -21,23 +21,30 @@ private_data_path = os.path.join(data_path, 'private')
 
 cachedir = '.'
 
-is_parallelize = True  # make it False if parallel training is not working
+is_parallelize = False  # make it False if parallel training is not working
 # make it True to use parallelism across machines
 is_parallelize_across_machines = False
 # maximum number of seconds per model training for parallelize across machines
 timeout_parallelize_across_machines = 10800
 # often doesn't work and takes a lot of disk space
 is_pickle_trained_submission = False
-min_duration_between_submissions = 15 * 60
 max_members_per_team = 3  # except for users own team
 max_n_ensemble = 80  # max number of submissions in Caruana's ensemble
-opening_timestamp = datetime.datetime(2015, 12, 30, 20, 0, 0)
-# before links to submissions in leaderboard are not alive
-public_opening_timestamp = datetime.datetime(2016, 1, 6, 20, 0, 0)
-closing_timestamp = datetime.datetime(2017, 1, 8, 14, 0, 0)
-is_send_trained_mails = True
-
 score_precision = 3
+is_send_trained_mails = True
+is_send_submitted_mails = True
+
+#min_duration_between_submissions = 0#15 * 60
+#opening_timestamp = datetime.datetime(2016, 01, 13, 11, 0, 0)
+# before links to submissions in leaderboard are not alive
+#public_opening_timestamp = datetime.datetime(2016, 01, 06, 20, 0, 0)
+#closing_timestamp = datetime.datetime(2016, 1, 27, 11, 0, 0)
+
+min_duration_between_submissions = 15 * 60
+opening_timestamp = datetime.datetime(2016, 01, 13, 11, 0, 0)
+# before links to submissions in leaderboard are not alive
+public_opening_timestamp = datetime.datetime(2016, 01, 20, 11, 0, 0)
+closing_timestamp = datetime.datetime(2016, 1, 26, 11, 0, 0)
 
 # Open ports in Stratuslab
 # 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015,
@@ -73,7 +80,8 @@ score_precision = 3
 #    server_port)
 # server_name = debug_server if local_deployment else train_server
 
-vd_server = 'onevm-189.lal.in2p3.fr'
+vd_server = 'onevm-177.lal.in2p3.fr'
+#vd_server = 'onevm-64.lal.in2p3.fr'
 reims_server = 'romeo1.univ-reims.fr'
 vd_root = '/mnt/datacamp'
 local_root = '/tmp'  # for local publishing / testing
@@ -240,9 +248,9 @@ ramps_configs['iris_remote'] = RampConfig(
 
 ramps_configs['variable_stars_remote'] = RampConfig(
     ramp_name='variable_stars',
-    n_cpus=5,
+    n_cpus=20,
     server_port='8080',
-    cv_test_size=0.5,
+    cv_test_size=0.2,
     random_state=57,
     **vd_kwargs
 )
@@ -268,7 +276,7 @@ ramps_configs['variable_stars_test_remote'] = RampConfig(
 ramps_configs['mortality_prediction_remote'] = RampConfig(
     ramp_name='mortality_prediction',
     n_cpus=5,
-    server_port='2811',
+    server_port='80',
     cv_test_size=0.5,
     random_state=57,
     **vd_kwargs
@@ -276,20 +284,20 @@ ramps_configs['mortality_prediction_remote'] = RampConfig(
 
 ramps_configs['air_passengers_remote'] = RampConfig(
     ramp_name='air_passengers',
-    n_cpus=10,
-    server_port='3147',
+    n_cpus=8,
+    server_port='8080',
     cv_test_size=0.2,
     random_state=57,
     **vd_kwargs
 )
 
-ramps_configs['air_passengers_remote2'] = RampConfig(
+ramps_configs['air_passengers_appstat'] = RampConfig(
     ramp_name='air_passengers',
-    n_cpus=10,
-    server_port='5010',
-    cv_test_size=0.5,
+    n_cpus=3,
+    server_port='8080',
+    cv_test_size=0.2,
     random_state=57,
-    **vd_kwargs
+    **appstat_kwargs
 )
 
 with open("ramp_index.txt") as f:
@@ -319,4 +327,5 @@ SQLALCHEMY_DATABASE_URI = 'sqlite:///' + db_f_name
 SQLALCHEMY_MIGRATE_REPO = db_migrate_dir
 ADMIN_MAILS = ['balazs.kegl@gmail.com',
                'alexandre.gramfort@telecom-paristech.fr',
-               'mehdi@cherti.name']
+               'mehdi@cherti.name',
+               'camille.marini@gmail.com']
