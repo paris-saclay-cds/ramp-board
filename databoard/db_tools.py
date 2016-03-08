@@ -66,7 +66,7 @@ def generate_passwords(users_to_add_f_name, password_f_name):
     users_to_add['password'] = [
         generate_single_password(mywords) for name in users_to_add['name']]
     # temporarily while we don't implement pwd recovery
-    users_to_add[['name', 'password']].to_csv(password_f_name)
+    users_to_add[['name', 'password']].to_csv(password_f_name, index=False)
 
 
 def send_password_mail(user_name, password, port=None):

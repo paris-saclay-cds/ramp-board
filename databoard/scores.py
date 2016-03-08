@@ -5,9 +5,8 @@
 # Author: Balazs Kegl
 # License: BSD 3 clause
 
-import sys
 import numpy as np
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 
 
 class Score(object):
@@ -126,7 +125,7 @@ class Error(ScoreFunction):
 
     @property
     def zero(self):
-        return ScoreLowerTheBetter(1.0, self.eps)
+        return ScoreLowerTheBetter(0.0, self.eps)
 
     @staticmethod
     def convert(x):
@@ -160,7 +159,7 @@ class NegativeLogLikelihood(ScoreFunction):
 
     @property
     def zero(self):
-        return ScoreLowerTheBetter(float('inf'), self.eps)
+        return ScoreLowerTheBetter(0.0, self.eps)
 
     @staticmethod
     def convert(x):
@@ -181,8 +180,32 @@ class RMSE(ScoreFunction):
 
     @property
     def zero(self):
-        return ScoreLowerTheBetter(sys.float_info.max)
+        return ScoreLowerTheBetter(0.0)
 
     @staticmethod
     def convert(x):
         return ScoreLowerTheBetter(x)
+
+
+class RegressionF1(ScoreFunction):
+    def __init__(self, threshold):
+        self.threshold = threshold
+
+    def __call__(self, true_predictions, predictions, valid_indexes=None):
+        if valid_indexes is None:
+            y_pred = predictions.y_pred
+            y_true = true_predictions.y_pred
+        else:
+            y_pred = predictions.y_pred[valid_indexes]
+            y_true = true_predictions.y_pred[valid_indexes]
+        score = f1_score(y_true > self.threshold, y_pred > self.threshold)
+        return ScoreHigherTheBetter(score)
+
+    @property
+    def zero(self):
+        return ScoreHigherTheBetter(0.0)
+
+    @staticmethod
+    def convert(x):
+        return ScoreHigherTheBetter(x)
+

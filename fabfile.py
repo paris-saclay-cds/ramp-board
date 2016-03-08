@@ -272,16 +272,22 @@ software = [
     'databoard/ramps/__init__.py',
     'databoard/ramps/air_passengers/__init__.py',
     'databoard/ramps/air_passengers/specific.py',
+    'databoard/ramps/bankruptcy/__init__.py',
+    'databoard/ramps/bankruptcy/specific.py',
     'databoard/ramps/boston_housing/__init__.py',
     'databoard/ramps/boston_housing/specific.py',
     'databoard/ramps/el_nino_bagged_cv_future/__init__.py',
     'databoard/ramps/el_nino_bagged_cv_future/specific.py',
     'databoard/ramps/el_nino_block_cv/__init__.py',
     'databoard/ramps/el_nino_block_cv/specific.py',
+    'databoard/ramps/epidemium_cancer_rate/__init__.py',
+    'databoard/ramps/epidemium_cancer_rate/specific.py',
     'databoard/ramps/iris/__init__.py',
     'databoard/ramps/iris/specific.py',
     'databoard/ramps/kaggle_otto/__init__.py',
     'databoard/ramps/kaggle_otto/specific.py',
+    'databoard/ramps/macro_abm/__init__.py',
+    'databoard/ramps/macro_abm/specific.py',
     'databoard/ramps/mortality_prediction/__init__.py',
     'databoard/ramps/mortality_prediction/specific.py',
     'databoard/ramps/pollenating_insects/__init__.py',
@@ -465,7 +471,7 @@ def create_user(name, password, lastname, firstname, email,
     from databoard.db_tools import create_user
     create_user(
         name, password, lastname, firstname, email, access_level, hidden_notes)
-    train_test(t=name, s=sandbox_d_name)
+    #train_test(t=name, s=sandbox_d_name)
 
 
 def generate_single_password():

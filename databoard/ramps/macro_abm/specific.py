@@ -10,44 +10,53 @@ from sklearn.cross_validation import ShuffleSplit, train_test_split
 import databoard.scores as scores
 # menu polymorphism example
 from databoard.regression_prediction import Predictions
-from databoard.config import config_object, submissions_path, raw_data_path
-from databoard.config import public_data_path, private_data_path
+from databoard.config import config_object, submissions_path
+from databoard.config import raw_data_path, public_data_path, private_data_path
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
-ramp_title = 'Boston housing regression (test)'
-target_column_name = 'medv'
+ramp_title = 'Macroeconomic ABM surrogate'
+target_column_name = 'p-value'
 
 cv_test_size = config_object.cv_test_size
-held_out_test_size = 0.2
+held_out_test_size = 0.6
+public_train_size = 0.5  # so public train and train have the same size
 random_state = config_object.random_state
 n_CV = config_object.n_cpus
 
-raw_filename = os.path.join(raw_data_path, 'boston_housing.csv')
-train_filename = os.path.join(public_data_path, 'train.csv')
+raw_filename = os.path.join(raw_data_path, 'data.h5')
+public_train_filename = os.path.join(public_data_path, 'public_train.csv')
+train_filename = os.path.join(private_data_path, 'train.csv')
 test_filename = os.path.join(private_data_path, 'test.csv')
 
-score = scores.RMSE()
+score = scores.RegressionF1(0.001)
 
 workflow_element_types = [
     {'name': 'regressor'},
-    {'name': 'comments'},
 ]
 
 
-def read_data(filename, index_col=None):
-    data = pd.read_csv(filename, index_col=index_col)
+def prepare_data():
+    df = pd.read_hdf(raw_filename)
+    df = df.drop([i for i in range(250)], axis=1)
+    df = df.drop(['Label', 'KS_statistic'], axis=1)
+    df_train, df_test = train_test_split(
+        df, test_size=held_out_test_size, random_state=random_state)
+    df_public_train, df_private_train = train_test_split(
+        df_train, train_size=public_train_size, random_state=random_state)
+    df_public_train.to_csv(public_train_filename, index=False)
+    df_private_train.to_csv(train_filename, index=False)
+    # test data was too big
+    _, df_test = train_test_split(
+        df_test, test_size=0.5, random_state=random_state)
+    df_test.to_csv(test_filename, index=False)
+
+
+def read_data(filename):
+    data = pd.read_csv(filename)
     y_array = data[target_column_name].values
     X_array = data.drop([target_column_name], axis=1).values
     return X_array, y_array
-
-
-def prepare_data():
-    df = pd.read_csv(raw_filename, index_col=0)
-    df_train, df_test = train_test_split(
-        df, test_size=held_out_test_size, random_state=random_state)
-    df_train.to_csv(train_filename, index=False)
-    df_test.to_csv(test_filename, index=False)
 
 
 def get_train_data():
@@ -61,8 +70,9 @@ def get_test_data():
 
 
 def get_cv(y_train_array):
-    cv = ShuffleSplit(y_train_array.shape[0], n_iter=n_CV,
-                      test_size=cv_test_size, random_state=random_state)
+    cv = ShuffleSplit(
+        len(y_train_array), n_iter=n_CV, test_size=cv_test_size,
+        random_state=random_state)
     return cv
 
 

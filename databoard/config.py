@@ -21,7 +21,7 @@ private_data_path = os.path.join(data_path, 'private')
 
 cachedir = '.'
 
-is_parallelize = False  # make it False if parallel training is not working
+is_parallelize = True  # make it False if parallel training is not working
 # make it True to use parallelism across machines
 is_parallelize_across_machines = False
 # maximum number of seconds per model training for parallelize across machines
@@ -30,21 +30,15 @@ timeout_parallelize_across_machines = 10800
 is_pickle_trained_submission = False
 max_members_per_team = 3  # except for users own team
 max_n_ensemble = 80  # max number of submissions in Caruana's ensemble
-score_precision = 3
+score_precision = 0
 is_send_trained_mails = True
 is_send_submitted_mails = True
 
-#min_duration_between_submissions = 0#15 * 60
-#opening_timestamp = datetime.datetime(2016, 01, 13, 11, 0, 0)
-# before links to submissions in leaderboard are not alive
-#public_opening_timestamp = datetime.datetime(2016, 01, 06, 20, 0, 0)
-#closing_timestamp = datetime.datetime(2016, 1, 27, 11, 0, 0)
-
 min_duration_between_submissions = 15 * 60
-opening_timestamp = datetime.datetime(2016, 01, 13, 11, 0, 0)
+opening_timestamp = datetime.datetime(2016, 02, 12, 12, 0, 0)
 # before links to submissions in leaderboard are not alive
-public_opening_timestamp = datetime.datetime(2016, 01, 20, 11, 0, 0)
-closing_timestamp = datetime.datetime(2016, 1, 26, 11, 0, 0)
+public_opening_timestamp = datetime.datetime(2016, 02, 13, 8, 0, 0)
+closing_timestamp = datetime.datetime(2016, 02, 15, 12, 0, 0)
 
 # Open ports in Stratuslab
 # 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015,
@@ -218,18 +212,24 @@ reims_kwargs = dict(
     web_root=vd_root,
 )
 
-ramps_configs['boston_housing_local'] = RampConfig(
-    ramp_name='boston_housing', **local_kwargs)
 ramps_configs['air_passengers_local'] = RampConfig(
     ramp_name='air_passengers', **local_kwargs)
+ramps_configs['boston_housing_local'] = RampConfig(
+    ramp_name='boston_housing', **local_kwargs)
+ramps_configs['bankruptcy_local'] = RampConfig(
+    ramp_name='bankruptcy', **local_kwargs)
 ramps_configs['el_nino_bagged_cv_future_local'] = RampConfig(
     ramp_name='el_nino_bagged_cv_future', **local_kwargs)
 ramps_configs['el_nino_block_cv_local'] = RampConfig(
     ramp_name='el_nino_block_cv', cv_bag_size=0.5, **local_kwargs)
+ramps_configs['epidemium_cancer_rate_local'] = RampConfig(
+    ramp_name='epidemium_cancer_rate', **local_kwargs)
 ramps_configs['iris_local'] = RampConfig(
     ramp_name='iris', **local_kwargs)
 ramps_configs['kaggle_otto_local'] = RampConfig(
     ramp_name='kaggle_otto', **local_kwargs)
+ramps_configs['macro_abm_local'] = RampConfig(
+    ramp_name='macro_abm', **local_kwargs)
 ramps_configs['mortality_prediction_local'] = RampConfig(
     ramp_name='mortality_prediction', **local_kwargs)
 ramps_configs['pollenating_insects_local'] = RampConfig(
@@ -291,6 +291,39 @@ ramps_configs['air_passengers_remote'] = RampConfig(
     **vd_kwargs
 )
 
+ramps_configs['macro_abm_remote'] = RampConfig(
+    ramp_name='macro_abm',
+    n_cpus=8,
+    server_port='8080',
+    cv_test_size=0.5,
+    random_state=57,
+    **vd_kwargs
+)
+
+ramps_configs['epidemium_cancer_rate_remote'] = RampConfig(
+    ramp_name='epidemium_cancer_rate',
+    n_cpus=8,
+    server_port='8080',
+    cv_test_size=0.5,
+    random_state=57,
+    **vd_kwargs
+)
+
+ramps_configs['bankruptcy_remote'] = RampConfig(
+    ramp_name='bankruptcy',
+    n_cpus=8,
+    server_port='8080',
+    cv_test_size=0.5,
+    random_state=57,
+    train_server='onevm-222.lal.in2p3.fr',
+    train_user='root',
+    train_root=vd_root,
+    web_server='onevm-222.lal.in2p3.fr',
+    web_user='root',
+    web_root=vd_root,
+)
+
+
 ramps_configs['air_passengers_appstat'] = RampConfig(
     ramp_name='air_passengers',
     n_cpus=3,
@@ -328,4 +361,5 @@ SQLALCHEMY_MIGRATE_REPO = db_migrate_dir
 ADMIN_MAILS = ['balazs.kegl@gmail.com',
                'alexandre.gramfort@telecom-paristech.fr',
                'mehdi@cherti.name',
-               'camille.marini@gmail.com']
+               'camille.marini@gmail.com',
+               'remi.bardenet@gmail.com']

@@ -107,7 +107,7 @@ def send_submission_mails(user, submission, team):
     smtpserver.starttls()
     smtpserver.ehlo
     smtpserver.login(gmail_user, gmail_pwd)
-    subject = 'fab train_test:t={},s={}'.format(team.name, submission.name)
+    subject = 'fab train_test:t="{}",s="{}"'.format(team.name, submission.name)
     header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
         recipient_list, gmail_user, subject)
     body = 'user = {}\nramp = {}\nserver = {}\nsubmission dir = {}\n'.format(

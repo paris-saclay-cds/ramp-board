@@ -47,8 +47,8 @@ def prepare_data():
     df = pd.read_csv(raw_filename)
     df_train, df_test = train_test_split(
         df, test_size=held_out_test_size, random_state=random_state)
-    df_train.to_csv(train_filename)
-    df_test.to_csv(test_filename)
+    df_train.to_csv(train_filename, index=False)
+    df_test.to_csv(test_filename, index=False)
 
 
 def get_train_data():
