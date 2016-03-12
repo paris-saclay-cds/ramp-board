@@ -21,8 +21,6 @@ from wtforms.widgets import TextArea
 import flask
 import flask.ext.login as fl
 from databoard import app, login_manager
-from databoard.generic import changedir
-from databoard.config import repos_path
 import databoard.config as config
 import databoard.db_tools as db_tools
 from databoard.model import User, Team, Submission, WorkflowElement,\
@@ -594,31 +592,3 @@ def submission_file_diff(id):
         'submission_file_diff.html',
         diff=user_interaction.submission_file_diff,
         ramp_title=config.config_object.specific.ramp_title)
-
-
-@app.route("/add/", methods=("POST",))
-def add_team_repo():
-    if request.method == "POST":
-        repo_name = request.form["name"].strip()
-        repo_path = request.form["url"].strip()
-        message = ''
-
-        correct_name = True
-        for name_part in repo_name.split('_'):
-            if not name_part.isalnum():
-                correct_name = False
-                message = 'Incorrect team name. Please only use letters, digits and underscores.'
-                break
-
-        if correct_name:
-            try:
-                Repo.clone_from(
-                    repo_path, os.path.join(repos_path, repo_name))
-            except Exception as e:
-                logger.error('Unable to add a repository: \n{}'.format(e))
-                message = str(e)
-
-        if message:
-            flash(message)
-
-        return redirect(url_for('list_teams_repos'))

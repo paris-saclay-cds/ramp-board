@@ -5,8 +5,8 @@ from importlib import import_module
 root_path = '.'
 
 # paths
-repos_path = os.path.join(root_path, 'git_submissions')
-ground_truth_path = os.path.join(root_path, 'ground_truth')
+#repos_path = os.path.join(root_path, 'git_submissions')
+#ground_truth_path = os.path.join(root_path, 'ground_truth')
 submissions_d_name = 'submissions'
 submissions_path = os.path.join(root_path, submissions_d_name)
 deposited_submissions_d_name = 'deposited_submissions'
@@ -14,10 +14,18 @@ deposited_submissions_path = os.path.join(
     root_path, deposited_submissions_d_name)
 sandbox_d_name = 'sandbox'
 sandbox_path = os.path.join(root_path, sandbox_d_name)
+ramps_path = os.path.join(root_path, 'ramps')
+
 data_path = os.path.join(root_path, 'data')
 raw_data_path = os.path.join(data_path, 'raw')
 public_data_path = os.path.join(data_path, 'public')
 private_data_path = os.path.join(data_path, 'private')
+
+specific_module = 'databoard.specific'
+workflows_module = specific_module + '.workflows'
+problems_module = specific_module + '.problems'
+events_module = specific_module + '.events'
+
 
 cachedir = '.'
 

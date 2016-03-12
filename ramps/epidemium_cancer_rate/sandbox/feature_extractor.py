@@ -1,20 +1,20 @@
+import pandas as pd
+
+
 class FeatureExtractor(object):
-    # The columns you want to include without pre-processing
     core_cols = ['Year']
-    # Categorical columns. They must be processed (use pd.get_dummies for the simplest way)
-    categ_cols = ['RegionType','Part of', 'Region', 'Gender', 'MainOrigin', 'cancer_type']
-    # the different factors to include in the model
-    additional_cols = []
- 
+    region_cols = ['RegionType', 'Part of', 'Region']
+    categ_cols = ['Gender', 'Age', 'MainOrigin']
+    additional_cols = ['HIV_15_49']
+
     def __init__(self):
         pass
- 
+
     def fit(self, X_df, y_array):
         pass
- 
+
     def transform(self, X_df):
-        import pandas as pd
-        ret = X_df[self.core_cols].copy()
+        ret = X_df[['Year']].copy()
         # dummify the categorical variables
         for col in self.categ_cols:
             ret = ret.join(pd.get_dummies(X_df[col], prefix=col[:3]))

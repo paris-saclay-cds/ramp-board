@@ -60,8 +60,9 @@ def prepare_data():
     _, y_train = specific.get_train_data()
     cv = specific.get_cv(y_train)
     db_tools.add_cv_folds(cv)
-    db_tools.setup_workflow_element_types()
-    db_tools.setup_problem(specific.workflow_element_types)
+    db_tools.setup_workflows()
+    db_tools.setup_problem(
+        specific.workflow, specific.other_workflow_element_types)
 
 
 def clear_registrants():
@@ -269,6 +270,10 @@ software = [
     'databoard/remove_test_db.py',
     'databoard/scores.py',
     'databoard/views.py',
+    'databoard/specific/__init__.py',
+    'databoard/specific/workflows/__init__.py',
+    'databoard/specific/workflows/regressor_workflow.py',
+    'databoard/specific/workflows/classifier_workflow.py',
     'databoard/ramps/__init__.py',
     'databoard/ramps/air_passengers/__init__.py',
     'databoard/ramps/air_passengers/specific.py',

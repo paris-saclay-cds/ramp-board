@@ -1,5 +1,6 @@
 TODO
 - Also save when submitting. Or put all editing windows on the sandbox page. No save just submit. And large files (like csv) should be uneditable and uploadeable from the sandbox, and downloadeable from the view_submission views. Must add filename preferences and filename table.
+- When moving to full database, forget the team names in 
 - Merge teams.
 - Maybe register the submitter user, not only team
 - Parallel contributivity. Or at least make it not lock the db. It seems that the real bottleneck is iterating through submissions (both in CV in in Submission) in the db
@@ -13,6 +14,9 @@ TODO
 - don't allow resubmit during training
 - remove submission timing constraint for admins
 - "training" state so we can avoid resubmission while training and we can launch several "fab train_test_earliest_new"
+- use git but not github, see overleaf
+Frome Rémi:
+  - *paired* T-tests with a Bonferroni correction
 Didier's ideas:
   1) He wants to submit through git. What I understand is that he basically wants an API, not a web interface. 
   2) He pointed to us to jenkins: https://jenkins-ci.org/ for the engineering details of launching untrusted code in safe mode. That's what they use for automating their testing: gitlab and jenkins.

@@ -13,7 +13,7 @@ from databoard import db
 
 from databoard.model import User, Team, Submission, SubmissionFile,\
     SubmissionFileType, SubmissionFileTypeExtension, WorkflowElementType,\
-    WorkflowElement, Extension,\
+    WorkflowElement, Workflow, Extension, Problem, Event, EventTeam,\
     CVFold, SubmissionOnCVFold, DetachedSubmissionOnCVFold,\
     UserInteraction,\
     NameClashError, MergeTeamError, TooEarlySubmissionError,\
@@ -41,13 +41,15 @@ def date_time_format(date_time):
 
 def get_hashed_password(plain_text_password):
     """Hash a password for the first time
-    (Using bcrypt, the salt is saved into the hash itself)"""
+    (Using bcrypt, the salt is saved into the hash itself)
+    """
     return bcrypt.hashpw(plain_text_password, bcrypt.gensalt())
 
 
 def check_password(plain_text_password, hashed_password):
     """Check hased password. Using bcrypt, the salt is saved into the
-    hash itself"""
+    hash itself
+    """
     return bcrypt.checkpw(plain_text_password, hashed_password)
 
 
@@ -71,7 +73,8 @@ def generate_passwords(users_to_add_f_name, password_f_name):
 
 def send_password_mail(user_name, password, port=None):
     """Also resets password. If port is None, use
-    config.config_object.server_port."""
+    config.config_object.server_port.
+    """
 
     user = User.query.filter_by(name=user_name).one()
     user.hashed_password = get_hashed_password(password)
@@ -125,26 +128,23 @@ def send_password_mails(password_f_name, port):
         send_password_mail(u['name'], u['password'], port)
 
 
-def setup_workflow_element_types():
+def setup_workflows():
+    """Setting up database. 
+
+    Should be called once although there is no harm recalling it: if the
+    elements are in the db, it skips adding them.
+    """
     extension_names = ['py', 'R', 'txt', 'csv']
     for name in extension_names:
-        extension = Extension.query.filter_by(name=name).one_or_none()
-        if extension is None:
-            db.session.add(Extension(name=name))
-    db.session.commit()
+        add_extension(name)
 
     submission_file_types = [
         ('code', True, 10 ** 5),
         ('text', True, 10 ** 5),
         ('data', False, 10 ** 8)
     ]
-    for (name, is_editable, max_size) in submission_file_types:
-        submission_file_type = SubmissionFileType.query.filter_by(
-            name=name).one_or_none()
-        if submission_file_type is None:
-            db.session.add(SubmissionFileType(
-                name=name, is_editable=is_editable, max_size=max_size))
-    db.session.commit()
+    for name, is_editable, max_size in submission_file_types:
+        add_submission_file_type(name, is_editable, max_size)
 
     submission_file_type_extensions = [
         ('code', 'py'),
@@ -152,16 +152,8 @@ def setup_workflow_element_types():
         ('text', 'txt'),
         ('data', 'csv')
     ]
-    for (type_name, extension_name) in submission_file_type_extensions:
-        submission_file_type = SubmissionFileType.query.filter_by(
-            name=type_name).one()
-        extension = Extension.query.filter_by(name=extension_name).one()
-        type_extension = SubmissionFileTypeExtension.query.filter_by(
-            type=submission_file_type, extension=extension).one_or_none()
-        if type_extension is None:
-            db.session.add(SubmissionFileTypeExtension(
-                type=submission_file_type, extension=extension))
-    db.session.commit()
+    for type_name, extension_name in submission_file_type_extensions:
+        add_submission_file_type_extension(type_name, extension_name)
 
     workflow_element_types = [
         ('feature_extractor', 'code'),
@@ -173,28 +165,137 @@ def setup_workflow_element_types():
         ('comments', 'text'),
         ('external_data', 'data'),
     ]
-    for name, type_name in workflow_element_types:
-        submission_file_type = SubmissionFileType.query.filter_by(
-            name=type_name).one()
+    for workflow_element_type_name, submission_file_type_name in\
+            workflow_element_types:
+        add_workflow_element_type(
+            workflow_element_type_name, submission_file_type_name)
+
+    workflows = [
+        ('classifier_workflow', ['classifier']),
+        ('regressor_workflow', ['regressor']),
+    ]
+    for name, element_type_names in workflows:
+        add_workflow(name, element_type_names)
+
+
+def add_extension(name):
+    """Adding a new extension, e.g., 'py'."""
+    extension = Extension.query.filter_by(name=name).one_or_none()
+    if extension is None:
+        db.session.add(Extension(name=name))
+        db.session.commit()
+
+
+def add_submission_file_type(name, is_editable, max_size):
+    """Adding a new submission file type, e.g., ('code', True, 10 ** 5).
+
+    Should be preceded by adding extensions.
+    """
+    submission_file_type = SubmissionFileType.query.filter_by(
+        name=name).one_or_none()
+    if submission_file_type is None:
+        db.session.add(SubmissionFileType(
+            name=name, is_editable=is_editable, max_size=max_size))
+        db.session.commit()
+
+
+def add_submission_file_type_extension(type_name, extension_name):
+    """Adding a new submission file type extension, e.g., ('code', 'py').
+
+    Should be preceded by adding submission file types and extensions.
+    """
+    submission_file_type = SubmissionFileType.query.filter_by(
+        name=type_name).one()
+    extension = Extension.query.filter_by(name=extension_name).one()
+    type_extension = SubmissionFileTypeExtension.query.filter_by(
+        type=submission_file_type, extension=extension).one_or_none()
+    if type_extension is None:
+        db.session.add(SubmissionFileTypeExtension(
+            type=submission_file_type, extension=extension))
+        db.session.commit()
+
+
+def add_workflow_element_type(workflow_element_type_name,
+                              submission_file_type_name):
+    """Adding a new workflow element type, e.g., ('classifier', 'code').
+
+    Should be preceded by adding submission file types and extensions.
+    """
+    submission_file_type = SubmissionFileType.query.filter_by(
+        name=submission_file_type_name).one()
+    workflow_element_type = WorkflowElementType.query.filter_by(
+        name=workflow_element_type_name).one_or_none()
+    if workflow_element_type is None:
+        db.session.add(WorkflowElementType(
+            name=workflow_element_type_name, type=submission_file_type))
+        db.session.commit()
+
+
+def add_workflow(workflow_name, element_type_names):
+    """Adding a new workflow, e.g., ('classifier_workflow', ['classifier']).
+
+    Workflow file should be set up in
+    databoard/specific/workflows/<workflow_name>. Should be preceded by adding
+    workflow element types.
+    """
+    workflow = Workflow.query.filter_by(name=workflow_name).one_or_none()
+    if workflow is None:
+        db.session.add(Workflow(name=workflow_name))
+    for element_type_name in element_type_names:
         workflow_element_type = WorkflowElementType.query.filter_by(
-            name=name, type=submission_file_type).one_or_none()
-        if workflow_element_type is None:
-            db.session.add(WorkflowElementType(
-                name=name, type=submission_file_type))
+            name=element_type_name).one()
+        workflow_element =\
+            WorkflowElement.query.filter_by(
+                workflow=workflow,
+                workflow_element_type=workflow_element_type).one_or_none()
+        if workflow_element is None:
+            db.session.add(WorkflowElement(
+                workflow=workflow,
+                workflow_element_type=workflow_element_type))
     db.session.commit()
 
 
-def setup_problem(workflow_elements):
-    for workflow_element_dict in workflow_elements:
-        name = workflow_element_dict['name']
-        try:
-            type = workflow_element_dict['type']
-            workflow_element = WorkflowElement(
-                name=type, name_in_workflow=name)
-        except KeyError:
-            workflow_element = WorkflowElement(name=name)
-        db.session.add(workflow_element)
+def add_problem(problem_name):
+    """Adding a new RAMP problem.
+
+    Problem file should be set up in
+    databoard/specific/problems/<problem_name>. Should be preceded by adding
+    a workflow, then workflow_name specified in the event file (workflow_name
+    is acting as a pointer for the join). Also prepares the data.
+    """
+    problem = Problem.query.filter_by(name=problem_name).one_or_none()
+    if problem is None:
+        db.session.add(Problem(name=problem_name))
+        db.session.commit()
+        problem = Problem.query.filter_by(name=problem_name).one()
+    problem.module.prepare_data()
+
+
+def add_event(event_name):
+    """Adding a new RAMP event.
+
+    Event file should be set up in
+    databoard/specific/events/<event_name>. Should be preceded by adding
+    a problem, then problem_name imported in the event file (problem_name
+    is acting as a pointer for the join). Also adds CV folds.
+    """
+    event = Event.query.filter_by(name=event_name).one_or_none()
+    if event is None:
+        db.session.add(Event(name=event_name))
+        db.session.commit()
+        event = Event.query.filter_by(name=event_name).one()
+    _, y_train = event.problem.module.get_train_data()
+    cv = event.module.get_cv(y_train)
+    for train_is, test_is in cv:
+        cv_fold = CVFold(event=event, train_is=train_is, test_is=test_is)
+        db.session.add(cv_fold)
     db.session.commit()
+
+
+def print_cv_folds():
+    print('***************** CV folds ****************')
+    for i, cv_fold in enumerate(CVFold.query.all()):
+        print i, cv_fold
 
 
 def create_user(name, password, lastname, firstname, email,
@@ -236,9 +337,6 @@ def create_user(name, password, lastname, firstname, email,
             raise e
     logger.info('Creating {}'.format(user))
     logger.info('Creating {}'.format(team))
-    # submitting the starting kit for default team
-    make_submission_and_copy_files(
-        name, config.sandbox_d_name, config.sandbox_path)
     return user
 
 
@@ -266,69 +364,83 @@ def print_users():
 
 ######################### Teams ###########################
 
+# for now this is not functional, we should think through how teams
+# should be merged when we have multiple RAMP events.
+# def merge_teams(name, initiator_name, acceptor_name):
+#     initiator = Team.query.filter_by(name=initiator_name).one()
+#     acceptor = Team.query.filter_by(name=acceptor_name).one()
+#     if not initiator.is_active:
+#         raise MergeTeamError('Merge initiator is not active')
+#     if not acceptor.is_active:
+#         raise MergeTeamError('Merge acceptor is not active')
+#     # Meaning they are already in another team for the ramp
 
-def merge_teams(name, initiator_name, acceptor_name):
-    initiator = Team.query.filter_by(name=initiator_name).one()
-    acceptor = Team.query.filter_by(name=acceptor_name).one()
-    if not initiator.is_active:
-        raise MergeTeamError('Merge initiator is not active')
-    if not acceptor.is_active:
-        raise MergeTeamError('Merge acceptor is not active')
-    # Meaning they are already in another team for the ramp
+#     # Testing if team size is <= max_members_per_team
+#     n_members_initiator = get_n_team_members(initiator)
+#     n_members_acceptor = get_n_team_members(acceptor)
+#     n_members_new = n_members_initiator + n_members_acceptor
+#     if n_members_new > config.max_members_per_team:
+#         raise MergeTeamError(
+#             'Too big team: new team would be of size {}, the max is {}'.format(
+#                 n_members_new, config.max_members_per_team))
 
-    # Testing if team size is <= max_members_per_team
-    n_members_initiator = get_n_team_members(initiator)
-    n_members_acceptor = get_n_team_members(acceptor)
-    n_members_new = n_members_initiator + n_members_acceptor
-    if n_members_new > config.max_members_per_team:
-        raise MergeTeamError(
-            'Too big team: new team would be of size {}, the max is {}'.format(
-                n_members_new, config.max_members_per_team))
+#     members_initiator = get_team_members(initiator)
+#     members_acceptor = get_team_members(acceptor)
 
-    members_initiator = get_team_members(initiator)
-    members_acceptor = get_team_members(acceptor)
+#     # Testing if team (same members) exists under a different name. If the
+#     # name is the same, we break. If the loop goes through, we add new team.
+#     members_set = set(members_initiator).union(set(members_acceptor))
+#     for team in Team.query:
+#         if members_set == set(get_team_members(team)):
+#             if name == team.name:
+#                 # ok, but don't add new team, just set them to inactive
+#                 initiator.is_active = False
+#                 acceptor.is_active = False
+#                 return team
+#             raise MergeTeamError(
+#                 'Team exists with the same members, team name = {}'.format(
+#                     team.name))
+#     else:
+#         team = Team(name=name, admin=initiator.admin,
+#                     initiator=initiator, acceptor=acceptor)
+#         db.session.add(team)
+#     initiator.is_active = False
+#     acceptor.is_active = False
+#     try:
+#         db.session.commit()
+#     except IntegrityError as e:
+#         db.session.rollback()
+#         try:
+#             Team.query.filter_by(name=name).one()
+#             raise NameClashError('team name is already in use')
+#         except NoResultFound:
+#             raise e
+#     logger.info('Merging {} and {} into {}'.format(initiator, acceptor, team))
+#     # submitting the starting kit for merged team
+#     make_submission_and_copy_files(
+#         name, config.sandbox_d_name, config.sandbox_path)
+#     return team
 
-    # Testing if team (same members) exists under a different name. If the
-    # name is the same, we break. If the loop goes through, we add new team.
-    members_set = set(members_initiator).union(set(members_acceptor))
-    for team in Team.query:
-        if members_set == set(get_team_members(team)):
-            if name == team.name:
-                # ok, but don't add new team, just set them to inactive
-                initiator.is_active = False
-                acceptor.is_active = False
-                return team
-            raise MergeTeamError(
-                'Team exists with the same members, team name = {}'.format(
-                    team.name))
-    else:
-        team = Team(name=name, admin=initiator.admin,
-                    initiator=initiator, acceptor=acceptor)
-        db.session.add(team)
-    initiator.is_active = False
-    acceptor.is_active = False
-    try:
-        db.session.commit()
-    except IntegrityError as e:
-        db.session.rollback()
-        try:
-            Team.query.filter_by(name=name).one()
-            raise NameClashError('team name is already in use')
-        except NoResultFound:
-            raise e
-    logger.info('Merging {} and {} into {}'.format(initiator, acceptor, team))
-    # submitting the starting kit for merged team
+
+# def print_active_teams():
+#     print('***************** List of active teams ****************')
+#     for team in Team.query.filter(Team.is_active):
+#         print('{} members:'.format(team))
+#         for member in get_team_members(team):
+#             print('\t{}'.format(member))
+
+
+def signup_team(event_name, team_name):
+    event = Event.query.filter_by(name=event_name).one()
+    team = Team.query.filter_by(name=team_name).one()
+    event_team = EventTeam(event=event, team=team)
+    db.session.add(event_team)
+    db.session.commit()
+    # submitting the starting kit for team
+    from_submission_path = os.path.join(
+        config.ramps_path, event.problem.name, config.sandbox_d_name)
     make_submission_and_copy_files(
-        name, config.sandbox_d_name, config.sandbox_path)
-    return team
-
-
-def print_active_teams():
-    print('***************** List of active teams ****************')
-    for team in Team.query.filter(Team.is_active):
-        print('{} members:'.format(team))
-        for member in get_team_members(team):
-            print('\t{}'.format(member))
+        event_name, team_name, config.sandbox_d_name, from_submission_path)
 
 
 ######################### Submissions ###########################
@@ -357,32 +469,35 @@ def make_submission_on_cv_folds(cv_folds, submission):
         db.session.add(submission_on_cv_fold)
 
 
-def make_submission(team_name, submission_name, submission_path):
+def make_submission(event_name, team_name, submission_name, submission_path):
     # TODO: to call unit tests on submitted files. Those that are found
     # in the table that describes the workflow. For the rest just check
     # maybe size
+    event = Event.query.filter_by(name=event_name).one()
     team = Team.query.filter_by(name=team_name).one()
+    event_team = EventTeam.query.filter_by(event=event, team=team).one()
     submission = Submission.query.filter_by(
-        name=submission_name, team=team).one_or_none()
-    cv_folds = CVFold.query.all()
-    workflow_elements = WorkflowElement.query.all()
+        name=submission_name, event_team=event_team).one_or_none()
     if submission is None:
         # Checking if submission is too early
-        all_submissions = Submission.query.filter_by(team=team).order_by(
-            Submission.submission_timestamp).all()
-        last_submission = None if len(all_submissions) == 0 \
-            else all_submissions[-1]
+        all_submissions = Submission.query.filter_by(
+            event_team=event_team).order_by(
+                Submission.submission_timestamp).all()
+        if len(all_submissions) == 0:
+            last_submission = None
+        else:
+            last_submission = all_submissions[-1]
         if last_submission is not None and\
                 last_submission.name != config.sandbox_d_name:
             now = datetime.datetime.utcnow()
             last = last_submission.submission_timestamp
-            min_diff = config.min_duration_between_submissions
+            min_diff = event.min_duration_between_submissions
             diff = (now - last).total_seconds()
             if diff < min_diff:
                 raise TooEarlySubmissionError(
                     'You need to wait {} more seconds until next submission'
                     .format(int(min_diff - diff)))
-        submission = Submission(name=submission_name, team=team)
+        submission = Submission(name=submission_name, event_team=event_team)
         db.session.add(submission)
     else:
         # We allow resubmit for new or failing submissions
@@ -391,12 +506,12 @@ def make_submission(team_name, submission_name, submission_path):
             submission.state = 'new'
             submission.submission_timestamp = datetime.datetime.utcnow()
             for submission_on_cv_fold in submission.on_cv_folds:
-                # couldn't figure out how to reset to default values
+                # I couldn't figure out how to reset to default values
                 db.session.delete(submission_on_cv_fold)
         else:
             raise DuplicateSubmissionError(
-                'Submission "{}" of team "{}" exists already'.format(
-                    submission_name, team_name))
+                'Submission "{}" of team "{}" at event "{}" exists already'.format(
+                    submission_name, team_name, event_name))
 
     deposited_f_name_list = os.listdir(submission_path)
     # TODO: more error checking
@@ -404,20 +519,20 @@ def make_submission(team_name, submission_name, submission_path):
                        for f_name in deposited_f_name_list]
     deposited_extensions = [f_name.split('.')[1]
                             for f_name in deposited_f_name_list]
-    for workflow_element in workflow_elements:
+    for workflow_element in event.problem.workflow.elements:
         # We find all files with matching names to workflow_element.name.
         # If none found, raise error.
         # Then look for one that has a legal extension. If none found,
         # raise error. If there are several ones, for now we use the first
         # matching file.
 
-        name = workflow_element.name
         i_names = [i for i in range(len(deposited_types))
-                   if deposited_types[i] == name]
+                   if deposited_types[i] == workflow_element.name]
         if len(i_names) == 0:
             db.session.rollback()
-            raise MissingSubmissionFileError('{}/{}/{}: {}'.format(
-                team_name, submission_name, name, submission_path))
+            raise MissingSubmissionFileError('{}/{}/{}/{}: {}'.format(
+                event_name, team_name, submission_name, workflow_element.name,
+                submission_path))
 
         for i_name in i_names:
             extension_name = deposited_extensions[i_name]
@@ -431,8 +546,9 @@ def make_submission(team_name, submission_name, submission_path):
             extensions = extensions.join(",")
             for i_name in i_names:
                 extensions.append(deposited_extensions[i_name])
-            raise MissingExtensionError('{}/{}/{}/{}: {}'.format(
-                team_name, submission_name, name, extensions, submission_path))
+            raise MissingExtensionError('{}/{}/{}/{}/{}: {}'.format(
+                event_name, team_name, submission_name, workflow_element.name,
+                extensions, submission_path))
 
         # maybe it's a resubmit
         submission_file = SubmissionFile.query.filter_by(
@@ -453,39 +569,33 @@ def make_submission(team_name, submission_name, submission_path):
             db.session.add(submission_file)
 
     db.session.commit()  # to enact db.session.delete(submission_on_cv_fold)
-    make_submission_on_cv_folds(cv_folds, submission)
+    make_submission_on_cv_folds(event.cv_folds, submission)
     # for remembering it in the sandbox view
-    team.last_submission_name = submission_name
+    event_team.last_submission_name = submission_name
     db.session.commit()
 
     # We should copy files here
     return submission
 
 
-def make_submission_and_copy_files(team_name, new_submission_name,
+def make_submission_and_copy_files(event_name, team_name, new_submission_name,
                                    from_submission_path):
-    """Called from create_user(), merge_teams(), fetch.add_models(),
+    """Called from signup_team(), merge_teams(), fetch.add_models(),
     view.sandbox()."""
 
     submission = make_submission(
-        team_name, new_submission_name, from_submission_path)
-    team_path, new_submission_path = submission.get_paths(
-        config.submissions_path)
-
-    if not os.path.exists(team_path):
-        os.mkdir(team_path)
-    open(os.path.join(team_path, '__init__.py'), 'a').close()
+        event_name, team_name, new_submission_name, from_submission_path)
     # clean up the model directory in case it's a resubmission
-    if os.path.exists(new_submission_path):
-        shutil.rmtree(new_submission_path)
-    os.mkdir(new_submission_path)
-    open(os.path.join(new_submission_path, '__init__.py'), 'a').close()
+    if os.path.exists(submission.path):
+        shutil.rmtree(submission.path)
+    os.mkdir(submission.path)
+    open(os.path.join(submission.path, '__init__.py'), 'a').close()
 
     # copy the submission files into the model directory, should all this
     # probably go to Submission
     for f_name in submission.f_names:
         src = os.path.join(from_submission_path, f_name)
-        dst = os.path.join(new_submission_path, f_name)
+        dst = os.path.join(submission.path, f_name)
         shutil.copy2(src, dst)  # copying also metadata
         logger.info('Copying {} to {}'.format(src, dst))
 
@@ -1195,40 +1305,6 @@ def get_top_score_per_user(closing_timestamp=None):
         top_score_per_user_dict, columns=columns)
     top_score_per_user_dict_df = top_score_per_user_dict_df.sort_values('name')
     return top_score_per_user_dict_df
-    
-
-
-######################### CVFold ###########################
-
-
-def print_cv_folds():
-    print('***************** CV folds ****************')
-    for i, cv_fold in enumerate(CVFold.query.all()):
-        print i, cv_fold
-
-
-def reset_cv_folds():
-    """Changing the CV scheme without deleting the submissions."""
-    cv_folds = CVFold.query.all()
-    for cv_fold in cv_folds:
-        db.session.delete(cv_fold)
-    db.session.commit()
-    specific = config.config_object.specific
-    _, y_train = specific.get_train_data()
-    cv = specific.get_cv(y_train)
-    add_cv_folds(cv)
-    cv_folds = CVFold.query.all()
-    submissions = Submission.query.all()
-    for submission in submissions:
-        make_submission_on_cv_folds(cv_folds, submission)
-    db.session.commit()
-
-
-def add_cv_folds(cv):
-    for train_is, test_is in cv:
-        cv_fold = CVFold(train_is=train_is, test_is=test_is)
-        db.session.add(cv_fold)
-    db.session.commit()
 
 
 #################### User interactions #####################

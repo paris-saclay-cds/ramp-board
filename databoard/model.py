@@ -5,6 +5,7 @@ import logging
 import datetime
 import numpy as np
 from flask import request
+from importlib import import_module
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from databoard import db
@@ -49,12 +50,14 @@ class PredictionType(db.TypeDecorator):
     """ Storing Predictions."""
     impl = db.LargeBinary
 
+    # going into the db
     def process_bind_param(self, value, dialect):
         # we convert the initial value into np.array to handle None and lists
         if value is None:
             return None
         return zlib.compress(np.array(value.y_pred).dumps())
 
+    # going out of the db
     def process_result_value(self, value, dialect):
         if value is None:
             return None
@@ -142,9 +145,6 @@ class Team(db.Model):
         'Team', primaryjoin=('Team.acceptor_id == Team.id'), uselist=False)
 
     creation_timestamp = db.Column(db.DateTime, nullable=False)
-    is_active = db.Column(db.Boolean, default=True)  # ->ramp_teams
-
-    last_submission_name = db.Column(db.String, default=None)
 
     def __init__(self, name, admin, initiator=None, acceptor=None):
         self.name = name
@@ -158,10 +158,9 @@ class Team(db.Model):
         return str_
 
     def __repr__(self):
-        repr = '''Team(name={}, admin_name={}, is_active={},
+        repr = '''Team(name={}, admin_name={},
                   initiator={}, acceptor={})'''.format(
-            self.name, self.admin.name, self.is_active, self.initiator,
-            self.acceptor)
+            self.name, self.admin.name, self.initiator, self.acceptor)
         return repr
 
 
@@ -187,16 +186,147 @@ def get_user_teams(user):
             yield team
 
 
-def get_active_user_team(user):
-    # There should always be an active user team, if not, throw an exception
-    teams = Team.query.all()
-    for team in teams:
-        if user in get_team_members(team) and team.is_active:
-            return team
-
-
 def get_n_user_teams(user):
     return len(get_user_teams(user))
+
+
+# a given RAMP problem, like iris or variable_stars
+class Problem(db.Model):
+    __tablename__ = 'problems'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False, unique=True)
+
+    workflow_id = db.Column(
+        db.Integer, db.ForeignKey('workflows.id'), nullable=False)
+    workflow = db.relationship(
+        'Workflow', backref=db.backref('problems'))
+
+    def __init__(self, name):
+        self.name = name
+        self.workflow = Workflow.query.filter_by(
+            name=self.module.workflow_name).one()
+
+    def __repr__(self):
+        repr = 'Problem(name={})'.format(self.name)
+        return repr
+
+    @property
+    def module(self):
+        return import_module('.' + self.name, config.problems_module)
+
+
+# a given RAMP event, like iris_test or M2_data_science_2015_variable_stars
+class Event(db.Model):
+    __tablename__ = 'events'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False, unique=True)
+
+    problem_id = db.Column(
+        db.Integer, db.ForeignKey('problems.id'), nullable=False)
+    problem = db.relationship(
+        'Problem', backref=db.backref('events'))
+
+    max_members_per_team = db.Column(db.Integer, default=3)
+    # max number of submissions in Caruana's ensemble
+    max_n_ensemble = db.Column(db.Integer, default=80)
+    score_precision = db.Column(db.Integer, default=3)  # n_digits
+    is_send_trained_mails = False
+    is_send_submitted_mails = False
+
+    min_duration_between_submissions = db.Column(db.Integer, default=15 * 60)
+    opening_timestamp = db.Column(
+        db.DateTime, default=datetime.datetime(2000, 1, 1, 0, 0, 0))
+    # before links to submissions in leaderboard are not alive
+    public_opening_timestamp = db.Column(
+        db.DateTime, default=datetime.datetime(2000, 1, 1, 0, 0, 0))
+    closing_timestamp = db.Column(
+        db.DateTime, default=datetime.datetime(4000, 1, 1, 0, 0, 0))
+
+    def __init__(self, name):
+        self.name = name
+        self.problem = Problem.query.filter_by(
+            name=self.module.problem_name).one()
+
+    def __repr__(self):
+        repr = 'Event(name={})'.format(self.name)
+        return repr
+
+    @property
+    def module(self):
+        return import_module('.' + self.name, config.events_module)
+
+
+class CVFold(db.Model):
+    """Storing train and test folds, more precisely: train and test indices.
+
+    Created when the ramp event is set up.
+    """
+
+    __tablename__ = 'cv_folds'
+
+    id = db.Column(db.Integer, primary_key=True)
+    train_is = db.Column(NumpyType, nullable=False)
+    test_is = db.Column(NumpyType, nullable=False)
+
+    event_id = db.Column(
+        db.Integer, db.ForeignKey('events.id'), nullable=False)
+    event = db.relationship(
+        'Event', backref=db.backref('cv_folds'))
+
+    def __repr__(self):
+        return 'fold {}'.format(self.train_is)[:15]
+
+
+class EventAdmin(db.Model):
+    __tablename__ = 'event_admins'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    event_id = db.Column(
+        db.Integer, db.ForeignKey('events.id'), nullable=False)
+    event = db.relationship(
+        'Event', backref=db.backref('event_admins'))
+
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user = db.relationship(
+        'Event', backref=db.backref('admined_events'))
+
+
+# many-to-many
+class EventTeam(db.Model):
+    __tablename__ = 'event_teams'
+
+    id = db.Column(db.Integer, primary_key=True)
+ 
+    event_id = db.Column(
+        db.Integer, db.ForeignKey('events.id'), nullable=False)
+    event = db.relationship(
+        'Event', backref=db.backref('event_teams'))
+
+    team_id = db.Column(
+        db.Integer, db.ForeignKey('teams.id'), nullable=False)
+    team = db.relationship(
+        'Team', backref=db.backref('team_events'))
+
+    is_active = db.Column(db.Boolean, default=True)
+    last_submission_name = db.Column(db.String, default=None)
+    signup_timestamp = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, event, team):
+        self.event = event
+        self.team = team
+        self.signup_timestamp = datetime.datetime.utcnow()
+
+
+def get_active_user_team(event, user):
+    # There should always be an active user team, if not, throw an exception
+    event_teams = EventTeam.query.filter_by(event=event).all()
+    for event_team in event_teams:
+        if user in get_team_members(event_team.team) and event_team.is_active:
+            return event_team.team
 
 
 class SubmissionFileType(db.Model):
@@ -277,9 +407,28 @@ class WorkflowElementType(db.Model):
         return self.type.max_size
 
 
-# RAMP or problem id should come in here. Or even better: workflow id which
-# will then belong to RAMP or problem.
+# training and test code now belongs to the workflow, not the workflow
+# element. This latter would requre to carefully define workflow element
+# interfaces. Eg, a dilemma: classifier + calibrator needs to handled at the
+# workflow level (since calibrator needs held out data). Eventually we should
+# have both workflow-level and workflow-element-level code to avoid code
+# repetiotion.
+class Workflow(db.Model):
+    __tablename__ = 'workflows'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False, unique=True)
+
+    @property
+    def path(self):
+        return os.path.join(config.workflows_path, self.name)
+
+
 # In lists we will order files according to their ids
+# many-to-many link
+# For now files define the workflow, so eg, a feature_extractor + regressor
+# is not the same workflow as a feature_extractor + regressor + external data,
+# even though the training codes are the same.
 class WorkflowElement(db.Model):
     __tablename__ = 'workflow_elements'
 
@@ -290,17 +439,22 @@ class WorkflowElement(db.Model):
     # refer to workflow_element_type.type.name
     name = db.Column(db.String, nullable=False, unique=True)
 
+    workflow_id = db.Column(
+        db.Integer, db.ForeignKey('workflows.id'))
+    workflow = db.relationship(
+        'Workflow', backref=db.backref('elements'))
+
     workflow_element_type_id = db.Column(
         db.Integer, db.ForeignKey('workflow_element_types.id'),
         nullable=False)
     workflow_element_type = db.relationship(
         'WorkflowElementType', backref=db.backref('submission_files'))
 
-    def __init__(self, name, name_in_workflow=None):
-        self.workflow_element_type = WorkflowElementType.query.filter_by(
-            name=name).one()
+    def __init__(self, workflow, workflow_element_type, name_in_workflow=None):
+        self.workflow = workflow
+        self.workflow_element_type = workflow_element_type
         if name_in_workflow is None:
-            self.name = name
+            self.name = self.workflow_element_type.name
         else:
             self.name = name_in_workflow
 
@@ -488,12 +642,13 @@ class Submission(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=False)
-    # one-to-many, ->ramp_teams
-    team = db.relationship('Team', backref=db.backref('submissions'))
+    event_team_id = db.Column(
+        db.Integer, db.ForeignKey('event_teams.id'), nullable=False)
+    event_team = db.relationship(
+        'EventTeam', backref=db.backref('submissions'))
 
     name = db.Column(db.String(20, convert_unicode=True), nullable=False)
-    hash_ = db.Column(db.String, nullable=False)
+    hash_ = db.Column(db.String, nullable=False, index=True, unique=True)
     submission_timestamp = db.Column(db.DateTime, nullable=False)
     training_timestamp = db.Column(db.DateTime)
 
@@ -518,12 +673,13 @@ class Submission(db.Model):
     notes = db.Column(db.String, default='')  # eg, why is it disqualified
 
     # later also ramp_id
-    db.UniqueConstraint(team_id, name, name='ts_constraint')
+    db.UniqueConstraint(event_team_id, name, name='ts_constraint')
 
-    def __init__(self, name, team):
+    def __init__(self, name, event_team):
         self.name = name
-        self.team = team
+        self.event_team = event_team
         sha_hasher = hashlib.sha1()
+        sha_hasher.update(self.event.name.encode('utf-8'))
         sha_hasher.update(self.team.name.encode('utf-8'))
         sha_hasher.update(self.name.encode('utf-8'))
         # We considered using the id, but then it will be given away in the
@@ -532,14 +688,23 @@ class Submission(db.Model):
         self.submission_timestamp = datetime.datetime.utcnow()
 
     def __str__(self):
-        return 'Submission({}/{})'.format(self.team.name, self.name)
+        return 'Submission({}/{}/{})'.format(
+            self.event.name, self.team.name, self.name)
 
     def __repr__(self):
-        repr = '''Submission(team_name={}, name={}, files={},
+        repr = '''Submission(event_name={}, team_name={}, name={}, files={},
                   state={}, train_time={})'''.format(
-            self.team.name, self.name, self.files,
+            self.event.name, self.team.name, self.name, self.files,
             self.state, self.train_time_cv_mean)
         return repr
+
+    @hybrid_property
+    def team(self):
+        return self.event_team.team
+
+    @hybrid_property
+    def event(self):
+        return self.event_team.event
 
     @hybrid_property
     def is_error(self):
@@ -560,9 +725,8 @@ class Submission(db.Model):
 
     @property
     def path(self):
-        path = os.path.join(
-            config.submissions_path, self.team.name, self.hash_)
-        return path
+        return os.path.join(
+            config.submissions_path, 'submission_' + '{0:09d}'.format(self.id))
 
     @property
     def module(self):
@@ -651,11 +815,6 @@ class Submission(db.Model):
         self.error_msg = error_msg
         for submission_on_cv_fold in self.on_cv_folds:
             submission_on_cv_fold.set_error(error, error_msg)
-
-    def get_paths(self, submissions_path=config.submissions_path):
-        team_path = os.path.join(submissions_path, self.team.name)
-        submission_path = os.path.join(team_path, self.hash_)
-        return team_path, submission_path
 
     def compute_valid_score_cv_bag(self):
         """Cv-bags cv_fold.valid_predictions using combine_predictions_list.
@@ -804,21 +963,6 @@ def get_next_best_single_fold(predictions_list, true_predictions,
         return np.append(best_index_list, best_index), best_score
     else:
         return best_index_list, best_score
-
-
-class CVFold(db.Model):
-    """Created when the ramp is set up. Storing train and test folds, more
-    precisely: train and test indices. Should be related to the data set
-    and the ramp (that defines the cv). """
-
-    __tablename__ = 'cv_folds'
-
-    id = db.Column(db.Integer, primary_key=True)
-    train_is = db.Column(NumpyType, nullable=False)
-    test_is = db.Column(NumpyType, nullable=False)
-
-    def __repr__(self):
-        return 'fold {}'.format(self.train_is)[:15]
 
 
 # TODO: rename submission to workflow and submitted file to workflow_element

@@ -75,7 +75,7 @@ rsync -rRultv user_batches/m2_20160121 root@onevm-177.lal.in2p3.fr:/mnt/datacamp
 fab add_users_from_file:users_to_add.csv,passwords.csv
  - log in under other user, check site
  - when everything is fine, send mail (port can overwrite config.config_object.server_port in the mail):
-fab send_password_mails:passwords.csv,port=<port>
+fab send_password_mails:passwords.csv,port=<port> 
 
 
 ## Command description 
