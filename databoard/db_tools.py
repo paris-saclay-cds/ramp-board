@@ -20,7 +20,7 @@ from databoard.model import User, Team, Submission, SubmissionFile,\
     DuplicateSubmissionError, MissingSubmissionFileError,\
     MissingExtensionError,\
     combine_predictions_list, get_next_best_single_fold,\
-    get_active_user_team, get_user_teams, get_n_team_members,\
+    get_active_user_event_team, get_user_teams, get_n_team_members,\
     get_team_members
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
@@ -241,18 +241,19 @@ def add_workflow(workflow_name, element_type_names):
     workflow = Workflow.query.filter_by(name=workflow_name).one_or_none()
     if workflow is None:
         db.session.add(Workflow(name=workflow_name))
-    for element_type_name in element_type_names:
-        workflow_element_type = WorkflowElementType.query.filter_by(
-            name=element_type_name).one()
-        workflow_element =\
-            WorkflowElement.query.filter_by(
-                workflow=workflow,
-                workflow_element_type=workflow_element_type).one_or_none()
-        if workflow_element is None:
-            db.session.add(WorkflowElement(
-                workflow=workflow,
-                workflow_element_type=workflow_element_type))
-    db.session.commit()
+        workflow = Workflow.query.filter_by(name=workflow_name).one()
+        for element_type_name in element_type_names:
+            workflow_element_type = WorkflowElementType.query.filter_by(
+                name=element_type_name).one()
+            workflow_element =\
+                WorkflowElement.query.filter_by(
+                    workflow=workflow,
+                    workflow_element_type=workflow_element_type).one_or_none()
+            if workflow_element is None:
+                db.session.add(WorkflowElement(
+                    workflow=workflow,
+                    workflow_element_type=workflow_element_type))
+        db.session.commit()
 
 
 def add_problem(problem_name):
@@ -290,6 +291,18 @@ def add_event(event_name):
         cv_fold = CVFold(event=event, train_is=train_is, test_is=test_is)
         db.session.add(cv_fold)
     db.session.commit()
+
+
+def print_events():
+    print('***************** Events ****************')
+    for i, event in enumerate(Event.query.all()):
+        print i, event
+
+
+def print_problems():
+    print('***************** Problems ****************')
+    for i, problem in enumerate(Problem.query.all()):
+        print i, problem
 
 
 def print_cv_folds():
@@ -345,11 +358,11 @@ def validate_user(user):
     user.access_level = 'user'
 
 
-def get_sandbox(user):
-    team = get_active_user_team(user)
-    submission = Submission.query.filter(
-        team.id == Submission.team_id).filter(
-        Submission.name == config.sandbox_d_name).one()
+def get_sandbox(event, user):
+    event_team = get_active_user_event_team(event, user)
+
+    submission = Submission.query.filter_by(
+        event_team=event_team, name=config.sandbox_d_name).one_or_none()
     return submission
 
 
@@ -359,7 +372,7 @@ def print_users():
         print('{} belongs to teams:'.format(user))
         for team in get_user_teams(user):
             print('\t{}'.format(team))
-        print('Sandbox = {}'.format(get_sandbox(user)))
+        # print('Sandbox = {}'.format(get_sandbox(event, user)))
 
 
 ######################### Teams ###########################
@@ -422,12 +435,14 @@ def print_users():
 #     return team
 
 
-# def print_active_teams():
-#     print('***************** List of active teams ****************')
-#     for team in Team.query.filter(Team.is_active):
-#         print('{} members:'.format(team))
-#         for member in get_team_members(team):
-#             print('\t{}'.format(member))
+def print_active_teams(event_name):
+    print('***************** List of active teams ****************')
+    event = Event.query.filter_by(name=event_name).one()
+    event_teams = EventTeam.query.filter_by(event=event, is_active=True).all()
+    for event_team in event_teams:
+        print('{}/{} members:'.format(event_team.event, event_team.team))
+        for member in get_team_members(event_team.team):
+            print('\t{}'.format(member))
 
 
 def signup_team(event_name, team_name):
@@ -445,18 +460,22 @@ def signup_team(event_name, team_name):
 
 ######################### Submissions ###########################
 
-def set_state(team_name, submission_name, state):
+def set_state(event_name, team_name, submission_name, state):
+    event = Event.query.filter_by(name=event_name).one()
     team = Team.query.filter_by(name=team_name).one()
+    event_team = EventTeam.query.filter_by(event=event, team=team).one()
     submission = Submission.query.filter_by(
-        name=submission_name, team=team).one()
+        name=submission_name, event_team=event_team).one()
     submission.set_state(state)
     db.session.commit()
 
 
-def delete_submission(team_name, submission_name):
+def delete_submission(event_name, team_name, submission_name):
+    event = Event.query.filter_by(name=event_name).one()
     team = Team.query.filter_by(name=team_name).one()
+    event_team = EventTeam(event=event, team=team)
     submission = Submission.query.filter_by(
-        name=submission_name, team=team).one()
+        name=submission_name, event_team=event_team).one()
     shutil.rmtree(submission.path)
     db.session.delete(submission)
     db.session.commit()
@@ -604,9 +623,9 @@ def make_submission_and_copy_files(event_name, team_name, new_submission_name,
 
 
 def send_trained_mails(submission):
-    if config.is_send_trained_mails:
+    if submission.event_team.event.is_send_trained_mails:
         try:
-            users = get_team_members(submission.team)
+            users = get_team_members(submission.event_team.team)
             recipient_list = [user.email for user in users]
             gmail_user = config.MAIL_USERNAME
             gmail_pwd = config.MAIL_PASSWORD
@@ -615,9 +634,9 @@ def send_trained_mails(submission):
             smtpserver.starttls()
             smtpserver.ehlo
             smtpserver.login(gmail_user, gmail_pwd)
-            subject = 'submission {} was trained at {}'.format(
-                submission.name, date_time_format(
-                    submission.training_timestamp))
+            subject = 'submission {} for {} was trained at {}'.format(
+                submission.name, submission.event_team.event.name, 
+                date_time_format(submission.training_timestamp))
             header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
                 recipient_list, gmail_user, subject)
             body = ''
@@ -628,6 +647,11 @@ def send_trained_mails(submission):
 
 
 def train_test_submissions(submissions=None, force_retrain_test=False):
+    """Trains and tests submission.
+
+    If submissions is None, trains and tests all submissions.
+    """
+
     if submissions is None:
         submissions = Submission.query.filter(
             Submission.name != 'sandbox').order_by(Submission.id).all()
@@ -638,6 +662,7 @@ def train_test_submissions(submissions=None, force_retrain_test=False):
 # For parallel call
 def train_test_submission(submission, force_retrain_test=False):
     """We do it here so it's dockerizable."""
+
     detached_submission_on_cv_folds = [
         DetachedSubmissionOnCVFold(submission_on_cv_fold)
         for submission_on_cv_fold in submission.on_cv_folds]
@@ -645,9 +670,8 @@ def train_test_submission(submission, force_retrain_test=False):
     if force_retrain_test:
         logger.info('Forced retraining/testing {}'.format(submission))
 
-    specific = config.config_object.specific
-    X_train, y_train = specific.get_train_data()
-    X_test, y_test = specific.get_test_data()
+    X_train, y_train = submission.event.problem.module.get_train_data()
+    X_test, y_test = submission.event.problem.module.get_test_data()
 
     # Parallel, dict
     if config.is_parallelize:
@@ -655,9 +679,9 @@ def train_test_submission(submission, force_retrain_test=False):
         # updates the detached submission_on_cv_fold objects. If it doesn't
         # work, we can go back to multiprocessing and
         logger.info('Number of processes = {}'.format(
-            config.config_object.n_cpus))
+            submission.event.n_CV))
         detached_submission_on_cv_folds = Parallel(
-            n_jobs=config.config_object.n_cpus, verbose=5)(
+            n_jobs=submission.event.n_CV, verbose=5)(
             delayed(train_test_submission_on_cv_fold)(
                 submission_on_cv_fold, X_train, y_train, X_test, y_test,
                 force_retrain_test)
@@ -670,7 +694,7 @@ def train_test_submission(submission, force_retrain_test=False):
         for detached_submission_on_cv_fold, submission_on_cv_fold in\
                 zip(detached_submission_on_cv_folds, submission.on_cv_folds):
             train_test_submission_on_cv_fold(
-                detached_submission_on_cv_fold, 
+                detached_submission_on_cv_fold,
                 X_train, y_train, X_test, y_test,
                 force_retrain_test)
             submission_on_cv_fold.update(detached_submission_on_cv_fold)
@@ -703,127 +727,133 @@ def _make_error_message(e):
     return log_msg, error_msg
 
 
-def train_test_submission_on_cv_fold(submission_on_cv_fold, X_train, y_train,
+def train_test_submission_on_cv_fold(detached_submission_on_cv_fold, 
+                                     X_train, y_train,
                                      X_test, y_test, force_retrain_test=False):
-    train_submission_on_cv_fold(submission_on_cv_fold, X_train, y_train,
-                                force_retrain=force_retrain_test)
-    if 'error' not in submission_on_cv_fold.state:
-        test_submission_on_cv_fold(submission_on_cv_fold, X_test, y_test,
-                                   force_retest=force_retrain_test)
+    train_submission_on_cv_fold(
+        detached_submission_on_cv_fold, X_train, y_train,
+        force_retrain=force_retrain_test)
+    if 'error' not in detached_submission_on_cv_fold.state:
+        test_submission_on_cv_fold(
+            detached_submission_on_cv_fold, X_test, y_test,
+            force_retest=force_retrain_test)
     # When called in a single thread, we don't need the return value,
     # submission_on_cv_fold is modified in place. When called in parallel
     # multiprocessing mode, however, copies are made when the function is
     # called, so we have to explicitly return the modified object (so it is
     # ercopied into the original object)
-    return submission_on_cv_fold
+    return detached_submission_on_cv_fold
 
 
-def train_submission_on_cv_fold(submission_on_cv_fold, X, y,
+def train_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
                                 force_retrain=False):
-    if submission_on_cv_fold.state not in ['new', 'checked']\
+    if detached_submission_on_cv_fold.state not in ['new', 'checked']\
             and not force_retrain:
-        if 'error' in submission_on_cv_fold.state:
+        if 'error' in detached_submission_on_cv_fold.state:
             logger.error('Trying to train failed {}'.format(
-                submission_on_cv_fold))
+                detached_submission_on_cv_fold))
         else:
-            logger.info('Already trained {}'.format(submission_on_cv_fold))
+            logger.info('Already trained {}'.format(
+                detached_submission_on_cv_fold))
         return
 
     # so to make it importable, TODO: should go to make_submission
     # open(os.path.join(self.submission.path, '__init__.py'), 'a').close()
 
-    train_is = submission_on_cv_fold.train_is
-    specific = config.config_object.specific
+    train_is = detached_submission_on_cv_fold.train_is
 
-    logger.info('Training {}'.format(submission_on_cv_fold))
+    logger.info('Training {}'.format(detached_submission_on_cv_fold))
     start = timeit.default_timer()
     try:
-        submission_on_cv_fold.trained_submission = specific.train_submission(
-            submission_on_cv_fold.module, X, y, train_is)
-        submission_on_cv_fold.state = 'trained'
+        detached_submission_on_cv_fold.trained_submission =\
+            detached_submission_on_cv_fold.train_submission(
+                detached_submission_on_cv_fold.module, X, y, train_is)
+        detached_submission_on_cv_fold.state = 'trained'
     except Exception, e:
-        submission_on_cv_fold.state = 'training_error'
-        log_msg, submission_on_cv_fold.error_msg = _make_error_message(e)
+        detached_submission_on_cv_fold.state = 'training_error'
+        log_msg, detached_submission_on_cv_fold.error_msg =\
+            _make_error_message(e)
         logger.error(
             'Training {} failed with exception: \n{}'.format(
-                submission_on_cv_fold, log_msg))
+                detached_submission_on_cv_fold, log_msg))
         return
     end = timeit.default_timer()
-    submission_on_cv_fold.train_time = end - start
+    detached_submission_on_cv_fold.train_time = end - start
 
-    logger.info('Validating {}'.format(submission_on_cv_fold))
+    logger.info('Validating {}'.format(detached_submission_on_cv_fold))
     start = timeit.default_timer()
     try:
-        predictions = specific.test_submission(
-            submission_on_cv_fold.trained_submission, X, range(len(y)))
-        if predictions.n_samples == len(y):
-            submission_on_cv_fold.full_train_predictions = predictions
-            submission_on_cv_fold.state = 'validated'
+        y_pred = detached_submission_on_cv_fold.test_submission(
+            detached_submission_on_cv_fold.trained_submission, X,
+            range(len(y)))
+        if len(y_pred) == len(y):
+            detached_submission_on_cv_fold.full_train_y_pred = y_pred
+            detached_submission_on_cv_fold.state = 'validated'
         else:
-            submission_on_cv_fold.error_msg = 'Wrong output dimension in ' +\
-                'predict: {} instead of {}'.format(
-                    predictions.n_samples, len(y))
-            submission_on_cv_fold.state = 'validating_error'
+            detached_submission_on_cv_fold.error_msg =\
+                'Wrong output dimension in ' +\
+                'predict: {} instead of {}'.format(len(y_pred), len(y))
+            detached_submission_on_cv_fold.state = 'validating_error'
             logger.error(
                 'Validating {} failed with exception: \n{}'.format(
-                    submission_on_cv_fold.error_msg))
+                    detached_submission_on_cv_fold.error_msg))
             return
     except Exception, e:
-        submission_on_cv_fold.state = 'validating_error'
-        log_msg, submission_on_cv_fold.error_msg = _make_error_message(e)
+        detached_submission_on_cv_fold.state = 'validating_error'
+        log_msg, detached_submission_on_cv_fold.error_msg =\
+            _make_error_message(e)
         logger.error(
             'Validating {} failed with exception: \n{}'.format(
-                submission_on_cv_fold, log_msg))
+                detached_submission_on_cv_fold, log_msg))
         return
     end = timeit.default_timer()
-    submission_on_cv_fold.valid_time = end - start
+    detached_submission_on_cv_fold.valid_time = end - start
 
 
-def test_submission_on_cv_fold(submission_on_cv_fold, X, y,
+def test_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
                                force_retest=False):
-    if submission_on_cv_fold.state not in\
+    if detached_submission_on_cv_fold.state not in\
             ['new', 'checked', 'trained', 'validated'] and not force_retest:
-        if 'error' in submission_on_cv_fold.state:
+        if 'error' in detached_submission_on_cv_fold.state:
             logger.error('Trying to test failed {}'.format(
-                submission_on_cv_fold))
+                detached_submission_on_cv_fold))
         else:
-            logger.info('Already tested {}'.format(submission_on_cv_fold))
+            logger.info('Already tested {}'.format(detached_submission_on_cv_fold))
         return
 
-    specific = config.config_object.specific
-
-    logger.info('Testing {}'.format(submission_on_cv_fold))
+    logger.info('Testing {}'.format(detached_submission_on_cv_fold))
     start = timeit.default_timer()
     try:
-        predictions = specific.test_submission(
-            submission_on_cv_fold.trained_submission, X, range(len(y)))
-        if predictions.n_samples == len(y):
-            submission_on_cv_fold.test_predictions = predictions
-            submission_on_cv_fold.state = 'tested'
+        y_pred = detached_submission_on_cv_fold.test_submission(
+            detached_submission_on_cv_fold.trained_submission, X, range(len(y)))
+        if len(y_pred) == len(y):
+            detached_submission_on_cv_fold.test_y_pred = y_pred
+            detached_submission_on_cv_fold.state = 'tested'
         else:
-            submission_on_cv_fold.error_msg = 'Wrong output dimension in ' +\
-                'predict: {} instead of {}'.format(
-                    predictions.n_samples, len(y))
-            submission_on_cv_fold.state = 'testing_error'
+            detached_submission_on_cv_fold.error_msg =\
+                'Wrong output dimension in ' +\
+                'predict: {} instead of {}'.format(len(y_pred), len(y))
+            detached_submission_on_cv_fold.state = 'testing_error'
             logger.error(
                 'Testing {} failed with exception: \n{}'.format(
-                    submission_on_cv_fold.error_msg))
+                    detached_submission_on_cv_fold.error_msg))
     except Exception, e:
-        submission_on_cv_fold.state = 'testing_error'
-        log_msg, submission_on_cv_fold.error_msg = _make_error_message(e)
+        detached_submission_on_cv_fold.state = 'testing_error'
+        log_msg, detached_submission_on_cv_fold.error_msg = _make_error_message(e)
         logger.error(
             'Testing {} failed with exception: \n{}'.format(
-                submission_on_cv_fold, log_msg))
+                detached_submission_on_cv_fold, log_msg))
         return
     end = timeit.default_timer()
-    submission_on_cv_fold.test_time = end - start
+    detached_submission_on_cv_fold.test_time = end - start
 
 
-def compute_contributivity(force_ensemble=False):
+def compute_contributivity(event_name, force_ensemble=False):
     """Computes contributivity leaderboard scores.
 
     Parameters
     ----------
+    event_name : string
     force_ensemble : boolean
         To force include deleted models.
     """
@@ -841,19 +871,25 @@ def compute_contributivity(force_ensemble=False):
     # It would also make more sense to bag differently in eah fold, see the
     # comment in cv_fold.get_combined_predictions
 
-    true_predictions_train = generic.get_true_predictions_train()
-    true_predictions_test = generic.get_true_predictions_test()
+    event = Event.query.filter_by(name=event_name).one()
+    submissions = get_submissions(event_name)
+
+    true_predictions_train = event.problem.true_predictions_train()
+    true_predictions_test = event.problem.true_predictions_test()
 
     combined_predictions_list = []
     best_predictions_list = []
     combined_test_predictions_list = []
     best_test_predictions_list = []
     test_is_list = []
-    for cv_fold in CVFold.query.all():
+    for cv_fold in CVFold.query.filter_by(event=event).all():
         logger.info('{}'.format(cv_fold))
+        true_predictions_valid = event.problem.true_predictions_valid(
+            cv_fold.test_is)
         combined_predictions, best_predictions,\
             combined_test_predictions, best_test_predictions =\
-            compute_contributivity_on_fold(cv_fold, force_ensemble)
+            _compute_contributivity_on_fold(
+                cv_fold, true_predictions_valid, force_ensemble)
         # TODO: if we do asynchron CVs, this has to be revisited
         if combined_predictions is None:
             logger.info('No submissions to combine')
@@ -863,7 +899,7 @@ def compute_contributivity(force_ensemble=False):
         combined_test_predictions_list.append(combined_test_predictions)
         best_test_predictions_list.append(best_test_predictions)
         test_is_list.append(cv_fold.test_is)
-    for submission in Submission.query.all():
+    for submission in submissions:
         submission.set_contributivity(is_commit=False)
     db.session.commit()
     from model import _get_score_cv_bags
@@ -872,7 +908,7 @@ def compute_contributivity(force_ensemble=False):
                                  if c is not None]
     if len(combined_predictions_list) > 0:
         scores = _get_score_cv_bags(
-            combined_predictions_list, true_predictions_train,
+            event, combined_predictions_list, true_predictions_train,
             test_is_list)
         logger.info('Combined combined valid score = {}'.format(scores))
         with open('combined_combined_valid_score.txt', 'w') as f:
@@ -886,14 +922,15 @@ def compute_contributivity(force_ensemble=False):
                              if c is not None]
     if len(best_predictions_list) > 0:
         logger.info('Combined foldwise best valid score = {}'.format(
-            _get_score_cv_bags(best_predictions_list,
-                               true_predictions_train, test_is_list)))
+            _get_score_cv_bags(
+                event, best_predictions_list, true_predictions_train, 
+                test_is_list)))
 
     combined_test_predictions_list = [c for c in combined_test_predictions_list
                                       if c is not None]
     if len(combined_test_predictions_list) > 0:
         scores = _get_score_cv_bags(
-            combined_test_predictions_list, true_predictions_test)
+            event, combined_test_predictions_list, true_predictions_test)
         logger.info('Combined combined test score = {}'.format(scores))
         with open('combined_combined_test_score.txt', 'w') as f:
             f.write(str(round(scores[-1], config.score_precision)))
@@ -905,13 +942,15 @@ def compute_contributivity(force_ensemble=False):
                                   if c is not None]
     if len(best_test_predictions_list) > 0:
         logger.info('Combined foldwise best test score = {}'.format(
-            _get_score_cv_bags(best_test_predictions_list,
-                               true_predictions_test)))
+            _get_score_cv_bags(
+                event, best_test_predictions_list, true_predictions_test)))
 
 
-def compute_contributivity_on_fold(cv_fold, force_ensemble=False):
-    """Constructs the best model combination on a single fold, using greedy
-    forward selection with replacement. See
+def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
+                                    force_ensemble=False):
+    """Construct the best model combination on a single fold.
+
+    Using greedy forward selection with replacement. See
     http://www.cs.cornell.edu/~caruana/ctp/ct.papers/
     caruana.icml04.icdm06long.pdf.
     Then sets foldwise contributivity.
@@ -938,14 +977,15 @@ def compute_contributivity_on_fold(cv_fold, force_ensemble=False):
     ]
     if len(selected_submissions_on_fold) == 0:
         return None, None, None, None
-    true_predictions = generic.get_true_predictions_valid(cv_fold.test_is)
     # TODO: maybe this can be simplified. Don't need to get down
     # to prediction level.
     predictions_list = [
         submission_on_fold.valid_predictions
         for submission_on_fold in selected_submissions_on_fold]
     valid_scores = [
-        submission_on_fold.valid_score
+        # To convert it into Score instance which knows if lower/heigher
+        # is better
+        cv_fold.event.score.convert(submission_on_fold.valid_score)
         for submission_on_fold in selected_submissions_on_fold]
     best_prediction_index = np.argmax(valid_scores)
     best_index_list = np.array([best_prediction_index])
@@ -953,7 +993,8 @@ def compute_contributivity_on_fold(cv_fold, force_ensemble=False):
     while improvement and len(best_index_list) < config.max_n_ensemble:
         old_best_index_list = best_index_list
         best_index_list, score = get_next_best_single_fold(
-            predictions_list, true_predictions, best_index_list)
+            cv_fold.event, predictions_list, true_predictions_valid,
+            best_index_list)
         improvement = len(best_index_list) != len(old_best_index_list)
         logger.info('\t{}: {}'.format(best_index_list, score))
     # reset
@@ -989,36 +1030,17 @@ def compute_contributivity_on_fold(cv_fold, force_ensemble=False):
         combined_test_predictions, best_test_predictions
 
 
-def get_public_leaderboard(team_name=None, user=None, is_open_code=True):
+def get_public_leaderboard(event_name, team_name=None, user_name=None, 
+                           is_open_code=True):
     """
     Returns
     -------
     leaderboard_html : html string
     """
 
-    # We can't query on non-hybrid properties like Submission.name_with_link,
-    # so first we make the join then we extract the class members,
-    # including @property members (that can't be compiled into
-    # SQL queries)
-    if team_name is not None:
-        submissions_teams = db.session.query(Submission, Team).filter(
-            Team.id == Submission.team_id).filter(
-            Submission.is_public_leaderboard).filter(
-            Submission.name != config.sandbox_d_name).filter(
-            Team.name == team_name).all()
-    elif user is not None:
-        submissions_teams = []
-        for team_name in [team.name for team in get_user_teams(user)]:
-            submissions_teams += db.session.query(Submission, Team).filter(
-                Team.id == Submission.team_id).filter(
-                Team.name == team_name).filter(
-                Submission.name != config.sandbox_d_name).filter(
-                Submission.is_public_leaderboard).all()
-    else:
-        submissions_teams = db.session.query(Submission, Team).filter(
-            Team.id == Submission.team_id).filter(
-            Submission.is_public_leaderboard).filter(
-            Submission.name != config.sandbox_d_name).all()
+    submissions = get_submissions(event_name, team_name, user_name)
+    submissions = [submission for submission in submissions
+                   if submission.is_public_leaderboard]
 
     columns = ['team',
                'submission',
@@ -1029,16 +1051,16 @@ def get_public_leaderboard(team_name=None, user=None, is_open_code=True):
                'submitted at (UTC)']
     leaderboard_dict_list = [
         {column: value for column, value in zip(
-            columns, [team.name,
+            columns, [submission.event_team.team.name,
                       submission.name_with_link if is_open_code
                       else submission.name[:20],
                       round(submission.valid_score_cv_bag,
-                            config.score_precision),
+                            submission.event_team.event.score_precision),
                       int(100 * submission.contributivity + 0.5),
                       int(submission.train_time_cv_mean + 0.5),
                       int(submission.valid_time_cv_mean + 0.5),
                       date_time_format(submission.submission_timestamp)])}
-        for submission, team in submissions_teams
+        for submission in submissions
     ]
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
     leaderboard_df = leaderboard_df.sort_values(
@@ -1055,17 +1077,16 @@ def get_public_leaderboard(team_name=None, user=None, is_open_code=True):
     return leaderboard_html
 
 
-def get_private_leaderboard():
+def get_private_leaderboard(event_name, team_name=None, user_name=None):
     """
     Returns
     -------
     leaderboard_html : html string
     """
 
-    submissions_teams = db.session.query(Submission, Team).filter(
-        Team.id == Submission.team_id).filter(
-        Submission.is_private_leaderboard).filter(
-        Submission.name != config.sandbox_d_name).all()
+    submissions = get_submissions(event_name, team_name, user_name)
+    submissions = [submission for submission in submissions
+                   if submission.is_private_leaderboard]
 
     columns = ['team',
                'submission',
@@ -1081,29 +1102,24 @@ def get_private_leaderboard():
                'test time',
                'tet std',
                'submitted at (UTC)']
+    precision = submission.event_team.event.score_precision
     leaderboard_dict_list = [
         {column: value for column, value in zip(
-            columns, [team.name,
+            columns, [submission.event_team.team.name,
                       submission.name_with_link,
-                      round(submission.valid_score_cv_bag,
-                            config.score_precision),
-                      round(submission.valid_score_cv_mean,
-                            config.score_precision),
-                      round(submission.valid_score_cv_std,
-                            config.score_precision + 1),
-                      round(submission.test_score_cv_bag,
-                            config.score_precision),
-                      round(submission.test_score_cv_mean,
-                            config.score_precision),
-                      round(submission.test_score_cv_std,
-                            config.score_precision + 1),
+                      round(submission.valid_score_cv_bag, precision),
+                      round(submission.valid_score_cv_mean, precision),
+                      round(submission.valid_score_cv_std, precision + 1),
+                      round(submission.test_score_cv_bag, precision),
+                      round(submission.test_score_cv_mean, precision),
+                      round(submission.test_score_cv_std, precision + 1),
                       int(100 * submission.contributivity + 0.5),
                       round(submission.train_time_cv_mean),
                       round(submission.train_time_cv_std),
                       round(submission.valid_time_cv_mean),
                       round(submission.valid_time_cv_std),
                       date_time_format(submission.submission_timestamp)])}
-        for submission, team in submissions_teams
+        for submission in submissions
     ]
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
     leaderboard_df = leaderboard_df.sort_values(
@@ -1120,36 +1136,27 @@ def get_private_leaderboard():
     return leaderboard_html
 
 
-def get_new_submissions(user=None):
+def get_failed_leaderboard(event_name, team_name=None, user_name=None):
     """
     Returns
     -------
     leaderboard_html : html string
     """
-    if user is None:
-        submissions_teams = db.session.query(Submission, Team).filter(
-            Team.id == Submission.team_id).filter(
-            Submission.state == 'new').filter(
-            Submission.name != config.sandbox_d_name).order_by(
-            Submission.submission_timestamp).all()
-    else:
-        submissions_teams = []
-        for team_name in [team.name for team in get_user_teams(user)]:
-            submissions_teams += db.session.query(Submission, Team).filter(
-                Team.id == Submission.team_id).filter(
-                Team.name == team_name).filter(
-                Submission.state == 'new').filter(
-                Submission.name != config.sandbox_d_name).order_by(
-                Submission.submission_timestamp).all()
+    submissions = get_submissions(event_name, team_name, user_name)
+    submissions = [submission for submission in submissions
+                   if submission.is_error]
+
     columns = ['team',
                'submission',
-               'submitted at (UTC)']
+               'submitted at (UTC)',
+               'error']
     leaderboard_dict_list = [
         {column: value for column, value in zip(
-            columns, [team.name,
+            columns, [submission.event_team.team.name,
                       submission.name_with_link,
-                      date_time_format(submission.submission_timestamp)])}
-        for submission, team in submissions_teams
+                      date_time_format(submission.submission_timestamp),
+                      submission.state_with_link])}
+        for submission in submissions
     ]
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
     html_params = dict(
@@ -1164,15 +1171,83 @@ def get_new_submissions(user=None):
     return leaderboard_html
 
 
-def get_team_submissions(team_name, submission_name=None):
-    team = Team.query.filter(Team.name == team_name).one()
-    if submission_name is None:
-        submissions = Submission.query.filter(
-            team.id == Submission.team_id).all()
+def get_new_leaderboard(event_name, team_name=None, user_name=None):
+    """
+    Returns
+    -------
+    leaderboard_html : html string
+    """
+    submissions = get_submissions(event_name, team_name, user_name)
+    submissions = [submission for submission in submissions
+                   if submission.state == 'new' and submission.is_not_sandbox]
+
+    columns = ['team',
+               'submission',
+               'submitted at (UTC)']
+    leaderboard_dict_list = [
+        {column: value for column, value in zip(
+            columns, [submission.event_team.team.name,
+                      submission.name_with_link,
+                      date_time_format(submission.submission_timestamp)])}
+        for submission in submissions
+    ]
+    leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
+    html_params = dict(
+        escape=False,
+        index=False,
+        max_cols=None,
+        max_rows=None,
+        justify='left',
+        classes=['ui', 'blue', 'celled', 'table', 'sortable']
+    )
+    leaderboard_html = leaderboard_df.to_html(**html_params)
+    return leaderboard_html
+
+
+def get_submissions(event_name=None, user_name=None, team_name=None, 
+                    submission_name=None):
+    if event_name is None:  # All submissions
+        submissions = Submission.query.all()
     else:
-        submissions = Submission.query.filter(
-            team.id == Submission.team_id).filter(
-            submission_name == Submission.name).all()
+        if team_name is None: 
+            if user_name is None:  # All submissions in a given event
+                submissions_ = db.session.query(
+                    Submission, Event, EventTeam).filter(
+                    Event.name == event_name).filter(
+                    Event.id == EventTeam.event_id).filter(
+                    EventTeam.id == Submission.event_team_id).all()
+            else:
+                # All submissions for a given event by all the teams of a user
+                submissions_ = []
+                user_teams = get_user_event_teams(event_name, user_name)
+                for team in user_teams:
+                    submissions_ += db.session.query(
+                        Submission, Event, Team, EventTeam).filter(
+                        Team.id == team.id).filter(
+                        Team.id == Submission.team_id).filter(
+                        Event.name == event_name).filter(
+                        Event.id == EventTeam.event_id).filter(
+                        EventTeam.id == Submission.event_team_id).all()
+        else:
+            if submission_name is None:
+                # All submissions in a given event and team
+                submissions_ = db.session.query(
+                    Submission, Event, Team, EventTeam).filter(
+                    Event.name == event_name).filter(
+                    Team.name == team_name).filter(
+                    Event.id == EventTeam.event_id).filter(
+                    Team.id == EventTeam.team_id).filter(
+                    EventTeam.id == Submission.event_team_id).all()
+            else:  # Given submission
+                submissions_ = db.session.query(
+                    Submission, Event, Team, EventTeam).filter(
+                    Submission.name == submission_name).filter(
+                    Event.name == event_name).filter(
+                    Team.name == team_name).filter(
+                    Event.id == EventTeam.event_id).filter(
+                    Team.id == EventTeam.team_id).filter(
+                    EventTeam.id == Submission.event_team_id).all()
+        submissions = list(zip(*submissions_)[0])
     return submissions
 
 
@@ -1190,55 +1265,9 @@ def get_earliest_new_submission():
         return new_submissions[0]
 
 
-def get_failed_submissions(user=None):
-    """
-    Returns
-    -------
-    leaderboard_html : html string
-    """
-    if user is None:
-        submissions_teams = db.session.query(Submission, Team).filter(
-            Team.id == Submission.team_id).filter(
-            Submission.is_error).order_by(
-            Submission.submission_timestamp).all()
-    else:
-        submissions_teams = []
-        for team_name in [team.name for team in get_user_teams(user)]:
-            submissions_teams += db.session.query(Submission, Team).filter(
-                Team.id == Submission.team_id).filter(
-                Team.name == team_name).filter(
-                Submission.is_error).order_by(
-                Submission.submission_timestamp).all()
-    columns = ['team',
-               'submission',
-               'submitted at (UTC)',
-               'error']
-    leaderboard_dict_list = [
-        {column: value for column, value in zip(
-            columns, [team.name,
-                      submission.name_with_link,
-                      date_time_format(submission.submission_timestamp),
-                      submission.state_with_link])}
-        for submission, team in submissions_teams
-    ]
-    leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
-    html_params = dict(
-        escape=False,
-        index=False,
-        max_cols=None,
-        max_rows=None,
-        justify='left',
-        classes=['ui', 'blue', 'celled', 'table', 'sortable']
-    )
-    leaderboard_html = leaderboard_df.to_html(**html_params)
-    return leaderboard_html
-
-
-def print_submissions(submissions=None):
-    if submissions is None:
-        submissions = Submission.query.order_by(Submission.id).all()
+def print_submissions(event_name=None, team_name=None, submissions=None):
     print('***************** List of submissions ****************')
-    for submission in submissions:
+    for submission in get_submissions(event_name, team_name, submissions):
         print submission
         print('\tstate = {}'.format(submission.state))
         print('\tcontributivity = {0:.2f}'.format(

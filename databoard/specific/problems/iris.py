@@ -5,7 +5,7 @@ import os
 import sys
 import pandas as pd
 from sklearn.cross_validation import train_test_split
-import databoard.multiclass_prediction as multiclass_prediction
+import databoard.multiclass_prediction as prediction
 from databoard.config import submissions_path, ramps_path
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
@@ -23,7 +23,7 @@ train_filename = os.path.join(
 test_filename = os.path.join(
     ramps_path, problem_name, 'data', 'private', 'test.csv')
 
-multiclass_prediction.labels = ['setosa', 'versicolor', 'virginica']
+prediction.labels = ['setosa', 'versicolor', 'virginica']
 target_column_name = 'species'
 workflow_name = 'classifier_workflow'
 

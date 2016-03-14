@@ -10,7 +10,6 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from databoard import db
 import databoard.config as config
-import databoard.generic as generic
 
 # Training set table
 # Problem table
@@ -31,38 +30,6 @@ class NumpyType(db.TypeDecorator):
 
     def process_result_value(self, value, dialect):
         return np.loads(zlib.decompress(value))
-
-
-class ScoreType(db.TypeDecorator):
-    """ Storing score types (with redefined comparators)."""
-    impl = db.Float
-
-    # going into the db
-    def process_bind_param(self, value, dialect):
-        return float(value)
-
-    # going out of the db
-    def process_result_value(self, value, dialect):
-        return config.config_object.specific.score.convert(value)
-
-
-class PredictionType(db.TypeDecorator):
-    """ Storing Predictions."""
-    impl = db.LargeBinary
-
-    # going into the db
-    def process_bind_param(self, value, dialect):
-        # we convert the initial value into np.array to handle None and lists
-        if value is None:
-            return None
-        return zlib.compress(np.array(value.y_pred).dumps())
-
-    # going out of the db
-    def process_result_value(self, value, dialect):
-        if value is None:
-            return None
-        specific = config.config_object.specific
-        return specific.Predictions(y_pred=np.loads(zlib.decompress(value)))
 
 
 class User(db.Model):
@@ -186,6 +153,15 @@ def get_user_teams(user):
             yield team
 
 
+def get_user_event_teams(event_name, user_name):
+    event = Event.query.filter_by(name=event_name).one()
+    user = User.query.filter_by(name=user_name).one()
+    event_teams = EventTeam.query.filter_by(event=event).all()
+    for event_team in event_teams:
+        if user in get_team_members(event_team.team):
+            yield event_team
+
+
 def get_n_user_teams(user):
     return len(get_user_teams(user))
 
@@ -208,12 +184,36 @@ class Problem(db.Model):
             name=self.module.workflow_name).one()
 
     def __repr__(self):
-        repr = 'Problem(name={})'.format(self.name)
+        repr = 'Problem({})'.format(self.name)
         return repr
 
     @property
     def module(self):
         return import_module('.' + self.name, config.problems_module)
+
+    @property
+    def prediction(self):
+        return self.module.prediction
+
+    def true_predictions_train(self):
+        _, y_train = self.module.get_train_data()
+        return self.prediction.Predictions(y_true=y_train)
+
+    def true_predictions_test(self):
+        _, y_test = self.module.get_test_data()
+        return self.prediction.Predictions(y_true=y_test)
+
+    def true_predictions_valid(self, test_is):
+        _, y_train = self.module.get_train_data()
+        return self.prediction.Predictions(y_true=y_train[test_is])
+
+    @property
+    def train_submission(self):
+        return self.workflow.train_submission
+
+    @property
+    def test_submission(self):
+        return self.workflow.test_submission
 
 
 # a given RAMP event, like iris_test or M2_data_science_2015_variable_stars
@@ -225,8 +225,7 @@ class Event(db.Model):
 
     problem_id = db.Column(
         db.Integer, db.ForeignKey('problems.id'), nullable=False)
-    problem = db.relationship(
-        'Problem', backref=db.backref('events'))
+    problem = db.relationship('Problem', backref=db.backref('events'))
 
     max_members_per_team = db.Column(db.Integer, default=3)
     # max number of submissions in Caruana's ensemble
@@ -250,12 +249,32 @@ class Event(db.Model):
             name=self.module.problem_name).one()
 
     def __repr__(self):
-        repr = 'Event(name={})'.format(self.name)
+        repr = 'Event({})'.format(self.name)
         return repr
 
     @property
     def module(self):
         return import_module('.' + self.name, config.events_module)
+
+    @property
+    def prediction(self):
+        return self.problem.prediction
+
+    @property
+    def score(self):
+        return self.module.score
+
+    @property
+    def n_CV(self):
+        return self.module.n_CV
+
+    @property
+    def train_submission(self):
+        return self.problem.train_submission
+
+    @property
+    def test_submission(self):
+        return self.problem.test_submission
 
 
 class CVFold(db.Model):
@@ -300,7 +319,7 @@ class EventTeam(db.Model):
     __tablename__ = 'event_teams'
 
     id = db.Column(db.Integer, primary_key=True)
- 
+
     event_id = db.Column(
         db.Integer, db.ForeignKey('events.id'), nullable=False)
     event = db.relationship(
@@ -315,18 +334,20 @@ class EventTeam(db.Model):
     last_submission_name = db.Column(db.String, default=None)
     signup_timestamp = db.Column(db.DateTime, nullable=False)
 
+    db.UniqueConstraint(event_id, team_id, name='et_constraint')
+
     def __init__(self, event, team):
         self.event = event
         self.team = team
         self.signup_timestamp = datetime.datetime.utcnow()
 
 
-def get_active_user_team(event, user):
+def get_active_user_event_team(event, user):
     # There should always be an active user team, if not, throw an exception
     event_teams = EventTeam.query.filter_by(event=event).all()
     for event_team in event_teams:
         if user in get_team_members(event_team.team) and event_team.is_active:
-            return event_team.team
+            return event_team
 
 
 class SubmissionFileType(db.Model):
@@ -419,9 +440,23 @@ class Workflow(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
 
+    def __repr__(self):
+        repr = 'Workflow({})'.format(self.name)
+        for workflow_element in self.elements:
+            repr += '\n\t' + str(workflow_element)
+        return repr
+
     @property
-    def path(self):
-        return os.path.join(config.workflows_path, self.name)
+    def module(self):
+        return import_module('.' + self.name, config.workflows_module)
+
+    @property
+    def train_submission(self):
+        return self.module.train_submission
+
+    @property
+    def test_submission(self):
+        return self.module.test_submission
 
 
 # In lists we will order files according to their ids
@@ -457,6 +492,9 @@ class WorkflowElement(db.Model):
             self.name = self.workflow_element_type.name
         else:
             self.name = name_in_workflow
+
+    def __repr__(self):
+        return 'WorkflowElement({})'.format(self.name)
 
     # e.g. 'regression', 'external_data'. Normally == name
     @property
@@ -595,35 +633,54 @@ def combine_predictions_list(predictions_list, index_list=None):
     combined_predictions : instance of Predictions
         A predictions instance containing the combined (averaged) predictions.
     """
-    specific = config.config_object.specific
-
     if index_list is None:  # we combine the full list
         index_list = range(len(predictions_list))
 
     y_comb_list = np.array(
         [predictions_list[i].y_pred_comb for i in index_list])
 
+    Predictions = type(predictions_list[0])
+
     y_comb = np.nanmean(y_comb_list, axis=0)
-    combined_predictions = specific.Predictions(y_pred=y_comb)
+    combined_predictions = Predictions(y_pred=y_comb)
     return combined_predictions
 
 
-def _get_score_cv_bags(predictions_list, true_predictions, test_is_list=None):
-    specific = config.config_object.specific
+def _get_score_cv_bags(event, predictions_list, true_predictions,
+                       test_is_list=None):
+    """
+    Computed the bagged score of the predictions in predictions_list.
+
+    Called by Submission.compute_valid_score_cv_bag and
+    db_tools.compute_contributivity.
+
+    Parameters
+    ----------
+    event : instance of Event
+        Needed for the type of y_comb and 
+    predictions_list : list of instances of Predictions
+    true_predictions : instance of Predictions
+    test_is_list : list of integers
+        Indices of points that should be bagged in each prediction. If None,
+        the full prediction vectors will be bagged.
+    Returns
+    -------
+    score_cv_bags : instance of Score ()
+    """
 
     if test_is_list is None:  # we combine the full list
         test_is_list = [range(len(predictions.y_pred))
                         for predictions in predictions_list]
 
     n_samples = true_predictions.n_samples
-    y_comb = np.array([specific.Predictions(n_samples=n_samples)
+    y_comb = np.array([event.prediction.Predictions(n_samples=n_samples)
                        for _ in predictions_list])
     score_cv_bags = []
     for i, test_is in enumerate(test_is_list):
         y_comb[i].set_valid_in_train(predictions_list[i], test_is)
         combined_predictions = combine_predictions_list(y_comb[:i + 1])
         valid_indexes = combined_predictions.valid_indexes
-        score_cv_bags.append(specific.score(
+        score_cv_bags.append(event.score(
             true_predictions, combined_predictions, valid_indexes))
         # XXX maybe use masked arrays rather than passing valid_indexes
     return score_cv_bags
@@ -654,8 +711,8 @@ class Submission(db.Model):
 
     # These are cv-bagged scores. Individual scores are found in
     # SubmissionToTrain
-    valid_score_cv_bag = db.Column(ScoreType, default=0.0)  # cv
-    test_score_cv_bag = db.Column(ScoreType, default=0.0)  # holdout
+    valid_score_cv_bag = db.Column(db.Float, default=0.0)  # cv
+    test_score_cv_bag = db.Column(db.Float, default=0.0)  # holdout
     # we store the partial scores so to see the saturation and
     # overfitting as the number of cv folds grow
     valid_score_cv_bags = db.Column(NumpyType, default=None)
@@ -706,6 +763,18 @@ class Submission(db.Model):
     def event(self):
         return self.event_team.event
 
+    @property
+    def prediction(self):
+        return self.event.prediction
+
+    @property
+    def score(self):
+        return self.event.score
+
+    @hybrid_property
+    def is_not_sandbox(self):
+        return self.name != config.sandbox_d_name
+
     @hybrid_property
     def is_error(self):
         return (self.state == 'training_error') |\
@@ -715,13 +784,13 @@ class Submission(db.Model):
 
     @hybrid_property
     def is_public_leaderboard(self):
-        return self.is_valid & (
+        return self.is_not_sandbox & self.is_valid & (
             (self.state == 'validated') |
             (self.state == 'tested'))
 
     @hybrid_property
     def is_private_leaderboard(self):
-        return self.is_valid & (self.state == 'tested')
+        return self.is_not_sandbox & self.is_valid & (self.state == 'tested')
 
     @property
     def path(self):
@@ -800,9 +869,8 @@ class Submission(db.Model):
             submission_on_cv_fold.state = state
 
     def reset(self):
-        specific = config.config_object.specific
-        self.valid_score_cv_bag = specific.score.zero
-        self.test_score_cv_bag = specific.score.zero
+        self.valid_score_cv_bag = self.score.zero
+        self.test_score_cv_bag = self.score.zero
         self.valid_score_cv_bags = None
         self.test_score_cv_bags = None
         self.contributivity = 0.0
@@ -821,8 +889,7 @@ class Submission(db.Model):
         The predictions in predictions_list[i] belong to those indicated
         by self.on_cv_folds[i].test_is.
         """
-        specific = config.config_object.specific
-        true_predictions_train = generic.get_true_predictions_train()
+        true_predictions_train = self.event.problem.true_predictions_train()
 
         if self.is_public_leaderboard:
             predictions_list = [submission_on_cv_fold.valid_predictions for
@@ -830,10 +897,11 @@ class Submission(db.Model):
             test_is_list = [submission_on_cv_fold.cv_fold.test_is for
                             submission_on_cv_fold in self.on_cv_folds]
             self.valid_score_cv_bags = _get_score_cv_bags(
-                predictions_list, true_predictions_train, test_is_list)
-            self.valid_score_cv_bag = self.valid_score_cv_bags[-1]
+                self.event, predictions_list,
+                true_predictions_train, test_is_list)
+            self.valid_score_cv_bag = float(self.valid_score_cv_bags[-1])
         else:
-            self.valid_score_cv_bag = specific.score.zero
+            self.valid_score_cv_bag = float(self.score.zero)
             self.valid_score_cv_bags = None
         db.session.commit()
 
@@ -848,23 +916,21 @@ class Submission(db.Model):
         curves should be assessed in compute_valid_score_cv_bag on the
         (cross-)validation sets).
         """
-        specific = config.config_object.specific
-
         if self.is_private_leaderboard:
             # When we have submission id in Predictions, we should get the
             # team and submission from the db
-            true_predictions = generic.get_true_predictions_test()
+            true_predictions = self.event.problem.true_predictions_test()
             predictions_list = [submission_on_cv_fold.test_predictions for
                                 submission_on_cv_fold in self.on_cv_folds]
             combined_predictions_list = [
                 combine_predictions_list(predictions_list[:i + 1]) for
                 i in range(len(predictions_list))]
             self.test_score_cv_bags = [
-                specific.score(true_predictions, combined_predictions) for
+                self.score(true_predictions, combined_predictions) for
                 combined_predictions in combined_predictions_list]
-            self.test_score_cv_bag = self.test_score_cv_bags[-1]
+            self.test_score_cv_bag = float(self.test_score_cv_bags[-1])
         else:
-            self.test_score_cv_bag = specific.score.zero
+            self.test_score_cv_bag = float(self.score.zero)
             self.test_score_cv_bags = None
         db.session.commit()
 
@@ -907,7 +973,7 @@ class Submission(db.Model):
             self.error_msg = ''
 
 
-def get_next_best_single_fold(predictions_list, true_predictions,
+def get_next_best_single_fold(event, predictions_list, true_predictions,
                               best_index_list):
     """Finds the model that minimizes the score if added to
     predictions_list[best_index_list]. If there is no model improving the input
@@ -936,11 +1002,9 @@ def get_next_best_single_fold(predictions_list, true_predictions,
         Indices of the models in the new combination. If the same as input,
         no models wer found improving the score.
     """
-    specific = config.config_object.specific
-
     best_predictions = combine_predictions_list(
         predictions_list, index_list=best_index_list)
-    best_score = specific.score(true_predictions, best_predictions)
+    best_score = event.score(true_predictions, best_predictions)
     best_index = -1
     # Combination with replacement, what Caruana suggests. Basically, if a
     # model is added several times, it's upweighted, leading to
@@ -952,7 +1016,7 @@ def get_next_best_single_fold(predictions_list, true_predictions,
     for i in r:
         combined_predictions = combine_predictions_list(
             predictions_list, index_list=np.append(best_index_list, i))
-        new_score = specific.score(true_predictions, combined_predictions)
+        new_score = event.score(true_predictions, combined_predictions)
         # new_score = specific.score(pred_true, pred_comb)
         # '>' is overloaded in score, so 'x > y' means 'x is better than y'
         if new_score > best_score:
@@ -999,14 +1063,14 @@ class SubmissionOnCVFold(db.Model):
 
     # prediction on the full training set, including train and valid points
     # properties train_predictions and valid_predictions will make the slicing
-    full_train_predictions = db.Column(PredictionType, default=None)
-    test_predictions = db.Column(PredictionType, default=None)
+    full_train_y_pred = db.Column(NumpyType, default=None)
+    test_y_pred = db.Column(NumpyType, default=None)
     train_time = db.Column(db.Float, default=0.0)
     valid_time = db.Column(db.Float, default=0.0)
     test_time = db.Column(db.Float, default=0.0)
-    train_score = db.Column(ScoreType, default=0.0)
-    valid_score = db.Column(ScoreType, default=0.0)
-    test_score = db.Column(ScoreType, default=0.0)
+    train_score = db.Column(db.Float, default=0.0)
+    valid_score = db.Column(db.Float, default=0.0)
+    test_score = db.Column(db.Float, default=0.0)
     state = db.Column(submission_states, default='new')
     error_msg = db.Column(db.String, default='')
 
@@ -1031,30 +1095,38 @@ class SubmissionOnCVFold(db.Model):
             (self.state == 'validating_error') |\
             (self.state == 'testing_error')
 
+    # The following four functions are converting the stored numpy arrays
+    # <>_y_pred into Prediction instances
+    @property
+    def full_train_predictions(self):
+        return self.submission.prediction.Predictions(
+            y_pred=self.full_train_y_pred)
+
     @property
     def train_predictions(self):
-        specific = config.config_object.specific
-        return specific.Predictions(
-            y_pred=self.full_train_predictions.y_pred[self.cv_fold.train_is])
+        return self.submission.prediction.Predictions(
+            y_pred=self.full_train_y_pred[self.cv_fold.train_is])
 
     @property
     def valid_predictions(self):
-        specific = config.config_object.specific
-        return specific.Predictions(
-            y_pred=self.full_train_predictions.y_pred[self.cv_fold.test_is])
+        return self.submission.prediction.Predictions(
+            y_pred=self.full_train_y_pred[self.cv_fold.test_is])
+
+    @property
+    def test_predictions(self):
+        return self.submission.prediction.Predictions(y_pred=self.test_y_pred)
 
     def reset(self):
-        specific = config.config_object.specific
         self.contributivity = 0.0
         self.best = False
-        self.full_train_predictions = None
-        self.test_predictions = None
+        self.full_train_y_pred = None
+        self.test_y_pred = None
         self.train_time = 0.0
         self.valid_time = 0.0
         self.test_time = 0.0
-        self.train_score = specific.score.zero
-        self.valid_score = specific.score.zero
-        self.test_score = specific.score.zero
+        self.train_score = self.submission.score.zero
+        self.valid_score = self.submission.score.zero
+        self.test_score = self.submission.score.zero
         self.state = 'new'
         self.error_msg = ''
 
@@ -1064,26 +1136,26 @@ class SubmissionOnCVFold(db.Model):
         self.error_msg = error_msg
 
     def compute_train_scores(self):
-        specific = config.config_object.specific
-        true_full_train_predictions = generic.get_true_predictions_train()
-        self.train_score = specific.score(
+        true_full_train_predictions =\
+            self.submission.event.problem.true_predictions_train()
+        self.train_score = float(self.submission.score(
             true_full_train_predictions, self.full_train_predictions,
-            self.cv_fold.train_is)
+            self.cv_fold.train_is))
         db.session.commit()
 
     def compute_valid_scores(self):
-        specific = config.config_object.specific
-        true_full_train_predictions = generic.get_true_predictions_train()
-        self.valid_score = specific.score(
+        true_full_train_predictions =\
+            self.submission.event.problem.true_predictions_train()
+        self.valid_score = float(self.submission.score(
             true_full_train_predictions, self.full_train_predictions,
-            self.cv_fold.test_is)
+            self.cv_fold.test_is))
         db.session.commit()
 
     def compute_test_scores(self):
-        specific = config.config_object.specific
-        true_test_predictions = generic.get_true_predictions_test()
-        self.test_score = specific.score(
-            true_test_predictions, self.test_predictions)
+        true_test_predictions =\
+            self.submission.event.problem.true_predictions_test()
+        self.test_score = float(self.submission.score(
+            true_test_predictions, self.test_predictions))
         db.session.commit()
 
     def update(self, detached_submission_on_cv_fold):
@@ -1096,14 +1168,13 @@ class SubmissionOnCVFold(db.Model):
                 self.train_time = detached_submission_on_cv_fold.train_time
             if self.state in ['validated', 'tested']:
                 self.valid_time = detached_submission_on_cv_fold.valid_time
-                self.full_train_predictions =\
-                    detached_submission_on_cv_fold.full_train_predictions
+                self.full_train_y_pred =\
+                    detached_submission_on_cv_fold.full_train_y_pred
                 self.compute_train_scores()
                 self.compute_valid_scores()
             if self.state in ['tested']:
                 self.test_time = detached_submission_on_cv_fold.test_time
-                self.test_predictions =\
-                    detached_submission_on_cv_fold.test_predictions
+                self.test_y_pred = detached_submission_on_cv_fold.test_y_pred
                 self.compute_test_scores()
         db.session.commit()
 
@@ -1118,14 +1189,11 @@ class DetachedSubmissionOnCVFold(object):
     def __init__(self, submission_on_cv_fold):
         self.train_is = submission_on_cv_fold.cv_fold.train_is
         self.test_is = submission_on_cv_fold.cv_fold.test_is
-        self.full_train_predictions =\
-            submission_on_cv_fold.full_train_predictions
-        self.test_predictions = submission_on_cv_fold.test_predictions
-        self.full_train_predictions =\
-            submission_on_cv_fold.full_train_predictions
-        self.test_predictions = submission_on_cv_fold.test_predictions
+        self.full_train_y_pred = submission_on_cv_fold.full_train_y_pred
+        self.test_y_pred = submission_on_cv_fold.test_y_pred
         self.state = submission_on_cv_fold.state
-        self.name = submission_on_cv_fold.submission.team.name + '/'\
+        self.name = submission_on_cv_fold.submission.event.name + '/'\
+            + submission_on_cv_fold.submission.team.name + '/'\
             + submission_on_cv_fold.submission.name
         self.module = submission_on_cv_fold.submission.module
         self.error_msg = submission_on_cv_fold.error_msg
@@ -1133,6 +1201,10 @@ class DetachedSubmissionOnCVFold(object):
         self.valid_time = submission_on_cv_fold.valid_time
         self.test_time = submission_on_cv_fold.test_time
         self.trained_submission = None
+        self.train_submission =\
+            submission_on_cv_fold.submission.event.train_submission
+        self.test_submission =\
+            submission_on_cv_fold.submission.event.test_submission
 
     def __repr__(self):
         repr = 'Submission({}) on fold {}'.format(
@@ -1155,9 +1227,9 @@ class UserInteraction(db.Model):
         db.Integer, db.ForeignKey('users.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('user_interactions'))
 
-    team_id = db.Column(
+    event_team_id = db.Column(
         db.Integer, db.ForeignKey('teams.id'))
-    team = db.relationship('Team', backref=db.backref('user_interactions'))
+    event_team = db.relationship('Team', backref=db.backref('user_interactions'))
 
     submission_id = db.Column(
         db.Integer, db.ForeignKey('submissions.id'))
@@ -1169,12 +1241,12 @@ class UserInteraction(db.Model):
     submission_file = db.relationship(
         'SubmissionFile', backref=db.backref('user_interactions'))
 
-    def __init__(self, user, interaction, note=None, submission=None,
+    def __init__(self, user, event, interaction, note=None, submission=None,
                  submission_file=None, diff=None, similarity=None):
         self.timestamp = datetime.datetime.utcnow()
         self.interaction = interaction
         self.user = user
-        self.team = get_active_user_team(user)
+        self.event_team = get_active_user_team(event, user)
         self.ip = request.environ['REMOTE_ADDR']
         self.note = note
         self.submission = submission

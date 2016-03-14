@@ -144,98 +144,91 @@ def test_signup_team():
 
 def test_make_submission():
     event = Event.query.filter_by(name='iris_test').one()
-    team = Team.query.filter_by(name='kegl').one()
-    event_team = EventTeam.query.filter_by(event=event, team=team).one()
 
-    db_tools.make_submission(
+    db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf',
         'ramps/iris/deposited_submissions/kegl/rf')
     try:
-        db_tools.make_submission(
+        db_tools.make_submission_and_copy_files(
             'iris_test', 'kegl', 'rf2',
             'ramps/iris/deposited_submissions/kegl/rf2')
     except db_tools.TooEarlySubmissionError as e:
         assert e.value == 'You need to wait 899 more seconds until next submission'
     event.min_duration_between_submissions = 0
     db.session.commit()
-    db_tools.make_submission(
+    db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf2',
         'ramps/iris/deposited_submissions/kegl/rf2')
 
 
-    # db_tools.make_submission(
+    # db_tools.make_submission_and_copy_files(
     #     'kemfort', 'rf',
     #     'test_submissions/kemfort/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
-    # db_tools.make_submission(
+    # db_tools.make_submission_and_copy_files(
     #     'mchezakci', 'rf',
     #     'test_submissions/mchezakci/mfcee225579956cac0717ca38e7e4b529b28679cf')
-    # db_tools.make_submission(
+    # db_tools.make_submission_and_copy_files(
     #     'kemfort', 'rf2',
     #     'test_submissions/kemfort/ma971cc83c886aaaad37d25029e7718c00ac3b4cd')
-    # db_tools.make_submission(
+    # db_tools.make_submission_and_copy_files(
     #     'kemfort', 'training_error',
     #     'test_submissions/kemfort/mb5fa97067800c9c4c376b4d5beea3fd8a5db72c0')
-    # db_tools.make_submission(
+    # db_tools.make_submission_and_copy_files(
     #     'kemfort', 'validating_error',
     #     'test_submissions/kemfort/mde194f09b58f6e519b334908862351138b302bd2')
     db_tools.print_submissions()
 
     # resubmitting 'new' is OK
-    db_tools.make_submission(
+    db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf2',
-        'ramps/iris/deposited_submissions/kegl/rf')
-    # db_tools.make_submission(
+        'ramps/iris/deposited_submissions/kegl/rf2')
+    # db_tools.make_submission_and_copy_files(
     #     'kemfort', 'rf',
     #     'test_submissions/kemfort/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
 
-    submission = Submission.query.filter_by(
-        event_team=event_team, name='rf').one()
     # team = Team.query.filter_by(name='kemfort').one()
     # submission = Submission.query.filter_by(team=team, name='rf').one()
 
-    submission.state = 'training_error'
-    db.session.commit()
+    db_tools.set_state('iris_test', 'kegl', 'rf', 'training_error')
     # resubmitting 'error' is OK
-    db_tools.make_submission(
+    db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf',
         'ramps/iris/deposited_submissions/kegl/rf')
-    # db_tools.make_submission(
+    # db_tools.make_submission_and_copy_files(
     #     'kemfort', 'rf',
     #     'test_submissions/kemfort/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
 
-    submission.state = 'testing_error'
-    db.session.commit()
+    db_tools.set_state('iris_test', 'kegl', 'rf', 'testing_error')
     # resubmitting 'error' is OK
-    db_tools.make_submission(
+    db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf',
         'ramps/iris/deposited_submissions/kegl/rf')
-    # db_tools.make_submission(
+    # db_tools.make_submission_and_copy_files(
     #     'kemfort', 'rf',
     #     'test_submissions/kemfort/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
 
-    submission.state = 'trained'
-    db.session.commit()
+    db_tools.set_state('iris_test', 'kegl', 'rf', 'trained')
     # resubmitting 'trained' is not OK
     try:
-        db_tools.make_submission(
-            'iris_test', 'kegl', 'rf', 
+        db_tools.make_submission_and_copy_files(
+            'iris_test', 'kegl', 'rf',
             'ramps/iris/deposited_submissions/kegl/rf')
-        # db_tools.make_submission(
+        # db_tools.make_submission_and_copy_files(
         #     'kemfort', 'rf',
         #     'test_submissions/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
     except db_tools.DuplicateSubmissionError as e:
         assert e.value == 'Submission "rf" of team "kegl" at event "iris_test" exists already'
         # assert e.value == 'Submission "rf" of team "kemfort" exists already'
 
-    submission.state = 'testing_error'
+    db_tools.set_state('iris_test', 'kegl', 'rf', 'testing_error')
 
-    db_tools.make_submission(
+    db_tools.make_submission_and_copy_files(
         'boston_housing_test', 'kegl', 'rf',
         'ramps/boston_housing/deposited_submissions/kegl/rf')
     event = Event.query.filter_by(name='boston_housing_test').one()
     event.min_duration_between_submissions = 0
     db.session.commit()
-    db_tools.make_submission(
+    db_tools.make_submission_and_copy_files(
         'boston_housing_test', 'kegl', 'rf2',
         'ramps/boston_housing/deposited_submissions/kegl/rf2')
 
@@ -253,27 +246,40 @@ def train_test_submissions():
 
 
 def test_compute_contributivity():
-    db_tools.compute_contributivity()
+    db_tools.compute_contributivity('iris_test')
+    db_tools.compute_contributivity('boston_housing_test')
 
 
 def test_print_db():
+    db_tools.print_problems()
+    print '\n'
+    db_tools.print_events()
     print '\n'
     db_tools.print_users()
     print '\n'
-    db_tools.print_active_teams()
+    db_tools.print_active_teams(event_name='iris_test')
     print '\n'
-    db_tools.print_submissions()
+    db_tools.print_submissions(event_name='iris_test')
+
+    print '\n'
+    db_tools.print_active_teams(event_name='boston_housing_test')
+    print '\n'
+    db_tools.print_submissions(event_name='boston_housing_test')
 
 
 def test_leaderboard():
     print '\n'
     print('***************** Leaderboard ****************')
-    print db_tools.get_public_leaderboard()
-    print('*********** Leaderboard of kemfort ***********')
-    print db_tools.get_public_leaderboard(team_name='kemfort')
+    print db_tools.get_public_leaderboard('iris_test')
+    print db_tools.get_public_leaderboard('boston_housing_test')
+    print('***************** Private leaderboard ****************')
+    print db_tools.get_private_leaderboard('iris_test')
+    print db_tools.get_private_leaderboard('boston_housing_test')
     print('*********** Leaderboard of kegl ***********')
-    print db_tools.get_public_leaderboard(
-        user=User.query.filter_by(name='kegl').one())
-    print('*********** Failing submissions of kegl ***********')
-    print db_tools.get_failed_submissions(
-        user=User.query.filter_by(name='kegl').one())
+    print db_tools.get_public_leaderboard('iris_test', user_name='kegl')
+    print('*********** Private leaderboard of kegl ***********')
+    print db_tools.get_private_leaderboard('iris_test', user_name='kegl')
+    print('*********** Failing leaderboard of kegl ***********')
+    print db_tools.get_failed_leaderboard('iris_test', user_name='kegl')
+    print('*********** New leaderboard of kegl ***********')
+    print db_tools.get_new_leaderboard('iris_test', user_name='kegl')

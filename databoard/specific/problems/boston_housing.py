@@ -6,6 +6,7 @@ import sys
 import pandas as pd
 from sklearn.cross_validation import train_test_split
 from databoard.config import submissions_path, ramps_path
+import databoard.regression_prediction as prediction
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
