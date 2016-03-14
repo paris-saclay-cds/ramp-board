@@ -6,7 +6,7 @@ from databoard import db
 from databoard.model import NameClashError, MergeTeamError,\
     Team, Submission, CVFold, User, Event, EventTeam
 import databoard.db_tools as db_tools
-
+from distutils.dir_util import mkpath
 
 from databoard.remove_test_db import recreate_test_db
 
@@ -30,6 +30,11 @@ def test_set_config_to_test():
         origin_path, config.sandbox_d_name)
     config.config_object.n_cpus = 3
     config.is_send_trained_mails = False
+    mkpath(os.path.join(config.ramps_path, 'iris', 'data', 'public'))
+    mkpath(os.path.join(config.ramps_path, 'iris', 'data', 'private'))
+    mkpath(os.path.join(config.ramps_path, 'boston_housing', 'data', 'public'))
+    mkpath(os.path.join(
+        config.ramps_path, 'boston_housing', 'data', 'private'))
 
 
 def test_recreate_test_db():
