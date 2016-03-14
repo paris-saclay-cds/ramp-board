@@ -33,6 +33,86 @@ from distutils.util import strtobool
 logger = logging.getLogger('databoard')
 
 
+def publish_local_test():
+    destination_path = '/tmp/databoard_test'
+    os.system('rm -rf ' + destination_path)
+    os.mkdir(destination_path)
+    os.system('rsync -rRultv ramps/iris ' + destination_path)
+    os.system('rsync -rRultv ramps/boston_housing ' + destination_path)
+    os.system('rsync -rultv fabfile.py ' + destination_path)
+
+
+def new_test_setup():
+    from databoard.remove_test_db import recreate_test_db
+    import databoard.db_tools as db_tools
+    import databoard.config as config
+
+    if not os.path.exists(config.submissions_path):
+        os.mkdir(config.submissions_path)
+    if not os.path.exists(config.db_path):
+        os.mkdir(config.db_path)
+    open(os.path.join(config.submissions_path, '__init__.py'), 'a').close()
+
+    recreate_test_db()
+    db_tools.setup_workflows()
+    db_tools.add_problem('iris')
+    db_tools.add_event('iris_test')
+    db_tools.add_problem('boston_housing')
+    db_tools.add_event('boston_housing_test')
+
+    db_tools.create_user(
+        name='kegl', password='wine fulcra kook homy',
+        lastname='Kegl', firstname='Balazs',
+        email='balazs.kegl@gmail.com', access_level='admin')
+    db_tools.create_user(
+        name='agramfort', password='Fushun helium pigeon radon',
+        lastname='Gramfort', firstname='Alexandre',
+        email='alexandre.gramfort@gmail.com', access_level='admin')
+    db_tools.create_user(
+        name='akazakci', password='Sept. bestir Ottawa seven',
+        lastname='Akin', firstname='Kazakci',
+        email='osmanakin@gmail.com', access_level='admin')
+    db_tools.create_user(
+        name='mcherti', password='blown ashcan manful dost', lastname='Cherti',
+        firstname='Mehdi', email='mehdicherti@gmail.com',
+        access_level='admin')
+    db_tools.create_user(
+        name='camille_marini', password='therm pasha tootle stoney',
+        lastname='Marini', firstname='Camille',
+        email='camille.marini@gmail.com', access_level='admin')
+
+    db_tools.signup_team('iris_test', 'kegl')
+    db_tools.signup_team('boston_housing_test', 'kegl')
+    db_tools.signup_team('iris_test', 'agramfort')
+    db_tools.signup_team('boston_housing_test', 'agramfort')
+    db_tools.signup_team('iris_test', 'akazakci')
+    db_tools.signup_team('boston_housing_test', 'akazakci')
+    db_tools.signup_team('iris_test', 'mcherti')
+    db_tools.signup_team('boston_housing_test', 'mcherti')
+    db_tools.signup_team('iris_test', 'camille_marini')
+    db_tools.signup_team('boston_housing_test', 'camille_marini')
+
+    db_tools.make_submission_and_copy_files(
+        'iris_test', 'kegl', 'rf',
+        'ramps/iris/deposited_submissions/kegl/rf')
+    db_tools.make_submission_and_copy_files(
+        'iris_test', 'kegl', 'rf2',
+        'ramps/iris/deposited_submissions/kegl/rf2')
+
+    db_tools.make_submission_and_copy_files(
+        'boston_housing_test', 'camille_marini', 'rf',
+        'ramps/boston_housing/deposited_submissions/kegl/rf')
+    db_tools.make_submission_and_copy_files(
+        'boston_housing_test', 'camille_marini', 'rf2',
+        'ramps/boston_housing/deposited_submissions/kegl/rf2')
+
+    # config.is_parallelize = False
+    db_tools.train_test_submissions()
+    db_tools.compute_contributivity('iris_test')
+    db_tools.compute_contributivity('boston_housing_test')
+
+
+###############################################################################
 def reset_cv_folds():
     """Changing the CV scheme without deleting the submissions."""
     import databoard.db_tools as db_tools
@@ -99,28 +179,21 @@ def add_models():
     add_models()
 
 
-def train_test(t=None, s=None, state=None, force='False'):
+def train_test(e=None, t=None, s=None, state=None, force='False'):
     force = strtobool(force)
+    event_name = e
     team_name = t
     submission_name = s
 
     from databoard.db_tools import train_test_submissions,\
-        get_team_submissions, get_submissions_of_state
+        get_submissions, get_submissions_of_state
 
     if state is not None:
-        train_test_submissions(
-            get_submissions_of_state(state), force_retrain_test=force)
-    elif team_name is None:
-        train_test_submissions(force_retrain_test=force)  # All
+        submissions = get_submissions_of_state(state)
     else:
-        if submission_name is None:
-            train_test_submissions(
-                get_team_submissions(team_name), force_retrain_test=force)
-        else:
-            train_test_submissions(
-                get_team_submissions(
-                    team_name, submission_name), force_retrain_test=force)
-    compute_contributivity()
+        submissions = get_submissions(event_name, team_name, submission_name)
+    train_test_submissions(submissions, force_retrain_test=force)
+    compute_contributivity(event_name)
 
 
 def train_test_earliest_new():
@@ -135,9 +208,9 @@ def train_test_earliest_new():
         print('No new submissions')
 
 
-def compute_contributivity():
+def compute_contributivity(event_name):
     from databoard.db_tools import compute_contributivity
-    compute_contributivity()
+    compute_contributivity(event_name)
 
 
 def print_user_interactions():

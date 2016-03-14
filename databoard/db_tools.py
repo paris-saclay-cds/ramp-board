@@ -512,7 +512,7 @@ def make_submission(event_name, team_name, submission_name, submission_path):
             last = last_submission.submission_timestamp
             min_diff = event.min_duration_between_submissions
             diff = (now - last).total_seconds()
-            if diff < min_diff:
+            if team.admin.access_level != 'admin' and diff < min_diff:
                 raise TooEarlySubmissionError(
                     'You need to wait {} more seconds until next submission'
                     .format(int(min_diff - diff)))
@@ -912,7 +912,7 @@ def compute_contributivity(event_name, force_ensemble=False):
             test_is_list)
         logger.info('Combined combined valid score = {}'.format(scores))
         with open('combined_combined_valid_score.txt', 'w') as f:
-            f.write(str(round(scores[-1], config.score_precision)))
+            f.write(str(round(scores[-1], event.score_precision)))
             # TODO: should go into db
     else:
         with open('combined_combined_valid_score.txt', 'w') as f:
@@ -923,7 +923,7 @@ def compute_contributivity(event_name, force_ensemble=False):
     if len(best_predictions_list) > 0:
         logger.info('Combined foldwise best valid score = {}'.format(
             _get_score_cv_bags(
-                event, best_predictions_list, true_predictions_train, 
+                event, best_predictions_list, true_predictions_train,
                 test_is_list)))
 
     combined_test_predictions_list = [c for c in combined_test_predictions_list
@@ -933,7 +933,7 @@ def compute_contributivity(event_name, force_ensemble=False):
             event, combined_test_predictions_list, true_predictions_test)
         logger.info('Combined combined test score = {}'.format(scores))
         with open('combined_combined_test_score.txt', 'w') as f:
-            f.write(str(round(scores[-1], config.score_precision)))
+            f.write(str(round(scores[-1], event.score_precision)))
     else:
         with open('combined_combined_test_score.txt', 'w') as f:
             f.write('')  # TODO: should go into db
@@ -990,7 +990,7 @@ def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
     best_prediction_index = np.argmax(valid_scores)
     best_index_list = np.array([best_prediction_index])
     improvement = True
-    while improvement and len(best_index_list) < config.max_n_ensemble:
+    while improvement and len(best_index_list) < cv_fold.event.max_n_ensemble:
         old_best_index_list = best_index_list
         best_index_list, score = get_next_best_single_fold(
             cv_fold.event, predictions_list, true_predictions_valid,

@@ -59,25 +59,25 @@ def test_setup_problem():
 def test_create_user():
     # db_tools.add_users_from_file('databoard/tests/data/users_to_add.csv')
     db_tools.create_user(
-        name='kegl', password='wine fulcra kook homy', lastname='Kegl',
-        firstname='Balazs', email='balazs.kegl@gmail.com',
-        access_level='admin')
+        name='kegl', password='wine fulcra kook homy',
+        lastname='Kegl', firstname='Balazs',
+        email='balazs.kegl@gmail.com', access_level='admin')
     db_tools.create_user(
-        name='agramfort', password='bla', lastname='Gramfort',
-        firstname='Alexandre', email='alexandre.gramfort@gmail.com',
-        access_level='admin')
+        name='agramfort', password='Fushun helium pigeon radon',
+        lastname='Gramfort', firstname='Alexandre',
+        email='alexandre.gramfort@gmail.com', access_level='admin')
     db_tools.create_user(
-        name='akazakci', password='bla', lastname='Akin',
-        firstname='Kazakci', email='osmanakin@gmail.com',
-        access_level='user')
+        name='akazakci', password='Sept. bestir Ottawa seven',
+        lastname='Akin', firstname='Kazakci',
+        email='osmanakin@gmail.com', access_level='admin')
     db_tools.create_user(
-        name='mcherti', password='bla', lastname='Cherti',
+        name='mcherti', password='blown ashcan manful dost', lastname='Cherti',
         firstname='Mehdi', email='mehdicherti@gmail.com',
         access_level='admin')
     db_tools.create_user(
-        name='djabbz', password='bla', lastname='Benbouzid',
-        firstname='Djalel', email='djalel.benbouzid@gmail.com',
-        access_level='user')
+        name='camille_marini', password='therm pasha tootle stoney',
+        lastname='Marini', firstname='Camille',
+        email='camille.marini@gmail.com', access_level='admin')
 
     try:
         db_tools.create_user(
@@ -153,14 +153,14 @@ def test_make_submission():
     db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf',
         'ramps/iris/deposited_submissions/kegl/rf')
-    try:
-        db_tools.make_submission_and_copy_files(
-            'iris_test', 'kegl', 'rf2',
-            'ramps/iris/deposited_submissions/kegl/rf2')
-    except db_tools.TooEarlySubmissionError as e:
-        assert e.value == 'You need to wait 899 more seconds until next submission'
-    event.min_duration_between_submissions = 0
-    db.session.commit()
+    # try:
+    #     db_tools.make_submission_and_copy_files(
+    #         'iris_test', 'kegl', 'rf2',
+    #         'ramps/iris/deposited_submissions/kegl/rf2')
+    # except db_tools.TooEarlySubmissionError as e:
+    #     assert e.value == 'You need to wait 899 more seconds until next submission'
+    # event.min_duration_between_submissions = 0
+    # db.session.commit()
     db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf2',
         'ramps/iris/deposited_submissions/kegl/rf2')

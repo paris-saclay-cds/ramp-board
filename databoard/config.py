@@ -36,17 +36,6 @@ is_parallelize_across_machines = False
 timeout_parallelize_across_machines = 10800
 # often doesn't work and takes a lot of disk space
 is_pickle_trained_submission = False
-max_members_per_team = 3  # except for users own team
-max_n_ensemble = 80  # max number of submissions in Caruana's ensemble
-score_precision = 0
-is_send_trained_mails = True
-is_send_submitted_mails = True
-
-min_duration_between_submissions = 15 * 60
-opening_timestamp = datetime.datetime(2016, 02, 12, 12, 0, 0)
-# before links to submissions in leaderboard are not alive
-public_opening_timestamp = datetime.datetime(2016, 02, 13, 8, 0, 0)
-closing_timestamp = datetime.datetime(2016, 02, 15, 12, 0, 0)
 
 # Open ports in Stratuslab
 # 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015,
@@ -341,10 +330,10 @@ ramps_configs['air_passengers_appstat'] = RampConfig(
     **appstat_kwargs
 )
 
-with open("ramp_index.txt") as f:
-    ramp_index = f.readline()
+# with open("ramp_index.txt") as f:
+#     ramp_index = f.readline()
 
-config_object = ramps_configs[ramp_index]
+# config_object = ramps_configs[ramp_index]
 
 db_path = os.path.join(os.getcwd(), 'db')
 db_f_name = os.path.join(db_path, 'databoard.db')
@@ -369,5 +358,4 @@ SQLALCHEMY_MIGRATE_REPO = db_migrate_dir
 ADMIN_MAILS = ['balazs.kegl@gmail.com',
                'alexandre.gramfort@telecom-paristech.fr',
                'mehdi@cherti.name',
-               'camille.marini@gmail.com',
-               'remi.bardenet@gmail.com']
+               'camille.marini@gmail.com']
