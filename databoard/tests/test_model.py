@@ -12,23 +12,22 @@ from databoard.remove_test_db import recreate_test_db
 
 
 def test_set_config_to_test():
-    config.min_duration_between_submissions = 0
-    config.config_object.ramp_name = 'iris'
-    origin_path = os.path.join('ramps', config.config_object.ramp_name)
+    # config.min_duration_between_submissions = 0
+    # config.config_object.ramp_name = 'iris'
+    # origin_path = os.path.join('ramps', config.config_object.ramp_name)
     config.root_path = os.path.join('.')
-    tests_path = os.path.join('databoard', 'tests')
+    # tests_path = os.path.join('databoard', 'tests')
 
-    #config.raw_data_path = os.path.join(origin_path, 'data', 'raw')
-    #config.public_data_path = os.path.join(tests_path, 'data', 'public')
-    #config.private_data_path = os.path.join(tests_path, 'data', 'private')
+    # #config.raw_data_path = os.path.join(origin_path, 'data', 'raw')
+    # #config.public_data_path = os.path.join(tests_path, 'data', 'public')
+    # #config.private_data_path = os.path.join(tests_path, 'data', 'private')
     config.submissions_d_name = 'test_submissions'
     config.submissions_path = os.path.join(
         config.root_path, config.submissions_d_name)
-    config.deposited_submissions_path = os.path.join(
-        origin_path, config.deposited_submissions_d_name)
-    config.sandbox_path = os.path.join(
-        origin_path, config.sandbox_d_name)
-    config.config_object.n_cpus = 3
+    # config.deposited_submissions_path = os.path.join(
+    #     origin_path, config.deposited_submissions_d_name)
+    # config.sandbox_path = os.path.join(
+    #     origin_path, config.sandbox_d_name)
     config.is_send_trained_mails = False
     mkpath(os.path.join(config.ramps_path, 'iris', 'data', 'public'))
     mkpath(os.path.join(config.ramps_path, 'iris', 'data', 'private'))
@@ -153,14 +152,7 @@ def test_make_submission():
     db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf',
         'ramps/iris/deposited_submissions/kegl/rf')
-    # try:
-    #     db_tools.make_submission_and_copy_files(
-    #         'iris_test', 'kegl', 'rf2',
-    #         'ramps/iris/deposited_submissions/kegl/rf2')
-    # except db_tools.TooEarlySubmissionError as e:
-    #     assert e.value == 'You need to wait 899 more seconds until next submission'
-    # event.min_duration_between_submissions = 0
-    # db.session.commit()
+
     db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf2',
         'ramps/iris/deposited_submissions/kegl/rf2')
