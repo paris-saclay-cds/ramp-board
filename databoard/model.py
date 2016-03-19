@@ -21,7 +21,8 @@ logger = logging.getLogger('databoard')
 
 
 class NumpyType(db.TypeDecorator):
-    """ Storing zipped numpy arrays."""
+    """Storing zipped numpy arrays."""
+
     impl = db.LargeBinary
 
     def process_bind_param(self, value, dialect):
@@ -227,12 +228,12 @@ class Event(db.Model):
         db.Integer, db.ForeignKey('problems.id'), nullable=False)
     problem = db.relationship('Problem', backref=db.backref('events'))
 
-    max_members_per_team = db.Column(db.Integer, default=3)
+    max_members_per_team = db.Column(db.Integer, default=1)
     # max number of submissions in Caruana's ensemble
     max_n_ensemble = db.Column(db.Integer, default=80)
     score_precision = db.Column(db.Integer, default=3)  # n_digits
-    is_send_trained_mails = False
-    is_send_submitted_mails = False
+    is_send_trained_mails = db.Column(db.Boolean, default=True)
+    is_send_submitted_mails = db.Column(db.Boolean, default=True)
 
     min_duration_between_submissions = db.Column(db.Integer, default=15 * 60)
     opening_timestamp = db.Column(
@@ -242,6 +243,11 @@ class Event(db.Model):
         db.DateTime, default=datetime.datetime(2000, 1, 1, 0, 0, 0))
     closing_timestamp = db.Column(
         db.DateTime, default=datetime.datetime(4000, 1, 1, 0, 0, 0))
+
+    combined_combined_valid_score = db.Column(db.Float, default=None)
+    combined_combined_test_score = db.Column(db.Float, default=None)
+    combined_foldwise_valid_score = db.Column(db.Float, default=None)
+    combined_foldwise_test_score = db.Column(db.Float, default=None)
 
     def __init__(self, name):
         self.name = name
@@ -257,6 +263,10 @@ class Event(db.Model):
         return import_module('.' + self.name, config.events_module)
 
     @property
+    def title(self):
+        return self.module.event_title
+
+    @property
     def prediction(self):
         return self.problem.prediction
 
@@ -265,8 +275,8 @@ class Event(db.Model):
         return self.module.score
 
     @property
-    def n_CV(self):
-        return self.module.n_CV
+    def n_cv(self):
+        return self.module.n_cv
 
     @property
     def train_submission(self):
@@ -275,6 +285,39 @@ class Event(db.Model):
     @property
     def test_submission(self):
         return self.problem.test_submission
+
+    @property
+    def combined_combined_valid_score_str(self):
+        return None if self.combined_foldwise_valid_score is None else str(
+            round(self.combined_combined_valid_score, self.score_precision))
+
+    @property
+    def combined_combined_test_score_str(self):
+        return None if self.combined_combined_test_score is None else str(
+            round(self.combined_combined_test_score, self.score_precision))
+
+    @property
+    def combined_foldwise_valid_score_str(self):
+        return None if self.combined_foldwise_valid_score is None else str(
+            round(self.combined_foldwise_valid_score, self.score_precision))
+
+    @property
+    def combined_foldwise_test_score_str(self):
+        return None if self.combined_foldwise_test_score is None else str(
+            round(self.combined_foldwise_test_score, self.score_precision))
+
+    @property
+    def is_open(self):
+        now = datetime.datetime.utcnow()
+        return now > self.opening_timestamp and now < self.closing_timestamp
+
+    @property
+    def is_public_open(self):
+        now = datetime.datetime.utcnow()
+        print now
+        print self.public_opening_timestamp
+        return now > self.public_opening_timestamp\
+            and now < self.closing_timestamp
 
 
 class CVFold(db.Model):
@@ -308,10 +351,10 @@ class EventAdmin(db.Model):
     event = db.relationship(
         'Event', backref=db.backref('event_admins'))
 
-    user_id = db.Column(
+    admin_id = db.Column(
         db.Integer, db.ForeignKey('users.id'), nullable=False)
-    user = db.relationship(
-        'Event', backref=db.backref('admined_events'))
+    admin = db.relationship(
+        'User', backref=db.backref('admined_events'))
 
 
 # many-to-many
@@ -340,6 +383,10 @@ class EventTeam(db.Model):
         self.event = event
         self.team = team
         self.signup_timestamp = datetime.datetime.utcnow()
+
+    def __repr__(self):
+        repr = '{}/{}'.format(self.event, self.team)
+        return repr
 
 
 def get_active_user_event_team(event, user):
@@ -574,12 +621,16 @@ class SubmissionFile(db.Model):
         return self.type + '.' + self.extension
 
     @property
+    def link(self):
+        return '/' + os.path.join(self.submission.hash_, self.f_name)
+
+    @property
     def path(self):
         return os.path.join(self.submission.path, self.f_name)
 
     @property
     def name_with_link(self):
-        return '<a href="' + self.path + '">' + self.name[:20] + '</a>'
+        return '<a href="' + self.link + '">' + self.name[:20] + '</a>'
 
     def get_code(self):
         with open(self.path) as f:
@@ -592,13 +643,16 @@ class SubmissionFile(db.Model):
             f.write(code)
 
     def __repr__(self):
-        return 'SubmissionFile(name={}, type={}, extension={}, path={})'.format(
-            self.name, self.type, self.extension, self.path)
+        return 'SubmissionFile(name={}, type={}, extension={}, path={})'.\
+            format(self.name, self.type, self.extension, self.path)
 
 
 def combine_predictions_list(predictions_list, index_list=None):
-    """Combines predictions by taking the mean of their
-    get_combineable_predictions views. E.g. for regression it is the actual
+    """Combine predictions in predictions_list[index_list].
+
+    By taking the mean of their get_combineable_predictions views.
+
+    E.g. for regression it is the actual
     predictions, and for classification it is the probability array (which
     should be calibrated if we want the best performance). Called both for
     combining one submission on cv folds (a single model that is trained on
@@ -657,7 +711,7 @@ def _get_score_cv_bags(event, predictions_list, true_predictions,
     Parameters
     ----------
     event : instance of Event
-        Needed for the type of y_comb and 
+        Needed for the type of y_comb and
     predictions_list : list of instances of Predictions
     true_predictions : instance of Predictions
     test_is_list : list of integers
@@ -667,7 +721,6 @@ def _get_score_cv_bags(event, predictions_list, true_predictions,
     -------
     score_cv_bags : instance of Score ()
     """
-
     if test_is_list is None:  # we combine the full list
         test_is_list = [range(len(predictions.y_pred))
                         for predictions in predictions_list]
@@ -721,6 +774,7 @@ class Submission(db.Model):
     contributivity = db.Column(db.Float, default=0.0)
 
     state = db.Column(submission_states, default='new')
+    # TODO: hide absolute path in error
     error_msg = db.Column(db.String, default='')
     # user can delete but we keep
     is_valid = db.Column(db.Boolean, default=True)
@@ -741,7 +795,7 @@ class Submission(db.Model):
         sha_hasher.update(self.name.encode('utf-8'))
         # We considered using the id, but then it will be given away in the
         # url which is maybe not a good idea.
-        self.hash_ = 'm{}'.format(sha_hasher.hexdigest())
+        self.hash_ = '{}'.format(sha_hasher.hexdigest())
         self.submission_timestamp = datetime.datetime.utcnow()
 
     def __str__(self):
@@ -807,13 +861,13 @@ class Submission(db.Model):
 
     @property
     def name_with_link(self):
-        return '<a href="' + self.files[0].path + '">' + self.name[:20] +\
+        return '<a href="' + self.files[0].link + '">' + self.name[:20] +\
             '</a>'
 
     @property
     def state_with_link(self):
-        return '<a href="' + os.path.join(self.path, 'error.txt') + '">' +\
-            self.state + '</a>'
+        return '<a href=/' + os.path.join(self.hash_, 'error.txt')\
+            + '>' + self.state + '</a>'
 
     @property
     def train_score_cv_mean(self):
@@ -885,7 +939,8 @@ class Submission(db.Model):
             submission_on_cv_fold.set_error(error, error_msg)
 
     def compute_valid_score_cv_bag(self):
-        """Cv-bags cv_fold.valid_predictions using combine_predictions_list.
+        """Cv-bag cv_fold.valid_predictions using combine_predictions_list.
+
         The predictions in predictions_list[i] belong to those indicated
         by self.on_cv_folds[i].test_is.
         """
@@ -906,8 +961,9 @@ class Submission(db.Model):
         db.session.commit()
 
     def compute_test_score_cv_bag(self):
-        """Bags cv_fold.test_predictions using combine_predictions_list, and
-        stores the score of the bagged predictor in test_score_cv_bag. The
+        """Bag cv_fold.test_predictions using combine_predictions_list.
+
+        And stores the score of the bagged predictor in test_score_cv_bag. The
         scores of partial combinations are stored in test_score_cv_bags.
         This is for assessing the bagging learning curve, which is useful for
         setting the number of cv folds to its optimal value (in case the RAMP
@@ -975,7 +1031,9 @@ class Submission(db.Model):
 
 def get_next_best_single_fold(event, predictions_list, true_predictions,
                               best_index_list):
-    """Finds the model that minimizes the score if added to
+    """.
+
+    Find the model that minimizes the score if added to
     predictions_list[best_index_list]. If there is no model improving the input
     combination, the input best_index_list is returned. Otherwise the best
     model is added to the list. We could also return the combined prediction
@@ -1034,12 +1092,15 @@ def get_next_best_single_fold(event, predictions_list, true_predictions,
 # train_pred means that we can input it to the next workflow element
 # TODO: implement check
 class SubmissionOnCVFold(db.Model):
-    """Submission is an abstract (untrained) submission. SubmissionOnCVFold
+    """Submission is an abstract (untrained) submission.
+
+    SubmissionOnCVFold
     is an instantiation of Submission, to be trained on a data file and a cv
     fold. We don't actually store the trained model in the db (lack of disk and
     pickling issues), so trained submission is not a database column. On the
     other hand, we will store train, valid, and test predictions. In a sense
-    substituting CPU time for storage."""
+    substituting CPU time for storage.
+    """
 
     __tablename__ = 'submission_on_cv_folds'
 
@@ -1180,8 +1241,9 @@ class SubmissionOnCVFold(db.Model):
 
 
 class DetachedSubmissionOnCVFold(object):
-    """This class is a copy of SubmissionOnCVFold, all the fields we need in
-    train and test. It's because SQLAlchemy objects don't persist through
+    """Copy of SubmissionOnCVFold, all the fields we need in train and test.
+
+    It's because SQLAlchemy objects don't persist through
     multiprocessing jobs. Maybe eliminated if we do the parallelization
     differently, though I doubt it.
     """
@@ -1228,8 +1290,9 @@ class UserInteraction(db.Model):
     user = db.relationship('User', backref=db.backref('user_interactions'))
 
     event_team_id = db.Column(
-        db.Integer, db.ForeignKey('teams.id'))
-    event_team = db.relationship('Team', backref=db.backref('user_interactions'))
+        db.Integer, db.ForeignKey('event_teams.id'))
+    event_team = db.relationship(
+        'EventTeam', backref=db.backref('user_interactions'))
 
     submission_id = db.Column(
         db.Integer, db.ForeignKey('submissions.id'))
@@ -1241,12 +1304,14 @@ class UserInteraction(db.Model):
     submission_file = db.relationship(
         'SubmissionFile', backref=db.backref('user_interactions'))
 
-    def __init__(self, user, event, interaction, note=None, submission=None,
-                 submission_file=None, diff=None, similarity=None):
+    def __init__(self, user, interaction, event=None, note=None,
+                 submission=None, submission_file=None, diff=None,
+                 similarity=None):
         self.timestamp = datetime.datetime.utcnow()
         self.interaction = interaction
         self.user = user
-        self.event_team = get_active_user_team(event, user)
+        if event is not None:
+            self.event_team = get_active_user_event_team(event, user)
         self.ip = request.environ['REMOTE_ADDR']
         self.note = note
         self.submission = submission

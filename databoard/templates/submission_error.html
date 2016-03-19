@@ -21,15 +21,17 @@ onload="prettyPrint()"
 <div class="ui stackable one column grid">
     <div class="sixteen wide column">
         <h4 class="ui horizontal header divider grey">
-            <a href="/leaderboard"><i class="dashboard grey icon"></i>Leaderboard</a>
+            <a href="/events/{{ event.name }}/leaderboard"><i class="dashboard grey icon"></i>Leaderboard</a>
             <span><i class="angle right grey icon"></i></span>
-            {{ team_name }} 
+            {{ event.name }} 
             <span><i class="angle right grey icon"></i></span>
-            {{ submission_name }} 
+            {{ team.name }} 
             <span><i class="angle right grey icon"></i></span>
-            {{ submission_state }}
+            {{ submission.name }} 
+            <span><i class="angle right grey icon"></i></span>
+            {{ submission.state }}
             </h4>
-        <pre class="prettyprint linenums">{{ error_msg }}</pre>
+        <pre class="prettyprint linenums">{{ submission.error_msg }}</pre>
     </div>
 </div> 
 

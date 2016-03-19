@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}User{% endblock %}
+{% block content %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+{% if messages %}
+<div id="formerror" class="ui modal">
+    {% for category, message in messages %}
+        <div class="header">
+            {{ category }}
+        </div>
+        <div class="content">
+            <div class="description">
+                {{ message }}
+            </div>
+        </div>
+    {% endfor %}
+    <div class="actions">
+        <div class="ui button">Close</div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(function(){
+        $('#formerror.modal')
+            .modal('setting', 'transition', 'Fade Up')
+            .modal('show')
+        ;
+    });
+</script>
+{% endif %}
+{% endwith %}
+
+<h3 class="ui horizontal header divider">Events</h3>
+<div class="five wide right aligned column">
+{% if session.logged_in %}
+    {% for url, f_name in event_urls_f_names %}
+    <div class="ui fluid card">
+        <div class="content">
+            <div class="description">
+                <a href="/events/{{ url }}"><i class="file grey icon"></i>{{ f_name }}</a>:
+                <a href="/events/{{ url }}/my_submissions">my submissions</a>, 
+                <a href="/events/{{ url }}/leaderboard">leaderboard</a>,
+                <a href="/events/{{ url }}/sandbox">sandbox</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+</div>  
+
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block title %}Leaderboards{% endblock %}
+{% block content %}
+
+<h3 class="ui horizontal header divider">Information</h3>
+
+All info about the RAMP event will go here.
+
+<h3 class="ui horizontal header divider">Rules</h3>
+<ul>
+<li>Submissions will open at (UTC) {{ event.opening_timestamp }}
+<li>Training is not automatic, be patient.</li>
+<li>Pending (untrained) and failing submissions can be resubmitted under the same name at an arbitrary frequency.</li>
+<li>Once your submission is trained, it cannot be deleted or replaced.</li>
+<li> After each succesfully trained submission, you have to wait {{ event.min_duration_between_submissions }}s to resubmit. </li>
+<li>The leaderboard is in "hidden" mode until (UTC) {{ event.public_opening_timestamp }} which means that all scores are visible, but the links pointing to the code of the participants are hidden. After (UTC) {{ event.public_opening_timestamp }}, all submitted codes are public. <b>You will be encouraged to look at and reuse each other's code.</b>
+</ul>
+
+{% endblock %}

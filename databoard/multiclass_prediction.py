@@ -1,6 +1,3 @@
-# Author: Balazs Kegl
-# License: BSD 3 clause
-
 import numpy as np
 from base_prediction import BasePrediction
 
@@ -31,7 +28,7 @@ class Predictions(BasePrediction):
         if len(shape) != 2:
             raise ValueError('Multiclass y_proba should be 2-dimensional, '
                              'instead it is {}-dimensional'.format(len(shape)))
-        #if shape[1] != len(labels):
+        # if shape[1] != len(labels):
         #    raise ValueError('Vectors in multiclass y_proba should be '
         #                     '{}-dimensional, instead they are {}-dimensional'.
         #                     format(len(labels), shape[1]))
@@ -61,7 +58,7 @@ class Predictions(BasePrediction):
 
     @property
     def y_pred_label_index(self):
-        """multi-class y_pred is the index of the predicted label"""
+        """Multi-class y_pred is the index of the predicted label."""
         return np.argmax(self.y_proba, axis=1)
 
     @property
@@ -70,7 +67,7 @@ class Predictions(BasePrediction):
 
     @property
     def y_pred_comb(self):
-        """Returns an array which can be combined by taking means"""
+        """Return an array which can be combined by taking means."""
         return self.y_proba
 
     # def combine(self, indexes=[]):

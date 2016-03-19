@@ -1,6 +1,3 @@
-# Author: Balazs Kegl
-# License: BSD 3 clause
-
 import numpy as np
 from base_prediction import BasePrediction
 
@@ -34,7 +31,7 @@ class Predictions(BasePrediction):
 
     @property
     def y_pred_comb(self):
-        """Returns an array which can be combined by taking means"""
+        """Return an array which can be combined by taking means."""
         return self.y_pred
 
     # def combine(self, indexes=[]):

@@ -20,7 +20,7 @@ inplace:
 test:
 	nosetests databoard/tests
 	fab publish_local_test
-	cd /tmp/databoard_test; fab new_test_setup
+	cd /tmp/databoard_test; fab test_setup; fab test_setup
 
 test-all: test
 	fab publish_test:amadeus_local

@@ -1,5 +1,8 @@
 -- Schema for databoard database.
 
+-- master + slaves for the resources
+-- submission file requirements
+-- submission resource requirements
 create table users (
     user_id                  integer primary key autoincrement not null,
     user_name                text unique not null,

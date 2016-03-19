@@ -2,34 +2,11 @@ import sys
 if '' not in sys.path:  # Balazs bug
     sys.path.insert(0, '')
 
-# for pickling theano
-# sys.setrecursionlimit(50000)
-
 import os
-import pandas as pd
 import logging
+import datetime
 from distutils.util import strtobool
-# import fabric.contrib.project as project
-# from fabric.api import *
-# from fabric.contrib.files import exists
-# from fabric.state import connections
 
-# DON'T IMPORT ANYTHING FROM DATABOARD HERE !
-
-# Open ports in Stratuslab
-# 22, 80, 389, 443, 636, 2135, 2170, 2171, 2172, 2811, 3147, 5001, 5010, 5015,
-# 8080, 8081, 8095, 8188, 8443, 8444, 9002, 10339, 10636, 15000, 15001, 15002,
-# 15003, 15004, 20000-25000.
-
-# the user to use for the remote commands
-# env.user = config.get_ramp_field('deploy_user')
-# env.use_ssh_config = True
-
-# the servers where the commands are executed
-# env.hosts = [config.get_ramp_field('train_user') + '@' + config.get_ramp_field('train_server'),
-#             config.get_ramp_field('web_user') + '@' + config.get_ramp_field('web_server'),]
-
-# production = env.hosts[0]
 logger = logging.getLogger('databoard')
 
 
@@ -37,12 +14,12 @@ def publish_local_test():
     destination_path = '/tmp/databoard_test'
     os.system('rm -rf ' + destination_path)
     os.mkdir(destination_path)
-    os.system('rsync -rRultv ramps/iris ' + destination_path)
-    os.system('rsync -rRultv ramps/boston_housing ' + destination_path)
+    os.system('rsync -rRultv problems/iris ' + destination_path)
+    os.system('rsync -rRultv problems/boston_housing ' + destination_path)
     os.system('rsync -rultv fabfile.py ' + destination_path)
 
 
-def new_test_setup():
+def test_setup():
     from databoard.remove_test_db import recreate_test_db
     import databoard.db_tools as db_tools
     import databoard.config as config
@@ -81,6 +58,15 @@ def new_test_setup():
         lastname='Marini', firstname='Camille',
         email='camille.marini@gmail.com', access_level='admin')
 
+    db_tools.create_user(
+        name='test_user', password='test',
+        lastname='Test', firstname='User',
+        email='test.user@gmail.com', access_level='user')
+    db_tools.create_user(
+        name='test_iris_admin', password='test',
+        lastname='Admin', firstname='Iris',
+        email='iris.admin@gmail.com', access_level='user')
+
     db_tools.signup_team('iris_test', 'kegl')
     db_tools.signup_team('boston_housing_test', 'kegl')
     db_tools.signup_team('iris_test', 'agramfort')
@@ -91,20 +77,23 @@ def new_test_setup():
     db_tools.signup_team('boston_housing_test', 'mcherti')
     db_tools.signup_team('iris_test', 'camille_marini')
     db_tools.signup_team('boston_housing_test', 'camille_marini')
+    db_tools.signup_team('iris_test', 'test_user')
+
+    db_tools.make_event_admin('iris_test', 'test_iris_admin')
 
     db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf',
-        'ramps/iris/deposited_submissions/kegl/rf')
+        'problems/iris/deposited_submissions/kegl/rf')
     db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf2',
-        'ramps/iris/deposited_submissions/kegl/rf2')
+        'problems/iris/deposited_submissions/kegl/rf2')
 
     db_tools.make_submission_and_copy_files(
         'boston_housing_test', 'camille_marini', 'rf',
-        'ramps/boston_housing/deposited_submissions/kegl/rf')
+        'problems/boston_housing/deposited_submissions/kegl/rf')
     db_tools.make_submission_and_copy_files(
         'boston_housing_test', 'camille_marini', 'rf2',
-        'ramps/boston_housing/deposited_submissions/kegl/rf2')
+        'problems/boston_housing/deposited_submissions/kegl/rf2')
 
     # config.is_parallelize = False
     db_tools.train_test_submissions()
@@ -112,187 +101,12 @@ def new_test_setup():
     db_tools.compute_contributivity('boston_housing_test')
 
 
-###############################################################################
-def reset_cv_folds():
-    """Changing the CV scheme without deleting the submissions."""
-    import databoard.db_tools as db_tools
-    db_tools.reset_cv_folds()
-
-
-def clear_cache():
-    from sklearn.externals.joblib import Memory
-    from databoard.config import cachedir
-
-    logger.info('Flushing the joblib cache.')
-    mem = Memory(cachedir=cachedir)
-    mem.clear()
-
-
-def prepare_data():
-    import databoard.config as config
-    import databoard.db_tools as db_tools
-    specific = config.config_object.specific
-
-    # Preparing the data set, typically public train/private held-out test cut
-    logger.info('Preparing the dataset.')
-    specific.prepare_data()
-    logger.info('Adding CV folds.')
-    _, y_train = specific.get_train_data()
-    cv = specific.get_cv(y_train)
-    db_tools.add_cv_folds(cv)
-    db_tools.setup_workflows()
-    db_tools.setup_problem(
-        specific.workflow, specific.other_workflow_element_types)
-
-
-def clear_registrants():
-    import shutil
-    from databoard.config import repos_path, submissions_path
-    # Prepare the teams repo submodules
-    # logger.info('Init team repos git')
-    # repo = Repo.init(config.repos_path)  # does nothing if already exists
-
-    # Remove the git repos of the teams
-    logger.info('Clearing the teams repositories.')
-    shutil.rmtree(repos_path, ignore_errors=True)
-    os.mkdir(repos_path)
-
-    logger.info('Clearing the models directory.')
-    shutil.rmtree(submissions_path, ignore_errors=True)
-    os.mkdir(submissions_path)
-    open(os.path.join(submissions_path, '__init__.py'), 'a').close()
-
-
-def test_setup():
-    from databoard.remove_test_db import recreate_test_db
-
-    recreate_test_db()
-    prepare_data()
-    clear_registrants()
-    # Flush joblib cache
-    clear_cache()
-    # todo: set up database
-
-
-def add_models():
-    from databoard.fetch import add_models
-    add_models()
-
-
-def train_test(e=None, t=None, s=None, state=None, force='False'):
-    force = strtobool(force)
-    event_name = e
-    team_name = t
-    submission_name = s
-
-    from databoard.db_tools import train_test_submissions,\
-        get_submissions, get_submissions_of_state
-
-    if state is not None:
-        submissions = get_submissions_of_state(state)
-    else:
-        submissions = get_submissions(event_name, team_name, submission_name)
-    train_test_submissions(submissions, force_retrain_test=force)
-    compute_contributivity(event_name)
-
-
-def train_test_earliest_new():
-    # it's not so simple: when submission is being trained, it's still new.
-    from databoard.db_tools import train_test_submission,\
-        get_earliest_new_submission
-
-    submission = get_earliest_new_submission()
-    if submission is not None:
-        train_test_submission(submission)
-    else:
-        print('No new submissions')
-
-
-def compute_contributivity(event_name):
-    from databoard.db_tools import compute_contributivity
-    compute_contributivity(event_name)
-
-
-def print_user_interactions():
-    from databoard.db_tools import print_user_interactions
-    print_user_interactions()
-
-
-def print_submissions(t=None, s=None, state=None):
-    team_name = t
-    submission_name = s
-
-    from databoard.db_tools import print_submissions, get_team_submissions,\
-        get_submissions_of_state
-    if team_name is None and state is None:
-        print_submissions()  # All
-    else:
-        if submission_name is None and state is None:
-            print_submissions(get_team_submissions(team_name))
-        elif state is None:
-            print_submissions(get_team_submissions(team_name, submission_name))
-        else:
-            print_submissions(get_submissions_of_state(state))
-
-
-def print_active_teams():
-    from databoard.db_tools import print_active_teams
-    print_active_teams()
-
-
-def print_users():
-    from databoard.db_tools import print_users
-    print_users()
-
-
-def set_state(t, s, state):
-    team_name = t
-    submission_name = s
-
-    from databoard.db_tools import set_state
-    set_state(team_name, submission_name, state)
-
-
-def delete_submission(t, s):
-    team_name = t
-    submission_name = s
-
-    from databoard.db_tools import delete_submission
-    delete_submission(team_name, submission_name)
-
-
-def kill(team, tag):
-    import glob
-    import signal
-    from databoard.fetch import get_tag_uid
-    from databoard.config import config_object
-
-    answer = 'y'
-    while answer != 'y':
-        answer = raw_input('Sure? (y/n): ')
-
-    pid_filenames = os.path.join(
-        config_object.submissions_path, team, get_tag_uid(team, tag), 'pid_*')
-    print pid_filenames
-    for f in glob.glob(pid_filenames):
-        with open(f) as pid_file:
-            pid = pid_file.read()
-            os.kill(int(pid), signal.SIGKILL)
-
-
-def serve(port=None, test='False'):
-    test = strtobool(test)
+def serve():
     from databoard import app
-    from databoard.config import config_object
-    # loads url/function bindings through @app.route decorators
     import databoard.views  # noqa
+    import databoard.config as config
 
-    if test:
-        pass
-    if port is None:
-        server_port = int(config_object.server_port)
-    else:
-        server_port = int(port)
+    server_port = int(config.server_port)
     app.run(
         debug=False,
         port=server_port,
@@ -301,28 +115,31 @@ def serve(port=None, test='False'):
         processes=1000)
 
 
-# TODO: fill up the following functions so to easily deploy
-# databoard on the server
+def train_test(e=None, t=None, s=None, state=None, force='False'):
+    force = strtobool(force)
 
-# FIXME: dtach not working
-# @hosts(production)
-# def rserve(sockname="db_server"):
-#    if not exists("/usr/bin/dtach"):
-#        sudo("apt-get install dtach")
-#
-#    with cd(config.dest_path):
-#        # run('export SERV_PORT={}'.format(server_port))
-#        # run('fab serve')
-#        # run('dtach -n `mktemp -u /tmp/{}.XXXX` export SERV_PORT={};fab serve'.format(sockname, server_port))
-#        return run('dtach -n `mktemp -u /tmp/{}.XXXX` fab serve:port={}'.format(sockname, server_port))
+    from databoard.db_tools import train_test_submissions,\
+        get_submissions, get_submissions_of_state
 
-# from importlib import import_module
+    if state is not None:
+        submissions = get_submissions_of_state(state)
+    else:
+        submissions = get_submissions(
+            event_name=e, team_name=t, submission_name=s)
+    print submissions
+    train_test_submissions(submissions, force_retrain_test=force)
+    compute_contributivity(event_name=e)
 
 
-ramp_deployment = [
-    'fabfile.py',
-    'ramp_index.txt',
-]
+def compute_contributivity(event_name):
+    from databoard.db_tools import compute_contributivity
+    compute_contributivity(event_name)
+
+
+def print_submissions(e=None, t=None, s=None):
+    from databoard.db_tools import print_submissions
+    print_submissions(event_name=e, team_name=t, submission_name=s)
+
 
 software = [
     'fabfile.py',
@@ -335,7 +152,6 @@ software = [
     'databoard/db_tools.py',
     'databoard/fetch.py',
     'databoard/forms.py',
-    'databoard/generic.py',
     'databoard/machine_parallelism.py',
     'databoard/model.py',
     'databoard/multiclass_prediction.py',
@@ -347,31 +163,12 @@ software = [
     'databoard/specific/workflows/__init__.py',
     'databoard/specific/workflows/regressor_workflow.py',
     'databoard/specific/workflows/classifier_workflow.py',
-    'databoard/ramps/__init__.py',
-    'databoard/ramps/air_passengers/__init__.py',
-    'databoard/ramps/air_passengers/specific.py',
-    'databoard/ramps/bankruptcy/__init__.py',
-    'databoard/ramps/bankruptcy/specific.py',
-    'databoard/ramps/boston_housing/__init__.py',
-    'databoard/ramps/boston_housing/specific.py',
-    'databoard/ramps/el_nino_bagged_cv_future/__init__.py',
-    'databoard/ramps/el_nino_bagged_cv_future/specific.py',
-    'databoard/ramps/el_nino_block_cv/__init__.py',
-    'databoard/ramps/el_nino_block_cv/specific.py',
-    'databoard/ramps/epidemium_cancer_rate/__init__.py',
-    'databoard/ramps/epidemium_cancer_rate/specific.py',
-    'databoard/ramps/iris/__init__.py',
-    'databoard/ramps/iris/specific.py',
-    'databoard/ramps/kaggle_otto/__init__.py',
-    'databoard/ramps/kaggle_otto/specific.py',
-    'databoard/ramps/macro_abm/__init__.py',
-    'databoard/ramps/macro_abm/specific.py',
-    'databoard/ramps/mortality_prediction/__init__.py',
-    'databoard/ramps/mortality_prediction/specific.py',
-    'databoard/ramps/pollenating_insects/__init__.py',
-    'databoard/ramps/pollenating_insects/specific.py',
-    'databoard/ramps/variable_stars/__init__.py',
-    'databoard/ramps/variable_stars/specific.py',
+    'databoard/specific/problems/__init__.py',
+    'databoard/specific/problems/boston_housing.py',
+    'databoard/specific/problems/iris.py',
+    'databoard/specific/events/__init__.py',
+    'databoard/specific/events/boston_housing_test.py',
+    'databoard/specific/events/iris_test.py',
     'databoard/tests/__init__.py',
     'databoard/tests/test_model.py',
     'databoard/tests/test_multiclass_predictions.py',
@@ -381,219 +178,41 @@ software = [
     'databoard/templates',
 ]
 
+deployment = [
+    'fabfile.py',
+    'problems/iris/data/raw/iris.csv',
+    'problems/iris/sandbox/classifier.py',
+    'problems/iris/deposited_submissions/kegl/rf/classifier.py',
+    'problems/iris/deposited_submissions/kegl/rf2/classifier.py',
+    'problems/boston_housing/data/raw/boston_housing.csv',
+    'problems/boston_housing/sandbox/regressor.py',
+    'problems/boston_housing/deposited_submissions/kegl/rf/regressor.py',
+    'problems/boston_housing/deposited_submissions/kegl/rf2/regressor.py',
+]
 
-def _save_ramp_index(ramp_index):
-    # we save ramp_index in the main dir so the deplyment can query itself
-    # for example, in serve (to get the port number) and sepcific (to get
-    # the number of CPUs). generic.get_ramp_index() reads it in
-    with open('ramp_index.txt', 'w') as f:
-        f.write(ramp_index)
 
+def publish_software():
+    from databoard.config import vd_server, vd_root
 
-def publish(ramp_index, test='False'):
-    test = strtobool(test)
-    _save_ramp_index(ramp_index)
-
-    # don't import before saving the ramp_index.txt file
-    from databoard.config import config_object, deposited_submissions_d_name,\
-        sandbox_d_name
-    ramp_name = config_object.ramp_name
-    # TODO: check if ramp_name is the same as in
-    #      'ramps/' + ramp_name + '/specific.py'
-
-    # publishing ramp_deployment
-    local = config_object.train_server == 'localhost'
     command = "rsync -pthrRvz -c "
-    if not local:
-        command += "--rsh=\'ssh -i " + os.path.expanduser("~")
-        command += "/.ssh/datacamp/id_rsa -p 22\' "
-    for file in ramp_deployment:
-        command += file + " "
-    if not config_object.is_same_web_and_train_servers():
-        command += config_object.get_deployment_target('web')
-    else:
-        command += config_object.get_deployment_target('train')
-    print command
-    os.system(command)
-
-    command = "rsync -pthrvz -c "
-    if not local:
-        command += "--rsh=\'ssh -i " + os.path.expanduser("~")
-        command += "/.ssh/datacamp/id_rsa -p 22\' "
-    command += " ramps/" + ramp_name + '/' + sandbox_d_name + ' '
-    if not config_object.is_same_web_and_train_servers():
-        command += config_object.get_deployment_target('web')
-    else:
-        command += config_object.get_deployment_target('train')
-    print command
-    os.system(command)
-
-    # publishing software
-    if not local:
-        command = "rsync -pthrRvz -c "
-        command += "--rsh=\'ssh -i " + os.path.expanduser("~")
-        command += "/.ssh/datacamp/id_rsa -p 22\' "
-        for file in software:
-            command += file + " "
-        if not config_object.is_same_web_and_train_servers():
-            command += config_object.get_software_target('web')
-        else:
-            command += config_object.get_software_target('train')
-        print command
-        os.system(command)
-
-    if test:
-        command = "rsync -pthrvz -c "
-        if not local:
-            command += "--rsh=\'ssh -i " + os.path.expanduser("~")
-            command += "/.ssh/datacamp/id_rsa -p 22\' "
-        command += " ramps/" + ramp_name + '/' +\
-            deposited_submissions_d_name + ' '
-        if not config_object.is_same_web_and_train_servers():
-            command += config_object.get_deployment_target('web')
-        else:
-            command += config_object.get_deployment_target('train')
-        print command
-        os.system(command)
-
-"""
-    # rsyncing specific
-    command = "rsync -pthrvz -c "
-    if not local:
-        command += "--rsh=\'ssh -i " + os.path.expanduser("~")
-        command += "/.ssh/datacamp/id_rsa -p 22\' "
-    command += " ramps/" + ramp_name + "/specific.py "
-    if not config_object.is_same_web_and_train_servers():
-        command += config_object.get_deployment_target('web')
-        command += "/databoard/"
-    else:
-        command += config_object.get_deployment_target('train')
-        command += "/databoard/"
-    print command
-    os.system(command)
-"""
-
-
-# (re)publish data set from 'ramps/' + ramp_name + '/data'
-# fab prepare_data should be run at the destination
-def publish_data(ramp_index):
-    from databoard.config import config_object
-    local = config_object.train_server == 'localhost'
-    ramp_name = config_object.ramp_name
-    command = "rsync --delete -pthrvz -c "
-    if not local:
-        command += "--rsh=\'ssh -i " + os.path.expanduser("~")
-        command += "/.ssh/datacamp/id_rsa -p 22\' "
-    command += 'ramps/' + ramp_name + '/data '
-    if not config_object.is_same_web_and_train_servers():
-        command += config_object.get_deployment_target('web') + "/"
-    else:
-        command += config_object.get_deployment_target('train') + "/"
+    command += "--rsh=\'ssh -i " + os.path.expanduser("~")
+    command += "/.ssh/datacamp/id_rsa -p 22\' "
+    for file in software:
+        command += file + ' '
+    command += 'root@' + vd_server + ':' + vd_root + '/code/'
     print command
     os.system(command)
 
 
-def _clear_destination_path_aux(destination_path, destination_root):
-    if os.path.exists(destination_path):
-        os.system('rm -rf ' + destination_path + '/*')
-    else:
-        if not os.path.exists(destination_root):
-            os.mkdir(destination_root)
-        os.mkdir(destination_path)
+def publish_deployment():
+    from databoard.config import vd_server, vd_root
 
+    command = "rsync -pthrRvz -c "
+    command += "--rsh=\'ssh -i " + os.path.expanduser("~")
+    command += "/.ssh/datacamp/id_rsa -p 22\' "
+    for file in deployment:
+        command += file + ' '
+    command += 'root@' + vd_server + ':' + vd_root + '/databoard_test/'
+    print command
+    os.system(command)
 
-def clear_destination_path(ramp_index):
-    _save_ramp_index(ramp_index)  # todo before importing databoard
-
-    from databoard.config import config_object
-    if not config_object.is_same_web_and_train_servers():
-        # destination_path eg
-        # '/tmp/databoard_local/databoard_mortality_prediction_8080'
-        destination_path = config_object.web_destination_path
-        destination_root = config_object.web_root
-        _clear_destination_path_aux(destination_path, destination_root)
-    destination_path = config_object.train_destination_path
-    destination_root = config_object.train_root
-    _clear_destination_path_aux(destination_path, destination_root)
-
-
-# For now, test is two-phased: 1) publish_test<ramp_index> first, which is a
-# publish and publish_data that clears the destination first completely, and 2)
-# go to the destination, and test_ramp there. It's because I don't know
-# how to make import path (for specific and user submission) run time. If
-# everything is deployed from a database, we can have single test commands that
-# publish and test locally and remotely using fabric magic.
-def publish_test(ramp_index):
-    clear_destination_path(ramp_index)
-    publish(ramp_index, test='True')
-    publish_data(ramp_index)
-
-
-def test_ramp():
-    import databoard.config as config
-    from databoard.tests.test_model import test_create_user, test_merge_teams
-    min_duration_between_submissions = config.min_duration_between_submissions
-    config.min_duration_between_submissions = 0
-    test_setup()
-    test_create_user()  # kegl, agramfort, akazakci, mcherti, pwd = 'bla'
-    test_merge_teams()  # kemfort, mkezakci
-    add_models()  # will create user and team 'test'
-    train_test()
-    config.min_duration_between_submissions = min_duration_between_submissions
-    # leaderboard(test='True')
-
-
-def create_user(name, password, lastname, firstname, email,
-                access_level='user', hidden_notes=''):
-    from databoard.config import sandbox_d_name
-    from databoard.db_tools import create_user
-    create_user(
-        name, password, lastname, firstname, email, access_level, hidden_notes)
-    #train_test(t=name, s=sandbox_d_name)
-
-
-def generate_single_password():
-    from databoard.db_tools import generate_single_password
-    print generate_single_password()
-
-
-def generate_passwords(users_to_add_f_name, password_f_name):
-    from databoard.db_tools import generate_passwords
-    print generate_passwords(users_to_add_f_name, password_f_name)
-
-
-def add_users_from_file(users_to_add_f_name, password_f_name):
-    """Users whould be the same in the same order in the two files."""
-
-    test_setup()
-    users_to_add = pd.read_csv(users_to_add_f_name)
-    passwords = pd.read_csv(password_f_name)
-    users_to_add['password'] = passwords['password']
-    for _, u in users_to_add.iterrows():
-        print u
-        create_user(u['name'], u['password'], u['lastname'], u['firstname'],
-                    u['email'], u['access_level'], u['hidden_notes'])
-
-
-def send_password_mail(user_name, password):
-    from databoard.db_tools import send_password_mail
-    send_password_mail(user_name, password)
-
-
-def send_password_mails(password_f_name, port=None):
-    from databoard.db_tools import send_password_mails
-    send_password_mails(password_f_name, port)
-
-
-def set_error(t, s, error_msg, error='training_error'):
-    from databoard.db_tools import set_error
-    set_error(t, s, error, error_msg)
-
-
-def get_top_score_per_user(f_name=None):
-    from databoard.db_tools import get_top_score_per_user
-    from databoard.config import public_opening_timestamp
-    if f_name is None:
-        print get_top_score_per_user(public_opening_timestamp)
-    else:
-        get_top_score_per_user(public_opening_timestamp).to_csv(f_name)

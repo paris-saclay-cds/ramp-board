@@ -15,18 +15,17 @@ from databoard.model import User, Team, Submission, SubmissionFile,\
     SubmissionFileType, SubmissionFileTypeExtension, WorkflowElementType,\
     WorkflowElement, Workflow, Extension, Problem, Event, EventTeam,\
     CVFold, SubmissionOnCVFold, DetachedSubmissionOnCVFold,\
-    UserInteraction,\
-    NameClashError, MergeTeamError, TooEarlySubmissionError,\
+    UserInteraction, EventAdmin,\
+    NameClashError, TooEarlySubmissionError,\
     DuplicateSubmissionError, MissingSubmissionFileError,\
     MissingExtensionError,\
     combine_predictions_list, get_next_best_single_fold,\
-    get_active_user_event_team, get_user_teams, get_n_team_members,\
-    get_team_members
+    get_active_user_event_team, get_user_teams,\
+    get_team_members, get_user_event_teams
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 import databoard.config as config
-import databoard.generic as generic
 
 
 logger = logging.getLogger('databoard')
@@ -40,15 +39,17 @@ def date_time_format(date_time):
 ######################### Users ###########################
 
 def get_hashed_password(plain_text_password):
-    """Hash a password for the first time
+    """Hash a password for the first time.
+
     (Using bcrypt, the salt is saved into the hash itself)
     """
     return bcrypt.hashpw(plain_text_password, bcrypt.gensalt())
 
 
 def check_password(plain_text_password, hashed_password):
-    """Check hased password. Using bcrypt, the salt is saved into the
-    hash itself
+    """Check hased password.
+
+    Using bcrypt, the salt is saved into the hash itself.
     """
     return bcrypt.checkpw(plain_text_password, hashed_password)
 
@@ -72,10 +73,11 @@ def generate_passwords(users_to_add_f_name, password_f_name):
 
 
 def send_password_mail(user_name, password, port=None):
-    """Also resets password. If port is None, use
+    """Send password mail.
+
+    Also resets password. If port is None, use
     config.config_object.server_port.
     """
-
     user = User.query.filter_by(name=user_name).one()
     user.hashed_password = get_hashed_password(password)
     db.session.commit()
@@ -94,8 +96,9 @@ def send_password_mail(user_name, password, port=None):
     header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
         user.email, gmail_user, subject)
     body = 'Dear {},\n\n'.format(user.firstname)
-    body += 'Here is your login and other information for the {} RAMP:\n\n'.format(
-        config.config_object.specific.ramp_title)
+    body += 'Here is your login and other information ' +\
+        'for the {} RAMP:\n\n'.format(
+            config.config_object.specific.ramp_title)
     body += 'username: {}\n'.format(user.name)
     body += 'password: {}\n'.format(password)
 
@@ -129,7 +132,7 @@ def send_password_mails(password_f_name, port):
 
 
 def setup_workflows():
-    """Setting up database. 
+    """Setting up database.
 
     Should be called once although there is no harm recalling it: if the
     elements are in the db, it skips adding them.
@@ -182,7 +185,9 @@ def add_extension(name):
     """Adding a new extension, e.g., 'py'."""
     extension = Extension.query.filter_by(name=name).one_or_none()
     if extension is None:
-        db.session.add(Extension(name=name))
+        extension = Extension(name=name)
+        logger.info('Adding {}'.format(extension))
+        db.session.add(extension)
         db.session.commit()
 
 
@@ -194,8 +199,10 @@ def add_submission_file_type(name, is_editable, max_size):
     submission_file_type = SubmissionFileType.query.filter_by(
         name=name).one_or_none()
     if submission_file_type is None:
-        db.session.add(SubmissionFileType(
-            name=name, is_editable=is_editable, max_size=max_size))
+        submission_file_type = SubmissionFileType(
+            name=name, is_editable=is_editable, max_size=max_size)
+        logger.info('Adding {}'.format(submission_file_type))
+        db.session.add(submission_file_type)
         db.session.commit()
 
 
@@ -210,8 +217,10 @@ def add_submission_file_type_extension(type_name, extension_name):
     type_extension = SubmissionFileTypeExtension.query.filter_by(
         type=submission_file_type, extension=extension).one_or_none()
     if type_extension is None:
-        db.session.add(SubmissionFileTypeExtension(
-            type=submission_file_type, extension=extension))
+        type_extension = SubmissionFileTypeExtension(
+            type=submission_file_type, extension=extension)
+        logger.info('Adding {}'.format(type_extension))
+        db.session.add(type_extension)
         db.session.commit()
 
 
@@ -226,8 +235,10 @@ def add_workflow_element_type(workflow_element_type_name,
     workflow_element_type = WorkflowElementType.query.filter_by(
         name=workflow_element_type_name).one_or_none()
     if workflow_element_type is None:
-        db.session.add(WorkflowElementType(
-            name=workflow_element_type_name, type=submission_file_type))
+        workflow_element_type = WorkflowElementType(
+            name=workflow_element_type_name, type=submission_file_type)
+        logger.info('Adding {}'.format(workflow_element_type))
+        db.session.add(workflow_element_type)
         db.session.commit()
 
 
@@ -250,9 +261,11 @@ def add_workflow(workflow_name, element_type_names):
                     workflow=workflow,
                     workflow_element_type=workflow_element_type).one_or_none()
             if workflow_element is None:
-                db.session.add(WorkflowElement(
+                workflow_element = WorkflowElement(
                     workflow=workflow,
-                    workflow_element_type=workflow_element_type))
+                    workflow_element_type=workflow_element_type)
+                logger.info('Adding {}'.format(workflow_element))
+                db.session.add(workflow_element)
         db.session.commit()
 
 
@@ -266,10 +279,24 @@ def add_problem(problem_name):
     """
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
     if problem is None:
-        db.session.add(Problem(name=problem_name))
+        problem = Problem(name=problem_name)
+        logger.info('Adding {}'.format(problem))
+        db.session.add(problem)
         db.session.commit()
-        problem = Problem.query.filter_by(name=problem_name).one()
     problem.module.prepare_data()
+
+
+def _set_table_attribute(table, attr):
+    """Setting attributes from config file.
+
+    Assumes that table has a module field that imports the config file.
+    If attr is not specified in the file, revert to default.
+    """
+    try:
+        value = getattr(table.module, attr)
+    except AttributeError:
+        return
+    setattr(table, attr, value)
 
 
 def add_event(event_name):
@@ -282,9 +309,21 @@ def add_event(event_name):
     """
     event = Event.query.filter_by(name=event_name).one_or_none()
     if event is None:
-        db.session.add(Event(name=event_name))
+        event = Event(name=event_name)
+        logger.info('Adding {}'.format(event))
+        db.session.add(event)
         db.session.commit()
-        event = Event.query.filter_by(name=event_name).one()
+
+    _set_table_attribute(event, 'max_members_per_team')
+    _set_table_attribute(event, 'max_n_ensemble')
+    _set_table_attribute(event, 'score_precision')
+    _set_table_attribute(event, 'is_send_trained_mails')
+    _set_table_attribute(event, 'is_send_submitted_mails')
+    _set_table_attribute(event, 'min_duration_between_submissions')
+    _set_table_attribute(event, 'opening_timestamp')
+    _set_table_attribute(event, 'public_opening_timestamp')
+    _set_table_attribute(event, 'closing_timestamp')
+
     _, y_train = event.problem.module.get_train_data()
     cv = event.module.get_cv(y_train)
     for train_is, test_is in cv:
@@ -453,9 +492,19 @@ def signup_team(event_name, team_name):
     db.session.commit()
     # submitting the starting kit for team
     from_submission_path = os.path.join(
-        config.ramps_path, event.problem.name, config.sandbox_d_name)
+        config.problems_path, event.problem.name, config.sandbox_d_name)
     make_submission_and_copy_files(
         event_name, team_name, config.sandbox_d_name, from_submission_path)
+
+
+def make_event_admin(event_name, admin_name):
+    event = Event.query.filter_by(name=event_name).one()
+    admin = User.query.filter_by(name=admin_name).one()
+    event_admin = EventAdmin.query.filter_by(
+        event=event, admin=admin).one_or_none()
+    if event_admin is None:
+        event_admin = EventAdmin(event=event, admin=admin)
+        db.session.commit()
 
 
 ######################### Submissions ###########################
@@ -599,9 +648,11 @@ def make_submission(event_name, team_name, submission_name, submission_path):
 
 def make_submission_and_copy_files(event_name, team_name, new_submission_name,
                                    from_submission_path):
-    """Called from signup_team(), merge_teams(), fetch.add_models(),
-    view.sandbox()."""
+    """Make submission and copy files to submission.path.
 
+    Called from signup_team(), merge_teams(), fetch.add_models(),
+    view.sandbox().
+    """
     submission = make_submission(
         event_name, team_name, new_submission_name, from_submission_path)
     # clean up the model directory in case it's a resubmission
@@ -634,9 +685,8 @@ def send_trained_mails(submission):
             smtpserver.starttls()
             smtpserver.ehlo
             smtpserver.login(gmail_user, gmail_pwd)
-            subject = 'submission {} for {} was trained at {}'.format(
-                submission.name, submission.event_team.event.name, 
-                date_time_format(submission.training_timestamp))
+            subject = '{} was trained at {}'.format(
+                submission, date_time_format(submission.training_timestamp))
             header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
                 recipient_list, gmail_user, subject)
             body = ''
@@ -646,12 +696,42 @@ def send_trained_mails(submission):
             logger.error('Mailing error: {}'.format(e))
 
 
+def send_submission_mails(user, submission, event_team):
+    #  later can be joined to the ramp admins
+    event = event_team.event
+    team = event_team.team
+    recipient_list = config.ADMIN_MAILS
+    event_admins = EventAdmin.query.filter_by(event=event)
+    recipient_list += [event_admin.admin.email for event_admin in event_admins]
+    gmail_user = config.MAIL_USERNAME
+    gmail_pwd = config.MAIL_PASSWORD
+    smtpserver = smtplib.SMTP(config.MAIL_SERVER, config.MAIL_PORT)
+    smtpserver.ehlo()
+    smtpserver.starttls()
+    smtpserver.ehlo
+    smtpserver.login(gmail_user, gmail_pwd)
+    subject = 'fab train_test:e="{}",t="{}",s="{}"'.format(
+        event.name, team.name, submission.name)
+    header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
+        recipient_list, gmail_user, subject)
+    # body = 'user = {}\nevent = {}\nserver = {}\nsubmission dir = {}\n'.format(
+    #     user,
+    #     event.name
+    #     config.config_object.get_deployment_target(mode='train'),
+    #     submission.path)
+    body = 'user = {}\nevent = {}\nsubmission dir = {}\n'.format(
+        user,
+        event.name,
+        submission.path)
+    for recipient in recipient_list:
+        smtpserver.sendmail(gmail_user, recipient, header + body)
+
+
 def train_test_submissions(submissions=None, force_retrain_test=False):
-    """Trains and tests submission.
+    """Train and test submission.
 
     If submissions is None, trains and tests all submissions.
     """
-
     if submissions is None:
         submissions = Submission.query.filter(
             Submission.name != 'sandbox').order_by(Submission.id).all()
@@ -662,7 +742,6 @@ def train_test_submissions(submissions=None, force_retrain_test=False):
 # For parallel call
 def train_test_submission(submission, force_retrain_test=False):
     """We do it here so it's dockerizable."""
-
     detached_submission_on_cv_folds = [
         DetachedSubmissionOnCVFold(submission_on_cv_fold)
         for submission_on_cv_fold in submission.on_cv_folds]
@@ -679,9 +758,9 @@ def train_test_submission(submission, force_retrain_test=False):
         # updates the detached submission_on_cv_fold objects. If it doesn't
         # work, we can go back to multiprocessing and
         logger.info('Number of processes = {}'.format(
-            submission.event.n_CV))
+            submission.event.n_cv))
         detached_submission_on_cv_folds = Parallel(
-            n_jobs=submission.event.n_CV, verbose=5)(
+            n_jobs=submission.event.n_cv, verbose=5)(
             delayed(train_test_submission_on_cv_fold)(
                 submission_on_cv_fold, X_train, y_train, X_test, y_test,
                 force_retrain_test)
@@ -710,7 +789,9 @@ def train_test_submission(submission, force_retrain_test=False):
 
 
 def _make_error_message(e):
-    """log_msg is the full error what we print into logger.error. error_msg
+    """Make an error message in train/test.
+
+    log_msg is the full error what we print into logger.error. error_msg
     is what we save and display to the user. Ideally error_msg is the part
     of the code that is related to the user submission.
     """
@@ -727,7 +808,7 @@ def _make_error_message(e):
     return log_msg, error_msg
 
 
-def train_test_submission_on_cv_fold(detached_submission_on_cv_fold, 
+def train_test_submission_on_cv_fold(detached_submission_on_cv_fold,
                                      X_train, y_train,
                                      X_test, y_test, force_retrain_test=False):
     train_submission_on_cv_fold(
@@ -872,7 +953,7 @@ def compute_contributivity(event_name, force_ensemble=False):
     # comment in cv_fold.get_combined_predictions
 
     event = Event.query.filter_by(name=event_name).one()
-    submissions = get_submissions(event_name)
+    submissions = get_submissions(event_name=event_name)
 
     true_predictions_train = event.problem.true_predictions_train()
     true_predictions_test = event.problem.true_predictions_test()
@@ -901,7 +982,6 @@ def compute_contributivity(event_name, force_ensemble=False):
         test_is_list.append(cv_fold.test_is)
     for submission in submissions:
         submission.set_contributivity(is_commit=False)
-    db.session.commit()
     from model import _get_score_cv_bags
     # if there are no predictions to combine, it crashed
     combined_predictions_list = [c for c in combined_predictions_list
@@ -911,20 +991,19 @@ def compute_contributivity(event_name, force_ensemble=False):
             event, combined_predictions_list, true_predictions_train,
             test_is_list)
         logger.info('Combined combined valid score = {}'.format(scores))
-        with open('combined_combined_valid_score.txt', 'w') as f:
-            f.write(str(round(scores[-1], event.score_precision)))
-            # TODO: should go into db
+        event.combined_combined_valid_score = float(scores[-1])
     else:
-        with open('combined_combined_valid_score.txt', 'w') as f:
-            f.write('')  # TODO: should go into db
+        event.combined_combined_valid_score = None
 
     best_predictions_list = [c for c in best_predictions_list
                              if c is not None]
     if len(best_predictions_list) > 0:
-        logger.info('Combined foldwise best valid score = {}'.format(
-            _get_score_cv_bags(
-                event, best_predictions_list, true_predictions_train,
-                test_is_list)))
+        scores = _get_score_cv_bags(
+            event, best_predictions_list, true_predictions_train, test_is_list)
+        logger.info('Combined foldwise best valid score = {}'.format(scores))
+        event.combined_foldwise_valid_score = float(scores[-1])
+    else:
+        event.combined_foldwise_valid_score = None
 
     combined_test_predictions_list = [c for c in combined_test_predictions_list
                                       if c is not None]
@@ -932,18 +1011,20 @@ def compute_contributivity(event_name, force_ensemble=False):
         scores = _get_score_cv_bags(
             event, combined_test_predictions_list, true_predictions_test)
         logger.info('Combined combined test score = {}'.format(scores))
-        with open('combined_combined_test_score.txt', 'w') as f:
-            f.write(str(round(scores[-1], event.score_precision)))
+        event.combined_combined_test_score = float(scores[-1])
     else:
-        with open('combined_combined_test_score.txt', 'w') as f:
-            f.write('')  # TODO: should go into db
+        event.combined_combined_test_score = None
 
     best_test_predictions_list = [c for c in best_test_predictions_list
                                   if c is not None]
     if len(best_test_predictions_list) > 0:
-        logger.info('Combined foldwise best test score = {}'.format(
-            _get_score_cv_bags(
-                event, best_test_predictions_list, true_predictions_test)))
+        scores = _get_score_cv_bags(
+            event, best_test_predictions_list, true_predictions_test)
+        logger.info('Combined foldwise best valid score = {}'.format(scores))
+        event.combined_foldwise_test_score = float(scores[-1])
+    else:
+        event.combined_foldwise_test_score = None
+    db.session.commit()
 
 
 def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
@@ -1030,17 +1111,60 @@ def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
         combined_test_predictions, best_test_predictions
 
 
-def get_public_leaderboard(event_name, team_name=None, user_name=None, 
-                           is_open_code=True):
+def is_user_signed_up(event_name, user_name):
+    for event_team in get_user_event_teams(event_name, user_name):
+        if event_team.is_active:
+            return True
+    return False
+
+
+def is_admin(event, user):
+    if user.access_level == 'admin':
+        return True
+    event_admin = EventAdmin.query.filter_by(
+        event=event, user=user).one_or_none()
+    if event_admin is None:
+        return False
+    else:
+        return True
+
+
+def is_open_code(event, current_user, submission=None):
+    """
+    True if current_user can look at submission of event.
+    If submission is None, it is assumed to be the sandbox. 
+    """
+    if not current_user.is_authenticated or not current_user.is_active:
+        return False
+    if is_admin(event, current_user):
+        return True
+    if not is_user_signed_up(event.name, current_user.name):
+        return False
+    if submission is None:
+        # It's probably stupid since we could just return True here, but this
+        # access right thing will have to be cleaned up anyways
+        submission = get_sandbox(event, current_user)
+    if current_user in get_team_members(submission.event_team.team):
+        # This may be slow
+        return True
+    if event.is_public_open:
+        return True
+    return False
+
+
+def get_public_leaderboard(event_name, current_user, team_name=None,
+                           user_name=None):
     """
     Returns
     -------
     leaderboard_html : html string
     """
 
-    submissions = get_submissions(event_name, team_name, user_name)
+    submissions = get_submissions(
+        event_name=event_name, team_name=team_name, user_name=user_name)
     submissions = [submission for submission in submissions
                    if submission.is_public_leaderboard]
+    event = Event.query.filter_by(name=event_name).one()
 
     columns = ['team',
                'submission',
@@ -1052,10 +1176,11 @@ def get_public_leaderboard(event_name, team_name=None, user_name=None,
     leaderboard_dict_list = [
         {column: value for column, value in zip(
             columns, [submission.event_team.team.name,
-                      submission.name_with_link if is_open_code
+                      submission.name_with_link if is_open_code(
+                          event, current_user, submission)
                       else submission.name[:20],
                       round(submission.valid_score_cv_bag,
-                            submission.event_team.event.score_precision),
+                            event.score_precision),
                       int(100 * submission.contributivity + 0.5),
                       int(submission.train_time_cv_mean + 0.5),
                       int(submission.valid_time_cv_mean + 0.5),
@@ -1084,7 +1209,8 @@ def get_private_leaderboard(event_name, team_name=None, user_name=None):
     leaderboard_html : html string
     """
 
-    submissions = get_submissions(event_name, team_name, user_name)
+    submissions = get_submissions(
+        event_name=event_name, team_name=team_name, user_name=user_name)
     submissions = [submission for submission in submissions
                    if submission.is_private_leaderboard]
 
@@ -1142,7 +1268,9 @@ def get_failed_leaderboard(event_name, team_name=None, user_name=None):
     -------
     leaderboard_html : html string
     """
-    submissions = get_submissions(event_name, team_name, user_name)
+
+    submissions = get_submissions(
+        event_name=event_name, team_name=team_name, user_name=user_name)
     submissions = [submission for submission in submissions
                    if submission.is_error]
 
@@ -1177,7 +1305,8 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
     -------
     leaderboard_html : html string
     """
-    submissions = get_submissions(event_name, team_name, user_name)
+    submissions = get_submissions(
+        event_name=event_name, team_name=team_name, user_name=user_name)
     submissions = [submission for submission in submissions
                    if submission.state == 'new' and submission.is_not_sandbox]
 
@@ -1204,30 +1333,28 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
     return leaderboard_html
 
 
-def get_submissions(event_name=None, user_name=None, team_name=None, 
+def get_submissions(event_name=None, team_name=None, user_name=None,
                     submission_name=None):
     if event_name is None:  # All submissions
         submissions = Submission.query.all()
     else:
-        if team_name is None: 
+        if team_name is None:
             if user_name is None:  # All submissions in a given event
                 submissions_ = db.session.query(
                     Submission, Event, EventTeam).filter(
                     Event.name == event_name).filter(
                     Event.id == EventTeam.event_id).filter(
                     EventTeam.id == Submission.event_team_id).all()
+                submissions = list(zip(*submissions_)[0])
             else:
                 # All submissions for a given event by all the teams of a user
-                submissions_ = []
-                user_teams = get_user_event_teams(event_name, user_name)
-                for team in user_teams:
-                    submissions_ += db.session.query(
-                        Submission, Event, Team, EventTeam).filter(
-                        Team.id == team.id).filter(
-                        Team.id == Submission.team_id).filter(
+                submissions = []
+                for event_team in get_user_event_teams(event_name, user_name):
+                    submissions += db.session.query(
+                        Submission).filter(
                         Event.name == event_name).filter(
-                        Event.id == EventTeam.event_id).filter(
-                        EventTeam.id == Submission.event_team_id).all()
+                        Event.id == event_team.event_id).filter(
+                        event_team.id == Submission.event_team_id).all()
         else:
             if submission_name is None:
                 # All submissions in a given event and team
@@ -1247,7 +1374,7 @@ def get_submissions(event_name=None, user_name=None, team_name=None,
                     Event.id == EventTeam.event_id).filter(
                     Team.id == EventTeam.team_id).filter(
                     EventTeam.id == Submission.event_team_id).all()
-        submissions = list(zip(*submissions_)[0])
+            submissions = list(zip(*submissions_)[0])
     return submissions
 
 
@@ -1265,9 +1392,12 @@ def get_earliest_new_submission():
         return new_submissions[0]
 
 
-def print_submissions(event_name=None, team_name=None, submissions=None):
+def print_submissions(event_name=None, team_name=None, submission_name=None):
+    submissions = get_submissions(
+        event_name=event_name, team_name=team_name,
+        submission_name=submission_name)
     print('***************** List of submissions ****************')
-    for submission in get_submissions(event_name, team_name, submissions):
+    for submission in submissions:
         print submission
         print('\tstate = {}'.format(submission.state))
         print('\tcontributivity = {0:.2f}'.format(
@@ -1367,6 +1497,7 @@ def get_user_interactions():
     user_interactions = UserInteraction.query.all()
 
     columns = ['timestamp (UTC)',
+               'event',
                'user',
                'team',
                'interaction',
@@ -1375,12 +1506,26 @@ def get_user_interactions():
                'code similarity',
                'diff']
 
+    def event_name(user_interaction):
+        event_team = user_interaction.event_team
+        if event_team is None:
+            return ''
+        else:
+            return event_team.event.name
+
+    def team_name(user_interaction):
+        event_team = user_interaction.event_team
+        if event_team is None:
+            return ''
+        else:
+            return event_team.team.name
+
     def submission_name(user_interaction):
         submission = user_interaction.submission
         if submission is None:
             return ''
         else:
-            return submission.team.name + '/' + submission.name_with_link
+            return submission.name_with_link
 
     def submission_file_name(user_interaction):
         submission_file = user_interaction.submission_file
@@ -1406,8 +1551,9 @@ def get_user_interactions():
     user_interactions_dict_list = [
         {column: value for column, value in zip(
             columns, [date_time_format(user_interaction.timestamp),
+                      event_name(user_interaction),
                       user_interaction.user.name,
-                      user_interaction.team.name,
+                      team_name(user_interaction),
                       user_interaction.interaction,
                       submission_name(user_interaction),
                       submission_file_name(user_interaction),

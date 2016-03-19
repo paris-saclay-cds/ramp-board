@@ -129,37 +129,32 @@ if (i<10)
 return i;
 }
 </script>
-
 <div class="ui stackable two column grid">
   <div class="one column row">
     <div class="column">
-    {% if combined_combined_valid_score and combined_combined_valid_score != '' %}
-      <h4>Combined score: {{ combined_combined_valid_score }}</h4>
+    {% if event.combined_combined_valid_score_str and event.is_open %}
+      <h4>Combined score: {{ event.combined_combined_valid_score_str }}</h4>
     {% endif %}    
-    {% if combined_combined_test_score and combined_combined_test_score != '' %}
-      <h4>Combined test score: {{ combined_combined_test_score }}</h4>
+    {% if event.combined_combined_test_score_str and event.is_public_open %}
+      <h4>Combined test score: {{ event.combined_combined_test_score_str }}</h4>
     {% endif %}    
-    {% if opening_date_time %}
-      <h3 class="ui horizontal header divider">{{ leaderboard_title }}, code links will open at (UTC) {{ opening_date_time }}</h3>
-    {% else %}
       <h3 class="ui horizontal header divider">{{ leaderboard_title }}</h3>
-    {% endif %}
       <div id='leaderboard'>{{leaderboard|safe}}</div>
     </div>
   </div>
-{% if new_submissions %}
+{% if new_leaderboard %}
   <div class="column">
     <div id="id_new_models">
       <h3 class="ui horizontal header divider">New submissions (pending training)</h3>
-      <div id='new_models'>{{new_submissions|safe}}</div>
+      <div id='new_models'>{{new_leaderboard|safe}}</div>
     </div>
   </div>
 {% endif %}
-{% if failed_submissions %}
+{% if failed_leaderboard %}
   <div class="column">
     <div id="id_failed_models">
       <h3 class="ui horizontal header divider">Failed submissions</h3>
-      <div id='failed_models'>{{failed_submissions|safe}}</div>
+      <div id='failed_models'>{{failed_leaderboard|safe}}</div>
     </div>
   </div>
 {% endif %}

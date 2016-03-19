@@ -1,6 +1,3 @@
-# Author: Balazs Kegl
-# License: BSD 3 clause
-
 from numpy.testing import assert_equal
 import databoard.scores as scores
 import databoard.multiclass_prediction as multiclass_prediction

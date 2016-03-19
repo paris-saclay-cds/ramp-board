@@ -1,10 +1,8 @@
 import os
 
 import databoard.config as config
-from numpy.testing import assert_array_equal
 from databoard import db
-from databoard.model import NameClashError, MergeTeamError,\
-    Team, Submission, CVFold, User, Event, EventTeam
+from databoard.model import NameClashError, MergeTeamError, User, Event
 import databoard.db_tools as db_tools
 from distutils.dir_util import mkpath
 
@@ -12,28 +10,16 @@ from databoard.remove_test_db import recreate_test_db
 
 
 def test_set_config_to_test():
-    # config.min_duration_between_submissions = 0
-    # config.config_object.ramp_name = 'iris'
-    # origin_path = os.path.join('ramps', config.config_object.ramp_name)
     config.root_path = os.path.join('.')
-    # tests_path = os.path.join('databoard', 'tests')
-
-    # #config.raw_data_path = os.path.join(origin_path, 'data', 'raw')
-    # #config.public_data_path = os.path.join(tests_path, 'data', 'public')
-    # #config.private_data_path = os.path.join(tests_path, 'data', 'private')
     config.submissions_d_name = 'test_submissions'
     config.submissions_path = os.path.join(
         config.root_path, config.submissions_d_name)
-    # config.deposited_submissions_path = os.path.join(
-    #     origin_path, config.deposited_submissions_d_name)
-    # config.sandbox_path = os.path.join(
-    #     origin_path, config.sandbox_d_name)
-    config.is_send_trained_mails = False
-    mkpath(os.path.join(config.ramps_path, 'iris', 'data', 'public'))
-    mkpath(os.path.join(config.ramps_path, 'iris', 'data', 'private'))
-    mkpath(os.path.join(config.ramps_path, 'boston_housing', 'data', 'public'))
+    mkpath(os.path.join(config.problems_path, 'iris', 'data', 'public'))
+    mkpath(os.path.join(config.problems_path, 'iris', 'data', 'private'))
     mkpath(os.path.join(
-        config.ramps_path, 'boston_housing', 'data', 'private'))
+        config.problems_path, 'boston_housing', 'data', 'public'))
+    mkpath(os.path.join(
+        config.problems_path, 'boston_housing', 'data', 'private'))
 
 
 def test_recreate_test_db():
@@ -148,15 +134,15 @@ def test_signup_team():
 
 def test_make_submission():
     event = Event.query.filter_by(name='iris_test').one()
-
+    print event.combined_combined_valid_score
+    print event.combined_combined_valid_score_str
     db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf',
-        'ramps/iris/deposited_submissions/kegl/rf')
+        'problems/iris/deposited_submissions/kegl/rf')
 
     db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf2',
-        'ramps/iris/deposited_submissions/kegl/rf2')
-
+        'problems/iris/deposited_submissions/kegl/rf2')
 
     # db_tools.make_submission_and_copy_files(
     #     'kemfort', 'rf',
@@ -178,7 +164,7 @@ def test_make_submission():
     # resubmitting 'new' is OK
     db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf2',
-        'ramps/iris/deposited_submissions/kegl/rf2')
+        'problems/iris/deposited_submissions/kegl/rf2')
     # db_tools.make_submission_and_copy_files(
     #     'kemfort', 'rf',
     #     'test_submissions/kemfort/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
@@ -190,7 +176,7 @@ def test_make_submission():
     # resubmitting 'error' is OK
     db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf',
-        'ramps/iris/deposited_submissions/kegl/rf')
+        'problems/iris/deposited_submissions/kegl/rf')
     # db_tools.make_submission_and_copy_files(
     #     'kemfort', 'rf',
     #     'test_submissions/kemfort/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
@@ -199,7 +185,7 @@ def test_make_submission():
     # resubmitting 'error' is OK
     db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf',
-        'ramps/iris/deposited_submissions/kegl/rf')
+        'problems/iris/deposited_submissions/kegl/rf')
     # db_tools.make_submission_and_copy_files(
     #     'kemfort', 'rf',
     #     'test_submissions/kemfort/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
@@ -209,7 +195,7 @@ def test_make_submission():
     try:
         db_tools.make_submission_and_copy_files(
             'iris_test', 'kegl', 'rf',
-            'ramps/iris/deposited_submissions/kegl/rf')
+            'problems/iris/deposited_submissions/kegl/rf')
         # db_tools.make_submission_and_copy_files(
         #     'kemfort', 'rf',
         #     'test_submissions/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
@@ -221,13 +207,13 @@ def test_make_submission():
 
     db_tools.make_submission_and_copy_files(
         'boston_housing_test', 'kegl', 'rf',
-        'ramps/boston_housing/deposited_submissions/kegl/rf')
+        'problems/boston_housing/deposited_submissions/kegl/rf')
     event = Event.query.filter_by(name='boston_housing_test').one()
     event.min_duration_between_submissions = 0
     db.session.commit()
     db_tools.make_submission_and_copy_files(
         'boston_housing_test', 'kegl', 'rf2',
-        'ramps/boston_housing/deposited_submissions/kegl/rf2')
+        'problems/boston_housing/deposited_submissions/kegl/rf2')
 
     db.session.commit()
 
@@ -265,15 +251,17 @@ def test_print_db():
 
 
 def test_leaderboard():
+    current_user = User.query.filter_by(name='kegl').one()
     print '\n'
     print('***************** Leaderboard ****************')
-    print db_tools.get_public_leaderboard('iris_test')
-    print db_tools.get_public_leaderboard('boston_housing_test')
+    print db_tools.get_public_leaderboard('iris_test', current_user)
+    print db_tools.get_public_leaderboard('boston_housing_test', current_user)
     print('***************** Private leaderboard ****************')
     print db_tools.get_private_leaderboard('iris_test')
     print db_tools.get_private_leaderboard('boston_housing_test')
     print('*********** Leaderboard of kegl ***********')
-    print db_tools.get_public_leaderboard('iris_test', user_name='kegl')
+    print db_tools.get_public_leaderboard(
+        'iris_test', current_user, user_name='kegl')
     print('*********** Private leaderboard of kegl ***********')
     print db_tools.get_private_leaderboard('iris_test', user_name='kegl')
     print('*********** Failing leaderboard of kegl ***********')

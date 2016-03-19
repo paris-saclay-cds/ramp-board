@@ -1,4 +1,5 @@
-include ramps/*/data/raw/*csv
-include ramps/*/*.py
+include problems/*/data/*/*
+include problems/*/deposited_submissions/*/*/*  # for test
+include problems/*/sandbox/*
 include Makefile
 include README.md

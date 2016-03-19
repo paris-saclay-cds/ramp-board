@@ -25,16 +25,15 @@
               </div>
               <!-- <div class="ui vertical fitted divider"></div> -->
               <div class="six wide column">
-                <h2 class="ui orange header">{{ ramp_title }}</h2>
+              {% if event %}
+                <h2 class="ui orange header">{{ event.title }}</h2>
+              {% endif %}
               </div>
               <div class="five wide right aligned column">
                 {% if session.logged_in %}
-                  <a href="{{ url_for('user') }}">my submissions</a><br>
-                  <a href="{{ url_for('sandbox') }}">new submission</a><br>
-                  <a href="{{ url_for('leaderboard') }}">leaderboard</a><br>
                   <a href="{{ url_for('logout') }}">log out</a><br>
                 {% endif %}
-                </div>  
+              </div>  
             </div>
             <!-- <div class="ui menu">
               <a class="active item">

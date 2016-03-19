@@ -1,9 +1,10 @@
-"""All score classes have a score function taking a ground truth vector
-    and a prediction vector and returning a score; and a boolean
-    higher_the_better."""
+"""Sorce classes.
 
-# Author: Balazs Kegl
-# License: BSD 3 clause
+All score classes have a score function taking a ground truth vector
+and a prediction vector and returning a score; and a boolean
+higher_the_better.
+"""
+
 
 import numpy as np
 from sklearn.metrics import accuracy_score, f1_score
@@ -208,4 +209,3 @@ class RegressionF1(ScoreFunction):
     @staticmethod
     def convert(x):
         return ScoreHigherTheBetter(x)
-
