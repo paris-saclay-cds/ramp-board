@@ -1,5 +1,6 @@
 from flask.ext.wtf import Form
-from wtforms import StringField, PasswordField, SelectMultipleField, validators
+from wtforms import StringField, PasswordField, SelectMultipleField,\
+    BooleanField, validators
 from wtforms.widgets import ListWidget, CheckboxInput
 from flask_wtf.file import FileField
 
@@ -12,7 +13,22 @@ class MultiCheckboxField(SelectMultipleField):
 class LoginForm(Form):
     user_name = StringField('user_name', [validators.Required()])
     password = PasswordField('password', [validators.Required()])
-    # remember_me = BooleanField('remember_me', default=False)
+
+
+class UserProfileForm(Form):
+    user_name = StringField('user_name', [validators.Required()])
+    password = PasswordField('password', [validators.Required()])
+    firstname = StringField('firstname', [validators.Required()])
+    lastname = StringField('lastname', [validators.Required()])
+    email = StringField('email', [validators.Required()])
+    linkedin_url = StringField('linkedin_url')
+    twitter_url = StringField('twitter_url')
+    facebook_url = StringField('facebook_url')
+    google_url = StringField('google_url')
+    github_url = StringField('github_url')
+    website_url = StringField('website_url')
+    bio = StringField('bio')
+    is_want_news = BooleanField()
 
 
 class CodeForm(Form):

@@ -323,6 +323,8 @@ def add_event(event_name):
     _set_table_attribute(event, 'opening_timestamp')
     _set_table_attribute(event, 'public_opening_timestamp')
     _set_table_attribute(event, 'closing_timestamp')
+    _set_table_attribute(event, 'is_public')
+    _set_table_attribute(event, 'is_controled_signup')
 
     _, y_train = event.problem.module.get_train_data()
     cv = event.module.get_cv(y_train)
@@ -351,11 +353,12 @@ def print_cv_folds():
 
 
 def create_user(name, password, lastname, firstname, email,
-                access_level='user', hidden_notes=''):
+                access_level='user', hidden_notes='', linkedin_url=None):
     hashed_password = get_hashed_password(password)
     user = User(name=name, hashed_password=hashed_password,
                 lastname=lastname, firstname=firstname, email=email,
-                access_level=access_level, hidden_notes=hidden_notes)
+                access_level=access_level, hidden_notes=hidden_notes,
+                linkedin_url=linkedin_url)
     # Creating default team with the same name as the user
     # user is admin of her own team
     team = Team(name=name, admin=user)
@@ -484,7 +487,7 @@ def print_active_teams(event_name):
             print('\t{}'.format(member))
 
 
-def signup_team(event_name, team_name):
+def sign_up_team(event_name, team_name):
     event = Event.query.filter_by(name=event_name).one()
     team = Team.query.filter_by(name=team_name).one()
     event_team = EventTeam(event=event, team=team)
@@ -495,6 +498,13 @@ def signup_team(event_name, team_name):
         config.problems_path, event.problem.name, config.sandbox_d_name)
     make_submission_and_copy_files(
         event_name, team_name, config.sandbox_d_name, from_submission_path)
+
+
+def approve_user(user_name):
+    user = User.query.filter_by(name=user_name).one()
+    if user.access_level == 'asked':
+        user.access_level = 'user'
+    db.session.commit()
 
 
 def make_event_admin(event_name, admin_name):
@@ -650,7 +660,7 @@ def make_submission_and_copy_files(event_name, team_name, new_submission_name,
                                    from_submission_path):
     """Make submission and copy files to submission.path.
 
-    Called from signup_team(), merge_teams(), fetch.add_models(),
+    Called from sign_up_team(), merge_teams(), fetch.add_models(),
     view.sandbox().
     """
     submission = make_submission(
@@ -723,6 +733,63 @@ def send_submission_mails(user, submission, event_team):
         user,
         event.name,
         submission.path)
+    for recipient in recipient_list:
+        smtpserver.sendmail(gmail_user, recipient, header + body)
+
+
+def send_sign_up_request_mail(event, user):
+    team = Team.query.filter_by(name=user.name).one()
+    recipient_list = config.ADMIN_MAILS
+    event_admins = EventAdmin.query.filter_by(event=event)
+    recipient_list += [event_admin.admin.email for event_admin in event_admins]
+    gmail_user = config.MAIL_USERNAME
+    gmail_pwd = config.MAIL_PASSWORD
+    smtpserver = smtplib.SMTP(config.MAIL_SERVER, config.MAIL_PORT)
+    smtpserver.ehlo()
+    smtpserver.starttls()
+    smtpserver.ehlo
+    smtpserver.login(gmail_user, gmail_pwd)
+    subject = 'fab sign_up_team:e="{}",t="{}"'.format(
+        event.name, team.name)
+    header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
+        recipient_list, gmail_user, subject)
+    body = 'event = {}\n'.format(event.name)
+    body += 'user = {}\n'.format(user.name)
+    body += 'name = {} {}\n'.format(user.firstname, user.lastname)
+    body += 'email = {}\n'.format(user.email)
+    body += 'linkedin = {}\n'.format(user.linkedin_url)
+    body += 'twitter = {}\n'.format(user.twitter_url)
+    body += 'facebook = {}\n'.format(user.facebook_url)
+    body += 'github = {}\n'.format(user.github_url)
+    body += 'notes = {}\n'.format(user.hidden_notes)
+    body += 'bio = {}\n'.format(user.bio)
+
+    for recipient in recipient_list:
+        smtpserver.sendmail(gmail_user, recipient, header + body)
+
+
+def send_register_request_mail(user):
+    recipient_list = config.ADMIN_MAILS
+    gmail_user = config.MAIL_USERNAME
+    gmail_pwd = config.MAIL_PASSWORD
+    smtpserver = smtplib.SMTP(config.MAIL_SERVER, config.MAIL_PORT)
+    smtpserver.ehlo()
+    smtpserver.starttls()
+    smtpserver.ehlo
+    smtpserver.login(gmail_user, gmail_pwd)
+    subject = 'fab approve_user:u="{}"'.format(user.name)
+    header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
+        recipient_list, gmail_user, subject)
+    body = 'user = {}\n'.format(user.name)
+    body += 'name = {} {}\n'.format(user.firstname, user.lastname)
+    body += 'email = {}\n'.format(user.email)
+    body += 'linkedin = {}\n'.format(user.linkedin_url)
+    body += 'twitter = {}\n'.format(user.twitter_url)
+    body += 'facebook = {}\n'.format(user.facebook_url)
+    body += 'github = {}\n'.format(user.github_url)
+    body += 'notes = {}\n'.format(user.hidden_notes)
+    body += 'bio = {}\n'.format(user.bio)
+
     for recipient in recipient_list:
         smtpserver.sendmail(gmail_user, recipient, header + body)
 
@@ -1122,17 +1189,28 @@ def is_admin(event, user):
     if user.access_level == 'admin':
         return True
     event_admin = EventAdmin.query.filter_by(
-        event=event, user=user).one_or_none()
+        event=event, admin=user).one_or_none()
     if event_admin is None:
         return False
     else:
         return True
 
 
+def is_public_event(event, user):
+    if event is None:
+        return False
+    if user.access_level == 'asked':
+        return False
+    if event.is_public or is_admin(event, user):
+        return True
+    return False
+
+
 def is_open_code(event, current_user, submission=None):
     """
     True if current_user can look at submission of event.
-    If submission is None, it is assumed to be the sandbox. 
+
+    If submission is None, it is assumed to be the sandbox.
     """
     if not current_user.is_authenticated or not current_user.is_active:
         return False

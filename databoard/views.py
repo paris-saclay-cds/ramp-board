@@ -24,7 +24,7 @@ from databoard.model import User, Submission, WorkflowElement,\
     DuplicateSubmissionError, TooEarlySubmissionError,\
     MissingExtensionError
 from databoard.forms import LoginForm, CodeForm, SubmitForm, ImportForm,\
-    UploadForm
+    UploadForm, UserProfileForm
 
 app.secret_key = os.urandom(24)
 
@@ -85,6 +85,41 @@ def login():
     )
 
 
+@app.route("/sign_up", methods=['GET', 'POST'])
+def sign_up():
+    if current_user.is_authenticated:
+        session['logged_in'] = True
+        return redirect(url_for('user'))
+
+    form = UserProfileForm()
+    if form.validate_on_submit():
+        try:
+            user = db_tools.create_user(
+                name=form.user_name.data,
+                password=form.password.data,
+                lastname=form.lastname.data,
+                firstname=form.firstname.data,
+                email=form.email.data,
+                linkedin_url=form.linkedin_url.data,
+                twitter_url=form.twitter_url.data,
+                facebook_url=form.facebook_url.data,
+                google_url=form.google_url.data,
+                github_url=form.github_url.data,
+                website_url=form.website_url.data,
+                bio=form.bio.data,
+                is_want_news=form.is_want_news.data,
+                access_level='asked')
+        except Exception as e:
+            flask.flash('{}'.format(e), category='Sign-up error')
+            return redirect(url_for('sign_up'))
+        db_tools.send_register_request_mail(user)
+        return flask.redirect(flask.url_for('login'))
+    return render_template(
+        'sign_up.html',
+        form=form,
+    )
+
+
 @app.route("/user")
 @fl.login_required
 def user():
@@ -92,14 +127,22 @@ def user():
         user=current_user, interaction='looking at user')
 
     events = Event.query.all()
-    event_urls_f_names = [(event.name, event.title) for event in events]
+    event_urls_f_names = [
+        (event.name,
+         event.title,
+         db_tools.is_public_event(event, current_user),
+         db_tools.is_user_signed_up(event.name, current_user.name))
+        for event in events]
     return render_template('user.html',
                            event_urls_f_names=event_urls_f_names)
 
 
-def _redirect_to_user(error_str):
-    flask.flash(error_str)
-    logger.error(error_str)
+def _redirect_to_user(message_str, is_error=True, category=None):
+    flask.flash(message_str, category=category)
+    if is_error:
+        logger.error(message_str)
+    else:
+        logger.info(message_str)
     return redirect(url_for('user'))
 
 
@@ -112,11 +155,33 @@ def _redirect_to_sandbox(event, message_str, is_error=True, category=None):
     return flask.redirect('/events/{}/sandbox'.format(event.name))
 
 
+@app.route("/events/<event_name>/sign_up")
+@fl.login_required
+def sign_up_for_event(event_name):
+    event = Event.query.filter_by(name=event_name).one_or_none()
+    if not db_tools.is_public_event(event, current_user):
+        return _redirect_to_user('{}: no event named "{}"'.format(
+            current_user, event_name))
+    db_tools.add_user_interaction(
+        user=current_user, event=event, interaction='signing up at event')
+
+    if event.is_controled_signup:
+        db_tools.send_sign_up_request_mail(event, current_user)
+        return _redirect_to_user(
+            "Sign-up request is sent to event admins.", is_error=False,
+            category='Request sent')
+    else:
+        db_tools.sign_up_team(event.name, current_user.name)
+        return _redirect_to_sandbox(
+            event, "{} is signed up for {}.".format(current_user, event),
+            is_error=False, category='Successful sign-up')
+
+
 @app.route("/events/<event_name>")
 @fl.login_required
 def user_event(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if event is None:
+    if not db_tools.is_public_event(event, current_user):
         return _redirect_to_user('{}: no event named "{}"'.format(
             current_user, event_name))
     db_tools.add_user_interaction(
@@ -130,7 +195,7 @@ def user_event(event_name):
 @fl.login_required
 def my_submissions(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if event is None:
+    if not db_tools.is_public_event(event, current_user):
         return _redirect_to_user('{}: no event named "{}"'.format(
             current_user, event_name))
     db_tools.add_user_interaction(
@@ -154,7 +219,7 @@ def my_submissions(event_name):
 @app.route("/events/<event_name>/leaderboard")
 def leaderboard(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if event is None:
+    if not db_tools.is_public_event(event, current_user):
         return _redirect_to_user('{}: no event named "{}"'.format(
             current_user, event_name))
     db_tools.add_user_interaction(
@@ -311,7 +376,7 @@ def view_model(submission_hash, f_name):
 @fl.login_required
 def sandbox(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if event is None:
+    if not db_tools.is_public_event(event, current_user):
         return _redirect_to_user('{}: no event named "{}"'.format(
             current_user, event_name))
     if not db_tools.is_open_code(event, current_user):
@@ -486,7 +551,7 @@ def logout():
 @fl.login_required
 def private_leaderboard(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if event is None:
+    if not db_tools.is_public_event(event, current_user):
         return _redirect_to_user('{}: no event named "{}"'.format(
             current_user, event_name))
     if not current_user.is_authenticated:

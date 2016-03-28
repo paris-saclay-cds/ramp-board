@@ -67,17 +67,17 @@ def test_setup():
         lastname='Admin', firstname='Iris',
         email='iris.admin@gmail.com', access_level='user')
 
-    db_tools.signup_team('iris_test', 'kegl')
-    db_tools.signup_team('boston_housing_test', 'kegl')
-    db_tools.signup_team('iris_test', 'agramfort')
-    db_tools.signup_team('boston_housing_test', 'agramfort')
-    db_tools.signup_team('iris_test', 'akazakci')
-    db_tools.signup_team('boston_housing_test', 'akazakci')
-    db_tools.signup_team('iris_test', 'mcherti')
-    db_tools.signup_team('boston_housing_test', 'mcherti')
-    db_tools.signup_team('iris_test', 'camille_marini')
-    db_tools.signup_team('boston_housing_test', 'camille_marini')
-    db_tools.signup_team('iris_test', 'test_user')
+    db_tools.sign_up_team('iris_test', 'kegl')
+    db_tools.sign_up_team('boston_housing_test', 'kegl')
+    db_tools.sign_up_team('iris_test', 'agramfort')
+    db_tools.sign_up_team('boston_housing_test', 'agramfort')
+    db_tools.sign_up_team('iris_test', 'akazakci')
+    db_tools.sign_up_team('boston_housing_test', 'akazakci')
+    db_tools.sign_up_team('iris_test', 'mcherti')
+    db_tools.sign_up_team('boston_housing_test', 'mcherti')
+    db_tools.sign_up_team('iris_test', 'camille_marini')
+    db_tools.sign_up_team('boston_housing_test', 'camille_marini')
+    db_tools.sign_up_team('iris_test', 'test_user')
 
     db_tools.make_event_admin('iris_test', 'test_iris_admin')
 
@@ -99,6 +99,16 @@ def test_setup():
     db_tools.train_test_submissions()
     db_tools.compute_contributivity('iris_test')
     db_tools.compute_contributivity('boston_housing_test')
+
+
+def sign_up_team(e, t):
+    from databoard.db_tools import sign_up_team
+    sign_up_team(event_name=e, team_name=t)
+
+
+def approve_user(u):
+    from databoard.db_tools import approve_user
+    approve_user(user_name=u)
 
 
 def serve():

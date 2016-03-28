@@ -39,14 +39,17 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20), nullable=False, unique=True)
     hashed_password = db.Column(db.String, nullable=False)
-    lastname = db.Column(db.String, nullable=False)
-    firstname = db.Column(db.String, nullable=False)
-    email = db.Column(db.String, nullable=False, unique=True)
-    linkedin_url = db.Column(db.String, default=None)
-    twitter_url = db.Column(db.String, default=None)
-    facebook_url = db.Column(db.String, default=None)
-    google_url = db.Column(db.String, default=None)
+    lastname = db.Column(db.String(256), nullable=False)
+    firstname = db.Column(db.String(256), nullable=False)
+    email = db.Column(db.String(256), nullable=False, unique=True)
+    linkedin_url = db.Column(db.String(256), default=None)
+    twitter_url = db.Column(db.String(256), default=None)
+    facebook_url = db.Column(db.String(256), default=None)
+    google_url = db.Column(db.String(256), default=None)
+    github_url = db.Column(db.String(256), default=None)
+    website_url = db.Column(db.String(256), default=None)
     hidden_notes = db.Column(db.String, default=None)
+    bio = db.Column(db.String(1024), default=None)
     is_want_news = db.Column(db.Boolean, default=True)
     access_level = db.Column(db.Enum(
         'admin', 'user', 'asked'), default='asked')  # 'asked' needs approval
@@ -57,7 +60,9 @@ class User(db.Model):
     is_active = db.Column(db.Boolean, default=True)
 
     def __init__(self, name, hashed_password, lastname, firstname, email,
-                 access_level='user', hidden_notes=''):
+                 access_level='user', hidden_notes='', linkedin_url='',
+                 twitter_url='', facebook_url='', google_url='', github_url='',
+                 website_url='', bio='', is_want_news=True):
         self.name = name
         self.hashed_password = hashed_password
         self.lastname = lastname
@@ -66,6 +71,14 @@ class User(db.Model):
         self.access_level = access_level
         self.hidden_notes = hidden_notes
         self.signup_timestamp = datetime.datetime.utcnow()
+        self.linkedin_url = linkedin_url
+        self.twitter_url = twitter_url
+        self.facebook_url = facebook_url
+        self.google_url = google_url
+        self.github_url = github_url
+        self.website_url = website_url
+        self.bio = bio
+        self.is_want_news = is_want_news
 
     @property
     def is_anonymous(self):
@@ -234,6 +247,8 @@ class Event(db.Model):
     score_precision = db.Column(db.Integer, default=3)  # n_digits
     is_send_trained_mails = db.Column(db.Boolean, default=True)
     is_send_submitted_mails = db.Column(db.Boolean, default=True)
+    is_public = db.Column(db.Boolean, default=False)
+    is_controled_signup = db.Column(db.Boolean, default=True)
 
     min_duration_between_submissions = db.Column(db.Integer, default=15 * 60)
     opening_timestamp = db.Column(

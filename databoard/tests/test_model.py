@@ -79,9 +79,9 @@ def test_create_user():
         assert e.value == 'email is already in use'
 
 
-def test_signup_team():
-    db_tools.signup_team('iris_test', 'kegl')
-    db_tools.signup_team('boston_housing_test', 'kegl')
+def test_sign_up_team():
+    db_tools.sign_up_team('iris_test', 'kegl')
+    db_tools.sign_up_team('boston_housing_test', 'kegl')
 
 
 # for now this is not functional, we should think through how teams

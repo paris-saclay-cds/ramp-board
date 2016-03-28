@@ -33,3 +33,5 @@ opening_timestamp = datetime.datetime(2000, 1, 1, 0, 0, 0)
 # before links to submissions in leaderboard are not alive
 public_opening_timestamp = datetime.datetime(3000, 1, 1, 0, 0, 0)
 closing_timestamp = datetime.datetime(4000, 1, 1, 0, 0, 0)
+is_public = True
+is_controled_signup = False

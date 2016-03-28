@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+
+{% with messages = get_flashed_messages() %}
+
+{% if messages %}
+<div id="formerror" class="ui modal">
+    <div class="header">
+        Login error
+    </div>
+    <div class="content">
+        {% for message in messages %}
+        <div class="description">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    <div class="actions">
+        <div class="ui button">Close</div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(function(){
+        $('#formerror.modal')
+            .modal('setting', 'transition', 'Fade Up')
+            .modal('show')
+        ;
+    });
+</script>
+{% endif %}
+{% endwith %}
+<h3 class="ui horizontal header divider">Sign up</h3> 
+ <!-- style="padding-bottom: 20px " -->
+<form class="ui form" method="post" action="" name="sign_up">
+    {{ form.hidden_tag() }}
+    <div class="one field">
+        <div class="required field">
+            <label>Username</label>
+            {{ form.user_name(placeholder="username") }}
+            {% for error in form.user_name.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div class="required field">
+            <label>Password</label>
+            {{ form.password(placeholder="password") }}
+            {% for error in form.password.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div class="required field">
+            <label>First name</label>
+            {{ form.firstname(placeholder="firstname") }}
+            {% for error in form.firstname.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div class="required field">
+            <label>Last name</label>
+            {{ form.lastname(placeholder="lastname") }}
+            {% for error in form.lastname.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div class="required field">
+            <label>Email</label>
+            {{ form.email(placeholder="email") }}
+            {% for error in form.email.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div class="checkbox">
+            <label>I would like to receive news about future RAMP events</label>
+            {{ form.is_want_news(placeholder="is_want_news", checked=True) }}
+            {% for error in form.is_want_news.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <h4 class="ui horizontal header divider"></h4>
+        The following fields are not mandatory, but the more we know about you, the more likely we will approve your sign-up application.
+        <div class="field">
+            <label>LinkedIn URL</label>
+            {{ form.linkedin_url(placeholder="linkedin_url") }}
+            {% for error in form.linkedin_url.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div class="field">
+            <label>Twitter URL</label>
+            {{ form.twitter_url(placeholder="twitter_url") }}
+            {% for error in form.twitter_url.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div class="field">
+            <label>Facebook URL</label>
+            {{ form.facebook_url(placeholder="facebook_url") }}
+            {% for error in form.facebook_url.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div class="field">
+            <label>Google+ URL</label>
+            {{ form.google_url(placeholder="google_url") }}
+            {% for error in form.google_url.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div class="field">
+            <label>GitHub URL</label>
+            {{ form.github_url(placeholder="github_url") }}
+            {% for error in form.github_url.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div class="field">
+            <label>Short biography</label>
+            {{ form.bio(placeholder="bio") }}
+            {% for error in form.bio.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        <div class="field">
+            <label>Web site</label>
+            {{ form.website_url(placeholder="website_url") }}
+            {% for error in form.website_url.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+<!--        
+        <div class="required field">
+            <label>Remember me</label>
+            {{ form.remember_me }}
+        </div>
+-->
+        <input type="submit" value="Sign up" class="ui submit button">
+    </div>
+</form>
+
+{% endblock %}

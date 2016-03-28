@@ -33,19 +33,29 @@
 
 <h3 class="ui horizontal header divider">Events</h3>
 <div class="five wide right aligned column">
-{% if session.logged_in %}
-    {% for url, f_name in event_urls_f_names %}
-    <div class="ui fluid card">
-        <div class="content">
-            <div class="description">
-                <a href="/events/{{ url }}"><i class="file grey icon"></i>{{ f_name }}</a>:
-                <a href="/events/{{ url }}/my_submissions">my submissions</a>, 
-                <a href="/events/{{ url }}/leaderboard">leaderboard</a>,
-                <a href="/events/{{ url }}/sandbox">sandbox</a>
+{% if current_user.access_level == 'asked' %}
+Waiting for approval ...
+{% else %}
+    {% if session.logged_in %}
+        {% for url, f_name, f_open, f_signed_up in event_urls_f_names %}
+            {% if f_open %}
+            <div class="ui fluid card">
+                <div class="content">
+                    <div class="description">
+                        <a href="/events/{{ url }}"><i class="file grey icon"></i>{{ f_name }}</a>:
+                        <a href="/events/{{ url }}/leaderboard">leaderboard</a>,
+                        {% if f_signed_up %}
+                            <a href="/events/{{ url }}/my_submissions">my submissions</a>, 
+                            <a href="/events/{{ url }}/sandbox">sandbox</a>
+                        {% else %}
+                            <a href="/events/{{ url }}/sign_up">sign up</a>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-    {% endfor %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
 {% endif %}
 </div>  
 
