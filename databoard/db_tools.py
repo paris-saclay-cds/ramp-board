@@ -5,6 +5,7 @@ import timeit
 import smtplib
 import logging
 import datetime
+import json
 import numpy as np
 import pandas as pd
 import xkcdpass.xkcd_password as xp
@@ -26,7 +27,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 import databoard.config as config
-
+import post_api
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
@@ -794,10 +795,21 @@ def send_register_request_mail(user):
         smtpserver.sendmail(gmail_user, recipient, header + body)
 
 
-def train_test_submissions(submissions=None, force_retrain_test=False):
+def train_test_submissions(data_id, host_url, username, userpassd,
+                           submissions=None, force_retrain_test=False):
     """Train and test submission.
 
-    If submissions is None, trains and tests all submissions.
+    :param data_id: id of the associated dataset on datarun platform
+    :param host_url: host url of datarun
+    :param username: username for datarun
+    :param userpassd: user password for datarun
+    :param submissions: if submissions is None, trains and tests all submissions
+
+    :type data_id: integer
+    :type host_url: string
+    :type username: string
+    :type userpassd: string
+    :type submissions: list of submissions from databoard database
     """
     if submissions is None:
         submissions = Submission.query.filter(
@@ -806,53 +818,112 @@ def train_test_submissions(submissions=None, force_retrain_test=False):
         train_test_submission(submission, force_retrain_test)
 
 
-# For parallel call
-def train_test_submission(submission, force_retrain_test=False):
-    """We do it here so it's dockerizable."""
+def train_test_submission(submission, data_id, host_url, username, userpassd,
+                          force_retrain_test=False, priority='L'):
+    """
+    Send submission on CV fold to datarun
+    :param submission: submission from databoard database
+    :param data_id: id of the associated dataset on datarun platform
+    :param host_url: host url of datarun
+    :param username: username for datarun
+    :param userpassd: user password for datarun
+    :param force_retrain_test: to force the train-test even if already done
+    :param priority: priority of the task on datarun
+
+    :type submission: Submission element of databoard database
+    :type data_id: integer
+    :type host_url: string
+    :type username: string
+    :type userpassd: string
+    :type force_retrain_test: True or False
+    :type priority: string, 'L' or 'H'
+    """
+    submission_id = submission.id
+    submission_files = [submission_file.path
+                        for submission_file in submission.submission_files]
     detached_submission_on_cv_folds = [
-        DetachedSubmissionOnCVFold(submission_on_cv_fold)
+        [DetachedSubmissionOnCVFold(submission_on_cv_fold),
+         submission_on_cv_fold.id]
         for submission_on_cv_fold in submission.on_cv_folds]
 
     if force_retrain_test:
         logger.info('Forced retraining/testing {}'.format(submission))
 
-    X_train, y_train = submission.event.problem.module.get_train_data()
-    X_test, y_test = submission.event.problem.module.get_test_data()
+    i_first_fold = 1
+    for detached_submission_on_cv_fold, submission_fold_id in \
+            detached_submission_on_cv_folds:
+        train_is = detached_submission_on_cv_fold.train_is
+        test_is = detached_submission_on_cv_fold.test_is
+        if i_first_fold:
+            p_data_id = data_id
+            p_submission_files = submission_files
+        else:
+            p_data_id = None
+            p_submission_files = submission_files
+        post_submission = post_api.\
+            post_submission_fold(host_url, username, userpassd,
+                                 submission_id, submission_fold_id,
+                                 train_is, test_is, priority,
+                                 raw_data_id=p_data_id,
+                                 list_submission_files=p_submission_files)
+        i_first_fold = 0
+        if post_submission.ok:
+            task_id = json.loads(post_submission.content)["task_id"]
+            logger.info('Submission fold submitted, task id %s'
+                        % (task_id))
+        else:
+            logger.info('Problem submitting submission fold %s'
+                        'from submission %s' % (submission_fold_id,
+                                                submission.name))
 
-    # Parallel, dict
-    if config.is_parallelize:
-        # We are using 'threading' so train_test_submission_on_cv_fold
-        # updates the detached submission_on_cv_fold objects. If it doesn't
-        # work, we can go back to multiprocessing and
-        logger.info('Number of processes = {}'.format(
-            submission.event.n_cv))
-        detached_submission_on_cv_folds = Parallel(
-            n_jobs=submission.event.n_cv, verbose=5)(
-            delayed(train_test_submission_on_cv_fold)(
-                submission_on_cv_fold, X_train, y_train, X_test, y_test,
-                force_retrain_test)
-            for submission_on_cv_fold in detached_submission_on_cv_folds)
-        for detached_submission_on_cv_fold, submission_on_cv_fold in\
-                zip(detached_submission_on_cv_folds, submission.on_cv_folds):
-            submission_on_cv_fold.update(detached_submission_on_cv_fold)
-    else:
-        # detached_submission_on_cv_folds = []
-        for detached_submission_on_cv_fold, submission_on_cv_fold in\
-                zip(detached_submission_on_cv_folds, submission.on_cv_folds):
-            train_test_submission_on_cv_fold(
-                detached_submission_on_cv_fold,
-                X_train, y_train, X_test, y_test,
-                force_retrain_test)
-            submission_on_cv_fold.update(detached_submission_on_cv_fold)
-    submission.training_timestamp = datetime.datetime.utcnow()
-    submission.set_state_after_training()
-    submission.compute_test_score_cv_bag()
-    submission.compute_valid_score_cv_bag()
-    db.session.commit()
-    logger.info('valid_score = {}'.format(submission.valid_score_cv_bag))
-    logger.info('test_score = {}'.format(submission.test_score_cv_bag))
 
-    send_trained_mails(submission)
+def get_train_test_submission(submissions, host_url, username, userpassd):
+    """
+    Get submissions from datarun
+
+    :param submissions: list of submissions from databoard database
+    :param host_url: host url of datarun
+    :param username: username for datarun
+    :param userpassd: user password for datarun
+
+    :type submissions: list
+    :type host_url: string
+    :type username: string
+    :type userpassd: string
+    """
+    for submission in submissions:
+        list_submission_fold_id = [submission_fold.id for submission_fold in
+                                   submission.on_cv_folds]
+        list_pred = post_api.get_prediction_list(host_url, username, userpassd,
+                                                 list_submission_fold_id)
+        list_pred = json.loads(list_pred.content)
+        for pred in list_pred:
+            state = pred['state'].lower()
+            if state not in ["todo"]:
+                submission_fold = SubmissionOnCVFold.query.\
+                    get(id=pred["databoard_sf_id"])
+                submission_fold.state = state
+                if state in ['trained', 'validated', 'tested']:
+                    submission_fold.train_time = pred['train_time']
+                if state in ['validated', 'tested']:
+                    submission_fold.valid_time = pred['validation_time']
+                    submission_fold.full_train_y_pred = \
+                        pred['full_train_predictions']
+                    submission_fold.compute_train_scores()
+                    submission_fold.compute_valid_scores()
+                if state in ['tested']:
+                    submission_fold.test_time = pred['test_time']
+                    submission_fold.test_y_pred = pred['test_predictions']
+                    submission_fold.compute_test_scores()
+        submission.training_timestamp = datetime.datetime.utcnow()
+        submission.set_state_after_training()
+        submission.compute_test_score_cv_bag()
+        submission.compute_valid_score_cv_bag()
+        db.session.commit()
+        logger.info('valid_score = {}'.format(submission.valid_score_cv_bag))
+        logger.info('test_score = {}'.format(submission.test_score_cv_bag))
+
+        send_trained_mails(submission)
 
 
 def _make_error_message(e):
@@ -1510,7 +1581,7 @@ def set_error(team_name, submission_name, error, error_msg):
 
 def get_top_score_of_user(user, closing_timestamp):
     """Returns the bagged test score of the submission with the best bagged
-    valid score, from among all the submissions of the user, before 
+    valid score, from among all the submissions of the user, before
     closing_timestamp.
     """
     team = get_active_user_team(user)

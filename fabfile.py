@@ -125,7 +125,24 @@ def serve():
         processes=1000)
 
 
-def train_test(e=None, t=None, s=None, state=None, force='False'):
+def send_data_datarun():
+    print("TODO send data and split data")
+
+
+def train_test(data_id, host_url, username, userpassd, e=None, t=None, s=None,
+               state=None, force='False'):
+    """Train and test submission.
+
+    :param data_id: id of the associated dataset on datarun platform
+    :param host_url: host url of datarun
+    :param username: username for datarun
+    :param userpassd: user password for datarun
+
+    :type data_id: integer
+    :type host_url: string
+    :type username: string
+    :type userpassd: string
+     """
     force = strtobool(force)
 
     from databoard.db_tools import train_test_submissions,\
@@ -137,7 +154,8 @@ def train_test(e=None, t=None, s=None, state=None, force='False'):
         submissions = get_submissions(
             event_name=e, team_name=t, submission_name=s)
     print submissions
-    train_test_submissions(submissions, force_retrain_test=force)
+    train_test_submissions(data_id, host_url, username, userpassd,
+                           submissions, force_retrain_test=force)
     compute_contributivity(event_name=e)
 
 
