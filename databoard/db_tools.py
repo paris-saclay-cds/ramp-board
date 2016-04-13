@@ -287,6 +287,43 @@ def add_problem(problem_name):
     problem.module.prepare_data()
 
 
+def send_data_datarun(problem_name, host_url, username, userpassd):
+    """
+    Send data to datarun and prepare data (split train test)
+
+    :param problem_name: name of the problem
+    :param host_url: host url of datarun
+    :param username: username for datarun
+    :param userpassd: user password for datarun
+
+    :type problem_name: string
+    :type host_url: string
+    :type username: string
+    :type userpassd: string
+    """
+    problem = Problem.query.filter_by(name=problem_name).one_or_none()
+    if problem is None:
+        logger.info('Add the new RAMP problem before')
+    else:
+        # Sending data to datarun
+        target_column = problem.module.target_column_name
+        workflow_elements = [p.workflow_element_type.name for p in
+                             problem.workflow.elements]
+        data_file = problem.module.raw_filename
+        post_data = post_api.post_data(host_url, username, userpassd,
+                                       problem_name, target_column,
+                                       workflow_elements, data_file)
+        logger.info('Sending data to datarun: %s' % post_data.content)
+        if post_data.ok:
+            data_id = json.loads(post_data.content)["id"]
+            logger.info('** Data id on datarun: %s **' % data_id)
+            # Ask to prepare data to datarun
+            held_out_test = problem.module.held_out_test_size
+            post_split = post_api.post_split(host_url, username, userpassd,
+                                             held_out_test, data_id)
+            logger.info('Prepare data on datarun: %s' % post_split.content)
+
+
 def _set_table_attribute(table, attr):
     """Setting attributes from config file.
 
@@ -877,9 +914,9 @@ def train_test_submission(submission, data_id, host_url, username, userpassd,
                                                 submission.name))
 
 
-def get_train_test_submission(submissions, host_url, username, userpassd):
+def get_trained_tested_submissions(submissions, host_url, username, userpassd):
     """
-    Get submissions from datarun
+    Get submissions from datarun and save predictions in databoard database
 
     :param submissions: list of submissions from databoard database
     :param host_url: host url of datarun

@@ -125,8 +125,22 @@ def serve():
         processes=1000)
 
 
-def send_data_datarun():
-    print("TODO send data and split data")
+def send_data_datarun(problem_name, host_url, username, userpassd):
+    """
+    Send data to datarun and prepare data (split train test)
+
+    :param problem_name: name of the problem
+    :param host_url: host url of datarun
+    :param username: username for datarun
+    :param userpassd: user password for datarun
+
+    :type problem_name: string
+    :type host_url: string
+    :type username: string
+    :type userpassd: string
+    """
+    from databoard.db_tools import send_data_datarun
+    send_data_datarun(problem_name, host_url, username, userpassd)
 
 
 def train_test(data_id, host_url, username, userpassd, e=None, t=None, s=None,
@@ -157,6 +171,26 @@ def train_test(data_id, host_url, username, userpassd, e=None, t=None, s=None,
     train_test_submissions(data_id, host_url, username, userpassd,
                            submissions, force_retrain_test=force)
     compute_contributivity(event_name=e)
+
+
+def get_trained_tested_datarun(host_url, username, userpassd,
+                               e=None, t=None, s=None):
+    """
+    Get submissions from datarun and save predictions to databoard database
+
+    :param host_url: host url of datarun
+    :param username: username for datarun
+    :param userpassd: user password for datarun
+
+    :type host_url: string
+    :type username: string
+    :type userpassd: string
+    """
+    from databoard.db_tools import get_trained_tested_submissions
+    from databoard.db_tools import get_submissions
+    submissions = get_submissions(event_name=e, team_name=t, submission_name=s)
+    print(submissions)
+    get_trained_tested_submissions(submissions, host_url, username, userpassd)
 
 
 def compute_contributivity(event_name):
