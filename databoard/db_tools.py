@@ -310,6 +310,7 @@ def send_data_datarun(problem_name, host_url, username, userpassd):
         workflow_elements = [p.workflow_element_type.name for p in
                              problem.workflow.elements]
         data_file = problem.module.raw_filename
+        held_out_test = problem.module.held_out_test_size
         post_data = post_api.post_data(host_url, username, userpassd,
                                        problem_name, target_column,
                                        workflow_elements, data_file)
@@ -317,11 +318,20 @@ def send_data_datarun(problem_name, host_url, username, userpassd):
         if post_data.ok:
             data_id = json.loads(post_data.content)["id"]
             logger.info('** Data id on datarun: %s **' % data_id)
-            # Ask to prepare data to datarun
-            held_out_test = problem.module.held_out_test_size
-            post_split = post_api.post_split(host_url, username, userpassd,
-                                             held_out_test, data_id)
-            logger.info('Prepare data on datarun: %s' % post_split.content)
+        elif "RawData with this name already exists" in post_data.content:
+            get_data = post_api.get_raw_data(host_url, username, userpassd)
+            list_data = json.loads(get_data.content)
+            data_id = [dd['id'] for dd in list_data if
+                       dd['name'] == problem_name][0]
+            logger.info('** Data id on datarun: %s **' % data_id)
+        else:
+            logger.info('** Problem submittinf data to datarun, no data id **')
+            return None
+        # Ask to prepare data to datarun
+        post_split = post_api.post_split(host_url, username, userpassd,
+                                         held_out_test, data_id)
+        logger.info('Prepare data on datarun: %s' % post_split.content)
+        return data_id
 
 
 def _set_table_attribute(table, attr):
@@ -833,7 +843,8 @@ def send_register_request_mail(user):
 
 
 def train_test_submissions(data_id, host_url, username, userpassd,
-                           submissions=None, force_retrain_test=False):
+                           submissions=None, force_retrain_test=False,
+                           priority='L'):
     """Train and test submission.
 
     :param data_id: id of the associated dataset on datarun platform
@@ -841,18 +852,25 @@ def train_test_submissions(data_id, host_url, username, userpassd,
     :param username: username for datarun
     :param userpassd: user password for datarun
     :param submissions: if submissions is None, trains and tests all submissions
+    :param force_retrain: to resubmit a submission even if already done
+    :param priority: training priority of the submissions on datarun,\
+        'L' for low and 'H' for high
 
     :type data_id: integer
     :type host_url: string
     :type username: string
     :type userpassd: string
     :type submissions: list of submissions from databoard database
+    :type force_retrain: boolean
+    :type priority: string
     """
     if submissions is None:
         submissions = Submission.query.filter(
             Submission.name != 'sandbox').order_by(Submission.id).all()
     for submission in submissions:
-        train_test_submission(submission, force_retrain_test)
+        train_test_submission(submission, data_id, host_url, username,
+                              userpassd, force_retrain_test=force_retrain_test,
+                              priority=priority)
 
 
 def train_test_submission(submission, data_id, host_url, username, userpassd,
@@ -865,7 +883,8 @@ def train_test_submission(submission, data_id, host_url, username, userpassd,
     :param username: username for datarun
     :param userpassd: user password for datarun
     :param force_retrain_test: to force the train-test even if already done
-    :param priority: priority of the task on datarun
+    :param priority: priority of the task on datarun,\
+        'L' for low and 'H' for high
 
     :type submission: Submission element of databoard database
     :type data_id: integer
@@ -873,11 +892,11 @@ def train_test_submission(submission, data_id, host_url, username, userpassd,
     :type username: string
     :type userpassd: string
     :type force_retrain_test: True or False
-    :type priority: string, 'L' or 'H'
+    :type priority: string
     """
     submission_id = submission.id
     submission_files = [submission_file.path
-                        for submission_file in submission.submission_files]
+                        for submission_file in submission.files]
     detached_submission_on_cv_folds = [
         [DetachedSubmissionOnCVFold(submission_on_cv_fold),
          submission_on_cv_fold.id]
@@ -885,6 +904,9 @@ def train_test_submission(submission, data_id, host_url, username, userpassd,
 
     if force_retrain_test:
         logger.info('Forced retraining/testing {}'.format(submission))
+        force = 'submission, submission_fold'
+    else:
+        force = None
 
     i_first_fold = 1
     for detached_submission_on_cv_fold, submission_fold_id in \
@@ -902,7 +924,8 @@ def train_test_submission(submission, data_id, host_url, username, userpassd,
                                  submission_id, submission_fold_id,
                                  train_is, test_is, priority,
                                  raw_data_id=p_data_id,
-                                 list_submission_files=p_submission_files)
+                                 list_submission_files=p_submission_files,
+                                 force=force)
         i_first_fold = 0
         if post_submission.ok:
             task_id = json.loads(post_submission.content)["task_id"]
