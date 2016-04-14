@@ -309,6 +309,7 @@ def send_data_datarun(problem_name, host_url, username, userpassd):
         target_column = problem.module.target_column_name
         workflow_elements = [p.workflow_element_type.name for p in
                              problem.workflow.elements]
+        workflow_elements = ', '.join(workflow_elements)
         data_file = problem.module.raw_filename
         held_out_test = problem.module.held_out_test_size
         post_data = post_api.post_data(host_url, username, userpassd,
@@ -325,7 +326,7 @@ def send_data_datarun(problem_name, host_url, username, userpassd):
                        dd['name'] == problem_name][0]
             logger.info('** Data id on datarun: %s **' % data_id)
         else:
-            logger.info('** Problem submittinf data to datarun, no data id **')
+            logger.info('** Problem submitting data to datarun, no data id **')
             return None
         # Ask to prepare data to datarun
         post_split = post_api.post_split(host_url, username, userpassd,
@@ -904,9 +905,11 @@ def train_test_submission(submission, data_id, host_url, username, userpassd,
 
     if force_retrain_test:
         logger.info('Forced retraining/testing {}'.format(submission))
-        force = 'submission, submission_fold'
+        force1 = 'submission, submission_fold'
+        force2 = 'submission_fold'
     else:
-        force = None
+        force1 = None
+        force2 = None
 
     i_first_fold = 1
     for detached_submission_on_cv_fold, submission_fold_id in \
@@ -916,16 +919,18 @@ def train_test_submission(submission, data_id, host_url, username, userpassd,
         if i_first_fold:
             p_data_id = data_id
             p_submission_files = submission_files
+            p_force = force1
         else:
             p_data_id = None
-            p_submission_files = submission_files
+            p_submission_files = None
+            p_force = force2
         post_submission = post_api.\
             post_submission_fold(host_url, username, userpassd,
                                  submission_id, submission_fold_id,
                                  train_is, test_is, priority,
                                  raw_data_id=p_data_id,
                                  list_submission_files=p_submission_files,
-                                 force=force)
+                                 force=p_force)
         i_first_fold = 0
         if post_submission.ok:
             task_id = json.loads(post_submission.content)["task_id"]
