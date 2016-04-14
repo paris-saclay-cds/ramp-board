@@ -103,13 +103,12 @@ def test_setup():
     data_id_iris = db_tools.send_data_datarun('iris', host_url, username,
                                               userpassd)
     print(data_id_iris)
-    # config.is_parallelize = False
+    from databoard.db_tools import get_submissions
+    submissions = get_submissions(event_name='iris_test')
     db_tools.train_test_submissions(data_id_iris, host_url, username,
-                                    userpassd, submissions=None,
+                                    userpassd, submissions=submissions,
                                     force_retrain_test=True, priority='L')
     time.sleep(228)
-    from databoard.db_tools import get_submissions_of_state
-    submissions = get_submissions_of_state('new')
     db_tools.get_trained_tested_submissions(submissions, host_url, username,
                                             userpassd)
     db_tools.compute_contributivity('iris_test')

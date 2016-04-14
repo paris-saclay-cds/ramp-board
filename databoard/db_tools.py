@@ -6,10 +6,12 @@ import smtplib
 import logging
 import datetime
 import json
+import zlib
+import base64
 import numpy as np
 import pandas as pd
 import xkcdpass.xkcd_password as xp
-from sklearn.externals.joblib import Parallel, delayed
+# from sklearn.externals.joblib import Parallel, delayed
 from databoard import db
 
 from databoard.model import User, Team, Submission, SubmissionFile,\
@@ -957,29 +959,43 @@ def get_trained_tested_submissions(submissions, host_url, username, userpassd):
     :type userpassd: string
     """
     for submission in submissions:
+        y_shape_train = submission.event.problem.\
+            true_predictions_train().y_pred.shape
+        y_shape_test = submission.event.problem.\
+            true_predictions_test().y_pred.shape
         list_submission_fold_id = [submission_fold.id for submission_fold in
                                    submission.on_cv_folds]
+        print(list_submission_fold_id)
         list_pred = post_api.get_prediction_list(host_url, username, userpassd,
                                                  list_submission_fold_id)
         list_pred = json.loads(list_pred.content)
+        print(list_pred)
         for pred in list_pred:
             state = pred['state'].lower()
+            print(state)
             if state not in ["todo"]:
                 submission_fold = SubmissionOnCVFold.query.\
-                    get(id=pred["databoard_sf_id"])
+                    filter(SubmissionOnCVFold.id == pred["databoard_sf_id"]).\
+                    first()
                 submission_fold.state = state
                 if state in ['trained', 'validated', 'tested']:
                     submission_fold.train_time = pred['train_time']
                 if state in ['validated', 'tested']:
                     submission_fold.valid_time = pred['validation_time']
-                    submission_fold.full_train_y_pred = \
-                        pred['full_train_predictions']
+                    full_train_y_pred = np.fromstring(zlib.decompress(
+                        base64.b64decode(pred['full_train_predictions'])),
+                        dtype=float).reshape(y_shape_train)
+                    submission_fold.full_train_y_pred = full_train_y_pred
                     submission_fold.compute_train_scores()
                     submission_fold.compute_valid_scores()
                 if state in ['tested']:
                     submission_fold.test_time = pred['test_time']
-                    submission_fold.test_y_pred = pred['test_predictions']
+                    test_y_pred = np.fromstring(zlib.decompress(
+                        base64.b64decode(pred['test_predictions'])),
+                        dtype=float).reshape(y_shape_test)
+                    submission_fold.test_y_pred = test_y_pred
                     submission_fold.compute_test_scores()
+        db.session.commit()
         submission.training_timestamp = datetime.datetime.utcnow()
         submission.set_state_after_training()
         submission.compute_test_score_cv_bag()
