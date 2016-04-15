@@ -222,6 +222,7 @@ def get_trained_tested_datarun(host_url, username, userpassd,
     print(submissions)
     get_trained_tested_submissions_datarun(submissions, host_url,
                                            username, userpassd)
+    compute_contributivity(event_name=e)
 
 
 def train_test(e=None, t=None, s=None, state=None, force='False'):
