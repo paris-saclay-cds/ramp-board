@@ -967,14 +967,11 @@ def get_trained_tested_submissions(submissions, host_url, username, userpassd):
             true_predictions_test().y_pred.shape
         list_submission_fold_id = [submission_fold.id for submission_fold in
                                    submission.on_cv_folds]
-        print(list_submission_fold_id)
         list_pred = post_api.get_prediction_list(host_url, username, userpassd,
                                                  list_submission_fold_id)
         list_pred = json.loads(list_pred.content)
-        print(list_pred)
         for pred in list_pred:
             state = pred['state'].lower()
-            print(state)
             if state not in ["todo"]:
                 submission_fold = SubmissionOnCVFold.query.\
                     filter(SubmissionOnCVFold.id == pred["databoard_sf_id"]).\
