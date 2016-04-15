@@ -982,8 +982,10 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
                 submission_fold.state = state
                 if state in ['trained', 'validated', 'tested']:
                     submission_fold.train_time = pred['train_time']
+                    submission_fold.state = 'trained'
                 if state in ['validated', 'tested']:
                     submission_fold.valid_time = pred['validation_time']
+                    submission_fold.state = 'validated'
                     full_train_y_pred = np.fromstring(zlib.decompress(
                         base64.b64decode(pred['full_train_predictions'])),
                         dtype=float).reshape(y_shape_train)
@@ -992,6 +994,7 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
                     submission_fold.compute_valid_scores()
                 if state in ['tested']:
                     submission_fold.test_time = pred['test_time']
+                    submission_fold.state = 'tested'
                     test_y_pred = np.fromstring(zlib.decompress(
                         base64.b64decode(pred['test_predictions'])),
                         dtype=float).reshape(y_shape_test)
