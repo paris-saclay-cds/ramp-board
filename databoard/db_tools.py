@@ -308,6 +308,7 @@ def send_data_datarun(problem_name, host_url, username, userpassd):
         logger.info('Add the new RAMP problem before')
     else:
         # Sending data to datarun
+        random_state = problem.module.random_state
         target_column = problem.module.target_column_name
         workflow_elements = [p.workflow_element_type.name for p in
                              problem.workflow.elements]
@@ -332,7 +333,8 @@ def send_data_datarun(problem_name, host_url, username, userpassd):
             return None
         # Ask to prepare data to datarun
         post_split = post_api.post_split(host_url, username, userpassd,
-                                         held_out_test, data_id)
+                                         held_out_test, data_id,
+                                         random_state=random_state)
         logger.info('Prepare data on datarun: %s' % post_split.content)
         return data_id
 
