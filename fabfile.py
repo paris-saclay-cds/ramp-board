@@ -201,7 +201,6 @@ def train_test_datarun(data_id, host_url, username, userpassd, e=None, t=None,
     train_test_submissions_datarun(data_id, host_url, username, userpassd,
                                    submissions, force_retrain_test=force,
                                    priority=priority)
-    compute_contributivity(event_name=e)
 
 
 def get_trained_tested_datarun(host_url, username, userpassd,
