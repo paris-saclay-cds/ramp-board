@@ -104,19 +104,28 @@ def test_setup():
     data_id_boston = db_tools.send_data_datarun('boston_housing', host_url,
                                                 username, userpassd)
     # send submissions to datarun
+    print('**** TRAIN-TEST DATARUN ****')
     from databoard.db_tools import get_submissions
     list_data = [data_id_iris, data_id_boston]
     list_event = ['iris_test', 'boston_housing_test']
     for data_id, event_name in zip(list_data, list_event):
         submissions = get_submissions(event_name=event_name)
         submissions = [sub for sub in submissions if sub.name != 'sandbox']
-        db_tools.train_test_submissions(data_id, host_url, username,
-                                        userpassd, submissions=submissions,
-                                        force_retrain_test=True, priority='L')
+        db_tools.train_test_submissions_datarun(data_id, host_url,
+                                                username, userpassd,
+                                                submissions=submissions,
+                                                force_retrain_test=True,
+                                                priority='L')
         time.sleep(228)
-        db_tools.get_trained_tested_submissions(submissions, host_url, username,
-                                                userpassd)
+        db_tools.get_trained_tested_submissions_datarun(submissions, host_url,
+                                                        username, userpassd)
         db_tools.compute_contributivity(event_name)
+
+    # compare results with local train and test
+    print('**** TRAIN-TEST LOCAL ****')
+    db_tools.train_test_submissions()
+    db_tools.compute_contributivity('iris_test')
+    db_tools.compute_contributivity('boston_housing_test')
 
 
 def sign_up_team(e, t):

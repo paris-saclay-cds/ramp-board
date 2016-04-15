@@ -11,7 +11,7 @@ import base64
 import numpy as np
 import pandas as pd
 import xkcdpass.xkcd_password as xp
-# from sklearn.externals.joblib import Parallel, delayed
+from sklearn.externals.joblib import Parallel, delayed
 from databoard import db
 
 from databoard.model import User, Team, Submission, SubmissionFile,\
@@ -847,10 +847,10 @@ def send_register_request_mail(user):
         smtpserver.sendmail(gmail_user, recipient, header + body)
 
 
-def train_test_submissions(data_id, host_url, username, userpassd,
-                           submissions=None, force_retrain_test=False,
-                           priority='L'):
-    """Train and test submission.
+def train_test_submissions_datarun(data_id, host_url, username, userpassd,
+                                   submissions=None, force_retrain_test=False,
+                                   priority='L'):
+    """Train and test submission using datarun.
 
     :param data_id: id of the associated dataset on datarun platform
     :param host_url: host url of datarun
@@ -873,13 +873,15 @@ def train_test_submissions(data_id, host_url, username, userpassd,
         submissions = Submission.query.filter(
             Submission.name != 'sandbox').order_by(Submission.id).all()
     for submission in submissions:
-        train_test_submission(submission, data_id, host_url, username,
-                              userpassd, force_retrain_test=force_retrain_test,
-                              priority=priority)
+        train_test_submission_datarun(submission, data_id, host_url,
+                                      username, userpassd,
+                                      force_retrain_test=force_retrain_test,
+                                      priority=priority)
 
 
-def train_test_submission(submission, data_id, host_url, username, userpassd,
-                          force_retrain_test=False, priority='L'):
+def train_test_submission_datarun(submission, data_id, host_url,
+                                  username, userpassd,
+                                  force_retrain_test=False, priority='L'):
     """
     Send submission on CV fold to datarun
     :param submission: submission from databoard database
@@ -946,7 +948,8 @@ def train_test_submission(submission, data_id, host_url, username, userpassd,
                                                 submission.name))
 
 
-def get_trained_tested_submissions(submissions, host_url, username, userpassd):
+def get_trained_tested_submissions_datarun(submissions, host_url,
+                                           username, userpassd):
     """
     Get submissions from datarun and save predictions in databoard database
 
@@ -1004,6 +1007,67 @@ def get_trained_tested_submissions(submissions, host_url, username, userpassd):
         logger.info('test_score = {}'.format(submission.test_score_cv_bag))
 
         send_trained_mails(submission)
+
+
+def train_test_submissions(submissions=None, force_retrain_test=False):
+    """Train and test submission.
+
+    If submissions is None, trains and tests all submissions.
+    """
+    if submissions is None:
+        submissions = Submission.query.filter(
+            Submission.name != 'sandbox').order_by(Submission.id).all()
+    for submission in submissions:
+        train_test_submission(submission, force_retrain_test)
+
+
+# For parallel call
+def train_test_submission(submission, force_retrain_test=False):
+    """We do it here so it's dockerizable."""
+    detached_submission_on_cv_folds = [
+        DetachedSubmissionOnCVFold(submission_on_cv_fold)
+        for submission_on_cv_fold in submission.on_cv_folds]
+
+    if force_retrain_test:
+        logger.info('Forced retraining/testing {}'.format(submission))
+
+    X_train, y_train = submission.event.problem.module.get_train_data()
+    X_test, y_test = submission.event.problem.module.get_test_data()
+
+    # Parallel, dict
+    if config.is_parallelize:
+        # We are using 'threading' so train_test_submission_on_cv_fold
+        # updates the detached submission_on_cv_fold objects. If it doesn't
+        # work, we can go back to multiprocessing and
+        logger.info('Number of processes = {}'.format(
+            submission.event.n_cv))
+        detached_submission_on_cv_folds = Parallel(
+            n_jobs=submission.event.n_cv, verbose=5)(
+            delayed(train_test_submission_on_cv_fold)(
+                submission_on_cv_fold, X_train, y_train, X_test, y_test,
+                force_retrain_test)
+            for submission_on_cv_fold in detached_submission_on_cv_folds)
+        for detached_submission_on_cv_fold, submission_on_cv_fold in\
+                zip(detached_submission_on_cv_folds, submission.on_cv_folds):
+            submission_on_cv_fold.update(detached_submission_on_cv_fold)
+    else:
+        # detached_submission_on_cv_folds = []
+        for detached_submission_on_cv_fold, submission_on_cv_fold in\
+                zip(detached_submission_on_cv_folds, submission.on_cv_folds):
+            train_test_submission_on_cv_fold(
+                detached_submission_on_cv_fold,
+                X_train, y_train, X_test, y_test,
+                force_retrain_test)
+            submission_on_cv_fold.update(detached_submission_on_cv_fold)
+    submission.training_timestamp = datetime.datetime.utcnow()
+    submission.set_state_after_training()
+    submission.compute_test_score_cv_bag()
+    submission.compute_valid_score_cv_bag()
+    db.session.commit()
+    logger.info('valid_score = {}'.format(submission.valid_score_cv_bag))
+    logger.info('test_score = {}'.format(submission.test_score_cv_bag))
+
+    send_trained_mails(submission)
 
 
 def _make_error_message(e):
