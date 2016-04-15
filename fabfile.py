@@ -269,6 +269,7 @@ software = [
     'databoard/remove_test_db.py',
     'databoard/scores.py',
     'databoard/views.py',
+    'databoard/post_api.py',
     'databoard/specific/__init__.py',
     'databoard/specific/workflows/__init__.py',
     'databoard/specific/workflows/regressor_workflow.py',
