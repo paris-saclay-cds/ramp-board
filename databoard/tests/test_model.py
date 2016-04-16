@@ -34,6 +34,7 @@ def test_password_hashing():
 
 
 def test_setup_problem():
+    db_tools.setup_score_types()
     db_tools.setup_workflows()
     db_tools.add_problem('iris')
     db_tools.add_event('iris_test')

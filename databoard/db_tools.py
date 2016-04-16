@@ -7,6 +7,7 @@ import logging
 import datetime
 import numpy as np
 import pandas as pd
+from itertools import chain
 import xkcdpass.xkcd_password as xp
 from sklearn.externals.joblib import Parallel, delayed
 from databoard import db
@@ -14,6 +15,7 @@ from databoard import db
 from databoard.model import User, Team, Submission, SubmissionFile,\
     SubmissionFileType, SubmissionFileTypeExtension, WorkflowElementType,\
     WorkflowElement, Workflow, Extension, Problem, Event, EventTeam,\
+    ScoreType, EventScoreType,\
     CVFold, SubmissionOnCVFold, DetachedSubmissionOnCVFold,\
     UserInteraction, EventAdmin,\
     NameClashError, TooEarlySubmissionError,\
@@ -95,6 +97,7 @@ def send_password_mail(user_name, password, port=None):
         config.config_object.specific.ramp_title)
     header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
         user.email, gmail_user, subject)
+
     body = 'Dear {},\n\n'.format(user.firstname)
     body += 'Here is your login and other information ' +\
         'for the {} RAMP:\n\n'.format(
@@ -129,6 +132,30 @@ def send_password_mails(password_f_name, port):
 
     for _, u in passwords.iterrows():
         send_password_mail(u['name'], u['password'], port)
+
+
+def setup_score_types():
+    score_types = [
+        ('rmse', True, 0.0, float('inf')),
+        ('error', True, 0.0, 1.0),
+        ('accuracy', False, 0.0, 1.0),
+        ('negative_log_likelihood', True, 0.0, float('inf')),
+        ('relative_rmse', True, 0.0, float('inf')),
+    ]
+    for name, is_lower_the_better, minimum, maximum in score_types:
+        add_score_type(name, is_lower_the_better, minimum, maximum)
+
+
+def add_score_type(name, is_lower_the_better, minimum, maximum):
+    """Adding a new score type, e.g., RMSE."""
+    score_type = ScoreType.query.filter_by(name=name).one_or_none()
+    if score_type is None:
+        score_type = ScoreType(
+            name=name, is_lower_the_better=is_lower_the_better,
+            minimum=minimum, maximum=maximum)
+        logger.info('Adding {}'.format(score_type))
+        db.session.add(score_type)
+        db.session.commit()
 
 
 def setup_workflows():
@@ -331,6 +358,25 @@ def add_event(event_name):
     for train_is, test_is in cv:
         cv_fold = CVFold(event=event, train_is=train_is, test_is=test_is)
         db.session.add(cv_fold)
+
+    score_type_descriptors = event.module.score_type_descriptors
+    if type(score_type_descriptors) is not list:
+        score_type_descriptors = [score_type_descriptors]
+    for score_type_descriptor in score_type_descriptors:
+        if type(score_type_descriptor) is not dict:
+            score_type_descriptor = {'name':score_type_descriptor}
+        score_type = ScoreType.query.filter_by(
+            name=score_type_descriptor['name']).one()
+        event_score_type = EventScoreType.query.filter_by(
+            event=event, score_type=score_type).one_or_none()
+        if event_score_type is None:
+            event_score_type = EventScoreType(
+                event=event, score_type=score_type)
+            db.session.add(event_score_type)
+        if 'precision' in score_type_descriptor:
+            event_score_type.precision = score_type_descriptor['precision']
+        if 'new_name' in score_type_descriptor:
+            event_score_type.name = score_type_descriptor['new_name']
     db.session.commit()
 
 
@@ -353,12 +399,17 @@ def print_cv_folds():
 
 
 def create_user(name, password, lastname, firstname, email,
-                access_level='user', hidden_notes='', linkedin_url=None):
+                access_level='user', hidden_notes='', linkedin_url='',
+                twitter_url='', facebook_url='', google_url='', github_url='',
+                website_url='', bio='', is_want_news=True):
     hashed_password = get_hashed_password(password)
     user = User(name=name, hashed_password=hashed_password,
                 lastname=lastname, firstname=firstname, email=email,
                 access_level=access_level, hidden_notes=hidden_notes,
-                linkedin_url=linkedin_url)
+                linkedin_url=linkedin_url, twitter_url=twitter_url,
+                facebook_url=facebook_url, google_url=google_url,
+                github_url=github_url, website_url=website_url, bio=bio,
+                is_want_news=is_want_news)
     # Creating default team with the same name as the user
     # user is admin of her own team
     team = Team(name=name, admin=user)
@@ -490,14 +541,36 @@ def print_active_teams(event_name):
 def sign_up_team(event_name, team_name):
     event = Event.query.filter_by(name=event_name).one()
     team = Team.query.filter_by(name=team_name).one()
-    event_team = EventTeam(event=event, team=team)
-    db.session.add(event_team)
-    db.session.commit()
-    # submitting the starting kit for team
-    from_submission_path = os.path.join(
-        config.problems_path, event.problem.name, config.sandbox_d_name)
-    make_submission_and_copy_files(
-        event_name, team_name, config.sandbox_d_name, from_submission_path)
+    event_team = EventTeam.query.filter_by(
+        event=event, team=team).one_or_none()
+    if event_team is None:
+        event_team = EventTeam(event=event, team=team)
+        db.session.add(event_team)
+        db.session.commit()
+        # submitting the starting kit for team
+        from_submission_path = os.path.join(
+            config.problems_path, event.problem.name, config.sandbox_d_name)
+        make_submission_and_copy_files(
+            event_name, team_name, config.sandbox_d_name, from_submission_path)
+        for user in get_team_members(team):
+            send_mail(user.email, 'signed up for {} as team {}'.format(
+                event_name, team_name), '')
+
+
+def send_mail(to, subject, body):
+    try:
+        gmail_user = config.MAIL_USERNAME
+        gmail_pwd = config.MAIL_PASSWORD
+        smtpserver = smtplib.SMTP(config.MAIL_SERVER, config.MAIL_PORT)
+        smtpserver.ehlo()
+        smtpserver.starttls()
+        smtpserver.ehlo
+        smtpserver.login(gmail_user, gmail_pwd)
+        header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
+            to, gmail_user, subject)
+        smtpserver.sendmail(gmail_user, to, header + body)
+    except Exception as e:
+        logger.error('Mailing error: {}'.format(e))
 
 
 def approve_user(user_name):
@@ -505,6 +578,7 @@ def approve_user(user_name):
     if user.access_level == 'asked':
         user.access_level = 'user'
     db.session.commit()
+    send_mail(user.email, 'RAMP sign-up approved', '')
 
 
 def make_event_admin(event_name, admin_name):
@@ -576,6 +650,7 @@ def make_submission(event_name, team_name, submission_name, submission_path):
                     'You need to wait {} more seconds until next submission'
                     .format(int(min_diff - diff)))
         submission = Submission(name=submission_name, event_team=event_team)
+        make_submission_on_cv_folds(event.cv_folds, submission)
         db.session.add(submission)
     else:
         # We allow resubmit for new or failing submissions
@@ -584,8 +659,7 @@ def make_submission(event_name, team_name, submission_name, submission_path):
             submission.state = 'new'
             submission.submission_timestamp = datetime.datetime.utcnow()
             for submission_on_cv_fold in submission.on_cv_folds:
-                # I couldn't figure out how to reset to default values
-                db.session.delete(submission_on_cv_fold)
+                submission_on_cv_fold.reset()
         else:
             raise DuplicateSubmissionError(
                 'Submission "{}" of team "{}" at event "{}" exists already'.format(
@@ -641,13 +715,8 @@ def make_submission(event_name, team_name, submission_name, submission_path):
             submission_file = SubmissionFile(
                 submission=submission, workflow_element=workflow_element,
                 submission_file_type_extension=type_extension)
-#            submission_file = SubmissionFile(
-#                submission=submission, name=name,
-#                extension_name=extension_name)
             db.session.add(submission_file)
 
-    db.session.commit()  # to enact db.session.delete(submission_on_cv_fold)
-    make_submission_on_cv_folds(event.cv_folds, submission)
     # for remembering it in the sandbox view
     event_team.last_submission_name = submission_name
     db.session.commit()
@@ -849,8 +918,11 @@ def train_test_submission(submission, force_retrain_test=False):
     submission.compute_test_score_cv_bag()
     submission.compute_valid_score_cv_bag()
     db.session.commit()
-    logger.info('valid_score = {}'.format(submission.valid_score_cv_bag))
-    logger.info('test_score = {}'.format(submission.test_score_cv_bag))
+    for score in submission.scores:
+        logger.info('valid_score {} = {}'.format(
+            score.score_name, score.valid_score_cv_bag))
+        logger.info('test_score {} = {}'.format(
+            score.score_name, score.test_score_cv_bag))
 
     send_trained_mails(submission)
 
@@ -1055,8 +1127,8 @@ def compute_contributivity(event_name, force_ensemble=False):
                                  if c is not None]
     if len(combined_predictions_list) > 0:
         scores = _get_score_cv_bags(
-            event, combined_predictions_list, true_predictions_train,
-            test_is_list)
+            event, event.official_score_type, combined_predictions_list,
+            true_predictions_train, test_is_list)
         logger.info('Combined combined valid score = {}'.format(scores))
         event.combined_combined_valid_score = float(scores[-1])
     else:
@@ -1066,7 +1138,8 @@ def compute_contributivity(event_name, force_ensemble=False):
                              if c is not None]
     if len(best_predictions_list) > 0:
         scores = _get_score_cv_bags(
-            event, best_predictions_list, true_predictions_train, test_is_list)
+            event, event.official_score_type, best_predictions_list,
+            true_predictions_train, test_is_list)
         logger.info('Combined foldwise best valid score = {}'.format(scores))
         event.combined_foldwise_valid_score = float(scores[-1])
     else:
@@ -1076,7 +1149,8 @@ def compute_contributivity(event_name, force_ensemble=False):
                                       if c is not None]
     if len(combined_test_predictions_list) > 0:
         scores = _get_score_cv_bags(
-            event, combined_test_predictions_list, true_predictions_test)
+            event, event.official_score_type, combined_test_predictions_list,
+            true_predictions_test)
         logger.info('Combined combined test score = {}'.format(scores))
         event.combined_combined_test_score = float(scores[-1])
     else:
@@ -1086,7 +1160,8 @@ def compute_contributivity(event_name, force_ensemble=False):
                                   if c is not None]
     if len(best_test_predictions_list) > 0:
         scores = _get_score_cv_bags(
-            event, best_test_predictions_list, true_predictions_test)
+            event, event.official_score_type, best_test_predictions_list,
+            true_predictions_test)
         logger.info('Combined foldwise best valid score = {}'.format(scores))
         event.combined_foldwise_test_score = float(scores[-1])
     else:
@@ -1130,12 +1205,13 @@ def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
     predictions_list = [
         submission_on_fold.valid_predictions
         for submission_on_fold in selected_submissions_on_fold]
-    valid_scores = [
-        # To convert it into Score instance which knows if lower/heigher
-        # is better
-        cv_fold.event.score.convert(submission_on_fold.valid_score)
+    valid_scores = [submission_on_fold.scores[
+        cv_fold.event.official_score_index].valid_score
         for submission_on_fold in selected_submissions_on_fold]
-    best_prediction_index = np.argmax(valid_scores)
+    if cv_fold.event.official_score_type.is_lower_the_better:
+        best_prediction_index = np.argmin(valid_scores)
+    else:
+        best_prediction_index = np.argmax(valid_scores)
     best_index_list = np.array([best_prediction_index])
     improvement = True
     while improvement and len(best_index_list) < cv_fold.event.max_n_ensemble:
@@ -1245,29 +1321,30 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
     event = Event.query.filter_by(name=event_name).one()
 
     columns = ['team',
-               'submission',
-               'score',
-               'contributivity',
+               'submission'] +\
+              [score_type.name for score_type in event.score_types] +\
+              ['contributivity',
                'train time',
                'test time',
                'submitted at (UTC)']
-    leaderboard_dict_list = [
-        {column: value for column, value in zip(
-            columns, [submission.event_team.team.name,
-                      submission.name_with_link if is_open_code(
-                          event, current_user, submission)
-                      else submission.name[:20],
-                      round(submission.valid_score_cv_bag,
-                            event.score_precision),
-                      int(100 * submission.contributivity + 0.5),
-                      int(submission.train_time_cv_mean + 0.5),
-                      int(submission.valid_time_cv_mean + 0.5),
-                      date_time_format(submission.submission_timestamp)])}
-        for submission in submissions
-    ]
+    values = zip(*[
+        [submission.event_team.team.name,
+         submission.name_with_link if is_open_code(
+             event, current_user, submission) else submission.name[:20]] +
+        [round(score.valid_score_cv_bag, score.precision)
+            for score in submission.scores] +
+        [round(100 * submission.contributivity),
+         round(submission.train_time_cv_mean),
+         round(submission.valid_time_cv_mean),
+         date_time_format(submission.submission_timestamp)]
+        for submission in submissions])
+    leaderboard_dict_list = {column: value for column, value in zip(
+        columns, values)}
+
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
+    sort_column = event.official_score_type.name
     leaderboard_df = leaderboard_df.sort_values(
-        'contributivity', ascending=False)
+        sort_column, ascending=event.official_score_type.is_lower_the_better)
     html_params = dict(
         escape=False,
         index=False,
@@ -1291,43 +1368,49 @@ def get_private_leaderboard(event_name, team_name=None, user_name=None):
         event_name=event_name, team_name=team_name, user_name=user_name)
     submissions = [submission for submission in submissions
                    if submission.is_private_leaderboard]
+    event = Event.query.filter_by(name=event_name).one()
 
     columns = ['team',
-               'submission',
-               'public bag',
-               'public mean',
-               'public std',
-               'private bag',
-               'private mean',
-               'private std',
-               'contributivity',
+               'submission'] + list(chain.from_iterable([[
+                score_type.name + ' pub bag',
+                score_type.name + ' pub mean',
+                score_type.name + ' pub std',
+                score_type.name + ' pr bag',
+                score_type.name + ' pr mean',
+                score_type.name + ' pr std']
+                for score_type in event.score_types])) +\
+              ['contributivity',
                'train time',
                'trt std',
                'test time',
                'tet std',
                'submitted at (UTC)']
-    precision = submission.event_team.event.score_precision
-    leaderboard_dict_list = [
-        {column: value for column, value in zip(
-            columns, [submission.event_team.team.name,
-                      submission.name_with_link,
-                      round(submission.valid_score_cv_bag, precision),
-                      round(submission.valid_score_cv_mean, precision),
-                      round(submission.valid_score_cv_std, precision + 1),
-                      round(submission.test_score_cv_bag, precision),
-                      round(submission.test_score_cv_mean, precision),
-                      round(submission.test_score_cv_std, precision + 1),
-                      int(100 * submission.contributivity + 0.5),
-                      round(submission.train_time_cv_mean),
-                      round(submission.train_time_cv_std),
-                      round(submission.valid_time_cv_mean),
-                      round(submission.valid_time_cv_std),
-                      date_time_format(submission.submission_timestamp)])}
-        for submission in submissions
-    ]
+
+    values = zip(*[
+        [submission.event_team.team.name,
+         submission.name_with_link] +
+         list(chain.from_iterable([[
+          round(score.valid_score_cv_bag, score.precision),
+          round(score.valid_score_cv_mean, score.precision),
+          round(score.valid_score_cv_std, score.precision + 1),
+          round(score.test_score_cv_bag, score.precision),
+          round(score.test_score_cv_mean, score.precision),
+          round(score.test_score_cv_std, score.precision + 1)]
+            for score in submission.scores])) +
+        [round(100 * submission.contributivity),
+         round(submission.train_time_cv_mean),
+         round(submission.train_time_cv_std),
+         round(submission.valid_time_cv_mean),
+         round(submission.valid_time_cv_std),
+         date_time_format(submission.submission_timestamp)]
+        for submission in submissions])
+    print values
+    leaderboard_dict_list = {column: value for column, value in zip(
+        columns, values)}
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
+    sort_column = event.official_score_type.name + ' pr bag'
     leaderboard_df = leaderboard_df.sort_values(
-        'contributivity', ascending=False)
+        sort_column, ascending=event.official_score_type.is_lower_the_better)
     html_params = dict(
         escape=False,
         index=False,
@@ -1480,18 +1563,20 @@ def print_submissions(event_name=None, team_name=None, submission_name=None):
         print('\tstate = {}'.format(submission.state))
         print('\tcontributivity = {0:.2f}'.format(
             submission.contributivity))
-        print('\tvalid_score_cv_mean = {0:.2f}'.format(
-            submission.valid_score_cv_mean))
-        print '\tvalid_score_cv_bag = {0:.2f}'.format(
-            float(submission.valid_score_cv_bag))
-        print '\tvalid_score_cv_bags = {}'.format(
-            submission.valid_score_cv_bags)
-        print '\ttest_score_cv_mean = {0:.2f}'.format(
-            submission.test_score_cv_mean)
-        print '\ttest_score_cv_bag = {0:.2f}'.format(
-            float(submission.test_score_cv_bag))
-        print '\ttest_score_cv_bags = {}'.format(
-            submission.test_score_cv_bags)
+        for score in submission.scores:
+            print('\tscore_name = {}'.format(score.score_name))
+            print('\t\tvalid_score_cv_mean = {0:.2f}'.format(
+                score.valid_score_cv_mean))
+            print '\t\tvalid_score_cv_bag = {0:.2f}'.format(
+                float(score.valid_score_cv_bag))
+            print '\t\tvalid_score_cv_bags = {}'.format(
+                score.valid_score_cv_bags)
+            print '\t\ttest_score_cv_mean = {0:.2f}'.format(
+                score.test_score_cv_mean)
+            print '\t\ttest_score_cv_bag = {0:.2f}'.format(
+                float(score.test_score_cv_bag))
+            print '\t\ttest_score_cv_bags = {}'.format(
+                score.test_score_cv_bags)
         print('\tpath = {}'.format(submission.path))
         print '\tcv folds'
         submission_on_cv_folds = db.session.query(SubmissionOnCVFold).filter(
@@ -1516,8 +1601,8 @@ def get_top_score_of_user(user, closing_timestamp):
     team = get_active_user_team(user)
     submissions = Submission.query.filter_by(team=team).filter(
         Submission.is_private_leaderboard).all()
-    best_valid_score = config.config_object.specific.score.zero
-    best_test_score = config.config_object.specific.score.zero
+    best_valid_score = config.config_object.specific.score.worst
+    best_test_score = config.config_object.specific.score.worst
     for submission in submissions:
         if submission.valid_score_cv_bag > best_valid_score:
             best_valid_score = submission.valid_score_cv_bag

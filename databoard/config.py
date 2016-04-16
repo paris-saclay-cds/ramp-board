@@ -23,7 +23,7 @@ specific_module = 'databoard.specific'
 workflows_module = specific_module + '.workflows'
 problems_module = specific_module + '.problems'
 events_module = specific_module + '.events'
-
+score_types_module = specific_module + '.score_types'
 
 cachedir = '.'
 

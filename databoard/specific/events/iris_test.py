@@ -1,6 +1,5 @@
 import datetime
 from sklearn.cross_validation import StratifiedShuffleSplit
-import databoard.scores as scores
 from databoard.specific.problems.iris import problem_name  # noqa
 
 event_name = 'iris_test'  # should be the same as the file name
@@ -12,7 +11,11 @@ event_title = 'Iris classification (test)'
 random_state = 57
 cv_test_size = 0.5
 n_cv = 2
-score = scores.Accuracy()
+score_type_descriptors = [
+    {'name': 'accuracy', 'precision': 1, 'new_name': 'acc'},
+    'error',
+    {'name': 'negative_log_likelihood', 'new_name': 'nll'},
+]
 
 
 def get_cv(y_train_array):

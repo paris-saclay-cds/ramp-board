@@ -64,5 +64,6 @@ if __name__ == "__main__":
               'databoard.specific.workflows',
               'databoard.specific.problems',
               'databoard.specific.events',
+              'databoard.specific.score_types',
           ],
           scripts=['fabfile.py'])

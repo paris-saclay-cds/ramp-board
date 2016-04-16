@@ -31,6 +31,7 @@ def test_setup():
     open(os.path.join(config.submissions_path, '__init__.py'), 'a').close()
 
     recreate_test_db()
+    db_tools.setup_score_types()
     db_tools.setup_workflows()
     db_tools.add_problem('iris')
     db_tools.add_event('iris_test')
@@ -167,7 +168,6 @@ software = [
     'databoard/multiclass_prediction.py',
     'databoard/regression_prediction.py',
     'databoard/remove_test_db.py',
-    'databoard/scores.py',
     'databoard/views.py',
     'databoard/specific/__init__.py',
     'databoard/specific/workflows/__init__.py',
@@ -179,6 +179,12 @@ software = [
     'databoard/specific/events/__init__.py',
     'databoard/specific/events/boston_housing_test.py',
     'databoard/specific/events/iris_test.py',
+    'databoard/specific/score_types/__init__.py',
+    'databoard/specific/score_types/accuracy.py',
+    'databoard/specific/score_types/error.py',
+    'databoard/specific/score_types/negative_log_likelihood.py',
+    'databoard/specific/score_types/relative_rmse.py',
+    'databoard/specific/score_types/rmse.py',
     'databoard/tests/__init__.py',
     'databoard/tests/test_model.py',
     'databoard/tests/test_multiclass_predictions.py',
