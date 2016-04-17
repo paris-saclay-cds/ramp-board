@@ -1000,6 +1000,8 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
                         dtype=float).reshape(y_shape_test)
                     submission_fold.test_y_pred = test_y_pred
                     submission_fold.compute_test_scores()
+                if 'error' in state:
+                    submission_fold.state = 'checking_error'  # TODO more info
         db.session.commit()
         submission.training_timestamp = datetime.datetime.utcnow()
         submission.set_state_after_training()
