@@ -975,6 +975,7 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
         list_pred = json.loads(list_pred.content)
         for pred in list_pred:
             state = pred['state'].lower()
+            log_messages = pred['log_messages']
             if state not in ["todo"]:
                 submission_fold = SubmissionOnCVFold.query.\
                     filter(SubmissionOnCVFold.id == pred["databoard_sf_id"]).\
@@ -1001,7 +1002,14 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
                     submission_fold.test_y_pred = test_y_pred
                     submission_fold.compute_test_scores()
                 if 'error' in state:
-                    submission_fold.state = 'checking_error'  # TODO more info
+                    if 'ERROR(split' in log_messages:
+                        submission_fold.state = 'checking_error'
+                    if 'ERROR(train' in log_messages:
+                        submission_fold.state = 'training_error'
+                    elif 'ERROR(validation' in log_messages:
+                        submission_fold.state = 'validating_error'
+                    elif 'ERROR(test' in log_messages:
+                        submission_fold.state = 'testing_error'
         db.session.commit()
         submission.training_timestamp = datetime.datetime.utcnow()
         submission.set_state_after_training()
