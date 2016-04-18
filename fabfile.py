@@ -100,6 +100,8 @@ def test_setup():
     host_url = os.environ.get('DATARUN_URL')
     username = os.environ.get('DATARUN_USERNAME')
     userpassd = os.environ.get('DATARUN_PASSWORD')
+    if host_url is None or username is None or userpassd is None:
+        sys.exit('**** Configure your datarun authentication parameters ****')
     data_id_iris = db_tools.send_data_datarun('iris', host_url, username,
                                               userpassd)
     data_id_boston = db_tools.send_data_datarun('boston_housing', host_url,
