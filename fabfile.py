@@ -4,7 +4,7 @@ if '' not in sys.path:  # Balazs bug
 
 import os
 import logging
-import datetime
+import time
 from distutils.util import strtobool
 
 logger = logging.getLogger('databoard')
@@ -96,7 +96,34 @@ def test_setup():
         'boston_housing_test', 'camille_marini', 'rf2',
         'problems/boston_housing/deposited_submissions/kegl/rf2')
 
-    # config.is_parallelize = False
+    # send data to datarun
+    host_url = os.environ.get('DATARUN_URL')
+    username = os.environ.get('DATARUN_USERNAME')
+    userpassd = os.environ.get('DATARUN_PASSWORD')
+    data_id_iris = db_tools.send_data_datarun('iris', host_url, username,
+                                              userpassd)
+    data_id_boston = db_tools.send_data_datarun('boston_housing', host_url,
+                                                username, userpassd)
+    # send submissions to datarun
+    print('**** TRAIN-TEST DATARUN ****')
+    from databoard.db_tools import get_submissions
+    list_data = [data_id_iris, data_id_boston]
+    list_event = ['iris_test', 'boston_housing_test']
+    for data_id, event_name in zip(list_data, list_event):
+        submissions = get_submissions(event_name=event_name)
+        submissions = [sub for sub in submissions if sub.name != 'sandbox']
+        db_tools.train_test_submissions_datarun(data_id, host_url,
+                                                username, userpassd,
+                                                submissions=submissions,
+                                                force_retrain_test=True,
+                                                priority='L')
+        time.sleep(228)
+        db_tools.get_trained_tested_submissions_datarun(submissions, host_url,
+                                                        username, userpassd)
+        db_tools.compute_contributivity(event_name)
+
+    # compare results with local train and test
+    print('**** TRAIN-TEST LOCAL ****')
     db_tools.train_test_submissions()
     db_tools.compute_contributivity('iris_test')
     db_tools.compute_contributivity('boston_housing_test')
@@ -124,6 +151,79 @@ def serve():
         use_reloader=False,
         host='0.0.0.0',
         processes=1000)
+
+
+def send_data_datarun(problem_name, host_url, username, userpassd):
+    """
+    Send data to datarun and prepare data (split train test)
+
+    :param problem_name: name of the problem
+    :param host_url: host url of datarun
+    :param username: username for datarun
+    :param userpassd: user password for datarun
+
+    :type problem_name: string
+    :type host_url: string
+    :type username: string
+    :type userpassd: string
+    """
+    from databoard.db_tools import send_data_datarun
+    send_data_datarun(problem_name, host_url, username, userpassd)
+
+
+def train_test_datarun(data_id, host_url, username, userpassd, e=None, t=None,
+                       s=None, state=None, force='False', priority='L'):
+    """Train and test submission using datarun.
+
+    :param data_id: id of the associated dataset on datarun platform
+    :param host_url: host url of datarun
+    :param username: username for datarun
+    :param userpassd: user password for datarun
+    :param priority: training priority of the submissions on datarun,\
+        'L' for low and 'H' for high
+
+    :type data_id: integer
+    :type host_url: string
+    :type username: string
+    :type userpassd: string
+    :type priority: string
+     """
+    force = strtobool(force)
+
+    from databoard.db_tools import train_test_submissions_datarun,\
+        get_submissions, get_submissions_of_state
+
+    if state is not None:
+        submissions = get_submissions_of_state(state)
+    else:
+        submissions = get_submissions(
+            event_name=e, team_name=t, submission_name=s)
+    print submissions
+    train_test_submissions_datarun(data_id, host_url, username, userpassd,
+                                   submissions, force_retrain_test=force,
+                                   priority=priority)
+
+
+def get_trained_tested_datarun(host_url, username, userpassd,
+                               e=None, t=None, s=None):
+    """
+    Get submissions from datarun and save predictions to databoard database
+
+    :param host_url: host url of datarun
+    :param username: username for datarun
+    :param userpassd: user password for datarun
+
+    :type host_url: string
+    :type username: string
+    :type userpassd: string
+    """
+    from databoard.db_tools import get_trained_tested_submissions_datarun
+    from databoard.db_tools import get_submissions
+    submissions = get_submissions(event_name=e, team_name=t, submission_name=s)
+    print(submissions)
+    get_trained_tested_submissions_datarun(submissions, host_url,
+                                           username, userpassd)
+    compute_contributivity(event_name=e)
 
 
 def train_test(e=None, t=None, s=None, state=None, force='False'):
@@ -169,6 +269,7 @@ software = [
     'databoard/regression_prediction.py',
     'databoard/remove_test_db.py',
     'databoard/views.py',
+    'databoard/post_api.py',
     'databoard/specific/__init__.py',
     'databoard/specific/workflows/__init__.py',
     'databoard/specific/workflows/regressor_workflow.py',

@@ -5,6 +5,9 @@ import timeit
 import smtplib
 import logging
 import datetime
+import json
+import zlib
+import base64
 import numpy as np
 import pandas as pd
 from itertools import chain
@@ -28,7 +31,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 import databoard.config as config
-
+import post_api
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
@@ -311,6 +314,56 @@ def add_problem(problem_name):
         db.session.add(problem)
         db.session.commit()
     problem.module.prepare_data()
+
+
+def send_data_datarun(problem_name, host_url, username, userpassd):
+    """
+    Send data to datarun and prepare data (split train test)
+
+    :param problem_name: name of the problem
+    :param host_url: host url of datarun
+    :param username: username for datarun
+    :param userpassd: user password for datarun
+
+    :type problem_name: string
+    :type host_url: string
+    :type username: string
+    :type userpassd: string
+    """
+    problem = Problem.query.filter_by(name=problem_name).one_or_none()
+    if problem is None:
+        logger.info('Add the new RAMP problem before')
+    else:
+        # Sending data to datarun
+        random_state = problem.module.random_state
+        target_column = problem.module.target_column_name
+        workflow_elements = [p.workflow_element_type.name for p in
+                             problem.workflow.elements]
+        workflow_elements = ', '.join(workflow_elements)
+        data_file = problem.module.raw_filename
+        held_out_test = problem.module.held_out_test_size
+        post_data = post_api.post_data(host_url, username, userpassd,
+                                       problem_name, target_column,
+                                       workflow_elements, data_file)
+        logger.info('Sending data to datarun: %s' % post_data.content)
+        if post_data.ok:
+            data_id = json.loads(post_data.content)["id"]
+            logger.info('** Data id on datarun: %s **' % data_id)
+        elif "RawData with this name already exists" in post_data.content:
+            get_data = post_api.get_raw_data(host_url, username, userpassd)
+            list_data = json.loads(get_data.content)
+            data_id = [dd['id'] for dd in list_data if
+                       dd['name'] == problem_name][0]
+            logger.info('** Data id on datarun: %s **' % data_id)
+        else:
+            logger.info('** Problem submitting data to datarun, no data id **')
+            return None
+        # Ask to prepare data to datarun
+        post_split = post_api.post_split(host_url, username, userpassd,
+                                         held_out_test, data_id,
+                                         random_state=random_state)
+        logger.info('Prepare data on datarun: %s' % post_split.content)
+        return data_id
 
 
 def _set_table_attribute(table, attr):
@@ -861,6 +914,181 @@ def send_register_request_mail(user):
 
     for recipient in recipient_list:
         smtpserver.sendmail(gmail_user, recipient, header + body)
+
+
+def train_test_submissions_datarun(data_id, host_url, username, userpassd,
+                                   submissions=None, force_retrain_test=False,
+                                   priority='L'):
+    """Train and test submission using datarun.
+
+    :param data_id: id of the associated dataset on datarun platform
+    :param host_url: host url of datarun
+    :param username: username for datarun
+    :param userpassd: user password for datarun
+    :param submissions: if submissions is None, trains and tests all submissions
+    :param force_retrain: to resubmit a submission even if already done
+    :param priority: training priority of the submissions on datarun,\
+        'L' for low and 'H' for high
+
+    :type data_id: integer
+    :type host_url: string
+    :type username: string
+    :type userpassd: string
+    :type submissions: list of submissions from databoard database
+    :type force_retrain: boolean
+    :type priority: string
+    """
+    if submissions is None:
+        submissions = Submission.query.filter(
+            Submission.name != 'sandbox').order_by(Submission.id).all()
+    for submission in submissions:
+        train_test_submission_datarun(submission, data_id, host_url,
+                                      username, userpassd,
+                                      force_retrain_test=force_retrain_test,
+                                      priority=priority)
+
+
+def train_test_submission_datarun(submission, data_id, host_url,
+                                  username, userpassd,
+                                  force_retrain_test=False, priority='L'):
+    """
+    Send submission on CV fold to datarun
+    :param submission: submission from databoard database
+    :param data_id: id of the associated dataset on datarun platform
+    :param host_url: host url of datarun
+    :param username: username for datarun
+    :param userpassd: user password for datarun
+    :param force_retrain_test: to force the train-test even if already done
+    :param priority: priority of the task on datarun,\
+        'L' for low and 'H' for high
+
+    :type submission: Submission element of databoard database
+    :type data_id: integer
+    :type host_url: string
+    :type username: string
+    :type userpassd: string
+    :type force_retrain_test: True or False
+    :type priority: string
+    """
+    submission_id = submission.id
+    submission_files = [submission_file.path
+                        for submission_file in submission.files]
+    detached_submission_on_cv_folds = [
+        [DetachedSubmissionOnCVFold(submission_on_cv_fold),
+         submission_on_cv_fold.id]
+        for submission_on_cv_fold in submission.on_cv_folds]
+
+    if force_retrain_test:
+        logger.info('Forced retraining/testing {}'.format(submission))
+        force1 = 'submission, submission_fold'
+        force2 = 'submission_fold'
+    else:
+        force1 = None
+        force2 = None
+
+    i_first_fold = 1
+    for detached_submission_on_cv_fold, submission_fold_id in \
+            detached_submission_on_cv_folds:
+        train_is = detached_submission_on_cv_fold.train_is
+        test_is = detached_submission_on_cv_fold.test_is
+        if i_first_fold:
+            p_data_id = data_id
+            p_submission_files = submission_files
+            p_force = force1
+        else:
+            p_data_id = None
+            p_submission_files = None
+            p_force = force2
+        post_submission = post_api.\
+            post_submission_fold(host_url, username, userpassd,
+                                 submission_id, submission_fold_id,
+                                 train_is, test_is, priority,
+                                 raw_data_id=p_data_id,
+                                 list_submission_files=p_submission_files,
+                                 force=p_force)
+        i_first_fold = 0
+        if post_submission.ok:
+            task_id = json.loads(post_submission.content)["task_id"]
+            logger.info('Submission fold submitted, task id %s'
+                        % (task_id))
+        else:
+            logger.info('Problem submitting submission fold %s'
+                        'from submission %s' % (submission_fold_id,
+                                                submission.name))
+
+
+def get_trained_tested_submissions_datarun(submissions, host_url,
+                                           username, userpassd):
+    """
+    Get submissions from datarun and save predictions in databoard database
+
+    :param submissions: list of submissions from databoard database
+    :param host_url: host url of datarun
+    :param username: username for datarun
+    :param userpassd: user password for datarun
+
+    :type submissions: list
+    :type host_url: string
+    :type username: string
+    :type userpassd: string
+    """
+    for submission in submissions:
+        y_shape_train = submission.event.problem.\
+            true_predictions_train().y_pred.shape
+        y_shape_test = submission.event.problem.\
+            true_predictions_test().y_pred.shape
+        list_submission_fold_id = [submission_fold.id for submission_fold in
+                                   submission.on_cv_folds]
+        list_pred = post_api.get_prediction_list(host_url, username, userpassd,
+                                                 list_submission_fold_id)
+        list_pred = json.loads(list_pred.content)
+        for pred in list_pred:
+            state = pred['state'].lower()
+            log_messages = pred['log_messages']
+            if state not in ["todo"]:
+                submission_fold = SubmissionOnCVFold.query.\
+                    filter(SubmissionOnCVFold.id == pred["databoard_sf_id"]).\
+                    first()
+                submission_fold.state = state
+                if state in ['trained', 'validated', 'tested']:
+                    submission_fold.train_time = pred['train_time']
+                    submission_fold.state = 'trained'
+                if state in ['validated', 'tested']:
+                    submission_fold.valid_time = pred['validation_time']
+                    submission_fold.state = 'validated'
+                    full_train_y_pred = np.fromstring(zlib.decompress(
+                        base64.b64decode(pred['full_train_predictions'])),
+                        dtype=float).reshape(y_shape_train)
+                    submission_fold.full_train_y_pred = full_train_y_pred
+                    submission_fold.compute_train_scores()
+                    submission_fold.compute_valid_scores()
+                if state in ['tested']:
+                    submission_fold.test_time = pred['test_time']
+                    submission_fold.state = 'tested'
+                    test_y_pred = np.fromstring(zlib.decompress(
+                        base64.b64decode(pred['test_predictions'])),
+                        dtype=float).reshape(y_shape_test)
+                    submission_fold.test_y_pred = test_y_pred
+                    submission_fold.compute_test_scores()
+                if 'error' in state:
+                    if 'ERROR(split' in log_messages:
+                        submission_fold.state = 'checking_error'
+                    if 'ERROR(train' in log_messages:
+                        submission_fold.state = 'training_error'
+                    elif 'ERROR(validation' in log_messages:
+                        submission_fold.state = 'validating_error'
+                    elif 'ERROR(test' in log_messages:
+                        submission_fold.state = 'testing_error'
+        db.session.commit()
+        submission.training_timestamp = datetime.datetime.utcnow()
+        submission.set_state_after_training()
+        submission.compute_test_score_cv_bag()
+        submission.compute_valid_score_cv_bag()
+        db.session.commit()
+        logger.info('valid_score = {}'.format(submission.valid_score_cv_bag))
+        logger.info('test_score = {}'.format(submission.test_score_cv_bag))
+
+        send_trained_mails(submission)
 
 
 def train_test_submissions(submissions=None, force_retrain_test=False):
@@ -1595,7 +1823,7 @@ def set_error(team_name, submission_name, error, error_msg):
 
 def get_top_score_of_user(user, closing_timestamp):
     """Returns the bagged test score of the submission with the best bagged
-    valid score, from among all the submissions of the user, before 
+    valid score, from among all the submissions of the user, before
     closing_timestamp.
     """
     team = get_active_user_team(user)
