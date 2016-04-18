@@ -1085,8 +1085,11 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
         submission.compute_test_score_cv_bag()
         submission.compute_valid_score_cv_bag()
         db.session.commit()
-        logger.info('valid_score = {}'.format(submission.valid_score_cv_bag))
-        logger.info('test_score = {}'.format(submission.test_score_cv_bag))
+        for score in submission.scores:
+            logger.info('valid_score {} = {}'.format(
+                score.score_name, score.valid_score_cv_bag))
+            logger.info('test_score {} = {}'.format(
+                score.score_name, score.test_score_cv_bag))
 
         send_trained_mails(submission)
 
