@@ -1018,14 +1018,22 @@ class Submission(db.Model):
         return [file.f_name for file in self.files]
 
     @property
+    def link(self):
+        return self.files[0].link
+
+    @property
+    def full_name_with_link(self):
+        return '<a href={}>{}/{}/{}</a>'.format(
+            self.link, self.event.name, self.team.name, self.name[:20])
+
+    @property
     def name_with_link(self):
-        return '<a href="' + self.files[0].link + '">' + self.name[:20] +\
-            '</a>'
+        return '<a href={}>{}</a>'.format(self.link, self.name[:20])
 
     @property
     def state_with_link(self):
-        return '<a href=/' + os.path.join(self.hash_, 'error.txt')\
-            + '>' + self.state + '</a>'
+        return '<a href={}>{}</a>'.format(
+            os.path.join(self.hash_, 'error.txt'), self.state)
 
     @property
     def train_time_cv_mean(self):
@@ -1453,12 +1461,32 @@ class DetachedSubmissionOnCVFold(object):
         return repr
 
 
+user_interaction_type = db.Enum(
+    'copy',
+    'download',
+    'giving credit',
+    'login',
+    'logout',
+    'looking at error',
+    'looking at event',
+    'looking at leaderboard',
+    'looking at my_submissions',
+    'looking at private leaderboard',
+    'looking at submission',
+    'looking at user',
+    'save',
+    'signing up at event',
+    'submit',
+    'upload',
+)
+
+
 class UserInteraction(db.Model):
     __tablename__ = 'user_interactions'
 
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, nullable=False)
-    interaction = db.Column(db.String, nullable=False)
+    interaction = db.Column(user_interaction_type, nullable=False)
     note = db.Column(db.String, default=None)
     submission_file_diff = db.Column(db.String, default=None)
     submission_file_similarity = db.Column(db.Float, default=None)
@@ -1504,6 +1532,47 @@ class UserInteraction(db.Model):
             return None
         return os.path.join(
             config.submissions_path, 'diff_bef24208a45043059', str(self.id))
+
+    @property
+    def event(self):
+        return self.event_team.event
+
+    @property
+    def team(self):
+        return self.event_team.team
+
+
+submission_similarity_type = db.Enum(
+    'target_credit',  # credit given by one of the authors of target
+    'source_credit',  # credit given by one of the authors of source
+    'thirdparty_credit',  # credit given by an independent user
+)
+
+
+class SubmissionSimilarity(db.Model):
+    __tablename__ = 'submission_similaritys'
+
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(submission_similarity_type, nullable=False)
+    note = db.Column(db.String, default=None)
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow())
+    similarity = db.Column(db.Float, default=0.0)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user = db.relationship(
+        'User', backref=db.backref('submission_similaritys'))
+
+    source_submission_id = db.Column(
+        db.Integer, db.ForeignKey('submissions.id'))
+    source_submission = db.relationship(
+        'Submission', primaryjoin=(
+            'SubmissionSimilarity.source_submission_id == Submission.id'))
+
+    target_submission_id = db.Column(
+        db.Integer, db.ForeignKey('submissions.id'))
+    target_submission = db.relationship(
+        'Submission', primaryjoin=(
+            'SubmissionSimilarity.target_submission_id == Submission.id'))
 
 
 class NameClashError(Exception):

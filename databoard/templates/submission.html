@@ -12,7 +12,7 @@ onload="prettyPrint()"
 {% block title %}Submission code{% endblock %}
 {% block content %}
 
-{% if submission_f_names %}
+{% if submission.f_names %}
     {% set left_col_width = 'twelve' %}    
 {% else %}
     {% set left_col_width = 'sixteen' %}
@@ -23,19 +23,20 @@ onload="prettyPrint()"
         <h4 class="ui horizontal header divider grey">
             <a href="/leaderboard"><i class="dashboard grey icon"></i>Leaderboard</a>
             <span><i class="angle right grey icon"></i></span>
-            {{ team_name }} 
+            {{ submission.team.name }} 
             <span><i class="angle right grey icon"></i></span>
-            {{ submission_name }} 
+            {{ submission.name }} 
             <span><i class="angle right grey icon"></i></span>
             <a href="{{ submission_url }}"><i class="download grey icon"></i>{{ f_name }}</a>
             </h4>
+        <a href="/credit/{{ submission.hash_ }}">Click here</a> to assess and assign credit for this submission (quantify where it comes from).
         <pre class="prettyprint linenums">{{ code }}</pre>
     </div>
-    {% if submission_f_names and f_name != 'error.txt' %}
+    {% if submission.f_names and f_name != 'error.txt' %}
     <div class="four wide column">
         <div class="ui sticky">
         <h4 class="ui horizontal header divider grey">File list</h4>
-            {% for f in submission_f_names %}
+            {% for f in submission.f_names %}
             <div class="ui fluid card">
                 <div class="content">
                     <div class="description">

@@ -14,17 +14,18 @@ from sqlalchemy.orm.exc import NoResultFound
 from werkzeug import secure_filename
 from wtforms import StringField
 from wtforms.widgets import TextArea
+from databoard import db
 
 import flask
 import flask.ext.login as fl
 from databoard import app, login_manager
 import databoard.db_tools as db_tools
 from databoard.model import User, Submission, WorkflowElement,\
-    Event, SubmissionFile, UserInteraction,\
+    Event, SubmissionFile, UserInteraction, SubmissionSimilarity,\
     DuplicateSubmissionError, TooEarlySubmissionError,\
     MissingExtensionError
 from databoard.forms import LoginForm, CodeForm, SubmitForm, ImportForm,\
-    UploadForm, UserProfileForm
+    UploadForm, UserProfileForm, CreditForm
 
 app.secret_key = os.urandom(24)
 
@@ -153,6 +154,16 @@ def _redirect_to_sandbox(event, message_str, is_error=True, category=None):
     else:
         logger.info(message_str)
     return flask.redirect('/events/{}/sandbox'.format(event.name))
+
+
+def _redirect_to_credit(submission_hash, message_str, is_error=True,
+                        category=None):
+    flask.flash(message_str, category=category)
+    if is_error:
+        logger.error(message_str)
+    else:
+        logger.info(message_str)
+    return flask.redirect('/credit/{}'.format(submission_hash))
 
 
 @app.route("/events/<event_name>/sign_up")
@@ -364,12 +375,9 @@ def view_model(submission_hash, f_name):
     return render_template(
         'submission.html',
         code=code,
-        submission_f_names=submission.f_names,
+        submission=submission,
         f_name=f_name,
-        submission_name=submission.name,
-        team_name=team.name,
-        import_form=import_form,
-        event=event)
+        import_form=import_form)
 
 
 @app.route("/events/<event_name>/sandbox", methods=['GET', 'POST'])
@@ -520,12 +528,96 @@ def sandbox(event_name):
             user=current_user, event=event, interaction='submit',
             submission=new_submission)
 
-        return flask.redirect(flask.url_for('user'))
+        return flask.redirect('/credit/{}'.format(new_submission.hash_))
     return render_template('sandbox.html',
                            submission_names=sandbox_submission.f_names,
                            code_form=code_form,
                            submit_form=submit_form,
                            upload_form=upload_form,
+                           event=event)
+
+
+@app.route("/credit/<submission_hash>", methods=['GET', 'POST'])
+@fl.login_required
+def credit(submission_hash):
+    submission = Submission.query.filter_by(
+        hash_=submission_hash).one_or_none()
+    if submission is None:
+        error_str = 'Missing submission {}: {}'.format(
+            current_user, submission_hash)
+        return _redirect_to_user(error_str)
+    event_team = submission.event_team
+    event = event_team.event
+    if not db_tools.is_open_code(event, current_user, submission):
+        error_str = '{} has no right to look at {}/{}'.format(
+            current_user, event, submission)
+        return _redirect_to_user(error_str)
+    source_submissions = db_tools.get_source_submissions(submission)
+
+    def get_s_field(source_submission):
+        return '{}/{}/{}'.format(
+            source_submission.event_team.event.name,
+            source_submission.event_team.team.name,
+            source_submission.name)
+
+    credit_form_kwargs = {}
+    for source_submission in source_submissions:
+        s_field = get_s_field(source_submission)
+        setattr(CreditForm, s_field, StringField(u'Text'))
+    credit_form = CreditForm(**credit_form_kwargs)
+    sum_credit = 0
+    new = True
+    for source_submission in source_submissions:
+        s_field = get_s_field(source_submission)
+        submission_similaritys = SubmissionSimilarity.query.filter_by(
+            type='target_credit', user=current_user,
+            source_submission=source_submission,
+            target_submission=submission).all()
+        if not submission_similaritys:
+            credit = 0
+        else:
+            new = False
+            submission_similaritys.sort(
+                key=lambda x: x.timestamp, reverse=True)
+            credit = int(round(100 * submission_similaritys[0].similarity))
+            sum_credit += credit
+        credit_form.name_credits.append(
+            (s_field, str(credit), source_submission.link))
+    # This doesnt work, not sure why
+    # if not new:
+    #    credit_form.novelty.data = str(100 - sum_credit)
+    if credit_form.validate_on_submit():
+        try:
+            sum_credit = int(credit_form.novelty.data)
+            for source_submission in source_submissions:
+                s_field = get_s_field(source_submission)
+                sum_credit += int(getattr(credit_form, s_field).data)
+            if sum_credit != 100:
+                return _redirect_to_credit(
+                    submission_hash,
+                    'Error: The total credit should add up to 100')
+        except Exception as e:
+            return _redirect_to_credit(submission_hash, 'Error: {}'.format(e))
+        for source_submission in source_submissions:
+            s_field = get_s_field(source_submission)
+            submission_similarity = SubmissionSimilarity(
+                type='target_credit', user=current_user,
+                source_submission=source_submission,
+                target_submission=submission,
+                similarity=int(getattr(credit_form, s_field).data) / 100.)
+            db.session.add(submission_similarity)
+        db.session.commit()
+
+        db_tools.add_user_interaction(
+            user=current_user, event=event, interaction='giving credit',
+            submission=submission)
+
+        return flask.redirect('/events/{}/sandbox'.format(event.name))
+
+    return render_template('credit.html',
+                           submission=submission,
+                           source_submissions=source_submissions,
+                           credit_form=credit_form,
                            event=event)
 
 

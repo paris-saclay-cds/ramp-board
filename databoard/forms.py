@@ -39,6 +39,12 @@ class SubmitForm(Form):
     submission_name = StringField('submission_name', [validators.Required()])
 
 
+class CreditForm(Form):
+    note = StringField('submission_name')
+    novelty = StringField('novelty')
+    name_credits = []
+
+
 class ImportForm(Form):
     selected_f_names = MultiCheckboxField('selected_f_names')
 

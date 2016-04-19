@@ -1970,3 +1970,20 @@ def get_user_interactions():
     )
     user_interactions_html = user_interactions_df.to_html(**html_params)
     return user_interactions_html
+
+
+def get_source_submissions(submission):
+    submissions = Submission.query.filter_by(
+        event_team=submission.event_team).all()
+    users = get_team_members(submission.team)
+    for user in users:
+        user_interactions = UserInteraction.query.filter_by(
+            user=user, interaction='looking at submission').all()
+        submissions += [user_interaction.submission for
+                        user_interaction in user_interactions if
+                        user_interaction.event == submission.event]
+    submissions = list(set(submissions))
+    submissions = [s for s in submissions if
+                   s.submission_timestamp < submission.submission_timestamp]
+    submissions.sort(key=lambda x: x.submission_timestamp, reverse=True)
+    return submissions
