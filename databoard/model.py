@@ -922,6 +922,7 @@ class Submission(db.Model):
     training_timestamp = db.Column(db.DateTime)
 
     contributivity = db.Column(db.Float, default=0.0)
+    historical_contributivity = db.Column(db.Float, default=0.0)
 
     state = db.Column(submission_states, default='new')
     # TODO: hide absolute path in error
@@ -1266,6 +1267,7 @@ class SubmissionScoreOnCVFold(db.Model):
     @property
     def score_function(self):
         return self.score_type.score_function
+
 
 # TODO: rename submission to workflow and submitted file to workflow_element
 # TODO: SubmissionOnCVFold should actually be a workflow element. Saving

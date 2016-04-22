@@ -18,7 +18,7 @@ from databoard import db
 from databoard.model import User, Team, Submission, SubmissionFile,\
     SubmissionFileType, SubmissionFileTypeExtension, WorkflowElementType,\
     WorkflowElement, Workflow, Extension, Problem, Event, EventTeam,\
-    ScoreType, EventScoreType,\
+    ScoreType, EventScoreType, SubmissionSimilarity,\
     CVFold, SubmissionOnCVFold, DetachedSubmissionOnCVFold,\
     UserInteraction, EventAdmin,\
     NameClashError, TooEarlySubmissionError,\
@@ -1485,6 +1485,33 @@ def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
         combined_test_predictions, best_test_predictions
 
 
+def compute_historical_contributivity(event_name):
+    submissions = get_submissions(event_name=event_name)
+    submissions.sort(key=lambda x: x.submission_timestamp, reverse=True)
+    for submission in submissions:
+        submission.historical_contributivity = 0.0
+    for submission in submissions:
+        submission.historical_contributivity += submission.contributivity
+        submission_similaritys = SubmissionSimilarity.query.filter_by(
+            type='target_credit', target_submission=submission).all()
+        if submission_similaritys:
+            # if a target team enters several credits to a source submission
+            # we only take the latest
+            submission_similaritys.sort(
+                key=lambda x: x.timestamp, reverse=True)
+            processed_submissions = []
+            for submission_similarity in submission_similaritys:
+                source_submission = submission_similarity.source_submission
+                if source_submission not in processed_submissions:
+                    partial_credit = submission.historical_contributivity *\
+                        submission_similarity.similarity
+                    source_submission.historical_contributivity +=\
+                        partial_credit
+                    submission.historical_contributivity -= partial_credit
+                    processed_submissions.append(source_submission)
+    db.session.commit()
+
+
 def is_user_signed_up(event_name, user_name):
     for event_team in get_user_event_teams(event_name, user_name):
         if event_team.is_active:
@@ -1555,6 +1582,7 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
                'submission'] +\
               [score_type.name for score_type in event.score_types] +\
               ['contributivity',
+               'historical contributivity',
                'train time',
                'test time',
                'submitted at (UTC)']
@@ -1565,6 +1593,7 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
         [round(score.valid_score_cv_bag, score.precision)
             for score in submission.scores] +
         [round(100 * submission.contributivity),
+         round(100 * submission.historical_contributivity),
          round(submission.train_time_cv_mean),
          round(submission.valid_time_cv_mean),
          date_time_format(submission.submission_timestamp)]
@@ -1611,6 +1640,7 @@ def get_private_leaderboard(event_name, team_name=None, user_name=None):
                 score_type.name + ' pr std']
                 for score_type in event.score_types])) +\
               ['contributivity',
+               'historical contributivity',
                'train time',
                'trt std',
                'test time',
@@ -1629,6 +1659,7 @@ def get_private_leaderboard(event_name, team_name=None, user_name=None):
           round(score.test_score_cv_std, score.precision + 1)]
             for score in submission.scores])) +
         [round(100 * submission.contributivity),
+         round(100 * submission.historical_contributivity),
          round(submission.train_time_cv_mean),
          round(submission.train_time_cv_std),
          round(submission.valid_time_cv_mean),

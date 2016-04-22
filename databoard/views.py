@@ -577,6 +577,7 @@ def credit(submission_hash):
             credit = 0
         else:
             new = False
+            # find the last credit (in case crediter changes her mind)
             submission_similaritys.sort(
                 key=lambda x: x.timestamp, reverse=True)
             credit = int(round(100 * submission_similaritys[0].similarity))

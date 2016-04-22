@@ -228,7 +228,7 @@ def get_trained_tested_datarun(host_url, username, userpassd,
     compute_contributivity(event_name=e)
 
 
-def train_test(e=None, t=None, s=None, state=None, force='False'):
+def train_test(e, t=None, s=None, state=None, force='False'):
     force = strtobool(force)
 
     from databoard.db_tools import train_test_submissions,\
@@ -246,7 +246,9 @@ def train_test(e=None, t=None, s=None, state=None, force='False'):
 
 def compute_contributivity(event_name):
     from databoard.db_tools import compute_contributivity
+    from databoard.db_tools import compute_historical_contributivity
     compute_contributivity(event_name)
+    compute_historical_contributivity(event_name)
 
 
 def print_submissions(e=None, t=None, s=None):
