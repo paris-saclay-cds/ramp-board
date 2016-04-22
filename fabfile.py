@@ -294,23 +294,9 @@ software = [
     'databoard/tests/test_model.py',
     'databoard/tests/test_multiclass_predictions.py',
     'databoard/tests/test_regression_predictions.py',
-    'databoard/tests/test_scores.py',
     'databoard/static',
     'databoard/templates',
 ]
-
-deployment = [
-    'fabfile.py',
-    'problems/iris/data/raw/iris.csv',
-    'problems/iris/sandbox/classifier.py',
-    'problems/iris/deposited_submissions/kegl/rf/classifier.py',
-    'problems/iris/deposited_submissions/kegl/rf2/classifier.py',
-    'problems/boston_housing/data/raw/boston_housing.csv',
-    'problems/boston_housing/sandbox/regressor.py',
-    'problems/boston_housing/deposited_submissions/kegl/rf/regressor.py',
-    'problems/boston_housing/deposited_submissions/kegl/rf2/regressor.py',
-]
-
 
 def publish_software():
     from databoard.config import vd_server, vd_root
@@ -323,6 +309,21 @@ def publish_software():
     command += 'root@' + vd_server + ':' + vd_root + '/code/'
     print command
     os.system(command)
+
+
+deployment = [
+    'fabfile.py',
+    'problems/iris/data/raw/iris.csv',
+    'problems/iris/sandbox/classifier.py',
+    'problems/iris/deposited_submissions/kegl/rf/classifier.py',
+    'problems/iris/deposited_submissions/kegl/rf2/classifier.py',
+    'problems/iris/description.html',
+    'problems/boston_housing/data/raw/boston_housing.csv',
+    'problems/boston_housing/sandbox/regressor.py',
+    'problems/boston_housing/deposited_submissions/kegl/rf/regressor.py',
+    'problems/boston_housing/deposited_submissions/kegl/rf2/regressor.py',
+    'problems/boston_housing/description.html',
+]
 
 
 def publish_deployment():
