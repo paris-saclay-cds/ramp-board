@@ -10,9 +10,10 @@ submissions_path = os.path.join(root_path, submissions_d_name)
 # deposited_submissions_d_name = 'deposited_submissions'
 # deposited_submissions_path = os.path.join(
 #     root_path, deposited_submissions_d_name)
-sandbox_d_name = 'sandbox'
+sandbox_d_name = 'starting_kit'
 sandbox_path = os.path.join(root_path, sandbox_d_name)
-problems_path = os.path.join(root_path, 'problems')
+problems_d_name = 'problems'
+problems_path = os.path.join(root_path, problems_d_name)
 
 # data_path = os.path.join(root_path, 'data')
 # raw_data_path = os.path.join(data_path, 'raw')
@@ -69,7 +70,8 @@ is_pickle_trained_submission = False
 #    server_port)
 # server_name = debug_server if local_deployment else train_server
 
-vd_server = 'onevm-177.lal.in2p3.fr'
+vd_server = 'onevm-58.lal.in2p3.fr'
+production_server = 'onevm-177.lal.in2p3.fr'
 reims_server = 'romeo1.univ-reims.fr'
 vd_root = '/mnt/datacamp'
 local_root = '/tmp'  # for local publishing / testing

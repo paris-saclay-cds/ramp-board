@@ -298,6 +298,7 @@ software = [
     'databoard/templates',
 ]
 
+
 def publish_software():
     from databoard.config import vd_server, vd_root
 
@@ -314,16 +315,20 @@ def publish_software():
 deployment = [
     'fabfile.py',
     'problems/iris/data/raw/iris.csv',
-    'problems/iris/sandbox/classifier.py',
     'problems/iris/deposited_submissions/kegl/rf/classifier.py',
     'problems/iris/deposited_submissions/kegl/rf2/classifier.py',
     'problems/iris/description.html',
+    'problems/iris/starting_kit',
+    'problems/iris/starting_kit.zip',
     'problems/boston_housing/data/raw/boston_housing.csv',
-    'problems/boston_housing/sandbox/regressor.py',
     'problems/boston_housing/deposited_submissions/kegl/rf/regressor.py',
     'problems/boston_housing/deposited_submissions/kegl/rf2/regressor.py',
     'problems/boston_housing/description.html',
+    'problems/boston_housing/starting_kit',
+    'problems/boston_housing/starting_kit.zip',
 ]
+
+# zip -r starting_kit.zip starting_kit
 
 
 def publish_deployment():
@@ -337,4 +342,3 @@ def publish_deployment():
     command += 'root@' + vd_server + ':' + vd_root + '/databoard_test/'
     print command
     os.system(command)
-

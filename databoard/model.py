@@ -417,6 +417,8 @@ class EventScoreType(db.Model):
     def score_function(self):
         return self.score_type.score_function
 
+cv_fold_types = db.Enum('live', 'test')
+
 
 class CVFold(db.Model):
     """Storing train and test folds, more precisely: train and test indices.
@@ -427,6 +429,8 @@ class CVFold(db.Model):
     __tablename__ = 'cv_folds'
 
     id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(cv_fold_types, default='live')
+
     train_is = db.Column(NumpyType, nullable=False)
     test_is = db.Column(NumpyType, nullable=False)
 
@@ -903,6 +907,8 @@ submission_states = db.Enum(
     'new', 'checked', 'checking_error', 'trained', 'training_error',
     'validated', 'validating_error', 'tested', 'testing_error')
 
+submission_types = db.Enum('live', 'test')
+
 
 class Submission(db.Model):
     """An abstract (untrained) submission."""
@@ -924,6 +930,7 @@ class Submission(db.Model):
     contributivity = db.Column(db.Float, default=0.0)
     historical_contributivity = db.Column(db.Float, default=0.0)
 
+    type = db.Column(submission_types, default='live')
     state = db.Column(submission_states, default='new')
     # TODO: hide absolute path in error
     error_msg = db.Column(db.String, default='')

@@ -20,6 +20,7 @@ import flask
 import flask.ext.login as fl
 from databoard import app, login_manager
 import databoard.db_tools as db_tools
+import databoard.config as config
 from databoard.model import User, Submission, WorkflowElement,\
     Event, SubmissionFile, UserInteraction, SubmissionSimilarity,\
     DuplicateSubmissionError, TooEarlySubmissionError,\
@@ -197,9 +198,27 @@ def user_event(event_name):
             current_user, event_name))
     db_tools.add_user_interaction(
         user=current_user, event=event, interaction='looking at event')
-
+    with open(os.path.join(
+        config.problems_path, event.problem.name, 'description.html'), 'r')\
+            as description_file:
+        description = description_file.read()
     return render_template('event.html',
+                           description=description,
                            event=event)
+
+
+@app.route("/events/<event_name>/starting_kit")
+@fl.login_required
+def download_starting_kit(event_name):
+    event = Event.query.filter_by(name=event_name).one_or_none()
+    starting_kit_path = os.path.abspath(os.path.join(
+        config.root_path, config.problems_d_name, event.problem.name))
+    f_name = '{}.zip'.format(config.sandbox_d_name)
+    print starting_kit_path
+    return send_from_directory(
+        starting_kit_path, f_name, as_attachment=True,
+        attachment_filename='{}_{}'.format(event_name, f_name),
+        mimetype='application/octet-stream')
 
 
 @app.route("/events/<event_name>/my_submissions")
