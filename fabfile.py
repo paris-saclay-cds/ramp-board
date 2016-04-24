@@ -155,6 +155,43 @@ def serve():
         processes=1000)
 
 
+def add_workflow_element_type(name, type):
+    from databoard.db_tools import add_workflow_element_type
+
+    add_workflow_element_type(name, type)
+
+
+def add_workflow(name, *element_type_names):
+    from databoard.db_tools import add_workflow
+
+    add_workflow(name, element_type_names)
+
+
+def add_score_type(name, is_lower_the_better, minimum, maximum):
+    from databoard.db_tools import add_score_type
+
+    add_score_type(
+        name, strtobool(is_lower_the_better), float(minimum), float(maximum))
+
+
+def add_problem(name, force='False'):
+    """Add new problem. If force=True, deletes problem (with all events) if exists."""
+    force = strtobool(force)
+
+    from databoard.db_tools import add_problem
+
+    add_problem(name, force)
+
+
+def add_event(name, force='False'):
+    """Add new event. If force=True, deletes event (with all submissions) if exists."""
+    force = strtobool(force)
+
+    from databoard.db_tools import add_event
+
+    add_event(name, force)
+
+
 def send_data_datarun(problem_name, host_url, username, userpassd):
     """
     Send data to datarun and prepare data (split train test)
@@ -233,13 +270,15 @@ def train_test(e, t=None, s=None, state=None, force='False'):
 
     from databoard.db_tools import train_test_submissions,\
         get_submissions, get_submissions_of_state
+    from databoard.config import sandbox_d_name
 
     if state is not None:
         submissions = get_submissions_of_state(state)
     else:
         submissions = get_submissions(
             event_name=e, team_name=t, submission_name=s)
-    print submissions
+    submissions = [submission for submission in submissions
+                   if submission.name != sandbox_d_name]
     train_test_submissions(submissions, force_retrain_test=force)
     compute_contributivity(event_name=e)
 
@@ -254,6 +293,11 @@ def compute_contributivity(event_name):
 def print_submissions(e=None, t=None, s=None):
     from databoard.db_tools import print_submissions
     print_submissions(event_name=e, team_name=t, submission_name=s)
+
+
+def print_submission_similaritys():
+    from databoard.db_tools import print_submission_similaritys
+    print_submission_similaritys()
 
 
 software = [
@@ -275,21 +319,24 @@ software = [
     'databoard/views.py',
     'databoard/post_api.py',
     'databoard/specific/__init__.py',
-    'databoard/specific/workflows/__init__.py',
-    'databoard/specific/workflows/regressor_workflow.py',
-    'databoard/specific/workflows/classifier_workflow.py',
-    'databoard/specific/problems/__init__.py',
-    'databoard/specific/problems/boston_housing.py',
-    'databoard/specific/problems/iris.py',
     'databoard/specific/events/__init__.py',
     'databoard/specific/events/boston_housing_test.py',
     'databoard/specific/events/iris_test.py',
+    'databoard/specific/events/variable_stars.py',
+    'databoard/specific/problems/__init__.py',
+    'databoard/specific/problems/boston_housing.py',
+    'databoard/specific/problems/iris.py',
+    'databoard/specific/problems/variable_stars.py',
     'databoard/specific/score_types/__init__.py',
     'databoard/specific/score_types/accuracy.py',
     'databoard/specific/score_types/error.py',
     'databoard/specific/score_types/negative_log_likelihood.py',
     'databoard/specific/score_types/relative_rmse.py',
     'databoard/specific/score_types/rmse.py',
+    'databoard/specific/workflows/__init__.py',
+    'databoard/specific/workflows/classifier_workflow.py',
+    'databoard/specific/workflows/feature_extractor_classifier_calibrator_workflow.py',
+    'databoard/specific/workflows/regressor_workflow.py',
     'databoard/tests/__init__.py',
     'databoard/tests/test_model.py',
     'databoard/tests/test_multiclass_predictions.py',
@@ -299,15 +346,20 @@ software = [
 ]
 
 
-def publish_software():
-    from databoard.config import vd_server, vd_root
+def publish_software(target='test'):
+    from databoard.config import vd_server, production_server, vd_root
+
+    if target == 'test':
+        server = vd_server
+    else:
+        server = production_server
 
     command = "rsync -pthrRvz -c "
     command += "--rsh=\'ssh -i " + os.path.expanduser("~")
     command += "/.ssh/datacamp/id_rsa -p 22\' "
     for file in software:
         command += file + ' '
-    command += 'root@' + vd_server + ':' + vd_root + '/code/'
+    command += 'root@' + server + ':' + vd_root + '/code/'
     print command
     os.system(command)
 
@@ -340,5 +392,23 @@ def publish_deployment():
     for file in deployment:
         command += file + ' '
     command += 'root@' + vd_server + ':' + vd_root + '/databoard_test/'
+    print command
+    os.system(command)
+
+
+def publish_problem(problem_name, target='local'):
+    from databoard.config import vd_server, production_server, vd_root
+
+    command = "rsync -pthrRvz -c "
+    if target == 'local':
+        command += 'problems/' + problem_name + ' /tmp/databoard_test/'
+    else:
+        if target == 'test':
+            server = vd_server
+        else:
+            server = production_server
+        command += "--rsh=\'ssh -i " + os.path.expanduser("~")
+        command += "/.ssh/datacamp/id_rsa -p 22\' problems/" + problem_name
+        command += ' root@' + server + ':' + vd_root + '/databoard_test/'
     print command
     os.system(command)

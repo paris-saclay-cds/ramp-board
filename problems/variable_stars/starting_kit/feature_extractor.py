@@ -2,8 +2,8 @@ import numpy as np
 
 
 def fold_time_series(time_point, period, div_period):
-    return time_point - 1.0 * int(time_point / (period / div_period)) * \
-        period / div_period
+    return time_point - 1.0 * int(
+        time_point / (period / div_period)) * period / div_period
 
 
 def get_bin_means(instance, num_bins):
@@ -18,8 +18,8 @@ def get_bin_means(instance, num_bins):
         time_points_folded = np.array(
             [fold_time_series(time_point, period, div_period)
              for time_point in time_points])
-        time_points_folded_digitized = \
-            np.digitize(time_points_folded, bins) - 1
+        time_points_folded_digitized = np.digitize(
+            time_points_folded, bins) - 1
         binned_means = np.array(
             [light_points[time_points_folded_digitized == i].mean()
              for i in range(num_bins)])
@@ -43,13 +43,14 @@ class FeatureExtractor():
             'magnitude_b',
             'magnitude_r'
         ]
-        X_array = np.array([[instance[col] for col in cols]
-                           for instance in X_dict])
-        real_period = np.array([instance['period'] / instance['div_period']
-                                for instance in X_dict])
+        X_array = np.array(
+            [[instance[col] for col in cols] for instance in X_dict])
+        real_period = np.array(
+            [instance['period'] / instance['div_period']
+             for instance in X_dict])
         X_array = np.concatenate((X_array.T, [real_period])).T
         num_bins = 5
-        X_array_variable_features = np.array([get_bin_means(instance, num_bins)
-                                              for instance in X_dict])
+        X_array_variable_features = np.array(
+            [get_bin_means(instance, num_bins) for instance in X_dict])
         X_array = np.concatenate((X_array.T, X_array_variable_features.T)).T
         return X_array

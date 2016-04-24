@@ -7,34 +7,58 @@ Install dependencies with `pip install -Ur requirements.txt`
 
 ## Deploy
 
-### Create specific.py
+### Prepare starting kit bundle, data, and test submissions for local test
 
- - put it into databoard/ramps/<ramp_name>
- - along with __init__.py
- - add databoard.ramps.<ramp_name> to packages in setup.py
+ - cd problems/<problem_name>
+ - starting_kit/<event_name>_ramp_staring_kit.py
+ - starting_kit/public_train.csv (+ other data if needed)
+ - starting_kit/*.py for the initial submissions in the sandbox
+ - starting_kit/user_test_submission.py
+ - data/raw/* all the data which prepare_data() will use + the directory structure, usually data/private
+ - for local tests (optional), create deposited_submissions/<test_team>/<test_submission> and put the test submission files there
+ - run 
+zip -r starting_kit.zip starting_kit. 
+   This is a bit tricky: if the public_train is created in prepare_data, after deployment (fab add_problem, fab add_event), zip should be re-run just in case.
+ - run
+fab publish_problem:<problem_name>,target=local/test/production
+   which will copy everything on the local test, production or test server
 
-### Setup data
+### Add workflow element types and workflows (in case the ramp needs a new one)
 
- - create ramps/<ramp_name>/data /public /private /raw
- - put the data file into amps/<ramp_name>/data/raw
+ - code the workflow element type in databoard/specific/workflows
+ - add it to fabfile.software
+ - workflow element type example
+fab add_workflow_element_type:classifier,code
+ - workflow example:
+fab add_workflow:feature_extractor_classifier_calibrator_workflow,feature_extractor,classifier,calibrator
 
-### Setup the sandbox
+### Add score types (in case the ramp needs a new one)
 
- - create ramps/<ramp_name>/sandbox and put their the starting kit submission
+ - code the score type in databoard/specific/score_types
+ - add it to fabfile.software
+ - score type example
+fab add_score_type:test_score_type,True,0.0,inf
 
-### Setup the test submissions
+### Add problem
+ 
+ - code the problem in databoard/specific/problems
+ - add it to fabfile.software
+ - problem example
+fab add_problem:variable_stars
 
- - for local tests, create ramps/<ramp_name>/deposited_submissions/<test_team>/<test_submission> and put the test submission files there
+### Add event
+ 
+ - code the event in databoard/specific/events
+ - add it to fabfile.software
+ - event example
+fab add_event:variable_stars
+
+
+
 
 ### Test ramp locally
 
- - put in config.py
-ramps_configs['<ramp_name>_local'] = RampConfig(
-    ramp_name='<ramp_name>', **local_kwargs)
- - in development dir:
-fab publish_test:<ramp_name>_local
-cd /tmp/databoard_<ramp_name>_8080
-fab test_ramp
+fab test_setup
 fab serve
  - goto http://0.0.0.0:8080/ and test the interface
 
@@ -42,28 +66,25 @@ fab serve
 
  - setup ramps_configs['<ramp_name>_remote'] in config.py
  - in development dir (repeat each time you change the code):
-fab publish:<ramp_name>_remote
- - publish data:
-fab publish_data:<ramp_name>_remote
- - on server:
- - if first time code is deployed, or setup.py changed:
+fab publish_sofware:target=test/production
+fab publish_problem:<problem_name>,target=local/test/production
 cd /mnt/datacamp/code
 pip install -Ur requirements.txt
 python setup.py develop
 
 ### Test and setup ramp on remote server
 
-cd /mnt/datacamp/databoard_<ramp_name>_<port>
-fab test_ramp
- - this will also set the ramp up (but not the database)
+cd /mnt/datacamp/databoard_test or /mnt/datacamp/databoard
+fab test_setup
 fab serve:<port>
  - open server, log in (with one of the accounts set up in tests/test_model)
- - submit the sandbox under the name 'test'
-fab train_test
+ - submit the starting_kit under the name 'test'
+fab train_test:<event_name>
  - check the leaderboard, private_leaderboard, user_interactions, etc.
 
 ### Set up the database
 
+ - old setup, we keep it for a while in case we migrate old databases.
  - make a file users_to_add.csv with fields
  firstname,lastname,email,name,hidden_notes,access_level
  - if passwords are needed, run this to generate 'passwords.csv'

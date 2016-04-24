@@ -299,7 +299,7 @@ def add_workflow(workflow_name, element_type_names):
         db.session.commit()
 
 
-def add_problem(problem_name):
+def add_problem(problem_name, force=False):
     """Adding a new RAMP problem.
 
     Problem file should be set up in
@@ -308,12 +308,44 @@ def add_problem(problem_name):
     is acting as a pointer for the join). Also prepares the data.
     """
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
-    if problem is None:
-        problem = Problem(name=problem_name)
-        logger.info('Adding {}'.format(problem))
-        db.session.add(problem)
-        db.session.commit()
+    if problem is not None:
+        if force:
+            delete_problem(problem)
+        else:
+            logger.info(
+                'Attempting to delete problem and all linked events, ' +
+                'use "force=True" if you know what you are doing.')
+            return
+    problem = Problem(name=problem_name)
+    logger.info('Adding {}'.format(problem))
+    db.session.add(problem)
+    db.session.commit()
     problem.module.prepare_data()
+
+
+# these could go into a delete callback in problem and event, I just don't know
+# how to do that.
+def delete_problem(problem):
+    for event in problem.events:
+        delete_event(problem)
+    db.session.delete(problem)
+    db.session.commit()
+
+
+# the main reason having this is that I couldn't make a cascade delete in
+# SubmissionSimilarity since it has two submission parents
+def delete_event(event):
+    submissions = get_submissions(event_name=event.name)
+    submission_similaritys = []
+    for submission in submissions:
+        submission_similaritys += SubmissionSimilarity.query.filter_by(
+            target_submission=submission).all()
+        submission_similaritys += SubmissionSimilarity.query.filter_by(
+            source_submission=submission).all()
+    for submission_similarity in submission_similaritys:
+        db.session.delete(submission_similarity)
+    db.session.delete(event)
+    db.session.commit()
 
 
 def send_data_datarun(problem_name, host_url, username, userpassd):
@@ -379,7 +411,7 @@ def _set_table_attribute(table, attr):
     setattr(table, attr, value)
 
 
-def add_event(event_name):
+def add_event(event_name, force=False):
     """Adding a new RAMP event.
 
     Event file should be set up in
@@ -388,15 +420,23 @@ def add_event(event_name):
     is acting as a pointer for the join). Also adds CV folds.
     """
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if event is None:
-        event = Event(name=event_name)
-        logger.info('Adding {}'.format(event))
-        db.session.add(event)
-        db.session.commit()
+    if event is not None:
+        if force:
+            delete_event(event)
+        else:
+            logger.info(
+                'Attempting to delete event, use "force=True" ' +
+                'if you know what you are doing')
+            return
+    event = Event(name=event_name)
+    logger.info('Adding {}'.format(event))
+    db.session.add(event)
+    db.session.commit()
 
     _set_table_attribute(event, 'max_members_per_team')
     _set_table_attribute(event, 'max_n_ensemble')
     _set_table_attribute(event, 'score_precision')
+    # _set_table_attribute(event, 'n_cv')
     _set_table_attribute(event, 'is_send_trained_mails')
     _set_table_attribute(event, 'is_send_submitted_mails')
     _set_table_attribute(event, 'min_duration_between_submissions')
@@ -449,6 +489,13 @@ def print_cv_folds():
     print('***************** CV folds ****************')
     for i, cv_fold in enumerate(CVFold.query.all()):
         print i, cv_fold
+
+
+def print_submission_similaritys():
+    print('******** Submission similarities **********')
+    for i, submission_similarity in enumerate(
+            SubmissionSimilarity.query.all()):
+        print i, submission_similarity
 
 
 def create_user(name, password, lastname, firstname, email,
@@ -1125,9 +1172,9 @@ def train_test_submission(submission, force_retrain_test=False):
         # updates the detached submission_on_cv_fold objects. If it doesn't
         # work, we can go back to multiprocessing and
         logger.info('Number of processes = {}'.format(
-            submission.event.n_cv))
+            submission.event.n_jobs))
         detached_submission_on_cv_folds = Parallel(
-            n_jobs=submission.event.n_cv, verbose=5)(
+            n_jobs=submission.event.n_jobs, verbose=5)(
             delayed(train_test_submission_on_cv_fold)(
                 submission_on_cv_fold, X_train, y_train, X_test, y_test,
                 force_retrain_test)
@@ -1592,10 +1639,10 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
              event, current_user, submission) else submission.name[:20]] +
         [round(score.valid_score_cv_bag, score.precision)
             for score in submission.scores] +
-        [round(100 * submission.contributivity),
-         round(100 * submission.historical_contributivity),
-         round(submission.train_time_cv_mean),
-         round(submission.valid_time_cv_mean),
+        [int(round(100 * submission.contributivity)),
+         int(round(100 * submission.historical_contributivity)),
+         int(round(submission.train_time_cv_mean)),
+         int(round(submission.valid_time_cv_mean)),
          date_time_format(submission.submission_timestamp)]
         for submission in submissions])
     leaderboard_dict_list = {column: value for column, value in zip(
@@ -1658,12 +1705,12 @@ def get_private_leaderboard(event_name, team_name=None, user_name=None):
           round(score.test_score_cv_mean, score.precision),
           round(score.test_score_cv_std, score.precision + 1)]
             for score in submission.scores])) +
-        [round(100 * submission.contributivity),
-         round(100 * submission.historical_contributivity),
-         round(submission.train_time_cv_mean),
-         round(submission.train_time_cv_std),
-         round(submission.valid_time_cv_mean),
-         round(submission.valid_time_cv_std),
+        [int(round(100 * submission.contributivity)),
+         int(round(100 * submission.historical_contributivity)),
+         int(round(submission.train_time_cv_mean)),
+         int(round(submission.train_time_cv_std)),
+         int(round(submission.valid_time_cv_mean)),
+         int(round(submission.valid_time_cv_std)),
          date_time_format(submission.submission_timestamp)]
         for submission in submissions])
     print values
@@ -1768,7 +1815,10 @@ def get_submissions(event_name=None, team_name=None, user_name=None,
                     Event.name == event_name).filter(
                     Event.id == EventTeam.event_id).filter(
                     EventTeam.id == Submission.event_team_id).all()
-                submissions = list(zip(*submissions_)[0])
+                if submissions_:
+                    submissions = list(zip(*submissions_)[0])
+                else:
+                    submissions = []
             else:
                 # All submissions for a given event by all the teams of a user
                 submissions = []
@@ -1797,7 +1847,10 @@ def get_submissions(event_name=None, team_name=None, user_name=None,
                     Event.id == EventTeam.event_id).filter(
                     Team.id == EventTeam.team_id).filter(
                     EventTeam.id == Submission.event_team_id).all()
-            submissions = list(zip(*submissions_)[0])
+            if submissions_:
+                submissions = list(zip(*submissions_)[0])
+            else:
+                submissions = []
     return submissions
 
 

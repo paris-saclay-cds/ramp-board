@@ -11,6 +11,7 @@ submissions_path = os.path.join(root_path, submissions_d_name)
 # deposited_submissions_path = os.path.join(
 #     root_path, deposited_submissions_d_name)
 sandbox_d_name = 'starting_kit'
+starting_kit_d_name = 'starting_kit'
 sandbox_path = os.path.join(root_path, sandbox_d_name)
 problems_d_name = 'problems'
 problems_path = os.path.join(root_path, problems_d_name)

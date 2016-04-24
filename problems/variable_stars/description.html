@@ -1,0 +1,23 @@
+<i> Balázs Kégl (LAL/CNRS), Marc Moniez (LAL/CNRS), Alex Gramfort (LTCI/Telecom ParisTech), Djalel Benbouzid (UPMC), Mehdi Cherti (LAL/CNRS) </i>
+<p>
+
+<h1>Introduction</h1>
+
+<h3>Variable stars</h3>
+
+Most stars emit light steadily in time, but a small fraction of them has a variable <i>light curve</i>: light emission versus time. We call them <a href = "http://en.wikipedia.org/wiki/Variable_star">variable stars</a>. The light curves are usually <a href="http://en.wikipedia.org/wiki/Periodic_function">periodic</a> and highly regular. There are essentially two reasons why light emission can vary. First, the star itself can be <a href="https://www.youtube.com/watch?v=sXJBrRmHPj8">oscillating</a>, so its light emission varies in time. Second, the star that seems a single point at Earth (because of our large distance) is actually a <a href="http://en.wikipedia.org/wiki/Binary_system"><i>binary system</i></a>: two stars that <a href="https://www.youtube.com/watch?v=1kFFwHkxBiI">orbit around their common center of gravity</a>. When the <a href="http://en.wikipedia.org/wiki/Orbital_plane_%28astronomy%29">orbital plane</a> is parallel to our line of view, the stars <a href="http://csep10.phys.utk.edu/astr162/lect/binaries/eclipsing.html">eclipse each other</a> periodically, creating a light curve with a <a href="http://www.dlr.de/en/desktopdefault.aspx/tabid-5170/8702_read-20474/">charateristic signature</a>. Identifying, classifying, and analyzing variable stars are hugely important for calibrating distances, and making these analyses automatic will be crucial in the upcoming sky survey projects such as <a href="http://www.lsst.org/lsst/">LSST</a>.
+
+<h3>The EROS1 database, a catalog of light curves</h3> 
+
+Our data is coming from the <a href="http://eros.in2p3.fr/">EROS1 project</a> that took data between 1990 and 1994.
+400 <a href="http://www.atnf.csiro.au/outreach/education/senior/astrophysics/photometry_photographicastro.html">photographic plates</a> were taken of the <a href="http://en.wikipedia.org/wiki/Large_Magellanic_Cloud">Large Magellanic Cloud</a> with the <a href="http://www.eso.org/public/teles-instr/lasilla/1mschmidt/">ESO-Schmidt 1m telescope</a>. Each plate covers the same $5^\circ \times 5^\circ$ field, centered at $\alpha  = 5h18m43s$, $\delta = −69d42m17s$ in the <a href="http://en.wikipedia.org/wiki/Celestial_coordinate_system">celestial coordinate system</a>. Photos were taken in two <a href = "http://science-edu.larc.nasa.gov/EDDOCS/Wavelengths_for_Colors.html">frequency bands</a> (red: 630nm; blue: 385nm), digitized at the <a href="http://en.wikipedia.org/wiki/Paris_Observatory">Observatoire de Paris</a>, and analyzed at the <a href="http://cc.in2p3.fr/">IN2P3 Computing Center</a>.
+
+<h3>Selecting variable stars</h3>
+
+The full catalog contains 8 million objects. We estimated the probability of a star being stable using an in-house algorithm and selected the $\simeq 1\%$ least stable stars. The light curve of each selected star was then visually inspected, and the star was either declared stable or assigned a variability type and a quality index. The variability types are <a href="http://en.wikipedia.org/wiki/Binary_star#Eclipsing_binaries">eclipsing binary</a>, <a href="http://en.wikipedia.org/wiki/Cepheid_variable">Cepheid</a>, <a href="http://en.wikipedia.org/wiki/RR_Lyrae_variable">RR-Lyrae</a>, <a href="http://en.wikipedia.org/wiki/Mira_variable">Mira</a>, and other (the variability is clearly established, but the type is unclear). The quality index was visually estimated from 1 (lowest signal to background ratio) to 3 (best signal to background ratio). A total of 22802 variable objects were found that include 9046 RR-Lyrae, 2758 Cepheids, 1596 eclipsing binaries, 890 Miras, and 8512 unclassified objects. About 10% of the data was lost in the data archeology step that included converting the measurements from a native <a href="http://en.wikipedia.org/wiki/Physics_Analysis_Workstation">PAW</a> format to csv, giving us a total of 19429 stars.
+
+<h3>Selecting data</h3>
+
+For the RAMP, we decided to drop all instances in the "unclassified object" category since the interpretation of this type was unclear. We then randomly selected 30% of the data for public training, giving us 3641 training instances.
+
+The data consists of two files, train.csv contains "static" features in a classical row-wise csv table, and train_varlength_features.csv.gz is a table that contains all the time series. The contents and the format of both files are explained below.

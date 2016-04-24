@@ -1,19 +1,18 @@
 import datetime
 from sklearn.cross_validation import StratifiedShuffleSplit
-from databoard.specific.problems.iris import problem_name  # noqa
+from databoard.specific.problems.variable_stars import problem_name  # noqa
 
-event_name = 'iris_test'  # should be the same as the file name
+event_name = 'variable_stars'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Iris classification (test)'
+event_title = 'Variable star type prediction'
 
 random_state = 57
 cv_test_size = 0.5
-n_cv = 2
+n_cv = 8
 score_type_descriptors = [
-    {'name': 'accuracy', 'precision': 1, 'new_name': 'acc'},
-    'error',
+    {'name': 'accuracy', 'precision': 3, 'new_name': 'acc'},
     {'name': 'negative_log_likelihood', 'new_name': 'nll'},
 ]
 

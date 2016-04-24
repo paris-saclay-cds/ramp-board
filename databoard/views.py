@@ -1,5 +1,6 @@
 import os
 # import sys
+import codecs
 import shutil
 import difflib
 import logging
@@ -198,8 +199,9 @@ def user_event(event_name):
             current_user, event_name))
     db_tools.add_user_interaction(
         user=current_user, event=event, interaction='looking at event')
-    with open(os.path.join(
-        config.problems_path, event.problem.name, 'description.html'), 'r')\
+    with codecs.open(os.path.join(
+        config.problems_path, event.problem.name, 'description.html'),
+            'r', 'utf-8')\
             as description_file:
         description = description_file.read()
     return render_template('event.html',
@@ -318,7 +320,7 @@ def view_model(submission_hash, f_name):
     team = submission.event_team.team
     workflow_element_name = f_name.split('.')[0]
     workflow_element = WorkflowElement.query.filter_by(
-        name=workflow_element_name).one_or_none()
+        name=workflow_element_name, workflow=event.workflow).one_or_none()
     if workflow_element is None:
         error_str = '{} is not a valid workflow element by {} in {}/{}/{}/{}'.\
             format(workflow_element_name, current_user, event, team,
@@ -379,7 +381,7 @@ def view_model(submission_hash, f_name):
             logger.info('Copying {} to {}'.format(src, dst))
 
             workflow_element = WorkflowElement.query.filter_by(
-                name=f_name.split('.')[0]).one()
+                name=f_name.split('.')[0], workflow=event.workflow).one()
             submission_file = SubmissionFile.query.filter_by(
                 submission=submission,
                 workflow_element=workflow_element).one()
@@ -465,7 +467,7 @@ def sandbox(event_name):
         upload_f_name = secure_filename(upload_form.file.data.filename)
         upload_name = upload_f_name.split('.')[0]
         upload_workflow_element = WorkflowElement.query.filter_by(
-            name=upload_name).one_or_none()
+            name=upload_name, workflow=event.workflow).one_or_none()
         if upload_workflow_element is None:
             return _redirect_to_sandbox(
                 event, '{} is not in the file list.'.format(upload_f_name))

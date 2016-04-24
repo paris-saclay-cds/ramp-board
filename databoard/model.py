@@ -11,12 +11,6 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from databoard import db
 import databoard.config as config
 
-# Training set table
-# Problem table
-# Ramp table that connects all (training set, problem, cv, specific)
-# specific should be cut at least into problem-specific, data and cv-specific,
-# and ramp (event) specific files
-
 logger = logging.getLogger('databoard')
 
 
@@ -194,12 +188,20 @@ class Problem(db.Model):
 
     def __init__(self, name):
         self.name = name
-        self.workflow = Workflow.query.filter_by(
-            name=self.module.workflow_name).one()
+        self.reset()
+        # to check if the module and all required fields are there
+        self.module
+        self.prediction
+        self.train_submission
+        self.test_submission
 
     def __repr__(self):
-        repr = 'Problem({})'.format(self.name)
+        repr = 'Problem({})\n{}'.format(self.name, self.workflow)
         return repr
+
+    def reset(self):
+        self.workflow = Workflow.query.filter_by(
+            name=self.module.workflow_name).one()
 
     @property
     def module(self):
@@ -235,9 +237,19 @@ class ScoreType(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
-    is_lower_the_better = db.Column(db.Boolean)
-    minimum = db.Column(db.Float)
-    maximum = db.Column(db.Float)
+    is_lower_the_better = db.Column(db.Boolean, nullable=False)
+    minimum = db.Column(db.Float, nullable=False)
+    maximum = db.Column(db.Float, nullable=False)
+
+    def __init__(self, name, is_lower_the_better, minimum, maximum):
+        self.name = name
+        self.is_lower_the_better = is_lower_the_better
+        self.minimum = minimum
+        self.maximum = maximum
+        # to check if the module and all required fields are there
+        self.module
+        self.score_function
+        self.precision
 
     def __repr__(self):
         repr = 'ScoreType(name={})'.format(self.name)
@@ -273,7 +285,8 @@ class Event(db.Model):
 
     problem_id = db.Column(
         db.Integer, db.ForeignKey('problems.id'), nullable=False)
-    problem = db.relationship('Problem', backref=db.backref('events'))
+    problem = db.relationship('Problem', backref=db.backref(
+        'events', cascade='all, delete-orphan'))
 
     max_members_per_team = db.Column(db.Integer, default=1)
     # max number of submissions in Caruana's ensemble
@@ -303,8 +316,13 @@ class Event(db.Model):
 
     def __init__(self, name):
         self.name = name
+        # to check if the module and all required fields are there
+        # db fields are later initialized by db.tools._set_table_attribute
+        self.module
         self.problem = Problem.query.filter_by(
             name=self.module.problem_name).one()
+        self.title
+        self.prediction
 
     def __repr__(self):
         repr = 'Event({})'.format(self.name)
@@ -323,17 +341,17 @@ class Event(db.Model):
         return self.problem.prediction
 
     @property
+    def workflow(self):
+        return self.problem.workflow
+
+    @property
     def official_score_function(self):
         return self.score_types[
-            self.official_score_index].score_type.score_function
+            self.official_score_index].score_function
 
     @property
     def official_score_type(self):
-        return self.score_types[self.official_score_index].score_type
-
-    @property
-    def n_cv(self):
-        return self.module.n_cv
+        return self.score_types[self.official_score_index]
 
     @property
     def train_submission(self):
@@ -371,10 +389,16 @@ class Event(db.Model):
     @property
     def is_public_open(self):
         now = datetime.datetime.utcnow()
-        print now
-        print self.public_opening_timestamp
         return now > self.public_opening_timestamp\
             and now < self.closing_timestamp
+
+    @property
+    def n_jobs(self):
+        """Number of jobs for local parallelization.
+
+        return: number of live cv folds.
+        """
+        return sum(1 for cv_fold in self.cv_folds if cv_fold.type == 'live')
 
 
 # many-to-many
@@ -387,8 +411,8 @@ class EventScoreType(db.Model):
 
     event_id = db.Column(
         db.Integer, db.ForeignKey('events.id'), nullable=False)
-    event = db.relationship(
-        'Event', backref=db.backref('score_types'))
+    event = db.relationship('Event', backref=db.backref(
+        'score_types', cascade='all, delete-orphan'))
 
     score_type_id = db.Column(
         db.Integer, db.ForeignKey('score_types.id'), nullable=False)
@@ -410,12 +434,24 @@ class EventScoreType(db.Model):
             self.precision = score_type.precision
 
     def __repr__(self):
-        repr = '{}/{}'.format(self.event, self.team)
+        repr = '{}: {}/{}'.format(self.name, self.event, self.score_type)
         return repr
 
     @property
     def score_function(self):
         return self.score_type.score_function
+
+    @property
+    def is_lower_the_better(self):
+        return self.score_type.is_lower_the_better
+
+    @property
+    def minimum(self):
+        return self.score_type.minimum
+
+    @property
+    def maximum(self):
+        return self.score_type.maximum
 
 cv_fold_types = db.Enum('live', 'test')
 
@@ -436,8 +472,8 @@ class CVFold(db.Model):
 
     event_id = db.Column(
         db.Integer, db.ForeignKey('events.id'), nullable=False)
-    event = db.relationship(
-        'Event', backref=db.backref('cv_folds'))
+    event = db.relationship('Event', backref=db.backref(
+        'cv_folds', cascade='all, delete-orphan'))
 
     def __repr__(self):
         return 'fold {}'.format(self.train_is)[:15]
@@ -450,8 +486,8 @@ class EventAdmin(db.Model):
 
     event_id = db.Column(
         db.Integer, db.ForeignKey('events.id'), nullable=False)
-    event = db.relationship(
-        'Event', backref=db.backref('event_admins'))
+    event = db.relationship('Event', backref=db.backref(
+        'event_admins', cascade='all, delete-orphan'))
 
     admin_id = db.Column(
         db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -467,8 +503,8 @@ class EventTeam(db.Model):
 
     event_id = db.Column(
         db.Integer, db.ForeignKey('events.id'), nullable=False)
-    event = db.relationship(
-        'Event', backref=db.backref('event_teams'))
+    event = db.relationship('Event', backref=db.backref(
+        'event_teams', cascade='all, delete-orphan'))
 
     team_id = db.Column(
         db.Integer, db.ForeignKey('teams.id'), nullable=False)
@@ -589,6 +625,13 @@ class Workflow(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
 
+    def __init__(self, name):
+        self.name = name
+        # to check if the module and all required fields are there
+        self.module
+        self.train_submission
+        self.test_submission
+
     def __repr__(self):
         repr = 'Workflow({})'.format(self.name)
         for workflow_element in self.elements:
@@ -621,7 +664,7 @@ class WorkflowElement(db.Model):
     # unless specified otherwise. It's because in more complex workflows
     # the same type can occur more then once. self.type below will always
     # refer to workflow_element_type.type.name
-    name = db.Column(db.String, nullable=False, unique=True)
+    name = db.Column(db.String, nullable=False)
 
     workflow_id = db.Column(
         db.Integer, db.ForeignKey('workflows.id'))
@@ -632,7 +675,7 @@ class WorkflowElement(db.Model):
         db.Integer, db.ForeignKey('workflow_element_types.id'),
         nullable=False)
     workflow_element_type = db.relationship(
-        'WorkflowElementType', backref=db.backref('submission_files'))
+        'WorkflowElementType', backref=db.backref('workflows'))
 
     def __init__(self, workflow, workflow_element_type, name_in_workflow=None):
         self.workflow = workflow
@@ -643,7 +686,8 @@ class WorkflowElement(db.Model):
             self.name = name_in_workflow
 
     def __repr__(self):
-        return 'WorkflowElement({})'.format(self.name)
+        return 'Workflow({}): WorkflowElement({})'.format(
+            self.workflow.name, self.name)
 
     # e.g. 'regression', 'external_data'. Normally == name
     @property
@@ -680,7 +724,7 @@ class SubmissionFile(db.Model):
         db.Integer, db.ForeignKey('submissions.id'), nullable=False)
     submission = db.relationship(
         'Submission',
-        backref=db.backref('files', cascade="all, delete-orphan"))
+        backref=db.backref('files', cascade='all, delete-orphan'))
 
     # e.g. 'regression', 'external_data'
     workflow_element_id = db.Column(
@@ -848,7 +892,8 @@ class SubmissionScore(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     submission_id = db.Column(
         db.Integer, db.ForeignKey('submissions.id'), nullable=False)
-    submission = db.relationship('Submission', backref=db.backref('scores'))
+    submission = db.relationship('Submission', backref=db.backref(
+        'scores', cascade='all, delete-orphan'))
 
     score_type_id = db.Column(
         db.Integer, db.ForeignKey('score_types.id'), nullable=False)
@@ -919,8 +964,8 @@ class Submission(db.Model):
 
     event_team_id = db.Column(
         db.Integer, db.ForeignKey('event_teams.id'), nullable=False)
-    event_team = db.relationship(
-        'EventTeam', backref=db.backref('submissions'))
+    event_team = db.relationship('EventTeam', backref=db.backref(
+        'submissions', cascade='all, delete-orphan'))
 
     name = db.Column(db.String(20, convert_unicode=True), nullable=False)
     hash_ = db.Column(db.String, nullable=False, index=True, unique=True)
@@ -962,7 +1007,6 @@ class Submission(db.Model):
                 submission=self, score_type=event_score_type.score_type)
             db.session.add(submission_score)
         self.reset()
-        print self
 
     def __str__(self):
         return 'Submission({}/{}/{})'.format(
@@ -1253,12 +1297,13 @@ class SubmissionScoreOnCVFold(db.Model):
     submission_on_cv_fold_id = db.Column(
         db.Integer, db.ForeignKey('submission_on_cv_folds.id'), nullable=False)
     submission_on_cv_fold = db.relationship(
-        'SubmissionOnCVFold', backref=db.backref('scores'))
+        'SubmissionOnCVFold', backref=db.backref(
+            'scores', cascade='all, delete-orphan'))
 
     submission_score_id = db.Column(
         db.Integer, db.ForeignKey('submission_scores.id'), nullable=False)
-    submission_score = db.relationship(
-        'SubmissionScore', backref=db.backref('on_cv_folds'))
+    submission_score = db.relationship('SubmissionScore', backref=db.backref(
+        'on_cv_folds', cascade='all, delete-orphan'))
 
     train_score = db.Column(db.Float)
     valid_score = db.Column(db.Float)
@@ -1507,18 +1552,18 @@ class UserInteraction(db.Model):
 
     event_team_id = db.Column(
         db.Integer, db.ForeignKey('event_teams.id'))
-    event_team = db.relationship(
-        'EventTeam', backref=db.backref('user_interactions'))
+    event_team = db.relationship('EventTeam', backref=db.backref(
+        'user_interactions', cascade='all, delete-orphan'))
 
     submission_id = db.Column(
         db.Integer, db.ForeignKey('submissions.id'))
-    submission = db.relationship(
-        'Submission', backref=db.backref('user_interactions'))
+    submission = db.relationship('Submission', backref=db.backref(
+        'user_interactions', cascade='all, delete-orphan'))
 
     submission_file_id = db.Column(
         db.Integer, db.ForeignKey('submission_files.id'))
-    submission_file = db.relationship(
-        'SubmissionFile', backref=db.backref('user_interactions'))
+    submission_file = db.relationship('SubmissionFile', backref=db.backref(
+        'user_interactions', cascade='all, delete-orphan'))
 
     def __init__(self, user, interaction, event=None, note=None,
                  submission=None, submission_file=None, diff=None,
@@ -1582,6 +1627,12 @@ class SubmissionSimilarity(db.Model):
     target_submission = db.relationship(
         'Submission', primaryjoin=(
             'SubmissionSimilarity.target_submission_id == Submission.id'))
+
+    def __repr__(self):
+        repr = 'type={}, user={}, source={}, target={}, similarity={}'.format(
+            self.type, self.user, self.source_submission,
+            self.target_submission, self.similarity)
+        return repr
 
 
 class NameClashError(Exception):
