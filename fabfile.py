@@ -141,12 +141,14 @@ def approve_user(u):
     approve_user(user_name=u)
 
 
-def serve():
+def serve(port=None):
     from databoard import app
     import databoard.views  # noqa
     import databoard.config as config
 
-    server_port = int(config.server_port)
+    if port is None:
+        port = config.server_port
+    server_port = int(port)
     app.run(
         debug=False,
         port=server_port,
@@ -227,6 +229,8 @@ def train_test_datarun(data_id, host_url, username, userpassd, e=None, t=None,
     :type userpassd: string
     :type priority: string
      """
+    from databoard.config import sandbox_d_name
+
     force = strtobool(force)
 
     from databoard.db_tools import train_test_submissions_datarun,\
@@ -237,6 +241,9 @@ def train_test_datarun(data_id, host_url, username, userpassd, e=None, t=None,
     else:
         submissions = get_submissions(
             event_name=e, team_name=t, submission_name=s)
+    submissions = [submission for submission in submissions
+                   if submission.name != sandbox_d_name]
+
     print submissions
     train_test_submissions_datarun(data_id, host_url, username, userpassd,
                                    submissions, force_retrain_test=force,
@@ -383,15 +390,21 @@ deployment = [
 # zip -r starting_kit.zip starting_kit
 
 
-def publish_deployment():
-    from databoard.config import vd_server, vd_root
+def publish_deployment(target='test'):
+    from databoard.config import vd_server, production_server, vd_root
 
     command = "rsync -pthrRvz -c "
+    if target == 'test':
+        server = vd_server
+        root = vd_root + '/databoard_test/'
+    else:
+        server = production_server
+        root = vd_root + '/databoard/'
     command += "--rsh=\'ssh -i " + os.path.expanduser("~")
     command += "/.ssh/datacamp/id_rsa -p 22\' "
     for file in deployment:
         command += file + ' '
-    command += 'root@' + vd_server + ':' + vd_root + '/databoard_test/'
+    command += 'root@' + server + ':' + root
     print command
     os.system(command)
 
@@ -405,10 +418,12 @@ def publish_problem(problem_name, target='local'):
     else:
         if target == 'test':
             server = vd_server
+            root = vd_root + '/databoard_test/'
         else:
             server = production_server
+            root = vd_root + '/databoard/'
         command += "--rsh=\'ssh -i " + os.path.expanduser("~")
         command += "/.ssh/datacamp/id_rsa -p 22\' problems/" + problem_name
-        command += ' root@' + server + ':' + vd_root + '/databoard_test/'
+        command += ' root@' + server + ':' + root
     print command
     os.system(command)
