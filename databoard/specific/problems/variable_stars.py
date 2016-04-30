@@ -5,7 +5,6 @@ from sklearn.cross_validation import train_test_split
 import databoard.multiclass_prediction as prediction
 from databoard.config import submissions_path, problems_path,\
     starting_kit_d_name
-from distutils.dir_util import mkpath
 
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 

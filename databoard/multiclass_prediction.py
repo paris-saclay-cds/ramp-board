@@ -70,6 +70,10 @@ class Predictions(BasePrediction):
         """Return an array which can be combined by taking means."""
         return self.y_proba
 
+    @property
+    def n_samples(self):
+        return len(self.y_proba)
+
     # def combine(self, indexes=[]):
         # Not yet used
 

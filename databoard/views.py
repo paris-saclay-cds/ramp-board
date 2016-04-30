@@ -55,6 +55,8 @@ def before_request():
 @app.route("/", methods=['GET', 'POST'])
 @app.route("/login", methods=['GET', 'POST'])
 def login():
+    db_tools.add_user_interaction(interaction='landing')
+
     # If there is already a user logged in, don't let another log in
     if current_user.is_authenticated:
         session['logged_in'] = True
@@ -74,7 +76,7 @@ def login():
         fl.login_user(user, remember=True)  # , remember=form.remember_me.data)
         session['logged_in'] = True
         logger.info('{} is logged in'.format(current_user))
-        db_tools.add_user_interaction(user=current_user, interaction='login')
+        db_tools.add_user_interaction(interaction='login', user=current_user)
         # next = flask.request.args.get('next')
         # next_is_valid should check if the user has valid
         # permission to access the `next` url
@@ -127,7 +129,7 @@ def sign_up():
 @fl.login_required
 def user():
     db_tools.add_user_interaction(
-        user=current_user, interaction='looking at user')
+        interaction='looking at user', user=current_user)
 
     events = Event.query.all()
     event_urls_f_names = [
@@ -176,7 +178,7 @@ def sign_up_for_event(event_name):
         return _redirect_to_user('{}: no event named "{}"'.format(
             current_user, event_name))
     db_tools.add_user_interaction(
-        user=current_user, event=event, interaction='signing up at event')
+        interaction='signing up at event', user=current_user, event=event)
 
     if event.is_controled_signup:
         db_tools.send_sign_up_request_mail(event, current_user)
@@ -198,7 +200,7 @@ def user_event(event_name):
         return _redirect_to_user('{}: no event named "{}"'.format(
             current_user, event_name))
     db_tools.add_user_interaction(
-        user=current_user, event=event, interaction='looking at event')
+        interaction='looking at event', user=current_user, event=event)
     with codecs.open(os.path.join(
         config.problems_path, event.problem.name, 'description.html'),
             'r', 'utf-8')\
@@ -231,8 +233,8 @@ def my_submissions(event_name):
         return _redirect_to_user('{}: no event named "{}"'.format(
             current_user, event_name))
     db_tools.add_user_interaction(
-        user=current_user, event=event,
-        interaction='looking at my_submissions')
+        interaction='looking at my_submissions',
+        user=current_user, event=event)
 
     leaderbord_html = db_tools.get_public_leaderboard(
         event_name, current_user, user_name=current_user.name)
@@ -250,13 +252,15 @@ def my_submissions(event_name):
 
 @app.route("/events/<event_name>/leaderboard")
 def leaderboard(event_name):
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, current_user):
         return _redirect_to_user('{}: no event named "{}"'.format(
             current_user, event_name))
     db_tools.add_user_interaction(
-        user=current_user, event=event,
-        interaction='looking at leaderboard')
+        interaction='looking at leaderboard',
+        user=current_user, event=event)
     leaderbord_html = db_tools.get_public_leaderboard(event_name, current_user)
     leaderboard_kwargs = dict(
         leaderboard=leaderbord_html,
@@ -343,7 +347,7 @@ def view_model(submission_hash, f_name):
         return _redirect_to_user(error_str)
 
     db_tools.add_user_interaction(
-        user=current_user, event=event, interaction='looking at submission',
+        interaction='looking at submission', user=current_user, event=event,
         submission=submission, submission_file=submission_file)
 
     logger.info('{} is looking at {}/{}/{}/{}'.format(
@@ -356,7 +360,7 @@ def view_model(submission_hash, f_name):
         #    with ZipFile(archive_filename, 'w') as archive:
         #        archive.write(f_name)
         db_tools.add_user_interaction(
-            user=current_user, event=event, interaction='download',
+            interaction='download', user=current_user, event=event,
             submission=submission, submission_file=submission_file)
 
         return send_from_directory(
@@ -386,7 +390,7 @@ def view_model(submission_hash, f_name):
                 submission=submission,
                 workflow_element=workflow_element).one()
             db_tools.add_user_interaction(
-                user=current_user, event=event, interaction='copy',
+                interaction='copy', user=current_user, event=event,
                 submission=submission, submission_file=submission_file)
 
         return flask.redirect('/events/{}/sandbox'.format(event.name))
@@ -453,7 +457,7 @@ def sandbox(event_name):
                     similarity = difflib.SequenceMatcher(
                         a=old_code, b=new_code).ratio()
                     db_tools.add_user_interaction(
-                        user=current_user, event=event, interaction='save',
+                        interaction='save', user=current_user, event=event,
                         submission_file=submission_file,
                         diff=diff, similarity=similarity)
         except Exception as e:
@@ -498,12 +502,12 @@ def sandbox(event_name):
             similarity = difflib.SequenceMatcher(
                 a=old_code, b=new_code).ratio()
             db_tools.add_user_interaction(
-                user=current_user, event=event, interaction='upload',
+                interaction='upload', user=current_user, event=event,
                 submission_file=submission_file,
                 diff=diff, similarity=similarity)
         else:
             db_tools.add_user_interaction(
-                user=current_user, event=event, interaction='upload',
+                interaction='upload', user=current_user, event=event,
                 submission_file=submission_file)
 
         return flask.redirect(request.referrer)
@@ -546,7 +550,7 @@ def sandbox(event_name):
             category='Submission')
 
         db_tools.add_user_interaction(
-            user=current_user, event=event, interaction='submit',
+            interaction='submit', user=current_user, event=event,
             submission=new_submission)
 
         return flask.redirect('/credit/{}'.format(new_submission.hash_))
@@ -631,7 +635,7 @@ def credit(submission_hash):
         db.session.commit()
 
         db_tools.add_user_interaction(
-            user=current_user, event=event, interaction='giving credit',
+            interaction='giving credit', user=current_user, event=event,
             submission=submission)
 
         return flask.redirect('/events/{}/sandbox'.format(event.name))
@@ -646,8 +650,7 @@ def credit(submission_hash):
 @app.route("/logout")
 @fl.login_required
 def logout():
-    db_tools.add_user_interaction(
-        user=current_user, interaction='logout')
+    db_tools.add_user_interaction(interaction='logout', user=current_user)
     session['logged_in'] = False
     logger.info('{} is logged out'.format(current_user))
     fl.logout_user()
@@ -673,11 +676,11 @@ def private_leaderboard(event_name):
     if (not db_tools.is_admin(event, current_user) and
         (event.closing_timestamp is None or
             event.closing_timestamp > datetime.datetime.utcnow())):
-        return redirect('/events/{}/private_leaderboard'.format(event_name))
+        return redirect(url_for('user'))
 
     db_tools.add_user_interaction(
-        user=current_user, event=event,
-        interaction='looking at private leaderboard')
+        interaction='looking at private leaderboard',
+        user=current_user, event=event)
     leaderbord_html = db_tools.get_private_leaderboard(event_name)
     return render_template(
         'leaderboard.html',
@@ -722,7 +725,7 @@ def view_submission_error(submission_hash):
     # TODO: check if event == submission.event_team.event
 
     db_tools.add_user_interaction(
-        user=current_user, event=event, interaction='looking at error',
+        interaction='looking at error', user=current_user, event=event,
         submission=submission)
 
     return render_template(

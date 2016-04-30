@@ -2,10 +2,9 @@ import datetime
 from sklearn.cross_validation import StratifiedShuffleSplit
 from databoard.specific.problems.variable_stars import problem_name  # noqa
 
-event_name = 'variable_stars'  # should be the same as the file name
-
 # Unmutable config parameters that we always read from here
 
+event_name = 'variable_stars'  # should be the same as the file name
 event_title = 'Variable star type prediction'
 
 random_state = 57

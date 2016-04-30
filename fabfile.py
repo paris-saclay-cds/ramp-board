@@ -194,6 +194,12 @@ def add_event(name, force='False'):
     add_event(name, force)
 
 
+def make_event_admin(e, u):
+    from databoard.db_tools import make_event_admin
+
+    make_event_admin(event_name=e, admin_name=u)
+
+
 def send_data_datarun(problem_name, host_url, username, userpassd):
     """
     Send data to datarun and prepare data (split train test)
@@ -328,14 +334,19 @@ software = [
     'databoard/specific/__init__.py',
     'databoard/specific/events/__init__.py',
     'databoard/specific/events/boston_housing_test.py',
+    'databoard/specific/events/epidemium2_cancer_mortality.py',
     'databoard/specific/events/iris_test.py',
+    'databoard/specific/events/HEP_detector_anomalies.py',
     'databoard/specific/events/variable_stars.py',
     'databoard/specific/problems/__init__.py',
     'databoard/specific/problems/boston_housing.py',
+    'databoard/specific/problems/epidemium2_cancer_mortality.py',
     'databoard/specific/problems/iris.py',
+    'databoard/specific/problems/HEP_detector_anomalies.py',
     'databoard/specific/problems/variable_stars.py',
     'databoard/specific/score_types/__init__.py',
     'databoard/specific/score_types/accuracy.py',
+    'databoard/specific/score_types/auc.py',
     'databoard/specific/score_types/error.py',
     'databoard/specific/score_types/negative_log_likelihood.py',
     'databoard/specific/score_types/relative_rmse.py',
@@ -343,6 +354,7 @@ software = [
     'databoard/specific/workflows/__init__.py',
     'databoard/specific/workflows/classifier_workflow.py',
     'databoard/specific/workflows/feature_extractor_classifier_calibrator_workflow.py',
+    'databoard/specific/workflows/feature_extractor_regressor_workflow.py',
     'databoard/specific/workflows/regressor_workflow.py',
     'databoard/tests/__init__.py',
     'databoard/tests/test_model.py',

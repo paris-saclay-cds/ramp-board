@@ -364,22 +364,26 @@ class Event(db.Model):
     @property
     def combined_combined_valid_score_str(self):
         return None if self.combined_foldwise_valid_score is None else str(
-            round(self.combined_combined_valid_score, self.score_precision))
+            round(self.combined_combined_valid_score,
+                  self.official_score_type.precision))
 
     @property
     def combined_combined_test_score_str(self):
         return None if self.combined_combined_test_score is None else str(
-            round(self.combined_combined_test_score, self.score_precision))
+            round(self.combined_combined_test_score,
+                  self.official_score_type.precision))
 
     @property
     def combined_foldwise_valid_score_str(self):
         return None if self.combined_foldwise_valid_score is None else str(
-            round(self.combined_foldwise_valid_score, self.score_precision))
+            round(self.combined_foldwise_valid_score,
+                  self.official_score_type.precision))
 
     @property
     def combined_foldwise_test_score_str(self):
         return None if self.combined_foldwise_test_score is None else str(
-            round(self.combined_foldwise_test_score, self.score_precision))
+            round(self.combined_foldwise_test_score,
+                  self.official_score_type.precision))
 
     @property
     def is_open(self):
@@ -391,6 +395,11 @@ class Event(db.Model):
         now = datetime.datetime.utcnow()
         return now > self.public_opening_timestamp\
             and now < self.closing_timestamp
+
+    @property
+    def is_closed(self):
+        now = datetime.datetime.utcnow()
+        return now > self.closing_timestamp
 
     @property
     def n_jobs(self):
@@ -452,6 +461,10 @@ class EventScoreType(db.Model):
     @property
     def maximum(self):
         return self.score_type.maximum
+
+    @property
+    def worst(self):
+        return self.score_type.worst
 
 cv_fold_types = db.Enum('live', 'test')
 
@@ -895,10 +908,10 @@ class SubmissionScore(db.Model):
     submission = db.relationship('Submission', backref=db.backref(
         'scores', cascade='all, delete-orphan'))
 
-    score_type_id = db.Column(
-        db.Integer, db.ForeignKey('score_types.id'), nullable=False)
-    score_type = db.relationship(
-        'ScoreType', backref=db.backref('submissions'))
+    event_score_type_id = db.Column(
+        db.Integer, db.ForeignKey('event_score_types.id'), nullable=False)
+    event_score_type = db.relationship(
+        'EventScoreType', backref=db.backref('submissions'))
 
     # These are cv-bagged scores. Individual scores are found in
     # SubmissionToTrain
@@ -911,16 +924,16 @@ class SubmissionScore(db.Model):
 
     @property
     def score_name(self):
-        return self.score_type.name
+        return self.event_score_type.name
 
     @property
     def score_function(self):
-        return self.score_type.score_function
+        return self.event_score_type.score_function
 
     # default display precision in n_digits
     @property
     def precision(self):
-        return self.score_type.precision
+        return self.event_score_type.precision
 
     @property
     def train_score_cv_mean(self):
@@ -1004,7 +1017,7 @@ class Submission(db.Model):
             event=event_team.event)
         for event_score_type in event_score_types:
             submission_score = SubmissionScore(
-                submission=self, score_type=event_score_type.score_type)
+                submission=self, event_score_type=event_score_type)
             db.session.add(submission_score)
         self.reset()
 
@@ -1084,7 +1097,7 @@ class Submission(db.Model):
 
     @property
     def state_with_link(self):
-        return '<a href={}>{}</a>'.format(
+        return '<a href=/{}>{}</a>'.format(
             os.path.join(self.hash_, 'error.txt'), self.state)
 
     @property
@@ -1121,8 +1134,8 @@ class Submission(db.Model):
         self.state = 'new'
         self.error_msg = ''
         for score in self.scores:
-            score.valid_score_cv_bag = score.score_type.worst
-            score.test_score_cv_bag = score.score_type.worst
+            score.valid_score_cv_bag = score.event_score_type.worst
+            score.test_score_cv_bag = score.event_score_type.worst
             score.valid_score_cv_bags = None
             score.test_score_cv_bags = None
 
@@ -1148,12 +1161,12 @@ class Submission(db.Model):
                             submission_on_cv_fold in self.on_cv_folds]
             for score in self.scores:
                 score.valid_score_cv_bags = _get_score_cv_bags(
-                    self.event, score.score_type, predictions_list,
+                    self.event, score.event_score_type, predictions_list,
                     true_predictions_train, test_is_list)
                 score.valid_score_cv_bag = float(score.valid_score_cv_bags[-1])
         else:
             for score in self.scores:
-                score.valid_score_cv_bag = float(score.score_type.worst)
+                score.valid_score_cv_bag = float(score.event_score_type.worst)
                 score.valid_score_cv_bags = None
         db.session.commit()
 
@@ -1186,7 +1199,7 @@ class Submission(db.Model):
                 score.test_score_cv_bag = float(score.test_score_cv_bags[-1])
         else:
             for score in self.scores:
-                score.test_score_cv_bag = float(score.score_type.worst)
+                score.test_score_cv_bag = float(score.event_score_type.worst)
                 score.test_score_cv_bags = None
         db.session.commit()
 
@@ -1313,12 +1326,12 @@ class SubmissionScoreOnCVFold(db.Model):
         submission_on_cv_fold_id, submission_score_id, name='ss_constraint')
 
     @property
-    def score_type(self):
-        return self.submission_score.score_type
+    def event_score_type(self):
+        return self.submission_score.event_score_type
 
     @property
     def score_function(self):
-        return self.score_type.score_function
+        return self.event_score_type.score_function
 
 
 # TODO: rename submission to workflow and submitted file to workflow_element
@@ -1425,9 +1438,9 @@ class SubmissionOnCVFold(db.Model):
         self.state = 'new'
         self.error_msg = ''
         for score in self.scores:
-            score.train_score = score.score_type.worst
-            score.valid_score = score.score_type.worst
-            score.test_score = score.score_type.worst
+            score.train_score = score.event_score_type.worst
+            score.valid_score = score.event_score_type.worst
+            score.test_score = score.event_score_type.worst
 
     def set_error(self, error, error_msg):
         self.reset()
@@ -1519,6 +1532,7 @@ user_interaction_type = db.Enum(
     'copy',
     'download',
     'giving credit',
+    'landing',
     'login',
     'logout',
     'looking at error',
@@ -1547,7 +1561,7 @@ class UserInteraction(db.Model):
     ip = db.Column(db.String, default=None)
 
     user_id = db.Column(
-        db.Integer, db.ForeignKey('users.id'), nullable=False)
+        db.Integer, db.ForeignKey('users.id'))
     user = db.relationship('User', backref=db.backref('user_interactions'))
 
     event_team_id = db.Column(
@@ -1565,7 +1579,7 @@ class UserInteraction(db.Model):
     submission_file = db.relationship('SubmissionFile', backref=db.backref(
         'user_interactions', cascade='all, delete-orphan'))
 
-    def __init__(self, user, interaction, event=None, note=None,
+    def __init__(self, interaction, user=None, event=None, note=None,
                  submission=None, submission_file=None, diff=None,
                  similarity=None):
         self.timestamp = datetime.datetime.utcnow()

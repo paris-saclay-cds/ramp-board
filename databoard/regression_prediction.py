@@ -17,10 +17,6 @@ class Predictions(BasePrediction):
         else:
             raise ValueError("Missing init argument: y_pred, y_true, f_name "
                              "or n_samples")
-        shape = self.y_pred.shape
-        if len(shape) != 1:
-            raise ValueError('Multiclass y_proba should be 1-dimensional, '
-                             'instead it is {}-dimensional'.format(len(shape)))
 
     def set_valid_in_train(self, predictions, test_is):
         self.y_pred[test_is] = predictions.y_pred
@@ -33,6 +29,10 @@ class Predictions(BasePrediction):
     def y_pred_comb(self):
         """Return an array which can be combined by taking means."""
         return self.y_pred
+
+    @property
+    def n_samples(self):
+        return self.y_pred.shape
 
     # def combine(self, indexes=[]):
         # Not yet used

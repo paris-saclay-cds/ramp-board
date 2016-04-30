@@ -11,7 +11,3 @@ class BasePrediction(object):
 
     def save(self, f_name):
         np.save(f_name, self.y_pred)
-
-    @property
-    def n_samples(self):
-        return len(self.y_pred)

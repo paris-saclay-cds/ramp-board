@@ -283,20 +283,20 @@ def add_workflow(workflow_name, element_type_names):
     if workflow is None:
         db.session.add(Workflow(name=workflow_name))
         workflow = Workflow.query.filter_by(name=workflow_name).one()
-        for element_type_name in element_type_names:
-            workflow_element_type = WorkflowElementType.query.filter_by(
-                name=element_type_name).one()
-            workflow_element =\
-                WorkflowElement.query.filter_by(
-                    workflow=workflow,
-                    workflow_element_type=workflow_element_type).one_or_none()
-            if workflow_element is None:
-                workflow_element = WorkflowElement(
-                    workflow=workflow,
-                    workflow_element_type=workflow_element_type)
-                logger.info('Adding {}'.format(workflow_element))
-                db.session.add(workflow_element)
-        db.session.commit()
+    for element_type_name in element_type_names:
+        workflow_element_type = WorkflowElementType.query.filter_by(
+            name=element_type_name).one()
+        workflow_element =\
+            WorkflowElement.query.filter_by(
+                workflow=workflow,
+                workflow_element_type=workflow_element_type).one_or_none()
+        if workflow_element is None:
+            workflow_element = WorkflowElement(
+                workflow=workflow,
+                workflow_element_type=workflow_element_type)
+            logger.info('Adding {}'.format(workflow_element))
+            db.session.add(workflow_element)
+    db.session.commit()
 
 
 def add_problem(problem_name, force=False):
@@ -455,9 +455,11 @@ def add_event(event_name, force=False):
     score_type_descriptors = event.module.score_type_descriptors
     if type(score_type_descriptors) is not list:
         score_type_descriptors = [score_type_descriptors]
-    for score_type_descriptor in score_type_descriptors:
+    for i, score_type_descriptor in enumerate(score_type_descriptors):
         if type(score_type_descriptor) is not dict:
-            score_type_descriptor = {'name':score_type_descriptor}
+            # this is ugly, needed a fast fix for official_score_name below
+            score_type_descriptors[i] = {'name': score_type_descriptor}
+            score_type_descriptor = {'name': score_type_descriptor}
         score_type = ScoreType.query.filter_by(
             name=score_type_descriptor['name']).one()
         event_score_type = EventScoreType.query.filter_by(
@@ -470,6 +472,18 @@ def add_event(event_name, force=False):
             event_score_type.precision = score_type_descriptor['precision']
         if 'new_name' in score_type_descriptor:
             event_score_type.name = score_type_descriptor['new_name']
+    # I thought that event.score_types will be sorted by the order we add
+    # event_score_types, but no, it's ordered by id (I guess), so we have to 
+    # excplicitly assign event.official_score_index here.
+    print score_type_descriptors
+    try:
+        official_score_name = event.module.official_score_name
+    except AttributeError:
+        official_score_name = score_type_descriptors[0]['name']
+    for i, score_type in enumerate(event.score_types):
+        if score_type.name == official_score_name:
+            event.official_score_index = i
+            break
     db.session.commit()
 
 
@@ -1975,14 +1989,22 @@ def get_user_interactions():
     user_interactions = UserInteraction.query.all()
 
     columns = ['timestamp (UTC)',
-               'event',
-               'user',
-               'team',
+               'IP',
                'interaction',
+               'user',
+               'event',
+               'team',
                'submission',
                'file',
                'code similarity',
                'diff']
+
+    def user_name(user_interaction):
+        user = user_interaction.user
+        if user is None:
+            return ''
+        else:
+            return user.name
 
     def event_name(user_interaction):
         event_team = user_interaction.event_team
@@ -2029,10 +2051,11 @@ def get_user_interactions():
     user_interactions_dict_list = [
         {column: value for column, value in zip(
             columns, [date_time_format(user_interaction.timestamp),
-                      event_name(user_interaction),
-                      user_interaction.user.name,
-                      team_name(user_interaction),
+                      user_interaction.ip,
                       user_interaction.interaction,
+                      user_name(user_interaction),
+                      event_name(user_interaction),
+                      team_name(user_interaction),
                       submission_name(user_interaction),
                       submission_file_name(user_interaction),
                       submission_similarity(user_interaction),
