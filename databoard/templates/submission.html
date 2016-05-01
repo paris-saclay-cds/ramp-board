@@ -21,7 +21,9 @@ onload="prettyPrint()"
 <div class="ui stackable two column grid">
     <div class="{{ left_col_width }} wide column">
         <h4 class="ui horizontal header divider grey">
-            <a href="/leaderboard"><i class="dashboard grey icon"></i>Leaderboard</a>
+            <a href="/events/{{ event.name }}">{{ event.title }}</a>
+            <span><i class="angle right grey icon"></i></span>
+            <a href="/events/{{ event.name }}/leaderboard">Leaderboard</a>
             <span><i class="angle right grey icon"></i></span>
             {{ submission.team.name }} 
             <span><i class="angle right grey icon"></i></span>

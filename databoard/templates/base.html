@@ -30,6 +30,14 @@
               {% endif %}
               </div>
               <div class="five wide right aligned column">
+              {% if event %}
+                  <a href="/events/{{ event.name }}/leaderboard">leaderboard</a><br>
+                  <a href="/events/{{ event.name }}/sandbox">sandbox</a><br>
+                  <a href="/events/{{ event.name }}/my_submissions">my submissions</a><br>
+                  <a href="/events/{{ event.name }}">description</a><br>
+                  <a href="/events/{{ event.name }}/starting_kit">starting kit</a><br>
+              {% endif %}
+                  <a href="/user">home</a><br>
                 {% if session.logged_in %}
                   <a href="{{ url_for('logout') }}">log out</a><br>
                 {% endif %}

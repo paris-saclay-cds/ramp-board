@@ -81,7 +81,7 @@ def login():
         # next_is_valid should check if the user has valid
         # permission to access the `next` url
         # if not fl.next_is_valid(next):
-        #    return flask.abort(400)
+        #     return flask.abort(400)
 
         return flask.redirect(flask.url_for('user'))
     return render_template(
@@ -251,9 +251,8 @@ def my_submissions(event_name):
 
 
 @app.route("/events/<event_name>/leaderboard")
+@fl.login_required
 def leaderboard(event_name):
-    if not current_user.is_authenticated:
-        return redirect(url_for('login'))
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, current_user):
         return _redirect_to_user('{}: no event named "{}"'.format(
@@ -399,6 +398,7 @@ def view_model(submission_hash, f_name):
         code = f.read()
     return render_template(
         'submission.html',
+        event=event,
         code=code,
         submission=submission,
         f_name=f_name,
@@ -626,12 +626,14 @@ def credit(submission_hash):
             return _redirect_to_credit(submission_hash, 'Error: {}'.format(e))
         for source_submission in source_submissions:
             s_field = get_s_field(source_submission)
-            submission_similarity = SubmissionSimilarity(
-                type='target_credit', user=current_user,
-                source_submission=source_submission,
-                target_submission=submission,
-                similarity=int(getattr(credit_form, s_field).data) / 100.)
-            db.session.add(submission_similarity)
+            similarity = int(getattr(credit_form, s_field).data) / 100.
+            if similarity > 0:
+                submission_similarity = SubmissionSimilarity(
+                    type='target_credit', user=current_user,
+                    source_submission=source_submission,
+                    target_submission=submission,
+                    similarity=similarity)
+                db.session.add(submission_similarity)
         db.session.commit()
 
         db_tools.add_user_interaction(
@@ -667,6 +669,8 @@ def logout():
 @app.route("/events/<event_name>/private_leaderboard")
 @fl.login_required
 def private_leaderboard(event_name):
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, current_user):
         return _redirect_to_user('{}: no event named "{}"'.format(
@@ -686,7 +690,8 @@ def private_leaderboard(event_name):
         'leaderboard.html',
         leaderboard_title='Leaderboard',
         leaderboard=leaderbord_html,
-        event=event
+        event=event,
+        private=True,
     )
 
 

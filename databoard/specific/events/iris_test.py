@@ -28,7 +28,7 @@ def get_cv(y_train_array):
 
 max_members_per_team = 1
 max_n_ensemble = 80  # max number of submissions in greedy ensemble
-is_send_trained_mails = False
+is_send_trained_mails = True
 is_send_submitted_mails = False
 min_duration_between_submissions = 15 * 60  # sec
 opening_timestamp = datetime.datetime(2000, 1, 1, 0, 0, 0)

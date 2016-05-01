@@ -524,6 +524,11 @@ def create_user(name, password, lastname, firstname, email,
                 facebook_url=facebook_url, google_url=google_url,
                 github_url=github_url, website_url=website_url, bio=bio,
                 is_want_news=is_want_news)
+    if access_level == 'asked':
+        user.is_authenticated = False
+    else:
+        user.is_authenticated = True
+
     # Creating default team with the same name as the user
     # user is admin of her own team
     team = Team(name=name, admin=user)
@@ -563,6 +568,7 @@ def create_user(name, password, lastname, firstname, email,
 def validate_user(user):
     # from 'asked' to 'user'
     user.access_level = 'user'
+    user.is_authenticated = True
 
 
 def get_sandbox(event, user):
@@ -883,6 +889,10 @@ def send_trained_mails(submission):
             header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
                 recipient_list, gmail_user, subject)
             body = ''
+            for score in submission.scores:
+                body += '{} = {}\n'.format(
+                    score.score_name,
+                    round(score.valid_score_cv_bag, score.precision))
             for recipient in recipient_list:
                 smtpserver.sendmail(gmail_user, recipient, header + body)
         except Exception as e:
@@ -1561,10 +1571,11 @@ def compute_historical_contributivity(event_name):
             submission_similaritys.sort(
                 key=lambda x: x.timestamp, reverse=True)
             processed_submissions = []
+            historical_contributivity = submission.historical_contributivity
             for submission_similarity in submission_similaritys:
                 source_submission = submission_similarity.source_submission
                 if source_submission not in processed_submissions:
-                    partial_credit = submission.historical_contributivity *\
+                    partial_credit = historical_contributivity *\
                         submission_similarity.similarity
                     source_submission.historical_contributivity +=\
                         partial_credit
@@ -1727,7 +1738,6 @@ def get_private_leaderboard(event_name, team_name=None, user_name=None):
          int(round(submission.valid_time_cv_std)),
          date_time_format(submission.submission_timestamp)]
         for submission in submissions])
-    print values
     leaderboard_dict_list = {column: value for column, value in zip(
         columns, values)}
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
@@ -1892,6 +1902,8 @@ def print_submissions(event_name=None, team_name=None, submission_name=None):
         print('\tstate = {}'.format(submission.state))
         print('\tcontributivity = {0:.2f}'.format(
             submission.contributivity))
+        print('\thistorical contributivity = {0:.2f}'.format(
+            submission.historical_contributivity))
         for score in submission.scores:
             print('\tscore_name = {}'.format(score.score_name))
             print('\t\tvalid_score_cv_mean = {0:.2f}'.format(
