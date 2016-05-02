@@ -1584,6 +1584,15 @@ def compute_historical_contributivity(event_name):
     db.session.commit()
 
 
+# to "cache" the leaderboards
+def compute_contributivity_and_save_leaderboards(
+        event_name, force_ensemble=False):
+    #compute_contributivity(event_name, force_ensemble)
+    #compute_historical_contributivity(event_name)
+    user = User.query.filter_by(name='kegl').one()
+    public_leaderboard_html = get_public_leaderboard(event_name, user)
+
+
 def is_user_signed_up(event_name, user_name):
     for event_team in get_user_event_teams(event_name, user_name):
         if event_team.is_active:
@@ -1643,7 +1652,6 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
     -------
     leaderboard_html : html string
     """
-
     submissions = get_submissions(
         event_name=event_name, team_name=team_name, user_name=user_name)
     submissions = [submission for submission in submissions

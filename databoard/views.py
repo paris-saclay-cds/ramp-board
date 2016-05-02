@@ -675,8 +675,6 @@ def private_leaderboard(event_name):
     if not db_tools.is_public_event(event, current_user):
         return _redirect_to_user('{}: no event named "{}"'.format(
             current_user, event_name))
-    if not current_user.is_authenticated:
-        return redirect(url_for('leaderboard'))
     if (not db_tools.is_admin(event, current_user) and
         (event.closing_timestamp is None or
             event.closing_timestamp > datetime.datetime.utcnow())):

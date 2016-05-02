@@ -303,6 +303,11 @@ def compute_contributivity(event_name):
     compute_historical_contributivity(event_name)
 
 
+def compute_contributivity_and_save_leaderboards(event_name):
+    from databoard.db_tools import compute_contributivity_and_save_leaderboards
+    compute_contributivity_and_save_leaderboards(event_name)
+
+
 def print_submissions(e=None, t=None, s=None):
     from databoard.db_tools import print_submissions
     print_submissions(event_name=e, team_name=t, submission_name=s)
