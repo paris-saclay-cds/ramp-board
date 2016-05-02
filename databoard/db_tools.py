@@ -697,6 +697,7 @@ def approve_user(user_name):
     user = User.query.filter_by(name=user_name).one()
     if user.access_level == 'asked':
         user.access_level = 'user'
+    user.is_authenticated = True
     db.session.commit()
     send_mail(user.email, 'RAMP sign-up approved', '')
 
