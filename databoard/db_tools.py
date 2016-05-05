@@ -336,6 +336,14 @@ def delete_problem(problem):
 # SubmissionSimilarity since it has two submission parents
 def delete_event(event):
     submissions = get_submissions(event_name=event.name)
+    delete_submission_similarity(submissions)
+    db.session.delete(event)
+    db.session.commit()
+
+
+# the main reason having this is that I couldn't make a cascade delete in
+# SubmissionSimilarity since it has two submission parents
+def delete_submission_similarity(submissions):
     submission_similaritys = []
     for submission in submissions:
         submission_similaritys += SubmissionSimilarity.query.filter_by(
@@ -344,7 +352,6 @@ def delete_event(event):
             source_submission=submission).all()
     for submission_similarity in submission_similaritys:
         db.session.delete(submission_similarity)
-    db.session.delete(event)
     db.session.commit()
 
 
@@ -475,7 +482,6 @@ def add_event(event_name, force=False):
     # I thought that event.score_types will be sorted by the order we add
     # event_score_types, but no, it's ordered by id (I guess), so we have to 
     # excplicitly assign event.official_score_index here.
-    print score_type_descriptors
     try:
         official_score_name = event.module.official_score_name
     except AttributeError:
@@ -727,12 +733,21 @@ def set_state(event_name, team_name, submission_name, state):
 def delete_submission(event_name, team_name, submission_name):
     event = Event.query.filter_by(name=event_name).one()
     team = Team.query.filter_by(name=team_name).one()
-    event_team = EventTeam(event=event, team=team)
+    event_team = EventTeam.query.filter_by(event=event, team=team).one()
     submission = Submission.query.filter_by(
         name=submission_name, event_team=event_team).one()
     shutil.rmtree(submission.path)
+
+    cv_folds = CVFold.query.filter_by(event=event).all()
+    for cv_fold in cv_folds:
+        submission_on_cv_fold = SubmissionOnCVFold.query.filter_by(
+            submission=submission, cv_fold=cv_fold).one()
+        cv_fold.submissions.remove(submission_on_cv_fold)
+
+    delete_submission_similarity([submission])
     db.session.delete(submission)
     db.session.commit()
+    compute_contributivity_and_save_leaderboards(event_name)
 
 
 def make_submission_on_cv_folds(cv_folds, submission):
@@ -1176,6 +1191,25 @@ def train_test_submissions(submissions=None, force_retrain_test=False):
             Submission.name != 'sandbox').order_by(Submission.id).all()
     for submission in submissions:
         train_test_submission(submission, force_retrain_test)
+        # Means and stds were constructed on demand by fetching fold times.
+        # It was slow because submission_on_folds contain also possibly large
+        # predictions. If postgres solves this issue (which can be tested on
+        # the mean and std scores on the private leaderbord), the
+        # corresponding columns (which are now redundant) can be deleted in
+        # Submission and this computation can also be deleted.
+        submission.train_time_cv_mean = np.array(
+            [ts.train_time for ts in submission.on_cv_folds]).mean()
+        submission.valid_time_cv_mean = np.array(
+            [ts.valid_time for ts in submission.on_cv_folds]).mean()
+        submission.test_time_cv_mean = np.array(
+            [ts.test_time for ts in submission.on_cv_folds]).mean()
+        submission.train_time_cv_std = np.array(
+            [ts.train_time for ts in submission.on_cv_folds]).std()
+        submission.valid_time_cv_std = np.array(
+            [ts.valid_time for ts in submission.on_cv_folds]).std()
+        submission.test_time_cv_std = np.array(
+            [ts.test_time for ts in submission.on_cv_folds]).std()
+        db.session.commit()
 
 
 # For parallel call
@@ -1588,10 +1622,10 @@ def compute_historical_contributivity(event_name):
 # to "cache" the leaderboards
 def compute_contributivity_and_save_leaderboards(
         event_name, force_ensemble=False):
-    #compute_contributivity(event_name, force_ensemble)
-    #compute_historical_contributivity(event_name)
-    user = User.query.filter_by(name='kegl').one()
-    public_leaderboard_html = get_public_leaderboard(event_name, user)
+    compute_contributivity(event_name, force_ensemble)
+    compute_historical_contributivity(event_name)
+    #user = User.query.filter_by(name='kegl').one()
+    #public_leaderboard_html = get_public_leaderboard(event_name, user)
 
 
 def is_user_signed_up(event_name, user_name):

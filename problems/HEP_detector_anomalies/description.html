@@ -18,13 +18,11 @@ The nature of the challenge is to devise a classifier that can distinguish the a
 
 <h2>Data</h2>
 
-A version of the <a href="http://opendata.cern.ch/collection/ATLAS-Higgs-Challenge-2014?ln=en">HiggsML dataset</a> (used in the <a href="https://higgsml.lal.in2p3.fr/">Kaggle Challenge</a> in 2014) is provided. It contains a mixture of Higgs particles decaying into tau pairs and the principal background processes. The bulk of the events are unchanged, but a significant minority have been artificially distorted or corrupted in some way. These anomalies include:
-<ul>
-<li>abnormal value for the pseudorapidity (eta) for the tau candidates 
-<li>lepton transverse momentum scaled by a factor 10 
-<li>missing transverse energy increased by a factor 10 
-<li>lepton and tau phi values switched. 
-</ul>
+A version of the <a href="http://opendata.cern.ch/collection/ATLAS-Higgs-Challenge-2014?ln=en">HiggsML dataset</a> (used
+in the <a href="https://higgsml.lal.in2p3.fr/">Kaggle Challenge</a> in 2014) is provided. It contains a mixture of Higgs
+particles decaying into tau pairs and the principal background processes. Half of the events are unchanged, but the
+other half  has been artificially distorted or corrupted in some way. The detail of these distortions will be
+revealed during the RAMP.
 
 The full dataset contains approximately 800K events.
 We are giving you 100k events to build models and will use the rest to test them.

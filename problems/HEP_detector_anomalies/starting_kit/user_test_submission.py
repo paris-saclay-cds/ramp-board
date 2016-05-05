@@ -12,7 +12,7 @@ if __name__ == '__main__':
     y = data[['isSkewed']].values.ravel()
     X = data.drop(['isSkewed'], axis=1).reset_index(drop=True)
 
-    skf = StratifiedShuffleSplit(y, n_iter=3, test_size=0.5, random_state=43)
+    skf = StratifiedShuffleSplit(y, n_iter=2, test_size=0.5, random_state=43)
     print("Training ...")
     for valid_train_is, valid_test_is in skf:
         print('-------------------------------------------------------------')
@@ -25,5 +25,6 @@ if __name__ == '__main__':
         clf = Classifier()
         clf.fit(X_valid_train, y_valid_train)
         y_valid_pred = clf.predict_proba(X_valid_test)
-        print('accuracy = ', accuracy_score(y_valid_test, y_valid_pred[:, 1] > 0.5))
+        print('accuracy = ', accuracy_score(
+            y_valid_test, y_valid_pred[:, 1] > y_valid_pred[:, 0]))
         print('ROC AUC = ', roc_auc_score(y_valid_test, y_valid_pred[:, 1]))

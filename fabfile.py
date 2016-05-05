@@ -318,6 +318,11 @@ def print_submission_similaritys():
     print_submission_similaritys()
 
 
+def delete_submission(e, t, s):
+    from databoard.db_tools import delete_submission
+    delete_submission(event_name=e, team_name=t, submission_name=s)
+
+
 software = [
     'fabfile.py',
     'setup.py',

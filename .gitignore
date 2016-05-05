@@ -9,6 +9,7 @@ joblib
 *.log
 *.lock
 db/*
+submissions/*
 tools/*
 databoard.egg-info
 user_batches

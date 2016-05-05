@@ -999,6 +999,12 @@ class Submission(db.Model):
     is_to_ensemble = db.Column(db.Boolean, default=True)
     notes = db.Column(db.String, default='')  # eg, why is it disqualified
 
+    train_time_cv_mean = db.Column(db.Float, default=0.0)
+    valid_time_cv_mean = db.Column(db.Float, default=0.0)
+    test_time_cv_mean = db.Column(db.Float, default=0.0)
+    train_time_cv_std = db.Column(db.Float, default=0.0)
+    valid_time_cv_std = db.Column(db.Float, default=0.0)
+    test_time_cv_std = db.Column(db.Float, default=0.0)
     # later also ramp_id
     db.UniqueConstraint(event_team_id, name, name='ts_constraint')
 
@@ -1100,29 +1106,34 @@ class Submission(db.Model):
         return '<a href=/{}>{}</a>'.format(
             os.path.join(self.hash_, 'error.txt'), self.state)
 
-    @property
-    def train_time_cv_mean(self):
-        return np.array([ts.train_time for ts in self.on_cv_folds]).mean()
+    # These were constructing means and stds by fetching fold times. It was
+    # slow because submission_on_folds contain also possibly large predictions
+    # If postgres solves this issue (which can be tested on the mean and std
+    # scores on the private leaderbord), the corresponding columns (which are
+    # now redundant) can be deleted and these can be uncommented.
+    # @property
+    # def train_time_cv_mean(self):
+    #     return np.array([ts.train_time for ts in self.on_cv_folds]).mean()
 
-    @property
-    def valid_time_cv_mean(self):
-        return np.array([ts.valid_time for ts in self.on_cv_folds]).mean()
+    # @property
+    # def valid_time_cv_mean(self):
+    #     return np.array([ts.valid_time for ts in self.on_cv_folds]).mean()
 
-    @property
-    def test_time_cv_mean(self):
-        return np.array([ts.test_time for ts in self.on_cv_folds]).mean()
+    # @property
+    # def test_time_cv_mean(self):
+    #     return np.array([ts.test_time for ts in self.on_cv_folds]).mean()
 
-    @property
-    def train_time_cv_std(self):
-        return np.array([ts.train_time for ts in self.on_cv_folds]).std()
+    # @property
+    # def train_time_cv_std(self):
+    #     return np.array([ts.train_time for ts in self.on_cv_folds]).std()
 
-    @property
-    def valid_time_cv_std(self):
-        return np.array([ts.valid_time for ts in self.on_cv_folds]).std()
+    # @property
+    # def valid_time_cv_std(self):
+    #     return np.array([ts.valid_time for ts in self.on_cv_folds]).std()
 
-    @property
-    def test_time_cv_std(self):
-        return np.array([ts.test_time for ts in self.on_cv_folds]).std()
+    # @property
+    # def test_time_cv_std(self):
+    #     return np.array([ts.test_time for ts in self.on_cv_folds]).std()
 
     def set_state(self, state):
         self.state = state
@@ -1603,11 +1614,17 @@ class UserInteraction(db.Model):
 
     @property
     def event(self):
-        return self.event_team.event
+        if self.event_team:
+            return self.event_team.event
+        else:
+            return None
 
     @property
     def team(self):
-        return self.event_team.team
+        if self.event_team:
+            return self.event_team.team
+        else:
+            return None
 
 
 submission_similarity_type = db.Enum(
