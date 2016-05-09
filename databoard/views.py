@@ -84,8 +84,16 @@ def login():
         #     return flask.abort(400)
 
         return flask.redirect(flask.url_for('user'))
+
+    events = Event.query.filter_by(is_public=True).all()
+    event_urls_f_names = [
+        (event.name,
+         event.title)
+        for event in events]
+
     return render_template(
         'login.html',
+        event_urls_f_names=event_urls_f_names,
         form=form,
     )
 
@@ -193,14 +201,18 @@ def sign_up_for_event(event_name):
 
 
 @app.route("/events/<event_name>")
-@fl.login_required
+# @fl.login_required
 def user_event(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if not db_tools.is_public_event(event, current_user):
-        return _redirect_to_user('{}: no event named "{}"'.format(
-            current_user, event_name))
-    db_tools.add_user_interaction(
-        interaction='looking at event', user=current_user, event=event)
+    # if not db_tools.is_public_event(event, current_user):
+    #     return _redirect_to_user('{}: no event named "{}"'.format(
+    #         current_user, event_name))
+    if current_user.is_authenticated:
+        db_tools.add_user_interaction(
+            interaction='looking at event', user=current_user, event=event)
+    else:
+        db_tools.add_user_interaction(
+            interaction='looking at event', event=event)
     with codecs.open(os.path.join(
         config.problems_path, event.problem.name, 'description.html'),
             'r', 'utf-8')\

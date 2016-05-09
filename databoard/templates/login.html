@@ -58,6 +58,20 @@
         <input type="submit" value="Login" class="ui submit button">
     </div>
 </form>
+
 <h3 class="ui horizontal header divider"><a href="/sign_up">Sign up</a></h3> 
+<h3 class="ui horizontal header divider">Running RAMPs</h3> 
+{% for url, f_name in event_urls_f_names %}
+    <div class="ui fluid card">
+        <div class="content">
+            <font size=+1>
+            <div class="description">
+                <a href="/events/{{ url }}"><i class="file grey icon"></i>{{ f_name }}</a>:
+                <a href="/events/{{ url }}/leaderboard">leaderboard</a>
+            </div>
+            </font>
+        </div>
+    </div>
+{% endfor %}
 
 {% endblock %}

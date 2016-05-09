@@ -1,0 +1,53 @@
+<i>Camille Marini (LTCI/CNRS), Alex Gramfort (LTCI/Télécom ParisTech), Sana Tfaili (Lip(Sys)²/UPSud), Laetitia Le (Lip(Sys)²/UPSud), Mehdi Cherti (LAL/CNRS), Balázs Kégl (LAL/CNRS)</i><br>
+    
+<h2> Introduction </h2>
+
+Chemotherapy is one of the most used treatment against cancer. It uses chemical substances (<a href=https://en.wikipedia.org/wiki/List_of_chemotherapeutic_agents>chemotherapeutic agents</a>) which kill cells that divide too quickly. These chemical substances are often diluted in a particular solution and packaged in bags, diffusers, or syringes, before being administered. <a href=https://books.google.fr/books?id=EB00rD8AqaYC&pg=PA188&lpg=PA188&dq=wrong+chemotherapeutic&source=bl&ots=m7EfyG6A3J&sig=ZVa0hLqDPFe2iExV6FOREJztN8c&hl=en&sa=X&ved=0ahUKEwj_5ZinkarMAhUFnBoKHaJiAgAQ6AEIKDAC#v=onepage&q=wrong%20chemotherapeutic&f=false>Wrong medication</a>  (wrong chemotherapeutic agent or wrong concentration) can have major impacts for patients. To prevent wrong medication, some recent French regulations impose the verification of anti-cancer drugs before their administration. The goal is to check that they contain the good chemotherapeutic agent with the good dosage. 
+
+<a href=https://en.wikipedia.org/wiki/Raman_spectroscopy>Raman spectroscopy</a> could be used to make this check, since, theoretically, i) each molecule has a specific spectral fingerprint by which the molecule can be identified; and ii) the Raman intensity increases with the concentration of the molecule. The main advantage of spectroscopy above other methods (for example, liquid chromatography) is that it is non-destructive and non-invasive (measures are made without opening the drug containers). However, this method is rarely used in hospital environment because of the complexity of the spectral signals to analyze. Automating the analysis of these spectral signals could significantly help. Eventually, a complete analytical system (from measuring Raman spectra to identifying the chemotherapeutic agent and its concentration) could be designed, which would be easy to use and would prevent wrong medication. 
+
+In this context, the goal of this project is to develop prediction models able to <b>identify and quantify chemotherapeutic agents from their Raman spectra</b>.  
+
+The Lip(Sys)² laboratory measured Raman spectra of 4 types of chemotherapeutic agents (called *molecule*) in 3 different packages (called <i>vial</i>), diluted in 9 different solutions (called <i>solute gammes</i>), and having different concentrations. A total of <b>360 spectra were measured for each agent</b>, except for one (348 spectra).  
+
+Part of these data are saved in the file <code>train.csv</code> as follows (<code>n_samples</code> being the number of samples): 
+
+<table>
+    <tr>
+        <th>Data key</th>
+        <th>Contains</th>
+        <th>Dimension</th>
+    </tr>
+    <tr>
+        <td><code>molecule</code></td>
+        <td>Type of chemotherapeutic agent. Six possible values: A for infliximab, B for bévacizumab, Q for ramucirumab, R for rituximab</td>
+        <td>(<code>n_samples</code>,)</td>
+    </tr>
+    <tr>
+        <td><code>vial</code></td>
+        <td>Vial type. Three possible values: 1, 2, 3</td>
+        <td>(<code>1</code>, <code>n_samples</code>)</td>
+    </tr>
+    <tr>
+        <td><code>solute</code></td>
+        <td>Solute group. Fourteen possible values: 1, 2, ..., 14</td>
+        <td>(<code>1</code>, <code>n_samples</code>)</td>
+    </tr>
+    <tr>
+        <td><code>concentration</code></td>
+        <td>Concentration</td>
+        <td>(<code>n_samples</code>, <code>1</code>)</td>
+    </tr>
+    <tr>
+        <td><code>spectra</code></td>
+        <td>Intensity of Raman spectrum</td>
+        <td>(<code>n_samples</code>, <code>1866</code>)</td>
+    </tr>
+</table>
+
+To sum up, there are too objectives:
+
+<ul>
+    <li><b>classification</b>: predict which molecule it corresponds to given the spectrum.</li>
+    <li><b>regression</b>: predict the concentration of a molecule. The prediction should not depend on the vial or the solute group. The error metric is the mean absolute relative error (mare): $$\frac{1}{n_{samples}}\sum_{i=1}^{n_{samples}}\left|\frac{y_i-\hat{y}_i}{y_i}\right|$$ with $y$ and $\hat{y}$ being the true and predicted concentration.</li>
+</ul>

@@ -479,6 +479,7 @@ def add_event(event_name, force=False):
             event_score_type.precision = score_type_descriptor['precision']
         if 'new_name' in score_type_descriptor:
             event_score_type.name = score_type_descriptor['new_name']
+        print score_type
     # I thought that event.score_types will be sorted by the order we add
     # event_score_types, but no, it's ordered by id (I guess), so we have to 
     # excplicitly assign event.official_score_index here.
@@ -487,9 +488,10 @@ def add_event(event_name, force=False):
     except AttributeError:
         official_score_name = score_type_descriptors[0]['name']
     for i, score_type in enumerate(event.score_types):
-        if score_type.name == official_score_name:
+        if score_type.score_type.name == official_score_name:
             event.official_score_index = i
             break
+    print event.official_score_type
     db.session.commit()
 
 
@@ -1171,6 +1173,25 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
         submission.set_state_after_training()
         submission.compute_test_score_cv_bag()
         submission.compute_valid_score_cv_bag()
+        # Means and stds were constructed on demand by fetching fold times.
+        # It was slow because submission_on_folds contain also possibly large
+        # predictions. If postgres solves this issue (which can be tested on
+        # the mean and std scores on the private leaderbord), the
+        # corresponding columns (which are now redundant) can be deleted in
+        # Submission and this computation can also be deleted.
+        submission.train_time_cv_mean = np.array(
+            [ts.train_time for ts in submission.on_cv_folds]).mean()
+        submission.valid_time_cv_mean = np.array(
+            [ts.valid_time for ts in submission.on_cv_folds]).mean()
+        submission.test_time_cv_mean = np.array(
+            [ts.test_time for ts in submission.on_cv_folds]).mean()
+        submission.train_time_cv_std = np.array(
+            [ts.train_time for ts in submission.on_cv_folds]).std()
+        submission.valid_time_cv_std = np.array(
+            [ts.valid_time for ts in submission.on_cv_folds]).std()
+        submission.test_time_cv_std = np.array(
+            [ts.test_time for ts in submission.on_cv_folds]).std()
+        
         db.session.commit()
         for score in submission.scores:
             logger.info('valid_score {} = {}'.format(
