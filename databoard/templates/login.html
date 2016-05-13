@@ -30,6 +30,8 @@
 </script>
 {% endif %}
 {% endwith %}
+<h3><a href="/sign_up">Sign up</a></h3> 
+
 <h3 class="ui horizontal header divider">Login</h3> 
  <!-- style="padding-bottom: 20px " -->
 <form class="ui form" method="post" action="" name="login">
@@ -59,7 +61,6 @@
     </div>
 </form>
 
-<h3 class="ui horizontal header divider"><a href="/sign_up">Sign up</a></h3> 
 <h3 class="ui horizontal header divider">Running RAMPs</h3> 
 {% for url, f_name in event_urls_f_names %}
     <div class="ui fluid card">
@@ -73,5 +74,7 @@
         </div>
     </div>
 {% endfor %}
+
+{% include 'description.html' %}
 
 {% endblock %}

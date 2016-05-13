@@ -106,3 +106,15 @@ fab send_password_mails:passwords.csv,port=<port>
 fab serve:<port>
 
 ### Other commands
+
+ - drug_spectra
+fab add_score_type:error_mare_mixed,True,0.0,1.0
+fab add_score_type:error_mixed,True,0.0,1.0 
+fab add_score_type:mare_mixed,True,0.0,inf 
+fab add_score_type:mare,True,0.0,inf
+fab add_workflow_element_type:feature_extractor_clf,code
+fab add_workflow_element_type:feature_extractor_reg,code 
+fab add_workflow:feature_extractor_classifier_regressor_workflow,feature_extractor_clf,classifier,feature_extractor_reg,regressor
+fab add_problem:drug_spectra 
+fab add_event:drug_spectra
+

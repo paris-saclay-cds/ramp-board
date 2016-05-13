@@ -146,6 +146,7 @@ def user():
          db_tools.is_public_event(event, current_user),
          db_tools.is_user_signed_up(event.name, current_user.name))
         for event in events]
+
     return render_template('user.html',
                            event_urls_f_names=event_urls_f_names)
 
