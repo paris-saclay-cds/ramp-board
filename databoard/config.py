@@ -5,6 +5,7 @@ root_path = '.'
 # paths
 # repos_path = os.path.join(root_path, 'git_submissions')
 # ground_truth_path = os.path.join(root_path, 'ground_truth')
+templates_path = os.path.join(root_path, 'submissions_d_name')
 submissions_d_name = 'submissions'
 submissions_path = os.path.join(root_path, submissions_d_name)
 # deposited_submissions_d_name = 'deposited_submissions'
@@ -72,7 +73,7 @@ is_pickle_trained_submission = False
 # server_name = debug_server if local_deployment else train_server
 
 vd_server = 'onevm-58.lal.in2p3.fr'
-production_server = 'onevm-177.lal.in2p3.fr'
+production_server = '134.158.75.241'
 reims_server = 'romeo1.univ-reims.fr'
 vd_root = '/mnt/datacamp'
 local_root = '/tmp'  # for local publishing / testing

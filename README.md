@@ -53,8 +53,10 @@ fab add_problem:variable_stars
  - event example
 fab add_event:variable_stars
 
+## Backup
 
-
+rsync -rultv root@134.158.75.241:/mnt/datacamp/databoard/db/databoard.db db/
+rsync -rultv root@134.158.75.241:/mnt/datacamp/databoard/submissions ./
 
 ### Test ramp locally
 
@@ -64,51 +66,23 @@ fab serve
 
 ### Publish on the server
 
- - setup ramps_configs['<ramp_name>_remote'] in config.py
- - in development dir (repeat each time you change the code):
-fab publish_sofware:target=test/production
-fab publish_problem:<problem_name>,target=local/test/production
-cd /mnt/datacamp/code
+fab publish_software:target=production
+fab publish_software:target=test
+
+### If code is redeployed
+
 pip install -Ur requirements.txt
 python setup.py develop
 
-### Test and setup ramp on remote server
+### Server
 
-cd /mnt/datacamp/databoard_test or /mnt/datacamp/databoard
-fab test_setup
-fab serve:<port>
- - open server, log in (with one of the accounts set up in tests/test_model)
- - submit the starting_kit under the name 'test'
-fab train_test:<event_name>
- - check the leaderboard, private_leaderboard, user_interactions, etc.
-
-### Set up the database
-
- - old setup, we keep it for a while in case we migrate old databases.
- - make a file users_to_add.csv with fields
- firstname,lastname,email,name,hidden_notes,access_level
- - if passwords are needed, run this to generate 'passwords.csv'
-fab generate_passwords:users_to_add.csv,passwords.csv
- - eventually edit it (if you eg want to use existing passwords)
- - rsync it to the remote server, eg.
-rsync -rRultv user_batches/m2_20160121 root@onevm-177.lal.in2p3.fr:/mnt/datacamp/databoard_air_passengers_8080/
- - on the server (users should be the same in the same order, user_name is not checked) (maybe turn config.is_send_trained_mails off)
-fab add_users_from_file:users_to_add.csv,passwords.csv
- - log in under other user, check site
- - when everything is fine, send mail (port can overwrite config.config_object.server_port in the mail):
-fab send_password_mails:passwords.csv,port=<port> 
+fab serve:80 > server_logs/server16.txt 2>&1
 
 
-## Command description 
-    
-### Launch the web server
-
-fab serve:<port>
-
-### Other commands
+### Example sequence of adding the drug_spectra ramp
 
  - drug_spectra
-fab add_score_type:error_mare_mixed,True,0.0,1.0
+fab add_score_type:error_mare_mixed,True,0.0,inf
 fab add_score_type:error_mixed,True,0.0,1.0 
 fab add_score_type:mare_mixed,True,0.0,inf 
 fab add_score_type:mare,True,0.0,inf
