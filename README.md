@@ -78,10 +78,13 @@ python setup.py develop
 
 fab serve:80 > server_logs/server16.txt 2>&1
 
-### Profiling
+### App performance
 
+#### Profiling
 fab profile:port,profiling_output_file  
-By default `port=None` (for local profiling) and `profiling_output_file=profiler.log`
+By default `port=None` (for local profiling) and `profiling_output_file=profiler.log`  
+#### Database performance
+To report in the logging system queries that takes too long, define an environment variable `DATABOARD_DB_PERF` (equals to 'True' for instance).   
 
 ### Example sequence of adding the drug_spectra ramp
 

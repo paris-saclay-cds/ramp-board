@@ -19,6 +19,7 @@ from databoard import db
 
 import flask
 import flask.ext.login as fl
+from flask.ext.sqlalchemy import get_debug_queries
 from databoard import app, login_manager
 import databoard.db_tools as db_tools
 import databoard.config as config
@@ -777,3 +778,14 @@ def submission_file_diff(id):
         'submission_file_diff.html',
         diff=user_interaction.submission_file_diff
     )
+
+
+@app.after_request
+def after_request(response):
+    for query in get_debug_queries():
+        if query.duration >= config.DATABASE_QUERY_TIMEOUT:
+            app.logger.warning("SLOW QUERY: %s\nParameters: %s\n"
+                               "Duration: %fs\nContext: %s\n"
+                               % (query.statement, query.parameters,
+                                  query.duration, query.context))
+    return response
