@@ -78,6 +78,10 @@ python setup.py develop
 
 fab serve:80 > server_logs/server16.txt 2>&1
 
+### Profiling
+
+fab profile:port,profiling_output_file  
+By default `port=None` (for local profiling) and `profiling_output_file=profiler.log`
 
 ### Example sequence of adding the drug_spectra ramp
 
