@@ -86,7 +86,7 @@ By default `port=None` (for local profiling) and `profiling_output_file=profiler
 #### Database performance
 To report in the logging system queries that takes too long, define an environment variable `DATABOARD_DB_PERF` (equals to 'True' for instance).   
 #### Stress Tests with [Locust](http://locust.io/)  
-1. Modify `locustfile.py` to specify the current ramp url to be tested (or to add some tasks)    
+1. Modify `locustfile.py` to specify the current ramp url to be tested (or to add some tasks) and define two environment variables `DATABOARD_USERNAME` and `DATABOARD_PASSWORD` to login during tests.     
 2. Run `locust -f locustfile.py` 
 3. Go to http://127.0.0.1:8089/ and enter the number of users to simulate  
 
