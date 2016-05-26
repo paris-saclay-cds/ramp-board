@@ -157,6 +157,27 @@ def serve(port=None):
         processes=1000)
 
 
+def profile(port=None, profiling_file='profiler.log'):
+    from werkzeug.contrib.profiler import ProfilerMiddleware
+    from werkzeug.contrib.profiler import MergeStream
+    from databoard import app
+    import databoard.config as config
+
+    app.config['PROFILE'] = True
+    f = open(profiling_file, 'w')
+    stream = MergeStream(sys.stdout, f)
+    app.wsgi_app = ProfilerMiddleware(app.wsgi_app, stream=stream,
+                                      restrictions=[30])
+    if port is None:
+        port = config.server_port
+        server_port = int(port)
+        app.run(debug=True,
+                port=server_port,
+                use_reloader=False,
+                host='0.0.0.0',
+                processes=1000)
+
+
 def add_workflow_element_type(name, type):
     from databoard.db_tools import add_workflow_element_type
 
