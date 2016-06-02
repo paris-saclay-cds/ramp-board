@@ -76,7 +76,7 @@ rsync -rultv root@134.158.75.241:/mnt/datacamp/databoard/submissions ./
 ### Test ramp locally
 
 fab test_setup
-fab serve
+fab serve:test=True
  - goto http://0.0.0.0:8080/ and test the interface
 
 ### Publish on the server

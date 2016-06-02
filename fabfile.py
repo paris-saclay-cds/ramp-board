@@ -141,10 +141,13 @@ def approve_user(u):
     approve_user(user_name=u)
 
 
-def serve(port=None):
+def serve(port=None, test=False):
     from databoard import app
     import databoard.views  # noqa
     import databoard.config as config
+
+    if test:
+        app.config.from_object('databoard.config.TestingConfig')
 
     if port is None:
         port = config.server_port
