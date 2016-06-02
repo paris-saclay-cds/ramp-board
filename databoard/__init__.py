@@ -9,7 +9,7 @@ __version__ = '0.1.dev'
 
 
 app = Flask('databoard')
-app.config.from_object('databoard.config')
+app.config.from_object('databoard.config.Config')
 app.debug = False
 # app.debug_mode = True
 db = SQLAlchemy(app)

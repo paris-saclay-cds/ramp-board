@@ -12,6 +12,7 @@ Flask-Mail>=0.9.1
 Flask-SQLAlchemy>=2.1
 Flask-Wtf>=0.12
 Flask-Migrate>=1.6.0
+psycopg2==2.4.5
 sqlalchemy>=1.0.9
 xkcd_password<=1.4.2
 theano

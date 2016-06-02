@@ -46,7 +46,8 @@ class User(db.Model):
     bio = db.Column(db.String(1024), default=None)
     is_want_news = db.Column(db.Boolean, default=True)
     access_level = db.Column(db.Enum(
-        'admin', 'user', 'asked'), default='asked')  # 'asked' needs approval
+        'admin', 'user', 'asked', name='access_level'), default='asked')
+    # 'asked' needs approval
     signup_timestamp = db.Column(db.DateTime, nullable=False)
 
     # Flask-Login fields
@@ -466,7 +467,7 @@ class EventScoreType(db.Model):
     def worst(self):
         return self.score_type.worst
 
-cv_fold_types = db.Enum('live', 'test')
+cv_fold_types = db.Enum('live', 'test', name='cv_fold_types')
 
 
 class CVFold(db.Model):
@@ -963,9 +964,10 @@ class SubmissionScore(db.Model):
 # evaluate right after train/test, so no need for 'scored' states
 submission_states = db.Enum(
     'new', 'checked', 'checking_error', 'trained', 'training_error',
-    'validated', 'validating_error', 'tested', 'testing_error')
+    'validated', 'validating_error', 'tested', 'testing_error',
+    name='submission_states')
 
-submission_types = db.Enum('live', 'test')
+submission_types = db.Enum('live', 'test', name='submission_types')
 
 
 class Submission(db.Model):
@@ -1557,13 +1559,14 @@ user_interaction_type = db.Enum(
     'signing up at event',
     'submit',
     'upload',
+    name='user_interaction_type'
 )
 
 
 class UserInteraction(db.Model):
     __tablename__ = 'user_interactions'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     timestamp = db.Column(db.DateTime, nullable=False)
     interaction = db.Column(user_interaction_type, nullable=False)
     note = db.Column(db.String, default=None)
@@ -1631,6 +1634,7 @@ submission_similarity_type = db.Enum(
     'target_credit',  # credit given by one of the authors of target
     'source_credit',  # credit given by one of the authors of source
     'thirdparty_credit',  # credit given by an independent user
+    name='submission_similarity_type'
 )
 
 

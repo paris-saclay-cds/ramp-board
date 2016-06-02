@@ -5,6 +5,21 @@
 Install dependencies with `pip install -Ur requirements.txt`
 (You might want to create a virtualenv beforehand)
 
+## Set up the database
+
+Postgres databases: one for test and one for dev  
+Install postgres and create two databases (`createdb db_name`)  
+Set up environment variables:  
+* `DATABOARD_DB_URL`: SQLALCHEMY_DATABASE_URI for the dev database, e.g. `postgresql://localhost/db_name`  
+* `DATABOARD_DB_URL_TEST`: SQLALCHEMY_DATABASE_URI for the test database  
+Upgrade the dev database with: `python manage.py db upgrade`  
+
+### Migrations
+Run: `python manage.py db migrate`. It creates a migration file in `migrations/versions/`  
+Add `import databoard` on top of the migration file  
+Run: `python manage.py db upgrade` to apply the migration
+**Don't forget to add and commit migrations files**
+
 ## Deploy
 
 ### Prepare starting kit bundle, data, and test submissions for local test

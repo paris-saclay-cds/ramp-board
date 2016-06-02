@@ -349,15 +349,25 @@ MAIL_USERNAME = 'databoardmailer@gmail.com'
 MAIL_PASSWORD = 'fly18likeacar'
 MAIL_DEFAULT_SENDER = ('Databoard', 'databoardmailer@gmail.com')
 MAIL_RECIPIENTS = ''  # notification_recipients
-# abs max upload file size, to throw 413, before saving it
-MAX_CONTENT_LENGTH = 1024 * 1024 * 1024
-LOG_FILENAME = None  # if None, output to screen
-WTF_CSRF_ENABLED = True
-SECRET_KEY = 'eroigudsfojbn;lk'
-SQLALCHEMY_TRACK_MODIFICATIONS = True
-SQLALCHEMY_DATABASE_URI = 'sqlite:///' + db_f_name
-SQLALCHEMY_MIGRATE_REPO = db_migrate_dir
 ADMIN_MAILS = ['balazs.kegl@gmail.com',
                'alexandre.gramfort@telecom-paristech.fr',
                'mehdi@cherti.name',
                'camille.marini@gmail.com']
+
+
+class Config(object):
+    # abs max upload file size, to throw 413, before saving it
+    MAX_CONTENT_LENGTH = 1024 * 1024 * 1024
+    LOG_FILENAME = None  # if None, output to screen
+    WTF_CSRF_ENABLED = True
+    SECRET_KEY = 'eroigudsfojbn;lk'
+    SQLALCHEMY_TRACK_MODIFICATIONS = True
+    # SQLALCHEMY_DATABASE_URI = 'sqlite:///' + db_f_name
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABOARD_DB_URL')
+    SQLALCHEMY_MIGRATE_REPO = db_migrate_dir
+    TESTING = False
+
+
+class TestingConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABOARD_DB_URL_TEST')
