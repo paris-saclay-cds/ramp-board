@@ -1,17 +1,10 @@
-import os
-from databoard.config import db_path, db_f_name
-from databoard import db
-
-
-def remove_test_db():
-    if not os.path.exists(db_path):
-        os.mkdir(db_path)
-    try:
-        os.remove(db_f_name)
-    except OSError:
-        pass
+from databoard import app, db
+app.config.from_object('databoard.config.TestingConfig')
 
 
 def recreate_test_db():
-    remove_test_db()
+    """Initialisation of a test database"""
+    db.session.close()
+    db.drop_all()
     db.create_all()
+    print(db)
