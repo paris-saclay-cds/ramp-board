@@ -1,3 +1,4 @@
+import os
 import logging
 
 from flask import Flask
@@ -10,6 +11,8 @@ __version__ = '0.1.dev'
 
 app = Flask('databoard')
 app.config.from_object('databoard.config.Config')
+if os.environ.get('DATABOARD_TEST'):
+    app.config.from_object('databoard.config.TestingConfig')
 app.debug = False
 # app.debug_mode = True
 db = SQLAlchemy(app)

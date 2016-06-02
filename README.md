@@ -7,12 +7,13 @@ Install dependencies with `pip install -Ur requirements.txt`
 
 ## Set up the database
 
-Postgres databases: one for test and one for dev  
-Install postgres and create two databases (`createdb db_name`)  
-Set up environment variables:  
+Postgres databases: one for test and one for dev.   
+1. Install postgres and create two databases (`createdb db_name`)  
+2. Set up environment variables:  
 * `DATABOARD_DB_URL`: SQLALCHEMY_DATABASE_URI for the dev database, e.g. `postgresql://localhost/db_name`  
 * `DATABOARD_DB_URL_TEST`: SQLALCHEMY_DATABASE_URI for the test database  
-Upgrade the dev database with: `python manage.py db upgrade`  
+* `DATABOARD_TEST`: `True` if you want to use the test database, `False` else.  
+3. Upgrade the dev database with: `python manage.py db upgrade`  
 
 ### Migrations
 Run: `python manage.py db migrate`. It creates a migration file in `migrations/versions/`  
@@ -75,8 +76,9 @@ rsync -rultv root@134.158.75.241:/mnt/datacamp/databoard/submissions ./
 
 ### Test ramp locally
 
+set the environment variable `DATABOARD_TEST` to `True` (`export DATABOARD_TEST=True`)
 fab test_setup
-fab serve:test=True
+fab serve
  - goto http://0.0.0.0:8080/ and test the interface
 
 ### Publish on the server
