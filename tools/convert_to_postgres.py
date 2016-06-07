@@ -1,6 +1,6 @@
-## Before running the script, create a backup of databoard/model.py
-## (mv databoard/model.py databoard/model_backup.py)
-## and move tools/model_transfer.py to databoard/model.py
+# Before running the script, create a backup of databoard/model.py
+# (mv databoard/model.py databoard/model_backup.py)
+# and move tools/model_transfer.py to databoard/model.py
 import inspect
 import math
 import pandas as pd
@@ -43,7 +43,6 @@ def put_obj_not_id(table_data, db_obj_name, model):
 
 
 def create_table_instances(table, csv_file, db):
-    # table.__table__.columns.keys()
     data = pd.read_csv(csv_file)
     for dd in data.iterrows():
         table_data = dd[1].to_dict()
@@ -60,58 +59,6 @@ def create_table_instances(table, csv_file, db):
         t = None
         try:
             t = table(**table_data)
-#         except TypeError as e:
-#             mess = "__init__() got an unexpected keyword argument '%s'"
-#             if str(e) == mess % 'id':
-#                 t, removed_field = clean_data(table, table_data, [])
-#             elif (str(e) == mess % 'workflow_id' and
-#                   table.__tablename__ == 'problems'):
-#                 t, removed_field = clean_data(table, table_data,
-#                                               ['workflow_id'])
-#             elif str(e) == mess % 'admin_id':
-#                 table_data = put_obj_not_id(table_data, 'admin',
-#                                             databoard.model.User)
-#                 t, removed_field = clean_data(table, table_data,
-#                                               ['initiator_id', 'acceptor_id'])
-#             elif (str(e) == mess % 'public_opening_timestamp' and
-#                   table.__tablename__ == 'events'):
-#                 add_event(table_data['name'])
-#             elif (str(e) == mess % 'workflow_id' and
-#                   table.__tablename__ == 'workflow_elements'):
-#                 table_data = put_obj_not_id(table_data, 'workflow',
-#                                             databoard.model.Workflow)
-#                 table_data = put_obj_not_id(table_data, 'workflow_element_type',
-#                                             databoard.model.WorkflowElementType)
-#                 table_data['name_in_workflow'] = table_data['name']
-#                 del table_data['name']
-#                 t, removed_field = clean_data(table, table_data, [])
-#             elif (str(e) == mess % 'event_id' and
-#                   table.__tablename__ == 'event_teams'):
-#                 table_data = put_obj_not_id(table_data, 'event',
-#                                             databoard.model.Event)
-#                 table_data = put_obj_not_id(table_data, 'team',
-#                                             databoard.model.Team)
-#                 t, removed_field = clean_data(table, table_data,
-#                                               ['last_submission_name'])
-#                 t.last_submission_name = removed_field['last_submission_name']
-#             elif (str(e) == mess % 'test_time_cv_mean' and
-#                   table.__tablename__ == 'submissions'):
-#                 table_data = put_obj_not_id(table_data, 'event_team',
-#                                             databoard.model.EventTeam)
-#                 list_remove = table_data.keys()
-#                 list_remove.remove('name')
-#                 list_remove.remove('id')
-#                 list_remove.remove('event_team')
-#                 with db.session.no_autoflush:
-#                     t, removed_field = clean_data(table, table_data,
-#                                                   list_remove)
-#                     for kk, vv in removed_field.items():
-#                         if type(vv) == float:
-#                             if math.isnan(vv):
-#                                 vv = None
-#                         setattr(t, kk, vv)
-#             else:
-#                 raise e
         except Exception as e:
             raise e
         if t:
