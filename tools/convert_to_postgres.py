@@ -17,7 +17,7 @@ csv4 = ['cv_folds.csv', 'event_admins.csv', 'event_teams.csv',
         'event_score_types.csv']
 csv5 = ['submissions.csv']
 csv6 = ['submission_on_cv_folds.csv', 'submission_files.csv',
-        'submission_similaritys.csv']
+        'submission_similaritys.csv', 'submission_scores.csv']
 csv7 = ['user_interactions.csv', 'submission_score_on_cv_folds.csv']
 meta_list_csv = [csv1, csv2, csv3, csv4, csv5, csv6, csv7]
 
