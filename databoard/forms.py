@@ -16,7 +16,8 @@ class LoginForm(Form):
 
 
 class UserProfileForm(Form):
-    user_name = StringField('user_name', [validators.Required()])
+    user_name = StringField('user_name', [validators.Required(),
+                                          validators.Length(min=1, max=20)])
     password = PasswordField('password', [validators.Required()])
     firstname = StringField('firstname', [validators.Required()])
     lastname = StringField('lastname', [validators.Required()])
