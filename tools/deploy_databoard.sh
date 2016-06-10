@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 # :Usage: bash deploy_databoard.sh
 # Prepare Ubuntu (14.04) server instance for the application deployment 
 # We follow steps (+ other steps) from 
@@ -6,9 +6,11 @@
 
 # Add environment variables
 # env.sh file with environment variables must be in the same folder as this script
-mv env.sh ~/.aliases
-sed -i -e '$a source ~/.aliases' ~/.zshrc
-source ~/.zshrc
+# mv env.sh ~/.aliases
+# sed -i -e '$a source ~/.aliases' ~/.zshrc
+# source ~/.zshrc
+mv env.sh ~/.bash_aliases
+source ~/.bashrc
 
 # Set locales variables
 export LC_ALL=en_US.UTF-8
@@ -54,28 +56,34 @@ python setup.py develop
 # Reacreate the database
 python -c 'from databoard import db; db.create_all()'
 # TODO add script here to recreate existing db 
+# Depends on how we ll make db backup
 
 # Configure Apache: copy apache conf file to /etc/apache2/sites-available/
 mv /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/backup.conf
 cp tools/databoard.conf /etc/apache2/sites-available/000-default.conf
 
+# Set the ServerName
+export IP_MASTER=$(/sbin/ifconfig eth0 | grep "inet addr" | awk -F: '{print $2}' | awk '{print $1}')
+sed -i "s/<ServerName>/$IP_MASTER/g" /etc/apache2/sites-available/000-default.conf
+
 # Deal with environment variables
-sed 's/=/ /g' ~/.aliases > tt.txt
-sed "s/'//g" tt.txt > tt1.txt
-sed "s/export/SetEnv/g" tt1.txt > tt.txt
-while read p; 
-do  
-  sed -i "4a $p" /etc/apache2/sites-available/000-default.conf; 
-done < tt.txt
+sed -i "3a SetEnv DATABOARD_DB_URL $DATABOARD_DB_URL" /etc/apache2/sites-available/000-default.conf;
+# sed 's/=/ /g' ~/.bash_aliases > tt.txt
+# sed "s/'//g" tt.txt > tt1.txt
+# sed "s/export/SetEnv/g" tt1.txt > tt.txt
+# while read p; 
+# do  
+#   sed -i "4a $p" /etc/apache2/sites-available/000-default.conf; 
+# done < tt.txt
 sed -i "s/SetEnv/    SetEnv/g" /etc/apache2/sites-available/000-default.conf
-rm tt.txt tt1.txt
+# rm tt.txt tt1.txt
+# Problem with getting env var from apache and wsgi... Workaround:
+sed -i "s/os.environ.get('DATABOARD_DB_URL')/$DATABOARD_DB_URL/g" /home/databoard/config.py 
 
 # Wrapping up some permissions issues
 # I don t think we need it, since nothing has to be written in the project dir
 sudo chown -R www-data:www-data ../databoard
 sudo chown :www-data ../.
-# sudo chmod -R 777 $DIR_DATA
-# sudo chmod -R 777 $DIR_SUBMISSION
 
 # Restart Apache
 sudo service apache2 restart

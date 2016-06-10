@@ -11,6 +11,7 @@ joblib
 db/*
 submissions/*
 # tools/*
+tools/env.sh
 databoard.egg-info
 user_batches
 old_stuff
