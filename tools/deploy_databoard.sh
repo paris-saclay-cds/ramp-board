@@ -43,6 +43,8 @@ pg_createcluster 9.3 main --start
 sed -i "85c local   all             postgres                                trust" /etc/postgresql/9.3/main/pg_hba.conf 
 sudo service postgresql restart
 psql -U postgres -c '\i tools/setup_database.sql'
+# Pb with db user password..not properly set with the above script... workaround:
+psql -U postgres -c "ALTER ROLE $DATABOARD_DB_USER WITH PASSWORD '$DATABOARD_DB_PASSWORD'"
 # Change database user permissions
 sed -i "86i local   all             $DATABOARD_DB_USER                                 trust" /etc/postgresql/9.3/main/pg_hba.conf
 sudo service postgresql restart
@@ -77,8 +79,9 @@ sed -i "3a SetEnv DATABOARD_DB_URL $DATABOARD_DB_URL" /etc/apache2/sites-availab
 # done < tt.txt
 sed -i "s/SetEnv/    SetEnv/g" /etc/apache2/sites-available/000-default.conf
 # rm tt.txt tt1.txt
-# Problem with getting env var from apache and wsgi... Workaround:
-sed -i "s/os.environ.get('DATABOARD_DB_URL')/$DATABOARD_DB_URL/g" /home/databoard/config.py 
+# Problem with getting env var from apache and wsgi... Workaround (which is not working...TODO by hand...):
+# TODO fix this...
+sed -i "s/os.environ.get('DATABOARD_DB_URL')/'$DATABOARD_DB_URL'/g" /home/databoard/databoard/config.py 
 
 # Wrapping up some permissions issues
 # I don t think we need it, since nothing has to be written in the project dir
