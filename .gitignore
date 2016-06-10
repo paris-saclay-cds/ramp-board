@@ -10,7 +10,7 @@ joblib
 *.lock
 db/*
 submissions/*
-tools/*
+# tools/*
 databoard.egg-info
 user_batches
 old_stuff
