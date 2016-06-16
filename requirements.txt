@@ -21,3 +21,6 @@ lasagne
 nolearn
 py-bcrypt
 requests==2.9.1
+pycrypto==2.6.1
+pycrypto-on-pypi==2.3
+ecdsa==0.13
