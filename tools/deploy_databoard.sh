@@ -9,7 +9,8 @@
 # mv env.sh ~/.aliases
 # sed -i -e '$a source ~/.aliases' ~/.zshrc
 # source ~/.zshrc
-mv env.sh ~/.bash_aliases
+mv env.sh ~/.aliases
+echo 'source ~/.aliases' >> ~/.bashrc
 source ~/.bashrc
 
 # Set locales variables
@@ -32,7 +33,13 @@ apt-get -y install sshfs
 mkdir /mnt/datacamp
 sshfs -o Ciphers=arcfour256 -o allow_other -o IdentityFile=/root/.ssh/id_rsa_sciencefs -o StrictHostKeyChecking=no "$SCIENCEFS_LOGIN"@sciencefs.di.u-psud.fr:/sciencefs/homes/"$SCIENCEFS_LOGIN"/databoard /mnt/datacamp
 
+# Copy all databoard files (not the code, but submissions, ...)
+mkdir datacamp
+cp -r /mnt/datacamp/databoard /home/datacamp/.
+
 # Clone the project
+mkdir code
+cd code
 git clone -b postgres2 --single-branch https://camille24@bitbucket.org/kegl/databoard.git
 cd databoard
 
@@ -81,12 +88,15 @@ sed -i "s/SetEnv/    SetEnv/g" /etc/apache2/sites-available/000-default.conf
 # rm tt.txt tt1.txt
 # Problem with getting env var from apache and wsgi... Workaround (which is not working...TODO by hand...):
 # TODO fix this...
-sed -i "s/os.environ.get('DATABOARD_DB_URL')/'$DATABOARD_DB_URL'/g" /home/databoard/databoard/config.py 
+sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" /home/code/databoard/databoard/config.py 
 
 # Wrapping up some permissions issues
 # I don t think we need it, since nothing has to be written in the project dir
-sudo chown -R www-data:www-data ../databoard
-sudo chown :www-data ../.
+# sudo chown -R www-data:www-data ../databoard
+# sudo chown :www-data ../.
+sudo chown -R :www-data ../.
+sudo chown -R www-data:www-data /home/datacamp/databoard
+
 
 # Restart Apache
 sudo service apache2 restart

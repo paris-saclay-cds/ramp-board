@@ -1,6 +1,6 @@
 #!/bin/sh    
 # Backup databoard database and databoard files
-databoard_path=/home/databoard
+databoard_path=/home/datacamp/databoard
 backup_path=/mnt/datacamp/backup
 db=databoard
 
