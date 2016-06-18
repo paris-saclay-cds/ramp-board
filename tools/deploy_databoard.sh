@@ -65,7 +65,8 @@ python setup.py develop
 # Reacreate the database
 python -c 'from databoard import db; db.create_all()'
 # TODO add script here to recreate existing db 
-# Depends on how we ll make db backup
+# Depends on how we ll make db backup. 
+# For the first transfer from sqlite to postgres, use export_to_csv.sh and convert_to_postgres.py
 
 # Configure Apache: copy apache conf file to /etc/apache2/sites-available/
 mv /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/backup.conf
@@ -77,23 +78,11 @@ sed -i "s/<ServerName>/$IP_MASTER/g" /etc/apache2/sites-available/000-default.co
 
 # Deal with environment variables
 sed -i "3a SetEnv DATABOARD_DB_URL $DATABOARD_DB_URL" /etc/apache2/sites-available/000-default.conf;
-# sed 's/=/ /g' ~/.bash_aliases > tt.txt
-# sed "s/'//g" tt.txt > tt1.txt
-# sed "s/export/SetEnv/g" tt1.txt > tt.txt
-# while read p; 
-# do  
-#   sed -i "4a $p" /etc/apache2/sites-available/000-default.conf; 
-# done < tt.txt
 sed -i "s/SetEnv/    SetEnv/g" /etc/apache2/sites-available/000-default.conf
-# rm tt.txt tt1.txt
-# Problem with getting env var from apache and wsgi... Workaround (which is not working...TODO by hand...):
-# TODO fix this...
+# Problem with getting env var from apache and wsgi... Workaround:
 sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" /home/code/databoard/databoard/config.py 
 
 # Wrapping up some permissions issues
-# I don t think we need it, since nothing has to be written in the project dir
-# sudo chown -R www-data:www-data ../databoard
-# sudo chown :www-data ../.
 sudo chown -R :www-data ../.
 sudo chown -R www-data:www-data /home/datacamp/databoard
 
