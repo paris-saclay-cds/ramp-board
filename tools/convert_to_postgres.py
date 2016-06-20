@@ -85,6 +85,11 @@ def list_csv_to_dict(list_csv):
         name_csv = ''.join([dd.title()
                             for dd in file_csv.split('.')[0].split('_')])
         name_csv = name_csv[:-1]  # remove the s at the end
+        # Deal with CVFold...
+        if name_csv == 'CvFold':
+            name_csv = 'CVFold'
+        elif name_csv == 'SubmissionOnCvFold':
+            name_csv = 'SubmissionOnCVFold'
         dict_csv[name_csv] = file_csv
     return dict_csv
 
