@@ -30,7 +30,7 @@ def test_setup():
         os.mkdir(config.db_path)
     open(os.path.join(config.submissions_path, '__init__.py'), 'a').close()
 
-    recreate_test_db()
+    #recreate_test_db()
     db_tools.setup_score_types()
     db_tools.setup_workflows()
     db_tools.add_problem('iris')
@@ -344,6 +344,7 @@ software = [
     'databoard/post_api.py',
     'databoard/specific/__init__.py',
     'databoard/specific/events/__init__.py',
+    'databoard/specific/events/air_passengers_dssp4.py',
     'databoard/specific/events/boston_housing_test.py',
     'databoard/specific/events/drug_spectra.py',
     'databoard/specific/events/epidemium2_cancer_mortality.py',
@@ -351,6 +352,7 @@ software = [
     'databoard/specific/events/HEP_detector_anomalies.py',
     'databoard/specific/events/variable_stars.py',
     'databoard/specific/problems/__init__.py',
+    'databoard/specific/problems/air_passengers.py',
     'databoard/specific/problems/boston_housing.py',
     'databoard/specific/problems/drug_spectra.py',
     'databoard/specific/problems/epidemium2_cancer_mortality.py',
@@ -373,6 +375,7 @@ software = [
     'databoard/specific/workflows/feature_extractor_classifier_calibrator_workflow.py',
     'databoard/specific/workflows/feature_extractor_regressor_workflow.py',
     'databoard/specific/workflows/feature_extractor_classifier_regressor_workflow.py',
+    'databoard/specific/workflows/feature_extractor_regressor_with_external_data_workflow.py',
     'databoard/specific/workflows/regressor_workflow.py',
     'databoard/tests/__init__.py',
     'databoard/tests/test_model.py',
@@ -384,10 +387,11 @@ software = [
 
 
 def publish_software(target='test'):
-    from databoard.config import vd_server, production_server, vd_root
+    from databoard.config import test_server, production_server
+    from databoard.config import test_root, production_root
 
     if target == 'test':
-        server = vd_server
+        server = test_server
     else:
         server = production_server
 
@@ -396,7 +400,10 @@ def publish_software(target='test'):
     command += "/.ssh/datacamp/id_rsa -p 22\' "
     for file in software:
         command += file + ' '
-    command += 'root@' + server + ':' + vd_root + '/code/'
+    if target == 'test':
+        command += 'root@' + server + ':' + test_root + '/code/'
+    else:
+        command += 'root@' + server + ':' + production_root + '/code/'
     print command
     os.system(command)
 
@@ -420,38 +427,39 @@ deployment = [
 # zip -r starting_kit.zip starting_kit
 
 
-def publish_deployment(target='test'):
-    from databoard.config import vd_server, production_server, vd_root
+# def publish_deployment(target='test'):
+#     from databoard.config import vd_server, production_server, vd_root
 
-    command = "rsync -pthrRvz -c "
-    if target == 'test':
-        server = vd_server
-        root = vd_root + '/databoard_test/'
-    else:
-        server = production_server
-        root = vd_root + '/databoard/'
-    command += "--rsh=\'ssh -i " + os.path.expanduser("~")
-    command += "/.ssh/datacamp/id_rsa -p 22\' "
-    for file in deployment:
-        command += file + ' '
-    command += 'root@' + server + ':' + root
-    print command
-    os.system(command)
+#     command = "rsync -pthrRvz -c "
+#     if target == 'test':
+#         server = vd_server
+#         root = vd_root + '/databoard_test/'
+#     else:
+#         server = production_server
+#         root = vd_root + '/databoard/'
+#     command += "--rsh=\'ssh -i " + os.path.expanduser("~")
+#     command += "/.ssh/datacamp/id_rsa -p 22\' "
+#     for file in deployment:
+#         command += file + ' '
+#     command += 'root@' + server + ':' + root
+#     print command
+#     os.system(command)
 
 
 def publish_problem(problem_name, target='local'):
-    from databoard.config import vd_server, production_server, vd_root
+    from databoard.config import test_server, production_server
+    from databoard.config import test_root, production_root
 
     command = "rsync -pthrRvz -c "
     if target == 'local':
         command += 'problems/' + problem_name + ' /tmp/databoard_test/'
     else:
         if target == 'test':
-            server = vd_server
-            root = vd_root + '/databoard_test/'
+            server = test_server
+            root = test_root + '/databoard_test/'
         else:
             server = production_server
-            root = vd_root + '/databoard/'
+            root = production_root + '/databoard/'
         command += "--rsh=\'ssh -i " + os.path.expanduser("~")
         command += "/.ssh/datacamp/id_rsa -p 22\' problems/" + problem_name
         command += ' root@' + server + ':' + root
