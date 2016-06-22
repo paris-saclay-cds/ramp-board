@@ -93,8 +93,11 @@ python setup.py develop
 
 ### Server
 
+ - old:
 fab serve:80 > server_logs/server16.txt 2>&1
-
+ - new:
+sudo service apache2 restart
+tail -f /var/log/apache2/error.log
 
 ### Example sequence of adding the drug_spectra ramp
 
@@ -103,9 +106,19 @@ fab add_score_type:error_mare_mixed,True,0.0,inf
 fab add_score_type:error_mixed,True,0.0,1.0 
 fab add_score_type:mare_mixed,True,0.0,inf 
 fab add_score_type:mare,True,0.0,inf
-fab add_workflow_element_type:feature_extractor_clf,code
 fab add_workflow_element_type:feature_extractor_reg,code 
+fab add_workflow_element_type:feature_extractor_clf,code
 fab add_workflow:feature_extractor_classifier_regressor_workflow,feature_extractor_clf,classifier,feature_extractor_reg,regressor
 fab add_problem:drug_spectra 
 fab add_event:drug_spectra
 
+ - air passengers
+fab add_workflow_element_type:external_data,data
+fab add_workflow:feature_extractor_regressor_with_external_data_workflow,feature_extractor,regressor,external_data
+fab add_problem:air_passengers
+fab add_event:air_passengers_dssp4
+fab sign_up_team:air_passengers_dssp4,kegl
+fab sign_up_team:air_passengers_dssp4,agramfort
+
+megnezni, hogy hogy kell nem ascii-t kinyomtatni a formatban
+kitalalni, hogy mi lehet ascii, mi nem

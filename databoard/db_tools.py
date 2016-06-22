@@ -886,7 +886,7 @@ def make_submission_and_copy_files(event_name, team_name, new_submission_name,
         shutil.copy2(src, dst)  # copying also metadata
         logger.info('Copying {} to {}'.format(src, dst))
 
-    logger.info("Adding submission={}".format(submission))
+    logger.info('Adding {}'.format(submission))
     return submission
 
 

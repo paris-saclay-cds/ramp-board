@@ -72,10 +72,11 @@ is_pickle_trained_submission = False
 #    server_port)
 # server_name = debug_server if local_deployment else train_server
 
-vd_server = 'onevm-58.lal.in2p3.fr'
+test_server = '134.158.75.128'
+test_root = '/home/datacamp'
 production_server = '134.158.75.241'
+production_root = '/mnt/datacamp'
 reims_server = 'romeo1.univ-reims.fr'
-vd_root = '/mnt/datacamp'
 local_root = '/tmp'  # for local publishing / testing
 server_port = 8080
 
