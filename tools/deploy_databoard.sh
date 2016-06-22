@@ -6,9 +6,6 @@
 
 # Add environment variables
 # env.sh file with environment variables must be in the same folder as this script
-# mv env.sh ~/.aliases
-# sed -i -e '$a source ~/.aliases' ~/.zshrc
-# source ~/.zshrc
 mv env.sh ~/.aliases
 echo 'source ~/.aliases' >> ~/.bashrc
 source ~/.bashrc
@@ -35,6 +32,7 @@ sshfs -o Ciphers=arcfour256 -o allow_other -o IdentityFile=/root/.ssh/id_rsa_sci
 
 # Copy all databoard files (not the code, but submissions, ...)
 mkdir datacamp
+# cp -r /mnt/datacamp/backup/databoard /home/datacamp/.
 cp -r /mnt/datacamp/databoard /home/datacamp/.
 
 # Clone the project
@@ -56,8 +54,7 @@ psql -U postgres -c "ALTER ROLE $DATABOARD_DB_USER WITH PASSWORD '$DATABOARD_DB_
 sed -i "86i local   all             $DATABOARD_DB_USER                                 trust" /etc/postgresql/9.3/main/pg_hba.conf
 sudo service postgresql restart
 
-# Configure a Python Virtual Environment
-# mkvirtualenv datarun
+# Install required Python packages
 sudo apt-get -y install python-numpy python-scipy  
 pip install -Ur requirements.txt
 python setup.py develop
@@ -77,9 +74,13 @@ export IP_MASTER=$(/sbin/ifconfig eth0 | grep "inet addr" | awk -F: '{print $2}'
 sed -i "s/<ServerName>/$IP_MASTER/g" /etc/apache2/sites-available/000-default.conf
 
 # Deal with environment variables
+# In databoard, we need to set up one one environment variable: 
+# DATABOARD_DB_URL, which is called in databoard/config.py
+# The usual way is to define environment variable in the apache conf file:
 sed -i "3a SetEnv DATABOARD_DB_URL $DATABOARD_DB_URL" /etc/apache2/sites-available/000-default.conf;
 sed -i "s/SetEnv/    SetEnv/g" /etc/apache2/sites-available/000-default.conf
-# Problem with getting env var from apache and wsgi... Workaround:
+# But for some reasons, it does not work. 
+# So we set up the value of this environment variable directly in databoard/config.py 
 sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" /home/code/databoard/databoard/config.py 
 
 # Wrapping up some permissions issues
