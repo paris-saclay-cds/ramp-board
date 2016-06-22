@@ -1,24 +1,34 @@
 # Before running the script, create a backup of databoard/model.py
 # (mv databoard/model.py databoard/model_backup.py)
 # and move tools/model_transfer.py to databoard/model.py
+# The csv files mentionned at the beginning are obtained with the script
+# tools/export_to_csv.sh.
+# If a csv file is too big (as it might be the case for
+# submission_on_cv_folds.csv), you need to split it in different file, such as
+# submission_on_cv_fold<i>.csv with i between 0 and 9
+# (to split files, you can use split_csv.sh)
 import inspect
+import base64
+import zlib
 import math
+import numpy as np
 import pandas as pd
 from databoard import db
 import databoard.model
 
-dir_data = '/home/camille/Documents/Profiling/stratus_May2016/databoard/db/'
-csv1 = ['submission_file_types.csv', 'users.csv', 'workflows.csv',
-        'extensions.csv', 'score_types.csv']
-csv2 = ['workflow_element_types.csv', 'submission_file_type_extensions.csv',
-        'teams.csv', 'problems.csv']
-csv3 = ['workflow_elements.csv', 'events.csv']
-csv4 = ['cv_folds.csv', 'event_admins.csv', 'event_teams.csv',
-        'event_score_types.csv']
-csv5 = ['submissions.csv']
-csv6 = ['submission_on_cv_folds.csv', 'submission_files.csv',
-        'submission_similaritys.csv', 'submission_scores.csv']
-csv7 = ['user_interactions.csv', 'submission_score_on_cv_folds.csv']
+dir_data = './'
+csv1 = [['submission_file_types.csv'], ['users.csv'], ['workflows.csv'],
+        ['extensions.csv'], ['score_types.csv']]
+csv2 = [['workflow_element_types.csv'], ['submission_file_type_extensions.csv'],
+        ['teams.csv'], ['problems.csv']]
+csv3 = [['workflow_elements.csv'], ['events.csv']]
+csv4 = [['cv_folds.csv'], ['event_admins.csv'], ['event_teams.csv'],
+        ['event_score_types.csv']]
+csv5 = [['submissions.csv']]
+csv6 = [['submission_on_cv_fold%s.csv' % i for i in range(1, 6)],
+        ['submission_files.csv'],
+        ['submission_similaritys.csv'], ['submission_scores.csv']]
+csv7 = [['user_interactions.csv'], ['submission_score_on_cv_folds.csv']]
 meta_list_csv = [csv1, csv2, csv3, csv4, csv5, csv6, csv7]
 
 
@@ -46,13 +56,29 @@ def create_table_instances(table, csv_file, db):
     data = pd.read_csv(csv_file)
     for dd in data.iterrows():
         table_data = dd[1].to_dict()
+        # Change hex() in keys that contain it
+        if 'hex(train_is)' in table_data.keys():
+            table_data['train_is'] = table_data.pop('hex(train_is)')
+            table_data['test_is'] = table_data.pop('hex(test_is)')
+        elif 'hex(full_train_y_pred)' in table_data.keys():
+            table_data['full_train_y_pred'] =\
+                table_data.pop('hex(full_train_y_pred)')
+            table_data['test_y_pred'] = table_data.pop('hex(test_y_pred)')
+        elif 'hex(valid_score_cv_bags)' in table_data.keys():
+            table_data['valid_score_cv_bags'] =\
+                table_data.pop('hex(valid_score_cv_bags)')
+            table_data['test_score_cv_bags'] =\
+                table_data.pop('hex(test_score_cv_bags)')
         # Deal with boolean: convert 0/1 to '0'/'1'
+        # Deal with NumpyType()
         for kk, vv in table_data.items():
             try:
                 if table.__table__.columns[kk].type.python_type == bool:
                     table_data[kk] = str(vv)
             except NotImplementedError:
-                pass
+                # NumpyType
+                vv = base64.b16decode(vv)
+                table_data[kk] = np.loads(zlib.decompress(vv))
             if type(vv) == float:
                 if math.isnan(vv):
                     table_data[kk] = None
@@ -74,13 +100,15 @@ def create_tables_from_list_csv(model_module, dict_csv, dir_data, db):
     for name, obj in inspect.getmembers(model_module):
         if name in dict_csv.keys():
             print('Creating table %s' % name)
-            csv_file = dir_data + dict_csv[name]
-            create_table_instances(obj, csv_file, db)
+            for dd in dict_csv[name]:
+                csv_file = dir_data + dd
+                create_table_instances(obj, csv_file, db)
 
 
 def list_csv_to_dict(list_csv):
     dict_csv = {}
-    for file_csv in list_csv:
+    for list_file_csv in list_csv:
+        file_csv = list_file_csv[0]
         # convert csv file name to model name
         name_csv = ''.join([dd.title()
                             for dd in file_csv.split('.')[0].split('_')])
@@ -90,7 +118,7 @@ def list_csv_to_dict(list_csv):
             name_csv = 'CVFold'
         elif name_csv == 'SubmissionOnCvFold':
             name_csv = 'SubmissionOnCVFold'
-        dict_csv[name_csv] = file_csv
+        dict_csv[name_csv] = list_file_csv
     return dict_csv
 
 
