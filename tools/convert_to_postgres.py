@@ -118,6 +118,8 @@ def list_csv_to_dict(list_csv):
             name_csv = 'CVFold'
         elif name_csv == 'SubmissionOnCvFold':
             name_csv = 'SubmissionOnCVFold'
+        elif name_csv == 'SubmissionScoreOnCvFold':
+            name_csv = 'SubmissionScoreOnCVFold'
         dict_csv[name_csv] = list_file_csv
     return dict_csv
 
