@@ -306,9 +306,9 @@ class Event(db.Model):
     closing_timestamp = db.Column(
         db.DateTime, default=datetime.datetime(4000, 1, 1, 0, 0, 0))
 
-    # the index of the score in self.event_score_types which is used for
-    # ensembling and contributivity. The default is 0 (first in the list).
-    official_score_index = db.Column(db.Integer, default=0)
+    # the name of the score in self.event_score_types which is used for
+    # ensembling and contributivity.
+    official_score_name = db.Column(db.String)
 
     combined_combined_valid_score = db.Column(db.Float, default=None)
     combined_combined_test_score = db.Column(db.Float, default=None)
@@ -346,13 +346,13 @@ class Event(db.Model):
         return self.problem.workflow
 
     @property
-    def official_score_function(self):
-        return self.score_types[
-            self.official_score_index].score_function
+    def official_score_type(self):
+        return EventScoreType.query.filter_by(
+            event=self, name=self.official_score_name).one()
 
     @property
-    def official_score_type(self):
-        return self.score_types[self.official_score_index]
+    def official_score_function(self):
+        return self.official_score_type.score_function
 
     @property
     def train_submission(self):
@@ -434,6 +434,7 @@ class EventScoreType(db.Model):
     precision = db.Column(db.Integer)
 
     db.UniqueConstraint(event_id, score_type_id, name='es_constraint')
+    db.UniqueConstraint(event_id, name, name='en_constraint')
 
     def __init__(self, event, score_type, name=None, precision=None):
         self.event = event
@@ -1053,6 +1054,10 @@ class Submission(db.Model):
         return self.event.official_score_function
 
     @property
+    def official_score_name(self):
+        return self.event.official_score_name
+
+    @property
     def prediction(self):
         return self.event.prediction
 
@@ -1339,6 +1344,10 @@ class SubmissionScoreOnCVFold(db.Model):
         submission_on_cv_fold_id, submission_score_id, name='ss_constraint')
 
     @property
+    def name(self):
+        return self.event_score_type.name
+
+    @property
     def event_score_type(self):
         return self.submission_score.event_score_type
 
@@ -1439,6 +1448,13 @@ class SubmissionOnCVFold(db.Model):
     @property
     def test_predictions(self):
         return self.submission.prediction.Predictions(y_pred=self.test_y_pred)
+
+    @property
+    def official_score(self):
+        for score in self.scores:
+            # print score.name, self.submission.official_score_name
+            if self.submission.official_score_name == score.name:
+                return score
 
     def reset(self):
         self.contributivity = 0.0

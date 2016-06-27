@@ -484,15 +484,16 @@ def add_event(event_name, force=False):
     # event_score_types, but no, it's ordered by id (I guess), so we have to 
     # excplicitly assign event.official_score_index here.
     try:
-        official_score_name = event.module.official_score_name
+        event.official_score_name = event.module.official_score_name
     except AttributeError:
-        official_score_name = score_type_descriptors[0]['name']
-    for i, score_type in enumerate(event.score_types):
-        if score_type.score_type.name == official_score_name:
-            event.official_score_index = i
-            break
-    print event.official_score_type
+        score_type_descriptor = score_type_descriptors[0]
+        if 'new_name' in score_type_descriptor:
+            event.official_score_name = score_type_descriptor['new_name']
+        else:
+            event.official_score_name = score_type_descriptor['name']
+    print event.official_score_name
     db.session.commit()
+    print event.official_score_type
 
 
 def print_events():
@@ -1563,8 +1564,8 @@ def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
     predictions_list = [
         submission_on_fold.valid_predictions
         for submission_on_fold in selected_submissions_on_fold]
-    valid_scores = [submission_on_fold.scores[
-        cv_fold.event.official_score_index].valid_score
+    valid_scores = [
+        submission_on_fold.official_score.valid_score
         for submission_on_fold in selected_submissions_on_fold]
     if cv_fold.event.official_score_type.is_lower_the_better:
         best_prediction_index = np.argmin(valid_scores)
@@ -1738,7 +1739,7 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
         columns, values)}
 
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
-    sort_column = event.official_score_type.name
+    sort_column = event.official_score_name
     leaderboard_df = leaderboard_df.sort_values(
         sort_column, ascending=event.official_score_type.is_lower_the_better)
     html_params = dict(
@@ -1805,7 +1806,7 @@ def get_private_leaderboard(event_name, team_name=None, user_name=None):
     leaderboard_dict_list = {column: value for column, value in zip(
         columns, values)}
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
-    sort_column = event.official_score_type.name + ' pr bag'
+    sort_column = event.official_score_name + ' pr bag'
     leaderboard_df = leaderboard_df.sort_values(
         sort_column, ascending=event.official_score_type.is_lower_the_better)
     html_params = dict(

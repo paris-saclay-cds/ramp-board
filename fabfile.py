@@ -401,9 +401,9 @@ def publish_software(target='test'):
     for file in software:
         command += file + ' '
     if target == 'test':
-        command += 'root@' + server + ':' + test_root + '/code/'
+        command += 'root@' + server + ':/home/code/'
     else:
-        command += 'root@' + server + ':' + production_root + '/code/'
+        command += 'root@' + server + ':/home/code/'
     print command
     os.system(command)
 
