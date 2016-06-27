@@ -8,13 +8,16 @@
 # env.sh file with environment variables must be in the same folder as this script
 mv env.sh ~/.aliases
 echo 'source ~/.aliases' >> ~/.bashrc
+echo 'source ~/.aliases' >> ~/.zshrc
 source ~/.bashrc
 
 # Set locales variables
 export LC_ALL=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 
-cd /home/
+# Set databoard and persistent disk path
+export DISK_PATH=/dev/vdb
+export DATABOARD_PATH=/mnt/ramp_data/
 
 # Install Packages from the Ubuntu Repositories 
 sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" update 
@@ -30,10 +33,15 @@ apt-get -y install sshfs
 mkdir /mnt/datacamp
 sshfs -o Ciphers=arcfour256 -o allow_other -o IdentityFile=/root/.ssh/id_rsa_sciencefs -o StrictHostKeyChecking=no "$SCIENCEFS_LOGIN"@sciencefs.di.u-psud.fr:/sciencefs/homes/"$SCIENCEFS_LOGIN"/databoard /mnt/datacamp
 
+# Mount persistent disk
+mkdir $DATABOARD_PATH
+mount $DISK_PATH $DATABOARD_PATH
+
 # Copy all databoard files (not the code, but submissions, ...)
+cd $DATABOARD_PATH
 mkdir datacamp
-# cp -r /mnt/datacamp/backup/databoard /home/datacamp/.
-cp -r /mnt/datacamp/databoard /home/datacamp/.
+# cp -r /mnt/datacamp/backup/databoard ${DATABOARD_PATH}/datacamp/.
+cp -r /mnt/datacamp/databoard ${DATABOARD_PATH}/datacamp/.
 
 # Clone the project
 mkdir code
