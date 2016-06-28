@@ -30,7 +30,7 @@ def test_setup():
         os.mkdir(config.db_path)
     open(os.path.join(config.submissions_path, '__init__.py'), 'a').close()
 
-    #recreate_test_db()
+    recreate_test_db()
     db_tools.setup_score_types()
     db_tools.setup_workflows()
     db_tools.add_problem('iris')
