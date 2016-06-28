@@ -3,6 +3,8 @@ from flask.ext.migrate import Migrate, MigrateCommand
 from databoard import db, app
 
 app.config.from_object('databoard.config.Config')
+if os.environ.get('DATABOARD_TEST'):
+    app.config.from_object('databoard.config.TestingConfig')
 
 migrate = Migrate(app, db)
 manager = Manager(app)
