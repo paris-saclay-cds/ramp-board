@@ -7,13 +7,17 @@ Install dependencies with `pip install -Ur requirements.txt`
 
 ## Set up the database
 
-Postgres databases: one for test and one for dev.   
-1. Install postgres and create two databases (`createdb db_name`)  
+**Postgres databases**: one for test and one for dev.   
+1. Install postgres and create two databases (`createdb <db_name>`)  
 2. Set up environment variables:  
-* `DATABOARD_DB_URL`: SQLALCHEMY_DATABASE_URI for the dev database, e.g. `postgresql://localhost/db_name`  
-* `DATABOARD_DB_URL_TEST`: SQLALCHEMY_DATABASE_URI for the test database  
+* `DATABOARD_DB_URL`: `SQLALCHEMY_DATABASE_URI` for the dev database, which should be something like `postgresql://<db_user>:<db_password>@localhost/<db_name>`  
+* `DATABOARD_DB_URL_TEST`: `SQLALCHEMY_DATABASE_URI` for the test database  
 * `DATABOARD_TEST`: `True` if you want to use the test database, `False` else.  
 3. Upgrade the dev database with: `python manage.py db upgrade`  
+
+Possible to use a **SQLite database** (instead of postgres). In this case, you only need to follow step 2 and 3. 
+For step 2, the `SQLALCHEMY_DATABASE_URI` should be something like: `sqlite:///<db_file_path_and_name>`.
+
 
 ### Migrations
 Run: `python manage.py db migrate`. It creates a migration file in `migrations/versions/`  
