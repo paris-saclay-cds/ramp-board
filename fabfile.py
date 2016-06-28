@@ -173,7 +173,7 @@ def add_score_type(name, is_lower_the_better, minimum, maximum):
     from databoard.db_tools import add_score_type
 
     add_score_type(
-        name, strtobool(is_lower_the_better), float(minimum), float(maximum))
+        name, is_lower_the_better, float(minimum), float(maximum))
 
 
 def add_problem(name, force='False'):

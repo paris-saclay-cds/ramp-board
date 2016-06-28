@@ -1118,6 +1118,20 @@ class Submission(db.Model):
             os.path.join(self.hash_, 'error.txt'), self.state)
 
     def ordered_scores(self, score_names):
+        """Iterator yielding SubmissionScores.
+
+        Ordered according to score_names. Called by get_public_leaderboard
+        and get_private_leaderboard, making sure scores are listed in the
+        correct column.
+
+        Parameters
+        ----------
+        score_names : list of strings
+
+        Return
+        ----------
+        scores : iterator of SubmissionScore objects
+        """
         score_dict = {score.score_name: score for score in self.scores}
         for score_name in score_names:
             yield score_dict[score_name]
