@@ -8,7 +8,7 @@ score_name = {'drug_spectra': 'combined',
               'air_passengers_dssp4': 'rmse',
               'boston_housing_test': 'rmse',
               'epidemium2_cancer_mortality': 'rmse',
-              'iris_test': 'accuracy',
+              'iris_test': 'acc',
               'HEP_detector_anomalies': 'auc'}
 
 for kk, vv in score_name.items():
