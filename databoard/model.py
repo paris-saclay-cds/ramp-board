@@ -308,7 +308,8 @@ class Event(db.Model):
 
     # the name of the score in self.event_score_types which is used for
     # ensembling and contributivity.
-    official_score_name = db.Column(db.String)
+    # official_score_name = db.Column(db.String)
+    official_score_index = db.Column(db.Integer, default=0)
 
     combined_combined_valid_score = db.Column(db.Float, default=None)
     combined_combined_test_score = db.Column(db.Float, default=None)
