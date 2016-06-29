@@ -17,7 +17,7 @@ score_type_descriptors = [
     {'name': 'error_mixed', 'precision': 3, 'new_name': 'err'},
     {'name': 'mare_mixed', 'precision': 3, 'new_name': 'mare'},
 ]
-official_score_name = 'error_mare_mixed'
+official_score_name = 'combined'
 
 
 def get_cv(y_train_array):

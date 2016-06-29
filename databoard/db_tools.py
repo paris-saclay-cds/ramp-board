@@ -1715,9 +1715,10 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
                    if submission.is_public_leaderboard]
     event = Event.query.filter_by(name=event_name).one()
 
+    score_names = [score_type.name for score_type in event.score_types]
     columns = ['team',
                'submission'] +\
-              [score_type.name for score_type in event.score_types] +\
+              score_names +\
               ['contributivity',
                'historical contributivity',
                'train time',
@@ -1728,7 +1729,7 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
          submission.name_with_link if is_open_code(
              event, current_user, submission) else submission.name[:20]] +
         [round(score.valid_score_cv_bag, score.precision)
-            for score in submission.scores] +
+            for score in submission.ordered_scores(score_names)] +
         [int(round(100 * submission.contributivity)),
          int(round(100 * submission.historical_contributivity)),
          int(round(submission.train_time_cv_mean)),
@@ -1767,15 +1768,16 @@ def get_private_leaderboard(event_name, team_name=None, user_name=None):
                    if submission.is_private_leaderboard]
     event = Event.query.filter_by(name=event_name).one()
 
+    score_names = [score_type.name for score_type in event.score_types]
     columns = ['team',
                'submission'] + list(chain.from_iterable([[
-                score_type.name + ' pub bag',
-                score_type.name + ' pub mean',
-                score_type.name + ' pub std',
-                score_type.name + ' pr bag',
-                score_type.name + ' pr mean',
-                score_type.name + ' pr std']
-                for score_type in event.score_types])) +\
+                name + ' pub bag',
+                name + ' pub mean',
+                name + ' pub std',
+                name + ' pr bag',
+                name + ' pr mean',
+                name + ' pr std']
+                for name in score_names])) +\
               ['contributivity',
                'historical contributivity',
                'train time',
@@ -1794,7 +1796,7 @@ def get_private_leaderboard(event_name, team_name=None, user_name=None):
           round(score.test_score_cv_bag, score.precision),
           round(score.test_score_cv_mean, score.precision),
           round(score.test_score_cv_std, score.precision + 1)]
-            for score in submission.scores])) +
+            for score in submission.ordered_scores(score_names)])) +
         [int(round(100 * submission.contributivity)),
          int(round(100 * submission.historical_contributivity)),
          int(round(submission.train_time_cv_mean)),

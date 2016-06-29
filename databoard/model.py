@@ -1059,6 +1059,10 @@ class Submission(db.Model):
         return self.event.official_score_name
 
     @property
+    def score_types(self):
+        return self.event.score_types
+
+    @property
     def prediction(self):
         return self.event.prediction
 
@@ -1113,6 +1117,25 @@ class Submission(db.Model):
     def state_with_link(self):
         return '<a href=/{}>{}</a>'.format(
             os.path.join(self.hash_, 'error.txt'), self.state)
+
+    def ordered_scores(self, score_names):
+        """Iterator yielding SubmissionScores.
+
+        Ordered according to score_names. Called by get_public_leaderboard
+        and get_private_leaderboard, making sure scores are listed in the
+        correct column.
+
+        Parameters
+        ----------
+        score_names : list of strings
+
+        Return
+        ----------
+        scores : iterator of SubmissionScore objects
+        """
+        score_dict = {score.score_name: score for score in self.scores}
+        for score_name in score_names:
+            yield score_dict[score_name]
 
     # These were constructing means and stds by fetching fold times. It was
     # slow because submission_on_folds contain also possibly large predictions
