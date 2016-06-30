@@ -375,7 +375,10 @@ def send_data_datarun(problem_name, host_url, username, userpassd):
     else:
         # Sending data to datarun
         random_state = problem.module.random_state
-        target_column = problem.module.target_column_name
+        try:
+            target_column = problem.module.target_column_name
+        except AttributeError:
+            target_column = 'specific'
         workflow_elements = [p.workflow_element_type.name for p in
                              problem.workflow.elements]
         workflow_elements = ', '.join(workflow_elements)
