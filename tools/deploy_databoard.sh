@@ -27,6 +27,13 @@ sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force
 # wget https://raw.github.com/brainsik/virtualenv-burrito/master/virtualenv-burrito.sh
 # bash virtualenv-burrito.sh 
 # source /root/.venvburrito/startup.sh
+# Install Numpy, Scipy, and xgboost
+sudo apt-get -y install python-numpy python-scipy  
+sudo apt-get -y install python-setuptools
+cd; git clone --recursive https://github.com/dmlc/xgboost
+cd xgboost; make -j4
+cd python-package; sudo python setup.py install
+cd
 
 # Mount ScienceFS disk
 apt-get -y install sshfs
@@ -63,7 +70,6 @@ sed -i "86i local   all             $DATABOARD_DB_USER                          
 sudo service postgresql restart
 
 # Install required Python packages
-sudo apt-get -y install python-numpy python-scipy  
 pip install -Ur requirements.txt
 python setup.py develop
 
