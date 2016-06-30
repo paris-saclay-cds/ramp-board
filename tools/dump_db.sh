@@ -6,8 +6,9 @@ db=databoard
 
 # dump db
 date=`date +"%Y%m%d_%H%M%N"`
-filename="${backup_path}/${db}_${date}.tar"
-pg_dump -U postgres -Ft $db > $filename
+filename="${backup_path}/${db}_${date}.dump"
+pg_dump -U postgres -Fc $db > $filename
+# to restore: pg_restore -j 8 -U postgres -d myDB myDB.dump
 
 # rsync databoard files
 rsync -a ${databoard_path}/ $backup_path/databoard
