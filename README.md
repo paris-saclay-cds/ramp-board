@@ -126,3 +126,9 @@ fab add_event:air_passengers_dssp4
 fab sign_up_team:air_passengers_dssp4,kegl
 fab sign_up_team:air_passengers_dssp4,agramfort
 
+
+### How to use datarun to train test submissions?
+
+See datarun documentation (especially "notes for databoard users"):   
+- [pdf here](https://github.com/camillemarini/datarun/blob/master/docs/datarun.pdf)  
+- [html here](https://github.com/camillemarini/datarun/tree/master/docs/html)  

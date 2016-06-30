@@ -1135,6 +1135,8 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
     :type userpassd: string
     """
     for submission in submissions:
+        logger.info('Getting submission %s - %s - %s from datarun'
+                    % (submission.event_team, submission.name, submission.id))
         y_shape_train = submission.event.problem.\
             true_predictions_train().y_pred.shape
         y_shape_test = submission.event.problem.\
@@ -1175,7 +1177,7 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
                 if 'error' in state:
                     if 'ERROR(split' in log_messages:
                         submission_fold.state = 'checking_error'
-                    if 'ERROR(train' in log_messages:
+                    elif 'ERROR(train' in log_messages:
                         submission_fold.state = 'training_error'
                     elif 'ERROR(validation' in log_messages:
                         submission_fold.state = 'validating_error'
