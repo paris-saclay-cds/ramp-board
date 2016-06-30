@@ -26,6 +26,8 @@ test_filename = os.path.join(
 
 target_column_name = 'log_PAX'
 workflow_name = 'feature_extractor_regressor_with_external_data_workflow'
+extra_files = [os.path.join(problems_path, problem_name,
+                            'air_passengers_datarun.py')]
 
 
 def read_data(df_filename):

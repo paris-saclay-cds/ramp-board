@@ -26,6 +26,8 @@ test_filename = os.path.join(
 prediction.labels = [0, 1]
 target_column_name = 'isSkewed'
 workflow_name = 'classifier_workflow'
+extra_files = [os.path.join(problems_path, problem_name,
+                            'HEP_detector_anomalies_datarun.py')]
 
 
 def prepare_data():
