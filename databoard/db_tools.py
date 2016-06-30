@@ -380,10 +380,15 @@ def send_data_datarun(problem_name, host_url, username, userpassd):
                              problem.workflow.elements]
         workflow_elements = ', '.join(workflow_elements)
         data_file = problem.module.raw_filename
+        try:
+            extra_files = problem.module.extra_files
+        except AttributeError:
+            extra_files = None
         held_out_test = problem.module.held_out_test_size
         post_data = post_api.post_data(host_url, username, userpassd,
                                        problem_name, target_column,
-                                       workflow_elements, data_file)
+                                       workflow_elements, data_file,
+                                       extra_files=extra_files)
         logger.info('Sending data to datarun: %s' % post_data.content)
         if post_data.ok:
             data_id = json.loads(post_data.content)["id"]
@@ -398,9 +403,13 @@ def send_data_datarun(problem_name, host_url, username, userpassd):
             logger.info('** Problem submitting data to datarun, no data id **')
             return None
         # Ask to prepare data to datarun
-        post_split = post_api.post_split(host_url, username, userpassd,
-                                         held_out_test, data_id,
-                                         random_state=random_state)
+        if extra_files:
+            post_split = post_api.custom_post_split(host_url, username,
+                                                    userpassd, data_id)
+        else:
+            post_split = post_api.post_split(host_url, username, userpassd,
+                                             held_out_test, data_id,
+                                             random_state=random_state)
         logger.info('Prepare data on datarun: %s' % post_split.content)
         return data_id
 
@@ -481,7 +490,7 @@ def add_event(event_name, force=False):
             event_score_type.name = score_type_descriptor['new_name']
         print score_type
     # I thought that event.score_types will be sorted by the order we add
-    # event_score_types, but no, it's ordered by id (I guess), so we have to 
+    # event_score_types, but no, it's ordered by id (I guess), so we have to
     # excplicitly assign event.official_score_index here.
     try:
         event.official_score_name = event.module.official_score_name
@@ -1192,7 +1201,7 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
             [ts.valid_time for ts in submission.on_cv_folds]).std()
         submission.test_time_cv_std = np.array(
             [ts.test_time for ts in submission.on_cv_folds]).std()
-        
+
         db.session.commit()
         for score in submission.scores:
             logger.info('valid_score {} = {}'.format(

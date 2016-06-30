@@ -24,7 +24,8 @@ def url_get(url1, url2, username, password, r_id=None):
 
 
 def post_data(host_url, username, password,
-              data_name, target_column, workflow_elements, data_file):
+              data_name, target_column, workflow_elements, data_file,
+              extra_files=None):
     """
     To post data to the datarun api.\
     Data are compressed (with zlib) and base64-encoded before being posted.
@@ -36,7 +37,9 @@ def post_data(host_url, username, password,
     :param target_column: name of the target column
     :param workflow_elements: workflow elements associated with this dataset,\
     e.g., feature_extractor, classifier
-    :param data_file: name with absolute of the dataset file
+    :param data_file: name with absolute path of the dataset file
+    :param extra_files: list of names with absolute path of extra files\
+        (such as a specific.py)
 
     :type host_url: string
     :type username: string
@@ -45,22 +48,67 @@ def post_data(host_url, username, password,
     :type target_column: string
     :type workflow_elements: string
     :type data_file: string
+    :type extra_files: list of string
     """
 
     data = {'name': data_name, 'target_column': target_column,
             'workflow_elements': workflow_elements}
     df = read_compress(data_file)
-    data['files'] = {data_name + '.csv': df}
+    short_name = data_file.split('/')[-1]
+    data['files'] = {short_name: df}
+    if extra_files:
+        for filename in extra_files:
+            df = read_compress(filename)
+            short_name = filename.split('/')[-1]
+            data['files'][short_name] = df
+
     return url_post(host_url, '/runapp/rawdata/', username, password,
                     data)
 
 
 def post_split(host_url, username, password,
                held_out_test, raw_data_id, random_state=42):
+    """
+    To split data between train and test on datarun
+
+    :param host_url: api host url, such as http://127.0.0.1:8000/ (localhost)
+    :param username: username to be used for authentication
+    :param password: password to be used for authentication
+    :param held_out_test: ratio of data for the test set
+    :param raw_data_id: id of the raw dataset on datarun
+    :param random_state: random state to be used in the shuffle split
+
+    :type host_url: string
+    :type username: string
+    :type password: string
+    :type held_out_test: float (between 0 and 1)
+    :type raw_data_id: integer
+    :type random_state: integer
+    """
     data = {'random_state': random_state, 'held_out_test': held_out_test,
             'raw_data_id': raw_data_id}
     return url_post(host_url, '/runapp/rawdata/split/', username, password,
                     data)
+
+
+def custom_post_split(host_url, username, password, raw_data_id):
+    """
+    To split data between train and test on datarun using a specific
+    prepare_data function sent by databoard
+
+    :param host_url: api host url, such as http://127.0.0.1:8000/ (localhost)
+    :param username: username to be used for authentication
+    :param password: password to be used for authentication
+    :param raw_data_id: id of the raw dataset on datarun
+
+    :type host_url: string
+    :type username: string
+    :type password: string
+    :type raw_data_id: integer
+    """
+    data = {'raw_data_id': raw_data_id}
+    return url_post(host_url, '/runapp/rawdata/customsplit/', username,
+                    password, data)
 
 
 def post_submission_fold(host_url, username, password,
