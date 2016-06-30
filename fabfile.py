@@ -417,6 +417,7 @@ deployment = [
     'problems/iris/starting_kit',
     'problems/iris/starting_kit.zip',
     'problems/boston_housing/data/raw/boston_housing.csv',
+    'problems/boston_housing/boston_housing_datarun.py',
     'problems/boston_housing/deposited_submissions/kegl/rf/regressor.py',
     'problems/boston_housing/deposited_submissions/kegl/rf2/regressor.py',
     'problems/boston_housing/description.html',
