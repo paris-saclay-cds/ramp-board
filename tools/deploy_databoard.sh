@@ -7,16 +7,16 @@
 # Add environment variables
 # env.sh file with environment variables must be in the same folder as this script
 mv env.sh ~/.aliases
+echo 'export LC_ALL=en_US.UTF-8' >> ~/.bashrc
+echo 'export LANGUAGE=en_US.UTF-8' >> ~/.bashrc
+echo 'export LC_ALL=en_US.UTF-8' >> ~/.zshrc
+echo 'export LANGUAGE=en_US.UTF-8' >> ~/.zshrc
 echo 'source ~/.aliases' >> ~/.bashrc
 echo 'source ~/.aliases' >> ~/.zshrc
 source ~/.bashrc
 
-# Set locales variables
-export LC_ALL=en_US.UTF-8
-export LANGUAGE=en_US.UTF-8
-
 # Set databoard and persistent disk path
-export DISK_PATH=/dev/vdb
+export DISK_PATH=/dev/vdc
 export DATABOARD_PATH=/mnt/ramp_data/
 
 # Install Packages from the Ubuntu Repositories 
@@ -24,10 +24,8 @@ sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force
 sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade 
 sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install python-pip apache2 libapache2-mod-wsgi
 sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install git
-# wget https://raw.github.com/brainsik/virtualenv-burrito/master/virtualenv-burrito.sh
-# bash virtualenv-burrito.sh 
-# source /root/.venvburrito/startup.sh
 # Install Numpy, Scipy, and xgboost
+sudo apt-get -y install ipython  
 sudo apt-get -y install python-numpy python-scipy  
 sudo apt-get -y install python-setuptools
 cd; git clone --recursive https://github.com/dmlc/xgboost
@@ -40,6 +38,8 @@ apt-get -y install sshfs
 mkdir /mnt/datacamp
 sshfs -o Ciphers=arcfour256 -o allow_other -o IdentityFile=/root/.ssh/id_rsa_sciencefs -o StrictHostKeyChecking=no "$SCIENCEFS_LOGIN"@sciencefs.di.u-psud.fr:/sciencefs/homes/"$SCIENCEFS_LOGIN"/databoard /mnt/datacamp
 
+# Format persistent disk (if first use)
+#mkfs.ext4 $DIS_PATH
 # Mount persistent disk
 mkdir $DATABOARD_PATH
 mount $DISK_PATH $DATABOARD_PATH
@@ -47,8 +47,7 @@ mount $DISK_PATH $DATABOARD_PATH
 # Copy all databoard files (not the code, but submissions, ...)
 cd $DATABOARD_PATH
 mkdir datacamp
-# cp -r /mnt/datacamp/backup/databoard ${DATABOARD_PATH}/datacamp/.
-cp -r /mnt/datacamp/databoard ${DATABOARD_PATH}/datacamp/.
+cp -r /mnt/datacamp/backup/databoard ${DATABOARD_PATH}/datacamp/.
 
 # Clone the project
 mkdir code
@@ -74,7 +73,7 @@ pip install -Ur requirements.txt
 python setup.py develop
 
 # Reacreate the database
-python -c 'from databoard import db; db.create_all()'
+python manage.py upgrade
 # TODO add script here to recreate existing db 
 # Depends on how we ll make db backup. 
 # For the first transfer from sqlite to postgres, use export_to_csv.sh and convert_to_postgres.py
@@ -99,7 +98,7 @@ sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" /home/code/d
 
 # Wrapping up some permissions issues
 sudo chown -R :www-data ../.
-sudo chown -R www-data:www-data /home/datacamp/databoard
+sudo chown -R www-data:www-data ${DATABOARD_PATH}/datacamp/databoard
 
 
 # Restart Apache
