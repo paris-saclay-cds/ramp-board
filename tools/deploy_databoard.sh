@@ -16,18 +16,35 @@ echo 'source ~/.aliases' >> ~/.zshrc
 source ~/.bashrc
 
 # Set databoard and persistent disk path
-export DISK_PATH=/dev/vdc
+export DISK_PATH=/dev/vdb
 export DATABOARD_PATH=/mnt/ramp_data/
+#export LAST_DB_DUMP=databoard_XXXXX.dump
 
-# Install Packages from the Ubuntu Repositories 
+# Update Packages from the Ubuntu Repositories 
 sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" update 
 sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade 
-sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install python-pip apache2 libapache2-mod-wsgi
+# Install pip
+curl -O https://bootstrap.pypa.io/get-pip.py
+python get-pip.py 
+pip install pyopenssl ndg-httpsclient pyasn1
+# Install Ubuntu dependencies for Python
+sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install build-essential python-dev
+sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install gfortran
+sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install swig
+sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install libatlas-dev
+sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install liblapack-dev
+sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install libfreetype6 libfreetype6-dev
+sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install libxft-dev
+sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install pandoc
+# Install numpy, scipy, and ipython
+pip install numpy
+pip install scipy
+pip install ipython
+# Install Apache and mod_wsgi
+sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install apache2 libapache2-mod-wsgi
+# Install git 
 sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install git
-# Install Numpy, Scipy, and xgboost
-sudo apt-get -y install ipython  
-sudo apt-get -y install python-numpy python-scipy  
-sudo apt-get -y install python-setuptools
+# Install xgboost
 cd; git clone --recursive https://github.com/dmlc/xgboost
 cd xgboost; make -j4
 cd python-package; sudo python setup.py install
@@ -56,7 +73,8 @@ git clone -b postgres2 --single-branch https://camille24@bitbucket.org/kegl/data
 cd databoard
 
 # Install Postgres
-sudo apt-get -y install python-dev libpq-dev postgresql postgresql-contrib
+# sudo apt-get -y install python-dev libpq-dev postgresql postgresql-contrib
+sudo apt-get -y install libpq-dev postgresql postgresql-contrib
 pg_createcluster 9.3 main --start
 # Change postgres permissions
 sed -i "85c local   all             postgres                                trust" /etc/postgresql/9.3/main/pg_hba.conf 
@@ -68,15 +86,15 @@ psql -U postgres -c "ALTER ROLE $DATABOARD_DB_USER WITH PASSWORD '$DATABOARD_DB_
 sed -i "86i local   all             $DATABOARD_DB_USER                                 trust" /etc/postgresql/9.3/main/pg_hba.conf
 sudo service postgresql restart
 
-# Install required Python packages
-pip install -Ur requirements.txt
+# Install required Python packages 
+pip install -r requirements.txt
 python setup.py develop
 
 # Reacreate the database
-python manage.py upgrade
-# TODO add script here to recreate existing db 
-# Depends on how we ll make db backup. 
+python manage.py db upgrade
 # For the first transfer from sqlite to postgres, use export_to_csv.sh and convert_to_postgres.py
+# Then: 
+# pg_restore -j 8 -U postgres -d databoard $LAST_DB_DUMP
 
 # Configure Apache: copy apache conf file to /etc/apache2/sites-available/
 mv /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/backup.conf
@@ -94,7 +112,7 @@ sed -i "3a SetEnv DATABOARD_DB_URL $DATABOARD_DB_URL" /etc/apache2/sites-availab
 sed -i "s/SetEnv/    SetEnv/g" /etc/apache2/sites-available/000-default.conf
 # But for some reasons, it does not work. 
 # So we set up the value of this environment variable directly in databoard/config.py 
-sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" /home/code/databoard/databoard/config.py 
+sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
 
 # Wrapping up some permissions issues
 sudo chown -R :www-data ../.
