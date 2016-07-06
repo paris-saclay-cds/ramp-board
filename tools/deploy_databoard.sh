@@ -122,4 +122,9 @@ sudo chown -R www-data:www-data ${DATABOARD_PATH}/datacamp/databoard
 # Restart Apache
 sudo service apache2 restart
 
-
+# Install zsh
+cd
+sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install zsh
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+echo 'source ~/.aliases' >> ~/.zshrc
+sed -i 's/plugins=(git)/plugins=(git cp tmux screen pip lol fabric)/g' ~/.zshrc
