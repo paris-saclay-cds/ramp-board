@@ -128,3 +128,12 @@ sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 echo 'source ~/.aliases' >> ~/.zshrc
 sed -i 's/plugins=(git)/plugins=(git cp tmux screen pip lol fabric)/g' ~/.zshrc
+
+# Add backup for the production server:
+# execution of tools/dump_db.sh and tools/housekeeping.sh with crontab
+# Not executed in the script because backup path must be checked and no backup for
+# test server
+# Add these lines to the file opened by crontab -e
+# 02 0    * * *   root    bash /mnt/ramp_data/code/databoard/tools/dump_db.sh
+# 22 1    * * *   root    bash /mnt/ramp_data/code/databoard/tools/housekeeping.sh
+
