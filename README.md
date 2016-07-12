@@ -106,3 +106,7 @@ fab add_workflow:feature_extractor_classifier_regressor_workflow,feature_extract
 fab add_problem:drug_spectra 
 fab add_event:drug_spectra
 
+## Remount disk
+
+export SCIENCEFS_LOGIN='balazs.kegl'
+sshfs -o Ciphers=arcfour256 -o allow_other -o IdentityFile=/root/.ssh/id_rsa_sciencefs -o StrictHostKeyChecking=no "$SCIENCEFS_LOGIN"@sciencefs.di.u-psud.fr:/sciencefs/homes/"$SCIENCEFS_LOGIN"/databoard /mnt/datacamp
