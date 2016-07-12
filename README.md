@@ -111,12 +111,25 @@ fab add_workflow:feature_extractor_classifier_regressor_workflow,feature_extract
 fab add_problem:drug_spectra 
 fab add_event:drug_spectra
 
-## Remount disk
+## Remount disks
+
+
+### sciencefs disk
 
 export SCIENCEFS_LOGIN='balazs.kegl'
+
 sshfs -o Ciphers=arcfour256 -o allow_other -o IdentityFile=/root/.ssh/id_rsa_sciencefs -o StrictHostKeyChecking=no "$SCIENCEFS_LOGIN"@sciencefs.di.u-psud.fr:/sciencefs/homes/"$SCIENCEFS_LOGIN"/databoard /mnt/datacamp
 
+### prod_ramp disk
 
+mount dev_file /mnt/ramp_data
+
+where dev_file corresponds to the path of the dev file
+of the prod_ramp disk : <https://keystone.lal.in2p3.fr/dashboard/project/volumes/>.
+
+Currently it is : /dev/vdb, so the command is :
+
+mount /dev/vdb /mnt/ramp_data
 
 ---------------
 1. Production server
