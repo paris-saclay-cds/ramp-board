@@ -37,6 +37,9 @@ vf_test_filename = os.path.join(
 prediction.labels = [1.0, 2.0, 3.0, 4.0]
 target_column_name = 'type'
 workflow_name = 'feature_extractor_classifier_calibrator_workflow'
+extra_files = [vf_raw_filename,
+               os.path.join(problems_path, problem_name,
+                            'variable_star_datarun.py')]
 
 
 def csv_array_to_float(csv_array_string):

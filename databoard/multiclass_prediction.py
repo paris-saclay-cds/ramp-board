@@ -1,5 +1,5 @@
 import numpy as np
-from base_prediction import BasePrediction
+from databoard.base_prediction import BasePrediction
 
 # Global static that should be set by specific (or somebody)
 labels = []

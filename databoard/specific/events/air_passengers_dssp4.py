@@ -1,26 +1,25 @@
 import datetime
-from sklearn.cross_validation import StratifiedShuffleSplit
-from databoard.specific.problems.iris import problem_name  # noqa
+from sklearn.cross_validation import ShuffleSplit
+from databoard.specific.problems.air_passengers import problem_name  # noqa
 
-event_name = 'iris_test'  # should be the same as the file name
+event_name = 'air_passengers_dssp4'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Iris classification (test)'
+event_title = 'Number of air passengers prediction (DSSP4)'
 
 random_state = 57
 cv_test_size = 0.5
-n_cv = 2
+n_cv = 8
 score_type_descriptors = [
-    {'name': 'accuracy', 'precision': 1, 'new_name': 'acc'},
-    'error',
-    {'name': 'negative_log_likelihood', 'new_name': 'nll'},
+    'rmse',
+#    {'name': 'relative_rmse', 'new_name': 'rel_rmse'},
 ]
 
 
 def get_cv(y_train_array):
-    cv = StratifiedShuffleSplit(
-        y_train_array, n_iter=n_cv, test_size=cv_test_size,
+    cv = ShuffleSplit(
+        len(y_train_array), n_iter=n_cv, test_size=cv_test_size,
         random_state=random_state)
     return cv
 
@@ -28,11 +27,12 @@ def get_cv(y_train_array):
 
 max_members_per_team = 1
 max_n_ensemble = 80  # max number of submissions in greedy ensemble
-is_send_trained_mails = False
-is_send_submitted_mails = False
+is_send_trained_mails = True
+is_send_submitted_mails = True
 min_duration_between_submissions = 15 * 60  # sec
 opening_timestamp = datetime.datetime(2000, 1, 1, 0, 0, 0)
 # before links to submissions in leaderboard are not alive
-public_opening_timestamp = datetime.datetime(2000, 1, 1, 0, 0, 0)
+public_opening_timestamp = datetime.datetime(3000, 1, 1, 0, 0, 0)
 closing_timestamp = datetime.datetime(4000, 1, 1, 0, 0, 0)
 is_public = True
+is_controled_signup = True

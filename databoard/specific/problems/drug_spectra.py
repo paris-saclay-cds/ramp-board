@@ -26,6 +26,8 @@ prediction.labels = ['A', 'B', 'Q', 'R']
 target_column_name_clf = 'molecule'
 target_column_name_reg = 'concentration'
 workflow_name = 'feature_extractor_classifier_regressor_workflow'
+extra_files = [os.path.join(problems_path, problem_name,
+                            'drug_spectra_datarun.py')]
 
 
 def prepare_data():

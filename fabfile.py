@@ -126,7 +126,7 @@ def test_setup():
 
     # compare results with local train and test
     print('**** TRAIN-TEST LOCAL ****')
-    db_tools.train_test_submissions()
+    db_tools.train_test_submissions(force_retrain_test=False)
     db_tools.compute_contributivity('iris_test')
     db_tools.compute_contributivity('boston_housing_test')
 
@@ -194,7 +194,7 @@ def add_score_type(name, is_lower_the_better, minimum, maximum):
     from databoard.db_tools import add_score_type
 
     add_score_type(
-        name, strtobool(is_lower_the_better), float(minimum), float(maximum))
+        name, is_lower_the_better, float(minimum), float(maximum))
 
 
 def add_problem(name, force='False'):
@@ -344,83 +344,90 @@ def delete_submission(e, t, s):
     delete_submission(event_name=e, team_name=t, submission_name=s)
 
 
-software = [
-    'fabfile.py',
-    'setup.py',
-    'requirements.txt',
-    'README.md',
-    'databoard/__init__.py',
-    'databoard/base_prediction.py',
-    'databoard/config.py',
-    'databoard/db_tools.py',
-    'databoard/fetch.py',
-    'databoard/forms.py',
-    'databoard/machine_parallelism.py',
-    'databoard/model.py',
-    'databoard/mixed_prediction.py',
-    'databoard/multiclass_prediction.py',
-    'databoard/regression_prediction.py',
-    'databoard/remove_test_db.py',
-    'databoard/views.py',
-    'databoard/post_api.py',
-    'databoard/specific/__init__.py',
-    'databoard/specific/events/__init__.py',
-    'databoard/specific/events/boston_housing_test.py',
-    'databoard/specific/events/drug_spectra.py',
-    'databoard/specific/events/epidemium2_cancer_mortality.py',
-    'databoard/specific/events/iris_test.py',
-    'databoard/specific/events/HEP_detector_anomalies.py',
-    'databoard/specific/events/variable_stars.py',
-    'databoard/specific/problems/__init__.py',
-    'databoard/specific/problems/boston_housing.py',
-    'databoard/specific/problems/drug_spectra.py',
-    'databoard/specific/problems/epidemium2_cancer_mortality.py',
-    'databoard/specific/problems/iris.py',
-    'databoard/specific/problems/HEP_detector_anomalies.py',
-    'databoard/specific/problems/variable_stars.py',
-    'databoard/specific/score_types/__init__.py',
-    'databoard/specific/score_types/accuracy.py',
-    'databoard/specific/score_types/auc.py',
-    'databoard/specific/score_types/error.py',
-    'databoard/specific/score_types/error_mare_mixed.py',
-    'databoard/specific/score_types/error_mixed.py',
-    'databoard/specific/score_types/mare.py',
-    'databoard/specific/score_types/mare_mixed.py',
-    'databoard/specific/score_types/negative_log_likelihood.py',
-    'databoard/specific/score_types/relative_rmse.py',
-    'databoard/specific/score_types/rmse.py',
-    'databoard/specific/workflows/__init__.py',
-    'databoard/specific/workflows/classifier_workflow.py',
-    'databoard/specific/workflows/feature_extractor_classifier_calibrator_workflow.py',
-    'databoard/specific/workflows/feature_extractor_regressor_workflow.py',
-    'databoard/specific/workflows/feature_extractor_classifier_regressor_workflow.py',
-    'databoard/specific/workflows/regressor_workflow.py',
-    'databoard/tests/__init__.py',
-    'databoard/tests/test_model.py',
-    'databoard/tests/test_multiclass_predictions.py',
-    'databoard/tests/test_regression_predictions.py',
-    'databoard/static',
-    'databoard/templates',
-]
-
-
-def publish_software(target='test'):
-    from databoard.config import vd_server, production_server, vd_root
-
-    if target == 'test':
-        server = vd_server
-    else:
-        server = production_server
-
-    command = "rsync -pthrRvz -c "
-    command += "--rsh=\'ssh -i " + os.path.expanduser("~")
-    command += "/.ssh/datacamp/id_rsa -p 22\' "
-    for file in software:
-        command += file + ' '
-    command += 'root@' + server + ':' + vd_root + '/code/'
-    print command
-    os.system(command)
-
+# software = [
+#     'fabfile.py',
+#     'setup.py',
+#     'requirements.txt',
+#     'README.md',
+#     'databoard/__init__.py',
+#     'databoard/base_prediction.py',
+#     'databoard/config.py',
+#     'databoard/db_tools.py',
+#     'databoard/fetch.py',
+#     'databoard/forms.py',
+#     'databoard/machine_parallelism.py',
+#     'databoard/model.py',
+#     'databoard/mixed_prediction.py',
+#     'databoard/multiclass_prediction.py',
+#     'databoard/regression_prediction.py',
+#     'databoard/remove_test_db.py',
+#     'databoard/views.py',
+#     'databoard/post_api.py',
+#     'databoard/specific/__init__.py',
+#     'databoard/specific/events/__init__.py',
+#     'databoard/specific/events/air_passengers_dssp4.py',
+#     'databoard/specific/events/boston_housing_test.py',
+#     'databoard/specific/events/drug_spectra.py',
+#     'databoard/specific/events/epidemium2_cancer_mortality.py',
+#     'databoard/specific/events/iris_test.py',
+#     'databoard/specific/events/HEP_detector_anomalies.py',
+#     'databoard/specific/events/variable_stars.py',
+#     'databoard/specific/problems/__init__.py',
+#     'databoard/specific/problems/air_passengers.py',
+#     'databoard/specific/problems/boston_housing.py',
+#     'databoard/specific/problems/drug_spectra.py',
+#     'databoard/specific/problems/epidemium2_cancer_mortality.py',
+#     'databoard/specific/problems/iris.py',
+#     'databoard/specific/problems/HEP_detector_anomalies.py',
+#     'databoard/specific/problems/variable_stars.py',
+#     'databoard/specific/score_types/__init__.py',
+#     'databoard/specific/score_types/accuracy.py',
+#     'databoard/specific/score_types/auc.py',
+#     'databoard/specific/score_types/error.py',
+#     'databoard/specific/score_types/error_mare_mixed.py',
+#     'databoard/specific/score_types/error_mixed.py',
+#     'databoard/specific/score_types/mare.py',
+#     'databoard/specific/score_types/mare_mixed.py',
+#     'databoard/specific/score_types/negative_log_likelihood.py',
+#     'databoard/specific/score_types/relative_rmse.py',
+#     'databoard/specific/score_types/rmse.py',
+#     'databoard/specific/workflows/__init__.py',
+#     'databoard/specific/workflows/classifier_workflow.py',
+#     'databoard/specific/workflows/feature_extractor_classifier_calibrator_workflow.py',
+#     'databoard/specific/workflows/feature_extractor_regressor_workflow.py',
+#     'databoard/specific/workflows/feature_extractor_classifier_regressor_workflow.py',
+#     'databoard/specific/workflows/feature_extractor_regressor_with_external_data_workflow.py',
+#     'databoard/specific/workflows/regressor_workflow.py',
+#     'databoard/tests/__init__.py',
+#     'databoard/tests/test_model.py',
+#     'databoard/tests/test_multiclass_predictions.py',
+#     'databoard/tests/test_regression_predictions.py',
+#     'databoard/static',
+#     'databoard/templates',
+# ]
+#
+#
+# def publish_software(target='test'):
+#     from databoard.config import test_server, production_server
+#     from databoard.config import test_root, production_root
+#
+#     if target == 'test':
+#         server = test_server
+#     else:
+#         server = production_server
+#
+#     command = "rsync -pthrRvz -c "
+#     command += "--rsh=\'ssh -i " + os.path.expanduser("~")
+#     command += "/.ssh/datacamp/id_rsa -p 22\' "
+#     for file in software:
+#         command += file + ' '
+#     if target == 'test':
+#         command += 'root@' + server + ':/home/code/'
+#     else:
+#         command += 'root@' + server + ':/home/code/'
+#     print command
+#     os.system(command)
+#
 
 deployment = [
     'fabfile.py',
@@ -431,6 +438,7 @@ deployment = [
     'problems/iris/starting_kit',
     'problems/iris/starting_kit.zip',
     'problems/boston_housing/data/raw/boston_housing.csv',
+    'problems/boston_housing/boston_housing_datarun.py',
     'problems/boston_housing/deposited_submissions/kegl/rf/regressor.py',
     'problems/boston_housing/deposited_submissions/kegl/rf2/regressor.py',
     'problems/boston_housing/description.html',
@@ -441,38 +449,40 @@ deployment = [
 # zip -r starting_kit.zip starting_kit
 
 
-def publish_deployment(target='test'):
-    from databoard.config import vd_server, production_server, vd_root
+# def publish_deployment(target='test'):
+#     from databoard.config import vd_server, production_server, vd_root
 
-    command = "rsync -pthrRvz -c "
-    if target == 'test':
-        server = vd_server
-        root = vd_root + '/databoard_test/'
-    else:
-        server = production_server
-        root = vd_root + '/databoard/'
-    command += "--rsh=\'ssh -i " + os.path.expanduser("~")
-    command += "/.ssh/datacamp/id_rsa -p 22\' "
-    for file in deployment:
-        command += file + ' '
-    command += 'root@' + server + ':' + root
-    print command
-    os.system(command)
+#     command = "rsync -pthrRvz -c "
+#     if target == 'test':
+#         server = vd_server
+#         root = vd_root + '/databoard_test/'
+#     else:
+#         server = production_server
+#         root = vd_root + '/databoard/'
+#     command += "--rsh=\'ssh -i " + os.path.expanduser("~")
+#     command += "/.ssh/datacamp/id_rsa -p 22\' "
+#     for file in deployment:
+#         command += file + ' '
+#     command += 'root@' + server + ':' + root
+#     print command
+#     os.system(command)
 
 
 def publish_problem(problem_name, target='local'):
-    from databoard.config import vd_server, production_server, vd_root
+    from databoard.config import test_server, production_server
+    from databoard.config import test_root, production_root
 
+    os.system('chmod 744 problems/' + problem_name + '/starting_kit/*')
     command = "rsync -pthrRvz -c "
     if target == 'local':
         command += 'problems/' + problem_name + ' /tmp/databoard_test/'
     else:
         if target == 'test':
-            server = vd_server
-            root = vd_root + '/databoard_test/'
+            server = test_server
+            root = test_root + '/databoard/'
         else:
             server = production_server
-            root = vd_root + '/databoard/'
+            root = production_root + '/databoard/'
         command += "--rsh=\'ssh -i " + os.path.expanduser("~")
         command += "/.ssh/datacamp/id_rsa -p 22\' problems/" + problem_name
         command += ' root@' + server + ':' + root

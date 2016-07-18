@@ -54,26 +54,34 @@ class User(db.Model):
     is_authenticated = db.Column(db.Boolean, default=True)
     is_active = db.Column(db.Boolean, default=True)
 
-    def __init__(self, name, hashed_password, lastname, firstname, email,
-                 access_level='user', hidden_notes='', linkedin_url='',
-                 twitter_url='', facebook_url='', google_url='', github_url='',
-                 website_url='', bio='', is_want_news=True):
-        self.name = name
-        self.hashed_password = hashed_password
-        self.lastname = lastname
-        self.firstname = firstname
-        self.email = email
-        self.access_level = access_level
-        self.hidden_notes = hidden_notes
-        self.signup_timestamp = datetime.datetime.utcnow()
-        self.linkedin_url = linkedin_url
-        self.twitter_url = twitter_url
-        self.facebook_url = facebook_url
-        self.google_url = google_url
-        self.github_url = github_url
-        self.website_url = website_url
-        self.bio = bio
-        self.is_want_news = is_want_news
+#     def __init__(self, name, hashed_password, lastname, firstname, email,
+#                  access_level='user', hidden_notes='', linkedin_url='',
+#                  twitter_url='', facebook_url='', google_url='', github_url='',
+#                  website_url='', bio='', is_want_news=True,
+#                  signup_timestamp=None, is_authenticated=None, is_active=None):
+#         self.name = name
+#         self.hashed_password = hashed_password
+#         self.lastname = lastname
+#         self.firstname = firstname
+#         self.email = email
+#         self.access_level = access_level
+#         self.hidden_notes = hidden_notes
+#         if signup_timestamp:
+#             self.signup_timestamp = signup_timestamp
+#         else:
+#             self.signup_timestamp = datetime.datetime.utcnow()
+#         if is_authenticated:
+#             self.is_authenticated = is_authenticated
+#         if is_active:
+#             self.is_active = is_active
+#         self.linkedin_url = linkedin_url
+#         self.twitter_url = twitter_url
+#         self.facebook_url = facebook_url
+#         self.google_url = google_url
+#         self.github_url = github_url
+#         self.website_url = website_url
+#         self.bio = bio
+#         self.is_want_news = is_want_news
 
     @property
     def is_anonymous(self):
@@ -122,12 +130,16 @@ class Team(db.Model):
 
     creation_timestamp = db.Column(db.DateTime, nullable=False)
 
-    def __init__(self, name, admin, initiator=None, acceptor=None):
-        self.name = name
-        self.admin = admin
-        self.initiator = initiator
-        self.acceptor = acceptor
-        self.creation_timestamp = datetime.datetime.utcnow()
+#     def __init__(self, name, admin, initiator=None, acceptor=None,
+#                  creation_timestamp=None):
+#         self.name = name
+#         self.admin = admin
+#         self.initiator = initiator
+#         self.acceptor = acceptor
+#         if creation_timestamp:
+#             self.creation_timestamp = creation_timestamp
+#         else:
+#             self.creation_timestamp = datetime.datetime.utcnow()
 
     def __str__(self):
         str_ = 'Team({})'.format(self.name)
@@ -187,14 +199,14 @@ class Problem(db.Model):
     workflow = db.relationship(
         'Workflow', backref=db.backref('problems'))
 
-    def __init__(self, name):
-        self.name = name
-        self.reset()
-        # to check if the module and all required fields are there
-        self.module
-        self.prediction
-        self.train_submission
-        self.test_submission
+#     def __init__(self, name):
+#         self.name = name
+#         self.reset()
+#         # to check if the module and all required fields are there
+#         self.module
+#         self.prediction
+#         self.train_submission
+#         self.test_submission
 
     def __repr__(self):
         repr = 'Problem({})\n{}'.format(self.name, self.workflow)
@@ -242,15 +254,15 @@ class ScoreType(db.Model):
     minimum = db.Column(db.Float, nullable=False)
     maximum = db.Column(db.Float, nullable=False)
 
-    def __init__(self, name, is_lower_the_better, minimum, maximum):
-        self.name = name
-        self.is_lower_the_better = is_lower_the_better
-        self.minimum = minimum
-        self.maximum = maximum
-        # to check if the module and all required fields are there
-        self.module
-        self.score_function
-        self.precision
+#     def __init__(self, name, is_lower_the_better, minimum, maximum):
+#         self.name = name
+#         self.is_lower_the_better = is_lower_the_better
+#         self.minimum = minimum
+#         self.maximum = maximum
+#         # to check if the module and all required fields are there
+#         self.module
+#         self.score_function
+#         self.precision
 
     def __repr__(self):
         repr = 'ScoreType(name={})'.format(self.name)
@@ -306,25 +318,24 @@ class Event(db.Model):
     closing_timestamp = db.Column(
         db.DateTime, default=datetime.datetime(4000, 1, 1, 0, 0, 0))
 
-    # the name of the score in self.event_score_types which is used for
-    # ensembling and contributivity.
-    official_score_name = db.Column(db.String)
-    # official_score_index = db.Column(db.Integer, default=0)
+    # the index of the score in self.event_score_types which is used for
+    # ensembling and contributivity. The default is 0 (first in the list).
+    official_score_index = db.Column(db.Integer, default=0)
 
     combined_combined_valid_score = db.Column(db.Float, default=None)
     combined_combined_test_score = db.Column(db.Float, default=None)
     combined_foldwise_valid_score = db.Column(db.Float, default=None)
     combined_foldwise_test_score = db.Column(db.Float, default=None)
 
-    def __init__(self, name):
-        self.name = name
-        # to check if the module and all required fields are there
-        # db fields are later initialized by db.tools._set_table_attribute
-        self.module
-        self.problem = Problem.query.filter_by(
-            name=self.module.problem_name).one()
-        self.title
-        self.prediction
+#     def __init__(self, name):
+#         self.name = name
+#         # to check if the module and all required fields are there
+#         # db fields are later initialized by db.tools._set_table_attribute
+#         self.module
+#         self.problem = Problem.query.filter_by(
+#             name=self.module.problem_name).one()
+#         self.title
+#         self.prediction
 
     def __repr__(self):
         repr = 'Event({})'.format(self.name)
@@ -347,13 +358,13 @@ class Event(db.Model):
         return self.problem.workflow
 
     @property
-    def official_score_type(self):
-        return EventScoreType.query.filter_by(
-            event=self, name=self.official_score_name).one()
+    def official_score_function(self):
+        return self.score_types[
+            self.official_score_index].score_function
 
     @property
-    def official_score_function(self):
-        return self.official_score_type.score_function
+    def official_score_type(self):
+        return self.score_types[self.official_score_index]
 
     @property
     def train_submission(self):
@@ -435,15 +446,14 @@ class EventScoreType(db.Model):
     precision = db.Column(db.Integer)
 
     db.UniqueConstraint(event_id, score_type_id, name='es_constraint')
-    db.UniqueConstraint(event_id, name, name='en_constraint')
 
-    def __init__(self, event, score_type, name=None, precision=None):
-        self.event = event
-        self.score_type = score_type
-        if name is None:
-            self.name = score_type.name
-        if precision is None:
-            self.precision = score_type.precision
+#     def __init__(self, event, score_type, name=None, precision=None):
+#         self.event = event
+#         self.score_type = score_type
+#         if name is None:
+#             self.name = score_type.name
+#         if precision is None:
+#             self.precision = score_type.precision
 
     def __repr__(self):
         repr = '{}: {}/{}'.format(self.name, self.event, self.score_type)
@@ -533,10 +543,15 @@ class EventTeam(db.Model):
 
     db.UniqueConstraint(event_id, team_id, name='et_constraint')
 
-    def __init__(self, event, team):
-        self.event = event
-        self.team = team
-        self.signup_timestamp = datetime.datetime.utcnow()
+#     def __init__(self, event, team, is_active=None, signup_timestamp=None):
+#         self.event = event
+#         self.team = team
+#         if signup_timestamp:
+#             self.signup_timestamp = signup_timestamp
+#         else:
+#             self.signup_timestamp = datetime.datetime.utcnow()
+#         if is_active:
+#             self.is_active = is_active
 
     def __repr__(self):
         repr = '{}/{}'.format(self.event, self.team)
@@ -641,12 +656,12 @@ class Workflow(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
 
-    def __init__(self, name):
-        self.name = name
-        # to check if the module and all required fields are there
-        self.module
-        self.train_submission
-        self.test_submission
+#     def __init__(self, name):
+#         self.name = name
+#         # to check if the module and all required fields are there
+#         self.module
+#         self.train_submission
+#         self.test_submission
 
     def __repr__(self):
         repr = 'Workflow({})'.format(self.name)
@@ -693,13 +708,13 @@ class WorkflowElement(db.Model):
     workflow_element_type = db.relationship(
         'WorkflowElementType', backref=db.backref('workflows'))
 
-    def __init__(self, workflow, workflow_element_type, name_in_workflow=None):
-        self.workflow = workflow
-        self.workflow_element_type = workflow_element_type
-        if name_in_workflow is None:
-            self.name = self.workflow_element_type.name
-        else:
-            self.name = name_in_workflow
+#     def __init__(self, workflow, workflow_element_type, name_in_workflow=None):
+#         self.workflow = workflow
+#         self.workflow_element_type = workflow_element_type
+#         if name_in_workflow is None:
+#             self.name = self.workflow_element_type.name
+#         else:
+#             self.name = name_in_workflow
 
     def __repr__(self):
         return 'Workflow({}): WorkflowElement({})'.format(
@@ -1012,24 +1027,24 @@ class Submission(db.Model):
     # later also ramp_id
     db.UniqueConstraint(event_team_id, name, name='ts_constraint')
 
-    def __init__(self, name, event_team):
-        self.name = name
-        self.event_team = event_team
-        sha_hasher = hashlib.sha1()
-        sha_hasher.update(self.event.name.encode('utf-8'))
-        sha_hasher.update(self.team.name.encode('utf-8'))
-        sha_hasher.update(self.name.encode('utf-8'))
-        # We considered using the id, but then it will be given away in the
-        # url which is maybe not a good idea.
-        self.hash_ = '{}'.format(sha_hasher.hexdigest())
-        self.submission_timestamp = datetime.datetime.utcnow()
-        event_score_types = EventScoreType.query.filter_by(
-            event=event_team.event)
-        for event_score_type in event_score_types:
-            submission_score = SubmissionScore(
-                submission=self, event_score_type=event_score_type)
-            db.session.add(submission_score)
-        self.reset()
+#     def __init__(self, name, event_team):
+#         self.name = name
+#         self.event_team = event_team
+#         sha_hasher = hashlib.sha1()
+#         sha_hasher.update(self.event.name.encode('utf-8'))
+#         sha_hasher.update(self.team.name.encode('utf-8'))
+#         sha_hasher.update(self.name.encode('utf-8'))
+#         # We considered using the id, but then it will be given away in the
+#         # url which is maybe not a good idea.
+#         self.hash_ = '{}'.format(sha_hasher.hexdigest())
+#         self.submission_timestamp = datetime.datetime.utcnow()
+#         event_score_types = EventScoreType.query.filter_by(
+#             event=event_team.event)
+#         for event_score_type in event_score_types:
+#             submission_score = SubmissionScore(
+#                 submission=self, event_score_type=event_score_type)
+#             db.session.add(submission_score)
+#         self.reset()
 
     def __str__(self):
         return 'Submission({}/{}/{})'.format(
@@ -1053,14 +1068,6 @@ class Submission(db.Model):
     @property
     def official_score_function(self):
         return self.event.official_score_function
-
-    @property
-    def official_score_name(self):
-        return self.event.official_score_name
-
-    @property
-    def score_types(self):
-        return self.event.score_types
 
     @property
     def prediction(self):
@@ -1117,25 +1124,6 @@ class Submission(db.Model):
     def state_with_link(self):
         return '<a href=/{}>{}</a>'.format(
             os.path.join(self.hash_, 'error.txt'), self.state)
-
-    def ordered_scores(self, score_names):
-        """Iterator yielding SubmissionScores.
-
-        Ordered according to score_names. Called by get_public_leaderboard
-        and get_private_leaderboard, making sure scores are listed in the
-        correct column.
-
-        Parameters
-        ----------
-        score_names : list of strings
-
-        Return
-        ----------
-        scores : iterator of SubmissionScore objects
-        """
-        score_dict = {score.score_name: score for score in self.scores}
-        for score_name in score_names:
-            yield score_dict[score_name]
 
     # These were constructing means and stds by fetching fold times. It was
     # slow because submission_on_folds contain also possibly large predictions
@@ -1368,10 +1356,6 @@ class SubmissionScoreOnCVFold(db.Model):
         submission_on_cv_fold_id, submission_score_id, name='ss_constraint')
 
     @property
-    def name(self):
-        return self.event_score_type.name
-
-    @property
     def event_score_type(self):
         return self.submission_score.event_score_type
 
@@ -1426,14 +1410,14 @@ class SubmissionOnCVFold(db.Model):
 
     db.UniqueConstraint(submission_id, cv_fold_id, name='sc_constraint')
 
-    def __init__(self, submission, cv_fold):
-        self.submission = submission
-        self.cv_fold = cv_fold
-        for score in submission.scores:
-            submission_score_on_cv_fold = SubmissionScoreOnCVFold(
-                submission_on_cv_fold=self, submission_score=score)
-            db.session.add(submission_score_on_cv_fold)
-        self.reset()
+#     def __init__(self, submission, cv_fold):
+#         self.submission = submission
+#         self.cv_fold = cv_fold
+#         for score in submission.scores:
+#             submission_score_on_cv_fold = SubmissionScoreOnCVFold(
+#                 submission_on_cv_fold=self, submission_score=score)
+#             db.session.add(submission_score_on_cv_fold)
+#         self.reset()
 
     def __repr__(self):
         repr = 'state = {}, c = {}'\
@@ -1472,13 +1456,6 @@ class SubmissionOnCVFold(db.Model):
     @property
     def test_predictions(self):
         return self.submission.prediction.Predictions(y_pred=self.test_y_pred)
-
-    @property
-    def official_score(self):
-        for score in self.scores:
-            # print score.name, self.submission.official_score_name
-            if self.submission.official_score_name == score.name:
-                return score
 
     def reset(self):
         self.contributivity = 0.0
@@ -1633,20 +1610,20 @@ class UserInteraction(db.Model):
     submission_file = db.relationship('SubmissionFile', backref=db.backref(
         'user_interactions', cascade='all, delete-orphan'))
 
-    def __init__(self, interaction, user=None, event=None, note=None,
-                 submission=None, submission_file=None, diff=None,
-                 similarity=None):
-        self.timestamp = datetime.datetime.utcnow()
-        self.interaction = interaction
-        self.user = user
-        if event is not None:
-            self.event_team = get_active_user_event_team(event, user)
-        self.ip = request.environ['REMOTE_ADDR']
-        self.note = note
-        self.submission = submission
-        self.submission_file = submission_file
-        self.submission_file_diff = diff
-        self.submission_file_similarity = similarity
+#     def __init__(self, interaction, user=None, event=None, note=None,
+#                  submission=None, submission_file=None, diff=None,
+#                  similarity=None):
+#         self.timestamp = datetime.datetime.utcnow()
+#         self.interaction = interaction
+#         self.user = user
+#         if event is not None:
+#             self.event_team = get_active_user_event_team(event, user)
+#         self.ip = request.environ['REMOTE_ADDR']
+#         self.note = note
+#         self.submission = submission
+#         self.submission_file = submission_file
+#         self.submission_file_diff = diff
+#         self.submission_file_similarity = similarity
 
     @property
     def submission_file_diff_link(self):

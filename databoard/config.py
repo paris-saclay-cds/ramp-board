@@ -72,10 +72,11 @@ is_pickle_trained_submission = False
 #    server_port)
 # server_name = debug_server if local_deployment else train_server
 
-vd_server = 'onevm-58.lal.in2p3.fr'
-production_server = '134.158.75.241'
+test_server = '134.158.75.119'
+test_root = '/mnt/ramp_data/datacamp/'
+production_server = '134.158.75.211'
+production_root = '/mnt/ramp_data/datacamp/'
 reims_server = 'romeo1.univ-reims.fr'
-vd_root = '/mnt/datacamp'
 local_root = '/tmp'  # for local publishing / testing
 server_port = 8080
 
@@ -349,14 +350,6 @@ MAIL_USERNAME = 'databoardmailer@gmail.com'
 MAIL_PASSWORD = 'fly18likeacar'
 MAIL_DEFAULT_SENDER = ('Databoard', 'databoardmailer@gmail.com')
 MAIL_RECIPIENTS = ''  # notification_recipients
-# abs max upload file size, to throw 413, before saving it
-MAX_CONTENT_LENGTH = 1024 * 1024 * 1024
-LOG_FILENAME = None  # if None, output to screen
-WTF_CSRF_ENABLED = True
-SECRET_KEY = 'eroigudsfojbn;lk'
-SQLALCHEMY_TRACK_MODIFICATIONS = True
-SQLALCHEMY_DATABASE_URI = 'sqlite:///' + db_f_name
-SQLALCHEMY_MIGRATE_REPO = db_migrate_dir
 ADMIN_MAILS = ['balazs.kegl@gmail.com',
                'alexandre.gramfort@telecom-paristech.fr',
                'mehdi@cherti.name',
@@ -364,3 +357,21 @@ ADMIN_MAILS = ['balazs.kegl@gmail.com',
 if os.environ.get('DATABOARD_DB_PERF'):
     SQLALCHEMY_RECORD_QUERIES = True
     DATABASE_QUERY_TIMEOUT = 0.5  # slow database query threshold (in seconds)
+
+
+class Config(object):
+    # abs max upload file size, to throw 413, before saving it
+    MAX_CONTENT_LENGTH = 1024 * 1024 * 1024
+    LOG_FILENAME = None  # if None, output to screen
+    WTF_CSRF_ENABLED = True
+    SECRET_KEY = 'eroigudsfojbn;lk'
+    SQLALCHEMY_TRACK_MODIFICATIONS = True
+    # SQLALCHEMY_DATABASE_URI = 'sqlite:///' + db_f_name
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABOARD_DB_URL')
+    SQLALCHEMY_MIGRATE_REPO = db_migrate_dir
+    TESTING = False
+
+
+class TestingConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABOARD_DB_URL_TEST')

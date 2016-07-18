@@ -12,11 +12,16 @@ Flask-Mail>=0.9.1
 Flask-SQLAlchemy>=2.1
 Flask-Wtf>=0.12
 Flask-Migrate>=1.6.0
+MarkupSafe==0.23
+psycopg2==2.4.5
 sqlalchemy>=1.0.9
-xkcd_password<=1.4.2
+xkcdpass<=1.4.2
 theano
 lasagne
 nolearn
 py-bcrypt
 requests==2.9.1
 locustio==0.7.4
+pycrypto==2.6.1
+pycrypto-on-pypi==2.3
+ecdsa==0.13
