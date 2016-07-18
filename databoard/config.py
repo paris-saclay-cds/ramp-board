@@ -357,6 +357,10 @@ ADMIN_MAILS = ['balazs.kegl@gmail.com',
 if os.environ.get('DATABOARD_DB_PERF'):
     SQLALCHEMY_RECORD_QUERIES = True
     DATABASE_QUERY_TIMEOUT = 0.5  # slow database query threshold (in seconds)
+# Link to datarun
+DATARUN_URL = os.environ.get('DATARUN_URL')
+DATARUN_USERNAME = os.environ.get('DATARUN_USERNAME')
+DATARUN_PASSWORD = os.environ.get('DATARUN_PASSWORD')
 
 
 class Config(object):
