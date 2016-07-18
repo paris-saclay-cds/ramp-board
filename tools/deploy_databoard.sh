@@ -10,6 +10,7 @@
 #    export DATARUN_URL='uuuu'
 #    export DATARUN_USERNAME='vvvv'
 #    export DATARUN_PASSWORD='wwww'
+#    export NB_WORKERS=2
 
 
 # Add environment variables
@@ -124,6 +125,9 @@ sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" ${DATABOARD_
 sed -i "s#os.environ.get('DATARUN_URL')#'$DATARUN_URL'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
 sed -i "s#os.environ.get('DATARUN_USERNAME')#'$DATARUN_USERNAME'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
 sed -i "s#os.environ.get('DATARUN_PASSWORD')#'$DATARUN_PASSWORD'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
+
+# Start celery workers
+bash ${DATABOARD_PATH}/code/databoard/tools/celery_worker.sh start $NB_WORKERS
 
 # Wrapping up some permissions issues
 sudo chown -R :www-data ../.
