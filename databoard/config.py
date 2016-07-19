@@ -1,4 +1,5 @@
 import os
+from celery.schedules import crontab
 
 root_path = '.'
 
@@ -374,6 +375,18 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABOARD_DB_URL')
     SQLALCHEMY_MIGRATE_REPO = db_migrate_dir
     TESTING = False
+    # Celery conf
+    CELERY_BROKER_URL = 'amqp://guest@localhost//'
+    CELERY_RESULT_BACKEND = 'amqp'
+    CELERY_TIMEZONE = 'UTC'
+
+    # get trained tested submission from datarun
+    CELERYBEAT_SCHEDULE = {
+        'get-trained-tested-submission-datarun': {
+            'task': 'tasks.get_submissions_datarun',
+            'schedule': crontab(minute='*/2')
+        }
+    }
 
 
 class TestingConfig(Config):
