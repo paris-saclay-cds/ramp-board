@@ -78,7 +78,7 @@ cp -r /mnt/datacamp/backup/databoard ${DATABOARD_PATH}/datacamp/.
 # Clone the project
 mkdir code
 cd code
-git clone -b postgres2 --single-branch https://camille24@bitbucket.org/kegl/databoard.git
+git clone https://camille24@bitbucket.org/kegl/databoard.git
 cd databoard
 
 # Install Postgres
