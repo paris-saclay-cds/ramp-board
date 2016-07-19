@@ -32,6 +32,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 import databoard.config as config
 import post_api
+from databoard import celery
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
@@ -1016,6 +1017,37 @@ def send_register_request_mail(user):
 
     for recipient in recipient_list:
         smtpserver.sendmail(gmail_user, recipient, header + body)
+
+
+@celery.task(name='tasks.send_submission_datarun')
+def send_submission_datarun(submission, priority='L', force_retrain_test=True):
+    datarun_host_url = config.DATARUN_URL
+    datarun_username = config.DATARUN_USERNAME
+    datarun_userpassd = config.DATARUN_PASSWORD
+    data_id = send_data_datarun(submission.event.problem.name,
+                                datarun_host_url, datarun_username,
+                                datarun_userpassd)
+    train_test_submissions_datarun(data_id, datarun_host_url,
+                                   datarun_username, datarun_userpassd,
+                                   submissions=submission,
+                                   force_retrain_test=force_retrain_test,
+                                   priority=priority)
+
+
+@celery.task(name='tasks.get_submissions_datarun')
+def get_submissions_datarun():
+    datarun_host_url = config.DATARUN_URL
+    datarun_username = config.DATARUN_USERNAME
+    datarun_userpassd = config.DATARUN_PASSWORD
+    submissions = get_submissions_of_state('new')
+    list_events = []
+    for submission in submissions:
+        list_events.append(submission.event.name)
+    get_trained_tested_submissions_datarun(submissions, datarun_host_url,
+                                           datarun_username, datarun_userpassd)
+    for event in list_events:
+        compute_contributivity(event_name=event)
+        compute_historical_contributivity(event_name=event)
 
 
 def train_test_submissions_datarun(data_id, host_url, username, userpassd,

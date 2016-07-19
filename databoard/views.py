@@ -583,6 +583,10 @@ def sandbox(event_name):
             interaction='submit', user=current_user, event=event,
             submission=new_submission)
 
+        # Send submission to datarun
+        db_tools.send_submission_datarun.delay(new_submission, priority='L',
+                                               force_retrain_test=True)
+
         return flask.redirect(u'/credit/{}'.format(new_submission.hash_))
     return render_template('sandbox.html',
                            submission_names=sandbox_submission.f_names,
