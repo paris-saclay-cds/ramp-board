@@ -2,6 +2,7 @@
 # :Usage: bash deploy_databoard.sh
 # Prepare Ubuntu (14.04) server instance for the application deployment 
 # There must be a file env.sh containing all required environment variables:
+#    export DATABOARD_PATH='/mnt/ramp_data/'  #where to mount the persistent disk
 #    export DATABOARD_DB_NAME='databoard'
 #    export DATABOARD_DB_USER='xxxx'
 #    export DATABOARD_DB_PASSWORD='yyyy'
@@ -26,7 +27,6 @@ source ~/.bashrc
 
 # Set databoard and persistent disk path
 export DISK_PATH=/dev/vdb
-export DATABOARD_PATH=/mnt/ramp_data/
 #export LAST_DB_DUMP=databoard_XXXXX.dump
 
 # Update Packages from the Ubuntu Repositories 
@@ -122,17 +122,22 @@ sed -i "s/SetEnv/    SetEnv/g" /etc/apache2/sites-available/000-default.conf
 # But for some reasons, it does not work. 
 # So we set up the value of this environment variable directly in databoard/config.py 
 sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
+sed -i "s#os.environ.get('DATABOARD_PATH')#'$DATABOARD_PATH'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
 sed -i "s#os.environ.get('DATARUN_URL')#'$DATARUN_URL'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
 sed -i "s#os.environ.get('DATARUN_USERNAME')#'$DATARUN_USERNAME'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
 sed -i "s#os.environ.get('DATARUN_PASSWORD')#'$DATARUN_PASSWORD'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
 
-# Start celery workers
-bash ${DATABOARD_PATH}/code/databoard/tools/celery_worker.sh start $NB_WORKERS
 
 # Wrapping up some permissions issues
 sudo chown -R :www-data ../.
 sudo chown -R www-data:www-data ${DATABOARD_PATH}/datacamp/databoard
 
+# Start celery workers
+sudo apt-get install rabbitmq-server
+chmod 777 ${DATABOARD_PATH}/code/databoard/tools/celery_worker.sh
+sudo -su ubuntu
+bash ${DATABOARD_PATH}/code/databoard/tools/celery_worker.sh start $NB_WORKERS
+sudo su root
 
 # Restart Apache
 sudo service apache2 restart

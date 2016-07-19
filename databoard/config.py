@@ -362,6 +362,8 @@ if os.environ.get('DATABOARD_DB_PERF'):
 DATARUN_URL = os.environ.get('DATARUN_URL')
 DATARUN_USERNAME = os.environ.get('DATARUN_USERNAME')
 DATARUN_PASSWORD = os.environ.get('DATARUN_PASSWORD')
+databoard_path = os.environ.get('DATABOARD_PATH')
+DATABOARD_DIR = databoard_path + '/datacamp/databoard'
 
 
 class Config(object):

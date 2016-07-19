@@ -1024,12 +1024,13 @@ def send_submission_datarun(submission, priority='L', force_retrain_test=True):
     datarun_host_url = config.DATARUN_URL
     datarun_username = config.DATARUN_USERNAME
     datarun_userpassd = config.DATARUN_PASSWORD
+    os.chdir(config.DATABOARD_DIR)
     data_id = send_data_datarun(submission.event.problem.name,
                                 datarun_host_url, datarun_username,
                                 datarun_userpassd)
     train_test_submissions_datarun(data_id, datarun_host_url,
                                    datarun_username, datarun_userpassd,
-                                   submissions=submission,
+                                   submissions=[submission],
                                    force_retrain_test=force_retrain_test,
                                    priority=priority)
 
@@ -1039,7 +1040,9 @@ def get_submissions_datarun():
     datarun_host_url = config.DATARUN_URL
     datarun_username = config.DATARUN_USERNAME
     datarun_userpassd = config.DATARUN_PASSWORD
-    submissions = get_submissions_of_state('new')
+    os.chdir(config.DATABOARD_DIR)
+    submissions = Submission.query.filter(Submission.state == 'new').\
+        filter(Submission.name != 'starting_kit').all()
     list_events = []
     for submission in submissions:
         list_events.append(submission.event.name)

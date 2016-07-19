@@ -11,7 +11,7 @@ logger = logging.getLogger('databoard')
 
 
 def publish_local_test():
-    destination_path = '/tmp/databoard_test'
+    destination_path = '/tmp/datacamp/databoard'
     os.system('rm -rf ' + destination_path)
     os.mkdir(destination_path)
     os.system('rsync -rRultv problems/iris ' + destination_path)
