@@ -1020,19 +1020,21 @@ def send_register_request_mail(user):
 
 
 @celery.task(name='tasks.send_submission_datarun')
-def send_submission_datarun(submission, priority='L', force_retrain_test=True):
+def send_submission_datarun(submission_name, team_name, event_name,
+                            priority='L', force_retrain_test=True):
     datarun_host_url = config.DATARUN_URL
     datarun_username = config.DATARUN_USERNAME
     datarun_userpassd = config.DATARUN_PASSWORD
     os.chdir(config.DATABOARD_DIR)
+    submission = get_submissions(event_name=event_name, team_name=team_name,
+                                 submission_name=submission_name)[0]
     data_id = send_data_datarun(submission.event.problem.name,
                                 datarun_host_url, datarun_username,
                                 datarun_userpassd)
-    train_test_submissions_datarun(data_id, datarun_host_url,
-                                   datarun_username, datarun_userpassd,
-                                   submissions=[submission],
-                                   force_retrain_test=force_retrain_test,
-                                   priority=priority)
+    train_test_submission_datarun(submission, data_id, datarun_host_url,
+                                  datarun_username, datarun_userpassd,
+                                  force_retrain_test=force_retrain_test,
+                                  priority=priority)
 
 
 @celery.task(name='tasks.get_submissions_datarun')
@@ -1048,9 +1050,12 @@ def get_submissions_datarun():
         list_events.append(submission.event.name)
     get_trained_tested_submissions_datarun(submissions, datarun_host_url,
                                            datarun_username, datarun_userpassd)
-    for event in list_events:
-        compute_contributivity(event_name=event)
-        compute_historical_contributivity(event_name=event)
+    if Submission.query.filter(Submission.state == 'new').\
+            filter(Submission.name != 'starting_kit').\
+            count() < len(submissions):
+        for event in list_events:
+            compute_contributivity(event_name=event)
+            compute_historical_contributivity(event_name=event)
 
 
 def train_test_submissions_datarun(data_id, host_url, username, userpassd,
@@ -1249,7 +1254,8 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
             logger.info('test_score {} = {}'.format(
                 score.score_name, score.test_score_cv_bag))
 
-        send_trained_mails(submission)
+        if submission.state != 'new':
+            send_trained_mails(submission)
 
 
 def train_test_submissions(submissions=None, force_retrain_test=False):

@@ -584,8 +584,12 @@ def sandbox(event_name):
             submission=new_submission)
 
         # Send submission to datarun
-        db_tools.send_submission_datarun.delay(new_submission, priority='L',
-                                               force_retrain_test=True)
+        db_tools.send_submission_datarun.\
+            apply_async(args=[new_submission.name,
+                              new_submission.team.name,
+                              new_submission.event.name],
+                        kwargs={'priority': 'L',
+                                'force_retrain_test': True})
 
         return flask.redirect(u'/credit/{}'.format(new_submission.hash_))
     return render_template('sandbox.html',
