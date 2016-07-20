@@ -356,7 +356,7 @@ def delete_submission_similarity(submissions):
     db.session.commit()
 
 
-def send_data_datarun(problem_name, host_url, username, userpassd):
+def send_data_datarun(problem_name, host_url, username, userpassd, split=True):
     """
     Send data to datarun and prepare data (split train test)
 
@@ -364,11 +364,13 @@ def send_data_datarun(problem_name, host_url, username, userpassd):
     :param host_url: host url of datarun
     :param username: username for datarun
     :param userpassd: user password for datarun
+    :param split: to split data on datarun server, even when data alread there
 
     :type problem_name: string
     :type host_url: string
     :type username: string
     :type userpassd: string
+    :type split: Boolean
     """
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
     if problem is None:
@@ -407,14 +409,15 @@ def send_data_datarun(problem_name, host_url, username, userpassd):
             logger.info('** Problem submitting data to datarun, no data id **')
             return None
         # Ask to prepare data to datarun
-        if extra_files:
-            post_split = post_api.custom_post_split(host_url, username,
-                                                    userpassd, data_id)
-        else:
-            post_split = post_api.post_split(host_url, username, userpassd,
-                                             held_out_test, data_id,
-                                             random_state=random_state)
-        logger.info('Prepare data on datarun: %s' % post_split.content)
+        if post_data.ok or split:
+            if extra_files:
+                post_split = post_api.custom_post_split(host_url, username,
+                                                        userpassd, data_id)
+            else:
+                post_split = post_api.post_split(host_url, username, userpassd,
+                                                 held_out_test, data_id,
+                                                 random_state=random_state)
+            logger.info('Prepare data on datarun: %s' % post_split.content)
         return data_id
 
 
@@ -1030,7 +1033,7 @@ def send_submission_datarun(submission_name, team_name, event_name,
                                  submission_name=submission_name)[0]
     data_id = send_data_datarun(submission.event.problem.name,
                                 datarun_host_url, datarun_username,
-                                datarun_userpassd)
+                                datarun_userpassd, split=False)
     train_test_submission_datarun(submission, data_id, datarun_host_url,
                                   datarun_username, datarun_userpassd,
                                   force_retrain_test=force_retrain_test,
