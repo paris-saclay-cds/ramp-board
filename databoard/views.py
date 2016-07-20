@@ -623,6 +623,8 @@ def credit(submission_hash):
             source_submission.event_team.team.name,
             source_submission.name)
 
+    # Make sure that CreditForm is empty
+    CreditForm.name_credits = []
     credit_form_kwargs = {}
     for source_submission in source_submissions:
         s_field = get_s_field(source_submission)
