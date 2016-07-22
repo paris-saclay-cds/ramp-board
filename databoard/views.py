@@ -437,9 +437,9 @@ def sandbox(event_name):
     # of textareas, named and populated at run time, is mind boggling.
 
     # First we need to make sure CodeForm is empty
-    for name_code in CodeForm.names_codes:
-        name, _ = name_code
-        delattr(CodeForm, name)
+    # for name_code in CodeForm.names_codes:
+    #     name, _ = name_code
+    #     delattr(CodeForm, name)
     CodeForm.names_codes = []
 
     # Then we create named
