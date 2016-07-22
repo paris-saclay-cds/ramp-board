@@ -26,7 +26,6 @@ dropdb -U postgres ${db}
 psql -U postgres -c '\i tools/setup_database.sql'
 # Pb with db user password..not properly set with the above script... workaround:
 psql -U postgres -c "ALTER ROLE $DATABOARD_DB_USER WITH PASSWORD '$DATABOARD_DB_PASSWORD'"
-python manage.py db upgrade
 # Restore the db
 pg_restore -j 8 -U postgres -d ${db} ${prod_db_dump}
 # rsync databoard files
