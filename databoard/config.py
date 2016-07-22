@@ -370,7 +370,7 @@ class Config(object):
     # abs max upload file size, to throw 413, before saving it
     MAX_CONTENT_LENGTH = 1024 * 1024 * 1024
     LOG_FILENAME = None  # if None, output to screen
-    WTF_CSRF_ENABLED = False  # True
+    WTF_CSRF_ENABLED = True
     SECRET_KEY = 'eroigudsfojbn;lk'
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     # SQLALCHEMY_DATABASE_URI = 'sqlite:///' + db_f_name
