@@ -34,7 +34,8 @@ target_column_names = [
     'g_mIntestine (C17-21)']
 workflow_name = 'feature_extractor_regressor_workflow'
 prediction_labels = None
-
+extra_files = [os.path.join(problems_path, problem_name,
+                            'epidemium2_cancer_mortality_datarun.py')]
 
 def prepare_data():
     df = pd.read_csv(raw_filename)

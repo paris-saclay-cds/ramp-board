@@ -12,25 +12,25 @@ class Predictions(BasePrediction):
         # multiclass_prediction.labels = labels
         if y_pred is not None:
             self.multiclass_prediction = multiclass_prediction.Predictions(
-                y_pred=y_pred[:, :-1])
+                labels=self.labels, y_pred=y_pred[:, :-1])
             self.regression_prediction = regression_prediction.Predictions(
-                y_pred=y_pred[:, -1])
+                labels=self.labels, y_pred=y_pred[:, -1])
         elif y_true is not None:
             self.multiclass_prediction = multiclass_prediction.Predictions(
-                y_true=y_true[:, 0])
+                labels=self.labels, y_true=y_true[:, 0])
             self.regression_prediction = regression_prediction.Predictions(
-                y_true=y_true[:, 1])
+                labels=self.labels, y_true=y_true[:, 1])
         elif f_name is not None:
             y_true = np.load(f_name)
             self.multiclass_prediction = multiclass_prediction.Predictions(
-                y_true=y_true[:, 0])
+                labels=self.labels, y_true=y_true[:, 0])
             self.regression_prediction = regression_prediction.Predictions(
-                y_true=y_true[:, 1])
+                labels=self.labels, y_true=y_true[:, 1])
         elif n_samples is not None:
             self.multiclass_prediction = multiclass_prediction.Predictions(
-                n_samples=n_samples)
+                labels=self.labels, n_samples=n_samples)
             self.regression_prediction = regression_prediction.Predictions(
-                n_samples=n_samples)
+                labels=self.labels, n_samples=n_samples)
 
     def set_valid_in_train(self, predictions, test_is):
         self.multiclass_prediction.set_valid_in_train(

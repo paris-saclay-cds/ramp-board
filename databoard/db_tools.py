@@ -390,7 +390,7 @@ def send_data_datarun(problem_name, host_url, username, userpassd, split=True):
             extra_files = problem.module.extra_files
         except AttributeError:
             extra_files = None
-        held_out_test = problem.module.held_out_test_size
+            held_out_test = problem.module.held_out_test_size
         post_data = post_api.post_data(host_url, username, userpassd,
                                        problem_name, target_column,
                                        workflow_elements, data_file,
