@@ -1,14 +1,12 @@
 import numpy as np
 from databoard.base_prediction import BasePrediction
 
-# Global static that should be set by specific (or somebody)
-labels = []
-
 
 class Predictions(BasePrediction):
 
-    def __init__(self, y_pred=None, y_pred_labels=None, y_pred_indexes=None,
-                 y_true=None, f_name=None, n_samples=None):
+    def __init__(self, labels=None, y_pred=None, y_pred_labels=None,
+                 y_pred_indexes=None, y_true=None, f_name=None, n_samples=None):
+        self.labels = labels
         if y_pred is not None:
             self.y_proba = np.array(y_pred)
         elif y_pred_labels is not None:
@@ -19,7 +17,7 @@ class Predictions(BasePrediction):
             self.y_proba = np.load(f_name)
         elif n_samples is not None:
             self.y_proba = np.empty(
-                (n_samples, len(labels)), dtype=np.float64)
+                (n_samples, len(self.labels)), dtype=np.float64)
             self.y_proba.fill(np.nan)
         else:
             raise ValueError('Missing init argument: y_pred, y_pred_labels, '
@@ -34,16 +32,16 @@ class Predictions(BasePrediction):
         #                     format(len(labels), shape[1]))
 
     def _init_from_pred_labels(self, y_pred_labels):
-        type_of_label = type(labels[0])
+        type_of_label = type(self.labels[0])
         self.y_proba = np.zeros(
-            (len(y_pred_labels), len(labels)), dtype=np.float64)
+            (len(y_pred_labels), len(self.labels)), dtype=np.float64)
         for ps_i, label_list in zip(self.y_proba, y_pred_labels):
             # converting single labels to list of labels, assumed below
             if type(label_list) != np.ndarray and type(label_list) != list:
                 label_list = [label_list]
             label_list = map(type_of_label, label_list)
             for label in label_list:
-                ps_i[labels.index(label)] = 1.0 / len(label_list)
+                ps_i[self.labels.index(label)] = 1.0 / len(label_list)
 
     def set_valid_in_train(self, predictions, test_is):
         self.y_proba[test_is] = predictions.y_proba
@@ -63,7 +61,7 @@ class Predictions(BasePrediction):
 
     @property
     def y_pred_label(self):
-        return labels[self.y_pred_label_index]
+        return self.labels[self.y_pred_label_index]
 
     @property
     def y_pred_comb(self):

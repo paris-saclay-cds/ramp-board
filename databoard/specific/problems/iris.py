@@ -21,7 +21,8 @@ train_filename = os.path.join(
 test_filename = os.path.join(
     problems_path, problem_name, 'data', 'private', 'test.csv')
 
-prediction.labels = ['setosa', 'versicolor', 'virginica']
+# prediction.labels = ['setosa', 'versicolor', 'virginica']
+prediction_labels = ['setosa', 'versicolor', 'virginica']
 target_column_name = 'species'
 workflow_name = 'classifier_workflow'
 

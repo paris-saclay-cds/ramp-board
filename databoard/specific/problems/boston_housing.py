@@ -23,6 +23,7 @@ test_filename = os.path.join(
 
 target_column_name = 'medv'
 workflow_name = 'regressor_workflow'
+prediction_labels = None
 extra_files = [os.path.join(problems_path, problem_name,
                             'boston_housing_datarun.py')]
 

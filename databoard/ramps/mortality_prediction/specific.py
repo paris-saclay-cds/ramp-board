@@ -17,7 +17,8 @@ from databoard.config import raw_data_path, public_data_path, private_data_path
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 ramp_title = 'Mortality prediction'
-multiclass_prediction.labels = ['0.0', '1.0']
+# multiclass_prediction.labels = ['0.0', '1.0']
+labels = ['0.0', '1.0']
 target_column_name = 'TARGET'
 
 cv_test_size = config_object.cv_test_size

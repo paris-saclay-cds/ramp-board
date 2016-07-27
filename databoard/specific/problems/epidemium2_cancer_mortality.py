@@ -33,6 +33,7 @@ target_column_names = [
     'g_mColon, rectum and anus (C18-21)',
     'g_mIntestine (C17-21)']
 workflow_name = 'feature_extractor_regressor_workflow'
+prediction_labels = None
 
 
 def prepare_data():

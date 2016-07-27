@@ -17,8 +17,11 @@ from databoard.config import raw_data_path, public_data_path, private_data_path
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 ramp_title = 'Pollenating insect classification'
-multiclass_prediction.labels = [565, 654, 682, 687, 696, 715, 759, 833, 835,
-                                881, 952, 970, 971, 978, 995, 996, 1061, 1071]
+# multiclass_prediction.labels = [565, 654, 682, 687, 696, 715, 759, 833, 835,
+#                                 881, 952, 970, 971, 978, 995, 996, 1061, 1071]
+labels = [565, 654, 682, 687, 696, 715, 759, 833, 835,
+          881, 952, 970, 971, 978, 995, 996, 1061, 1071]
+
 # held_out_test_size = 0.7
 
 cv_test_size = config_object.cv_test_size

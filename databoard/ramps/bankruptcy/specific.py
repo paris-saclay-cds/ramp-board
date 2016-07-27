@@ -20,7 +20,8 @@ from databoard.config import private_data_path
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 ramp_title = 'Bankruptcy prediction'
-multiclass_prediction.labels = [0, 1]
+# multiclass_prediction.labels = [0, 1]
+labels = [0, 1]
 target_column_name = 'Faillite'
 
 cv_test_size = config_object.cv_test_size

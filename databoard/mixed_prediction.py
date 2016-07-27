@@ -3,14 +3,13 @@ from databoard.base_prediction import BasePrediction
 import databoard.multiclass_prediction as multiclass_prediction
 import databoard.regression_prediction as regression_prediction
 
-# Global static that should be set by specific (or somebody)
-labels = []
-
 
 class Predictions(BasePrediction):
 
-    def __init__(self, y_pred=None, y_true=None, f_name=None, n_samples=None):
-        multiclass_prediction.labels = labels
+    def __init__(self, labels=None, y_pred=None, y_true=None, f_name=None,
+                 n_samples=None):
+        self.labels = labels
+        # multiclass_prediction.labels = labels
         if y_pred is not None:
             self.multiclass_prediction = multiclass_prediction.Predictions(
                 y_pred=y_pred[:, :-1])
