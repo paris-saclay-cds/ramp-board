@@ -1178,87 +1178,96 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
     :type userpassd: string
     """
     for submission in submissions:
-        logger.info('Getting submission %s - %s - %s from datarun'
-                    % (submission.event_team, submission.name, submission.id))
-        y_shape_train = submission.event.problem.\
-            true_predictions_train().y_pred.shape
-        y_shape_test = submission.event.problem.\
-            true_predictions_test().y_pred.shape
-        list_submission_fold_id = [submission_fold.id for submission_fold in
-                                   submission.on_cv_folds]
-        list_pred = post_api.get_prediction_list(host_url, username, userpassd,
-                                                 list_submission_fold_id)
-        list_pred = json.loads(list_pred.content)
-        for pred in list_pred:
-            state = pred['state'].lower()
-            log_messages = pred['log_messages']
-            if state not in ["todo"]:
-                submission_fold = SubmissionOnCVFold.query.\
-                    filter(SubmissionOnCVFold.id == pred["databoard_sf_id"]).\
-                    first()
-                submission_fold.state = state
-                if state in ['trained', 'validated', 'tested']:
-                    submission_fold.train_time = pred['train_time']
-                    submission_fold.state = 'trained'
-                if state in ['validated', 'tested']:
-                    submission_fold.valid_time = pred['validation_time']
-                    submission_fold.state = 'validated'
-                    full_train_y_pred = np.fromstring(zlib.decompress(
-                        base64.b64decode(pred['full_train_predictions'])),
-                        dtype=float).reshape(y_shape_train)
-                    submission_fold.full_train_y_pred = full_train_y_pred
-                    submission_fold.compute_train_scores()
-                    submission_fold.compute_valid_scores()
-                if state in ['tested']:
-                    submission_fold.test_time = pred['test_time']
-                    submission_fold.state = 'tested'
-                    test_y_pred = np.fromstring(zlib.decompress(
-                        base64.b64decode(pred['test_predictions'])),
-                        dtype=float).reshape(y_shape_test)
-                    submission_fold.test_y_pred = test_y_pred
-                    submission_fold.compute_test_scores()
-                if 'error' in state:
-                    if 'ERROR(split' in log_messages:
-                        submission_fold.state = 'checking_error'
-                    elif 'ERROR(train' in log_messages:
-                        submission_fold.state = 'training_error'
-                    elif 'ERROR(validation' in log_messages:
-                        submission_fold.state = 'validating_error'
-                    elif 'ERROR(test' in log_messages:
-                        submission_fold.state = 'testing_error'
-        db.session.commit()
-        submission.training_timestamp = datetime.datetime.utcnow()
-        submission.set_state_after_training()
-        submission.compute_test_score_cv_bag()
-        submission.compute_valid_score_cv_bag()
-        # Means and stds were constructed on demand by fetching fold times.
-        # It was slow because submission_on_folds contain also possibly large
-        # predictions. If postgres solves this issue (which can be tested on
-        # the mean and std scores on the private leaderbord), the
-        # corresponding columns (which are now redundant) can be deleted in
-        # Submission and this computation can also be deleted.
-        submission.train_time_cv_mean = np.array(
-            [ts.train_time for ts in submission.on_cv_folds]).mean()
-        submission.valid_time_cv_mean = np.array(
-            [ts.valid_time for ts in submission.on_cv_folds]).mean()
-        submission.test_time_cv_mean = np.array(
-            [ts.test_time for ts in submission.on_cv_folds]).mean()
-        submission.train_time_cv_std = np.array(
-            [ts.train_time for ts in submission.on_cv_folds]).std()
-        submission.valid_time_cv_std = np.array(
-            [ts.valid_time for ts in submission.on_cv_folds]).std()
-        submission.test_time_cv_std = np.array(
-            [ts.test_time for ts in submission.on_cv_folds]).std()
+        try:
+            logger.info('Getting submission %s - %s - %s from datarun'
+                        % (submission.event_team, submission.name,
+                           submission.id))
+            y_shape_train = submission.event.problem.\
+                true_predictions_train().y_pred.shape
+            y_shape_test = submission.event.problem.\
+                true_predictions_test().y_pred.shape
+            list_submission_fold_id = [submission_fold.id for submission_fold in
+                                       submission.on_cv_folds]
+            list_pred = post_api.get_prediction_list(host_url, username,
+                                                     userpassd,
+                                                     list_submission_fold_id)
+            list_pred = json.loads(list_pred.content)
+            for pred in list_pred:
+                state = pred['state'].lower()
+                log_messages = pred['log_messages']
+                if state not in ["todo"]:
+                    submission_fold = SubmissionOnCVFold.query.filter(
+                        SubmissionOnCVFold.id == pred["databoard_sf_id"]).\
+                        first()
+                    submission_fold.state = state
+                    if state in ['trained', 'validated', 'tested']:
+                        submission_fold.train_time = pred['train_time']
+                        submission_fold.state = 'trained'
+                    if state in ['validated', 'tested']:
+                        submission_fold.valid_time = pred['validation_time']
+                        submission_fold.state = 'validated'
+                        full_train_y_pred = np.fromstring(zlib.decompress(
+                            base64.b64decode(pred['full_train_predictions'])),
+                            dtype=float).reshape(y_shape_train)
+                        submission_fold.full_train_y_pred = full_train_y_pred
+                        submission_fold.compute_train_scores()
+                        submission_fold.compute_valid_scores()
+                    if state in ['tested']:
+                        submission_fold.test_time = pred['test_time']
+                        submission_fold.state = 'tested'
+                        test_y_pred = np.fromstring(zlib.decompress(
+                            base64.b64decode(pred['test_predictions'])),
+                            dtype=float).reshape(y_shape_test)
+                        submission_fold.test_y_pred = test_y_pred
+                        submission_fold.compute_test_scores()
+                    if 'error' in state:
+                        if 'ERROR(split' in log_messages:
+                            submission_fold.state = 'checking_error'
+                        elif 'ERROR(train' in log_messages:
+                            submission_fold.state = 'training_error'
+                        elif 'ERROR(validation' in log_messages:
+                            submission_fold.state = 'validating_error'
+                        elif 'ERROR(test' in log_messages:
+                            submission_fold.state = 'testing_error'
+            db.session.commit()
+            submission.training_timestamp = datetime.datetime.utcnow()
+            submission.set_state_after_training()
+            submission.compute_test_score_cv_bag()
+            submission.compute_valid_score_cv_bag()
+            # Means and stds were constructed on demand by fetching fold times.
+            # It was slow because submission_on_folds contain also possibly
+            # large predictions. If postgres solves this issue
+            # (which can be tested on the mean and std scores on the private
+            # leaderbord), the corresponding columns (which are now redundant)
+            # can be deleted in Submission and this computation can also be
+            # deleted.
+            submission.train_time_cv_mean = np.array(
+                [ts.train_time for ts in submission.on_cv_folds]).mean()
+            submission.valid_time_cv_mean = np.array(
+                [ts.valid_time for ts in submission.on_cv_folds]).mean()
+            submission.test_time_cv_mean = np.array(
+                [ts.test_time for ts in submission.on_cv_folds]).mean()
+            submission.train_time_cv_std = np.array(
+                [ts.train_time for ts in submission.on_cv_folds]).std()
+            submission.valid_time_cv_std = np.array(
+                [ts.valid_time for ts in submission.on_cv_folds]).std()
+            submission.test_time_cv_std = np.array(
+                [ts.test_time for ts in submission.on_cv_folds]).std()
 
-        db.session.commit()
-        for score in submission.scores:
-            logger.info('valid_score {} = {}'.format(
-                score.score_name, score.valid_score_cv_bag))
-            logger.info('test_score {} = {}'.format(
-                score.score_name, score.test_score_cv_bag))
+            db.session.commit()
+            for score in submission.scores:
+                logger.info('valid_score {} = {}'.format(
+                    score.score_name, score.valid_score_cv_bag))
+                logger.info('test_score {} = {}'.format(
+                    score.score_name, score.test_score_cv_bag))
 
-        if submission.state != 'new':
-            send_trained_mails(submission)
+            if submission.state != 'new':
+                send_trained_mails(submission)
+        except Exception as e:
+            logger.info('PROBLEM when trying to get submission %s - %s - %s '
+                        'from datarun: %s'
+                        % (submission.event_team, submission.name,
+                           submission.id, e))
 
 
 def train_test_submissions(submissions=None, force_retrain_test=False):
