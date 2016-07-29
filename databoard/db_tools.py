@@ -1158,8 +1158,9 @@ def train_test_submission_datarun(submission, data_id, host_url,
                         % (task_id))
         else:
             logger.info('Problem submitting submission fold %s'
-                        'from submission %s' % (submission_fold_id,
-                                                submission.name))
+                        'from submission %s: %s' % (submission_fold_id,
+                                                    submission.name,
+                                                    post_submission.reason))
 
 
 def get_trained_tested_submissions_datarun(submissions, host_url,
