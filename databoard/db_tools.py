@@ -1221,6 +1221,7 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
                         submission_fold.test_y_pred = test_y_pred
                         submission_fold.compute_test_scores()
                     if 'error' in state:
+                        submission_fold.error_msg = pred['log_messages']
                         if 'ERROR(split' in log_messages:
                             submission_fold.state = 'checking_error'
                         elif 'ERROR(train' in log_messages:
