@@ -815,3 +815,104 @@ def after_request(response):
                                % (query.statement, query.parameters,
                                   query.duration, query.context))
     return response
+
+
+@app.route("/events/<event_name>/dashboard_submissions")
+@fl.login_required
+def dashboard_submissions(event_name):
+    event = Event.query.filter_by(name=event_name).one_or_none()
+
+    if current_user.access_level == 'admin' or\
+            db_tools.is_admin(event, current_user):
+        # Get all new submissions
+        submissions = db_tools.get_submissions(event_name=event_name)
+        submissions = [submission for submission in submissions
+                       if submission.state == 'new' and
+                       submission.is_not_sandbox]
+        dashboard_kwargs = {'event': event,
+                            'submissions': submissions}
+        failed_leaderboard_html = db_tools.get_failed_leaderboard(event_name)
+        new_leaderboard_html = db_tools.get_new_leaderboard_datarun(event_name)
+        return render_template(
+            'dashboard_submissions.html',
+            failed_leaderboard=failed_leaderboard_html,
+            new_leaderboard=new_leaderboard_html,
+            **dashboard_kwargs)
+    else:
+        return _redirect_to_user(
+            u'Sorry {}, you do not have admin access for {}"'.
+            format(current_user, event_name))
+
+
+@app.route("/<submission_hash>/send_submission_datarun")
+@fl.login_required
+def send_submission_datarun(submission_hash):
+    submission = Submission.query.filter_by(
+        hash_=submission_hash).one_or_none()
+    if submission is None:
+        error_str = u'Missing submission: {}'.format(submission_hash)
+        return _redirect_to_user(error_str)
+    if current_user.access_level == 'admin' or\
+            db_tools.is_admin(submission.event, current_user):
+        # Send submission to datarun
+        db_tools.send_submission_datarun.\
+            apply_async(args=[submission.name,
+                              submission.team.name,
+                              submission.event.name],
+                        kwargs={'priority': 'L',
+                                'force_retrain_test': True})
+        message_str = u'Submission has been sent to datarun {}'.\
+            format(submission.name)
+        logger.info(message_str)
+        flask.flash(message_str, category='Info')
+        return flask.redirect(u'/events/{}/dashboard_submissions'.
+                              format(submission.event.name))
+    else:
+        return _redirect_to_user(
+            u'Sorry {}, you do not have admin rights"'.format(current_user))
+
+
+@app.route("/<submission_hash>/get_submission_datarun")
+@fl.login_required
+def get_submission_datarun(submission_hash):
+    submission = Submission.query.filter_by(
+        hash_=submission_hash).one_or_none()
+    if submission is None:
+        error_str = u'Missing submission: {}'.format(submission_hash)
+        return _redirect_to_user(error_str)
+    if current_user.access_level == 'admin' or\
+            db_tools.is_admin(submission.event, current_user):
+        # Get submission from datarun
+        db_tools.get_submissions_datarun.\
+            apply_async(args=[[submission]],
+                        kwargs={'priority': 'L',
+                                'force_retrain_test': True})
+        message_str = u'Getting submission {} from datarun'.format(submission.
+                                                                   name)
+        logger.info(message_str)
+        flask.flash(message_str, category='Info')
+        return flask.redirect(u'/events/{}/dashboard_submissions'.
+                              format(submission.event.name))
+    else:
+        return _redirect_to_user(
+            u'Sorry {}, you do not have admin rights"'.format(current_user))
+
+
+@app.route("/<event_name>/send_data_datarun")
+@fl.login_required
+def send_data_datarun(event_name):
+    event = Event.query.filter_by(name=event_name).one_or_none()
+    if current_user.access_level == 'admin' or\
+            db_tools.is_admin(event, current_user):
+        # Send data to datarun
+        db_tools.send_data_datarun.\
+            apply_async(args=[event.problem.name],
+                        kwargs={'split': True})
+        message_str = u'Sending data for {} to datarun'.format(event.name)
+        logger.info(message_str)
+        flask.flash(message_str, category='Info')
+        return flask.redirect(u'/events/{}/dashboard_submissions'.
+                              format(event.name))
+    else:
+        return _redirect_to_user(
+            u'Sorry {}, you do not have admin rights"'.format(current_user))

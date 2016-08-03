@@ -356,6 +356,17 @@ def delete_submission_similarity(submissions):
     db.session.commit()
 
 
+@celery.task(name='tasks.send_data_datarun')
+def send_data_datarun_config(problem_name, split=True):
+    datarun_host_url = config.DATARUN_URL
+    datarun_username = config.DATARUN_USERNAME
+    datarun_userpassd = config.DATARUN_PASSWORD
+    os.chdir(config.DATABOARD_DIR)
+    send_data_datarun(problem_name,
+                      datarun_host_url, datarun_username,
+                      datarun_userpassd, split=split)
+
+
 def send_data_datarun(problem_name, host_url, username, userpassd, split=True):
     """
     Send data to datarun and prepare data (split train test)
@@ -1041,13 +1052,14 @@ def send_submission_datarun(submission_name, team_name, event_name,
 
 
 @celery.task(name='tasks.get_submissions_datarun')
-def get_submissions_datarun():
+def get_submissions_datarun(submissions=None):
     datarun_host_url = config.DATARUN_URL
     datarun_username = config.DATARUN_USERNAME
     datarun_userpassd = config.DATARUN_PASSWORD
     os.chdir(config.DATABOARD_DIR)
-    submissions = Submission.query.filter(Submission.state == 'new').\
-        filter(Submission.name != 'starting_kit').all()
+    if not submissions:
+        submissions = Submission.query.filter(Submission.state == 'new').\
+            filter(Submission.name != 'starting_kit').all()
     list_events = []
     for submission in submissions:
         list_events.append(submission.event.name)
@@ -1948,6 +1960,45 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
             columns, [submission.event_team.team.name,
                       submission.name_with_link,
                       date_time_format(submission.submission_timestamp)])}
+        for submission in submissions
+    ]
+    leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
+    html_params = dict(
+        escape=False,
+        index=False,
+        max_cols=None,
+        max_rows=None,
+        justify='left',
+        classes=['ui', 'blue', 'celled', 'table', 'sortable']
+    )
+    leaderboard_html = leaderboard_df.to_html(**html_params)
+    return leaderboard_html
+
+
+def get_new_leaderboard_datarun(event_name, team_name=None, user_name=None):
+    """
+    Returns
+    -------
+    leaderboard_html : html string
+    """
+    submissions = get_submissions(
+        event_name=event_name, team_name=team_name, user_name=user_name)
+    submissions = [submission for submission in submissions
+                   if submission.state == 'new' and submission.is_not_sandbox]
+
+    columns = ['team', 'submission', 'submitted at (UTC)',
+               'Send to datarun', 'Get from datarun']
+    leaderboard_dict_list = [
+        {column: value for column, value in zip(
+            columns, [submission.event_team.team.name,
+                      submission.name_with_link,
+                      date_time_format(submission.submission_timestamp),
+                      "<center><a href='/{}/send_submission_datarun'><i "
+                      "class='arrow circle outline up icon'></i></a></center>".
+                      format(submission.hash_),
+                      "<center><a href='/{}/get_submission_datarun'><i "
+                      "class='arrow circle outline down icon'></i></a></center>".
+                      format(submission.hash_)])}
         for submission in submissions
     ]
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
