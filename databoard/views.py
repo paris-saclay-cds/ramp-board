@@ -25,7 +25,7 @@ import databoard.db_tools as db_tools
 import databoard.config as config
 from databoard.model import User, Submission, WorkflowElement,\
     Event, SubmissionFile, UserInteraction, SubmissionSimilarity,\
-    DuplicateSubmissionError, TooEarlySubmissionError,\
+    EventTeam, DuplicateSubmissionError, TooEarlySubmissionError,\
     MissingExtensionError
 from databoard.forms import LoginForm, CodeForm, SubmitForm, ImportForm,\
     UploadForm, UserProfileForm, CreditForm
@@ -51,6 +51,14 @@ def timestamp_to_time(timestamp):
 @app.before_request
 def before_request():
     g.user = current_user  # so templates can access user
+
+
+def check_admin(current_user, event):
+    try:
+        return (current_user.access_level == 'admin' or
+                db_tools.is_admin(event, current_user))
+    except AttributeError:
+        return False
 
 
 @app.route("/", methods=['GET', 'POST'])
@@ -148,8 +156,10 @@ def user():
          db_tools.is_user_signed_up(event.name, current_user.name))
         for event in events]
 
+    admin = check_admin(current_user, event)
     return render_template('user.html',
-                           event_urls_f_names=event_urls_f_names)
+                           event_urls_f_names=event_urls_f_names,
+                           admin=admin)
 
 
 def _redirect_to_user(message_str, is_error=True, category=None):
@@ -254,8 +264,7 @@ def user_event(event_name):
             'r', 'utf-8')\
             as description_file:
         description = description_file.read()
-    admin = (current_user.access_level == 'admin' or
-             db_tools.is_admin(event, current_user))
+    admin = check_admin(current_user, event)
     return render_template('event.html',
                            description=description,
                            event=event,
@@ -293,8 +302,7 @@ def my_submissions(event_name):
         event_name, user_name=current_user.name)
     new_leaderboard_html = db_tools.get_new_leaderboard(
         event_name, user_name=current_user.name)
-    admin = (current_user.access_level == 'admin' or
-             db_tools.is_admin(event, current_user))
+    admin = check_admin(current_user, event)
     return render_template('leaderboard.html',
                            leaderboard_title='Trained submissions',
                            leaderboard=leaderbord_html,
@@ -633,8 +641,7 @@ def sandbox(event_name):
                                 'force_retrain_test': True})
 
         return flask.redirect(u'/credit/{}'.format(new_submission.hash_))
-    admin = (current_user.access_level == 'admin' or
-             db_tools.is_admin(event, current_user))
+    admin = check_admin(current_user, event)
     return render_template('sandbox.html',
                            submission_names=sandbox_submission.f_names,
                            code_form=code_form,
@@ -726,8 +733,7 @@ def credit(submission_hash):
 
         return flask.redirect(u'/events/{}/sandbox'.format(event.name))
 
-    admin = (current_user.access_level == 'admin' or
-             db_tools.is_admin(event, current_user))
+    admin = check_admin(current_user, event)
     return render_template('credit.html',
                            submission=submission,
                            source_submissions=source_submissions,
@@ -771,8 +777,7 @@ def private_leaderboard(event_name):
         interaction='looking at private leaderboard',
         user=current_user, event=event)
     leaderbord_html = db_tools.get_private_leaderboard(event_name)
-    admin = (current_user.access_level == 'admin' or
-             db_tools.is_admin(event, current_user))
+    admin = check_admin(current_user, event)
     return render_template(
         'leaderboard.html',
         leaderboard_title='Leaderboard',
@@ -875,6 +880,15 @@ def dashboard_submissions(event_name):
     if current_user.access_level == 'admin' or\
             db_tools.is_admin(event, current_user):
         # Get dates and number of submissions
+        submissions_ = db.session.query(Submission, Event, EventTeam).\
+            filter(Event.name == event.name).\
+            filter(Event.id == EventTeam.event_id).\
+            filter(EventTeam.id == Submission.event_team_id).\
+            order_by(Submission.submission_timestamp).all()
+        if submissions_:
+            submissions = list(zip(*submissions_)[0])
+        else:
+            submissions = []
         submissions = db_tools.get_submissions(event_name=event_name)
         submissions = [submission for submission in submissions
                        if submission.name != config.sandbox_d_name]

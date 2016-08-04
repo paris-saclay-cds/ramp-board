@@ -42,13 +42,17 @@ Waiting for approval ...
             <div class="ui fluid card">
                 <div class="content">
                     <div class="description">
-                        <a href="/events/{{ url }}"><i class="file grey icon"></i>{{ f_name }}</a>:
-                        <a href="/events/{{ url }}/leaderboard">leaderboard</a>,
+                        <a href="/events/{{ url }}"><i class="file grey icon"></i><b>{{ f_name }}</b></a>: &nbsp
+                        <a href="/events/{{ url }}/leaderboard">leaderboard</a> &nbsp &nbsp
                         {% if f_signed_up %}
-                            <a href="/events/{{ url }}/my_submissions">my submissions</a>, 
-                            <a href="/events/{{ url }}/sandbox">sandbox</a>
+                            <a href="/events/{{ url }}/my_submissions">my submissions</a> &nbsp &nbsp
+                            <a href="/events/{{ url }}/sandbox">sandbox</a> &nbsp &nbsp &nbsp
                         {% else %}
-                            <a href="/events/{{ url }}/sign_up"><font size=+3>sign up</font></a>
+                            <a href="/events/{{ url }}/sign_up"><font size=+3>sign up</font></a> &nbsp &nbsp 
+                        {% endif %}
+                        {% if admin %}
+                            <a href="/events/{{ url }}/dashboard_submissions">dashboard admin</a> &nbsp &nbsp
+                            <a href="/events/{{ url }}/private_leaderboard">private leaderboard</a> &nbsp &nbsp
                         {% endif %}
                     </div>
                 </div>

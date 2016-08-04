@@ -133,7 +133,8 @@ sed -i "s#os.environ.get('DATABOARD_PATH', './')#'$DATABOARD_PATH'#g" ${DATABOAR
 sed -i "s#os.environ.get('DATARUN_URL')#'$DATARUN_URL'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
 sed -i "s#os.environ.get('DATARUN_USERNAME')#'$DATARUN_USERNAME'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
 sed -i "s#os.environ.get('DATARUN_PASSWORD')#'$DATARUN_PASSWORD'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
-
+# Change server name in config
+sed -i "s#current_server_name = '0.0.0.0:8080'#current_server_name = '$IP_MASTER'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
 
 # Wrapping up some permissions issues
 sudo chown -R :www-data ../.
