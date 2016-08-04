@@ -105,7 +105,9 @@ return i;
   <div class="one column row">
     <div class="column">
       <h3 class="ui horizontal header divider">Submissions</h3>
-      Plots TODO 
+        <div class="column">
+          <center><div id="submissions_stat" style="width: 1000px; height: 400px;"><!-- Plotly --></div></center> 
+        </div>
     </div>
   </div>
   <div class="column">
@@ -122,4 +124,45 @@ return i;
   </div>
 </div>
 
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+var training_time =   {
+    x: {{ timestamp_submissions|safe }},
+    y: {{ training_sec }},
+    mode: 'markers',
+    type: 'scatter',
+    text: {{ name_submissions|tojson|safe }},
+    marker: { size: 12 },
+    name: 'training time'
+  };
+var cum_submissions =   {
+    x: {{ timestamp_submissions|safe }},
+    y: {{ cumulated_submissions|safe }},
+    type: 'scatter',
+    text: {{ name_submissions|tojson|safe }},
+    marker: { size: 12 },
+    name: '# submissions',
+    xaxis: 'x2',
+    yaxis: 'y2',
+  };
+var layout = {
+  xaxis: {
+    domain: [0, 0.4],
+    title: 'submission timestamp',
+  },
+  yaxis: {
+    title: 'time between submission and training',
+  },
+  yaxis2: {
+    anchor: 'x2',
+    title: 'cumulated submission number',
+  },
+  xaxis2: {
+    domain: [0.6, 1],
+    title: 'submission timestamp'
+  },
+};
+var data = [training_time, cum_submissions];
+Plotly.newPlot('submissions_stat', data, layout);
+</script>
 {% endblock %}

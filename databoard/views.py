@@ -824,13 +824,25 @@ def dashboard_submissions(event_name):
 
     if current_user.access_level == 'admin' or\
             db_tools.is_admin(event, current_user):
-        # Get all new submissions
+        # Get dates and number of submissions
         submissions = db_tools.get_submissions(event_name=event_name)
         submissions = [submission for submission in submissions
-                       if submission.state == 'new' and
-                       submission.is_not_sandbox]
+                       if submission.name != config.sandbox_d_name]
+        timestamp_submissions = [submission.submission_timestamp.
+                                 strftime('%Y-%m-%d %H:%M:%S')
+                                 for submission in submissions]
+        name_submissions = [submission.name for submission in submissions]
+        cumulated_submissions = range(1, 1 + len(submissions))
+        training_sec = [(submission.training_timestamp -
+                         submission.submission_timestamp).seconds / 60.
+                        if submission.training_timestamp is not None
+                        else 0
+                        for submission in submissions]
         dashboard_kwargs = {'event': event,
-                            'submissions': submissions}
+                            'timestamp_submissions': timestamp_submissions,
+                            'training_sec': training_sec,
+                            'cumulated_submissions': cumulated_submissions,
+                            'name_submissions': name_submissions}
         failed_leaderboard_html = db_tools.get_failed_leaderboard(event_name)
         new_leaderboard_html = db_tools.get_new_leaderboard_datarun(event_name)
         return render_template(
