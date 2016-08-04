@@ -202,6 +202,40 @@ def sign_up_for_event(event_name):
             is_error=False, category='Successful sign-up')
 
 
+@app.route("/events/<event_name>/sign_up/<user_name>")
+@fl.login_required
+def approve_sign_up_for_event(event_name, user_name):
+    event = Event.query.filter_by(name=event_name).one_or_none()
+    user = User.query.filter_by(name=user_name).one_or_none()
+    if not current_user.access_level == 'admin' or\
+            not db_tools.is_admin(event, current_user):
+        return _redirect_to_user(u'Sorry {}, you do not have admin rights'.
+                                 format(current_user), is_error=True)
+    if not event or not user:
+        return _redirect_to_user(u'Oups, no event {} or no user {}.'.
+                                 format(event_name, user_name), is_error=True)
+    db_tools.sign_up_team(event.name, user.name)
+    return _redirect_to_user(
+        u'{} is signed up for {}.'.format(user, event),
+        is_error=False, category='Successful sign-up')
+
+
+@app.route("/sign_up/<user_name>")
+@fl.login_required
+def approve_user(user_name):
+    user = User.query.filter_by(name=user_name).one_or_none()
+    if not current_user.access_level == 'admin':
+        return _redirect_to_user(u'Sorry {}, you do not have admin rights'.
+                                 format(current_user), is_error=True)
+    if not user:
+        return _redirect_to_user(u'Oups, no user {}.'.format(user_name),
+                                 is_error=True)
+    db_tools.approve_user(user.name)
+    return _redirect_to_user(
+        u'{} is signed up.'.format(user),
+        is_error=False, category='Successful sign-up')
+
+
 @app.route("/events/<event_name>")
 # @fl.login_required
 def user_event(event_name):

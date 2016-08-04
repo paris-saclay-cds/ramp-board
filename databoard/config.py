@@ -73,7 +73,8 @@ is_pickle_trained_submission = False
 #    server_port)
 # server_name = debug_server if local_deployment else train_server
 
-test_server = '134.158.75.119'
+current_server_name = '0.0.0.0:8080'  # CHANGE WHEN DEPLOY!!
+test_server = '134.158.75.185'
 test_root = '/mnt/ramp_data/datacamp/'
 production_server = '134.158.75.211'
 production_root = '/mnt/ramp_data/datacamp/'

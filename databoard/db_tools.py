@@ -1001,7 +1001,11 @@ def send_sign_up_request_mail(event, user):
     body += 'facebook = {}\n'.format(user.facebook_url)
     body += 'github = {}\n'.format(user.github_url)
     body += 'notes = {}\n'.format(user.hidden_notes)
-    body += 'bio = {}\n'.format(user.bio)
+    body += 'bio = {}\n\n'.format(user.bio)
+    url_approve = 'http://{}/events/{}/sign_up/{}'.\
+        format(config.current_server_name, event.name, user.name)
+    body += 'Click on this link to approve this user for this event: {}\n'.\
+        format(url_approve)
 
     for recipient in recipient_list:
         smtpserver.sendmail(gmail_user, recipient, header + body)
@@ -1027,7 +1031,11 @@ def send_register_request_mail(user):
     body += 'facebook = {}\n'.format(user.facebook_url)
     body += 'github = {}\n'.format(user.github_url)
     body += 'notes = {}\n'.format(user.hidden_notes)
-    body += 'bio = {}\n'.format(user.bio)
+    body += 'bio = {}\n\n'.format(user.bio)
+    url_approve = 'http://{}/sign_up/{}'.\
+        format(config.current_server_name, user.name)
+    body += 'Click on the link to approve the registration of this user: {}\n'.\
+        format(url_approve)
 
     for recipient in recipient_list:
         smtpserver.sendmail(gmail_user, recipient, header + body)
