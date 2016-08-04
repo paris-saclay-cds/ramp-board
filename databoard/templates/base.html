@@ -31,6 +31,10 @@
               </div>
               <div class="five wide right aligned column">
               {% if event %}
+                  {% if admin %}
+                      <a href="/events/{{ event.name }}/dashboard_submissions">dashboard admin</a><br>
+                      <a href="/events/{{ event.name }}/private_leaderboard">private_leaderboard</a><br>
+                  {% endif %}
                   <a href="/events/{{ event.name }}/leaderboard">leaderboard</a><br>
                   <a href="/events/{{ event.name }}/sandbox">sandbox</a><br>
                   <a href="/events/{{ event.name }}/my_submissions">my submissions</a><br>

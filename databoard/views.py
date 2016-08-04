@@ -254,9 +254,12 @@ def user_event(event_name):
             'r', 'utf-8')\
             as description_file:
         description = description_file.read()
+    admin = (current_user.access_level == 'admin' or
+             db_tools.is_admin(event, current_user))
     return render_template('event.html',
                            description=description,
-                           event=event)
+                           event=event,
+                           admin=admin)
 
 
 @app.route("/events/<event_name>/starting_kit")
@@ -290,12 +293,15 @@ def my_submissions(event_name):
         event_name, user_name=current_user.name)
     new_leaderboard_html = db_tools.get_new_leaderboard(
         event_name, user_name=current_user.name)
+    admin = (current_user.access_level == 'admin' or
+             db_tools.is_admin(event, current_user))
     return render_template('leaderboard.html',
                            leaderboard_title='Trained submissions',
                            leaderboard=leaderbord_html,
                            failed_leaderboard=failed_leaderboard_html,
                            new_leaderboard=new_leaderboard_html,
-                           event=event)
+                           event=event,
+                           admin=admin)
 
 
 @app.route("/events/<event_name>/leaderboard")
@@ -323,6 +329,7 @@ def leaderboard(event_name):
             'leaderboard.html',
             failed_leaderboard=failed_leaderboard_html,
             new_leaderboard=new_leaderboard_html,
+            admin=True,
             **leaderboard_kwargs)
     else:
         return render_template(
@@ -626,12 +633,15 @@ def sandbox(event_name):
                                 'force_retrain_test': True})
 
         return flask.redirect(u'/credit/{}'.format(new_submission.hash_))
+    admin = (current_user.access_level == 'admin' or
+             db_tools.is_admin(event, current_user))
     return render_template('sandbox.html',
                            submission_names=sandbox_submission.f_names,
                            code_form=code_form,
                            submit_form=submit_form,
                            upload_form=upload_form,
-                           event=event)
+                           event=event,
+                           admin=admin)
 
 
 @app.route("/credit/<submission_hash>", methods=['GET', 'POST'])
@@ -716,11 +726,14 @@ def credit(submission_hash):
 
         return flask.redirect(u'/events/{}/sandbox'.format(event.name))
 
+    admin = (current_user.access_level == 'admin' or
+             db_tools.is_admin(event, current_user))
     return render_template('credit.html',
                            submission=submission,
                            source_submissions=source_submissions,
                            credit_form=credit_form,
-                           event=event)
+                           event=event,
+                           admin=admin)
 
 
 @app.route("/logout")
@@ -758,12 +771,15 @@ def private_leaderboard(event_name):
         interaction='looking at private leaderboard',
         user=current_user, event=event)
     leaderbord_html = db_tools.get_private_leaderboard(event_name)
+    admin = (current_user.access_level == 'admin' or
+             db_tools.is_admin(event, current_user))
     return render_template(
         'leaderboard.html',
         leaderboard_title='Leaderboard',
         leaderboard=leaderbord_html,
         event=event,
         private=True,
+        admin=admin
     )
 
 
@@ -883,6 +899,7 @@ def dashboard_submissions(event_name):
             'dashboard_submissions.html',
             failed_leaderboard=failed_leaderboard_html,
             new_leaderboard=new_leaderboard_html,
+            admin=True,
             **dashboard_kwargs)
     else:
         return _redirect_to_user(

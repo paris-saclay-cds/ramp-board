@@ -87,7 +87,7 @@ return i;
 </script>
 <div class="ui stackable two column grid">
   <div class="one column row">
-    <div id="info_event">
+    <div class="column">
       <h3 class="ui horizontal header divider">General information</h3>
       <p>Opening time of the event: {{ event.opening_timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
       <p>Send data to datarun and split between train and test on datarun: <a href='/{{ event.name }}/send_data_datarun'><i class='plane icon'></i><i class='plane icon'></i></a> 
