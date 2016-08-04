@@ -889,7 +889,6 @@ def dashboard_submissions(event_name):
             submissions = list(zip(*submissions_)[0])
         else:
             submissions = []
-        submissions = db_tools.get_submissions(event_name=event_name)
         submissions = [submission for submission in submissions
                        if submission.name != config.sandbox_d_name]
         timestamp_submissions = [submission.submission_timestamp.
