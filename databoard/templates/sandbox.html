@@ -117,7 +117,7 @@
     </div>
 </div>
 <h4 class="ui horizontal header divider grey">Submit your code!</h4>
-<form class="ui form" method="post" action="" name="submit" onsubmit="checkSave()">
+<form class="ui form" method="post" action="" name="submit" id="formSubmit">
     {{ submit_form.hidden_tag() }}
     <div class="one field">
 	<center> 
@@ -142,8 +142,7 @@
 {% endfor %}
 
 <script>
-//    document.getElementById("checksave").onsubmit = function() {checkSave()};
-    function checkSave() {
+  $('#formSubmit').submit(function() {
 	var modif = 0;
 	{% for name_code in code_form.names_codes %}
 	    var origin_code = document.getElementById(id="{{ name_code[0] }}").innerHTML; 
@@ -152,8 +151,8 @@
 	    }
 	{% endfor %}
 	if (modif == 1) {
-		confirm('You certainly forgot to save your files! \n- If you do not want to save them, click on OK. \n- If you forgot to save them, click on Cancel, save your files and submit again!');
-	}
-    }
+	     return	confirm('You certainly forgot to save your files! \n- If you do not want to save them, click on OK. \n- If you forgot to save them, click on Cancel, save your files and submit again!');
+ } 
+  });  
 </script>
 {% endblock %}
