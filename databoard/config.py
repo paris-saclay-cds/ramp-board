@@ -356,7 +356,7 @@ ADMIN_MAILS = ['balazs.kegl@gmail.com',
                'camille.marini@gmail.com']
 if os.environ.get('DATABOARD_DB_PERF'):
     SQLALCHEMY_RECORD_QUERIES = True
-    DATABASE_QUERY_TIMEOUT = 0.5  # slow database query threshold (in seconds)
+DATABASE_QUERY_TIMEOUT = 0.5  # slow database query threshold (in seconds)
 
 
 class Config(object):
