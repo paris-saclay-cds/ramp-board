@@ -17,7 +17,6 @@
 #    export DATARUN_URL='uuuu'
 #    export DATARUN_USERNAME='vvvv'
 #    export DATARUN_PASSWORD='wwww'
-#    export NB_WORKERS=2
 
 DISK_PATH=$1
 LAST_DB_DUMP=$2
@@ -157,10 +156,15 @@ chmod 777 ${DATABOARD_PATH}/code/databoard/tools/celery_info
 chmod 777 ${DATABOARD_PATH}/code/databoard/tools/celery_worker.sh
 chmod a+r -R $DATABOARD_PATH/datacamp/databoard/problems
 chmod a+r -R $DATABOARD_PATH/datacamp/databoard/submissions
-sudo -su ubuntu <<HERE
-echo Starting $NB_WORKERS workers as ubuntu user
-bash ${DATABOARD_PATH}/code/databoard/tools/celery_worker.sh start $NB_WORKERS
-HERE
+# sudo -su ubuntu <<HERE
+# echo Starting $NB_WORKERS workers as ubuntu user
+# bash ${DATABOARD_PATH}/code/databoard/tools/celery_worker.sh start $NB_WORKERS
+# HERE
+sed -i "s#DATABOARD_PATH#${DATABOARD_PATH}#g" ${DATABOARD_PATH}/code/databoard/tools/supervisord.conf
+sed -i "s#DATABOARD_PATH#${DATABOARD_PATH}#g" ${DATABOARD_PATH}/code/databoard/tools/celeryd.conf
+sed -i "s#DATABOARD_PATH#${DATABOARD_PATH}#g" ${DATABOARD_PATH}/code/databoard/tools/celerybeat.conf
+easy_install supervisor
+supervisord -c ${DATABOARD_PATH}/code/databoard/tools/supervisord.conf
 
 # Add backup for the production server:
 # execution of tools/dump_db.sh and tools/housekeeping.sh with crontab
