@@ -981,7 +981,7 @@ def send_data_datarun(event_name):
     if current_user.access_level == 'admin' or\
             db_tools.is_admin(event, current_user):
         # Send data to datarun
-        db_tools.send_data_datarun.\
+        db_tools.send_data_datarun_config.\
             apply_async(args=[event.problem.name],
                         kwargs={'split': True})
         message_str = u'Sending data for {} to datarun'.format(event.name)
