@@ -278,7 +278,7 @@ def download_starting_kit(event_name):
     starting_kit_path = os.path.abspath(os.path.join(
         config.root_path, config.problems_d_name, event.problem.name))
     f_name = u'{}.zip'.format(config.sandbox_d_name)
-    print starting_kit_path
+    print(starting_kit_path)
     return send_from_directory(
         starting_kit_path, f_name, as_attachment=True,
         attachment_filename=u'{}_{}'.format(event_name, f_name),
@@ -960,9 +960,7 @@ def get_submission_datarun(submission_hash):
             db_tools.is_admin(submission.event, current_user):
         # Get submission from datarun
         db_tools.get_submissions_datarun.\
-            apply_async(args=[[submission]],
-                        kwargs={'priority': 'L',
-                                'force_retrain_test': True})
+            apply_async(args=[[submission]])
         message_str = u'Getting submission {} from datarun'.format(submission.
                                                                    name)
         logger.info(message_str)

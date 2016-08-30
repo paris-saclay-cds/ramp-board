@@ -506,7 +506,7 @@ def add_event(event_name, force=False):
             event_score_type.precision = score_type_descriptor['precision']
         if 'new_name' in score_type_descriptor:
             event_score_type.name = score_type_descriptor['new_name']
-        print score_type
+        print(score_type)
     # I thought that event.score_types will be sorted by the order we add
     # event_score_types, but no, it's ordered by id (I guess), so we have to
     # excplicitly assign event.official_score_index here.
@@ -518,34 +518,34 @@ def add_event(event_name, force=False):
             event.official_score_name = score_type_descriptor['new_name']
         else:
             event.official_score_name = score_type_descriptor['name']
-    print event.official_score_name
+    print(event.official_score_name)
     db.session.commit()
-    print event.official_score_type
+    print(event.official_score_type)
 
 
 def print_events():
     print('***************** Events ****************')
     for i, event in enumerate(Event.query.all()):
-        print i, event
+        print(i, event)
 
 
 def print_problems():
     print('***************** Problems ****************')
     for i, problem in enumerate(Problem.query.all()):
-        print i, problem
+        print(i, problem)
 
 
 def print_cv_folds():
     print('***************** CV folds ****************')
     for i, cv_fold in enumerate(CVFold.query.all()):
-        print i, cv_fold
+        print(i, cv_fold)
 
 
 def print_submission_similaritys():
     print('******** Submission similarities **********')
     for i, submission_similarity in enumerate(
             SubmissionSimilarity.query.all()):
-        print i, submission_similarity
+        print(i, submission_similarity)
 
 
 def create_user(name, password, lastname, firstname, email,
@@ -1213,83 +1213,117 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
                                                      userpassd,
                                                      list_submission_fold_id)
             list_pred = json.loads(list_pred.content)
+            all_folds_ready = 1
             for pred in list_pred:
                 state = pred['state'].lower()
-                log_messages = pred['log_messages']
-                if state not in ["todo"]:
-                    submission_fold = SubmissionOnCVFold.query.filter(
-                        SubmissionOnCVFold.id == pred["databoard_sf_id"]).\
-                        first()
-                    submission_fold.state = state
-                    if state in ['trained', 'validated', 'tested']:
-                        submission_fold.train_time = pred['train_time']
-                        submission_fold.state = 'trained'
-                    if state in ['validated', 'tested']:
-                        submission_fold.valid_time = pred['validation_time']
-                        submission_fold.state = 'validated'
-                        full_train_y_pred = np.fromstring(zlib.decompress(
-                            base64.b64decode(pred['full_train_predictions'])),
-                            dtype=float).reshape(y_shape_train)
-                        submission_fold.full_train_y_pred = full_train_y_pred
-                        submission_fold.compute_train_scores()
-                        submission_fold.compute_valid_scores()
-                    if state in ['tested']:
-                        submission_fold.test_time = pred['test_time']
-                        submission_fold.state = 'tested'
-                        test_y_pred = np.fromstring(zlib.decompress(
-                            base64.b64decode(pred['test_predictions'])),
-                            dtype=float).reshape(y_shape_test)
-                        submission_fold.test_y_pred = test_y_pred
-                        submission_fold.compute_test_scores()
-                    if 'error' in state:
-                        submission_fold.error_msg = pred['log_messages']
-                        if 'ERROR(split' in log_messages:
-                            submission_fold.state = 'checking_error'
-                        elif 'ERROR(train' in log_messages:
-                            submission_fold.state = 'training_error'
-                        elif 'ERROR(validation' in log_messages:
-                            submission_fold.state = 'validating_error'
-                        elif 'ERROR(test' in log_messages:
-                            submission_fold.state = 'testing_error'
-            db.session.commit()
-            submission.training_timestamp = datetime.datetime.utcnow()
-            submission.set_state_after_training()
-            submission.compute_test_score_cv_bag()
-            submission.compute_valid_score_cv_bag()
-            # Means and stds were constructed on demand by fetching fold times.
-            # It was slow because submission_on_folds contain also possibly
-            # large predictions. If postgres solves this issue
-            # (which can be tested on the mean and std scores on the private
-            # leaderbord), the corresponding columns (which are now redundant)
-            # can be deleted in Submission and this computation can also be
-            # deleted.
-            submission.train_time_cv_mean = np.array(
-                [ts.train_time for ts in submission.on_cv_folds]).mean()
-            submission.valid_time_cv_mean = np.array(
-                [ts.valid_time for ts in submission.on_cv_folds]).mean()
-            submission.test_time_cv_mean = np.array(
-                [ts.test_time for ts in submission.on_cv_folds]).mean()
-            submission.train_time_cv_std = np.array(
-                [ts.train_time for ts in submission.on_cv_folds]).std()
-            submission.valid_time_cv_std = np.array(
-                [ts.valid_time for ts in submission.on_cv_folds]).std()
-            submission.test_time_cv_std = np.array(
-                [ts.test_time for ts in submission.on_cv_folds]).std()
+                if state == "todo":
+                    all_folds_ready = 0
+            if all_folds_ready:
+                for pred in list_pred:
+                    process_fold_datarun(pred, y_shape_train, y_shape_test)
+                db.session.commit()
+                submission.training_timestamp = datetime.datetime.utcnow()
+                submission.set_state_after_training()
+                submission.compute_test_score_cv_bag()
+                submission.compute_valid_score_cv_bag()
+                # Means and stds were constructed on demand by fetching fold
+                # times.
+                # It was slow because submission_on_folds contain also possibly
+                # large predictions. If postgres solves this issue
+                # (which can be tested on the mean and std scores on the private
+                # leaderbord), the corresponding columns (which are now
+                # redundant) can be deleted in Submission and this computation
+                # can also be deleted.
+                submission.train_time_cv_mean = np.array(
+                    [ts.train_time for ts in submission.on_cv_folds]).mean()
+                submission.valid_time_cv_mean = np.array(
+                    [ts.valid_time for ts in submission.on_cv_folds]).mean()
+                submission.test_time_cv_mean = np.array(
+                    [ts.test_time for ts in submission.on_cv_folds]).mean()
+                submission.train_time_cv_std = np.array(
+                    [ts.train_time for ts in submission.on_cv_folds]).std()
+                submission.valid_time_cv_std = np.array(
+                    [ts.valid_time for ts in submission.on_cv_folds]).std()
+                submission.test_time_cv_std = np.array(
+                    [ts.test_time for ts in submission.on_cv_folds]).std()
 
-            db.session.commit()
-            for score in submission.scores:
-                logger.info('valid_score {} = {}'.format(
-                    score.score_name, score.valid_score_cv_bag))
-                logger.info('test_score {} = {}'.format(
-                    score.score_name, score.test_score_cv_bag))
+                db.session.commit()
+                for score in submission.scores:
+                    logger.info('valid_score {} = {}'.format(
+                        score.score_name, score.valid_score_cv_bag))
+                    logger.info('test_score {} = {}'.format(
+                        score.score_name, score.test_score_cv_bag))
 
-            if submission.state != 'new':
-                send_trained_mails(submission)
+                if submission.state != 'new':
+                    send_trained_mails(submission)
         except Exception as e:
             logger.info('PROBLEM when trying to get submission %s - %s - %s '
                         'from datarun: %s'
                         % (submission.event_team, submission.name,
                            submission.id, e))
+
+
+def process_fold_datarun(pred, y_shape_train, y_shape_test):
+    """
+    Process submission on cv fold retrieved from datarun
+
+    :param pred: results of train-test on datarun
+    :param y_shape_train: shape of train dataset
+    :param y_shape_test: shape of test dataset
+    :type pred: dict
+    :type y_shape_train: tuple
+    :type y_shape_test: tuple
+    """
+    state = pred['state'].lower()
+    log_messages = pred['log_messages']
+    if state not in ["todo"]:
+        submission_fold = SubmissionOnCVFold.query.filter(
+            SubmissionOnCVFold.id == pred["databoard_sf_id"]).\
+            first()
+        submission_fold.state = state
+        if state in ['trained', 'validated', 'tested']:
+            submission_fold.train_time = pred['train_time']
+            submission_fold.state = 'trained'
+        if state in ['validated', 'tested']:
+            submission_fold.valid_time = pred['validation_time']
+            submission_fold.state = 'validated'
+            try:
+                full_train_y_pred = np.fromstring(zlib.decompress(
+                    base64.b64decode(
+                        pred['full_train_predictions'])),
+                    dtype=float).reshape(y_shape_train)
+            except ValueError:
+                full_train_y_pred = np.fromstring(zlib.decompress(
+                    base64.b64decode(
+                        pred['full_train_predictions'])),
+                    dtype=np.float32).reshape(y_shape_train)
+            submission_fold.full_train_y_pred = \
+                full_train_y_pred
+            submission_fold.compute_train_scores()
+            submission_fold.compute_valid_scores()
+        if state in ['tested']:
+            submission_fold.test_time = pred['test_time']
+            submission_fold.state = 'tested'
+            try:
+                test_y_pred = np.fromstring(zlib.decompress(
+                    base64.b64decode(pred['test_predictions'])),
+                    dtype=float).reshape(y_shape_test)
+            except ValueError:
+                test_y_pred = np.fromstring(zlib.decompress(
+                    base64.b64decode(pred['test_predictions'])),
+                    dtype=np.float32).reshape(y_shape_test)
+            submission_fold.test_y_pred = test_y_pred
+            submission_fold.compute_test_scores()
+        if 'error' in state:
+            submission_fold.error_msg = pred['log_messages']
+            if 'ERROR(split' in log_messages:
+                submission_fold.state = 'checking_error'
+            elif 'ERROR(train' in log_messages:
+                submission_fold.state = 'training_error'
+            elif 'ERROR(validation' in log_messages:
+                submission_fold.state = 'validating_error'
+            elif 'ERROR(test' in log_messages:
+                submission_fold.state = 'testing_error'
 
 
 def train_test_submissions(submissions=None, force_retrain_test=False):
@@ -1437,7 +1471,7 @@ def train_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
             detached_submission_on_cv_fold.train_submission(
                 detached_submission_on_cv_fold.module, X, y, train_is)
         detached_submission_on_cv_fold.state = 'trained'
-    except Exception, e:
+    except Exception as e:
         detached_submission_on_cv_fold.state = 'training_error'
         log_msg, detached_submission_on_cv_fold.error_msg =\
             _make_error_message(e)
@@ -1466,7 +1500,7 @@ def train_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
                 'Validating {} failed with exception: \n{}'.format(
                     detached_submission_on_cv_fold.error_msg))
             return
-    except Exception, e:
+    except Exception as e:
         detached_submission_on_cv_fold.state = 'validating_error'
         log_msg, detached_submission_on_cv_fold.error_msg =\
             _make_error_message(e)
@@ -1505,7 +1539,7 @@ def test_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
             logger.error(
                 'Testing {} failed with exception: \n{}'.format(
                     detached_submission_on_cv_fold.error_msg))
-    except Exception, e:
+    except Exception as e:
         detached_submission_on_cv_fold.state = 'testing_error'
         log_msg, detached_submission_on_cv_fold.error_msg = _make_error_message(e)
         logger.error(
@@ -2093,7 +2127,7 @@ def print_submissions(event_name=None, team_name=None, submission_name=None):
         submission_name=submission_name)
     print('***************** List of submissions ****************')
     for submission in submissions:
-        print submission
+        print(submission)
         print('\tstate = {}'.format(submission.state))
         print('\tcontributivity = {0:.2f}'.format(
             submission.contributivity))
@@ -2103,22 +2137,22 @@ def print_submissions(event_name=None, team_name=None, submission_name=None):
             print('\tscore_name = {}'.format(score.score_name))
             print('\t\tvalid_score_cv_mean = {0:.2f}'.format(
                 score.valid_score_cv_mean))
-            print '\t\tvalid_score_cv_bag = {0:.2f}'.format(
-                float(score.valid_score_cv_bag))
-            print '\t\tvalid_score_cv_bags = {}'.format(
-                score.valid_score_cv_bags)
-            print '\t\ttest_score_cv_mean = {0:.2f}'.format(
-                score.test_score_cv_mean)
-            print '\t\ttest_score_cv_bag = {0:.2f}'.format(
-                float(score.test_score_cv_bag))
-            print '\t\ttest_score_cv_bags = {}'.format(
-                score.test_score_cv_bags)
+            print('\t\tvalid_score_cv_bag = {0:.2f}'.format(
+                float(score.valid_score_cv_bag)))
+            print('\t\tvalid_score_cv_bags = {}'.format(
+                score.valid_score_cv_bags))
+            print('\t\ttest_score_cv_mean = {0:.2f}'.format(
+                score.test_score_cv_mean))
+            print('\t\ttest_score_cv_bag = {0:.2f}'.format(
+                float(score.test_score_cv_bag)))
+            print('\t\ttest_score_cv_bags = {}'.format(
+                score.test_score_cv_bags))
         print('\tpath = {}'.format(submission.path))
-        print '\tcv folds'
+        print('\tcv folds')
         submission_on_cv_folds = db.session.query(SubmissionOnCVFold).filter(
             SubmissionOnCVFold.submission == submission).all()
         for submission_on_cv_fold in submission_on_cv_folds:
-            print '\t\t' + str(submission_on_cv_fold)
+            print('\t\t' + str(submission_on_cv_fold))
 
 
 def set_error(team_name, submission_name, error, error_msg):
@@ -2176,14 +2210,14 @@ def add_user_interaction(**kwargs):
 def print_user_interactions():
     print('*********** User interactions ****************')
     for user_interaction in UserInteraction.query.all():
-        print date_time_format(user_interaction.timestamp),\
-            user_interaction.user, user_interaction.interaction
+        print(date_time_format(user_interaction.timestamp),
+              user_interaction.user, user_interaction.interaction)
         if user_interaction.submission_file_diff is not None:
-            print user_interaction.submission_file_diff
+            print(user_interaction.submission_file_diff)
         if user_interaction.submission_file_similarity is not None:
-            print user_interaction.submission_file_similarity
+            print(user_interaction.submission_file_similarity)
         if user_interaction.submission is not None:
-            print user_interaction.submission
+            print(user_interaction.submission)
 
 
 def get_user_interactions():
