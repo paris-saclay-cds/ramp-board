@@ -1060,14 +1060,28 @@ def send_submission_datarun(submission_name, team_name, event_name,
 
 
 @celery.task(name='tasks.get_submissions_datarun')
-def get_submissions_datarun(submissions=None):
+def get_submissions_datarun(submissions_details=None):
+    """
+    get submissions from datarun.
+    :param submissions_details: list of list with submission_name, team_name\
+        and event_name [[submission_name1, team_name1, event_name1], ..., \
+        [submission_name2, team_name2, event_name2]]
+    :type submissions_details: list
+    """
     datarun_host_url = config.DATARUN_URL
     datarun_username = config.DATARUN_USERNAME
     datarun_userpassd = config.DATARUN_PASSWORD
     os.chdir(config.DATABOARD_DIR)
-    if not submissions:
+    if not submissions_details:
         submissions = Submission.query.filter(Submission.state == 'new').\
             filter(Submission.name != 'starting_kit').all()
+    else:
+        submissions = []
+        for sub_details in submissions_details:
+            sub_name, team_name, event_name = sub_details
+            submissions.append(get_submissions(event_name=event_name,
+                                               team_name=team_name,
+                                               submission_name=sub_name)[0])
     list_events = []
     for submission in submissions:
         list_events.append(submission.event.name)

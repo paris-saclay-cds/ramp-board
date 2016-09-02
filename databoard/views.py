@@ -960,7 +960,9 @@ def get_submission_datarun(submission_hash):
             db_tools.is_admin(submission.event, current_user):
         # Get submission from datarun
         db_tools.get_submissions_datarun.\
-            apply_async(args=[[submission]])
+            apply_async(args=[[[submission.name,
+                               submission.event_team.team.name,
+                               submission.event.name]]])
         message_str = u'Getting submission {} from datarun'.format(submission.
                                                                    name)
         logger.info(message_str)
