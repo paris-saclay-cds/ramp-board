@@ -150,12 +150,13 @@ echo 'source ~/.aliases' >> ~/.zshrc
 sed -i 's/plugins=(git)/plugins=(git cp tmux screen pip lol fabric)/g' ~/.zshrc
 
 # Start celery workers
-sudo apt-get install rabbitmq-server
+sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install rabbitmq-server
 mkdir ${DATABOARD_PATH}/code/databoard/tools/celery_info
 chmod 777 ${DATABOARD_PATH}/code/databoard/tools/celery_info
 chmod 777 ${DATABOARD_PATH}/code/databoard/tools/celery_worker.sh
 chmod a+r -R $DATABOARD_PATH/datacamp/databoard/problems
 chmod a+r -R $DATABOARD_PATH/datacamp/databoard/submissions
+# chmod a+x -R $DATABOARD_PATH/datacamp/databoard/submissions
 # sudo -su ubuntu <<HERE
 # echo Starting $NB_WORKERS workers as ubuntu user
 # bash ${DATABOARD_PATH}/code/databoard/tools/celery_worker.sh start $NB_WORKERS
