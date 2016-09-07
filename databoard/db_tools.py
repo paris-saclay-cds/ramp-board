@@ -949,7 +949,7 @@ def send_submission_mails(user, submission, event_team):
     #  later can be joined to the ramp admins
     event = event_team.event
     team = event_team.team
-    recipient_list = config.ADMIN_MAILS
+    recipient_list = config.ADMIN_MAILS[:]
     event_admins = EventAdmin.query.filter_by(event=event)
     recipient_list += [event_admin.admin.email for event_admin in event_admins]
     gmail_user = config.MAIL_USERNAME
@@ -978,7 +978,7 @@ def send_submission_mails(user, submission, event_team):
 
 def send_sign_up_request_mail(event, user):
     team = Team.query.filter_by(name=user.name).one()
-    recipient_list = config.ADMIN_MAILS
+    recipient_list = config.ADMIN_MAILS[:]
     event_admins = EventAdmin.query.filter_by(event=event)
     recipient_list += [event_admin.admin.email for event_admin in event_admins]
     gmail_user = config.MAIL_USERNAME
@@ -1012,7 +1012,7 @@ def send_sign_up_request_mail(event, user):
 
 
 def send_register_request_mail(user):
-    recipient_list = config.ADMIN_MAILS
+    recipient_list = config.ADMIN_MAILS[:]
     gmail_user = config.MAIL_USERNAME
     gmail_pwd = config.MAIL_PASSWORD
     smtpserver = smtplib.SMTP(config.MAIL_SERVER, config.MAIL_PORT)
