@@ -8,7 +8,7 @@ import os.path
 import tempfile
 import datetime
 
-from flask import request, redirect, url_for, render_template,\
+from flask import request, redirect, url_for, render_template, abort,\
     send_from_directory, session, g
 from flask.ext.login import current_user
 from sqlalchemy.orm.exc import NoResultFound
@@ -28,7 +28,9 @@ from databoard.model import User, Submission, WorkflowElement,\
     EventTeam, DuplicateSubmissionError, TooEarlySubmissionError,\
     MissingExtensionError
 from databoard.forms import LoginForm, CodeForm, SubmitForm, ImportForm,\
-    UploadForm, UserProfileForm, CreditForm
+    UploadForm, UserProfileForm, CreditForm, EmailForm, PasswordForm
+from databoard.security import ts
+
 
 app.secret_key = os.urandom(24)
 
@@ -992,3 +994,58 @@ def send_data_datarun(event_name):
     else:
         return _redirect_to_user(
             u'Sorry {}, you do not have admin rights"'.format(current_user))
+
+
+@app.route('/reset_password', methods=["GET", "POST"])
+def reset_password():
+    form = EmailForm()
+    error = ''
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and user.access_level != 'asked':
+            subject = "Password reset requested - RAMP website"
+
+            # Here we use the URLSafeTimedSerializer we created in security
+            token = ts.dumps(user.email, salt='recover-key')
+
+            recover_url = url_for(
+                'reset_with_token',
+                token=token,
+                _external=True)
+
+            header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
+                   user.email, config.MAIL_USERNAME, subject)
+            body = ('Hi %s, \n\nclick on the link to reset your password:\n' %
+                    user.firstname)
+            body += recover_url
+            body += '\n\nSee you on the RAMP website!'
+            db_tools.send_mail(user.email, subject, header + body)
+            logger.info('Password reset requested for user %s' % user.name)
+            return redirect(url_for('login'))
+        else:
+            error = ('Sorry, but this user was not approved or the email was '
+                     'wrong. If you need some help, send an email to %s' %
+                     config.MAIL_USERNAME)
+    return render_template('reset_password.html', form=form, error=error)
+
+
+@app.route('/reset/<token>', methods=["GET", "POST"])
+def reset_with_token(token):
+    try:
+        email = ts.loads(token, salt="recover-key", max_age=86400)
+    except:
+        abort(404)
+
+    form = PasswordForm()
+
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=email).first_or_404()
+
+        user.hashed_password = db_tools.get_hashed_password(form.password.data)
+
+        db.session.add(user)
+        db.session.commit()
+
+        return redirect(url_for('login'))
+
+    return render_template('reset_with_token.html', form=form, token=token)
