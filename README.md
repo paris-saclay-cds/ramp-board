@@ -101,7 +101,7 @@ python setup.py develop
 fab serve:80 > server_logs/server16.txt 2>&1  
  - new:  
 sudo service apache2 restart  
-tail -f /var/log/apache2/error.log  
+  
 sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" /home/datacamp/code/databoard/config.py  
   
 ### Example sequence of adding the drug_spectra ramp  
@@ -126,6 +126,12 @@ fab add_event:air_passengers_dssp4
 fab sign_up_team:air_passengers_dssp4,kegl  
 fab sign_up_team:air_passengers_dssp4,agramfort  
   
+ - sea ice  
+fab add_workflow_element_type:ts_feature_extractor,code   
+fab add_workflow:ts_feature_extractor_regressor_workflow,ts_feature_extractor,regressor 
+fab add_problem:sea_ice 
+fab add_event:sea_ice
+fab sign_up_team:sea_ice,kegl    
   
 ### App performance  
   
@@ -205,3 +211,6 @@ Currently it is : /dev/vdb, so the command is :
 mount /dev/vdb /mnt/ramp_data  
   
 
+
+Test server:  http://134.158.75.185
+Production server: http://134.158.75.211/
