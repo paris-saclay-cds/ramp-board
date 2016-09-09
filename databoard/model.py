@@ -863,9 +863,10 @@ def combine_predictions_list(predictions_list, index_list=None):
 
 
 def _get_score_cv_bags(event, score_type, predictions_list, true_predictions,
-                       test_is_list=None):
+                       test_is_list=None,
+                       is_return_combined_predictions=False):
     """
-    Computed the bagged score of the predictions in predictions_list.
+    Computes the bagged score of the predictions in predictions_list.
 
     Called by Submission.compute_valid_score_cv_bag and
     db_tools.compute_contributivity.
@@ -899,7 +900,10 @@ def _get_score_cv_bags(event, score_type, predictions_list, true_predictions,
         score_cv_bags.append(score_type.score_function(
             true_predictions, combined_predictions, valid_indexes))
         # XXX maybe use masked arrays rather than passing valid_indexes
-    return score_cv_bags
+    if is_return_combined_predictions:
+        return combined_predictions, score_cv_bags
+    else:
+        return score_cv_bags
 
 
 class SubmissionScore(db.Model):

@@ -1499,9 +1499,12 @@ def compute_contributivity(event_name, force_ensemble=False):
     combined_predictions_list = [c for c in combined_predictions_list
                                  if c is not None]
     if len(combined_predictions_list) > 0:
-        scores = _get_score_cv_bags(
+        combined_predictions, scores = _get_score_cv_bags(
             event, event.official_score_type, combined_predictions_list,
-            true_predictions_train, test_is_list)
+            true_predictions_train, test_is_list=test_is_list,
+            is_return_combined_predictions=True)
+        np.savetxt(
+            'y_train_pred.csv', combined_predictions.y_pred, delimiter=',')
         logger.info('Combined combined valid score = {}'.format(scores))
         event.combined_combined_valid_score = float(scores[-1])
     else:
@@ -1512,7 +1515,7 @@ def compute_contributivity(event_name, force_ensemble=False):
     if len(best_predictions_list) > 0:
         scores = _get_score_cv_bags(
             event, event.official_score_type, best_predictions_list,
-            true_predictions_train, test_is_list)
+            true_predictions_train, test_is_list=test_is_list)
         logger.info('Combined foldwise best valid score = {}'.format(scores))
         event.combined_foldwise_valid_score = float(scores[-1])
     else:
@@ -1521,9 +1524,11 @@ def compute_contributivity(event_name, force_ensemble=False):
     combined_test_predictions_list = [c for c in combined_test_predictions_list
                                       if c is not None]
     if len(combined_test_predictions_list) > 0:
-        scores = _get_score_cv_bags(
+        combined_predictions, scores = _get_score_cv_bags(
             event, event.official_score_type, combined_test_predictions_list,
-            true_predictions_test)
+            true_predictions_test, is_return_combined_predictions=True)
+        np.savetxt(
+            'y_test_pred.csv', combined_predictions.y_pred, delimiter=',')
         logger.info('Combined combined test score = {}'.format(scores))
         event.combined_combined_test_score = float(scores[-1])
     else:
