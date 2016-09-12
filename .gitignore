@@ -1,3 +1,4 @@
+databoard/config.py
 build
 dist
 problems/*/data

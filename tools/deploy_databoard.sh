@@ -126,7 +126,8 @@ sed -i "s/<ServerName>/$IP_MASTER/g" /etc/apache2/sites-available/000-default.co
 sed -i "3a SetEnv DATABOARD_DB_URL $DATABOARD_DB_URL" /etc/apache2/sites-available/000-default.conf;
 sed -i "s/SetEnv/    SetEnv/g" /etc/apache2/sites-available/000-default.conf
 # But for some reasons, it does not work. 
-# So we set up the value of this environment variable directly in databoard/config.py 
+# So we set up the value of this environment variable directly in databoard/config.py
+cp ${DATABOARD_PATH}/code/databoard/databoard/config_local.py ${DATABOARD_PATH}/code/databoard/databoard/config.py
 sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
 sed -i "s#os.environ.get('DATABOARD_PATH', './')#'$DATABOARD_PATH'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
 sed -i "s#os.environ.get('DATARUN_URL')#'$DATARUN_URL'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
