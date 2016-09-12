@@ -22,7 +22,7 @@ y_test_filename = os.path.join(
     problems_path, problem_name, 'data', 'private', 'sea_ice_y_test.npy')
 raw_filename = X_train_filename
 extra_files = [os.path.join(problems_path, problem_name,
-                            'air_passengers_datarun.py'),
+                            'sea_ice_datarun.py'),
                y_train_filename, X_test_filename, y_test_filename]
 
 
