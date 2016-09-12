@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 problem_name = 'sea_ice'  # should be the same as the file name
 
+prediction_labels = None
 workflow_name = 'ts_feature_extractor_regressor_workflow'
 
 X_train_filename = os.path.join(
