@@ -26,3 +26,4 @@ pycrypto==2.6.1
 pycrypto-on-pypi==2.3
 ecdsa==0.13
 celery==3.1.23
+xarray==0.8.2
