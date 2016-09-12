@@ -65,6 +65,7 @@ cd xgboost; make -j4
 cd python-package; sudo python setup.py install
 cd
 # Install python-netcdf4 (requires zlib, hdf5, and netCDF-C)
+sudo apt-get -y install m4
 wget http://zlib.net/zlib-1.2.8.tar.gz
 wget http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.17.tar
 wget https://github.com/Unidata/netcdf-c/archive/v4.4.1.tar.gz
