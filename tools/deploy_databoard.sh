@@ -178,7 +178,7 @@ sed -i 's/plugins=(git)/plugins=(git cp tmux screen pip lol fabric)/g' ~/.zshrc
 sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install rabbitmq-server
 mkdir ${DATABOARD_PATH}/code/databoard/tools/celery_info
 chmod 777 ${DATABOARD_PATH}/code/databoard/tools/celery_info
-chmod 777 ${DATABOARD_PATH}/code/databoard/tools/celery_worker.sh
+# chmod 777 ${DATABOARD_PATH}/code/databoard/tools/celery_worker.sh
 chmod a+r -R $DATABOARD_PATH/datacamp/databoard/problems
 chmod a+r -R $DATABOARD_PATH/datacamp/databoard/submissions
 # chmod a+x -R $DATABOARD_PATH/datacamp/databoard/submissions
@@ -186,6 +186,9 @@ chmod a+r -R $DATABOARD_PATH/datacamp/databoard/submissions
 # echo Starting $NB_WORKERS workers as ubuntu user
 # bash ${DATABOARD_PATH}/code/databoard/tools/celery_worker.sh start $NB_WORKERS
 # HERE
+cp ${DATABOARD_PATH}/code/databoard/tools/local_supervisord.conf ${DATABOARD_PATH}/code/databoard/tools/supervisord.conf
+cp ${DATABOARD_PATH}/code/databoard/tools/local_celeryd.conf ${DATABOARD_PATH}/code/databoard/tools/celeryd.conf
+cp ${DATABOARD_PATH}/code/databoard/tools/local_celerybeat.conf ${DATABOARD_PATH}/code/databoard/tools/celerybeat.conf
 sed -i "s#DATABOARD_PATH#${DATABOARD_PATH}#g" ${DATABOARD_PATH}/code/databoard/tools/supervisord.conf
 sed -i "s#DATABOARD_PATH#${DATABOARD_PATH}#g" ${DATABOARD_PATH}/code/databoard/tools/celeryd.conf
 sed -i "s#DATABOARD_PATH#${DATABOARD_PATH}#g" ${DATABOARD_PATH}/code/databoard/tools/celerybeat.conf
