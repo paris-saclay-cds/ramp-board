@@ -388,7 +388,6 @@ def send_data_datarun(problem_name, host_url, username, userpassd, split=True):
         logger.info('Add the new RAMP problem before')
     else:
         # Sending data to datarun
-        random_state = problem.module.random_state
         try:
             target_column = problem.module.target_column_name
         except AttributeError:
@@ -402,6 +401,7 @@ def send_data_datarun(problem_name, host_url, username, userpassd, split=True):
         except AttributeError:
             extra_files = None
             held_out_test = problem.module.held_out_test_size
+            random_state = problem.module.random_state
         post_data = post_api.post_data(host_url, username, userpassd,
                                        problem_name, target_column,
                                        workflow_elements, data_file,
