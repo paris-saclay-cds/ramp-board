@@ -74,7 +74,7 @@
 {% endif %}
 {% endwith %}
 <h3 class="ui horizontal header divider grey">Sandbox</h3>
-You can either edit and save the code in the left column or upload the files in the right column. You can also import code from other submissions when the <a href="/events/{{ event.name }}/leaderboard">leaderboard</a> links are open. <p>
+<center>You can either edit and save the code in the left column or upload the files in the right column. You can also import code from other submissions when the <a href="/events/{{ event.name }}/leaderboard">leaderboard</a> links are open.</center> <p>
 <div class="ui stackable two column grid">
     <div class="ten wide column">
         <form class="ui form" method="post" action="" name="save">
@@ -86,8 +86,8 @@ You can either edit and save the code in the left column or upload the files in 
                     <textarea cols="80" id="{{ name_code[0] }}" name="{{ name_code[0] }}">{{ name_code[1] }}</textarea>
                     </div>
                 {% endfor %}
-                <h4 class="ui horizontal header divider grey">Save files</h4>
-                <input type="submit" value="Save" class="ui submit button">
+                <h4 class="ui horizontal header divider grey">Don't forget to save the files!</h4>
+                <center><input type="submit" value="Save" class="ui submit button"></center>
             </div>
         </form>
     </div>
@@ -114,26 +114,25 @@ You can either edit and save the code in the left column or upload the files in 
                 <input type="submit" value="Upload" class="ui upload button">
             </form>
         </div>
-        <div class="ui sticky">
-        <h4 class="ui horizontal header divider grey">Submit</h4>
-            <form class="ui form" method="post" action="" name="submit">
-                {{ submit_form.hidden_tag() }}
-                <div class="one field">
-                    <div class="required field">
-                        <label>Submission name (between 4 and 20 characters)</label> 
-                        {{ submit_form.submission_name }}
-                    </div>
-                    Don't forget to save the file before submitting.
-                    <input type="submit" value="Submit" class="ui submit button">
-                </div>
-            </form>
-        </div>
     </div>
 </div>
+<h4 class="ui horizontal header divider grey">Submit your code!</h4>
+<form class="ui form" method="post" action="" name="submit" id="formSubmit">
+    {{ submit_form.hidden_tag() }}
+    <div class="one field">
+	<center> 
+        <div class="required field">
+            <label>Submission name (between 4 and 20 characters)</label> 
+            {{ submit_form.submission_name }}
+        </div>
+        <input type="submit" value="Submit" class="ui submit button" id="checksave">
+	</center> 
+    </div>
+</form>
 
 {% for name_code in code_form.names_codes %}
   <script>
-    var editor = CodeMirror.fromTextArea(document.getElementById("{{ name_code[0] }}"), {
+    var editor_{{ name_code[0] }} = CodeMirror.fromTextArea(document.getElementById("{{ name_code[0] }}"), {
       lineNumbers: true,
       mode: "python",
       theme: "railscasts",
@@ -141,4 +140,19 @@ You can either edit and save the code in the left column or upload the files in 
     });
   </script>
 {% endfor %}
+
+<script>
+  $('#formSubmit').submit(function() {
+	var modif = 0;
+	{% for name_code in code_form.names_codes %}
+	    var origin_code = document.getElementById(id="{{ name_code[0] }}").innerHTML; 
+            if (editor_{{ name_code[0] }}.getValue() != origin_code) {
+                modif = 1;
+	    }
+	{% endfor %}
+	if (modif == 1) {
+	     return	confirm('You certainly forgot to save your files! \n- If you do not want to save them, click on OK. \n- If you forgot to save them, click on Cancel, save your files and submit again!');
+ } 
+  });  
+</script>
 {% endblock %}

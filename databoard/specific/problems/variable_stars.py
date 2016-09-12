@@ -34,7 +34,8 @@ vf_test_filename = os.path.join(
     problems_path, problem_name, 'data', 'private',
     'test_varlength_features.csv')
 
-prediction.labels = [1.0, 2.0, 3.0, 4.0]
+# prediction.labels = [1.0, 2.0, 3.0, 4.0]
+prediction_labels = [1.0, 2.0, 3.0, 4.0]
 target_column_name = 'type'
 workflow_name = 'feature_extractor_classifier_calibrator_workflow'
 extra_files = [vf_raw_filename,

@@ -52,3 +52,12 @@ class ImportForm(Form):
 
 class UploadForm(Form):
     file = FileField('file')
+
+
+class EmailForm(Form):
+    email = StringField('Email', validators=[validators.DataRequired(),
+                                             validators.Email()])
+
+
+class PasswordForm(Form):
+    password = PasswordField('Password', validators=[validators.DataRequired()])

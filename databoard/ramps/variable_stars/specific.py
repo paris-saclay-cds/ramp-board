@@ -19,7 +19,8 @@ sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 ramp_title = 'Variable star type prediction'
 target_column_name = 'type'
-multiclass_prediction.labels = [1.0, 2.0, 3.0, 4.0]
+# multiclass_prediction.labels = [1.0, 2.0, 3.0, 4.0]
+labels = [1.0, 2.0, 3.0, 4.0]
 held_out_test_size = 0.7
 cv_test_size = config_object.cv_test_size
 random_state = config_object.random_state

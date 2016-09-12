@@ -23,7 +23,8 @@ train_filename = os.path.join(
 test_filename = os.path.join(
     problems_path, problem_name, 'data', 'private', 'test.csv')
 
-prediction.labels = [0, 1]
+# prediction.labels = [0, 1]
+prediction_labels = [0, 1]
 target_column_name = 'isSkewed'
 workflow_name = 'classifier_workflow'
 extra_files = [os.path.join(problems_path, problem_name,

@@ -4,6 +4,11 @@
   
 Install dependencies with `pip install -Ur requirements.txt`  
 (You might want to create a virtualenv beforehand)  
+
+## Configuration
+
+**Copy `databoard/config_local.py` to `databoard/config.py`**. If you need special settings, you can modify `databoard/config.py`.  
+**Do not commit `databoard/config.py`**, since it might contain passwords... 
   
 ## Set up the database  
   
@@ -179,7 +184,7 @@ Two types of backup:
   
 #### 2. Test server  
   
-- Test server deployed on test_ramp 134.158.75.119  
+- Test server deployed on test_ramp 134.158.75.185  
   
 - One disk is mounted to the VM:  
     * persistent volume (test_ramp), where databoard code and submission files are stored. It is mounted to /mnt/ramp_data.  

@@ -1,8 +1,25 @@
 #!/bin/bash
-# :Usage: bash deploy_databoard.sh
 # Prepare Ubuntu (14.04) server instance for the application deployment 
-# We follow steps (+ other steps) from 
-# - https://www.digitalocean.com/community/tutorials/how-to-serve-django-applications-with-apache-and-mod_wsgi-on-ubuntu-14-04
+#
+# :Usage: bash deploy_databoard.sh {disk_path} {db_dump}
+# {disk_path} : path to attached persistent disk
+# {db_dump} : database dump from which to create new database . Give only the dump
+#file name, this file should be located on the sciencefs disk in ~/databoard/backup 
+#which will be mounted on the VM in /mnt/datacamp/backup
+#
+# There must be a file env.sh containing all required environment variables:
+#    export DATABOARD_PATH='/mnt/ramp_data/'  #where to mount the persistent disk
+#    export DATABOARD_DB_NAME='databoard'
+#    export DATABOARD_DB_USER='xxxx'
+#    export DATABOARD_DB_PASSWORD='yyyy'
+#    export DATABOARD_DB_URL='postgresql://xxxx:yyyy@localhost/databoard'
+#    export SCIENCEFS_LOGIN='zzzz'
+#    export DATARUN_URL='uuuu'
+#    export DATARUN_USERNAME='vvvv'
+#    export DATARUN_PASSWORD='wwww'
+
+DISK_PATH=$1
+LAST_DB_DUMP=$2
 
 # Add environment variables
 # env.sh file with environment variables must be in the same folder as this script
@@ -13,12 +30,10 @@ echo 'export LC_ALL=en_US.UTF-8' >> ~/.zshrc
 echo 'export LANGUAGE=en_US.UTF-8' >> ~/.zshrc
 echo 'source ~/.aliases' >> ~/.bashrc
 echo 'source ~/.aliases' >> ~/.zshrc
+export LC_ALL=en_US.UTF-8
+export LANGUAGE=en_US.UTF-8
 source ~/.bashrc
-
-# Set databoard and persistent disk path
-export DISK_PATH=/dev/vdb
-export DATABOARD_PATH=/mnt/ramp_data/
-#export LAST_DB_DUMP=databoard_XXXXX.dump
+source ~/.aliases
 
 # Update Packages from the Ubuntu Repositories 
 sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" update 
@@ -56,7 +71,7 @@ mkdir /mnt/datacamp
 sshfs -o Ciphers=arcfour256 -o allow_other -o IdentityFile=/root/.ssh/id_rsa_sciencefs -o StrictHostKeyChecking=no "$SCIENCEFS_LOGIN"@sciencefs.di.u-psud.fr:/sciencefs/homes/"$SCIENCEFS_LOGIN"/databoard /mnt/datacamp
 
 # Format persistent disk (if first use)
-#mkfs.ext4 $DIS_PATH
+#mkfs.ext4 $DISK_PATH
 # Mount persistent disk
 mkdir $DATABOARD_PATH
 mount $DISK_PATH $DATABOARD_PATH
@@ -69,7 +84,7 @@ cp -r /mnt/datacamp/backup/databoard ${DATABOARD_PATH}/datacamp/.
 # Clone the project
 mkdir code
 cd code
-git clone -b postgres2 --single-branch https://camille24@bitbucket.org/kegl/databoard.git
+git clone https://camille24@bitbucket.org/kegl/databoard.git
 cd databoard
 
 # Install Postgres
@@ -90,11 +105,11 @@ sudo service postgresql restart
 pip install -r requirements.txt
 python setup.py develop
 
-# Reacreate the database
-python manage.py db upgrade
+# Recreate the database
+#python manage.py db upgrade
 # For the first transfer from sqlite to postgres, use export_to_csv.sh and convert_to_postgres.py
 # Then: 
-# pg_restore -j 8 -U postgres -d databoard $LAST_DB_DUMP
+pg_restore -j 8 -U postgres -d databoard /mnt/datacamp/backup/$LAST_DB_DUMP
 
 # Configure Apache: copy apache conf file to /etc/apache2/sites-available/
 mv /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/backup.conf
@@ -111,13 +126,19 @@ sed -i "s/<ServerName>/$IP_MASTER/g" /etc/apache2/sites-available/000-default.co
 sed -i "3a SetEnv DATABOARD_DB_URL $DATABOARD_DB_URL" /etc/apache2/sites-available/000-default.conf;
 sed -i "s/SetEnv/    SetEnv/g" /etc/apache2/sites-available/000-default.conf
 # But for some reasons, it does not work. 
-# So we set up the value of this environment variable directly in databoard/config.py 
+# So we set up the value of this environment variable directly in databoard/config.py
+cp ${DATABOARD_PATH}/code/databoard/databoard/config_local.py ${DATABOARD_PATH}/code/databoard/databoard/config.py
 sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
+sed -i "s#os.environ.get('DATABOARD_PATH', './')#'$DATABOARD_PATH'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
+sed -i "s#os.environ.get('DATARUN_URL')#'$DATARUN_URL'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
+sed -i "s#os.environ.get('DATARUN_USERNAME')#'$DATARUN_USERNAME'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
+sed -i "s#os.environ.get('DATARUN_PASSWORD')#'$DATARUN_PASSWORD'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
+# Change server name in config
+sed -i "s#current_server_name = '0.0.0.0:8080'#current_server_name = '$IP_MASTER'#g" ${DATABOARD_PATH}/code/databoard/databoard/config.py 
 
 # Wrapping up some permissions issues
 sudo chown -R :www-data ../.
 sudo chown -R www-data:www-data ${DATABOARD_PATH}/datacamp/databoard
-
 
 # Restart Apache
 sudo service apache2 restart
@@ -128,6 +149,24 @@ sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 echo 'source ~/.aliases' >> ~/.zshrc
 sed -i 's/plugins=(git)/plugins=(git cp tmux screen pip lol fabric)/g' ~/.zshrc
+
+# Start celery workers
+sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install rabbitmq-server
+mkdir ${DATABOARD_PATH}/code/databoard/tools/celery_info
+chmod 777 ${DATABOARD_PATH}/code/databoard/tools/celery_info
+chmod 777 ${DATABOARD_PATH}/code/databoard/tools/celery_worker.sh
+chmod a+r -R $DATABOARD_PATH/datacamp/databoard/problems
+chmod a+r -R $DATABOARD_PATH/datacamp/databoard/submissions
+# chmod a+x -R $DATABOARD_PATH/datacamp/databoard/submissions
+# sudo -su ubuntu <<HERE
+# echo Starting $NB_WORKERS workers as ubuntu user
+# bash ${DATABOARD_PATH}/code/databoard/tools/celery_worker.sh start $NB_WORKERS
+# HERE
+sed -i "s#DATABOARD_PATH#${DATABOARD_PATH}#g" ${DATABOARD_PATH}/code/databoard/tools/supervisord.conf
+sed -i "s#DATABOARD_PATH#${DATABOARD_PATH}#g" ${DATABOARD_PATH}/code/databoard/tools/celeryd.conf
+sed -i "s#DATABOARD_PATH#${DATABOARD_PATH}#g" ${DATABOARD_PATH}/code/databoard/tools/celerybeat.conf
+easy_install supervisor
+supervisord -c ${DATABOARD_PATH}/code/databoard/tools/supervisord.conf
 
 # Add backup for the production server:
 # execution of tools/dump_db.sh and tools/housekeeping.sh with crontab

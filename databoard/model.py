@@ -214,15 +214,18 @@ class Problem(db.Model):
 
     def true_predictions_train(self):
         _, y_train = self.module.get_train_data()
-        return self.prediction.Predictions(y_true=y_train)
+        return self.prediction.Predictions(labels=self.module.prediction_labels,
+                                           y_true=y_train)
 
     def true_predictions_test(self):
         _, y_test = self.module.get_test_data()
-        return self.prediction.Predictions(y_true=y_test)
+        return self.prediction.Predictions(labels=self.module.prediction_labels,
+                                           y_true=y_test)
 
     def true_predictions_valid(self, test_is):
         _, y_train = self.module.get_train_data()
-        return self.prediction.Predictions(y_true=y_train[test_is])
+        return self.prediction.Predictions(labels=self.module.prediction_labels,
+                                           y_true=y_train[test_is])
 
     @property
     def train_submission(self):
@@ -858,7 +861,8 @@ def combine_predictions_list(predictions_list, index_list=None):
     Predictions = type(predictions_list[0])
 
     y_comb = np.nanmean(y_comb_list, axis=0)
-    combined_predictions = Predictions(y_pred=y_comb)
+    combined_predictions = Predictions(labels=predictions_list[0].labels,
+                                       y_pred=y_comb)
     return combined_predictions
 
 
@@ -890,7 +894,9 @@ def _get_score_cv_bags(event, score_type, predictions_list, true_predictions,
 
     n_samples = true_predictions.n_samples
     y_comb = np.array(
-        [event.prediction.Predictions(n_samples=n_samples)
+        [event.prediction.Predictions(labels=event.problem.module.
+                                      prediction_labels,
+                                      n_samples=n_samples)
          for _ in predictions_list])
     score_cv_bags = []
     for i, test_is in enumerate(test_is_list):
@@ -1461,21 +1467,26 @@ class SubmissionOnCVFold(db.Model):
     @property
     def full_train_predictions(self):
         return self.submission.prediction.Predictions(
+            labels=self.submission.event.problem.module.prediction_labels,
             y_pred=self.full_train_y_pred)
 
     @property
     def train_predictions(self):
         return self.submission.prediction.Predictions(
+            labels=self.submission.event.problem.module.prediction_labels,
             y_pred=self.full_train_y_pred[self.cv_fold.train_is])
 
     @property
     def valid_predictions(self):
         return self.submission.prediction.Predictions(
+            labels=self.submission.event.problem.module.prediction_labels,
             y_pred=self.full_train_y_pred[self.cv_fold.test_is])
 
     @property
     def test_predictions(self):
-        return self.submission.prediction.Predictions(y_pred=self.test_y_pred)
+        return self.submission.prediction.Predictions(
+            labels=self.submission.event.problem.module.prediction_labels,
+            y_pred=self.test_y_pred)
 
     @property
     def official_score(self):

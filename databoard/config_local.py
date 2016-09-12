@@ -1,4 +1,5 @@
 import os
+from celery.schedules import crontab
 
 root_path = '.'
 
@@ -72,6 +73,7 @@ is_pickle_trained_submission = False
 #    server_port)
 # server_name = debug_server if local_deployment else train_server
 
+current_server_name = '0.0.0.0:8080'  # CHANGE WHEN DEPLOY!!
 test_server = '134.158.75.185'
 test_root = '/mnt/ramp_data/datacamp/'
 production_server = '134.158.75.211'
@@ -357,6 +359,15 @@ ADMIN_MAILS = ['balazs.kegl@gmail.com',
 if os.environ.get('DATABOARD_DB_PERF'):
     SQLALCHEMY_RECORD_QUERIES = True
 DATABASE_QUERY_TIMEOUT = 0.5  # slow database query threshold (in seconds)
+<<<<<<< HEAD:databoard/config.py
+=======
+# Link to datarun
+DATARUN_URL = os.environ.get('DATARUN_URL')
+DATARUN_USERNAME = os.environ.get('DATARUN_USERNAME')
+DATARUN_PASSWORD = os.environ.get('DATARUN_PASSWORD')
+databoard_path = os.environ.get('DATABOARD_PATH', './')
+DATABOARD_DIR = databoard_path + '/datacamp/databoard'
+>>>>>>> celery:databoard/config_local.py
 
 
 class Config(object):
@@ -370,6 +381,18 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABOARD_DB_URL')
     SQLALCHEMY_MIGRATE_REPO = db_migrate_dir
     TESTING = False
+    # Celery conf
+    CELERY_BROKER_URL = 'amqp://guest@localhost//'
+    CELERY_RESULT_BACKEND = 'amqp'
+    CELERY_TIMEZONE = 'UTC'
+
+    # get trained tested submission from datarun
+    CELERYBEAT_SCHEDULE = {
+        'get-trained-tested-submission-datarun': {
+            'task': 'tasks.get_submissions_datarun',
+            'schedule': crontab(minute='*/2')
+        }
+    }
 
 
 class TestingConfig(Config):

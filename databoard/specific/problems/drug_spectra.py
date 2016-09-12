@@ -22,7 +22,8 @@ train_filename = os.path.join(
 test_filename = os.path.join(
     problems_path, problem_name, 'data', 'private', 'test.csv')
 
-prediction.labels = ['A', 'B', 'Q', 'R']
+# prediction.labels = ['A', 'B', 'Q', 'R']
+prediction_labels = ['A', 'B', 'Q', 'R']
 target_column_name_clf = 'molecule'
 target_column_name_reg = 'concentration'
 workflow_name = 'feature_extractor_classifier_regressor_workflow'

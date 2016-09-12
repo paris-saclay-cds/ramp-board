@@ -8,7 +8,7 @@ import os.path
 import tempfile
 import datetime
 
-from flask import request, redirect, url_for, render_template,\
+from flask import request, redirect, url_for, render_template, abort,\
     send_from_directory, session, g
 from flask.ext.login import current_user
 from sqlalchemy.orm.exc import NoResultFound
@@ -25,10 +25,12 @@ import databoard.db_tools as db_tools
 import databoard.config as config
 from databoard.model import User, Submission, WorkflowElement,\
     Event, SubmissionFile, UserInteraction, SubmissionSimilarity,\
-    DuplicateSubmissionError, TooEarlySubmissionError,\
+    EventTeam, DuplicateSubmissionError, TooEarlySubmissionError,\
     MissingExtensionError
 from databoard.forms import LoginForm, CodeForm, SubmitForm, ImportForm,\
-    UploadForm, UserProfileForm, CreditForm
+    UploadForm, UserProfileForm, CreditForm, EmailForm, PasswordForm
+from databoard.security import ts
+
 
 app.secret_key = os.urandom(24)
 
@@ -51,6 +53,14 @@ def timestamp_to_time(timestamp):
 @app.before_request
 def before_request():
     g.user = current_user  # so templates can access user
+
+
+def check_admin(current_user, event):
+    try:
+        return (current_user.access_level == 'admin' or
+                db_tools.is_admin(event, current_user))
+    except AttributeError:
+        return False
 
 
 @app.route("/", methods=['GET', 'POST'])
@@ -148,8 +158,10 @@ def user():
          db_tools.is_user_signed_up(event.name, current_user.name))
         for event in events]
 
+    admin = check_admin(current_user, event)
     return render_template('user.html',
-                           event_urls_f_names=event_urls_f_names)
+                           event_urls_f_names=event_urls_f_names,
+                           admin=admin)
 
 
 def _redirect_to_user(message_str, is_error=True, category=None):
@@ -202,6 +214,40 @@ def sign_up_for_event(event_name):
             is_error=False, category='Successful sign-up')
 
 
+@app.route("/events/<event_name>/sign_up/<user_name>")
+@fl.login_required
+def approve_sign_up_for_event(event_name, user_name):
+    event = Event.query.filter_by(name=event_name).one_or_none()
+    user = User.query.filter_by(name=user_name).one_or_none()
+    if not current_user.access_level == 'admin' or\
+            not db_tools.is_admin(event, current_user):
+        return _redirect_to_user(u'Sorry {}, you do not have admin rights'.
+                                 format(current_user), is_error=True)
+    if not event or not user:
+        return _redirect_to_user(u'Oups, no event {} or no user {}.'.
+                                 format(event_name, user_name), is_error=True)
+    db_tools.sign_up_team(event.name, user.name)
+    return _redirect_to_user(
+        u'{} is signed up for {}.'.format(user, event),
+        is_error=False, category='Successful sign-up')
+
+
+@app.route("/sign_up/<user_name>")
+@fl.login_required
+def approve_user(user_name):
+    user = User.query.filter_by(name=user_name).one_or_none()
+    if not current_user.access_level == 'admin':
+        return _redirect_to_user(u'Sorry {}, you do not have admin rights'.
+                                 format(current_user), is_error=True)
+    if not user:
+        return _redirect_to_user(u'Oups, no user {}.'.format(user_name),
+                                 is_error=True)
+    db_tools.approve_user(user.name)
+    return _redirect_to_user(
+        u'{} is signed up.'.format(user),
+        is_error=False, category='Successful sign-up')
+
+
 @app.route("/events/<event_name>")
 # @fl.login_required
 def user_event(event_name):
@@ -220,9 +266,11 @@ def user_event(event_name):
             'r', 'utf-8')\
             as description_file:
         description = description_file.read()
+    admin = check_admin(current_user, event)
     return render_template('event.html',
                            description=description,
-                           event=event)
+                           event=event,
+                           admin=admin)
 
 
 @app.route("/events/<event_name>/starting_kit")
@@ -232,7 +280,7 @@ def download_starting_kit(event_name):
     starting_kit_path = os.path.abspath(os.path.join(
         config.root_path, config.problems_d_name, event.problem.name))
     f_name = u'{}.zip'.format(config.sandbox_d_name)
-    print starting_kit_path
+    print(starting_kit_path)
     return send_from_directory(
         starting_kit_path, f_name, as_attachment=True,
         attachment_filename=u'{}_{}'.format(event_name, f_name),
@@ -256,12 +304,14 @@ def my_submissions(event_name):
         event_name, user_name=current_user.name)
     new_leaderboard_html = db_tools.get_new_leaderboard(
         event_name, user_name=current_user.name)
+    admin = check_admin(current_user, event)
     return render_template('leaderboard.html',
                            leaderboard_title='Trained submissions',
                            leaderboard=leaderbord_html,
                            failed_leaderboard=failed_leaderboard_html,
                            new_leaderboard=new_leaderboard_html,
-                           event=event)
+                           event=event,
+                           admin=admin)
 
 
 @app.route("/events/<event_name>/leaderboard")
@@ -289,6 +339,7 @@ def leaderboard(event_name):
             'leaderboard.html',
             failed_leaderboard=failed_leaderboard_html,
             new_leaderboard=new_leaderboard_html,
+            admin=True,
             **leaderboard_kwargs)
     else:
         return render_template(
@@ -437,9 +488,9 @@ def sandbox(event_name):
     # of textareas, named and populated at run time, is mind boggling.
 
     # First we need to make sure CodeForm is empty
-    for name_code in CodeForm.names_codes:
-        name, _ = name_code
-        delattr(CodeForm, name)
+    # for name_code in CodeForm.names_codes:
+    #     name, _ = name_code
+    #     delattr(CodeForm, name)
     CodeForm.names_codes = []
 
     # Then we create named
@@ -583,13 +634,23 @@ def sandbox(event_name):
             interaction='submit', user=current_user, event=event,
             submission=new_submission)
 
+        # Send submission to datarun
+        db_tools.send_submission_datarun.\
+            apply_async(args=[new_submission.name,
+                              new_submission.team.name,
+                              new_submission.event.name],
+                        kwargs={'priority': 'L',
+                                'force_retrain_test': True})
+
         return flask.redirect(u'/credit/{}'.format(new_submission.hash_))
+    admin = check_admin(current_user, event)
     return render_template('sandbox.html',
                            submission_names=sandbox_submission.f_names,
                            code_form=code_form,
                            submit_form=submit_form,
                            upload_form=upload_form,
-                           event=event)
+                           event=event,
+                           admin=admin)
 
 
 @app.route("/credit/<submission_hash>", methods=['GET', 'POST'])
@@ -615,6 +676,8 @@ def credit(submission_hash):
             source_submission.event_team.team.name,
             source_submission.name)
 
+    # Make sure that CreditForm is empty
+    CreditForm.name_credits = []
     credit_form_kwargs = {}
     for source_submission in source_submissions:
         s_field = get_s_field(source_submission)
@@ -672,11 +735,13 @@ def credit(submission_hash):
 
         return flask.redirect(u'/events/{}/sandbox'.format(event.name))
 
+    admin = check_admin(current_user, event)
     return render_template('credit.html',
                            submission=submission,
                            source_submissions=source_submissions,
                            credit_form=credit_form,
-                           event=event)
+                           event=event,
+                           admin=admin)
 
 
 @app.route("/logout")
@@ -714,12 +779,14 @@ def private_leaderboard(event_name):
         interaction='looking at private leaderboard',
         user=current_user, event=event)
     leaderbord_html = db_tools.get_private_leaderboard(event_name)
+    admin = check_admin(current_user, event)
     return render_template(
         'leaderboard.html',
         leaderboard_title='Leaderboard',
         leaderboard=leaderbord_html,
         event=event,
         private=True,
+        admin=admin
     )
 
 
@@ -805,3 +872,180 @@ def after_request(response):
                                % (query.statement, query.parameters,
                                   query.duration, query.context))
     return response
+
+
+@app.route("/events/<event_name>/dashboard_submissions")
+@fl.login_required
+def dashboard_submissions(event_name):
+    event = Event.query.filter_by(name=event_name).one_or_none()
+
+    if current_user.access_level == 'admin' or\
+            db_tools.is_admin(event, current_user):
+        # Get dates and number of submissions
+        submissions_ = db.session.query(Submission, Event, EventTeam).\
+            filter(Event.name == event.name).\
+            filter(Event.id == EventTeam.event_id).\
+            filter(EventTeam.id == Submission.event_team_id).\
+            order_by(Submission.submission_timestamp).all()
+        if submissions_:
+            submissions = list(zip(*submissions_)[0])
+        else:
+            submissions = []
+        submissions = [submission for submission in submissions
+                       if submission.name != config.sandbox_d_name]
+        timestamp_submissions = [submission.submission_timestamp.
+                                 strftime('%Y-%m-%d %H:%M:%S')
+                                 for submission in submissions]
+        name_submissions = [submission.name for submission in submissions]
+        cumulated_submissions = range(1, 1 + len(submissions))
+        training_sec = [(submission.training_timestamp -
+                         submission.submission_timestamp).seconds / 60.
+                        if submission.training_timestamp is not None
+                        else 0
+                        for submission in submissions]
+        dashboard_kwargs = {'event': event,
+                            'timestamp_submissions': timestamp_submissions,
+                            'training_sec': training_sec,
+                            'cumulated_submissions': cumulated_submissions,
+                            'name_submissions': name_submissions}
+        failed_leaderboard_html = db_tools.get_failed_leaderboard(event_name)
+        new_leaderboard_html = db_tools.get_new_leaderboard_datarun(event_name)
+        return render_template(
+            'dashboard_submissions.html',
+            failed_leaderboard=failed_leaderboard_html,
+            new_leaderboard=new_leaderboard_html,
+            admin=True,
+            **dashboard_kwargs)
+    else:
+        return _redirect_to_user(
+            u'Sorry {}, you do not have admin access for {}"'.
+            format(current_user, event_name))
+
+
+@app.route("/<submission_hash>/send_submission_datarun")
+@fl.login_required
+def send_submission_datarun(submission_hash):
+    submission = Submission.query.filter_by(
+        hash_=submission_hash).one_or_none()
+    if submission is None:
+        error_str = u'Missing submission: {}'.format(submission_hash)
+        return _redirect_to_user(error_str)
+    if current_user.access_level == 'admin' or\
+            db_tools.is_admin(submission.event, current_user):
+        # Send submission to datarun
+        db_tools.send_submission_datarun.\
+            apply_async(args=[submission.name,
+                              submission.team.name,
+                              submission.event.name],
+                        kwargs={'priority': 'L',
+                                'force_retrain_test': True})
+        message_str = u'Submission has been sent to datarun {}'.\
+            format(submission.name)
+        logger.info(message_str)
+        flask.flash(message_str, category='Info')
+        return flask.redirect(u'/events/{}/dashboard_submissions'.
+                              format(submission.event.name))
+    else:
+        return _redirect_to_user(
+            u'Sorry {}, you do not have admin rights"'.format(current_user))
+
+
+@app.route("/<submission_hash>/get_submission_datarun")
+@fl.login_required
+def get_submission_datarun(submission_hash):
+    submission = Submission.query.filter_by(
+        hash_=submission_hash).one_or_none()
+    if submission is None:
+        error_str = u'Missing submission: {}'.format(submission_hash)
+        return _redirect_to_user(error_str)
+    if current_user.access_level == 'admin' or\
+            db_tools.is_admin(submission.event, current_user):
+        # Get submission from datarun
+        db_tools.get_submissions_datarun.\
+            apply_async(args=[[[submission.name,
+                               submission.event_team.team.name,
+                               submission.event.name]]])
+        message_str = u'Getting submission {} from datarun'.format(submission.
+                                                                   name)
+        logger.info(message_str)
+        flask.flash(message_str, category='Info')
+        return flask.redirect(u'/events/{}/dashboard_submissions'.
+                              format(submission.event.name))
+    else:
+        return _redirect_to_user(
+            u'Sorry {}, you do not have admin rights"'.format(current_user))
+
+
+@app.route("/<event_name>/send_data_datarun")
+@fl.login_required
+def send_data_datarun(event_name):
+    event = Event.query.filter_by(name=event_name).one_or_none()
+    if current_user.access_level == 'admin' or\
+            db_tools.is_admin(event, current_user):
+        # Send data to datarun
+        db_tools.send_data_datarun_config.\
+            apply_async(args=[event.problem.name],
+                        kwargs={'split': True})
+        message_str = u'Sending data for {} to datarun'.format(event.name)
+        logger.info(message_str)
+        flask.flash(message_str, category='Info')
+        return flask.redirect(u'/events/{}/dashboard_submissions'.
+                              format(event.name))
+    else:
+        return _redirect_to_user(
+            u'Sorry {}, you do not have admin rights"'.format(current_user))
+
+
+@app.route('/reset_password', methods=["GET", "POST"])
+def reset_password():
+    form = EmailForm()
+    error = ''
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and user.access_level != 'asked':
+            subject = "Password reset requested - RAMP website"
+
+            # Here we use the URLSafeTimedSerializer we created in security
+            token = ts.dumps(user.email, salt='recover-key')
+
+            recover_url = url_for(
+                'reset_with_token',
+                token=token,
+                _external=True)
+
+            header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
+                   user.email, config.MAIL_USERNAME, subject)
+            body = ('Hi %s, \n\nclick on the link to reset your password:\n' %
+                    user.firstname)
+            body += recover_url
+            body += '\n\nSee you on the RAMP website!'
+            db_tools.send_mail(user.email, subject, header + body)
+            logger.info('Password reset requested for user %s' % user.name)
+            return redirect(url_for('login'))
+        else:
+            error = ('Sorry, but this user was not approved or the email was '
+                     'wrong. If you need some help, send an email to %s' %
+                     config.MAIL_USERNAME)
+    return render_template('reset_password.html', form=form, error=error)
+
+
+@app.route('/reset/<token>', methods=["GET", "POST"])
+def reset_with_token(token):
+    try:
+        email = ts.loads(token, salt="recover-key", max_age=86400)
+    except:
+        abort(404)
+
+    form = PasswordForm()
+
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=email).first_or_404()
+
+        user.hashed_password = db_tools.get_hashed_password(form.password.data)
+
+        db.session.add(user)
+        db.session.commit()
+
+        return redirect(url_for('login'))
+
+    return render_template('reset_with_token.html', form=form, token=token)
