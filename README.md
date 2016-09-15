@@ -135,8 +135,8 @@ fab sign_up_team:air_passengers_dssp4,agramfort
 fab add_workflow_element_type:ts_feature_extractor,code   
 fab add_workflow:ts_feature_extractor_regressor_workflow,ts_feature_extractor,regressor 
 fab add_problem:sea_ice 
-fab add_event:sea_ice
-fab sign_up_team:sea_ice,kegl    
+fab add_event:sea_ice_colorado
+fab sign_up_team:sea_ice_colorado,kegl    
   
 ### App performance  
   
@@ -214,8 +214,49 @@ of the prod_ramp disk : <https://keystone.lal.in2p3.fr/dashboard/project/volumes
 Currently it is : /dev/vdb, so the command is :  
   
 mount /dev/vdb /mnt/ramp_data  
-  
 
+Test server:  http://134.158.75.185  
+Production server: http://134.158.75.211/  
+### How to deploy databoard on stratuslab  
 
-Test server:  http://134.158.75.185
-Production server: http://134.158.75.211/
+A databoard server needs:  
+- an **Ubuntu 14.04 VM** with databoard installed on it  
+- a **persistent disk** where submission files and data are saved  
+- the **sciencefs disk** where are saved **backups** of the postgres database and of submission files (**only for a production server**)  
+
+Below are the instructions to **start a databoard server using the latest state of the production database**:
+
+#### For a test server
+
+1. Start a VM (Ubuntu 14.04) on openstack (via the openstack interface).
+2. Make it possible to log in as root: `ssh ubuntu@<VM_IP_ADDRESS> 'bash -s' < root_permissions.sh`
+3. Create a persistent disk and attach it to the VM (via the openstack interface).
+4. Create a file `env.sh` which contain required environment variables:
+```
+export DATABOARD_PATH='/mnt/ramp_data/'  #where to mount the persistent disk
+export DATABOARD_DB_NAME='databoard'
+export DATABOARD_DB_USER='xxxx'
+export DATABOARD_DB_PASSWORD='yyyy'
+export DATABOARD_DB_URL='postgresql://xxxx:yyyy@localhost/databoard'
+export SCIENCEFS_LOGIN='zzzz'
+export DATARUN_URL='uuuu'
+export DATARUN_USERNAME='vvvv'
+export DATARUN_PASSWORD='wwww'
+```
+5. scp to the VM the file `env.sh` and the script `tools/deploy_databoard.sh`: `scp env.sh tools/deploy_databoard.sh root@<VM_IP_ADDRESS>:/root/.`
+6. ssh to the instance and run `bash deploy_databoard.sh {disk_path} {db_dump}` where `disk path` is the path to the attached disk (something like `/dev/vdb`) and database dump from which to create new database (give only the dump file name, this file should be located on the sciencefs disk in `~/databoard/backup` which will be mounted on the VM in `/mnt/datacamp/backup`). This script:
+  - installs databoard on the VM. It will clone the project from giti (line 112). **MOdify this line to clone it with your account if needed**.
+  - mounts the sciencefs disk to retrieve backups of the latest state of the db and of associated submission files
+  - mounts the persistent disk and copy onto it backups of submission files from the sciencefs disk
+  - installs apache, ... and start the application
+  - starts celery workers to send jobs to datarun
+7. Unmount the sciencefs disk `fusermount -u /mnt/datacamp`
+
+#### For a production server  
+
+Follow **instructions 1 to 6** from above.
+7. Set up backups of the db and of submission files: use of `crontab` to run `tools/dump_db.sh` and `tools/housekeeping.sh`. To set up it, add these lines to the file opened by running `crontab -e`:
+```
+02 0    * * *   root    bash /mnt/ramp_data/code/databoard/tools/dump_db.sh
+22 1    * * *   root    bash /mnt/ramp_data/code/databoard/tools/housekeeping.sh
+```
