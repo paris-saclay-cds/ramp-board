@@ -219,10 +219,10 @@ Test server:  http://134.158.75.185
 Production server: http://134.158.75.211/  
 ### How to deploy databoard on stratuslab  
 
-A databoard server needs:
-- an **Ubuntu 14.04 VM** with databoard installed on it
-- a **persistent disk** where submission files and data are saved
-- the **sciencefs disk** where are saved **backups** of the postgres database and of submission files (**only for a production server**)
+A databoard server needs:  
+- an **Ubuntu 14.04 VM** with databoard installed on it  
+- a **persistent disk** where submission files and data are saved  
+- the **sciencefs disk** where are saved **backups** of the postgres database and of submission files (**only for a production server**)  
 
 Below are the instructions to **start a databoard server using the latest state of the production database**:
 
