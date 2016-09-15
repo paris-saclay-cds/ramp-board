@@ -1,27 +1,36 @@
-<i>Camille Marini (LTCI/CNRS), Alex Gramfort (LTCI/Télécom ParisTech), Sana Tfaili (Lip(Sys)²/UPSud), Laetitia Le (Lip(Sys)²/UPSud), Mehdi Cherti (LAL/CNRS), Balázs Kégl (LAL/CNRS)</i><br>
+<i> Balázs Kégl (CNRS), Camille Marini (CNRS), Andy Rhines (UW), Jennifer Dy (NEU), Arindam Banerjee (UMN) </i><br>
     
-<h2> Introduction </h2>
+<h2>Introduction</h2>
 
-<p>Chemotherapy is one of the most used treatment against cancer. It uses chemical substances (<a href=https://en.wikipedia.org/wiki/List_of_chemotherapeutic_agents>chemotherapeutic agents</a>) which kill cells that divide too quickly. These chemical substances are often diluted in a particular solution and packaged in bags, diffusers, or syringes, before being administered. <a href=https://books.google.fr/books?id=EB00rD8AqaYC&pg=PA188&lpg=PA188&dq=wrong+chemotherapeutic&source=bl&ots=m7EfyG6A3J&sig=ZVa0hLqDPFe2iExV6FOREJztN8c&hl=en&sa=X&ved=0ahUKEwj_5ZinkarMAhUFnBoKHaJiAgAQ6AEIKDAC#v=onepage&q=wrong%20chemotherapeutic&f=false>Wrong medication</a>  (wrong chemotherapeutic agent or wrong concentration) can have major impacts for patients. To prevent wrong medication, some recent French regulations impose the verification of anti-cancer drugs before their administration. The goal is to check that they contain the good chemotherapeutic agent with the good dosage.
+Arctic sea ice cover is one of the most variable features of Earth's climate. Its annual cycle peaks at around 15 million square kilometers in early spring, melting back to a minimum of about 6 million square kilometers in September. These seasonal swings are important for Earth's energy balance, as ice reflects the majority of sunlight while open water absorbs it. Changes in ice cover are also important for marine life and navigation for shipping.
+<img src=https://s3-us-west-2.amazonaws.com/artemp/arctic_min_max_map.png width=75%>
 
-<p><a href=https://en.wikipedia.org/wiki/Raman_spectroscopy>Raman spectroscopy</a> could be used to make this check, since, theoretically, i) each molecule has a specific spectral fingerprint by which the molecule can be identified; and ii) the Raman intensity increases with the concentration of the molecule. The main advantage of spectroscopy above other methods (for example, liquid chromatography) is that it is non-destructive and non-invasive (measures are made without opening the drug containers). However, this method is rarely used in hospital environment because of the complexity of the spectral signals to analyze. Automating the analysis of these spectral signals could significantly help. Eventually, a complete analytical system (from measuring Raman spectra to identifying the chemotherapeutic agent and its concentration) could be designed, which would be easy to use and would prevent wrong medication. 
+In recent years, Arctic sea ice cover has declined rapidly, particularly during the September minimum. These changes have outpaced the predictions of climate models, and forecasting extent remains a formidable challenge. Typically, skillful predictions are limited to ~2-5 months in advance (<a href=https://eos.org/features/improving-predictions-of-arctic-sea-ice-extent>Stroeve, et al. "Improving Predictions of Arctic Sea Ice Extent"</a>), while idealized experiments suggest that predictions up to two years in advance should be possible (<a href=http://onlinelibrary.wiley.com/doi/10.1002/qj.2401/abstract>Guemas et al, 2014</a>).
 
-<p>In this context, the goal of this project is to develop prediction models able to <b>identify and quantify chemotherapeutic agents from their Raman spectra</b>.  
+<img src=https://s3-us-west-2.amazonaws.com/artemp/sea-ice.jpg width=75%>
 
-<p>The Lip(Sys)² laboratory measured Raman spectra of 4 types of chemotherapeutic agents (called <i>molecule</i>) in 3 different packages (called <i>vial</i>), diluted in 9 different solutions (called <i>solute gammes</i>), and having different concentrations. A total of <b>360 spectra were measured for each agent</b>, except for one (348 spectra). <br>
+Better tools to predict ice cover are critical for seasonal and regional climate prediction, and would thus address grand challenges in the study of climate change (<a href=http://wcrp-climate.org/grand-challenges>World Climate Research Programme: Grand Challenges, 2013)</a>
 
-Part of these data are saved in the file <code>train.csv</code> as follows (<code>n_samples</code> being the number of samples): 
+
+<h3>The CCSM4 simulator</h3>
+
+As a surrogate for observational data, we will use output from a 1300 year simulation using the NCAR <a href=http://www.cesm.ucar.edu/models/ccsm4.0/>CCSM4.0</a> climate model. The model was run in fully-coupled mode with interactive ocean, atmosphere, and sea ice. The simulation was also performed in an idealized "Pre-Industrial" mode, where greenhouse gas concentrations and other external forcings are held fixed to 1850 levels. This allows us to access a  stationary climate over a 1000+ year period, which makes the evaluation of the predictor more robust than if we used real measurements that are both non-stationary and limited to several decades.
+
+<h3>The data</h3>
+
+The data is a time series of "images" $z_t$, consisting of different physical variables on a regular grid on the Earth, indexed by lon(gitude) and lat(itude) coordinates. The variables we have made available are: 
 <ul>
-    <li><b>molecule</b>: Type of chemotherapeutic agent. Six possible values: A for infliximab, B for bévacizumab, Q for ramucirumab, R for rituximab. Dimension: (<code>n_samples</code>,)</li>
-    <li><b>vial</b>: Vial type. Three possible values: 1, 2, 3. Dimension: (<code>1</code>, <code>n_samples</code>)</li>
-    <li><b>solute</b>: Solute group. Fourteen possible values: 1, 2, ..., 14. Dimension: (<code>1</code>, <code>n_samples</code>)</li>
-    <li><b>concentration</b>: Concentration of the molecule. Dimension: (<code>n_samples</code>, <code>1</code>)</li>
-    <li><b>spectra</b>: Intensity of Raman spectrum. Dimension: (<code>n_samples</code>, <code>1866</code>)</li>
+<li>ice_area --- the Northern Hemisphere sea ice area, in millions of squared kilometers.
+<li>ts --- surface temperature, most important over the oceans which have a very high heat capacity.
+<li>taux --- zonal (x-direction) surface wind stress. This is the frictional effect of winds on the sea surface and sea ice.
+<li>tauy --- meridional (y-direction) surface wind stress.
+<li>ps --- surface pressure.
+<li>psl --- equivalent sea-level surface pressure. This corrects ps for the effects of topography, though the two should be very similar.
+<li>shflx --- Surface sensible heat flux, the amount of heat transferred from the surface to the atmosphere.
+<li>cldtot --- Total cloud cover (fractional), which has strong effects on radiative energy balance at the surface.
 </ul>
+The fields are recorded every month for 1300 years, giving 15,600 time points. The goal is to predict the Northern Hemisphere sea ice area <span style="color:red">4 months ahead</span>. Since the most important prediction is the minimum area in September, we will also display the RMSE over predictions in May, predecting that years (minimum) ice area in September.
 
-<p>To sum up, there are too objectives:
+<h3>The prediction task</h3>
 
-<ul>
-    <li><b>classification</b>: predict which molecule it corresponds to given the spectrum.</li>
-    <li><b>regression</b>: predict the concentration of a molecule. The prediction should not depend on the vial or the solute group. The error metric is the mean absolute relative error (mare): $$\frac{1}{n_{samples}}\sum_{i=1}^{n_{samples}}\left|\frac{y_i-\hat{y}_i}{y_i}\right|$$ with $y$ and $\hat{y}$ being the true and predicted concentration.</li>
-</ul>
+The pipeline will consists of a time series feature extractor and a predictor. Since the task is regression, the predictor will be a regressor, and the score (to minimize) will be the <a href=http://en.wikipedia.org/wiki/Root-mean-square_deviation>root mean square error</a>. The feature extractor will have access to the whole data. It will construct a "classical" feature matrix where each row corresponds to a time point. You should collect all information into these features that you find relevant to the regressor. The feature extractor can take <span style="color:red">anything from the past</span>, that is, it will implement a function $x_t = f(z_1, \ldots, z_t)$. Since you will have access to the full data, in theory you can cheat (even inadvertantly) by using information from the future. We have implemented a randomized test to find such "bugs", but please do your best to avoid this since it would make the results irrelevant.

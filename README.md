@@ -135,8 +135,8 @@ fab sign_up_team:air_passengers_dssp4,agramfort
 fab add_workflow_element_type:ts_feature_extractor,code   
 fab add_workflow:ts_feature_extractor_regressor_workflow,ts_feature_extractor,regressor 
 fab add_problem:sea_ice 
-fab add_event:sea_ice
-fab sign_up_team:sea_ice,kegl    
+fab add_event:sea_ice_colorado
+fab sign_up_team:sea_ice_colorado,kegl    
   
 ### App performance  
   
