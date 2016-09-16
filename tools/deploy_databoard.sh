@@ -174,7 +174,9 @@ mkdir ${DATABOARD_PATH}/code/databoard/tools/celery_info
 chmod 777 ${DATABOARD_PATH}/code/databoard/tools/celery_info
 # chmod 777 ${DATABOARD_PATH}/code/databoard/tools/celery_worker.sh
 chmod a+r -R $DATABOARD_PATH/datacamp/databoard/problems
+chmod a+x -R $DATABOARD_PATH/datacamp/databoard/problems
 chmod a+r -R $DATABOARD_PATH/datacamp/databoard/submissions
+chmod a+x -R $DATABOARD_PATH/datacamp/databoard/submissions
 # chmod a+x -R $DATABOARD_PATH/datacamp/databoard/submissions
 # sudo -su ubuntu <<HERE
 # echo Starting $NB_WORKERS workers as ubuntu user
