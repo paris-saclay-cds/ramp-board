@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Login{% endblock %}
 {% block content %}
-
 {% with messages = get_flashed_messages() %}
 
 {% if messages %}
@@ -76,6 +75,6 @@
     </div>
 {% endfor %}
 
-{% include 'description.html' %}
+{% include 'description.html' %} 
 
 {% endblock %}
