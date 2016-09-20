@@ -109,7 +109,7 @@ sudo service apache2 restart
   
 sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" /home/datacamp/code/databoard/config.py  
   
-### Example sequence of adding the drug_spectra ramp  
+### Example sequence of adding ramps  
   
  - drug_spectra  
 fab add_score_type:error_mare_mixed,"1",0.0,inf  
