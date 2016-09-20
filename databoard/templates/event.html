@@ -39,7 +39,7 @@
 <h3 class="ui horizontal header divider">Rules</h3>
 <ul>
 <li>Submissions will open at (UTC) {{ event.opening_timestamp }}
-<li>Training is not automatic, be patient.</li>
+<li>When you submit, your submission is sent to be trained automatically. The jobs may wait some time in a queue before being run so be patient. There is a running time limit of 15 minutes in this queue. If your submission comes back with timeout or memory error, we can retrain it manually on a bigger server.</li>
 <li>Pending (untrained) and failing submissions can be resubmitted under the same name at an arbitrary frequency.</li>
 <li>Once your submission is trained, it cannot be deleted or replaced.</li>
 <li> After each succesfully trained submission, you have to wait {{ event.min_duration_between_submissions }}s to resubmit. </li>
