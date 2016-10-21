@@ -1,163 +1,105 @@
 {% extends "base.html" %}
-{% block head %}
-    {{ super() }}
-    <script src="{{ url_for('static', filename='tablesort.js') }}"></script>
-{% endblock %}
 {% block title %}Leaderboards{% endblock %}
 {% block content %}
+
 
 {% with messages = get_flashed_messages(with_categories=true) %}
 
 {% if messages %}
-<div id="formerror" class="ui modal">
+    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     {% for category, message in messages %}
-        <div class="header">
-            {{ category }}
-        </div>
-        <div class="content">
-            <div class="description">
-                {{ message }}
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+                </div>
+                <div class="modal-body">
+                    {{ message }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     {% endfor %}
-    <div class="actions">
-        <div class="ui button">Close</div>
     </div>
-</div>
-<script type="text/javascript">
-    $(function(){
-        $('#formerror.modal')
-            .modal('setting', 'transition', 'Fade Up')
-            .modal('show')
-        ;
-    });
-</script>
 {% endif %}
+
 {% endwith %}
 
-<script type=text/javascript>
-  $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-</script>
-
-<script type=text/javascript>
-  // var $checkbox = $("#autorefresh");
-  // $checkbox.checkbox({
-  //   onEnable: function() {
-  //       timeout = setTimeout(updateLeaderboards, 3000);
-  //       console.log("onEnable!" + $checkbox.prop("checked"));
-  //   },
-  //   onDisable: function() {
-  //       clearTimeout(timeout);
-  //       console.log("onDisable!" + $checkbox.prop("checked"));
-  //   }
-  // });
-
-  // $('.popup').popup({
-  //   inline   : true,
-  //   hoverable: true,
-  //   position : 'bottom left',
-  //   delay: {
-  //       show: 300,
-  //       hide: 800
-  //   }
-  // });
-</script>
-<script type=text/javascript>
-  function sortTables() {
-    // $('table.dataframe thead tr th:first-child').data('sortBy', function(th, td, tablesort) {
-    //       return parseInt(td.text(), 10);
-    // });
-    // $('table.dataframe thead th').filter(":contains('score')").data('sortBy', function(th, td, tablesort) {
-    //       return parseFloat(td.text());
-    // });
-    // $('table.dataframe thead th').filter(":eq('score')").addClass('descending');
-    $('table.dataframe thead th').filter(function() {
-      return $(this).text() === 'score';
-    }).addClass('descending');
-
-    $('.sortable.table').tablesort();
-  }
-
-  function updateLeaderboards() {
-    $.getJSON($SCRIPT_ROOT + '/_leaderboard', {}, function(data) {
-      $("#leaderboard").html(data.leaderboard);
-      $("#failed_models").html(data.failed_models);
-      $("#new_models").html(data.new_models);
-      // if (! data.new_models)
-      //     $("#id_new_models").hide();
-      // else
-      //     $("#id_new_models").show();
-      // if (! data.failed_models)
-      //     $("#id_failed_models").hide();
-      // else
-      //     $("#id_failed_models").show();
-    });
-    timeout = setTimeout(updateLeaderboards, 3000);  // 3 sec 
-    sortTables();
-  }
-
-  $(document).ready(function() {
-    sortTables();
-    // timeout = setTimeout(updateLeaderboards, 3000);  // 3 sec 
-  });
-</script>
-
-<!-- <div class="ui toggle checkbox" id="autorefresh">
-    <input type="checkbox" name="public">
-    <label>Auto-refresh</label>
-</div> -->
-<script>
-function startTime()
-{
-var today=new Date();
-var h=today.getHours();
-var m=today.getMinutes();
-var s=today.getSeconds();
-// add a zero in front of numbers<10
-m=checkTime(m);
-s=checkTime(s);
-document.getElementById('txt').innerHTML=h+":"+m+":"+s;
-t=setTimeout(function(){startTime()},500);
-}
-
-function checkTime(i)
-{
-if (i<10)
-  {
-  i="0" + i;
-  }
-return i;
-}
-</script>
-<div class="ui stackable two column grid">
-  <div class="one column row">
-    <div class="column">
-    {% if event.combined_combined_valid_score_str and event.is_open %}
-      <h4>Combined score: {{ event.combined_combined_valid_score_str }}</h4>
-    {% endif %}
-    {% if event.combined_combined_test_score_str and (event.is_closed or private) %}
-      <h4>Combined test score: {{ event.combined_combined_test_score_str }}</h4>
-    {% endif %}
-      <h3 class="ui horizontal header divider">{{ leaderboard_title }}</h3>
-      <div id='leaderboard'>{{leaderboard|safe}}</div>
-    </div>
-  </div>
-{% if new_leaderboard %}
-  <div class="column">
-    <div id="id_new_models">
-      <h3 class="ui horizontal header divider">New submissions (pending training)</h3>
-      <div id='new_models'>{{new_leaderboard|safe}}</div>
-    </div>
-  </div>
-{% endif %}
-{% if failed_leaderboard %}
-  <div class="column">
-    <div id="id_failed_models">
-      <h3 class="ui horizontal header divider">Failed submissions</h3>
-      <div id='failed_models'>{{failed_leaderboard|safe}}</div>
-    </div>
-  </div>
-{% endif %}
+<div class="page-title">
+    <span class="title">{{ event.name }}</span>
 </div>
 
+<div class="col-xs-12">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+              {{ leaderboard_title }}
+          </div>
+      </div>
+    </div>
+    <div class="card-body">
+        <h4><font color="#F17670">
+        {% if event.combined_combined_valid_score_str and event.is_open %}
+            Combined score: {{ event.combined_combined_valid_score_str }}
+        {% endif %}
+        {% if event.combined_combined_test_score_str and (event.is_closed or private) %}
+            Combined test score: {{ event.combined_combined_test_score_str }}
+        {% endif %}
+        </font></h4>
+		
+        <table class="datatable stripe cell-border" cellspacing="0" width="100%">
+          {{ leaderboard | safe}} 
+	    </table>
+    </div>
+  </div>
+</div>
+
+{% if new_leaderboard %}
+<div class="col-xs-6">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+              New submissions (pending training) 
+          </div>
+      </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+          {{ new_leaderboard | safe}} 
+	    </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% if failed_leaderboard %}
+<div class="col-xs-6">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+              Failed submissions  
+          </div>
+      </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+          {{ failed_leaderboard | safe}} 
+	    </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(function () {
+       $('#formerror').modal('toggle')
+});
+</script>
 {% endblock %}

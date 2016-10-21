@@ -1,123 +1,113 @@
 {% extends "base.html" %}
-{% block head %}
-    {{ super() }}
-    <script src="{{ url_for('static', filename='tablesort.js') }}"></script>
-{% endblock %}
 {% block title %}Dashboard submissions{% endblock %}
 {% block content %}
 
 {% with messages = get_flashed_messages(with_categories=true) %}
 
 {% if messages %}
-<div id="formerror" class="ui modal">
+    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     {% for category, message in messages %}
-        <div class="header">
-            {{ category }}
-        </div>
-        <div class="content">
-            <div class="description">
-                {{ message }}
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+                </div>
+                <div class="modal-body">
+                    {{ message }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     {% endfor %}
-    <div class="actions">
-        <div class="ui button">Close</div>
     </div>
-</div>
-<script type="text/javascript">
-    $(function(){
-        $('#formerror.modal')
-            .modal('setting', 'transition', 'Fade Up')
-            .modal('show')
-        ;
-    });
-</script>
 {% endif %}
 {% endwith %}
 
-<script type=text/javascript>
-  $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-</script>
 
-<script type=text/javascript>
-  function sortTables() {
-    $('table.dataframe thead th').filter(function() {
-      return $(this).text() === 'score';
-    }).addClass('descending');
+<div class="page-title">
+<span class="title">{{ event.name }}</span>
+</div>
 
-    $('.sortable.table').tablesort();
-  }
-
-  function updateLeaderboards() {
-    $.getJSON($SCRIPT_ROOT + '/_leaderboard', {}, function(data) {
-      $("#failed_models").html(data.failed_models);
-      $("#new_models").html(data.new_models);
-    });
-    timeout = setTimeout(updateLeaderboards, 3000);  // 3 sec 
-    sortTables();
-  }
-
-  $(document).ready(function() {
-    sortTables();
-  });
-</script>
-
-<script>
-function startTime()
-{
-var today=new Date();
-var h=today.getHours();
-var m=today.getMinutes();
-var s=today.getSeconds();
-// add a zero in front of numbers<10
-m=checkTime(m);
-s=checkTime(s);
-document.getElementById('txt').innerHTML=h+":"+m+":"+s;
-t=setTimeout(function(){startTime()},500);
-}
-
-function checkTime(i)
-{
-if (i<10)
-  {
-  i="0" + i;
-  }
-return i;
-}
-</script>
-<div class="ui stackable two column grid">
-  <div class="one column row">
-    <div class="column">
-      <h3 class="ui horizontal header divider">General information</h3>
+<div class="col-xs-12">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+			General Information
+          </div>
+      </div>
+    </div>
+    <div class="card-body">
       <p>Opening time of the event: {{ event.opening_timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
-      <p>Send data to datarun and split between train and test on datarun: <a href='/{{ event.name }}/send_data_datarun'><i class='plane icon'></i><i class='plane icon'></i></a> 
+      <p>Send data to datarun and split between train and test on datarun: <a href='/{{ event.name }}/send_data_datarun'><i class='icon fa fa-paper-plane'></i><i class='icon fa fa-paper-plane'></i></a> 
       <!-- <p>Open submissions? <b>TODO</b>  --!>
       <!-- <p>Time between two submissions: <b>TODO</b> --!>
     </div>
   </div>
-
-  <div class="one column row">
-    <div class="column">
-      <h3 class="ui horizontal header divider">Submissions</h3>
-        <div class="column">
-          <center><div id="submissions_stat" style="width: 1000px; height: 400px;"><!-- Plotly --></div></center> 
-        </div>
-    </div>
-  </div>
-  <div class="column">
-    <div id="id_new_models">
-      <h4 class="ui horizontal header divider">New submissions (pending training)</h4>
-      <div id='new_models'>{{new_leaderboard|safe}}</div>
-    </div>
-  </div>
-  <div class="column">
-    <div id="id_failed_models">
-      <h4 class="ui horizontal header divider">Failed submissions</h4>
-      <div id='failed_models'>{{failed_leaderboard|safe}}</div>
-    </div>
-  </div>
 </div>
 
+<div class="col-xs-12">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+			Submissions
+          </div>
+      </div>
+    </div>
+    <div class="card-body">
+	  <div class="row">
+		<div class="col-xs-12">
+          <center><div id="submissions_stat" style="width: 1000px; height: 400px;"><!-- Plotly --></div></center> 
+			<canvas id="line-chart" width="20" height="20"></canvas>
+        </div>
+      </div>
+	  <div class="row">
+		<div class="col-xs-6">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                  <div class="title">
+                      New submissions (pending training)
+                  </div>
+              </div>
+            </div>
+            <div class="card-body">
+                <table class="table table-hover" cellspacing="0" width="100%">
+                  {{ new_leaderboard | safe}}
+                </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xs-6">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                  <div class="title">
+                      Failed submissions 
+                  </div>
+              </div>
+            </div>
+            <div class="card-body">
+                <table class="table table-hover" cellspacing="0" width="100%">
+                  {{ failed_leaderboard | safe}}
+                </table>
+            </div>
+          </div>
+        </div>
+
+      </div> <!-- row -->
+    </div> <!-- card-body -->
+  </div> <!-- card -->
+</div> <!-- col -->
+
+{% endblock %}
+
+{% block scripts %}
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
 var training_time =   {
@@ -126,7 +116,8 @@ var training_time =   {
     mode: 'markers',
     type: 'scatter',
     text: {{ name_submissions|tojson|safe }},
-    marker: { size: 12 },
+    marker: { color: "#e84b3a",
+              size: 12 },
     name: 'training time'
   };
 var cum_submissions =   {
@@ -134,7 +125,8 @@ var cum_submissions =   {
     y: {{ cumulated_submissions|safe }},
     type: 'scatter',
     text: {{ name_submissions|tojson|safe }},
-    marker: { size: 12 },
+    marker: { color: "#e3a712",
+              size: 12 },
     name: '# submissions',
     xaxis: 'x2',
     yaxis: 'y2',
@@ -158,5 +150,10 @@ var layout = {
 };
 var data = [training_time, cum_submissions];
 Plotly.newPlot('submissions_stat', data, layout);
+</script>
+<script>
+$(function () {
+   $('#formerror').modal('toggle')
+});
 </script>
 {% endblock %}

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>RAMP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Fonts -->
+    <link href='http://fonts.googleapis.com/css?family=Roboto+Condensed:300,400' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Lato:300,400,700,900' rel='stylesheet' type='text/css'>
+    <!-- CSS Libs -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/font-awesome.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/animate.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/bootstrap-switch.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/checkbox3.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/jquery.dataTables.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/dataTables.bootstrap.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/select2.min.css') }}">
+    <!-- CSS App -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/themes/flat-blue.css') }}">
+</head>
+
+<body class="flat-blue landing-page">
+    <nav class="navbar navbar-inverse navbar-fixed-top  navbar-affix" role="navigation" data-spy="affix" data-offset-top="60">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">
+                    <div class="title"><span>&nbsp; &nbsp;<img src="{{ url_for('static', filename='img/logo_CDS_footer.svg') }}" height="20px"> RAMP</span></div>
+                </a>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse " aria-expanded="true">
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="active"><a href="#">Home</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                    <li><a href="/login">Login</a></li>
+                </ul>
+            </div>
+            <!--/.nav-collapse -->
+        </div>
+    </nav>
+    <div class="jumbotron app-header">
+        <div class="container">
+            <h2 class="text-center">
+                <br>
+                <div class="color-white"><span><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" alt="CDS logo" class="app-logo color-white">&nbsp;RAMP</span></div>
+            </h2>
+            <p class="text-center color-white app-description">Rapid Analytics <br>and Model Prototying.</p>
+            <p class="text-center"><a class="btn btn-primary btn-lg app-btn" href="#features" role="button">Learn more »</a></p>
+        </div>
+    </div>
+    <div class="container-fluid app-content-a" id="features">
+        <div class="container">        <div class="row text-center">
+            <div class="col-md-4 col-sm-6">
+                <span class="fa-stack fa-lg fa-5x">
+                  <i class="fa fa-circle-thin fa-stack-2x"></i>
+                  <i class="fa fa-users fa-stack-1x"></i>
+                </span>
+                <h2>Collaborative prototyping</h2>
+                <p>During the RAMP, the participants submit predictive solutions (code). The models are trained on our back-end. The scores are displayed on a leaderboard. All participants have access to all code, and they are encouraged to look at and to reuse each other's solutions. This accelerates the development process since good ideas spread fast.</p>
+            </div>
+            <!-- /.col-lg-4 -->
+            <div class="col-md-4 col-sm-6">
+                <span class="fa-stack fa-lg fa-5x">
+                  <i class="fa fa-circle-thin fa-stack-2x"></i>
+                  <i class="fa fa-graduation-cap fa-stack-1x"></i>
+                </span>
+                <h2>Training</h2>
+                <p>A great tool to learn data science! 
+                RAMPs are used in the MS Big Data at Telecom ParisTech, 
+                in three UPSaclay M2 programs (Data Science, AIC, Data and Knowledge), 
+                in a course on Machine Learning for Finance and Economics at Université Panthéon-Assas, 
+                in a graduate course in the Data analysis and decision program at Ecole Centrale de Lille.</p>
+            </div>
+            <!-- /.col-lg-4 -->
+            <div class="col-md-4 col-sm-6">
+                <span class="fa-stack fa-lg fa-5x">
+                  <i class="fa fa-circle-thin fa-stack-2x"></i>
+                  <i class="fa fa-comments-o fa-stack-1x"></i>
+                </span>
+                <h2>Networking</h2>
+                <p>Each RAMP attracts about 30-50 participants, coming from different backgrounds and carrier stages, who usually meet for the first time. They develop a working relationship in a relaxed environment, and sometimes keep working together after the event. </p>
+            </div>
+            <!-- /.col-lg-4 -->
+        </div>
+        </div>
+    </div>
+    <div class="container-fluid app-content-b feature-1">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-5 col-sm-6 text-left color-white">
+                    <h2 class="featurette-heading">Paris-Saclay Center of Data Science</h2>
+                    <p class="lead">RAMPs are organized by the Paris Saclay Center for Data Science: A multi-disciplinary initiative to define, structure, and manage the data science ecosystem at the University Paris-Saclay.</p>
+                </div>
+                <div class="col-md-7 col-sm-6">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid app-content-a" id="about">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h2 class="text-center app-content-header">What is a RAMP?</h2>
+                    <p class="text-center app-content-description">
+                    A RAMP is a collaborative data challenge. See <a href="/description">here</a> for more details.
+                    </p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <center>
+                         <iframe width="420" height="315" 
+                             src="https://www.youtube.com/embed/vQoH68hb85Q" frameborder="0" allowfullscreen></iframe>
+                    </center>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid app-content-b contact-us" id="contact">
+        <div class="container">
+            <div class="row featurette">
+                <div class="col-md-6"><h2 class="color-white contact-us-header">Contact Us</h2>
+                <p class="color-white contact-us-description">
+                Our office is located on the Orsay campus of the Paris-Saclay University, south-west of Paris. <br>
+                The best way to contact us is to send us an <a href="mailto:balazs.kegl@gmail.com"><strong>email</strong></a><br>    
+                </p></div>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid app-content-a">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h2 class="text-center app-content-header">Team</h2>
+                        <div class="col-md-2">
+                            <center>
+                            <img src="https://media.licdn.com/mpr/mpr/shrinknp_400_400/AAEAAQAAAAAAAABMAAAAJGE0ZDdmMDkyLWY0OTYtNGYzMS1iNDU1LTMwN2I2MjBkODViYQ.jpg" class="img-circle" alt="Balas Kegl" width="175" height="175"><br>
+                            <a href="https://www.linkedin.com/in/balazskegl">Balázs Kégl</a>
+                            </center>
+                        </div>
+                        <div class="col-md-2">
+                            <center>
+                                <img src="{{url_for('static', filename='img/Alex.jpg') }}" class="img-circle" alt="Alexandre Gramfort" width="175" height="175">
+                            <a href="https://www.linkedin.com/in/alexandregramfort">Alex Gramfort</a>
+                            </center>
+                        </div>
+                        <div class="col-md-2">
+                            <center>
+                            <img src="https://media.licdn.com/mpr/mpr/shrinknp_400_400/p/2/005/059/3c4/30ed83b.jpg" class="img-circle" alt="Akin Kazakçi" width="175" height="175">
+                            <a href="https://www.linkedin.com/in/akin-osman-kazakci-ab49516">Akin Kazakçi</a>
+                            </center>
+                        </div>
+                        <div class="col-md-2">
+                            <center>
+                            <img src="https://media.licdn.com/mpr/mpr/shrinknp_400_400/AAEAAQAAAAAAAAQ5AAAAJGUzMmRiNTRmLWM4OWEtNGJkNS1iYWQ2LTgwM2E5MWIyZDNmZQ.jpg" class="img-circle" alt="Camille Marini" width="175" height="175">
+                            <a href="https://www.linkedin.com/in/camille-marini-b585b210">Camille Marini</a>
+                            </center>
+                        </div>
+                        <div class="col-md-2">
+                            <center>
+                                <img src="{{url_for('static', filename='img/Mehdi.png') }}" class="img-circle" alt="Mehdi Cherti" width="175" height="175">
+                            <a href="https://www.linkedin.com/in/mehdi-cherti-38424b20">Mehdi Cherti</a>
+                            </center>
+                        </div>
+                        <div class="col-md-2">
+                            <center>
+                            <img src="https://media.licdn.com/mpr/mpr/shrinknp_400_400/AAEAAQAAAAAAAAOYAAAAJDRjNmZkNmNjLTViOTYtNGNhMC1iNTU0LWU1MTgzNzk4MWQ5OA.jpg" class="img-circle" alt="Yohann Stiruk" width="175" height="175">
+                            <a href="https://www.linkedin.com/in/yohann-sitruk-47289133">Yohann Sitruk</a>
+                            </center>
+                        </div>
+            </div>
+        </div>
+    </div>
+    <!-- /END THE FEATURETTES -->
+    <!-- FOOTER -->
+    <footer class="app-footer">
+      <div class="container">
+          <center><span class="pull-left"><i class="icon fa fa-copyright"></i> RAMP version beta <a href="#"><i class="icon fa fa-long-arrow-up"></i><i class="icon fa fa-long-arrow-up"></i></a></span> &nbsp; &nbsp; &nbsp; &nbsp;
+          <span><a href="/"><img src="{{ url_for('static', filename='img/logo_CDS_footer.svg') }}" height="20px"></a></span> &nbsp; &nbsp; &nbsp; &nbsp; <span><a href="mailto:balazs.kegl@gmail.com">Contact Us <i class="icon fa fa-envelope"></i></a></span>
+          <span class="pull-right">Thanks to <a href="https://github.com/tui2tone/flat-admin-bootstrap-templates">tui2tone</a> for the  template!</span>
+          </center>
+      </div>
+    </footer>
+    <!-- Javascript Libs -->
+    <script type="text/javascript" src="{{ url_for('static', filename='lib/js/jquery.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='lib/js/bootstrap.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='lib/js/Chart.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='lib/js/bootstrap-switch.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='lib/js/jquery.matchHeight-min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='lib/js/jquery.dataTables.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='lib/js/dataTables.bootstrap.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='lib/js/select2.full.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='lib/js/ace/ace.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='lib/js/ace/mode-html.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='lib/js/ace/theme-github.js') }}"></script>
+    <!-- /.container -->
+</body>
+
+</html>

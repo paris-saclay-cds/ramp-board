@@ -1,80 +1,79 @@
 {% extends "base.html" %}
 {% block title %}Login{% endblock %}
-{% block content %}
-{% with messages = get_flashed_messages() %}
 
+{% block content %}
+
+{% with messages = get_flashed_messages() %}
 {% if messages %}
-<div id="formerror" class="ui modal">
-    <div class="header">
-        Login error
-    </div>
-    <div class="content">
-        {% for message in messages %}
-        <div class="description">
-            {{ message }}
+    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Login Error</h4>
+                </div>
+                <div class="modal-body">
+    				{% for message in messages %}
+                    	{{ message }}
+					{% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+                </div>
+            </div>     
         </div>
-        {% endfor %}
     </div>
-    <div class="actions">
-        <div class="ui button">Close</div>
-    </div>
-</div>
-<script type="text/javascript">
-    $(function(){
-        $('#formerror.modal')
-            .modal('setting', 'transition', 'Fade Up')
-            .modal('show')
-        ;
-    });
-</script>
 {% endif %}
 {% endwith %}
-<h3><a href="/sign_up">Sign up</a></h3> 
 
-<h3 class="ui horizontal header divider">Login</h3> 
- <!-- style="padding-bottom: 20px " -->
-<form class="ui form" method="post" action="" name="login">
-    {{ form.hidden_tag() }}
-    <div class="one field">
-        <div class="required field">
-            <label>Username</label>
-            {{ form.user_name(placeholder="username") }}
-            {% for error in form.user_name.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
-        <div class="required field">
-            <label>Password</label>
-            {{ form.password(placeholder="password") }}
-            {% for error in form.password.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
-<!--        
-        <div class="required field">
-            <label>Remember me</label>
-            {{ form.remember_me }}
-        </div>
--->
-        <input type="submit" value="Login" class="ui submit button">
-        Forgot your password? <a href="/reset_password">Reset it!</a>
-    </div>
-</form>
-
-<h3 class="ui horizontal header divider">Running RAMPs</h3> 
-{% for url, f_name in event_urls_f_names %}
-    <div class="ui fluid card">
-        <div class="content">
-            <font size=+1>
-            <div class="description">
-                <a href="/events/{{ url }}"><i class="file grey icon"></i>{{ f_name }}</a>:
-                <a href="/events/{{ url }}/leaderboard">leaderboard</a>
+<div class="col-xs-12">
+     <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <div class="title">Login</div>
             </div>
-            </font>
         </div>
-    </div>
-{% endfor %}
 
-{% include 'description.html' %} 
+         <div class="card-body">
+
+             <form class="ui form" method="post" action="" name="login">
+                 {{ form.hidden_tag() }}
+                 <div class="one field">
+                     <div class="required field">
+                         <label>Username</label>
+                         {{ form.user_name(placeholder="username") }}
+                         {% for error in form.user_name.errors %}
+                             <span style="color: red;">[{{ error }}]</span>
+                         {% endfor %}
+                     </div>
+                     <div class="required field">
+                         <label>Password</label>
+                         {{ form.password(placeholder="password") }}
+                         {% for error in form.password.errors %}
+                             <span style="color: red;">[{{ error }}]</span>
+                         {% endfor %}
+                     </div>
+             <!--        
+                     <div class="required field">
+                         <label>Remember me</label>
+                         {{ form.remember_me }}
+                     </div>
+             -->
+                     <input type="submit" value="Login" class="ui submit button">
+                     Forgot your password? <a href="/reset_password">Reset it!</a>
+                 </div>
+             </form>
+         </div>
+    </div>
+</div>
 
 {% endblock %}
+
+{% block scripts %}
+<script>
+$(function () {
+       $('#formerror').modal('toggle')
+});
+</script>
+{% endblock %}
+

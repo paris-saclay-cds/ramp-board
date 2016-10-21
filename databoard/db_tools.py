@@ -42,6 +42,16 @@ def date_time_format(date_time):
     return date_time.strftime('%Y-%m-%d %H:%M:%S %a')
 
 
+def table_format(table_html):
+    """
+    remove <table></table> keywords from html table (converted from pandas
+    dataframe), to insert in datatable
+    """
+    # return '<thead> %s </tbody><tfoot><tr></tr></tfoot>' %\
+    return '<thead> %s </tbody>' %\
+        table_html.split('<thead>')[1].split('</tbody>')[0]
+
+
 ######################### Users ###########################
 
 def get_hashed_password(plain_text_password):
@@ -1891,10 +1901,10 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
         max_cols=None,
         max_rows=None,
         justify='left',
-        classes=['ui', 'blue', 'celled', 'table', 'sortable']
+        # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
     leaderboard_html = leaderboard_df.to_html(**html_params)
-    return leaderboard_html
+    return table_format(leaderboard_html)
 
 
 def get_private_leaderboard(event_name, team_name=None, user_name=None):
@@ -1959,10 +1969,10 @@ def get_private_leaderboard(event_name, team_name=None, user_name=None):
         max_cols=None,
         max_rows=None,
         justify='left',
-        classes=['ui', 'blue', 'celled', 'table', 'sortable']
+        # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
     leaderboard_html = leaderboard_df.to_html(**html_params)
-    return leaderboard_html
+    return table_format(leaderboard_html)
 
 
 def get_failed_leaderboard(event_name, team_name=None, user_name=None):
@@ -1996,10 +2006,10 @@ def get_failed_leaderboard(event_name, team_name=None, user_name=None):
         max_cols=None,
         max_rows=None,
         justify='left',
-        classes=['ui', 'blue', 'celled', 'table', 'sortable']
+        # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
     leaderboard_html = leaderboard_df.to_html(**html_params)
-    return leaderboard_html
+    return table_format(leaderboard_html)
 
 
 def get_new_leaderboard(event_name, team_name=None, user_name=None):
@@ -2030,10 +2040,10 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
         max_cols=None,
         max_rows=None,
         justify='left',
-        classes=['ui', 'blue', 'celled', 'table', 'sortable']
+        # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
     leaderboard_html = leaderboard_df.to_html(**html_params)
-    return leaderboard_html
+    return table_format(leaderboard_html)
 
 
 def get_new_leaderboard_datarun(event_name, team_name=None, user_name=None):
@@ -2054,11 +2064,11 @@ def get_new_leaderboard_datarun(event_name, team_name=None, user_name=None):
             columns, [submission.event_team.team.name,
                       submission.name_with_link,
                       date_time_format(submission.submission_timestamp),
-                      "<center><a href='/{}/send_submission_datarun'><i "
-                      "class='arrow circle outline up icon'></i></a></center>".
+                      "<center><a href='/{}/send_submission_datarun'><i class="
+                      "'glyphicon glyphicon-cloud-upload'></i></a></center>".
                       format(submission.hash_),
-                      "<center><a href='/{}/get_submission_datarun'><i "
-                      "class='arrow circle outline down icon'></i></a></center>".
+                      "<center><a href='/{}/get_submission_datarun'><i class="
+                      "'glyphicon glyphicon-cloud-download'></i></a></center>".
                       format(submission.hash_)])}
         for submission in submissions
     ]
@@ -2069,10 +2079,10 @@ def get_new_leaderboard_datarun(event_name, team_name=None, user_name=None):
         max_cols=None,
         max_rows=None,
         justify='left',
-        classes=['ui', 'blue', 'celled', 'table', 'sortable']
+        # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
     leaderboard_html = leaderboard_df.to_html(**html_params)
-    return leaderboard_html
+    return table_format(leaderboard_html)
 
 
 def get_submissions(event_name=None, team_name=None, user_name=None,
@@ -2333,10 +2343,10 @@ def get_user_interactions():
         max_cols=None,
         max_rows=None,
         justify='left',
-        classes=['ui', 'blue', 'celled', 'table', 'sortable']
+        # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
     user_interactions_html = user_interactions_df.to_html(**html_params)
-    return user_interactions_html
+    return table_format(user_interactions_html)
 
 
 def get_source_submissions(submission):

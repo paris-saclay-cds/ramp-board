@@ -575,7 +575,7 @@ a:hover {
       margin-top: 15px; }
 
 body.login-page {
-  background: url(../../img/app-header-bg.jpg) no-repeat center center fixed;
+  background: url(../../img/ramp.jpg) no-repeat center center fixed;
   -webkit-background-size: cover;
   -moz-background-size: cover;
   -o-background-size: cover;
@@ -912,26 +912,6 @@ body.login-page {
   z-index: 1001;
   border-radius: 1px; }
 
-.pricing-table .pt-header {
-  text-align: center;
-  padding: 1em; }
-  .pricing-table .pt-header .plan-pricing .pricing {
-    font-size: 2.5em; }
-  .pricing-table .pt-header .plan-pricing .pricing-type {
-    opacity: 0.9; }
-
-.pricing-table .pt-body {
-  padding: 1em;
-  text-align: center; }
-  .pricing-table .pt-body .plan-detail {
-    padding: 0;
-    margin: 0;
-    list-style: none; }
-
-.pricing-table .pt-footer {
-  padding: 0.75em;
-  text-align: center; }
-
 .icons-list {
   list-style: none;
   margin: 0;
@@ -1009,7 +989,7 @@ body.login-page {
     padding: 0 15px; }
   .landing-page .app-header {
     padding-top: 100px;
-    background-image: url("../img/app-header-bg.jpg");
+    background-image: url("../img/ramp_room.jpg");
     background-repeat: no-repeat;
     -webkit-background-size: cover;
     -moz-background-size: cover;
@@ -1018,14 +998,14 @@ body.login-page {
     background-position: center;
     margin-bottom: 0; }
     .landing-page .app-header .app-logo {
-      margin-bottom: 20px; }
+      margin-bottom: 10px; }
     .landing-page .app-header .app-description {
-      margin-bottom: 40px; }
+      margin-bottom: 10px; }
   .landing-page .app-content-a, .landing-page .app-content-b {
     padding-top: 50px;
     padding-bottom: 20px; }
   .landing-page .app-content-b.feature-1 {
-    background-image: url("../img/bg/picjumbo.com_HNCK3558.jpg");
+    background-image: url("../img/ramp.jpg");
     background-repeat: no-repeat;
     -webkit-background-size: cover;
     -moz-background-size: cover;
@@ -1036,7 +1016,7 @@ body.login-page {
   .landing-page .app-content-b.contact-us {
     padding-top: 60px;
     padding-bottom: 60px;
-    background-image: url("../img/contact-us-bg.jpg");
+    background-image: url("../img/hands.jpg");
     background-repeat: no-repeat;
     -webkit-background-size: cover;
     -moz-background-size: cover;
@@ -1051,7 +1031,7 @@ body.login-page {
       font-weight: 300;
       font-size: 18px;
       opacity: 0.9;
-      text-indent: 40px; }
+      text-indent: 0px; }
     .landing-page .app-content-b.contact-us form {
       margin-top: 20px; }
       .landing-page .app-content-b.contact-us form input {
