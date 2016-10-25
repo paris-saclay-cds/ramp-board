@@ -7,7 +7,7 @@ from locust import TaskSet
 from locust import task
 
 
-event_name = 'iris_test'  # name of the event to be tested
+event_name = 'sea_ice_colorado'  # name of the event to be tested
 
 
 class DataboardTasks(TaskSet):

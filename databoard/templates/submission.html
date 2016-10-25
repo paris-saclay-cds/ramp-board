@@ -2,26 +2,23 @@
 
 {% block head %}
     {{ super() }}
-    <!-- // <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?skin=desert"></script> -->
-    <link href="{{ url_for('static', filename='prettify/djabbz.css') }}" type="text/css" rel="stylesheet" />
-    <script type="text/javascript" src="{{ url_for('static', filename='prettify/prettify.js') }}"></script>
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?skin=sunburst"></script>
 {% endblock %}
-{% block bodyoptions %}
-onload="prettyPrint()"
-{% endblock %}
+
 {% block title %}Submission code{% endblock %}
+
 {% block content %}
 
-{% if submission.f_names %}
-    {% set left_col_width = 'twelve' %}    
-{% else %}
-    {% set left_col_width = 'sixteen' %}
-{% endif %}
+<div class="page-title">
+    <span class="title">{{ event.name }}</span>
+</div>
 
-<div class="ui stackable two column grid">
-    <div class="{{ left_col_width }} wide column">
-        <h4 class="ui horizontal header divider grey">
-            <a href="/events/{{ event.name }}">{{ event.title }}</a>
+<div class="col-xs-8">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+             <a href="/events/{{ event.name }}">{{ event.title }}</a>
             <span><i class="angle right grey icon"></i></span>
             <a href="/events/{{ event.name }}/leaderboard">Leaderboard</a>
             <span><i class="angle right grey icon"></i></span>
@@ -30,46 +27,64 @@ onload="prettyPrint()"
             {{ submission.name }} 
             <span><i class="angle right grey icon"></i></span>
             <a href="{{ submission_url }}"><i class="download grey icon"></i>{{ f_name }}</a>
-            </h4>
+          </div>
+      </div>
+    </div>
+    <div class="card-body">
         <a href="/credit/{{ submission.hash_ }}">Click here</a> to assess and assign credit for this submission (quantify where it comes from).
         <pre class="prettyprint linenums">{{ code }}</pre>
+	</div>
+  </div>
+</div>
+
+<div class="col-xs-4">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+			File List
+		  </div>
+      </div> 
     </div>
-    {% if submission.f_names and f_name != 'error.txt' %}
-    <div class="four wide column">
-        <div class="ui sticky">
-        <h4 class="ui horizontal header divider grey">File list</h4>
+    <div class="card-body">
+		{% if submission.f_names and f_name != 'error.txt' %}
             {% for f in submission.f_names %}
-            <div class="ui fluid card">
-                <div class="content">
-                    <div class="description">
-                        {% if f==f_name %}
-                        <i class="file grey icon"></i>{{f}}
-                        {% else %}
-                        <a href="{{ f }}"><i class="file grey icon"></i>{{ f }}</a>
-                        {% endif %}
+                {% if f==f_name %}
+					<div class="panel fresh-color panel-info">
+                      <div class="panel-heading">
+                		<i class="icon fa fa-file"></i> {{f}}
+                      </div>
                     </div>
-                </div>
-            </div>
+                {% else %}
+                	<div class="panel panel-info">
+                      <div class="panel-heading">
+					    <a href="{{ f }}"><i class="icon fa fa-file"></i> {{ f }}</a>
+                      </div>
+                    </div>
+                {% endif %}
             {% endfor %}
-        <h4 class="ui horizontal header divider grey">Import it to my sandbox</h4><p>
-        Be careful: this will overwrite any unsubmitted changes (so even changes that you have saved but not yet submitted) in your sandbox.
-        </div>
+		{% endif %}
+	</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+            Import it to my sandbox
+          </div> 
+      </div> 
+    </div> 
+    <div class="card-body">
+        <p><font color="#F17670">Be careful: this will overwrite any unsubmitted changes (even changes that you have saved but not yet submitted) in your sandbox.</font></p>
         <form class="ui form" method="post" action="" name="import">
             {{ import_form.hidden_tag() }}
-            <!--<div class="one field">
-                <div class="required field">
-                    <label>Bla</label>
-                    {% for f in import_form.files %}
-                        <input type="checkbox" id="{{f}}" name="{{f}}" value="{{f}}">
-                        <a href="{{ f }}"><i class="file grey icon"></i>{{ f }}</a>
-                    {% endfor %}
-                </div>
-            </div>-->
             {{ import_form.selected_f_names }}
-            <input type="submit" value="Import to my sandbox" class="ui submit button">
+            <input type="submit" value="Import to my sandbox" class="btn btn-warning">
         </form>
     </div>
-    {% endif %}
-</div> 
+  </div>
+</div>   
+
 
 {% endblock %}

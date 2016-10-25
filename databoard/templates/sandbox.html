@@ -42,94 +42,123 @@
     <script type="text/javascript"
     src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/addon/selection/active-line.min.js"></script>
 {% endblock %}
-{% block title %}Login{% endblock %}
+{% block title %}Sandbox{% endblock %}
 {% block content %}
 
 {% with messages = get_flashed_messages(with_categories=true) %}
 
 {% if messages %}
-<div id="formerror" class="ui modal">
+    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     {% for category, message in messages %}
-        <div class="header">
-            {{ category }}
-        </div>
-        <div class="content">
-            <div class="description">
-                {{ message }}
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+                </div>
+                <div class="modal-body">
+                	{{ message }}
+				</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
-    {% endfor %}
-    <div class="actions">
-        <div class="ui button">Close</div>
+	{% endfor %}
     </div>
-</div>
-<script type="text/javascript">
-    $(function(){
-        $('#formerror.modal')
-            .modal('setting', 'transition', 'Fade Up')
-            .modal('show')
-        ;
-    });
-</script>
 {% endif %}
 {% endwith %}
-<h3 class="ui horizontal header divider grey">Sandbox</h3>
-<center>You can either edit and save the code in the left column or upload the files in the right column. You can also import code from other submissions when the <a href="/events/{{ event.name }}/leaderboard">leaderboard</a> links are open.</center> <p>
-<div class="ui stackable two column grid">
-    <div class="ten wide column">
-        <form class="ui form" method="post" action="" name="save">
+
+<div class="page-title">
+    <span class="title">Sandbox</span>
+    <div class="description">You can either edit and save the code in the left column or upload the files in the right column. You can also import code from other submissions when the <a href="/events/{{ event.name }}/leaderboard">leaderboard</a> links are open.</div>
+</div>
+
+<div class="col-xs-8">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+              Edit and save your code!
+          </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <form class="ui form" method="post" action="" name="save">
             {{ code_form.hidden_tag() }}
-            <div class="one field">
+            <div>
                 {% for name_code in code_form.names_codes %}
-                    <h4 class="ui horizontal header divider grey">{{ name_code[0] }}</h4>
+                    <div class="sub-title">{{ name_code[0] }}</div>
                     <div>
                     <textarea cols="80" id="{{ name_code[0] }}" name="{{ name_code[0] }}">{{ name_code[1] }}</textarea>
                     </div>
                 {% endfor %}
-                <h4 class="ui horizontal header divider grey">Don't forget to save the files!</h4>
+				&nbsp; <br>
+                <center><p><font color="#F17670"><strong>Don't forget to save the files!</strong></font></p></center>
                 <center><input type="submit" value="Save" class="ui submit button"></center>
             </div>
-        </form>
+      </form>
     </div>
-    <div class="six wide column">
-        <div class="ui sticky">
-        <p>
-        <h4 class="ui horizontal header divider grey">File list</h4>
-            {% for f in submission_names %}
-            <div class="ui fluid card">
-                <div class="content">
-                    <div class="description">
-                        <i class="file grey icon"></i>{{ f }}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        <p>
-        <div class="ui sticky">
-        <h4 class="ui horizontal header divider grey">Upload file</h4>
-            <form class="ui form" action="" method="post" enctype="multipart/form-data">
-                {{ upload_form.hidden_tag() }}
-                <input type="file" name="file" class="ui submit button">
-                <input type="submit" value="Upload" class="ui upload button">
-            </form>
-        </div>
-    </div>
+  </div>
 </div>
-<h4 class="ui horizontal header divider grey">Submit your code!</h4>
-<form class="ui form" method="post" action="" name="submit" id="formSubmit">
-    {{ submit_form.hidden_tag() }}
-    <div class="one field">
-	<center> 
-        <div class="required field">
-            <label>Submission name (between 4 and 20 characters)</label> 
-            {{ submit_form.submission_name }}
-        </div>
-        <input type="submit" value="Submit" class="ui submit button" id="checksave">
-	</center> 
+<div class="col-xs-4">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+              Upload your files!
+          </div>
+      </div>
     </div>
-</form>
+	<div class="card-body">
+      <div class="sub-title"> File list</div>
+          {% for f in submission_names %}
+            <div class="panel fresh-color panel-info">
+              <div class="panel-heading">
+                <i class="fa fa-file"></i> {{ f }}
+              </div>
+            </div>
+          {% endfor %}
+      <div class="sub-title"> Upload file</div>
+        <div class="text-indent">
+          <form class="ui form" action="" method="post" enctype="multipart/form-data">
+              {{ upload_form.hidden_tag() }}
+              <input type="file" name="file" class="ui submit button">
+              <input type="submit" value="Upload" class="ui upload button">
+          </form>
+        </div>
+    </div>
+  </div>
+</div>
 
+<div class="row">
+  <div class="col-xs-12">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+            <div class="title">
+                Submit your code!
+            </div>
+        </div>
+      </div>
+	  <div class="card-body">
+        <form class="ui form" method="post" action="" name="submit" id="formSubmit">
+        {{ submit_form.hidden_tag() }}
+    	<center> 
+            <div class="required field">
+                <label>Submission name (between 4 and 20 characters)</label> 
+                {{ submit_form.submission_name }}
+            </div>
+            <input type="submit" value="Submit" class="ui submit button" id="checksave">
+    	</center> 
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
 {% for name_code in code_form.names_codes %}
   <script>
     var editor_{{ name_code[0] }} = CodeMirror.fromTextArea(document.getElementById("{{ name_code[0] }}"), {
@@ -154,5 +183,10 @@
 	     return	confirm('You certainly forgot to save your files! \n- If you do not want to save them, click on OK. \n- If you forgot to save them, click on Cancel, save your files and submit again!');
  } 
   });  
+</script>
+<script>
+$(function () {
+   $('#formerror').modal('toggle')
+});
 </script>
 {% endblock %}

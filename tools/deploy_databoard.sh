@@ -201,6 +201,6 @@ supervisord -c ${DATABOARD_PATH}/code/databoard/tools/supervisord.conf
 # Not executed in the script because backup path must be checked and no backup for
 # test server
 # Add these lines to the file opened by crontab -e
-# 02 0    * * *   root    bash /mnt/ramp_data/code/databoard/tools/dump_db.sh
-# 22 1    * * *   root    bash /mnt/ramp_data/code/databoard/tools/housekeeping.sh
+# 02 0    * * *   root    bash /mnt/ramp_data/code/databoard/tools/dump_db.sh >/dev/null 2>&1
+# 22 1    * * *   root    bash /mnt/ramp_data/code/databoard/tools/housekeeping.sh >/dev/null 2>&1
 

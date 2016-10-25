@@ -63,7 +63,6 @@ def check_admin(current_user, event):
         return False
 
 
-@app.route("/", methods=['GET', 'POST'])
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     db_tools.add_user_interaction(interaction='landing')
@@ -96,15 +95,8 @@ def login():
 
         return flask.redirect(flask.url_for('user'))
 
-    events = Event.query.filter_by(is_public=True).all()
-    event_urls_f_names = [
-        (event.name,
-         event.title)
-        for event in events]
-
     return render_template(
         'login.html',
-        event_urls_f_names=event_urls_f_names,
         form=form,
     )
 
@@ -144,21 +136,38 @@ def sign_up():
     )
 
 
+@app.route("/")
+def index():
+    return render_template('index.html')
+
+
+@app.route("/description")
+def ramp():
+    """
+    """
+    return render_template('ramp_description.html')
+
+
 @app.route("/user")
-@fl.login_required
 def user():
-    db_tools.add_user_interaction(
-        interaction='looking at user', user=current_user)
+    print(current_user)
+    if current_user.is_authenticated:
+        db_tools.add_user_interaction(
+            interaction='looking at user', user=current_user)
 
-    events = Event.query.all()
-    event_urls_f_names = [
-        (event.name,
-         event.title,
-         db_tools.is_public_event(event, current_user),
-         db_tools.is_user_signed_up(event.name, current_user.name))
-        for event in events]
+        events = Event.query.order_by(Event.opening_timestamp.desc())
+        event_urls_f_names = [
+            (event.name,
+             event.title,
+             db_tools.is_user_signed_up(event.name, current_user.name))
+            for event in events
+            if db_tools.is_public_event(event, current_user)]
 
-    admin = check_admin(current_user, event)
+    else:
+        events = Event.query.filter_by(is_public=True).all()
+        event_urls_f_names = [(event.name, event.title, False)
+                              for event in events]
+    admin = check_admin(current_user, None)
     return render_template('user.html',
                            event_urls_f_names=event_urls_f_names,
                            admin=admin)

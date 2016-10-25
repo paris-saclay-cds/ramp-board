@@ -2,21 +2,26 @@
 
 {% block head %}
     {{ super() }}
-    <!-- // <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?skin=desert"></script> -->
-    <link href="{{ url_for('static', filename='prettify/djabbz.css') }}" type="text/css" rel="stylesheet" />
-    <script type="text/javascript" src="{{ url_for('static', filename='prettify/prettify.js') }}"></script>
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?skin=sunburst"></script>
 {% endblock %}
-{% block bodyoptions %}
-onload="prettyPrint()"
-{% endblock %}
-{% block title %}Submission code{% endblock %}
+
+{% block title %}Submission code - Diff{% endblock %}
+
 {% block content %}
 
-<div class="ui stackable one column grid">
-    <div class="sixteen wide column">
-        <h3 class="ui horizontal header divider grey">Diff</h3>
+<div class="col-xs-12">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+            Diff
+          </div>
+      </div>
+    </div>
+    <div class="card-body">
         <pre class="prettyprint linenums">{{ diff }}</pre>
     </div>
-</div> 
+  </div>
+</div>
 
 {% endblock %}

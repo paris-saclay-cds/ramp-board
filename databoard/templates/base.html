@@ -1,70 +1,207 @@
+<!DOCTYPE html>
 <html>
-    <head>
-        {% block head %}
-        <script src="{{ url_for('static', filename='jquery-1.11.2.min.js') }}"></script>
-        <script src="{{ url_for('static', filename='semantic.min.js') }}"></script>
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='semantic.min.css') }}">
-        <title>{% block title %}{% endblock %} - RAMP</title>
-        {% endblock %}
-        <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    </head>
-    <body {% block bodyoptions %}{% endblock %}>
-        <div id="header">
-            {% block header %}
-            <div class="ui three column middle aligned grid" style="padding:20px">
-              <div class="five wide column">
-                <a href='/'>
-                  <h2 class="ui blue header">
-                      <i class="circular users icon"></i>
-                      <div class="content">
-                        RAMP
-                        <div class="sub header">Rapid Analytics and Model Prototyping</div>
-                      </div>
-                  </h2>
-                </a>
-              </div>
-              <!-- <div class="ui vertical fitted divider"></div> -->
-              <div class="six wide column">
-              {% if event %}
-                <h2 class="ui orange header">{{ event.title }}</h2>
-              {% endif %}
-              </div>
-              <div class="five wide right aligned column">
-              {% if event %}
-                  {% if admin %}
-                      <a href="/events/{{ event.name }}/dashboard_submissions">dashboard admin</a><br>
-                      <a href="/events/{{ event.name }}/private_leaderboard">private_leaderboard</a><br>
-                  {% endif %}
-                  <a href="/events/{{ event.name }}/leaderboard">leaderboard</a><br>
-                  <a href="/events/{{ event.name }}/sandbox">sandbox</a><br>
-                  <a href="/events/{{ event.name }}/my_submissions">my submissions</a><br>
-                  <a href="/events/{{ event.name }}">description</a><br>
-                  <a href="/events/{{ event.name }}/starting_kit">starting kit</a><br>
-              {% endif %}
-                  <a href="/user">home</a><br>
-                {% if session.logged_in %}
-                  <a href="{{ url_for('logout') }}">log out</a><br>
-                {% endif %}
-              </div>  
-            </div>
-            <!-- <div class="ui menu">
-              <a class="active item">
-                <i class="home icon"></i> Home
-              </a>
-              <a class="item">
-                <i class="mail icon"></i> Messages
-              </a>
-              <div class="right menu">
-                <div class="item">
-                  <div class="ui transparent icon input">
-                    <input type="text" placeholder="Search...">
-                    <i class="search link icon"></i>
-                  </div>
+
+<head>
+    {% block head %}
+    <title>{% block title %}{% endblock %} - RAMP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Fonts -->
+    <link href='http://fonts.googleapis.com/css?family=Roboto+Condensed:300,400' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Lato:300,400,700,900' rel='stylesheet' type='text/css'>
+    <!-- CSS Libs -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/font-awesome.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/animate.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/bootstrap-switch.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/checkbox3.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/jquery.dataTables.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/dataTables.bootstrap.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/select2.min.css') }}">
+    <!-- CSS App -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/themes/flat-blue.css') }}">
+    {% endblock %}
+</head>
+
+<body class="flat-blue" {% block bodyoptions %}{% endblock %}>
+    <div class="app-container">
+        <div class="row content-container">
+            <nav class="navbar navbar-default navbar-fixed-top navbar-top">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-expand-toggle">
+                            <i class="fa fa-bars icon"></i>
+                        </button>
+                        <ol class="breadcrumb navbar-breadcrumb">
+                            <li class="active"><a href="/">RAMP</a></li>
+                        </ol>
+                        <button type="button" class="navbar-right-expand-toggle pull-right visible-xs">
+                            <i class="fa fa-th icon"></i>
+                        </button>
+                    </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <button type="button" class="navbar-right-expand-toggle pull-right visible-xs">
+                            <i class="fa fa-times icon"></i>
+                        </button>
+                        {% if not session.logged_in %}
+                            <li>
+                                <a href="/login"><font color="#0ead9a"><b>Login</b></font></a>
+                            </li>
+                            <li>
+                                <a href="/sign_up"><font color="#0ead9a"><b>Sign Up</b></font></a>
+                            </li>
+                        {% endif %}
+                        <!-- for later
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-comments-o"></i></a>
+                            <ul class="dropdown-menu animated fadeInDown">
+                                <li class="title">
+                                    Notification <span class="badge pull-right">0</span>
+                                </li>
+                                <li class="message">
+                                    No new notification
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="dropdown danger">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-star-half-o"></i> 4</a>
+                            <ul class="dropdown-menu danger  animated fadeInDown">
+                                <li class="title">
+                                    Notification <span class="badge pull-right">4</span>
+                                </li>
+                                <li>
+                                    <ul class="list-group notifications">
+                                        <a href="#">
+                                            <li class="list-group-item">
+                                                <span class="badge">1</span> <i class="fa fa-exclamation-circle icon"></i> new registration
+                                            </li>
+                                        </a>
+                                        <a href="#">
+                                            <li class="list-group-item">
+                                                <span class="badge success">1</span> <i class="fa fa-check icon"></i> new orders
+                                            </li>
+                                        </a>
+                                        <a href="#">
+                                            <li class="list-group-item">
+                                                <span class="badge danger">2</span> <i class="fa fa-comments icon"></i> customers messages
+                                            </li>
+                                        </a>
+                                        <a href="#">
+                                            <li class="list-group-item message">
+                                                view all
+                                            </li>
+                                        </a>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        --!>
+                        {% if session.logged_in %}
+                        <li class="dropdown profile">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Hi {{ current_user.firstname }}!<span class="caret"></span></a>
+                            <ul class="dropdown-menu animated fadeInDown">
+                                <li>
+                                    <div class="profile-info">
+                                    <h4 class="username">{{ current_user.name }}</h4>
+                                    <p>{{ current_user.email }}</p>
+                                        <div class="btn-group margin-bottom-2x" role="group">
+                                        <!-- <button type="button" class="btn btn-default"><i class="fa fa-user"></i> Profile</button> --!>
+                                            <a href="{{ url_for('logout') }}" role="button" class="btn btn-default"><i class="fa fa-sign-out"></i>Logout</a>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                    </ul>
                 </div>
-              </div>
-            </div> -->
-            {% endblock %}
+            </nav>
+            <div class="side-menu sidebar-inverse">
+                <nav class="navbar navbar-inverse" role="navigation">
+                    <div class="side-menu-container">
+                        <div class="navbar-header">
+                            <a class="navbar-brand" href="/">
+                                <div class="icon fa fa-users"></div>
+                                <div class="title">RAMP</div>
+                            </a>
+                            <button type="button" class="navbar-expand-toggle pull-right visible-xs">
+                                <i class="fa fa-times icon"></i>
+                            </button>
+                        </div>
+                        <ul class="nav navbar-nav">
+                            <li>
+                                <a href="/user">
+                                    <span class="icon fa fa-list"></span><span class="title">Events</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/description">
+                                    <span class="icon fa fa-question"></span><span class="title">What is a RAMP?</span>
+                                </a>
+                            </li>
+                            {% if event %}
+                            <li class="panel panel-default dropdown active">
+                                <a data-toggle="collapse" href="#dropdown-event">
+                                    <span class="icon fa fa-cloud"></span><span class="title">{{ event.name }}</span>
+                                </a>
+                                <!-- Dropdown level 1 -->
+                                <div id="dropdown-event" class="panel-collapse active collapse in">
+                                    <div class="panel-body">
+                                        <ul class="nav navbar-nav">
+                                            <li><a href="/events/{{ event.name }}">description</a></li>
+                                            <li><a href="/events/{{ event.name }}/starting_kit">starting kit</a></li>
+                                            <li><a href="/events/{{ event.name }}/leaderboard">leaderboard</a></li>
+                                            <li><a href="/events/{{ event.name }}/sandbox">sandbox</a></li>
+                                            <li><a href="/events/{{ event.name }}/my_submissions">my submissions</a></li>
+                                            {% if admin %}
+                                            <li><a href="/events/{{ event.name }}/dashboard_submissions">dashboard admin</a></li>
+                                            <li><a href="/events/{{ event.name }}/private_leaderboard">private_leaderboard</a></li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <!-- /.navbar-collapse -->
+                </nav>
+            </div>
+            <!-- Main Content -->
+            <div class="container-fluid">
+                <div class="side-body">
+                    <div class="row">
+					{% block content %}
+                    {% endblock %}
+                    </div>
+                </div>
+            </div>
         </div>
-        <div id="content" style="padding:20px">{% block content %}{% endblock %}</div>
-    </body>
+        <footer class="app-footer">
+            <div class="wrapper">
+                <span class="pull-left"><i class="icon fa fa-copyright"></i> RAMP version beta <a href="#"><i class="icon fa fa-long-arrow-up"></i><i class="icon fa fa-long-arrow-up"></i></a></span> &nbsp; &nbsp; &nbsp; &nbsp; 
+                <span><a href="/"><img src="{{ url_for('static', filename='img/logo_CDS_footer.svg') }}" height="20px"></a></span> &nbsp; &nbsp; &nbsp; &nbsp; <span><a href="mailto:balazs.kegl@gmail.com">Contact Us <i class="icon fa fa-envelope"></i></a></span>
+                <span class="pull-right">Thanks to <a href="https://github.com/tui2tone/flat-admin-bootstrap-templates">tui2tone</a> for the  template!</span>
+            </div>
+        </footer>
+        <div>
+            <!-- Javascript Libs -->
+            <script type="text/javascript" src="{{ url_for('static', filename='lib/js/jquery.min.js') }}"></script>
+            <script type="text/javascript" src="{{ url_for('static', filename='lib/js/bootstrap.min.js') }}"></script>
+            <script type="text/javascript" src="{{ url_for('static', filename='lib/js/Chart.min.js') }}"></script>
+            <script type="text/javascript" src="{{ url_for('static', filename='lib/js/bootstrap-switch.min.js') }}"></script>
+            <script type="text/javascript" src="{{ url_for('static', filename='lib/js/jquery.matchHeight-min.js') }}"></script>
+            <script type="text/javascript" src="{{ url_for('static', filename='lib/js/jquery.dataTables.min.js') }}"></script>
+            <script type="text/javascript" src="{{ url_for('static', filename='lib/js/dataTables.bootstrap.min.js') }}"></script>
+            <script type="text/javascript" src="{{ url_for('static', filename='lib/js/select2.full.min.js') }}"></script>
+            <script type="text/javascript" src="{{ url_for('static', filename='lib/js/ace/ace.js') }}"></script>
+            <script type="text/javascript" src="{{ url_for('static', filename='lib/js/ace/mode-html.js') }}"></script>
+            <script type="text/javascript" src="{{ url_for('static', filename='lib/js/ace/theme-github.js') }}"></script>
+            <!-- Javascript -->
+            <script type="text/javascript" src="{{ url_for('static', filename='js/app.js') }}"></script>
+            {#            <script type="text/javascript" src="{{ url_for('static', filename='js/index.js') }}"></script> #}
+        {% block scripts %}
+        {% endblock %}
+</body>
+
 </html>
