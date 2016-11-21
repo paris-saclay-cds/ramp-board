@@ -133,8 +133,12 @@ def test_setup():
 
 
 def sign_up_team(e, t):
-    from databoard.db_tools import sign_up_team
+    from databoard.db_tools import sign_up_team, get_submissions
     sign_up_team(event_name=e, team_name=t)
+    if not os.environ.get('DATABOARD_TEST'):
+        submission = get_submissions(event_name=e, team_name=t,
+                                     submission_name="starting_kit")[0]
+        os.system('sudo chown -R www-data:www-data %s' % submission.path)
 
 
 def approve_user(u):
@@ -272,7 +276,7 @@ def train_test_datarun(data_id, host_url, username, userpassd, e=None, t=None,
     submissions = [submission for submission in submissions
                    if submission.name != sandbox_d_name]
 
-    print submissions
+    print(submissions)
     train_test_submissions_datarun(data_id, host_url, username, userpassd,
                                    submissions, force_retrain_test=force,
                                    priority=priority)
@@ -487,5 +491,5 @@ def publish_problem(problem_name, target='local'):
         command += "--rsh=\'ssh -i " + os.path.expanduser("~")
         command += "/.ssh/datacamp/id_rsa -p 22\' problems/" + problem_name
         command += ' root@' + server + ':' + root
-    print command
+    print(command)
     os.system(command)
