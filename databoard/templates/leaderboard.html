@@ -51,7 +51,7 @@
         {% endif %}
         </font></h4>
 		
-        <table class="datatable stripe cell-border" cellspacing="0" width="100%">
+        <table id="leaderboard" class="display" cellspacing="0" width="100%">
           {{ leaderboard | safe}} 
 	    </table>
     </div>
@@ -101,5 +101,11 @@
 $(function () {
        $('#formerror').modal('toggle')
 });
+
+$(document).ready(function() {
+        $('#leaderboard').DataTable({
+             "order": [[ 2, "desc" ]]
+             });
+} );
 </script>
 {% endblock %}

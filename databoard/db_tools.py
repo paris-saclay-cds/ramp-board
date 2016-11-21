@@ -1869,22 +1869,22 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
 
     score_names = [score_type.name for score_type in event.score_types]
     columns = ['team',
-               'submission'] +\
+               'submission',
+               'contributivity',
+               'historical_contributivity'] +\
               score_names +\
-              ['contributivity',
-               'historical contributivity',
-               'train time',
+              ['train time',
                'test time',
                'submitted at (UTC)']
     values = zip(*[
         [submission.event_team.team.name,
          submission.name_with_link if is_open_code(
-             event, current_user, submission) else submission.name[:20]] +
+             event, current_user, submission) else submission.name[:20],
+         int(round(100 * submission.contributivity)),
+         int(round(100 * submission.historical_contributivity))] +
         [round(score.valid_score_cv_bag, score.precision)
             for score in submission.ordered_scores(score_names)] +
-        [int(round(100 * submission.contributivity)),
-         int(round(100 * submission.historical_contributivity)),
-         int(round(submission.train_time_cv_mean)),
+        [int(round(submission.train_time_cv_mean)),
          int(round(submission.valid_time_cv_mean)),
          date_time_format(submission.submission_timestamp)]
         for submission in submissions])
