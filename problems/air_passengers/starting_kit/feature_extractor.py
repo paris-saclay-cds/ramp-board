@@ -1,7 +1,6 @@
 import pandas as pd
 import os
 
-
 class FeatureExtractor(object):
     def __init__(self):
         pass
@@ -16,9 +15,10 @@ class FeatureExtractor(object):
         X_weather = data_weather[['Date', 'AirPort', 'Max TemperatureC']]
         X_weather = X_weather.rename(
             columns={'Date': 'DateOfDeparture', 'AirPort': 'Arrival'})
-        X_encoded = X_encoded.set_index(['DateOfDeparture', 'Arrival'])
-        X_weather = X_weather.set_index(['DateOfDeparture', 'Arrival'])
-        X_encoded = X_encoded.join(X_weather).reset_index()
+        X_encoded = pd.merge(X_encoded, X_weather, how='left',
+                             left_on=['DateOfDeparture', 'Arrival'],
+                             right_on=['DateOfDeparture', 'Arrival'],
+                             sort=False)
 
         X_encoded = X_encoded.join(pd.get_dummies(
             X_encoded['Departure'], prefix='d'))
