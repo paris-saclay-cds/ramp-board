@@ -513,10 +513,12 @@ def view_model(submission_hash, f_name):
 def sandbox(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, current_user):
-        return _redirect_to_user(u'{}: no event named "{}"'.format(
+        return _redirect_to_user(u'{}: no access to "{}"'.format(
             current_user, event_name))
     if not db_tools.is_open_code(event, current_user):
-        error_str = u'No sandbox of {} in {}'.format(current_user, event)
+        error_str = u'No access to sandbox for event {}. '\
+            u'If you have already signed up, please wait for approval'.\
+            format(event)
         return _redirect_to_user(error_str)
 
     sandbox_submission = db_tools.get_sandbox(event, current_user)
