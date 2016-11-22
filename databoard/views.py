@@ -241,6 +241,33 @@ def approve_sign_up_for_event(event_name, user_name):
         is_error=False, category='Successful sign-up')
 
 
+@app.route("/approve_users", methods=['GET', 'POST'])
+@fl.login_required
+def approve_users():
+    if not current_user.access_level == 'admin':
+        return _redirect_to_user(u'Sorry {}, you do not have admin rights'.
+                                 format(current_user), is_error=True)
+    if request.method == 'GET':
+        asked_users = User.query.filter_by(access_level='asked')
+        return render_template('approve.html', asked_users=asked_users,
+                               admin=True)
+    elif request.method == 'POST':
+        to_be_approved = request.form.getlist('approve_users')
+        message = ""
+        for asked_user in to_be_approved:
+            db_tools.approve_user(asked_user)
+            message += "%s\n" % asked_user
+        return _redirect_to_user(message, is_error=False,
+                                 category="Approved users")
+    # if not user:
+    #     return _redirect_to_user(u'Oups, no user {}.'.format(user_name),
+    #                              is_error=True)
+    # db_tools.approve_user(user.name)
+    # return _redirect_to_user(
+    #     u'{} is signed up.'.format(user),
+    #     is_error=False, category='Successful sign-up')
+
+
 @app.route("/sign_up/<user_name>")
 @fl.login_required
 def approve_user(user_name):
@@ -470,13 +497,15 @@ def view_model(submission_hash, f_name):
 
     with open(os.path.join(submission.path, f_name)) as f:
         code = f.read()
+    admin = check_admin(current_user, event)
     return render_template(
         'submission.html',
         event=event,
         code=code,
         submission=submission,
         f_name=f_name,
-        import_form=import_form)
+        import_form=import_form,
+        admin=admin)
 
 
 @app.route("/events/<event_name>/sandbox", methods=['GET', 'POST'])

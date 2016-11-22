@@ -129,6 +129,9 @@
                             </button>
                         </div>
                         <ul class="nav navbar-nav">
+                            {% if admin %}
+                                <li><a href="/approve_users"><span class="icon fa fa-user-plus"></span><span class="title">Approve users</span></a></li>
+                            {% endif %}
                             <li>
                                 <a href="/user">
                                     <span class="icon fa fa-list"></span><span class="title">Events</span>

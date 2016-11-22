@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Approve users{% endblock %}
+
+{% block content %}
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Login Error</h4>
+                </div>
+                <div class="modal-body">
+    				{% for message in messages %}
+                    	{{ message }}
+					{% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+                </div>
+            </div>     
+        </div>
+    </div>
+{% endif %}
+{% endwith %}
+
+<div class="col-xs-12">
+     <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <div class="title">Approve new users</div>
+            </div>
+        </div>
+
+         <div class="card-body">
+			<form method="post">
+                <input type="checkbox" onClick="toggle(this)" checked> Approve all<br/><br/>
+                {% for asked_user in asked_users %}
+					<input type="checkbox" name="approve_users" value="{{ asked_user.name }}" checked> {{ asked_user.name }} - {{ asked_user.email }} - {{ asked_user.firstname }} {{ asked_user.lastname }}<br> 
+				{% endfor %}				
+				<input type="submit">
+			</form>
+         </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggle(source) {
+  checkboxes = document.getElementsByName('approve_users');
+  for(var i=0, n=checkboxes.length; i<n; i++) {
+    checkboxes[i].checked = source.checked;
+  }
+}
+</script>
+{% endblock %}
+
