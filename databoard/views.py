@@ -85,6 +85,8 @@ def login():
             return flask.redirect(flask.url_for('login'))
         fl.login_user(user, remember=True)  # , remember=form.remember_me.data)
         session['logged_in'] = True
+        user.is_authenticated = True
+        db.session.commit()
         logger.info(u'{} is logged in'.format(current_user))
         db_tools.add_user_interaction(interaction='login', user=current_user)
         # next = flask.request.args.get('next')
@@ -150,7 +152,6 @@ def ramp():
 
 @app.route("/user")
 def user():
-    print(current_user)
     if current_user.is_authenticated:
         db_tools.add_user_interaction(
             interaction='looking at user', user=current_user)
@@ -787,10 +788,14 @@ def credit(submission_hash):
 @app.route("/logout")
 @fl.login_required
 def logout():
-    db_tools.add_user_interaction(interaction='logout', user=current_user)
+    user = current_user
+    db_tools.add_user_interaction(interaction='logout', user=user)
     session['logged_in'] = False
-    logger.info(u'{} is logged out'.format(current_user))
+    user.is_authenticated = False
+    db.session.commit()
+    logger.info(u'{} is logged out'.format(user))
     fl.logout_user()
+
     return redirect(flask.url_for('login'))
 
 

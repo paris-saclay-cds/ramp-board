@@ -570,10 +570,6 @@ def create_user(name, password, lastname, firstname, email,
                 facebook_url=facebook_url, google_url=google_url,
                 github_url=github_url, website_url=website_url, bio=bio,
                 is_want_news=is_want_news)
-    if access_level == 'asked':
-        user.is_authenticated = False
-    else:
-        user.is_authenticated = True
 
     # Creating default team with the same name as the user
     # user is admin of her own team
