@@ -11,8 +11,8 @@ logger = logging.getLogger('databoard')
 
 
 def publish_local_test():
-    destination_path = '/tmp'
-    destination_path = destination_path + '/datacamp/databoard'
+    import databoard.config as config
+    destination_path = config.local_root + '/datacamp/databoard'
     os.system('rm -rf ' + destination_path)
     os.makedirs(destination_path)
     os.system('rsync -rRultv problems/iris ' + destination_path)
@@ -471,12 +471,13 @@ deployment = [
 
 def publish_problem(problem_name, target='local'):
     from databoard.config import test_server, production_server
-    from databoard.config import test_root, production_root
+    from databoard.config import test_root, production_root, local_root
 
     os.system('chmod 744 problems/' + problem_name + '/starting_kit/*')
     command = "rsync -pthrRvz -c "
     if target == 'local':
-        command += 'problems/' + problem_name + ' /tmp/databoard_test/'
+        command += 'problems/' + problem_name + ' ' +\
+            local_root + '/datacamp/databoard/'
     else:
         if target == 'test':
             server = test_server

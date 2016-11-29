@@ -42,7 +42,7 @@ Run: `python manage.py db upgrade` to apply the migration
  - data/raw/* all the data which prepare_data() will use + the directory structure, usually data/private  
  - for local tests (optional), create deposited_submissions/<test_team>/<test_submission> and put the test submission files there  
  - run   
-zip -r starting_kit.zip starting_kit.   
+zip -r starting_kit.zip starting_kit
    This is a bit tricky: if the public_train is created in prepare_data, after deployment (fab add_problem, fab add_event), zip should be re-run just in case.  
  - run  
 fab publish_problem:<problem_name>,target=local/test/production  
@@ -108,7 +108,11 @@ fab serve:80 > server_logs/server16.txt 2>&1
 sudo service apache2 restart  
   
 sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" /home/datacamp/code/databoard/config.py  
-  
+
+### Mac bug
+
+export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/Users/kegl/anaconda/lib
+
 ### Example sequence of adding ramps  
   
  - drug_spectra  

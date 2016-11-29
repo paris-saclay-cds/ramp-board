@@ -1,0 +1,40 @@
+<h2>Introduction</h2>
+
+A climate index is real-valued time-series which has been designated of interest in the climate literature. For example, the El Niño–Southern Oscillation (ENSO) index has widespread uses for predictions of regional and seasonal conditions, as it tends to have strong (positive or negative) correlation with a variety of weather conditions and <a href=http://www.ipcc-wg2.gov/SREX/images/uploads/SREX-SPMbrochure_FINAL.pdf>extreme events</a> throughout the globe. The ENSO index is just one of the many climate indices studied. However there is currently significant room for improvement in predicting even this extremely well studied index with such high global impact. For example, most statistical and climatological models erred significantly in their predictions of the 2015 El Niño event; their predictions were off by several months. Better tools to predict such indices are critical for seasonal and regional climate prediction, and would thus address grand challenges in the study of climate change (<a href=https://www.wcrp-climate.org/grand-challenges/grand-challenges-overview>World Climate Research Programme: Grand Challenges, 2013)</a>.
+
+<h3>El Niño</h3>
+
+<a href="https://www.ncdc.noaa.gov/teleconnections/enso/indicators/sst.php">El Niño</a> (La Niña) is a phenomenon in the equatorial Pacific Ocean characterized by a five consecutive 3-month running mean of sea surface temperature (SST) anomalies in the Niño 3.4 region that is above (below) the threshold of $+0.5^\circ$C ($-0.5\circ$C). This standard of measure is known as the Oceanic Niño Index (ONI).
+<br>
+<img src="https://www.ncdc.noaa.gov/monitoring-content/teleconnections/nino-regions.gif">
+<br>
+More information can be found <a href=https://www.ncdc.noaa.gov/teleconnections/enso/indicators/sst.php>here</a> on why it is an important region, and what the history of the index is.
+
+Here are the <a href = http://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/>current ENSO predictions</a>, updated monthly.
+
+
+<h3>The CCSM4 simulator</h3>
+
+Our data is coming from the <a href=http://www.cesm.ucar.edu/models/ccsm4.0/>CCSM4.0</a> model (simulator). This allows us to access a full regular temperature map for a 500+ year period which makes the evaluation of the predictor more robust than if we used real measurements. 
+
+<h3>The data</h3>
+
+The data is a time series of "images" $z_t$, consisting of temperature measurements (for a technical reason it is not SST that we will work with, rather air temperature) on a regular grid on the Earth, indexed by lon(gitude) and lat(itude) coordinates. Latitude and longitude are sampled at a resolution of $5^\circ$, giving 37 latitude and 72 longitude grid points, 2664 temperature measurements at every time step. The average temperatures are recorded every month for 119 years, giving 1428 time points in the public training data (available in the starting kit), 155/1860 in the training data (public leaderboard), and 500/6000 in the test data (private leaderboard). The goal is to predict the average temperature in the El Niño region, <span style="color:red">6 months ahead</span>.
+
+Note that the data set given in the starting kit is different from the one used to evaluate your submissions (of course, the data <i>structures</i> and the generative model (simulator) will be identical), so your submission should be generic (for example, it should be able to handle a time series of different length). 
+
+<h3>The prediction task</h3>
+
+The pipeline consists of a feature extractor and a predictor. Since the task is regression, the predictor will be a regressor, and the score (to minimize) will be the <a href=http://en.wikipedia.org/wiki/Root-mean-square_deviation>root mean square error</a>. The feature extractor will have access to the whole data. It will construct a "classical" feature matrix where each row corresponds to a time point. You should collect all information into these features that you find relevant to the regressor. The feature extractor can take <span style="color:red">anything from the past</span>, that is, it will implement a function $x_t = f(z_1, \ldots, z_t)$. Since you will have access to the full data, in theory you can cheat (even inadvertantly) by using information from the future. We have implemented a randomized test to detect such submissions, but please do your best to avoid this since it would make the results irrelevant.
+
+<h3>Domain-knowledge suggestions</h3>
+
+You are of course free to explore any regression technique to improve the prediction. Since the input dimension is relatively large (2000+ dimensions per time point even after subsampling) sparse regression techniques (eg. LASSO) may be the best way to go, but this is just an a priori suggestion. The following list provides you other hints to start with, based on domain knowledge. 
+<ul>
+<li>There is a strong seasonal cycle that must be taken into account.
+<li>There is little scientific/observational evidence that regions outside the Pacific play a role in NINO3.4 variability, so it is probably best to focus on Pacific SST for predictions.  
+<li>The relation between tropical and extra-tropical Pacific SST is very unclear, so please explore!
+<li>The NINO3.4 index has an oscillatory character (cold followed by warm followed by cold), but this pattern does not repeat exactly.  It would be useful to be able to predict periods when the oscillation is “strong” and when it “breaks down.”  
+<li>A common shortcoming of empirical predictions is that they under-predict the <i>amplitude</i> of warm and cold events.  Can this be improved?
+<li>There is evidence that the predictability is low when forecasts start in, or cross over, March and April (the so-called “spring barrier”). Improving predictions through the spring barrier would be important.
+<ul>

@@ -642,14 +642,17 @@ def sandbox(event_name):
         db_tools.add_user_interaction(
             interaction='submit', user=current_user, event=event,
             submission=new_submission)
+        try:
+            # Send submission to datarun
+            db_tools.send_submission_datarun.\
+                apply_async(args=[new_submission.name,
+                                  new_submission.team.name,
+                                  new_submission.event.name],
+                            kwargs={'priority': 'L',
+                                    'force_retrain_test': True})
+        except:
+            logger.info(u'{} is not sent to datarun'.format(new_submission))
 
-        # Send submission to datarun
-        db_tools.send_submission_datarun.\
-            apply_async(args=[new_submission.name,
-                              new_submission.team.name,
-                              new_submission.event.name],
-                        kwargs={'priority': 'L',
-                                'force_retrain_test': True})
 
         return flask.redirect(u'/credit/{}'.format(new_submission.hash_))
     admin = check_admin(current_user, event)

@@ -841,7 +841,11 @@ def make_submission(event_name, team_name, submission_name, submission_path):
                 'Submission "{}" of team "{}" at event "{}" exists already'.format(
                     submission_name, team_name, event_name))
 
+    # All file names with at least a . in them
     deposited_f_name_list = os.listdir(submission_path)
+    deposited_f_name_list = [
+        f_name for f_name in deposited_f_name_list
+        if f_name.find('.') >= 0]
     # TODO: more error checking
     deposited_types = [f_name.split('.')[0]
                        for f_name in deposited_f_name_list]
