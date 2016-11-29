@@ -536,6 +536,7 @@ class EventTeam(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     last_submission_name = db.Column(db.String, default=None)
     signup_timestamp = db.Column(db.DateTime, nullable=False)
+    approved = db.Column(db.Boolean, default=False)
 
     db.UniqueConstraint(event_id, team_id, name='et_constraint')
 

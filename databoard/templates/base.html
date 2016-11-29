@@ -152,10 +152,12 @@
                                     <div class="panel-body">
                                         <ul class="nav navbar-nav">
                                             <li><a href="/events/{{ event.name }}">description</a></li>
+                                            {% if (approved is not defined) or (approved == True) %}
                                             <li><a href="/events/{{ event.name }}/starting_kit">starting kit</a></li>
                                             <li><a href="/events/{{ event.name }}/leaderboard">leaderboard</a></li>
                                             <li><a href="/events/{{ event.name }}/sandbox">sandbox</a></li>
                                             <li><a href="/events/{{ event.name }}/my_submissions">my submissions</a></li>
+                                            {% endif %}
                                             {% if admin %}
                                             <li><a href="/events/{{ event.name }}/dashboard_submissions">dashboard admin</a></li>
                                             <li><a href="/events/{{ event.name }}/private_leaderboard">private_leaderboard</a></li>

@@ -160,13 +160,14 @@ def user():
         event_urls_f_names = [
             (event.name,
              event.title,
-             db_tools.is_user_signed_up(event.name, current_user.name))
+             db_tools.is_user_signed_up(event.name, current_user.name),
+             db_tools.is_user_asked_sign_up(event.name, current_user.name))
             for event in events
             if db_tools.is_public_event(event, current_user)]
 
     else:
         events = Event.query.filter_by(is_public=True).all()
-        event_urls_f_names = [(event.name, event.title, False)
+        event_urls_f_names = [(event.name, event.title, False, False)
                               for event in events]
     admin = check_admin(current_user, None)
     return render_template('user.html',
@@ -212,6 +213,7 @@ def sign_up_for_event(event_name):
     db_tools.add_user_interaction(
         interaction='signing up at event', user=current_user, event=event)
 
+    db_tools.ask_sign_up_team(event.name, current_user.name)
     if event.is_controled_signup:
         db_tools.send_sign_up_request_mail(event, current_user)
         return _redirect_to_user(
@@ -304,10 +306,16 @@ def user_event(event_name):
             as description_file:
         description = description_file.read()
     admin = check_admin(current_user, event)
+    if current_user.is_anonymous:
+        approved = False
+    else:
+        approved = db_tools.is_user_signed_up(event_name, current_user.name)
+    print(approved)
     return render_template('event.html',
                            description=description,
                            event=event,
-                           admin=admin)
+                           admin=admin,
+                           approved=approved)
 
 
 @app.route("/events/<event_name>/starting_kit")
@@ -514,8 +522,8 @@ def view_model(submission_hash, f_name):
 def sandbox(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, current_user):
-        return _redirect_to_user(u'{}: no access to "{}"'.format(
-            current_user, event_name))
+        return _redirect_to_user(u'{}: no access or no event named "{}"'.
+                                 format(current_user, event_name))
     if not db_tools.is_open_code(event, current_user):
         error_str = u'No access to sandbox for event {}. '\
             u'If you have already signed up, please wait for approval'.\

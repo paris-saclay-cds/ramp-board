@@ -700,7 +700,7 @@ def print_active_teams(event_name):
             print('\t{}'.format(member))
 
 
-def sign_up_team(event_name, team_name):
+def ask_sign_up_team(event_name, team_name):
     event = Event.query.filter_by(name=event_name).one()
     team = Team.query.filter_by(name=team_name).one()
     event_team = EventTeam.query.filter_by(
@@ -709,14 +709,27 @@ def sign_up_team(event_name, team_name):
         event_team = EventTeam(event=event, team=team)
         db.session.add(event_team)
         db.session.commit()
-        # submitting the starting kit for team
-        from_submission_path = os.path.join(
-            config.problems_path, event.problem.name, config.sandbox_d_name)
-        make_submission_and_copy_files(
-            event_name, team_name, config.sandbox_d_name, from_submission_path)
-        for user in get_team_members(team):
-            send_mail(user.email, 'signed up for {} as team {}'.format(
-                event_name, team_name), '')
+
+
+def sign_up_team(event_name, team_name):
+    event = Event.query.filter_by(name=event_name).one()
+    team = Team.query.filter_by(name=team_name).one()
+    event_team = EventTeam.query.filter_by(
+        event=event, team=team).one_or_none()
+    if event_team is None:
+        ask_sign_up_team(event_name, team_name)
+        event_team = EventTeam.query.filter_by(
+            event=event, team=team).one_or_none()
+    # submitting the starting kit for team
+    from_submission_path = os.path.join(
+        config.problems_path, event.problem.name, config.sandbox_d_name)
+    make_submission_and_copy_files(
+        event_name, team_name, config.sandbox_d_name, from_submission_path)
+    for user in get_team_members(team):
+        send_mail(user.email, 'signed up for {} as team {}'.format(
+            event_name, team_name), '')
+    event_team.approved = True
+    db.session.commit()
 
 
 def send_mail(to, subject, body):
@@ -1794,13 +1807,20 @@ def compute_contributivity_and_save_leaderboards(
         event_name, force_ensemble=False):
     compute_contributivity(event_name, force_ensemble)
     compute_historical_contributivity(event_name)
-    #user = User.query.filter_by(name='kegl').one()
-    #public_leaderboard_html = get_public_leaderboard(event_name, user)
+    # user = User.query.filter_by(name='kegl').one()
+    # public_leaderboard_html = get_public_leaderboard(event_name, user)
 
 
 def is_user_signed_up(event_name, user_name):
     for event_team in get_user_event_teams(event_name, user_name):
-        if event_team.is_active:
+        if event_team.is_active and event_team.approved:
+            return True
+    return False
+
+
+def is_user_asked_sign_up(event_name, user_name):
+    for event_team in get_user_event_teams(event_name, user_name):
+        if event_team.is_active and not event_team.approved:
             return True
     return False
 
