@@ -26,21 +26,48 @@
 {% endif %}
 {% endwith %}
 
-<div class="col-xs-12">
+<div class="col-xs-12 col-lg-12">
+     <form method="post">
      <div class="card">
         <div class="card-header">
             <div class="card-title">
-                <div class="title">Approve new users</div>
+                <div class="title">Approve new users and teams 
+		   	    <input type="submit" value="Approve!">
+			    </div>
             </div>
         </div>
 
          <div class="card-body">
-			<form method="post">
-                <input type="checkbox" onClick="toggle(this)" checked> Approve all<br/><br/>
-                {% for asked_user in asked_users %}
-					<input type="checkbox" name="approve_users" value="{{ asked_user.name }}" checked> {{ asked_user.name }} - {{ asked_user.email }} - {{ asked_user.firstname }} {{ asked_user.lastname }}<br> 
-				{% endfor %}				
-				<input type="submit">
+             <div class="col-xs-6 col-lg-6">
+                  <div class="card">
+                     <div class="card-header">
+                         <div class="card-title">
+                             <div class="title">New users</div>
+                         </div>
+                     </div>
+         			 <div class="card-body">
+                		<input type="checkbox" onClick="toggle_users(this)" checked> Approve all users<br/><br/>
+                		{% for asked_user in asked_users %}
+							<input type="checkbox" name="approve_users" value="{{ asked_user.name }}" checked> {{ asked_user.name }} - {{ asked_user.email }} - {{ asked_user.firstname }} {{ asked_user.lastname }}<br> 
+						{% endfor %}			
+					 </div>	
+				  </div>
+			 </div>
+             <div class="col-xs-6 col-lg-6">
+                  <div class="card">
+                     <div class="card-header">
+                         <div class="card-title">
+                             <div class="title">New teams for events</div>
+                         </div>
+                     </div>
+         			 <div class="card-body">
+                		<input type="checkbox" onClick="toggle_event_teams(this)" checked> Approve all event teams<br/><br/>
+                		{% for asked_event_team in asked_sign_up %}
+							<input type="checkbox" name="approve_event_teams" value="{{ asked_event_team.id }}" checked> {{ asked_event_team.event.name }} - {{ asked_event_team.team.name }} <br> 
+						{% endfor %}			
+					 </div>	
+				  </div>
+			 </div>
 			</form>
          </div>
     </div>
@@ -50,8 +77,14 @@
 
 {% block scripts %}
 <script>
-function toggle(source) {
+function toggle_users(source) {
   checkboxes = document.getElementsByName('approve_users');
+  for(var i=0, n=checkboxes.length; i<n; i++) {
+    checkboxes[i].checked = source.checked;
+  }
+}
+function toggle_event_teams(source) {
+  checkboxes = document.getElementsByName('approve_event_teams');
   for(var i=0, n=checkboxes.length; i<n; i++) {
     checkboxes[i].checked = source.checked;
   }

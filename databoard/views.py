@@ -252,14 +252,22 @@ def approve_users():
                                  format(current_user), is_error=True)
     if request.method == 'GET':
         asked_users = User.query.filter_by(access_level='asked')
+        asked_sign_up = EventTeam.query.filter_by(approved=False)
         return render_template('approve.html', asked_users=asked_users,
-                               admin=True)
+                               asked_sign_up=asked_sign_up, admin=True)
     elif request.method == 'POST':
-        to_be_approved = request.form.getlist('approve_users')
-        message = ""
-        for asked_user in to_be_approved:
+        users_to_be_approved = request.form.getlist('approve_users')
+        event_teams_to_be_approved = request.form.getlist('approve_event_teams')
+        message = "Approve users:\n"
+        for asked_user in users_to_be_approved:
             db_tools.approve_user(asked_user)
             message += "%s\n" % asked_user
+        message += " ** Approved event_team:\n"
+        for asked_id in event_teams_to_be_approved:
+            asked_event_team = EventTeam.query.get(int(asked_id))
+            db_tools.sign_up_team(asked_event_team.event.name,
+                                  asked_event_team.team.name)
+            message += "%s\n" % asked_event_team
         return _redirect_to_user(message, is_error=False,
                                  category="Approved users")
     # if not user:
