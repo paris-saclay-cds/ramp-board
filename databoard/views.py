@@ -5,11 +5,13 @@ import shutil
 import difflib
 import logging
 import os.path
+import time
 import tempfile
 import datetime
-
+import io
+import zipfile
 from flask import request, redirect, url_for, render_template, abort,\
-    send_from_directory, session, g
+    send_from_directory, session, g, send_file
 from flask.ext.login import current_user
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug import secure_filename
@@ -523,6 +525,32 @@ def view_model(submission_hash, f_name):
         f_name=f_name,
         import_form=import_form,
         admin=admin)
+
+
+@app.route("/<submission_hash>")
+@fl.login_required
+def download_submission(submission_hash):
+    submission = Submission.query.filter_by(hash_=submission_hash).one_or_none()
+    if submission is None:
+        error_str = u'Missing submission: {}'.format(submission_hash)
+        return _redirect_to_user(error_str)
+    event = submission.event_team.event
+    if not db_tools.is_open_code(event, current_user, submission):
+        error_str = u'{} has no right to look at {}/{}'.format(
+            current_user, event, submission)
+        return _redirect_to_user(error_str)
+    memory_file = io.BytesIO()
+    with zipfile.ZipFile(memory_file, 'w') as zf:
+        files = submission.files
+        for ff in files:
+            data = zipfile.ZipInfo(ff.f_name)
+            data.date_time = time.localtime(time.time())[:6]
+            data.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(data, ff.get_code())
+    memory_file.seek(0)
+    return send_file(memory_file,
+                     attachment_filename='submission_%s.zip' % submission.id,
+                     as_attachment=True)
 
 
 @app.route("/events/<event_name>/sandbox", methods=['GET', 'POST'])
