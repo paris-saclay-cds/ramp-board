@@ -1,5 +1,5 @@
 import datetime
-from sklearn.cross_validation import ShuffleSplit
+from sklearn.model_selection import ShuffleSplit
 from databoard.specific.problems.drug_spectra import problem_name  # noqa
 
 event_name = 'drug_spectra'  # should be the same as the file name
@@ -21,10 +21,9 @@ official_score_name = 'combined'
 
 
 def get_cv(y_train_array):
-    cv = ShuffleSplit(
-        len(y_train_array), n_iter=n_cv, test_size=cv_test_size,
-        random_state=random_state)
-    return cv
+    cv = ShuffleSplit(n_splits=n_cv, test_size=cv_test_size,
+                      random_state=random_state)
+    return cv.split(y_train_array)
 
 # Mutable config parameters to initialize database fields
 

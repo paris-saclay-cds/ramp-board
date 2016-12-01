@@ -2,8 +2,8 @@ import os
 from importlib import import_module
 import numpy as np
 import pandas as pd
-from sklearn.cross_validation import train_test_split
-from sklearn.cross_validation import StratifiedShuffleSplit
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedShuffleSplit
 # import databoard.multiclass_prediction as prediction
 # from databoard.config import submissions_path, problems_path,\
 #     starting_kit_d_name
@@ -115,9 +115,9 @@ def train_submission(module_path, X_dict, y_array, train_is):
     X_train_array = fe.transform(X_train_dict)
 
     # Train/valid cut for holding out calibration set
-    cv = StratifiedShuffleSplit(
-        y_train_array, n_iter=1, test_size=0.1, random_state=57)
-    calib_train_is, calib_test_is = list(cv)[0]
+    cv = StratifiedShuffleSplit(n_splits=1, test_size=0.1, random_state=57)
+    gen_cv = cv.split(X_train_array, y_train_array)
+    calib_train_is, calib_test_is = list(gen_cv)[0]
 
     X_train_train_array = X_train_array[calib_train_is]
     y_train_train_array = y_train_array[calib_train_is]

@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn.cross_validation import ShuffleSplit
+from sklearn.model_selection import ShuffleSplit
 
 
 def train_submission(module_path, X_df, y_array, train_is):
@@ -39,8 +39,8 @@ data = pd.read_csv("public_train.csv")
 X_df = data.drop(['log_PAX'], axis=1)
 y_array = data['log_PAX'].values
 
-skf = ShuffleSplit(y_array.shape[0], n_iter=2, test_size=0.2, random_state=61)
-skf_is = list(skf)[0]
+skf = ShuffleSplit(n_splits=2, test_size=0.2, random_state=61)
+skf_is = list(skf.split(y_array))[0]
 train_is, test_is = skf_is
 
 trained_model = train_submission('.', X_df, y_array, train_is)
@@ -48,4 +48,4 @@ y_pred_array = test_submission(trained_model, X_df, test_is)
 ground_truth_array = y_array[test_is]
 
 score = np.sqrt(np.mean(np.square(ground_truth_array - y_pred_array)))
-print 'RMSE =', score
+print('RMSE =', score)

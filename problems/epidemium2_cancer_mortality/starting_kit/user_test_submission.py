@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.cross_validation import ShuffleSplit
+from sklearn.model_selection import ShuffleSplit
 import feature_extractor
 import regressor
 
@@ -13,9 +13,9 @@ if __name__ == '__main__':
     X_df = df.drop(target_cols, axis=1)
     y_array = df[target_cols].values
 
-    skf = ShuffleSplit(len(y_array), n_iter=2, test_size=0.5, random_state=67)
+    skf = ShuffleSplit(n_splits=2, test_size=0.5, random_state=67)
     print('Training file ...')
-    for train_is, test_is in skf:
+    for train_is, test_is in skf.split(y_array):
         X_train_df = X_df.iloc[train_is]
         y_train_array = y_array[train_is]
 

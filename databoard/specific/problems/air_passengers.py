@@ -1,7 +1,7 @@
 import os
 import sys
 import pandas as pd
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 import databoard.regression_prediction as prediction  # noqa
 from databoard.config import submissions_path, problems_path,\
     starting_kit_d_name

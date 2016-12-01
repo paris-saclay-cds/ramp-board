@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import pandas as pd
 from scipy import io
-from sklearn.cross_validation import ShuffleSplit
+from sklearn.model_selection import ShuffleSplit
 import databoard.mixed_prediction as prediction
 from databoard.config import submissions_path, problems_path
 
@@ -39,10 +39,9 @@ def prepare_data():
         vial=data['Vial_ABQR'].ravel(),
         concentration=data['Conc_ABQR'].ravel(),
         molecule=data['Molecule_ABQR'].ravel()))
-    skf = ShuffleSplit(
-        len(df), n_iter=2, test_size=held_out_test_size,
-        random_state=random_state)
-    train_is, test_is = list(skf)[0]
+    skf = ShuffleSplit(n_splits=2, test_size=held_out_test_size,
+                       random_state=random_state)
+    train_is, test_is = list(skf.split(df))[0]
     df_train = df.iloc[train_is]
     df_test = df.iloc[test_is]
     df_train.to_csv(train_filename, index=False)
