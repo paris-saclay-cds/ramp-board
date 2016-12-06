@@ -245,7 +245,7 @@ export DATARUN_URL='uuuu'
 export DATARUN_USERNAME='vvvv'
 export DATARUN_PASSWORD='wwww'
 ```
-5. scp to the VM the file `env.sh` and the script `deploy_databoard.sh`: `scp env.sh tools/deploy_databoard.sh root@<VM_IP_ADDRESS>:/root/.`
+5. scp to the VM the file `env.sh` and the script `deploy_databoard.sh`: `scp env.sh deploy_databoard.sh root@<VM_IP_ADDRESS>:/root/.`
 6. ssh to the instance and run `bash deploy_databoard.sh {disk_path} {db_dump}` where `disk path` is the path to the attached disk (something like `/dev/vdb`, which can be found on the openstack interface) and database dump from which to create new database (give only the dump file name, this file should be located on the sciencefs disk in `~/databoard/backup` which will be mounted on the VM in `/mnt/datacamp/backup`). This script:  
     - installs databoard on the VM. It will clone the project from git (line 112). **Modify this line to clone it with your account if needed**.  
     - mounts the sciencefs disk to retrieve backups of the latest state of the db and of associated submission files  
