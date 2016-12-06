@@ -169,13 +169,6 @@ sudo chown -R www-data:www-data ${DATABOARD_PATH}/datacamp/databoard
 # Restart Apache
 sudo service apache2 restart
 
-# Install zsh
-cd
-sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install zsh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
-echo 'source ~/.aliases' >> ~/.zshrc
-sed -i 's/plugins=(git)/plugins=(git cp tmux screen pip lol fabric)/g' ~/.zshrc
-
 # Start celery workers
 sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install rabbitmq-server
 mkdir ${DATABOARD_PATH}/code/databoard/tools/celery_info
@@ -196,6 +189,13 @@ sed -i "s#DATABOARD_PATH#${DATABOARD_PATH}#g" ${DATABOARD_PATH}/code/databoard/t
 sed -i "s#DATABOARD_PATH#${DATABOARD_PATH}#g" ${DATABOARD_PATH}/code/databoard/tools/celerybeat.conf
 easy_install supervisor
 supervisord -c ${DATABOARD_PATH}/code/databoard/tools/supervisord.conf
+
+# Install zsh
+cd
+sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install zsh
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+echo 'source ~/.aliases' >> ~/.zshrc
+sed -i 's/plugins=(git)/plugins=(git cp tmux screen pip lol fabric)/g' ~/.zshrc
 
 # Add backup for the production server:
 # execution of tools/dump_db.sh and tools/housekeeping.sh with crontab
