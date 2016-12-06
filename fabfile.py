@@ -127,7 +127,7 @@ def test_setup():
 
     # compare results with local train and test
     print('**** TRAIN-TEST LOCAL ****')
-    db_tools.train_test_submissions(force_retrain_test=False)
+    db_tools.train_test_submissions(force_retrain_test=True)
     db_tools.compute_contributivity('iris_test')
     db_tools.compute_contributivity('boston_housing_test')
 
