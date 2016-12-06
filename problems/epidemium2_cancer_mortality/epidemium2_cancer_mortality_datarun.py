@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from sklearn.cross_validation import StratifiedShuffleSplit
+from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.preprocessing import LabelEncoder
 from importlib import import_module
 
@@ -30,10 +30,11 @@ prediction_labels = None
 def prepare_data(raw_data_path):
     df = pd.read_csv(os.path.join(raw_data_path, raw_filename))
     countries_encoded = LabelEncoder().fit_transform(df.country)
-    skf = StratifiedShuffleSplit(
-        y=countries_encoded, n_iter=2, test_size=None,
-        train_size=public_train_size, random_state=random_state)
-    public_train_is, private_is = list(skf)[0]
+    skf = StratifiedShuffleSplit(n_splits=2, test_size=None,
+                                 train_size=public_train_size,
+                                 random_state=random_state)
+    gen_skf = skf.split(countries_encoded, countries_encoded)
+    public_train_is, private_is = list(gen_skf)[0]
     df_public_train = df.iloc[public_train_is]
     df_private = df.iloc[private_is]
     df_public_train.to_csv(

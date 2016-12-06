@@ -15,9 +15,9 @@ Install dependencies with `pip install -Ur requirements.txt`
 **Postgres databases**: one for test and one for dev.     
 1. Install postgres and create two databases (`createdb <db_name>`)    
 2. Set up environment variables:    
-* `DATABOARD_DB_URL`: `SQLALCHEMY_DATABASE_URI` for the dev database, which should be something like `postgresql://<db_user>:<db_password>@localhost/<db_name>`    
-* `DATABOARD_DB_URL_TEST`: `SQLALCHEMY_DATABASE_URI` for the test database    
-* `DATABOARD_TEST`: `True` if you want to use the test database, `False` else.    
+    - `DATABOARD_DB_URL`: `SQLALCHEMY_DATABASE_URI` for the dev database, which should be something like `postgresql://<db_user>:<db_password>@localhost/<db_name>`    
+    - `DATABOARD_DB_URL_TEST`: `SQLALCHEMY_DATABASE_URI` for the test database    
+    - `DATABOARD_TEST`: `True` if you want to use the test database, `False` else.    
 3. Upgrade the dev database with: `python manage.py db upgrade`    
   
 Possible to use a **SQLite database** (instead of postgres). In this case, you only need to follow step 2 and 3.   
@@ -144,7 +144,7 @@ fab sign_up_team:sea_ice_colorado,kegl
   
 ### App performance  
   
-#### Profiling  
+#### Profiling  
 fab profile:port,profiling_output_file    
 By default `port=None` (for local profiling) and `profiling_output_file=profiler.log`    
 #### Database performance  
@@ -157,7 +157,7 @@ To report in the logging system queries that takes too long, define an environme
 5. Go to http://127.0.0.1:8089/ and enter the number of users to simulate    
   
   
-### How to use datarun to train test submissions?  
+### How to use datarun to train test submissions?  
   
 See datarun documentation (especially "notes for databoard users"):     
 - [pdf here](https://github.com/camillemarini/datarun/blob/master/docs/datarun.pdf)    
@@ -170,8 +170,7 @@ See datarun documentation (especially "notes for databoard users"):
 #### 1. Production server  
   
 - Production server deployed on prod_ramp 134.158.75.211.   
-This instance built from image "test_ramp_060716". This image has been obtained by running the script tools/deploy_databoard.sh.  
-  
+
 - Two disks are mounted to the VM:  
     * sciencefs disk, which is used for backup. It is mounted to /mnt/datacamp.  
     * persistent volume (prod_ramp), where databoard code and submission files are stored. It is mounted to /mnt/ramp_data.  
@@ -219,8 +218,7 @@ Currently it is : /dev/vdb, so the command is :
   
 mount /dev/vdb /mnt/ramp_data  
 
-Test server:  http://134.158.75.185  
-Production server: http://134.158.75.211/  
+
 ### How to deploy databoard on stratuslab  
 
 A databoard server needs:  
@@ -232,10 +230,10 @@ Below are the instructions to **start a databoard server using the latest state 
 
 #### For a test server
 
-1. Start a VM (Ubuntu 14.04) on openstack (via the openstack interface).
-2. Make it possible to log in as root: `ssh ubuntu@<VM_IP_ADDRESS> 'bash -s' < root_permissions.sh`
-3. Create a persistent disk and attach it to the VM (via the openstack interface).
-4. Create a file `env.sh` which contain required environment variables:
+1. Start a VM (Ubuntu 14.04) on openstack (via the openstack interface).  
+2. Go to `databoard/tools directory` and Make it possible to log in as root: `ssh ubuntu@<VM_IP_ADDRESS> 'bash -s' < root_permissions.sh`  
+3. Create a persistent disk and attach it to the VM (via the openstack interface).  
+4. Create a file `env.sh` which contain required environment variables **DO NOT COMMIT THIS FILE**:
 ```
 export DATABOARD_PATH='/mnt/ramp_data/'  #where to mount the persistent disk
 export DATABOARD_DB_NAME='databoard'
@@ -247,14 +245,13 @@ export DATARUN_URL='uuuu'
 export DATARUN_USERNAME='vvvv'
 export DATARUN_PASSWORD='wwww'
 ```
-5. scp to the VM the file `env.sh` and the script `tools/deploy_databoard.sh`: `scp env.sh tools/deploy_databoard.sh root@<VM_IP_ADDRESS>:/root/.`
-6. ssh to the instance and run `bash deploy_databoard.sh {disk_path} {db_dump}` where `disk path` is the path to the attached disk (something like `/dev/vdb`) and database dump from which to create new database (give only the dump file name, this file should be located on the sciencefs disk in `~/databoard/backup` which will be mounted on the VM in `/mnt/datacamp/backup`). This script:
-  - installs databoard on the VM. It will clone the project from giti (line 112). **MOdify this line to clone it with your account if needed**.
-  - mounts the sciencefs disk to retrieve backups of the latest state of the db and of associated submission files
-  - mounts the persistent disk and copy onto it backups of submission files from the sciencefs disk
-  - installs apache, ... and start the application
-  - starts celery workers to send jobs to datarun
-7. Unmount the sciencefs disk `fusermount -u /mnt/datacamp`
+5. scp to the VM the file `env.sh` and the script `deploy_databoard.sh`: `scp env.sh tools/deploy_databoard.sh root@<VM_IP_ADDRESS>:/root/.`
+6. ssh to the instance and run `bash deploy_databoard.sh {disk_path} {db_dump}` where `disk path` is the path to the attached disk (something like `/dev/vdb`, which can be found on the openstack interface) and database dump from which to create new database (give only the dump file name, this file should be located on the sciencefs disk in `~/databoard/backup` which will be mounted on the VM in `/mnt/datacamp/backup`). This script:  
+    - installs databoard on the VM. It will clone the project from git (line 112). **Modify this line to clone it with your account if needed**.  
+    - mounts the sciencefs disk to retrieve backups of the latest state of the db and of associated submission files  
+    - mounts the persistent disk and copy onto it backups of submission files from the sciencefs disk  
+    - installs apache, ... and start the application  
+    - starts celery workers to send jobs to datarun  6. Unmount the sciencefs disk `fusermount -u /mnt/datacamp`
 
 #### For a production server  
 

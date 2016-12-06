@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from importlib import import_module
-from sklearn.cross_validation import StratifiedShuffleSplit
+from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.metrics import accuracy_score
 
 train_filename = 'public_train.csv'
@@ -45,9 +45,9 @@ def train_submission(module_path, X_dict, y_array, train_is):
     X_train_array = fe.transform(X_train_dict)
 
     # Train/valid cut for holding out calibration set
-    cv = StratifiedShuffleSplit(
-        y_train_array, n_iter=1, test_size=0.1, random_state=57)
-    calib_train_is, calib_test_is = list(cv)[0]
+    cv = StratifiedShuffleSplit(n_splits=1, test_size=0.1, random_state=57)
+    gen_cv = cv.split(X_train_array, y_train_array)
+    calib_train_is, calib_test_is = list(gen_cv)[0]
 
     X_train_train_array = X_train_array[calib_train_is]
     y_train_train_array = y_train_array[calib_train_is]
@@ -100,4 +100,4 @@ if __name__ == '__main__':
         y_calib_probas_array = test_submission(
             trained_model, X_dict, valid_test_is)
         y_pred = [labels[np.argmax(probas)] for probas in y_calib_probas_array]
-        print 'accuracy = ', accuracy_score(y_pred, y_valid_test)
+        print('accuracy = ', accuracy_score(y_pred, y_valid_test))

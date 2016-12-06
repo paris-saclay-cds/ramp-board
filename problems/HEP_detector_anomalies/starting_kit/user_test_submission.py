@@ -2,7 +2,7 @@ from __future__ import division, print_function
 
 import pandas as pd
 
-from sklearn.cross_validation import StratifiedShuffleSplit
+from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.metrics import accuracy_score, roc_auc_score
 from classifier import Classifier
 
@@ -12,9 +12,9 @@ if __name__ == '__main__':
     y = data[['isSkewed']].values.ravel()
     X = data.drop(['isSkewed'], axis=1).reset_index(drop=True)
 
-    skf = StratifiedShuffleSplit(y, n_iter=2, test_size=0.5, random_state=43)
+    skf = StratifiedShuffleSplit(n_splits=2, test_size=0.5, random_state=43)
     print("Training ...")
-    for valid_train_is, valid_test_is in skf:
+    for valid_train_is, valid_test_is in skf.split(X, y):
         print('-------------------------------------------------------------')
 
         X_valid_train = X.ix[valid_train_is]

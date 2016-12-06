@@ -35,22 +35,26 @@
             <strong><font color="#e84b3a">Waiting for approval ...</font></strong>
             
             {% endif %}
-            {% for url, f_name, f_signed_up in event_urls_f_names %}
+            {% for url, f_name, f_signed_up, f_asked_sign_up in event_urls_f_names %}
                 <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12">
                   <div class="alert fresh-color alert-warning" role="alert">
-                     <a class="alert-link" href="/events/{{ url }}" data-toggle="tooltip" data-placement="top" title="Description"><strong>{{ f_name }}</strong></a></br>
+                     <strong>{{ f_name }}</strong></br>
                      <a class="alert-link" href="/events/{{ url }}" title="Description" style="text-decoration:none"><i class="icon fa fa-sticky-note"></i> description</a><br>
-                     <a class="alert-link" href="/events/{{ url }}/leaderboard" title="Leaderboard" style="text-decoration:none"><i class="icon fa fa-flag"></i> leaderboard</a><br>
                      {% if admin %}
                        <a class="alert-link" href="/events/{{ url }}/private_leaderboard" title="Private Leaderboard" style="text-decoration:none"><i class="icon fa fa-flag-checkered"></i> private leaderboard</a><br>
                        <a class="alert-link" href="/events/{{ url }}/dashboard_submissions" title="Dashboard Admin" style="text-decoration:none"><i class="icon fa fa-cogs"></i> dashboard admin</a><br>
             	     {% endif %}
                      {% if f_signed_up %}
+                       <a class="alert-link" href="/events/{{ url }}/leaderboard" title="Leaderboard" style="text-decoration:none"><i class="icon fa fa-flag"></i> leaderboard</a><br>
                        <a class="alert-link" href="/events/{{ url }}/my_submissions" title="My submissions" style="text-decoration:none"><i class="icon fa fa-folder"></i> my submissions</a><br>
                        <a class="alert-link" href="/events/{{ url }}/sandbox" title="Sandbox" style="text-decoration:none"><i class="icon fa fa-edit"></i> sandbox</a><br>
                      {% elif current_user.access_level in ['user', 'admin'] %}
-                        <a class="alert-link" href="/events/{{ url }}/sign_up" title="Sign up" style="text-decoration:none"><i class="icon fa fa-sign-in"></i> SIGN UP</a><br>
-            	     {% endif %}
+                        {% if f_asked_sign_up %}
+                            <strong><font color="#e84b3a">Waiting for approval...</font></strong>
+            	        {% else %}
+                            <a class="alert-link" href="/events/{{ url }}/sign_up" title="Sign up" style="text-decoration:none"><i class="icon fa fa-sign-in"></i> SIGN UP</a><br>
+                        {% endif %}
+                     {% endif %}
             
             	  </div>
                 </div>

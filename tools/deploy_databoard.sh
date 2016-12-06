@@ -104,6 +104,7 @@ mount $DISK_PATH $DATABOARD_PATH
 # Copy all databoard files (not the code, but submissions, ...)
 cd $DATABOARD_PATH
 mkdir datacamp
+echo "Copying submission directory"
 cp -r /mnt/datacamp/backup/databoard ${DATABOARD_PATH}/datacamp/.
 
 # Clone the project

@@ -32,7 +32,7 @@
     <span class="title">{{ event.name }}</span>
 </div>
 
-<div class="col-xs-12">
+<div class="col-xs-12 col-lg-12">
   <div class="card">
     <div class="card-header">
       <div class="card-title">
@@ -51,7 +51,7 @@
         {% endif %}
         </font></h4>
 		
-        <table class="datatable stripe cell-border" cellspacing="0" width="100%">
+        <table id="leaderboard" class="display" cellspacing="0" width="100%">
           {{ leaderboard | safe}} 
 	    </table>
     </div>
@@ -101,5 +101,12 @@
 $(function () {
        $('#formerror').modal('toggle')
 });
+
+$(document).ready(function() {
+        $('#leaderboard').DataTable({
+             "order": [[ 2, "desc" ]],
+             "scrollX": true
+             });
+} );
 </script>
 {% endblock %}

@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.cross_validation import ShuffleSplit
+from sklearn.model_selection import ShuffleSplit
 import feature_extractor_clf
 import feature_extractor_reg
 import classifier
@@ -32,11 +32,10 @@ def read_data(filename):
 if __name__ == '__main__':
     print("Reading file ...")
     X_df, y_df = read_data(train_filename)
-    skf = ShuffleSplit(
-        len(y_df), n_iter=2, test_size=0.2, random_state=57)
+    skf = ShuffleSplit(n_splits=2, test_size=0.2, random_state=57)
     print("Training file ...")
-    for train_is, test_is in skf:
-        print '--------------------------'
+    for train_is, test_is in skf.split(y_df):
+        print('--------------------------')
         X_train_df = X_df.iloc[train_is].copy()
         y_train_df = y_df.iloc[train_is].copy()
         X_test_df = X_df.iloc[test_is].copy()
@@ -56,7 +55,7 @@ if __name__ == '__main__':
         y_proba_clf = clf.predict_proba(X_test_array_clf)
         y_pred_clf = labels[np.argmax(y_proba_clf, axis=1)]
         error = 1 - accuracy_score(y_test_clf, y_pred_clf)
-        print 'error = ', error
+        print('error = %s' % error)
 
         fe_reg = feature_extractor_reg.FeatureExtractorReg()
         for i, label in enumerate(labels):

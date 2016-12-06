@@ -5,11 +5,13 @@ import shutil
 import difflib
 import logging
 import os.path
+import time
 import tempfile
 import datetime
-
+import io
+import zipfile
 from flask import request, redirect, url_for, render_template, abort,\
-    send_from_directory, session, g
+    send_from_directory, session, g, send_file
 from flask.ext.login import current_user
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug import secure_filename
@@ -85,6 +87,8 @@ def login():
             return flask.redirect(flask.url_for('login'))
         fl.login_user(user, remember=True)  # , remember=form.remember_me.data)
         session['logged_in'] = True
+        user.is_authenticated = True
+        db.session.commit()
         logger.info(u'{} is logged in'.format(current_user))
         db_tools.add_user_interaction(interaction='login', user=current_user)
         # next = flask.request.args.get('next')
@@ -150,7 +154,6 @@ def ramp():
 
 @app.route("/user")
 def user():
-    print(current_user)
     if current_user.is_authenticated:
         db_tools.add_user_interaction(
             interaction='looking at user', user=current_user)
@@ -159,13 +162,14 @@ def user():
         event_urls_f_names = [
             (event.name,
              event.title,
-             db_tools.is_user_signed_up(event.name, current_user.name))
+             db_tools.is_user_signed_up(event.name, current_user.name),
+             db_tools.is_user_asked_sign_up(event.name, current_user.name))
             for event in events
             if db_tools.is_public_event(event, current_user)]
 
     else:
         events = Event.query.filter_by(is_public=True).all()
-        event_urls_f_names = [(event.name, event.title, False)
+        event_urls_f_names = [(event.name, event.title, False, False)
                               for event in events]
     admin = check_admin(current_user, None)
     return render_template('user.html',
@@ -211,6 +215,7 @@ def sign_up_for_event(event_name):
     db_tools.add_user_interaction(
         interaction='signing up at event', user=current_user, event=event)
 
+    db_tools.ask_sign_up_team(event.name, current_user.name)
     if event.is_controled_signup:
         db_tools.send_sign_up_request_mail(event, current_user)
         return _redirect_to_user(
@@ -239,6 +244,41 @@ def approve_sign_up_for_event(event_name, user_name):
     return _redirect_to_user(
         u'{} is signed up for {}.'.format(user, event),
         is_error=False, category='Successful sign-up')
+
+
+@app.route("/approve_users", methods=['GET', 'POST'])
+@fl.login_required
+def approve_users():
+    if not current_user.access_level == 'admin':
+        return _redirect_to_user(u'Sorry {}, you do not have admin rights'.
+                                 format(current_user), is_error=True)
+    if request.method == 'GET':
+        asked_users = User.query.filter_by(access_level='asked')
+        asked_sign_up = EventTeam.query.filter_by(approved=False)
+        return render_template('approve.html', asked_users=asked_users,
+                               asked_sign_up=asked_sign_up, admin=True)
+    elif request.method == 'POST':
+        users_to_be_approved = request.form.getlist('approve_users')
+        event_teams_to_be_approved = request.form.getlist('approve_event_teams')
+        message = "Approve users:\n"
+        for asked_user in users_to_be_approved:
+            db_tools.approve_user(asked_user)
+            message += "%s\n" % asked_user
+        message += " ** Approved event_team:\n"
+        for asked_id in event_teams_to_be_approved:
+            asked_event_team = EventTeam.query.get(int(asked_id))
+            db_tools.sign_up_team(asked_event_team.event.name,
+                                  asked_event_team.team.name)
+            message += "%s\n" % asked_event_team
+        return _redirect_to_user(message, is_error=False,
+                                 category="Approved users")
+    # if not user:
+    #     return _redirect_to_user(u'Oups, no user {}.'.format(user_name),
+    #                              is_error=True)
+    # db_tools.approve_user(user.name)
+    # return _redirect_to_user(
+    #     u'{} is signed up.'.format(user),
+    #     is_error=False, category='Successful sign-up')
 
 
 @app.route("/sign_up/<user_name>")
@@ -276,10 +316,16 @@ def user_event(event_name):
             as description_file:
         description = description_file.read()
     admin = check_admin(current_user, event)
+    if current_user.is_anonymous:
+        approved = False
+    else:
+        approved = db_tools.is_user_signed_up(event_name, current_user.name)
+    print(approved)
     return render_template('event.html',
                            description=description,
                            event=event,
-                           admin=admin)
+                           admin=admin,
+                           approved=approved)
 
 
 @app.route("/events/<event_name>/starting_kit")
@@ -470,13 +516,41 @@ def view_model(submission_hash, f_name):
 
     with open(os.path.join(submission.path, f_name)) as f:
         code = f.read()
+    admin = check_admin(current_user, event)
     return render_template(
         'submission.html',
         event=event,
         code=code,
         submission=submission,
         f_name=f_name,
-        import_form=import_form)
+        import_form=import_form,
+        admin=admin)
+
+
+@app.route("/<submission_hash>")
+@fl.login_required
+def download_submission(submission_hash):
+    submission = Submission.query.filter_by(hash_=submission_hash).one_or_none()
+    if submission is None:
+        error_str = u'Missing submission: {}'.format(submission_hash)
+        return _redirect_to_user(error_str)
+    event = submission.event_team.event
+    if not db_tools.is_open_code(event, current_user, submission):
+        error_str = u'{} has no right to look at {}/{}'.format(
+            current_user, event, submission)
+        return _redirect_to_user(error_str)
+    memory_file = io.BytesIO()
+    with zipfile.ZipFile(memory_file, 'w') as zf:
+        files = submission.files
+        for ff in files:
+            data = zipfile.ZipInfo(ff.f_name)
+            data.date_time = time.localtime(time.time())[:6]
+            data.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(data, ff.get_code())
+    memory_file.seek(0)
+    return send_file(memory_file,
+                     attachment_filename='submission_%s.zip' % submission.id,
+                     as_attachment=True)
 
 
 @app.route("/events/<event_name>/sandbox", methods=['GET', 'POST'])
@@ -484,10 +558,12 @@ def view_model(submission_hash, f_name):
 def sandbox(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, current_user):
-        return _redirect_to_user(u'{}: no event named "{}"'.format(
-            current_user, event_name))
+        return _redirect_to_user(u'{}: no access or no event named "{}"'.
+                                 format(current_user, event_name))
     if not db_tools.is_open_code(event, current_user):
-        error_str = u'No sandbox of {} in {}'.format(current_user, event)
+        error_str = u'No access to sandbox for event {}. '\
+            u'If you have already signed up, please wait for approval'.\
+            format(event)
         return _redirect_to_user(error_str)
 
     sandbox_submission = db_tools.get_sandbox(event, current_user)
@@ -759,10 +835,14 @@ def credit(submission_hash):
 @app.route("/logout")
 @fl.login_required
 def logout():
-    db_tools.add_user_interaction(interaction='logout', user=current_user)
+    user = current_user
+    db_tools.add_user_interaction(interaction='logout', user=user)
     session['logged_in'] = False
-    logger.info(u'{} is logged out'.format(current_user))
+    user.is_authenticated = False
+    db.session.commit()
+    logger.info(u'{} is logged out'.format(user))
     fl.logout_user()
+
     return redirect(flask.url_for('login'))
 
 

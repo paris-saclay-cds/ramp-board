@@ -1,7 +1,7 @@
 import os
 from importlib import import_module
 import pandas as pd
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 
 problem_name = 'boston_housing'  # should be the same as the file name
 

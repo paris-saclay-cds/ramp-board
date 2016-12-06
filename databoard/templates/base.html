@@ -129,6 +129,9 @@
                             </button>
                         </div>
                         <ul class="nav navbar-nav">
+                            {% if admin %}
+                                <li><a href="/approve_users"><span class="icon fa fa-user-plus"></span><span class="title">Approve users</span></a></li>
+                            {% endif %}
                             <li>
                                 <a href="/user">
                                     <span class="icon fa fa-list"></span><span class="title">Events</span>
@@ -139,7 +142,7 @@
                                     <span class="icon fa fa-question"></span><span class="title">What is a RAMP?</span>
                                 </a>
                             </li>
-                            {% if event %}
+                            {% if event and current_user.is_authenticated %}
                             <li class="panel panel-default dropdown active">
                                 <a data-toggle="collapse" href="#dropdown-event">
                                     <span class="icon fa fa-cloud"></span><span class="title">{{ event.name }}</span>
@@ -149,10 +152,12 @@
                                     <div class="panel-body">
                                         <ul class="nav navbar-nav">
                                             <li><a href="/events/{{ event.name }}">description</a></li>
+                                            {% if (approved is not defined) or (approved == True) %}
                                             <li><a href="/events/{{ event.name }}/starting_kit">starting kit</a></li>
                                             <li><a href="/events/{{ event.name }}/leaderboard">leaderboard</a></li>
                                             <li><a href="/events/{{ event.name }}/sandbox">sandbox</a></li>
                                             <li><a href="/events/{{ event.name }}/my_submissions">my submissions</a></li>
+                                            {% endif %}
                                             {% if admin %}
                                             <li><a href="/events/{{ event.name }}/dashboard_submissions">dashboard admin</a></li>
                                             <li><a href="/events/{{ event.name }}/private_leaderboard">private_leaderboard</a></li>

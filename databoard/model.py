@@ -51,8 +51,7 @@ class User(db.Model):
     signup_timestamp = db.Column(db.DateTime, nullable=False)
 
     # Flask-Login fields
-    is_authenticated = db.Column(db.Boolean, default=True)
-    is_active = db.Column(db.Boolean, default=True)
+    is_authenticated = db.Column(db.Boolean, default=False)
 
     def __init__(self, name, hashed_password, lastname, firstname, email,
                  access_level='user', hidden_notes='', linkedin_url='',
@@ -74,6 +73,10 @@ class User(db.Model):
         self.website_url = website_url
         self.bio = bio
         self.is_want_news = is_want_news
+
+    @property
+    def is_active(self):
+        return True
 
     @property
     def is_anonymous(self):
@@ -533,6 +536,7 @@ class EventTeam(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     last_submission_name = db.Column(db.String, default=None)
     signup_timestamp = db.Column(db.DateTime, nullable=False)
+    approved = db.Column(db.Boolean, default=False)
 
     db.UniqueConstraint(event_id, team_id, name='et_constraint')
 

@@ -570,10 +570,6 @@ def create_user(name, password, lastname, firstname, email,
                 facebook_url=facebook_url, google_url=google_url,
                 github_url=github_url, website_url=website_url, bio=bio,
                 is_want_news=is_want_news)
-    if access_level == 'asked':
-        user.is_authenticated = False
-    else:
-        user.is_authenticated = True
 
     # Creating default team with the same name as the user
     # user is admin of her own team
@@ -704,7 +700,7 @@ def print_active_teams(event_name):
             print('\t{}'.format(member))
 
 
-def sign_up_team(event_name, team_name):
+def ask_sign_up_team(event_name, team_name):
     event = Event.query.filter_by(name=event_name).one()
     team = Team.query.filter_by(name=team_name).one()
     event_team = EventTeam.query.filter_by(
@@ -713,14 +709,27 @@ def sign_up_team(event_name, team_name):
         event_team = EventTeam(event=event, team=team)
         db.session.add(event_team)
         db.session.commit()
-        # submitting the starting kit for team
-        from_submission_path = os.path.join(
-            config.problems_path, event.problem.name, config.sandbox_d_name)
-        make_submission_and_copy_files(
-            event_name, team_name, config.sandbox_d_name, from_submission_path)
-        for user in get_team_members(team):
-            send_mail(user.email, 'signed up for {} as team {}'.format(
-                event_name, team_name), '')
+
+
+def sign_up_team(event_name, team_name):
+    event = Event.query.filter_by(name=event_name).one()
+    team = Team.query.filter_by(name=team_name).one()
+    event_team = EventTeam.query.filter_by(
+        event=event, team=team).one_or_none()
+    if event_team is None:
+        ask_sign_up_team(event_name, team_name)
+        event_team = EventTeam.query.filter_by(
+            event=event, team=team).one_or_none()
+    # submitting the starting kit for team
+    from_submission_path = os.path.join(
+        config.problems_path, event.problem.name, config.sandbox_d_name)
+    make_submission_and_copy_files(
+        event_name, team_name, config.sandbox_d_name, from_submission_path)
+    for user in get_team_members(team):
+        send_mail(user.email, 'signed up for {} as team {}'.format(
+            event_name, team_name), '')
+    event_team.approved = True
+    db.session.commit()
 
 
 def send_mail(to, subject, body):
@@ -1802,13 +1811,20 @@ def compute_contributivity_and_save_leaderboards(
         event_name, force_ensemble=False):
     compute_contributivity(event_name, force_ensemble)
     compute_historical_contributivity(event_name)
-    #user = User.query.filter_by(name='kegl').one()
-    #public_leaderboard_html = get_public_leaderboard(event_name, user)
+    # user = User.query.filter_by(name='kegl').one()
+    # public_leaderboard_html = get_public_leaderboard(event_name, user)
 
 
 def is_user_signed_up(event_name, user_name):
     for event_team in get_user_event_teams(event_name, user_name):
-        if event_team.is_active:
+        if event_team.is_active and event_team.approved:
+            return True
+    return False
+
+
+def is_user_asked_sign_up(event_name, user_name):
+    for event_team in get_user_event_teams(event_name, user_name):
+        if event_team.is_active and not event_team.approved:
             return True
     return False
 
@@ -1873,22 +1889,22 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
 
     score_names = [score_type.name for score_type in event.score_types]
     columns = ['team',
-               'submission'] +\
+               'submission',
+               'contributivity',
+               'historical_contributivity'] +\
               score_names +\
-              ['contributivity',
-               'historical contributivity',
-               'train time',
+              ['train time',
                'test time',
                'submitted at (UTC)']
     values = zip(*[
         [submission.event_team.team.name,
          submission.name_with_link if is_open_code(
-             event, current_user, submission) else submission.name[:20]] +
+             event, current_user, submission) else submission.name[:20],
+         int(round(100 * submission.contributivity)),
+         int(round(100 * submission.historical_contributivity))] +
         [round(score.valid_score_cv_bag, score.precision)
             for score in submission.ordered_scores(score_names)] +
-        [int(round(100 * submission.contributivity)),
-         int(round(100 * submission.historical_contributivity)),
-         int(round(submission.train_time_cv_mean)),
+        [int(round(submission.train_time_cv_mean)),
          int(round(submission.valid_time_cv_mean)),
          date_time_format(submission.submission_timestamp)]
         for submission in submissions])
