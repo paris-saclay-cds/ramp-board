@@ -111,10 +111,9 @@ def send_password_mail(user_name, password, port=None):
     header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
         user.email, gmail_user, subject)
 
-    body = u'Dear {},\n\n'.format(user.firstname)
-    body += 'Here is your login and other information ' +\
+    body = 'Here is your login and other information ' +\
         'for the RAMP site:\n\n'
-    body += u'username: {}\n'.format(user.name)
+    body += 'username: {}\n'.format(user.name)
     body += 'password: {}\n'.format(password)
     body += 'submission site: http://www.ramp.studio'
     smtpserver.sendmail(gmail_user, user.email, header + body)
