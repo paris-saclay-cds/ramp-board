@@ -69,5 +69,5 @@ if __name__ == '__main__':
         reg.fit(X_train_array_reg, y_train_reg)
         y_pred_reg = reg.predict(X_test_array_reg)
         mare = mare_score(y_test_reg, y_pred_reg)
-        print 'mare = ', mare
-        print 'combined error = ', 2. / 3 * error + 1. / 3 * mare
+        print('mare = ', mare)
+        print('combined error = ', 2. / 3 * error + 1. / 3 * mare)
