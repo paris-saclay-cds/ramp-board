@@ -2,6 +2,7 @@ import sys
 if '' not in sys.path:  # Balazs bug
     sys.path.insert(0, '')
 
+import pandas as pd
 import os
 import logging
 import time
@@ -494,3 +495,64 @@ def publish_problem(problem_name, target='local'):
         command += ' root@' + server + ':' + root
     print(command)
     os.system(command)
+
+
+### Batch add users ###
+
+def create_user(name, password, lastname, firstname, email,
+                access_level='user', hidden_notes=''):
+    from databoard.config import sandbox_d_name
+    from databoard.db_tools import create_user
+    create_user(
+        name, password, lastname, firstname, email, access_level, hidden_notes)
+
+
+def generate_single_password():
+    from databoard.db_tools import generate_single_password
+    print generate_single_password()
+
+
+def generate_passwords(users_to_add_f_name, password_f_name):
+    from databoard.db_tools import generate_passwords
+    print generate_passwords(users_to_add_f_name, password_f_name)
+
+
+def add_users_from_file(users_to_add_f_name, password_f_name):
+    """Users whould be the same in the same order in the two files."""
+    from databoard.model import NameClashError
+
+    users_to_add = pd.read_csv(users_to_add_f_name)
+    passwords = pd.read_csv(password_f_name)
+    users_to_add['password'] = passwords['password']
+    for _, u in users_to_add.iterrows():
+        print u
+        try:
+            if 'access_level' in u:
+                acces_level = u['access_level']
+            else:
+                acces_level = 'user'
+            create_user(u['name'], u['password'], u['lastname'], u['firstname'],
+                        u['email'], acces_level, u['hidden_notes'])
+        except NameClashError:
+            print 'user already in database'
+
+
+def send_password_mail(user_name, password):
+    from databoard.db_tools import send_password_mail
+    send_password_mail(user_name, password)
+
+
+def send_password_mails(password_f_name, port=None):
+    from databoard.db_tools import send_password_mails
+    send_password_mails(password_f_name, port)
+
+
+def sign_up_event_users_from_file(users_to_add_f_name, event):
+    from databoard.model import DuplicateSubmissionError
+    users_to_sign_up = pd.read_csv(users_to_add_f_name)
+    for _, u in users_to_sign_up.iterrows():
+        print 'signing up {} to {}'.format(u['name'], event)
+        try:
+            sign_up_team(event, u['name'])
+        except DuplicateSubmissionError:
+            print 'user already signed up'

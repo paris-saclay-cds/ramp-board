@@ -107,37 +107,16 @@ def send_password_mail(user_name, password, port=None):
     smtpserver.login(gmail_user, gmail_pwd)
 
     logger.info('Sending mail to {}'.format(user.email))
-    subject = '{} RAMP information'.format(
-        config.config_object.specific.ramp_title)
+    subject = 'RAMP signup information'
     header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
         user.email, gmail_user, subject)
 
     body = 'Dear {},\n\n'.format(user.firstname)
     body += 'Here is your login and other information ' +\
-        'for the {} RAMP:\n\n'.format(
-            config.config_object.specific.ramp_title)
+        'for the RAMP site:\n\n'
     body += 'username: {}\n'.format(user.name)
     body += 'password: {}\n'.format(password)
-
-    if port is None:
-        body += 'submission site: http://{}:{}\n'.format(
-            config.config_object.web_server, config.config_object.server_port)
-    elif port == '80':
-        body += 'submission site: http://{}\n'.format(
-            config.config_object.web_server)
-    else:
-        body += 'submission site: http://{}:{}\n'.format(
-            config.config_object.web_server, port)
-
-    if config.opening_timestamp is not None:
-        body += 'opening at (UTC) {}\n'.format(
-            date_time_format(config.opening_timestamp))
-    if config.public_opening_timestamp is not None:
-        body += 'opening of the collaborative phase at (UTC) {}\n'.format(
-            date_time_format(config.public_opening_timestamp))
-    if config.closing_timestamp is not None:
-        body += 'closing at (UTC) {}\n'.format(
-            date_time_format(config.closing_timestamp))
+    body += 'submission site: http://www.ramp.studio'
     smtpserver.sendmail(gmail_user, user.email, header + body)
 
 
