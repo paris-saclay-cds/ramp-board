@@ -57,6 +57,22 @@ Add `import databoard` on top of the migration file
 Run: `python manage.py db upgrade` to apply the migration
 **Don't forget to add and commit migrations files**
 
+
+## Set up datarun  
+
+If you want to use datarun (e.g. for local tests), you need to define the 3 environment variables (with your datarun credentials):  
+
+    export DATARUN_URL='uuuu'
+    export DATARUN_USERNAME='vvvv'
+    export DATARUN_PASSWORD='wwww'
+
+### How to use datarun to train test submissions?
+
+See datarun documentation (especially "notes for databoard users"):
+- [pdf here](https://github.com/camillemarini/datarun/blob/master/docs/datarun.pdf)
+- [html here](https://github.com/camillemarini/datarun/tree/master/docs/html)
+
+
 ## Deploy
 
 ### Prepare starting kit bundle, data, and test submissions for local test
@@ -203,12 +219,6 @@ To report in the logging system queries that takes too long, define an environme
 4. Run `locust -f locustfile.py`
 5. Go to http://127.0.0.1:8089/ and enter the number of users to simulate
 
-
-### How to use datarun to train test submissions?
-
-See datarun documentation (especially "notes for databoard users"):
-- [pdf here](https://github.com/camillemarini/datarun/blob/master/docs/datarun.pdf)
-- [html here](https://github.com/camillemarini/datarun/tree/master/docs/html)
 
 
 
