@@ -150,7 +150,7 @@ fab add_problem:el_nino
 fab add_event:el_nino
 fab sign_up_team:el_nino,kegl    
   
-### Batch sing up users
+### Batch sign up users
  - make a file users_to_add.csv with header
  firstname  lastname  email name  hidden_notes
  - make passwords for them:
