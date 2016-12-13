@@ -21,7 +21,7 @@ test-local:  # test using a local sqlite database
 	export DATABOARD_DB_URL_TEST=sqlite:////tmp/databoard_test.db; \
 	export DATABOARD_DB_URL=sqlite:////tmp/databoard_test.db; \
 	export DATABOARD_TEST=True; \
-	python manage.py db upgrade; make test
+	make test
 
 test:
 	nosetests databoard/tests
