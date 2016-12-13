@@ -1,11 +1,10 @@
 import os
+from distutils.dir_util import mkpath
 
 import databoard.config as config
 from databoard import db
 from databoard.model import NameClashError, MergeTeamError, User, Event
 import databoard.db_tools as db_tools
-from distutils.dir_util import mkpath
-
 from databoard.remove_test_db import recreate_test_db
 
 
@@ -135,8 +134,8 @@ def test_sign_up_team():
 
 def test_make_submission():
     event = Event.query.filter_by(name='iris_test').one()
-    print event.combined_combined_valid_score
-    print event.combined_combined_valid_score_str
+    print(event.combined_combined_valid_score)
+    print(event.combined_combined_valid_score_str)
     db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf',
         'problems/iris/deposited_submissions/kegl/rf')
@@ -236,36 +235,36 @@ def test_compute_contributivity():
 
 def test_print_db():
     db_tools.print_problems()
-    print '\n'
+    print('\n')
     db_tools.print_events()
-    print '\n'
+    print('\n')
     db_tools.print_users()
-    print '\n'
+    print('\n')
     db_tools.print_active_teams(event_name='iris_test')
-    print '\n'
+    print('\n')
     db_tools.print_submissions(event_name='iris_test')
 
-    print '\n'
+    print('\n')
     db_tools.print_active_teams(event_name='boston_housing_test')
-    print '\n'
+    print('\n')
     db_tools.print_submissions(event_name='boston_housing_test')
 
 
 def test_leaderboard():
     current_user = User.query.filter_by(name='kegl').one()
-    print '\n'
+    print('\n')
     print('***************** Leaderboard ****************')
-    print db_tools.get_public_leaderboard('iris_test', current_user)
-    print db_tools.get_public_leaderboard('boston_housing_test', current_user)
+    print(db_tools.get_public_leaderboard('iris_test', current_user))
+    print(db_tools.get_public_leaderboard('boston_housing_test', current_user))
     print('***************** Private leaderboard ****************')
-    print db_tools.get_private_leaderboard('iris_test')
-    print db_tools.get_private_leaderboard('boston_housing_test')
+    print(db_tools.get_private_leaderboard('iris_test'))
+    print(db_tools.get_private_leaderboard('boston_housing_test'))
     print('*********** Leaderboard of kegl ***********')
-    print db_tools.get_public_leaderboard(
-        'iris_test', current_user, user_name='kegl')
+    print(db_tools.get_public_leaderboard(
+            'iris_test', current_user, user_name='kegl'))
     print('*********** Private leaderboard of kegl ***********')
-    print db_tools.get_private_leaderboard('iris_test', user_name='kegl')
+    print(db_tools.get_private_leaderboard('iris_test', user_name='kegl'))
     print('*********** Failing leaderboard of kegl ***********')
-    print db_tools.get_failed_leaderboard('iris_test', user_name='kegl')
+    print(db_tools.get_failed_leaderboard('iris_test', user_name='kegl'))
     print('*********** New leaderboard of kegl ***********')
-    print db_tools.get_new_leaderboard('iris_test', user_name='kegl')
+    print(db_tools.get_new_leaderboard('iris_test', user_name='kegl'))
