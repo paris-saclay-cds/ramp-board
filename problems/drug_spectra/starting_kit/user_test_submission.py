@@ -36,10 +36,10 @@ if __name__ == '__main__':
     print("Training file ...")
     for train_is, test_is in skf.split(y_df):
         print('--------------------------')
-        X_train_df = X_df.iloc[train_is].copy()
-        y_train_df = y_df.iloc[train_is].copy()
-        X_test_df = X_df.iloc[test_is].copy()
-        y_test_df = y_df.iloc[test_is].copy()
+        X_train_df = X_df.iloc[train_is]
+        y_train_df = y_df.iloc[train_is]
+        X_test_df = X_df.iloc[test_is]
+        y_test_df = y_df.iloc[test_is]
         y_train_clf = y_train_df['molecule'].values
         y_train_reg = y_train_df['concentration'].values
         y_test_clf = y_test_df['molecule'].values
