@@ -67,6 +67,7 @@ def get_test_data():
 
 
 def train_submission(module_path, X_ds, y_array, train_is):
+    # from regressor import Regressor
     n_burn_in = X_ds.attrs['n_burn_in']
     X_train_ds = X_ds.isel(time=train_is)
     y_train_array = y_array[train_is]

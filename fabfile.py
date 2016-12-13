@@ -103,28 +103,29 @@ def test_setup():
     username = os.environ.get('DATARUN_USERNAME')
     userpassd = os.environ.get('DATARUN_PASSWORD')
     if host_url is None or username is None or userpassd is None:
-        sys.exit('**** Configure your datarun authentication parameters ****')
-    data_id_iris = db_tools.send_data_datarun('iris', host_url, username,
-                                              userpassd)
-    data_id_boston = db_tools.send_data_datarun('boston_housing', host_url,
-                                                username, userpassd)
-    # send submissions to datarun
-    print('**** TRAIN-TEST DATARUN ****')
-    from databoard.db_tools import get_submissions
-    list_data = [data_id_iris, data_id_boston]
-    list_event = ['iris_test', 'boston_housing_test']
-    for data_id, event_name in zip(list_data, list_event):
-        submissions = get_submissions(event_name=event_name)
-        submissions = [sub for sub in submissions if sub.name != 'sandbox']
-        db_tools.train_test_submissions_datarun(data_id, host_url,
-                                                username, userpassd,
-                                                submissions=submissions,
-                                                force_retrain_test=True,
-                                                priority='L')
-        time.sleep(228)
-        db_tools.get_trained_tested_submissions_datarun(submissions, host_url,
-                                                        username, userpassd)
-        db_tools.compute_contributivity(event_name)
+        print('*** Configure your datarun parameters to test with datarun ***')
+    else:
+        data_id_iris = db_tools.send_data_datarun('iris', host_url, username,
+                                                  userpassd)
+        data_id_boston = db_tools.send_data_datarun('boston_housing', host_url,
+                                                    username, userpassd)
+        # send submissions to datarun
+        print('**** TRAIN-TEST DATARUN ****')
+        from databoard.db_tools import get_submissions
+        list_data = [data_id_iris, data_id_boston]
+        list_event = ['iris_test', 'boston_housing_test']
+        for data_id, event_name in zip(list_data, list_event):
+            submissions = get_submissions(event_name=event_name)
+            submissions = [sub for sub in submissions if sub.name != 'sandbox']
+            db_tools.train_test_submissions_datarun(data_id, host_url,
+                                                    username, userpassd,
+                                                    submissions=submissions,
+                                                    force_retrain_test=True,
+                                                    priority='L')
+            time.sleep(228)
+            db_tools.get_trained_tested_submissions_datarun(submissions, host_url,
+                                                            username, userpassd)
+            db_tools.compute_contributivity(event_name)
 
     # compare results with local train and test
     print('**** TRAIN-TEST LOCAL ****')
@@ -509,12 +510,12 @@ def create_user(name, password, lastname, firstname, email,
 
 def generate_single_password():
     from databoard.db_tools import generate_single_password
-    print generate_single_password()
+    print(generate_single_password())
 
 
 def generate_passwords(users_to_add_f_name, password_f_name):
     from databoard.db_tools import generate_passwords
-    print generate_passwords(users_to_add_f_name, password_f_name)
+    print(generate_passwords(users_to_add_f_name, password_f_name))
 
 
 def add_users_from_file(users_to_add_f_name, password_f_name):

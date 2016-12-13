@@ -39,7 +39,7 @@ class Predictions(BasePrediction):
             # converting single labels to list of labels, assumed below
             if type(label_list) != np.ndarray and type(label_list) != list:
                 label_list = [label_list]
-            label_list = map(type_of_label, label_list)
+            label_list = list(map(type_of_label, label_list))
             for label in label_list:
                 ps_i[self.labels.index(label)] = 1.0 / len(label_list)
 

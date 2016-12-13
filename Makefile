@@ -17,6 +17,12 @@ inplace:
 	# to avoid errors in 0.15 upgrade
 	$(PYTHON) setup.py build_ext -i
 
+test-local:  # test using a local sqlite database
+	export DATABOARD_DB_URL_TEST=sqlite:////tmp/databoard_test.db; \
+	export DATABOARD_DB_URL=sqlite:////tmp/databoard_test.db; \
+	export DATABOARD_TEST=True; \
+	make test
+
 test:
 	nosetests databoard/tests
 	fab publish_local_test
