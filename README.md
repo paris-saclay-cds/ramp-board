@@ -111,7 +111,8 @@ sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" /home/dataca
 
 ### Mac bug
 
-export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/Users/kegl/anaconda/lib
+Add this to ~/.bash_profile:
+export DYLD_FALLBACK_LIBRARY_PATH=$HOME/anaconda/lib/:$DYLD_FALLBACK_LIBRARY_PATH
 
 ### Example sequence of adding ramps  
   
@@ -142,6 +143,25 @@ fab add_problem:sea_ice
 fab add_event:sea_ice_colorado
 fab sign_up_team:sea_ice_colorado,kegl    
   
+ - el nino (the first two lines are unnecessary if sea ice is already there)  
+fab add_workflow_element_type:ts_feature_extractor,code   
+fab add_workflow:ts_feature_extractor_regressor_workflow,ts_feature_extractor,regressor 
+fab add_problem:el_nino 
+fab add_event:el_nino
+fab sign_up_team:el_nino,kegl    
+  
+### Batch sing up users
+ - make a file users_to_add.csv with header
+ firstname  lastname  email name  hidden_notes
+ - make passwords for them:
+fab generate_passwords:users_to_add.csv,users_to_add.csv.w_pwd
+ - add them to the ramp (it's a bit messy now when a user is already there with a mail but different username; should be handled)
+fab add_users_from_file:users_to_add.csv,users_to_add.csv.w_pwd
+ - sign them up to an event:
+fab sign_up_event_users_from_file:users_to_add.csv,<event>
+ - send them mails with their passwords:
+fab send_password_mails:users_to_add.csv.w_pwd
+
 ### App performance  
   
 #### Profiling  
