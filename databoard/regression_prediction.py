@@ -1,5 +1,5 @@
 import numpy as np
-from base_prediction import BasePrediction
+from .base_prediction import BasePrediction
 
 
 class Predictions(BasePrediction):

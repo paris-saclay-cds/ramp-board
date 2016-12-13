@@ -31,7 +31,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 import databoard.config as config
-import post_api
+from databoard import post_api
 from databoard import celery
 
 logger = logging.getLogger('databoard')
@@ -1890,6 +1890,8 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
         columns, values)}
 
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
+    print(pd.__version__)
+    print(pd)
     sort_column = event.official_score_name
     leaderboard_df = leaderboard_df.sort_values(
         sort_column, ascending=event.official_score_type.is_lower_the_better)
