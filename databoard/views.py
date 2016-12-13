@@ -320,7 +320,6 @@ def user_event(event_name):
         approved = False
     else:
         approved = db_tools.is_user_signed_up(event_name, current_user.name)
-    print(approved)
     return render_template('event.html',
                            description=description,
                            event=event,

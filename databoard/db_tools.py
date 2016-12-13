@@ -2247,11 +2247,11 @@ def print_user_interactions():
             print(user_interaction.submission)
 
 
-def get_user_interactions():
+def get_user_interactions_df():
     """
     Returns
     -------
-    user_interactions_html : html string
+    user_interactions_df : pd.DataFrame
     """
 
     user_interactions = UserInteraction.query.all()
@@ -2335,6 +2335,17 @@ def get_user_interactions():
         user_interactions_dict_list, columns=columns)
     user_interactions_df = user_interactions_df.sort_values(
         'timestamp (UTC)', ascending=False)
+    return user_interactions_df
+
+
+def get_user_interactions():
+    """
+    Returns
+    -------
+    user_interactions_html : html string
+    """
+
+    user_interactions_df = get_user_interactions_df()
     html_params = dict(
         escape=False,
         index=False,
