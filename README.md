@@ -170,7 +170,7 @@ sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" /home/dataca
 
 ### Mac bug
 
-Add this to ~/.bash_profile:
+Postgres and anaconda are somehow clashing. Add this to ~/.bash_profile:
 export DYLD_FALLBACK_LIBRARY_PATH=$HOME/anaconda/lib/:$DYLD_FALLBACK_LIBRARY_PATH
 
 ### Example sequence of adding ramps

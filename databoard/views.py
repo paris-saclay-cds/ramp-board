@@ -708,8 +708,12 @@ def sandbox(event_name):
         logger.info(u'{} submitted {} for {}.'.format(
             current_user, new_submission.name, event_team))
         if event.is_send_submitted_mails:
-            db_tools.send_submission_mails(
-                current_user, new_submission, event_team)
+            try:
+                db_tools.send_submission_mails(
+                    current_user, new_submission, event_team)
+            except Exception as e:
+                logger.error(u'mail was not sent {} submitted {} for {}\n{}.'.format(
+                    current_user, new_submission.name, event_team, e))
         flask.flash(u'{} submitted {} for {}.'.format(
             current_user, new_submission.name, event_team),
             category='Submission')

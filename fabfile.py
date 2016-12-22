@@ -557,3 +557,9 @@ def sign_up_event_users_from_file(users_to_add_f_name, event):
             sign_up_team(event, u['name'])
         except DuplicateSubmissionError:
             print 'user already signed up'
+
+def dump_user_interactions():
+    from databoard.db_tools import get_user_interactions_df
+    user_interactions_df = get_user_interactions_df()
+    user_interactions_df.to_csv('user_interactions.csv')
+
