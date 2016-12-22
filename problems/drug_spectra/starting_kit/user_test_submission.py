@@ -46,7 +46,7 @@ if __name__ == '__main__':
         y_test_reg = y_test_df['concentration'].values
 
         fe_clf = feature_extractor_clf.FeatureExtractorClf()
-        fe_clf.fit(X_train_df, y_train_df)
+        fe_clf.fit(X_train_df, y_train_clf)
         X_train_array_clf = fe_clf.transform(X_train_df)
         X_test_array_clf = fe_clf.transform(X_test_df)
 

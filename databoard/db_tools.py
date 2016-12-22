@@ -1500,6 +1500,7 @@ def train_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
     logger.info('Validating {}'.format(detached_submission_on_cv_fold))
     start = timeit.default_timer()
     try:
+        # Computing predictions on full training set
         y_pred = detached_submission_on_cv_fold.test_submission(
             detached_submission_on_cv_fold.trained_submission, X,
             range(len(y)))
@@ -2262,6 +2263,7 @@ def get_user_interactions_df():
                'user',
                'event',
                'team',
+               'submission_id',
                'submission',
                'file',
                'code similarity',
@@ -2287,6 +2289,13 @@ def get_user_interactions_df():
             return ''
         else:
             return event_team.team.name
+
+    def submission_id(user_interaction):
+        submission = user_interaction.submission
+        if submission is None:
+            return -1
+        else:
+            return submission.id
 
     def submission_name(user_interaction):
         submission = user_interaction.submission
@@ -2324,6 +2333,7 @@ def get_user_interactions_df():
                       user_name(user_interaction),
                       event_name(user_interaction),
                       team_name(user_interaction),
+                      submission_id(user_interaction),
                       submission_name(user_interaction),
                       submission_file_name(user_interaction),
                       submission_similarity(user_interaction),

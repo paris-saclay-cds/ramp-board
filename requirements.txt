@@ -18,7 +18,7 @@ PyWavelets==0.5.1
 sqlalchemy>=1.0.9
 xkcdpass<=1.4.2
 theano
-tensorflow
+tensorflow==0.10.0
 keras==1.1.2
 lasagne
 nolearn
@@ -32,3 +32,4 @@ celery==3.1.23
 xarray==0.8.2
 statsmodels==0.6.1
 six=1.10.0
+networx

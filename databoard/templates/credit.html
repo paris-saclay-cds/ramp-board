@@ -41,7 +41,7 @@
         The numbers should add up to 100. <br>
         The list contains all submissions by team {{ submission.team.name }} and submissions that team members have looked at. <br>
         The numbers will be used for computing the total contributivity of the submissions by propagating the current contributivity backwards. <br>
-        Be honest and fair as much as possible :-)
+        Be honest and fair as much as possible.
 		<div class="col-xs-10">
             <form class="ui form" method="post" action="" name="save">
                 {{ credit_form.hidden_tag() }}
@@ -54,8 +54,8 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td>novelty</td>
-                                <td><input id="novelty" name="novelty" type="text" value="0"></td>
+                                <td>self credit</td>
+                                <td><input id="self_credit" name="self_credit" type="text" value="0"></td>
                             </tr>
                         {% for name_credit in credit_form.name_credits %}
                             <tr>

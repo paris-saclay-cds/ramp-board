@@ -1073,6 +1073,11 @@ class Submission(db.Model):
         return self.event.official_score_name
 
     @property
+    def official_score(self):
+        score_dict = {score.score_name: score for score in self.scores}
+        return score_dict[self.official_score_name]
+
+    @property
     def score_types(self):
         return self.event.score_types
 
