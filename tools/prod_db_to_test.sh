@@ -8,7 +8,7 @@
 # The current test database is removed and replace by a copy of the prod database
 
 # mount sciencefs disk
-sshfs -o Ciphers=arcfour256 -o allow_other -o IdentityFile=/root/.ssh/id_rsa_sciencefs -o StrictHostKeyChecking=no "$SCIENCEFS_LOGIN"@sciencefs.di.u-psud.fr:/sciencefs/homes/"$SCIENCEFS_LOGIN"/databoard ${mount_path}
+sshfs -o Ciphers=arcfour256 -o allow_other -o IdentityFile=${SCIENCEFS_ID} -o StrictHostKeyChecking=no "$SCIENCEFS_LOGIN"@sciencefs.di.u-psud.fr:/sciencefs/homes/"$SCIENCEFS_LOGIN"/databoard ${mount_path}
 
 # remove database on the test server
 dropdb -U postgres ${DATABOARD_DB_NAME}

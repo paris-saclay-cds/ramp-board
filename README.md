@@ -68,8 +68,9 @@ Define the following environment variables:
     export DATABOARD_DB_USER='<prod_db_user>'     # Ask Balazs
     export DATABOARD_DB_PASSWORD='<prod_db_pwd>'  # Ask Balazs
     export SCIENCEFS_LOGIN='balazs.kegl'          # You need the private key or the password...
-    export mount_path='mount_backup'              # path where to mount the scienceFS disk to get backups
-    export DATABOARD_PATH='/tmp'                  #root path to your databoard app. By default, on your local computer it is /tmp, so that the app is in /tmp/datacamp/databoard. For prod and test servers it is '/mnt/ramp_data'.                     
+    export SCIENCEFS_ID='<scienceFS_key>'         # Path and name of the scienceFS private key
+    export mount_path='mount_backup'              # Path where to mount the scienceFS disk to get backups
+    export DATABOARD_PATH='/tmp'                  # Root path to your databoard app. By default, on your local computer it is /tmp, so that the app is in /tmp/datacamp/databoard. For prod and test servers it is '/mnt/ramp_data'.                     
     export prod_db_dump='<blabla.dump>'           # db dump to be used (just write the dump name without the path to it
 
 Run script: ``bash tools/prod_db_to_test.sh``
