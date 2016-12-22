@@ -58,6 +58,22 @@ Run: `python manage.py db upgrade` to apply the migration
 **Don't forget to add and commit migrations files**
 
 
+### Get the prod database  
+
+A dump of the prod database is saved everyday on the scienceFS backup disk. You can use this dump to populate your test db. You need access to the scienceFS backup disk and the prod database  credentials.  
+
+Define the following environment variables:  
+::
+    export DATABOARD_DB_NAME='databoard'
+    export DATABOARD_DB_USER='<prod_db_user>'     # Ask Balazs
+    export DATABOARD_DB_PASSWORD='<prod_db_pwd>'  # Ask Balazs
+    export SCIENCEFS_LOGIN='balazs.kegl'          # You need the private key or the password...
+    export mount_path='mount_backup'              # path where to mount the scienceFS disk to get backups
+    export prod_db_dump='<blabla.dump>'           # db dump to be used (just write the dump name without the path to it
+    export DATABOARD_PATH='/tmp'                  #root path to your databoard app. By default, on your local computer it is /tmp, so that the app is in /tmp/datacamp/databoard. For prod and test servers it is '/mnt/ramp_data'.                     
+
+Run script: ``bash tools/prod_db_to_test.sh``
+
 ## Set up datarun  
 
 If you want to use datarun (e.g. for local tests), you need to define the 3 environment variables (with your datarun credentials):  
@@ -252,8 +268,6 @@ Two types of backup:
 - Databoard submission files, fabfile.py, ... are in /mnt/ramp_data/datacamp/databoard
 
 - Databoard code is in /mnt/ramp_data/code/databoard
-
-- If you want to use databoard submission files and database of the production server, you can use the script tools/prod_db_to_test.sh from the test server. Be careful to change the name of the database dump you want to use.
 
 
 #### Remount disks on prod server
