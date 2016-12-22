@@ -380,7 +380,6 @@ class Config(object):
     TESTING = False
     # Celery conf
     CELERY_BROKER_URL = 'amqp://guest@localhost//'
-    CELERY_RESULT_BACKEND = 'amqp'
     CELERY_TIMEZONE = 'UTC'
 
     # get trained tested submission from datarun
