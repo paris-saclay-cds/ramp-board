@@ -42,7 +42,7 @@ class SubmitForm(Form):
 
 class CreditForm(Form):
     note = StringField('submission_name')
-    novelty = StringField('novelty')
+    self_credit = StringField('self credit')
     name_credits = []
 
 
