@@ -65,6 +65,11 @@ def check_admin(current_user, event):
         return False
 
 
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('index.html'), 404
+
+
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     db_tools.add_user_interaction(interaction='landing')
@@ -526,7 +531,7 @@ def view_model(submission_hash, f_name):
         admin=admin)
 
 
-@app.route("/<submission_hash>")
+@app.route("/download/<submission_hash>")
 @fl.login_required
 def download_submission(submission_hash):
     submission = Submission.query.filter_by(hash_=submission_hash).one_or_none()
