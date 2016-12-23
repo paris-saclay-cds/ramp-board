@@ -6,6 +6,8 @@
 # - migration files are up-to-date on test server
 # on the test server (in backup_path)
 # The current test database is removed and replace by a copy of the prod database
+# To choose the dump, do:
+# export prod_db_dump=databoard_20161222_0002568518680.dump
 
 # mount sciencefs disk
 sshfs -o Ciphers=arcfour256 -o allow_other -o IdentityFile=/root/.ssh/id_rsa_sciencefs -o StrictHostKeyChecking=no "$SCIENCEFS_LOGIN"@sciencefs.di.u-psud.fr:/sciencefs/homes/"$SCIENCEFS_LOGIN"/databoard ${mount_path}
