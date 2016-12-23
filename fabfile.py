@@ -250,7 +250,7 @@ def train_test_datarun(data_id, host_url, username, userpassd, e=None, t=None,
                        s=None, state=None, force='False', priority='L'):
     """Train and test submission using datarun.
 
-    :param data_id: id of the associated dataset on datarun platform
+    :param data_id: id of the associated dataset on datarun platform, created when sending the data
     :param host_url: host url of datarun
     :param username: username for datarun
     :param userpassd: user password for datarun

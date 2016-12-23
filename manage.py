@@ -1,11 +1,14 @@
 import os
+from distutils.util import strtobool
 from flask.ext.script import Manager
 from flask.ext.migrate import Migrate, MigrateCommand
 from databoard import db, app
 
 app.config.from_object('databoard.config.Config')
-if os.environ.get('DATABOARD_TEST'):
-    app.config.from_object('databoard.config.TestingConfig')
+test_config = os.environ.get('DATABOARD_TEST')
+if test_config is not None:
+    if strtobool(test_config):
+        app.config.from_object('databoard.config.TestingConfig')
 
 migrate = Migrate(app, db)
 manager = Manager(app)
