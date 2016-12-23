@@ -5,6 +5,7 @@ from flask import Flask
 from flask_mail import Mail
 from flask.ext.login import LoginManager
 from flask.ext.sqlalchemy import SQLAlchemy
+from distutils.util import strtobool
 
 from celery import Celery
 # from celery.schedules import crontab
@@ -14,8 +15,10 @@ __version__ = '0.1.dev'
 
 app = Flask('databoard')
 app.config.from_object('databoard.config.Config')
-if os.environ.get('DATABOARD_TEST'):
-    app.config.from_object('databoard.config.TestingConfig')
+test_config = os.environ.get('DATABOARD_TEST')
+if test_config is not None:
+    if strtobool(test_config):
+        app.config.from_object('databoard.config.TestingConfig')
 app.debug = False
 # app.debug_mode = True
 db = SQLAlchemy(app)

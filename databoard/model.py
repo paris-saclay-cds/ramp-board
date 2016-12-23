@@ -1780,3 +1780,18 @@ class MissingExtensionError(Exception):
 
     def __str__(self):
         return repr(self.value)
+
+
+class HistoricalContributivity(db.Model):
+    __tablename__ = 'historical_contributivitys'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    submission_id = db.Column(
+        db.Integer, db.ForeignKey('submissions.id'))
+    submission = db.relationship('Submission', backref=db.backref(
+        'historical_contributivitys', cascade='all, delete-orphan'))
+
+    contributivity = db.Column(db.Float, default=0.0)
+    historical_contributivity = db.Column(db.Float, default=0.0)
+

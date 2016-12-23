@@ -795,10 +795,10 @@ def credit(submission_hash):
             (s_field, str(credit), source_submission.link))
     # This doesnt work, not sure why
     # if not new:
-    #    credit_form.novelty.data = str(100 - sum_credit)
+    #    credit_form.self_credit.data = str(100 - sum_credit)
     if credit_form.validate_on_submit():
         try:
-            sum_credit = int(credit_form.novelty.data)
+            sum_credit = int(credit_form.self_credit.data)
             for source_submission in source_submissions:
                 s_field = get_s_field(source_submission)
                 sum_credit += int(getattr(credit_form, s_field).data)
