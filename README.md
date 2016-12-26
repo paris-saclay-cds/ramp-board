@@ -42,9 +42,18 @@ For example you do in the postgres terminal: `createdb databoard`
 
 Example:
 
-    export DATABOARD_DB_URL=postgresql://$USER:<db_password>@localhost/databoard
+    If you do in the postgres "psql" command line:
 
-Assuming you created a database with `createdb databoard`.
+    CREATE USER databoard WITH password 'password';
+    CREATE DATABASE databoard_test WITH OWNER databoard;
+
+    Then you need to do:
+
+    export DATABOARD_DB_URL=postgresql://databoard:password@localhost/databoard_test
+
+    The general strucure is:
+
+    export DATABOARD_DB_URL=postgresql://$USER:<db_password>@localhost/<db_name>
 
 Then you can setup or upgrade the database with:
 
