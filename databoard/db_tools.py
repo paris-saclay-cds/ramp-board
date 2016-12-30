@@ -1566,7 +1566,8 @@ def test_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
     detached_submission_on_cv_fold.test_time = end - start
 
 
-def compute_contributivity(event_name, force_ensemble=False):
+def compute_contributivity(event_name, start_time_stamp=None,
+                           end_time_stamp=None, force_ensemble=False):
     """Computes contributivity leaderboard scores.
 
     Parameters
@@ -1607,7 +1608,8 @@ def compute_contributivity(event_name, force_ensemble=False):
         combined_predictions, best_predictions,\
             combined_test_predictions, best_test_predictions =\
             _compute_contributivity_on_fold(
-                cv_fold, true_predictions_valid, force_ensemble)
+                cv_fold, true_predictions_valid,
+                start_time_stamp, end_time_stamp, force_ensemble)
         # TODO: if we do asynchron CVs, this has to be revisited
         if combined_predictions is None:
             logger.info('No submissions to combine')
@@ -1673,6 +1675,7 @@ def compute_contributivity(event_name, force_ensemble=False):
 
 
 def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
+                                    start_time_stamp=None, end_time_stamp=None,
                                     force_ensemble=False):
     """Construct the best model combination on a single fold.
 
@@ -1701,6 +1704,26 @@ def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
         and submission_on_fold.is_public_leaderboard
         and submission_on_fold.submission.name != config.sandbox_d_name
     ]
+    # reset
+    for submission_on_fold in selected_submissions_on_fold:
+        submission_on_fold.best = False
+        submission_on_fold.contributivity = 0.0
+    # select submissions in time interval
+    if start_time_stamp is not None:
+        selected_submissions_on_fold = [
+            submission_on_fold for submission_on_fold
+            in selected_submissions_on_fold
+            if submission_on_fold.submission.submission_timestamp >
+            start_time_stamp
+        ]
+    if end_time_stamp is not None:
+        selected_submissions_on_fold = [
+            submission_on_fold for submission_on_fold
+            in selected_submissions_on_fold
+            if submission_on_fold.submission.submission_timestamp <
+            end_time_stamp
+        ]
+
     if len(selected_submissions_on_fold) == 0:
         return None, None, None, None
     # TODO: maybe this can be simplified. Don't need to get down
@@ -1724,10 +1747,6 @@ def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
             best_index_list)
         improvement = len(best_index_list) != len(old_best_index_list)
         logger.info('\t{}: {}'.format(best_index_list, score))
-    # reset
-    for submission_on_fold in selected_submissions_on_fold:
-        submission_on_fold.best = False
-        submission_on_fold.contributivity = 0.0
     # set
     selected_submissions_on_fold[best_index_list[0]].best = True
     # we share a unit of 1. among the contributive submissions
