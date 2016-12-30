@@ -558,8 +558,16 @@ def sign_up_event_users_from_file(users_to_add_f_name, event):
         except DuplicateSubmissionError:
             print 'user already signed up'
 
+
 def dump_user_interactions():
     from databoard.db_tools import get_user_interactions_df
     user_interactions_df = get_user_interactions_df()
-    user_interactions_df.to_csv('user_interactions.csv')
+    user_interactions_df.to_csv('user_interactions_dump.csv')
 
+
+# The following function was implemented to handle user interaction dump
+# but it turned out that the db insertion was not the CPU sink. Keep it
+# for a while if the site is still slow.
+# def update_user_interactions():
+#     from databoard.db_tools import update_user_interactions
+#     update_user_interactions()

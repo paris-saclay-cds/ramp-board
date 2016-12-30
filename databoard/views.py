@@ -737,7 +737,6 @@ def sandbox(event_name):
         except:
             logger.info(u'{} is not sent to datarun'.format(new_submission))
 
-
         return flask.redirect(u'/credit/{}'.format(new_submission.hash_))
     admin = check_admin(current_user, event)
     return render_template('sandbox.html',

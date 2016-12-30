@@ -1,4 +1,6 @@
 import os
+import time
+import codecs
 import shutil
 import bcrypt
 import timeit
@@ -1879,6 +1881,8 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
     -------
     leaderboard_html : html string
     """
+    start = time.time()
+
     submissions = get_submissions(
         event_name=event_name, team_name=team_name, user_name=user_name)
     submissions = [submission for submission in submissions
@@ -1922,6 +1926,9 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
         # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
     leaderboard_html = leaderboard_df.to_html(**html_params)
+    logger.info(u'leaderboard construction takes {}ms'.format(
+        int(1000 * (time.time() - start))))
+
     return table_format(leaderboard_html)
 
 
@@ -2248,10 +2255,32 @@ def get_top_score_per_user(closing_timestamp=None):
 
 #################### User interactions #####################
 
+
 def add_user_interaction(**kwargs):
+    start = time.time()
     user_interaction = UserInteraction(**kwargs)
+    logger.info(u'user interaction construction takes {}ms'.format(
+        int(1000 * (time.time() - start))))
+    start = time.time()
     db.session.add(user_interaction)
     db.session.commit()
+    logger.info(u'user interaction db insertion takes {}ms'.format(
+        int(1000 * (time.time() - start))))
+    # with codecs.open(config.user_interactions_f_name, 'a+') as f:
+    #     f.write(user_interaction.__repr__() + '\n')
+
+# The following function was implemented to handle user interaction dump
+# but it turned out that the db insertion was not the CPU sink. Keep it
+# for a while if the site is still slow.
+# def update_user_interactions():
+#     f = codecs.open(config.user_interactions_f_name, 'r')
+#     shutil.move(
+#         config.user_interactions_f_name,
+#         config.user_interactions_f_name + '.bak')
+#     for line in f:
+#         user_interaction = UserInteraction(line)
+#         db.session.add(user_interaction)
+#     db.session.commit()
 
 
 def print_user_interactions():

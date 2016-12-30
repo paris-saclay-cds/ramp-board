@@ -552,10 +552,17 @@ class EventTeam(db.Model):
 
 def get_active_user_event_team(event, user):
     # There should always be an active user team, if not, throw an exception
-    event_teams = EventTeam.query.filter_by(event=event).all()
-    for event_team in event_teams:
-        if user in get_team_members(event_team.team) and event_team.is_active:
-            return event_team
+    # The current code works only if each user admins a single team.
+    event_team = EventTeam.query.filter_by(
+        event=event, team=user.admined_teams[0]).one_or_none()
+    return event_team
+
+    # This below works for the general case with teams with more than
+    # on members but it is slow, eg in constructing user interactions
+    # event_teams = EventTeam.query.filter_by(event=event).all()
+    # for event_team in event_teams:
+    #     if user in get_team_members(event_team.team) and event_team.is_active:
+    #         return event_team
 
 
 class SubmissionFileType(db.Model):
@@ -799,7 +806,7 @@ class SubmissionFile(db.Model):
 
     @property
     def name_with_link(self):
-        return '<a href="' + self.link + '">' + self.name[:20] + '</a>'
+        return '<a href="' + self.link + '">' + self.name + '</a>'
 
     def get_code(self):
         with open(self.path) as f:
@@ -1657,20 +1664,86 @@ class UserInteraction(db.Model):
     submission_file = db.relationship('SubmissionFile', backref=db.backref(
         'user_interactions', cascade='all, delete-orphan'))
 
-    def __init__(self, interaction, user=None, event=None, note=None,
-                 submission=None, submission_file=None, diff=None,
-                 similarity=None):
+    def __init__(self, interaction=None, user=None, event=None,
+                 ip=None, note=None, submission=None, submission_file=None,
+                 diff=None, similarity=None):
         self.timestamp = datetime.datetime.utcnow()
         self.interaction = interaction
         self.user = user
         if event is not None:
             self.event_team = get_active_user_event_team(event, user)
-        self.ip = request.environ['REMOTE_ADDR']
+        if ip is None:
+            self.ip = request.environ['REMOTE_ADDR']
+        else:
+            self.ip = ip
         self.note = note
         self.submission = submission
         self.submission_file = submission_file
         self.submission_file_diff = diff
         self.submission_file_similarity = similarity
+
+# The following function was implemented to handle user interaction dump
+# but it turned out that the db insertion was not the CPU sink. Keep it
+# for a while if the site is still slow.
+
+    # def __init__(self, line=None, interaction=None, user=None, event=None,
+    #              ip=None, note=None, submission=None, submission_file=None,
+    #              diff=None, similarity=None):
+    #     if line is None:
+    #         # normal real-time construction using kwargs
+    #         self.timestamp = datetime.datetime.utcnow()
+    #         self.interaction = interaction
+    #         self.user = user
+    #         if event is not None:
+    #             self.event_team = get_active_user_event_team(event, user)
+    #         if ip is None:
+    #             self.ip = request.environ['REMOTE_ADDR']
+    #         else:
+    #             self.ip = ip
+    #         self.note = note
+    #         self.submission = submission
+    #         self.submission_file = submission_file
+    #         self.submission_file_diff = diff
+    #         self.submission_file_similarity = similarity
+    #     else:
+    #         # off-line construction using dump from 
+    #         # config.user_interactions_f_name
+    #         tokens = line.split(';')
+    #         self.timestamp = eval(tokens[0])
+    #         self.interaction = eval(tokens[1])
+    #         self.note = eval(tokens[2])
+    #         self.submission_file_diff = eval(tokens[3])
+    #         self.submission_file_similarity = eval(tokens[4])
+    #         self.ip = eval(tokens[5])
+    #         self.user_id = eval(tokens[6])
+    #         self.event_team_id = eval(tokens[7])
+    #         self.submission_id = eval(tokens[8])
+    #         self.submission_file_id = eval(tokens[9])
+
+    def __repr__(self):
+        repr = self.timestamp.__repr__()
+        repr += ';' + self.interaction.__repr__()
+        repr += ';' + self.note.__repr__()
+        repr += ';' + self.submission_file_diff.__repr__()
+        repr += ';' + self.submission_file_similarity.__repr__()
+        repr += ';' + self.ip.__repr__()
+        if self.user is None:
+            repr += ';None'
+        else:
+            repr += ';' + self.user.id.__repr__()
+        if self.event_team is None:
+            repr += ';None'
+        else:
+            repr += ';' + self.event_team.id.__repr__()
+        if self.submission is None:
+            repr += ';None'
+        else:
+            repr += ';' + self.submission.id.__repr__()
+        if self.submission_file is None:
+            repr += ';None'
+        else:
+            repr += ';' + self.submission_file.id.__repr__()
+        return repr
 
     @property
     def submission_file_diff_link(self):
