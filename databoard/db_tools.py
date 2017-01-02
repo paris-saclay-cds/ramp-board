@@ -2069,7 +2069,7 @@ def update_all_user_leaderboards(event_name):
         failed_leaderboard_html = get_failed_leaderboard(
             event_name, user_name)
         new_leaderboard_html = get_new_leaderboard(event_name, user_name)
-        event_team.leaderboard = leaderboards[0]
+        event_team.leaderboard_html = leaderboards[0]
         event_team.failed_leaderboard_html = failed_leaderboard_html
         event_team.new_leaderboard_html = new_leaderboard_html
     db.session.commit()
