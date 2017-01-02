@@ -268,7 +268,7 @@ def train_test_datarun(data_id, host_url, username, userpassd, e=None, t=None,
     force = strtobool(force)
 
     from databoard.db_tools import train_test_submissions_datarun,\
-        get_submissions, get_submissions_of_state
+        get_submissions, get_submissions_of_state, send_submission_datarun
 
     if state is not None:
         submissions = get_submissions_of_state(state)
@@ -279,9 +279,14 @@ def train_test_datarun(data_id, host_url, username, userpassd, e=None, t=None,
                    if submission.name != sandbox_d_name]
 
     print(submissions)
-    train_test_submissions_datarun(data_id, host_url, username, userpassd,
-                                   submissions, force_retrain_test=force,
-                                   priority=priority)
+    for submission in submissions:
+        send_submission_datarun(
+            submission.name, submission.team.name, submission.event.name,
+            priority='L', force_retrain_test=True)
+
+    # train_test_submissions_datarun(data_id, host_url, username, userpassd,
+    #                                submissions, force_retrain_test=force,
+    #                                priority=priority)
 
 
 def get_trained_tested_datarun(host_url, username, userpassd,
