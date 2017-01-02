@@ -2048,7 +2048,8 @@ def update_leaderboards(event_name):
 
 
 def update_user_leaderboards(event_name, user_name):
-    logger.info('Leaderboard is updated for user {} in event {}.')
+    logger.info('Leaderboard is updated for user {} in event {}.'.format(
+        user_name, event))
     leaderboards = get_leaderboards(event_name, user_name)
     failed_leaderboard_html = get_failed_leaderboard(event_name, user_name)
     new_leaderboard_html = get_new_leaderboard(event_name, user_name)
