@@ -306,6 +306,7 @@ def get_trained_tested_datarun(host_url, username, userpassd,
     compute_contributivity(event_name=e)
 
 
+
 def train_test(e, t=None, s=None, state=None, force='False'):
     force = strtobool(force)
 
@@ -321,19 +322,15 @@ def train_test(e, t=None, s=None, state=None, force='False'):
     submissions = [submission for submission in submissions
                    if submission.name != sandbox_d_name]
     train_test_submissions(submissions, force_retrain_test=force)
-    compute_contributivity(event_name=e)
+    compute_contributivity(e)
 
 
-def compute_contributivity(event_name):
+def compute_contributivity(e):
     from databoard.db_tools import compute_contributivity
     from databoard.db_tools import compute_historical_contributivity
-    compute_contributivity(event_name)
-    compute_historical_contributivity(event_name)
-
-
-def compute_contributivity_and_save_leaderboards(event_name):
-    from databoard.db_tools import compute_contributivity_and_save_leaderboards
-    compute_contributivity_and_save_leaderboards(event_name)
+    compute_contributivity(e)
+    compute_historical_contributivity(e)
+    update_leaderboards(e)
 
 
 def print_submissions(e=None, t=None, s=None):
@@ -563,6 +560,27 @@ def dump_user_interactions():
     from databoard.db_tools import get_user_interactions_df
     user_interactions_df = get_user_interactions_df()
     user_interactions_df.to_csv('user_interactions_dump.csv')
+
+
+def update_leaderboards(e):
+    from databoard.db_tools import update_leaderboards
+    update_leaderboards(e)
+
+
+def update_user_leaderboards(e, u):
+    from databoard.db_tools import update_user_leaderboards
+    update_user_leaderboards(e, u)
+
+
+def update_all_user_leaderboards(e):
+    from databoard.db_tools import update_all_user_leaderboards
+    update_all_user_leaderboards(e)
+
+
+def prepare_data(problem_name):
+    from databoard.model import Problem
+    problem = Problem.query.filter_by(name=problem_name).one_or_none()
+    problem.module.prepare_data()
 
 
 # The following function was implemented to handle user interaction dump

@@ -26,7 +26,7 @@ from databoard import app, login_manager
 import databoard.db_tools as db_tools
 import databoard.config as config
 from databoard.model import User, Submission, WorkflowElement,\
-    Event, SubmissionFile, UserInteraction, SubmissionSimilarity,\
+    Event, Team, SubmissionFile, UserInteraction, SubmissionSimilarity,\
     EventTeam, DuplicateSubmissionError, TooEarlySubmissionError,\
     MissingExtensionError
 from databoard.forms import LoginForm, CodeForm, SubmitForm, ImportForm,\
@@ -356,17 +356,17 @@ def my_submissions(event_name):
     db_tools.add_user_interaction(
         interaction='looking at my_submissions',
         user=current_user, event=event)
+    # Doesn't work if team mergers are allowed
+    team = Team.query.filter_by(name=current_user.name).one()
+    event_team = EventTeam.query.filter_by(event=event, team=team).one()
 
-    leaderbord_html = db_tools.get_public_leaderboard(
-        event_name, current_user, user_name=current_user.name)
-    failed_leaderboard_html = db_tools.get_failed_leaderboard(
-        event_name, user_name=current_user.name)
-    new_leaderboard_html = db_tools.get_new_leaderboard(
-        event_name, user_name=current_user.name)
+    leaderboard_html = event_team.leaderboard_html
+    failed_leaderboard_html = event_team.failed_leaderboard_html
+    new_leaderboard_html = event_team.new_leaderboard_html
     admin = check_admin(current_user, event)
     return render_template('leaderboard.html',
                            leaderboard_title='Trained submissions',
-                           leaderboard=leaderbord_html,
+                           leaderboard=leaderboard_html,
                            failed_leaderboard=failed_leaderboard_html,
                            new_leaderboard=new_leaderboard_html,
                            event=event,
@@ -376,6 +376,8 @@ def my_submissions(event_name):
 @app.route("/events/<event_name>/leaderboard")
 @fl.login_required
 def leaderboard(event_name):
+    start = time.time()
+
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, current_user):
         return _redirect_to_user(u'{}: no event named "{}"'.format(
@@ -383,28 +385,45 @@ def leaderboard(event_name):
     db_tools.add_user_interaction(
         interaction='looking at leaderboard',
         user=current_user, event=event)
-    leaderbord_html = db_tools.get_public_leaderboard(event_name, current_user)
+
+    logger.info(u'leaderboard user_interaction takes {}ms'.format(
+        int(1000 * (time.time() - start))))
+    start = time.time()
+
+    if db_tools.is_open_code(event, current_user):
+        leaderboard_html = event.public_leaderboard_html_with_links
+    else:
+        leaderboard_html = event.public_leaderboard_html_no_links
+
+    logger.info(u'leaderboard db access takes {}ms'.format(
+        int(1000 * (time.time() - start))))
+    start = time.time()
+
     leaderboard_kwargs = dict(
-        leaderboard=leaderbord_html,
+        leaderboard=leaderboard_html,
         leaderboard_title='Leaderboard',
         event=event
     )
 
     if current_user.access_level == 'admin' or\
             db_tools.is_admin(event, current_user):
-        failed_leaderboard_html = db_tools.get_failed_leaderboard(event_name)
-        new_leaderboard_html = db_tools.get_new_leaderboard(event_name)
-        return render_template(
+        failed_leaderboard_html = event.failed_leaderboard_html
+        new_leaderboard_html = event.new_leaderboard_html
+        template = render_template(
             'leaderboard.html',
             failed_leaderboard=failed_leaderboard_html,
             new_leaderboard=new_leaderboard_html,
             admin=True,
             **leaderboard_kwargs)
     else:
-        return render_template(
+        template = render_template(
             'leaderboard.html',
             **leaderboard_kwargs)
 
+    logger.info(u'leaderboard rendering takes {}ms'.format(
+        int(1000 * (time.time() - start))))
+
+    return template
 
 @app.route("/<submission_hash>/<f_name>", methods=['GET', 'POST'])
 @fl.login_required
@@ -863,6 +882,8 @@ def logout():
 @app.route("/events/<event_name>/private_leaderboard")
 @fl.login_required
 def private_leaderboard(event_name):
+    start = time.time()
+
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
     event = Event.query.filter_by(name=event_name).one_or_none()
@@ -877,16 +898,21 @@ def private_leaderboard(event_name):
     db_tools.add_user_interaction(
         interaction='looking at private leaderboard',
         user=current_user, event=event)
-    leaderbord_html = db_tools.get_private_leaderboard(event_name)
+    leaderboard_html = event.private_leaderboard_html
     admin = check_admin(current_user, event)
-    return render_template(
+    template = render_template(
         'leaderboard.html',
         leaderboard_title='Leaderboard',
-        leaderboard=leaderbord_html,
+        leaderboard=leaderboard_html,
         event=event,
         private=True,
         admin=admin
     )
+
+    logger.info(u'private leaderboard takes {}ms'.format(
+        int(1000 * (time.time() - start))))
+
+    return template
 
 
 @app.route("/<submission_hash>/error.txt")
@@ -1007,8 +1033,8 @@ def dashboard_submissions(event_name):
                             'training_sec': training_sec,
                             'cumulated_submissions': cumulated_submissions,
                             'name_submissions': name_submissions}
-        failed_leaderboard_html = db_tools.get_failed_leaderboard(event_name)
-        new_leaderboard_html = db_tools.get_new_leaderboard_datarun(event_name)
+        failed_leaderboard_html = event.failed_leaderboard_html
+        new_leaderboard_html = event.new_leaderboard_html
         return render_template(
             'dashboard_submissions.html',
             failed_leaderboard=failed_leaderboard_html,

@@ -890,6 +890,9 @@ def make_submission(event_name, team_name, submission_name, submission_path):
     event_team.last_submission_name = submission_name
     db.session.commit()
 
+    update_user_leaderboards(
+        submission.event_team.event.name, submission.event_team.team.name)
+
     # We should copy files here
     return submission
 
@@ -1085,17 +1088,19 @@ def get_submissions_datarun(submissions_details=None):
             submissions.append(get_submissions(event_name=event_name,
                                                team_name=team_name,
                                                submission_name=sub_name)[0])
-    list_events = []
+    list_event_names = []
     for submission in submissions:
-        list_events.append(submission.event.name)
-    get_trained_tested_submissions_datarun(submissions, datarun_host_url,
-                                           datarun_username, datarun_userpassd)
+        list_event_names.append(submission.event.name)
+    get_trained_tested_submissions_datarun(
+        submissions, datarun_host_url, datarun_username, datarun_userpassd)
     if Submission.query.filter(Submission.state == 'new').\
             filter(Submission.name != 'starting_kit').\
             count() < len(submissions):
-        for event in list_events:
-            compute_contributivity(event_name=event)
-            compute_historical_contributivity(event_name=event)
+        for event_name in list_event_names:
+            compute_contributivity(event_name=event_name)
+            compute_historical_contributivity(event_name=event_name)
+            update_leaderboards(event_name)
+
 
 
 def train_test_submissions_datarun(data_id, host_url, username, userpassd,
@@ -1273,6 +1278,10 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
 
                 if submission.state != 'new':
                     send_trained_mails(submission)
+                    update_user_leaderboards(
+                        submission.event_team.event.name,
+                        submission.event_team.team.name)
+
         except Exception as e:
             logger.info('PROBLEM when trying to get submission %s - %s - %s '
                         'from datarun: %s'
@@ -1424,6 +1433,8 @@ def train_test_submission(submission, force_retrain_test=False):
             score.score_name, score.test_score_cv_bag))
 
     send_trained_mails(submission)
+    update_user_leaderboards(
+        submission.event_team.event.name, submission.event_team.team.name)
 
 
 def _make_error_message(e):
@@ -1806,15 +1817,6 @@ def compute_historical_contributivity(event_name):
     db.session.commit()
 
 
-# to "cache" the leaderboards
-def compute_contributivity_and_save_leaderboards(
-        event_name, force_ensemble=False):
-    compute_contributivity(event_name, force_ensemble)
-    compute_historical_contributivity(event_name)
-    # user = User.query.filter_by(name='kegl').one()
-    # public_leaderboard_html = get_public_leaderboard(event_name, user)
-
-
 def is_user_signed_up(event_name, user_name):
     for event_team in get_user_event_teams(event_name, user_name):
         if event_team.is_active and event_team.approved:
@@ -1867,53 +1869,56 @@ def is_open_code(event, current_user, submission=None):
         # access right thing will have to be cleaned up anyways
         submission = get_sandbox(event, current_user)
     if current_user in get_team_members(submission.event_team.team):
-        # This may be slow
         return True
     if event.is_public_open:
         return True
     return False
 
 
-def get_public_leaderboard(event_name, current_user, team_name=None,
-                           user_name=None):
+def get_leaderboards(event_name, user_name=None):
     """
     Returns
     -------
-    leaderboard_html : html string
+    leaderboard_html_with_links : html string
+    leaderboard_html_with_no_links : html string
     """
     start = time.time()
 
-    submissions = get_submissions(
-        event_name=event_name, team_name=team_name, user_name=user_name)
+    submissions = get_submissions(event_name=event_name, user_name=user_name)
     submissions = [submission for submission in submissions
                    if submission.is_public_leaderboard]
     event = Event.query.filter_by(name=event_name).one()
 
     score_names = [score_type.name for score_type in event.score_types]
-    columns = ['team',
-               'submission',
-               'contributivity',
-               'historical_contributivity'] +\
-              score_names +\
-              ['train time',
-               'test time',
-               'submitted at (UTC)']
-    values = zip(*[
-        [submission.event_team.team.name,
-         submission.name_with_link if is_open_code(
-             event, current_user, submission) else submission.name[:20],
-         int(round(100 * submission.contributivity)),
-         int(round(100 * submission.historical_contributivity))] +
+    scoress = np.array([
         [round(score.valid_score_cv_bag, score.precision)
-            for score in submission.ordered_scores(score_names)] +
-        [int(round(submission.train_time_cv_mean)),
-         int(round(submission.valid_time_cv_mean)),
-         date_time_format(submission.submission_timestamp)]
-        for submission in submissions])
-    leaderboard_dict_list = {column: value for column, value in zip(
-        columns, values)}
-
-    leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
+         for score in submission.ordered_scores(score_names)]
+        for submission in submissions
+    ]).T
+    leaderboard_df = pd.DataFrame()
+    leaderboard_df['team'] = [
+        submission.event_team.team.name for submission in submissions]
+    leaderboard_df['submission'] = [
+        submission.name_with_link for submission in submissions]
+    leaderboard_df['contributivity'] = [
+        int(round(100 * submission.contributivity))
+        for submission in submissions]
+    leaderboard_df['historical_contributivity'] = [
+        int(round(100 * submission.historical_contributivity))
+        for submission in submissions]
+    for score_name in score_names:  # to make sure the column is created
+        leaderboard_df[score_name] = 0
+    for score_name, scores in zip(score_names, scoress):
+        leaderboard_df[score_name] = scores
+    leaderboard_df['train time'] = [
+        int(round(submission.train_time_cv_mean))
+        for submission in submissions]
+    leaderboard_df['test time'] = [
+        int(round(submission.valid_time_cv_mean))
+        for submission in submissions]
+    leaderboard_df['submitted at (UTC)'] = [
+        date_time_format(submission.submission_timestamp)
+        for submission in submissions]
     sort_column = event.official_score_name
     leaderboard_df = leaderboard_df.sort_values(
         sort_column, ascending=event.official_score_type.is_lower_the_better)
@@ -1925,66 +1930,87 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
         justify='left',
         # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
-    leaderboard_html = leaderboard_df.to_html(**html_params)
+    leaderboard_html_with_links = leaderboard_df.to_html(**html_params)
+    leaderboard_df['submission'] = [
+        submission.name[:20] for submission in submissions]
+    leaderboard_html_no_links = leaderboard_df.to_html(**html_params)
+
     logger.info(u'leaderboard construction takes {}ms'.format(
         int(1000 * (time.time() - start))))
 
-    return table_format(leaderboard_html)
+    return (
+        table_format(leaderboard_html_with_links),
+        table_format(leaderboard_html_no_links)
+    )
 
 
-def get_private_leaderboard(event_name, team_name=None, user_name=None):
+def get_private_leaderboards(event_name, user_name=None):
     """
     Returns
     -------
-    leaderboard_html : html string
+    leaderboard_html_with_links : html string
+    leaderboard_html_with_no_links : html string
     """
+    start = time.time()
 
-    submissions = get_submissions(
-        event_name=event_name, team_name=team_name, user_name=user_name)
+    submissions = get_submissions(event_name=event_name, user_name=user_name)
     submissions = [submission for submission in submissions
                    if submission.is_private_leaderboard]
     event = Event.query.filter_by(name=event_name).one()
 
     score_names = [score_type.name for score_type in event.score_types]
-    columns = ['team',
-               'submission'] + list(chain.from_iterable([[
-                name + ' pub bag',
-                name + ' pub mean',
-                name + ' pub std',
-                name + ' pr bag',
-                name + ' pr mean',
-                name + ' pr std']
-                for name in score_names])) +\
-              ['contributivity',
-               'historical contributivity',
-               'train time',
-               'trt std',
-               'test time',
-               'tet std',
-               'submitted at (UTC)']
-
-    values = zip(*[
-        [submission.event_team.team.name,
-         submission.name_with_link] +
-         list(chain.from_iterable([[
-          round(score.valid_score_cv_bag, score.precision),
+    scoresss = np.array([
+        [[round(score.valid_score_cv_bag, score.precision),
           round(score.valid_score_cv_mean, score.precision),
           round(score.valid_score_cv_std, score.precision + 1),
           round(score.test_score_cv_bag, score.precision),
           round(score.test_score_cv_mean, score.precision),
-          round(score.test_score_cv_std, score.precision + 1)]
-            for score in submission.ordered_scores(score_names)])) +
-        [int(round(100 * submission.contributivity)),
-         int(round(100 * submission.historical_contributivity)),
-         int(round(submission.train_time_cv_mean)),
-         int(round(submission.train_time_cv_std)),
-         int(round(submission.valid_time_cv_mean)),
-         int(round(submission.valid_time_cv_std)),
-         date_time_format(submission.submission_timestamp)]
-        for submission in submissions])
-    leaderboard_dict_list = {column: value for column, value in zip(
-        columns, values)}
-    leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
+          round(score.test_score_cv_std, score.precision + 1)
+         ]
+         for score in submission.ordered_scores(score_names)]
+        for submission in submissions
+    ])
+    scoresss = np.swapaxes(scoresss, 0, 1)
+    leaderboard_df = pd.DataFrame()
+    leaderboard_df['team'] = [
+        submission.event_team.team.name for submission in submissions]
+    leaderboard_df['submission'] = [
+        submission.name_with_link for submission in submissions]
+    for score_name in score_names:  # to make sure the column is created
+        leaderboard_df[score_name + ' pub bag'] = 0
+        leaderboard_df[score_name + ' pub mean'] = 0
+        leaderboard_df[score_name + ' pub std'] = 0
+        leaderboard_df[score_name + ' pr bag'] = 0
+        leaderboard_df[score_name + ' pr mean'] = 0
+        leaderboard_df[score_name + ' pr std'] = 0
+    for score_name, scoress in zip(score_names, scoresss):
+        leaderboard_df[score_name + ' pub bag'] = scoress[:, 0]
+        leaderboard_df[score_name + ' pub mean'] = scoress[:, 1]
+        leaderboard_df[score_name + ' pub std'] = scoress[:, 2]
+        leaderboard_df[score_name + ' pr bag'] = scoress[:, 3]
+        leaderboard_df[score_name + ' pr mean'] = scoress[:, 4]
+        leaderboard_df[score_name + ' pr std'] = scoress[:, 5]
+    leaderboard_df['contributivity'] = [
+        int(round(100 * submission.contributivity))
+        for submission in submissions]
+    leaderboard_df['historical_contributivity'] = [
+        int(round(100 * submission.historical_contributivity))
+        for submission in submissions]
+    leaderboard_df['train time'] = [
+        int(round(submission.train_time_cv_mean))
+        for submission in submissions]
+    leaderboard_df['trt std'] = [
+        int(round(submission.train_time_cv_std))
+        for submission in submissions]
+    leaderboard_df['test time'] = [
+        int(round(submission.valid_time_cv_mean))
+        for submission in submissions]
+    leaderboard_df['tet std'] = [
+        int(round(submission.valid_time_cv_std))
+        for submission in submissions]
+    leaderboard_df['submitted at (UTC)'] = [
+        date_time_format(submission.submission_timestamp)
+        for submission in submissions]
     sort_column = event.official_score_name + ' pr bag'
     leaderboard_df = leaderboard_df.sort_values(
         sort_column, ascending=event.official_score_type.is_lower_the_better)
@@ -1997,7 +2023,56 @@ def get_private_leaderboard(event_name, team_name=None, user_name=None):
         # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
     leaderboard_html = leaderboard_df.to_html(**html_params)
+
+    logger.info(u'private leaderboard construction takes {}ms'.format(
+        int(1000 * (time.time() - start))))
+
     return table_format(leaderboard_html)
+
+
+def update_leaderboards(event_name):
+    private_leaderboard_html = get_private_leaderboards(
+        event_name)
+    leaderboards = get_leaderboards(event_name)
+    failed_leaderboard_html = get_failed_leaderboard(event_name)
+    new_leaderboard_html = get_new_leaderboard(event_name)
+
+    event = Event.query.filter_by(name=event_name).one()
+    event.private_leaderboard_html = private_leaderboard_html
+    event.public_leaderboard_html_with_links = leaderboards[0]
+    event.public_leaderboard_html_no_links = leaderboards[1]
+    event.failed_leaderboard_html = failed_leaderboard_html
+    event.new_leaderboard_html = new_leaderboard_html
+
+    db.session.commit()
+
+
+def update_user_leaderboards(event_name, user_name):
+    leaderboards = get_leaderboards(event_name, user_name)
+    failed_leaderboard_html = get_failed_leaderboard(event_name, user_name)
+    new_leaderboard_html = get_new_leaderboard(event_name, user_name)
+    for event_team in get_user_event_teams(event_name, user_name):
+        event_team.leaderboard_html= leaderboards[0]
+        event_team.failed_leaderboard_html = failed_leaderboard_html
+        event_team.new_leaderboard_html = new_leaderboard_html
+    db.session.commit()
+
+
+def update_all_user_leaderboards(event_name):
+    event = Event.query.filter_by(name=event_name).one()
+    event_teams = EventTeam.query.filter_by(event=event).all()
+    print event
+    for event_team in event_teams:
+        user_name = event_team.team.name
+        print user_name
+        leaderboards = get_leaderboards(event_name, user_name)
+        failed_leaderboard_html = get_failed_leaderboard(
+            event_name, user_name)
+        new_leaderboard_html = get_new_leaderboard(event_name, user_name)
+        event_team.leaderboard = leaderboards[0]
+        event_team.failed_leaderboard_html = failed_leaderboard_html
+        event_team.new_leaderboard_html = new_leaderboard_html
+    db.session.commit()
 
 
 def get_failed_leaderboard(event_name, team_name=None, user_name=None):
@@ -2006,6 +2081,8 @@ def get_failed_leaderboard(event_name, team_name=None, user_name=None):
     -------
     leaderboard_html : html string
     """
+
+    start = time.time()
 
     submissions = get_submissions(
         event_name=event_name, team_name=team_name, user_name=user_name)
@@ -2034,6 +2111,10 @@ def get_failed_leaderboard(event_name, team_name=None, user_name=None):
         # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
     leaderboard_html = leaderboard_df.to_html(**html_params)
+
+    logger.info(u'failed leaderboard construction takes {}ms'.format(
+        int(1000 * (time.time() - start))))
+
     return table_format(leaderboard_html)
 
 
@@ -2043,6 +2124,8 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
     -------
     leaderboard_html : html string
     """
+    start = time.time()
+
     submissions = get_submissions(
         event_name=event_name, team_name=team_name, user_name=user_name)
     submissions = [submission for submission in submissions
@@ -2067,6 +2150,10 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
         justify='left',
         # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
+
+    logger.info(u'new leaderboard construction takes {}ms'.format(
+        int(1000 * (time.time() - start))))
+
     leaderboard_html = leaderboard_df.to_html(**html_params)
     return table_format(leaderboard_html)
 

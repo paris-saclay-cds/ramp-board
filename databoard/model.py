@@ -144,14 +144,17 @@ class Team(db.Model):
 
 
 def get_team_members(team):
-    if team.initiator is not None:
-        # "yield from" in Python 3.3
-        for member in get_team_members(team.initiator):
-            yield member
-        for member in get_team_members(team.acceptor):
-            yield member
-    else:
-        yield team.admin
+    # This works only if no team mergers. The commented code below
+    # is general but slow.
+    yield team.admin
+    # if team.initiator is not None:
+    #     # "yield from" in Python 3.3
+    #     for member in get_team_members(team.initiator):
+    #         yield member
+    #     for member in get_team_members(team.acceptor):
+    #         yield member
+    # else:
+    #     yield team.admin
 
 
 def get_n_team_members(team):
@@ -159,19 +162,31 @@ def get_n_team_members(team):
 
 
 def get_user_teams(user):
-    teams = Team.query.all()
-    for team in teams:
-        if user in get_team_members(team):
-            yield team
+    # This works only if no team mergers. The commented code below
+    # is general but slow.
+    team = Team.query.filter_by(name=user.name).one()
+    yield team
+    # teams = Team.query.all()
+    # for team in teams:
+    #     if user in get_team_members(team):
+    #         yield team
 
 
 def get_user_event_teams(event_name, user_name):
+    # This works only if no team mergers. The commented code below
+    # is general but slow.
     event = Event.query.filter_by(name=event_name).one()
-    user = User.query.filter_by(name=user_name).one()
-    event_teams = EventTeam.query.filter_by(event=event).all()
-    for event_team in event_teams:
-        if user in get_team_members(event_team.team):
-            yield event_team
+    team = Team.query.filter_by(name=user_name).one()
+    event_team = EventTeam.query.filter_by(
+        event=event, team=team).one_or_none()
+    if event_team is not None:
+        yield event_team
+    # event = Event.query.filter_by(name=event_name).one()
+    # user = User.query.filter_by(name=user_name).one()
+    # event_teams = EventTeam.query.filter_by(event=event).all()
+    # for event_team in event_teams:
+    #     if user in get_team_members(event_team.team):
+    #         yield event_team
 
 
 def get_n_user_teams(user):
@@ -321,6 +336,12 @@ class Event(db.Model):
     combined_combined_test_score = db.Column(db.Float, default=None)
     combined_foldwise_valid_score = db.Column(db.Float, default=None)
     combined_foldwise_test_score = db.Column(db.Float, default=None)
+
+    public_leaderboard_html_no_links = db.Column(db.String, default=None)
+    public_leaderboard_html_with_links = db.Column(db.String, default=None)
+    private_leaderboard_html = db.Column(db.String, default=None)
+    failed_leaderboard_html = db.Column(db.String, default=None)
+    new_leaderboard_html = db.Column(db.String, default=None)
 
     def __init__(self, name):
         self.name = name
@@ -537,6 +558,10 @@ class EventTeam(db.Model):
     last_submission_name = db.Column(db.String, default=None)
     signup_timestamp = db.Column(db.DateTime, nullable=False)
     approved = db.Column(db.Boolean, default=False)
+
+    leaderboard_html = db.Column(db.String, default=None)
+    failed_leaderboard_html = db.Column(db.String, default=None)
+    new_leaderboard_html = db.Column(db.String, default=None)
 
     db.UniqueConstraint(event_id, team_id, name='et_constraint')
 
@@ -1670,7 +1695,7 @@ class UserInteraction(db.Model):
         self.timestamp = datetime.datetime.utcnow()
         self.interaction = interaction
         self.user = user
-        if event is not None:
+        if event is not None and user is not None:
             self.event_team = get_active_user_event_team(event, user)
         if ip is None:
             self.ip = request.environ['REMOTE_ADDR']

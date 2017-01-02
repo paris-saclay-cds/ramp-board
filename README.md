@@ -167,6 +167,9 @@ fab serve:80 > server_logs/server16.txt 2>&1
  - new:
 sudo service apache2 restart
 
+ - inspect server log file:
+tail -n1000 -f /var/log/apache2/error.log
+
 sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" /home/datacamp/code/databoard/config.py
 
 ### Mac bug
