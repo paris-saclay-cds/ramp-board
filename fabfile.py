@@ -313,8 +313,29 @@ def train_test_datarun(e=None, t=None, s=None, state=None,
             priority='L', force_retrain_test=True)
 
 
-def get_trained_tested_datarun(host_url, username, userpassd,
-                               e=None, t=None, s=None):
+# def get_trained_tested_datarun(host_url, username, userpassd,
+#                                e=None, t=None, s=None):
+#     """
+#     Get submissions from datarun and save predictions to databoard database
+
+#     :param host_url: host url of datarun
+#     :param username: username for datarun
+#     :param userpassd: user password for datarun
+
+#     :type host_url: string
+#     :type username: string
+#     :type userpassd: string
+#     """
+#     from databoard.db_tools import get_trained_tested_submissions_datarun
+#     from databoard.db_tools import get_submissions
+#     submissions = get_submissions(event_name=e, team_name=t, submission_name=s)
+#     print(submissions)
+#     get_trained_tested_submissions_datarun(submissions, host_url,
+#                                            username, userpassd)
+#     compute_contributivity(event_name=e)
+
+
+def get_trained_tested_datarun(e=None, t=None, s=None):
     """
     Get submissions from datarun and save predictions to databoard database
 
@@ -326,14 +347,14 @@ def get_trained_tested_datarun(host_url, username, userpassd,
     :type username: string
     :type userpassd: string
     """
-    from databoard.db_tools import get_trained_tested_submissions_datarun
+    from databoard.db_tools import get_submissions_datarun
     from databoard.db_tools import get_submissions
     submissions = get_submissions(event_name=e, team_name=t, submission_name=s)
     print(submissions)
-    get_trained_tested_submissions_datarun(submissions, host_url,
-                                           username, userpassd)
-    compute_contributivity(event_name=e)
-
+    submission_details = [
+        [submission.name, submission.team.name, submission.event.name]
+        for submission in submissions]
+    get_submissions_datarun(submission_details)
 
 
 def train_test(e, t=None, s=None, state=None, force='False'):
