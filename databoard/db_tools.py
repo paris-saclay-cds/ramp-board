@@ -1093,6 +1093,9 @@ def get_submissions_datarun(submissions_details=None):
     list_event_names = []
     for submission in submissions:
         list_event_names.append(submission.event.name)
+        update_user_leaderboards(
+            submission.event_team.event.name,
+            submission.event_team.team.name)
     get_trained_tested_submissions_datarun(
         submissions, datarun_host_url, datarun_username, datarun_userpassd)
     if Submission.query.filter(Submission.state == 'new').\
