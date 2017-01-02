@@ -778,8 +778,8 @@ def delete_submission(event_name, team_name, submission_name):
     db.session.commit()
     compute_contributivity(event_name)
     compute_historical_contributivity(event_name)
-    update_leaderboards(event_name)
-    update_all_user_leaderboards(event_name)
+    update_user_leaderboards(event_name, team_name)
+
 
 def make_submission_on_cv_folds(cv_folds, submission):
     for cv_fold in cv_folds:
@@ -1101,7 +1101,6 @@ def get_submissions_datarun(submissions_details=None):
         for event_name in list_event_names:
             compute_contributivity(event_name=event_name)
             compute_historical_contributivity(event_name=event_name)
-            update_leaderboards(event_name)
 
 
 
@@ -1817,6 +1816,8 @@ def compute_historical_contributivity(event_name):
                     submission.historical_contributivity -= partial_credit
                     processed_submissions.append(source_submission)
     db.session.commit()
+    update_leaderboards(event_name)
+
 
 
 def is_user_signed_up(event_name, user_name):
@@ -2051,7 +2052,7 @@ def update_leaderboards(event_name):
 
 def update_user_leaderboards(event_name, user_name):
     logger.info('Leaderboard is updated for user {} in event {}.'.format(
-        user_name, event))
+        user_name, event_name))
     leaderboards = get_leaderboards(event_name, user_name)
     failed_leaderboard_html = get_failed_leaderboard(event_name, user_name)
     new_leaderboard_html = get_new_leaderboard(event_name, user_name)
