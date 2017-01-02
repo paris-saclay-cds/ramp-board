@@ -1890,7 +1890,7 @@ def get_leaderboards(event_name, user_name=None):
     leaderboard_html_with_links : html string
     leaderboard_html_with_no_links : html string
     """
-    start = time.time()
+    # start = time.time()
 
     submissions = get_submissions(event_name=event_name, user_name=user_name)
     submissions = [submission for submission in submissions
@@ -1943,8 +1943,8 @@ def get_leaderboards(event_name, user_name=None):
         submission.name[:20] for submission in submissions]
     leaderboard_html_no_links = leaderboard_df.to_html(**html_params)
 
-    logger.info(u'leaderboard construction takes {}ms'.format(
-        int(1000 * (time.time() - start))))
+    # logger.info(u'leaderboard construction takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
 
     return (
         table_format(leaderboard_html_with_links),
@@ -1959,7 +1959,7 @@ def get_private_leaderboards(event_name, user_name=None):
     leaderboard_html_with_links : html string
     leaderboard_html_with_no_links : html string
     """
-    start = time.time()
+    # start = time.time()
 
     submissions = get_submissions(event_name=event_name, user_name=user_name)
     submissions = [submission for submission in submissions
@@ -1978,8 +1978,7 @@ def get_private_leaderboards(event_name, user_name=None):
          for score in submission.ordered_scores(score_names)]
         for submission in submissions
     ])
-    print scoresss.shape
-    if len(scoresss) > 0:
+    if len(submissions) > 0:
         scoresss = np.swapaxes(scoresss, 0, 1)
     leaderboard_df = pd.DataFrame()
     leaderboard_df['team'] = [
@@ -2034,8 +2033,8 @@ def get_private_leaderboards(event_name, user_name=None):
     )
     leaderboard_html = leaderboard_df.to_html(**html_params)
 
-    logger.info(u'private leaderboard construction takes {}ms'.format(
-        int(1000 * (time.time() - start))))
+    # logger.info(u'private leaderboard construction takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
 
     return table_format(leaderboard_html)
 
@@ -2094,7 +2093,7 @@ def get_failed_leaderboard(event_name, team_name=None, user_name=None):
     leaderboard_html : html string
     """
 
-    start = time.time()
+    # start = time.time()
 
     submissions = get_submissions(
         event_name=event_name, team_name=team_name, user_name=user_name)
@@ -2124,8 +2123,8 @@ def get_failed_leaderboard(event_name, team_name=None, user_name=None):
     )
     leaderboard_html = leaderboard_df.to_html(**html_params)
 
-    logger.info(u'failed leaderboard construction takes {}ms'.format(
-        int(1000 * (time.time() - start))))
+    # logger.info(u'failed leaderboard construction takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
 
     return table_format(leaderboard_html)
 
@@ -2136,7 +2135,7 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
     -------
     leaderboard_html : html string
     """
-    start = time.time()
+    # start = time.time()
 
     submissions = get_submissions(
         event_name=event_name, team_name=team_name, user_name=user_name)
@@ -2163,8 +2162,8 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
         # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
 
-    logger.info(u'new leaderboard construction takes {}ms'.format(
-        int(1000 * (time.time() - start))))
+    # logger.info(u'new leaderboard construction takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
 
     leaderboard_html = leaderboard_df.to_html(**html_params)
     return table_format(leaderboard_html)
@@ -2356,15 +2355,15 @@ def get_top_score_per_user(closing_timestamp=None):
 
 
 def add_user_interaction(**kwargs):
-    start = time.time()
+    # start = time.time()
     user_interaction = UserInteraction(**kwargs)
-    logger.info(u'user interaction construction takes {}ms'.format(
-        int(1000 * (time.time() - start))))
-    start = time.time()
+    # logger.info(u'user interaction construction takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
+    # start = time.time()
     db.session.add(user_interaction)
     db.session.commit()
-    logger.info(u'user interaction db insertion takes {}ms'.format(
-        int(1000 * (time.time() - start))))
+    # logger.info(u'user interaction db insertion takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
     # with codecs.open(config.user_interactions_f_name, 'a+') as f:
     #     f.write(user_interaction.__repr__() + '\n')
 

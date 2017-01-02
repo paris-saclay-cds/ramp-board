@@ -376,7 +376,7 @@ def my_submissions(event_name):
 @app.route("/events/<event_name>/leaderboard")
 @fl.login_required
 def leaderboard(event_name):
-    start = time.time()
+    # start = time.time()
 
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, current_user):
@@ -386,18 +386,18 @@ def leaderboard(event_name):
         interaction='looking at leaderboard',
         user=current_user, event=event)
 
-    logger.info(u'leaderboard user_interaction takes {}ms'.format(
-        int(1000 * (time.time() - start))))
-    start = time.time()
+    # logger.info(u'leaderboard user_interaction takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
+    # start = time.time()
 
     if db_tools.is_open_code(event, current_user):
         leaderboard_html = event.public_leaderboard_html_with_links
     else:
         leaderboard_html = event.public_leaderboard_html_no_links
 
-    logger.info(u'leaderboard db access takes {}ms'.format(
-        int(1000 * (time.time() - start))))
-    start = time.time()
+    # logger.info(u'leaderboard db access takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
+    # start = time.time()
 
     leaderboard_kwargs = dict(
         leaderboard=leaderboard_html,
@@ -420,8 +420,8 @@ def leaderboard(event_name):
             'leaderboard.html',
             **leaderboard_kwargs)
 
-    logger.info(u'leaderboard rendering takes {}ms'.format(
-        int(1000 * (time.time() - start))))
+    # logger.info(u'leaderboard rendering takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
 
     return template
 
@@ -882,7 +882,7 @@ def logout():
 @app.route("/events/<event_name>/private_leaderboard")
 @fl.login_required
 def private_leaderboard(event_name):
-    start = time.time()
+    # start = time.time()
 
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
@@ -909,8 +909,8 @@ def private_leaderboard(event_name):
         admin=admin
     )
 
-    logger.info(u'private leaderboard takes {}ms'.format(
-        int(1000 * (time.time() - start))))
+    # logger.info(u'private leaderboard takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
 
     return template
 
