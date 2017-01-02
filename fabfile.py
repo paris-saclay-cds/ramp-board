@@ -330,7 +330,6 @@ def compute_contributivity(e):
     from databoard.db_tools import compute_historical_contributivity
     compute_contributivity(e)
     compute_historical_contributivity(e)
-    update_leaderboards(e)
 
 
 def print_submissions(e=None, t=None, s=None):

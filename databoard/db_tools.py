@@ -776,8 +776,10 @@ def delete_submission(event_name, team_name, submission_name):
     delete_submission_similarity([submission])
     db.session.delete(submission)
     db.session.commit()
-    compute_contributivity_and_save_leaderboards(event_name)
-
+    compute_contributivity(event_name)
+    compute_historical_contributivity(event_name)
+    update_leaderboards(event_name)
+    update_all_user_leaderboards(event_name)
 
 def make_submission_on_cv_folds(cv_folds, submission):
     for cv_fold in cv_folds:
