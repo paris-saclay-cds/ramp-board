@@ -246,28 +246,56 @@ def send_data_datarun(problem_name, host_url, username, userpassd):
     send_data_datarun(problem_name, host_url, username, userpassd)
 
 
-def train_test_datarun(data_id, host_url, username, userpassd, e=None, t=None,
-                       s=None, state=None, force='False', priority='L'):
+# def train_test_datarun(data_id, host_url, username, userpassd, e=None, t=None,
+#                        s=None, state=None, force='False', priority='L'):
+#     """Train and test submission using datarun.
+
+#     :param data_id: id of the associated dataset on datarun platform, created when sending the data
+#     :param host_url: host url of datarun
+#     :param username: username for datarun
+#     :param userpassd: user password for datarun
+#     :param priority: training priority of the submissions on datarun,\
+#         'L' for low and 'H' for high
+
+#     :type data_id: integer
+#     :type host_url: string
+#     :type username: string
+#     :type userpassd: string
+#     :type priority: string
+#      """
+#     from databoard.config import sandbox_d_name
+
+#     force = strtobool(force)
+
+#     from databoard.db_tools import train_test_submissions_datarun,\
+#         get_submissions, get_submissions_of_state
+
+#     if state is not None:
+#         submissions = get_submissions_of_state(state)
+#     else:
+#         submissions = get_submissions(
+#             event_name=e, team_name=t, submission_name=s)
+#     submissions = [submission for submission in submissions
+#                    if submission.name != sandbox_d_name]
+
+#     print(submissions)
+#     train_test_submissions_datarun(data_id, host_url, username, userpassd,
+#                                    submissions, force_retrain_test=force,
+#                                    priority=priority)
+
+
+def train_test_datarun(e=None, t=None, s=None, state=None,
+                       force='False', priority='L'):
     """Train and test submission using datarun.
 
-    :param data_id: id of the associated dataset on datarun platform, created when sending the data
-    :param host_url: host url of datarun
-    :param username: username for datarun
-    :param userpassd: user password for datarun
     :param priority: training priority of the submissions on datarun,\
         'L' for low and 'H' for high
-
-    :type data_id: integer
-    :type host_url: string
-    :type username: string
-    :type userpassd: string
-    :type priority: string
      """
     from databoard.config import sandbox_d_name
 
     force = strtobool(force)
 
-    from databoard.db_tools import train_test_submissions_datarun,\
+    from databoard.db_tools import\
         get_submissions, get_submissions_of_state, send_submission_datarun
 
     if state is not None:
@@ -283,10 +311,6 @@ def train_test_datarun(data_id, host_url, username, userpassd, e=None, t=None,
         send_submission_datarun(
             submission.name, submission.team.name, submission.event.name,
             priority='L', force_retrain_test=True)
-
-    # train_test_submissions_datarun(data_id, host_url, username, userpassd,
-    #                                submissions, force_retrain_test=force,
-    #                                priority=priority)
 
 
 def get_trained_tested_datarun(host_url, username, userpassd,
