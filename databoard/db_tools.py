@@ -823,7 +823,7 @@ def make_submission(event_name, team_name, submission_name, submission_path):
         # We allow resubmit for new or failing submissions
         if submission.name != config.sandbox_d_name and\
                 (submission.state == 'new' or submission.is_error):
-            submission.state = 'new'
+            submission.set_state('new')
             submission.submission_timestamp = datetime.datetime.utcnow()
             for submission_on_cv_fold in submission.on_cv_folds:
                 submission_on_cv_fold.reset()
@@ -1104,7 +1104,10 @@ def get_submissions_datarun(submissions_details=None):
         for event_name in list_event_names:
             compute_contributivity(event_name=event_name)
             compute_historical_contributivity(event_name=event_name)
-
+    for submission in submissions:
+        update_user_leaderboards(
+            submission.event_team.event.name,
+            submission.event_team.team.name)
 
 
 def train_test_submissions_datarun(data_id, host_url, username, userpassd,
@@ -1283,8 +1286,8 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
                 if submission.state != 'new':
                     send_trained_mails(submission)
                     update_user_leaderboards(
-                        submission.event_team.event.name,
-                        submission.event_team.team.name)
+                        submission.event.name,
+                        submission.team.name)
 
         except Exception as e:
             logger.info('PROBLEM when trying to get submission %s - %s - %s '
@@ -1437,8 +1440,6 @@ def train_test_submission(submission, force_retrain_test=False):
             score.score_name, score.test_score_cv_bag))
 
     send_trained_mails(submission)
-    update_user_leaderboards(
-        submission.event_team.event.name, submission.event_team.team.name)
 
 
 def _make_error_message(e):
@@ -1820,6 +1821,7 @@ def compute_historical_contributivity(event_name):
                     processed_submissions.append(source_submission)
     db.session.commit()
     update_leaderboards(event_name)
+    update_all_user_leaderboards(event_name)
 
 
 
@@ -1976,7 +1978,9 @@ def get_private_leaderboards(event_name, user_name=None):
          for score in submission.ordered_scores(score_names)]
         for submission in submissions
     ])
-    scoresss = np.swapaxes(scoresss, 0, 1)
+    print scoresss.shape
+    if len(scoresss) > 0:
+        scoresss = np.swapaxes(scoresss, 0, 1)
     leaderboard_df = pd.DataFrame()
     leaderboard_df['team'] = [
         submission.event_team.team.name for submission in submissions]
