@@ -890,8 +890,8 @@ def make_submission(event_name, team_name, submission_name, submission_path):
     event_team.last_submission_name = submission_name
     db.session.commit()
 
-    update_user_leaderboards(
-        submission.event_team.event.name, submission.event_team.team.name)
+    update_leaderboards(event_name)
+    update_user_leaderboards(event_name, team.name)
 
     # We should copy files here
     return submission
