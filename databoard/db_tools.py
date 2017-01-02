@@ -2048,11 +2048,12 @@ def update_leaderboards(event_name):
 
 
 def update_user_leaderboards(event_name, user_name):
+    logger.info('Leaderboard is updated for user {} in event {}.')
     leaderboards = get_leaderboards(event_name, user_name)
     failed_leaderboard_html = get_failed_leaderboard(event_name, user_name)
     new_leaderboard_html = get_new_leaderboard(event_name, user_name)
     for event_team in get_user_event_teams(event_name, user_name):
-        event_team.leaderboard_html= leaderboards[0]
+        event_team.leaderboard_html = leaderboards[0]
         event_team.failed_leaderboard_html = failed_leaderboard_html
         event_team.new_leaderboard_html = new_leaderboard_html
     db.session.commit()
