@@ -1761,7 +1761,7 @@ def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
             cv_fold.event, predictions_list, true_predictions_valid,
             best_index_list)
         improvement = len(best_index_list) != len(old_best_index_list)
-        logger.info('\t{}: {}'.format(best_index_list, score))
+        logger.info('\t{}: {}'.format(old_best_index_list, score))
     # set
     selected_submissions_on_fold[best_index_list[0]].best = True
     # we share a unit of 1. among the contributive submissions
