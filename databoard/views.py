@@ -390,7 +390,7 @@ def leaderboard(event_name):
     #     int(1000 * (time.time() - start))))
     # start = time.time()
 
-    if db_tools.is_open_code(event, current_user):
+    if db_tools.is_open_leaderboard(event, current_user):
         leaderboard_html = event.public_leaderboard_html_with_links
     else:
         leaderboard_html = event.public_leaderboard_html_no_links
@@ -460,8 +460,10 @@ def view_model(submission_hash, f_name):
         return _redirect_to_user(error_str)
     event = submission.event_team.event
     if not db_tools.is_open_code(event, current_user, submission):
-        error_str = u'{} has no right to look at {}/{}/{}'.format(
+        error_str = u'{} has no permission to look at {}/{}/{}\n'.format(
             current_user, event, submission, f_name)
+        error_str += u'The code links will open at (UTC) {}'.format(
+            db_tools.date_time_format(event.public_opening_timestamp))
         return _redirect_to_user(error_str)
     team = submission.event_team.team
     workflow_element_name = f_name.split('.')[0]

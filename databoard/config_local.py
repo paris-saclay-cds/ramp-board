@@ -358,8 +358,7 @@ MAIL_DEFAULT_SENDER = ('Databoard', 'databoardmailer@gmail.com')
 MAIL_RECIPIENTS = ''  # notification_recipients
 ADMIN_MAILS = ['balazs.kegl@gmail.com',
                'alexandre.gramfort@telecom-paristech.fr',
-               'mehdi@cherti.name',
-               'camille.marini@gmail.com']
+               'mehdi@cherti.name']
 if os.environ.get('DATABOARD_DB_PERF'):
     SQLALCHEMY_RECORD_QUERIES = True
 DATABASE_QUERY_TIMEOUT = 0.5  # slow database query threshold (in seconds)

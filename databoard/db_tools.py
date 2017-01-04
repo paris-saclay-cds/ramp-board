@@ -1093,9 +1093,6 @@ def get_submissions_datarun(submissions_details=None):
     list_event_names = []
     for submission in submissions:
         list_event_names.append(submission.event.name)
-        update_user_leaderboards(
-            submission.event_team.event.name,
-            submission.event_team.team.name)
     get_trained_tested_submissions_datarun(
         submissions, datarun_host_url, datarun_username, datarun_userpassd)
     if Submission.query.filter(Submission.state == 'new').\
@@ -1856,6 +1853,23 @@ def is_public_event(event, user):
     if user.access_level == 'asked':
         return False
     if event.is_public or is_admin(event, user):
+        return True
+    return False
+
+
+def is_open_leaderboard(event, current_user):
+    """
+    True if current_user can look at submission of event.
+
+    If submission is None, it is assumed to be the sandbox.
+    """
+    if not current_user.is_authenticated or not current_user.is_active:
+        return False
+    if is_admin(event, current_user):
+        return True
+    if not is_user_signed_up(event.name, current_user.name):
+        return False
+    if event.is_public_open:
         return True
     return False
 
