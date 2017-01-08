@@ -1469,6 +1469,7 @@ def train_test_submission_on_cv_fold(detached_submission_on_cv_fold,
         test_submission_on_cv_fold(
             detached_submission_on_cv_fold, X_test, y_test,
             force_retest=force_retrain_test)
+    detached_submission_on_cv_fold.module = None
     # When called in a single thread, we don't need the return value,
     # submission_on_cv_fold is modified in place. When called in parallel
     # multiprocessing mode, however, copies are made when the function is
