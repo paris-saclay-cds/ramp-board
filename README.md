@@ -341,7 +341,7 @@ Follow **instructions 1 to 6** from above.
 
 Normally, given a large enough frontend server, you are good to go using manual training (fab train_test) on the frontend server. The principle of the RAMP backend is the following:
 
-1. We mount the databoard root directory $DATABOARD_PATHdatacamp/databoard on the backend server, and make the database visible.
+1. We mount the databoard root directory $DATABOARD_PATH/datacamp/databoard on the backend server, and make the database visible.
 
 2. We launch a job (fab backend_train_test_loop) which loops infinitely with 30s waiting times between each iteration of:
     1. get all new submissions
@@ -362,7 +362,7 @@ Normally, given a large enough frontend server, you are good to go using manual 
 3. Clone the databoard code from github, eg. by executing tools/clone_databoard.sh. It will also install all the requirements in requirements.txt. Feel free to edit this file, add or delete libraries needed/not needed for the training jobs of the RAMP.
 
 4. cd tools and edit env.sh. It should contain the following environment variables:
-
+```
 export DATABOARD_IP='xx.xx.xx.xx'  # the IP of the frontent
 export DATABOARD_PATH='/mnt/ramp_data/'  # databoard path: on the frontend server it is in $DATABOARD_PATH/datacamp/databoard. It will be mounted on this server to the same path.
 export DATABOARD_DB_NAME='databoard'  # the name of the DB at the frontend
@@ -370,7 +370,7 @@ export DATABOARD_DB_USER='xxxx'  # the username of the DB at the frontend
 export DATABOARD_DB_PASSWORD='yyyy'  # the username of the DB at the frontend
 export DATABOARD_DB_URL='postgresql://'$DATABOARD_DB_USER':'$DATABOARD_DB_PASSWORD'@'$DATABOARD_IP':'$DATABOARD_DB_PORT'/'$DATABOARD_DB_NAME
 export DATABOARD_IDENTITY_FILE='/home/ubuntu/.ssh/ramp/id_rsa'  # the private key to log in to root@$DATABOARD_IP
-
+```
 5. Make sure that you can log in as a user root to the frontend server. Eg, 
     1. mkdir /home/ubuntu/.ssh/ramp
     2. Add 
