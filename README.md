@@ -371,19 +371,22 @@ export DATABOARD_DB_PASSWORD='yyyy'  # the username of the DB at the frontend
 export DATABOARD_DB_URL='postgresql://'$DATABOARD_DB_USER':'$DATABOARD_DB_PASSWORD'@'$DATABOARD_IP':'$DATABOARD_DB_PORT'/'$DATABOARD_DB_NAME
 export DATABOARD_IDENTITY_FILE='/home/ubuntu/.ssh/ramp/id_rsa'  # the private key to log in to root@$DATABOARD_IP
 ```
+
 5. Make sure that you can log in as a user root to the frontend server. Eg, 
     1. mkdir /home/ubuntu/.ssh/ramp
-    2. Add 
+    2. Add
+    ```
     Host xx.xx.xx.xx # ramp frontend
         User root
         ForwardAgent yes
         IdentityFile /home/ubuntu/.ssh/ramp/id_rsa
+    ```
     to /home/ubuntu/.ssh/config
     Make sure the $DATABOARD_IDENTITY_FILE variable is set to wherever the private key is (/home/ubuntu/.ssh/ramp/id_rsa in the example)
     3. Copy the private key that allows you to log in to the databoard frontend as root to /home/ubuntu/.ssh/ramp/id_rsa. Don't forget to change its rights to chmod 400
 
-6. Execute deploy_databoard_backend.sh. This script will install additional libraires, e.g. xgboost and python-netcdf4, which may take long time. You can comment out these installation if it's not needed in your ramp. The script then mounts the frontend directory $DATABOARD_IP:$DATABOARD_PATH/datacamp/databoard to the local directory $DATABOARD_PATH/datacamp/databoard
+6. Execute deploy_databoard_backend.sh. This script will install additional libraires, e.g., xgboost and python-netcdf4, which may take long time. You can comment out these installations if they are not needed in your ramp. The script then mounts the frontend directory $DATABOARD_IP:$DATABOARD_PATH/datacamp/databoard to the local directory $DATABOARD_PATH/datacamp/databoard.
 
 7. cd to $DATABOARD_PATH/datacamp/databoard. At this point you can execute any fab statements that you can execute at the frontend server. If you want this server to start training automatically, launch
-fab backend_train_test_loop
+fab backend_train_test_loop.
 
