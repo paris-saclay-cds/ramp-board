@@ -1012,7 +1012,7 @@ class SubmissionScore(db.Model):
 # evaluate right after train/test, so no need for 'scored' states
 submission_states = db.Enum(
     'new', 'checked', 'checking_error', 'trained', 'training_error',
-    'validated', 'validating_error', 'tested', 'testing_error',
+    'validated', 'validating_error', 'tested', 'testing_error', 'training',
     name='submission_states')
 
 submission_types = db.Enum('live', 'test', name='submission_types')

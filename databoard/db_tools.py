@@ -1356,6 +1356,19 @@ def process_fold_datarun(pred, y_shape_train, y_shape_test):
                 submission_fold.state = 'testing_error'
 
 
+def backend_train_test_loop(event_name=None, timeout=30):
+    while(True):
+        earliest_new_submission = get_earliest_new_submission(event_name)
+        logger.info('Automatic training {} at {}'.format(
+            earliest_new_submission, datetime.datetime.utcnow()))
+        if earliest_new_submission is not None:
+            train_test_submission(earliest_new_submission)
+            event_name = earliest_new_submission.event.name
+            compute_contributivity(event_name)
+            compute_historical_contributivity(event_name)
+        time.sleep(timeout)
+
+
 def train_test_submissions(submissions=None, force_retrain_test=False):
     """Train and test submission.
 
@@ -1363,33 +1376,18 @@ def train_test_submissions(submissions=None, force_retrain_test=False):
     """
     if submissions is None:
         submissions = Submission.query.filter(
-            Submission.name != 'sandbox').order_by(Submission.id).all()
+            Submission.name != 'starting_kit').order_by(Submission.id).all()
     for submission in submissions:
         train_test_submission(submission, force_retrain_test)
-        # Means and stds were constructed on demand by fetching fold times.
-        # It was slow because submission_on_folds contain also possibly large
-        # predictions. If postgres solves this issue (which can be tested on
-        # the mean and std scores on the private leaderbord), the
-        # corresponding columns (which are now redundant) can be deleted in
-        # Submission and this computation can also be deleted.
-        submission.train_time_cv_mean = np.array(
-            [ts.train_time for ts in submission.on_cv_folds]).mean()
-        submission.valid_time_cv_mean = np.array(
-            [ts.valid_time for ts in submission.on_cv_folds]).mean()
-        submission.test_time_cv_mean = np.array(
-            [ts.test_time for ts in submission.on_cv_folds]).mean()
-        submission.train_time_cv_std = np.array(
-            [ts.train_time for ts in submission.on_cv_folds]).std()
-        submission.valid_time_cv_std = np.array(
-            [ts.valid_time for ts in submission.on_cv_folds]).std()
-        submission.test_time_cv_std = np.array(
-            [ts.test_time for ts in submission.on_cv_folds]).std()
-        db.session.commit()
 
 
 # For parallel call
 def train_test_submission(submission, force_retrain_test=False):
     """We do it here so it's dockerizable."""
+
+    submission.state = 'training'
+    db.session.commit()
+
     detached_submission_on_cv_folds = [
         DetachedSubmissionOnCVFold(submission_on_cv_fold)
         for submission_on_cv_fold in submission.on_cv_folds]
@@ -1429,6 +1427,24 @@ def train_test_submission(submission, force_retrain_test=False):
     submission.set_state_after_training()
     submission.compute_test_score_cv_bag()
     submission.compute_valid_score_cv_bag()
+    # Means and stds were constructed on demand by fetching fold times.
+    # It was slow because submission_on_folds contain also possibly large
+    # predictions. If postgres solves this issue (which can be tested on
+    # the mean and std scores on the private leaderbord), the
+    # corresponding columns (which are now redundant) can be deleted in
+    # Submission and this computation can also be deleted.
+    submission.train_time_cv_mean = np.array(
+        [ts.train_time for ts in submission.on_cv_folds]).mean()
+    submission.valid_time_cv_mean = np.array(
+        [ts.valid_time for ts in submission.on_cv_folds]).mean()
+    submission.test_time_cv_mean = np.array(
+        [ts.test_time for ts in submission.on_cv_folds]).mean()
+    submission.train_time_cv_std = np.array(
+        [ts.train_time for ts in submission.on_cv_folds]).std()
+    submission.valid_time_cv_std = np.array(
+        [ts.valid_time for ts in submission.on_cv_folds]).std()
+    submission.test_time_cv_std = np.array(
+        [ts.test_time for ts in submission.on_cv_folds]).std()
     db.session.commit()
     for score in submission.scores:
         logger.info('valid_score {} = {}'.format(
@@ -2087,10 +2103,8 @@ def update_user_leaderboards(event_name, user_name):
 def update_all_user_leaderboards(event_name):
     event = Event.query.filter_by(name=event_name).one()
     event_teams = EventTeam.query.filter_by(event=event).all()
-    print event
     for event_team in event_teams:
         user_name = event_team.team.name
-        print user_name
         leaderboards = get_leaderboards(event_name, user_name)
         failed_leaderboard_html = get_failed_leaderboard(
             event_name, user_name)
@@ -2278,10 +2292,24 @@ def get_submissions_of_state(state):
     return Submission.query.filter(Submission.state == state).all()
 
 
-def get_earliest_new_submission():
-    new_submissions = Submission.query.filter_by(
-        state='new').order_by(
-        Submission.submission_timestamp).all()
+def get_earliest_new_submission(event_name=None):
+    if event_name is None:
+        new_submissions = Submission.query.filter_by(
+            state='new').filter(name != 'starting_kit').order_by(
+            Submission.submission_timestamp).all()
+    else:
+        new_submissions = db.session.query(
+            Submission, Event, EventTeam).filter(
+            Event.name == event_name).filter(
+            Event.id == EventTeam.event_id).filter(
+            EventTeam.id == Submission.event_team_id).filter(
+            Submission.state == 'new').filter(
+            Submission.name != 'starting_kit').order_by(
+            Submission.submission_timestamp).all()
+        if new_submissions:
+            new_submissions = list(zip(*new_submissions)[0])
+        else:
+            new_submissions = []
     if len(new_submissions) == 0:
         return None
     else:
