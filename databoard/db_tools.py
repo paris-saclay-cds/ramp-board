@@ -1357,15 +1357,20 @@ def process_fold_datarun(pred, y_shape_train, y_shape_test):
 
 
 def backend_train_test_loop(event_name=None, timeout=30):
+    event_names = set()
     while(True):
         earliest_new_submission = get_earliest_new_submission(event_name)
         logger.info('Automatic training {} at {}'.format(
             earliest_new_submission, datetime.datetime.utcnow()))
         if earliest_new_submission is not None:
             train_test_submission(earliest_new_submission)
-            event_name = earliest_new_submission.event.name
-            compute_contributivity(event_name)
-            compute_historical_contributivity(event_name)
+            event_names.add(event_name)
+        else:
+            # We only compute contributivity if nobody is waiting
+            for event_name in event_names:
+                compute_contributivity(event_name)
+                compute_historical_contributivity(event_name)
+            event_names = set()
         time.sleep(timeout)
 
 
@@ -2295,7 +2300,7 @@ def get_submissions_of_state(state):
 def get_earliest_new_submission(event_name=None):
     if event_name is None:
         new_submissions = Submission.query.filter_by(
-            state='new').filter(name != 'starting_kit').order_by(
+            state='new').filter(Submission.name != 'starting_kit').order_by(
             Submission.submission_timestamp).all()
     else:
         new_submissions = db.session.query(
