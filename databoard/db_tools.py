@@ -1583,6 +1583,7 @@ def test_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
     try:
         y_pred = detached_submission_on_cv_fold.test_submission(
             detached_submission_on_cv_fold.trained_submission, X, range(len(y)))
+        assert_all_finite(y_pred)
         if len(y_pred) == len(y):
             detached_submission_on_cv_fold.test_y_pred = y_pred
             detached_submission_on_cv_fold.state = 'tested'
