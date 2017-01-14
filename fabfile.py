@@ -246,29 +246,57 @@ def send_data_datarun(problem_name, host_url, username, userpassd):
     send_data_datarun(problem_name, host_url, username, userpassd)
 
 
-def train_test_datarun(data_id, host_url, username, userpassd, e=None, t=None,
-                       s=None, state=None, force='False', priority='L'):
+# def train_test_datarun(data_id, host_url, username, userpassd, e=None, t=None,
+#                        s=None, state=None, force='False', priority='L'):
+#     """Train and test submission using datarun.
+
+#     :param data_id: id of the associated dataset on datarun platform, created when sending the data
+#     :param host_url: host url of datarun
+#     :param username: username for datarun
+#     :param userpassd: user password for datarun
+#     :param priority: training priority of the submissions on datarun,\
+#         'L' for low and 'H' for high
+
+#     :type data_id: integer
+#     :type host_url: string
+#     :type username: string
+#     :type userpassd: string
+#     :type priority: string
+#      """
+#     from databoard.config import sandbox_d_name
+
+#     force = strtobool(force)
+
+#     from databoard.db_tools import train_test_submissions_datarun,\
+#         get_submissions, get_submissions_of_state
+
+#     if state is not None:
+#         submissions = get_submissions_of_state(state)
+#     else:
+#         submissions = get_submissions(
+#             event_name=e, team_name=t, submission_name=s)
+#     submissions = [submission for submission in submissions
+#                    if submission.name != sandbox_d_name]
+
+#     print(submissions)
+#     train_test_submissions_datarun(data_id, host_url, username, userpassd,
+#                                    submissions, force_retrain_test=force,
+#                                    priority=priority)
+
+
+def train_test_datarun(e=None, t=None, s=None, state=None,
+                       force='False', priority='L'):
     """Train and test submission using datarun.
 
-    :param data_id: id of the associated dataset on datarun platform, created when sending the data
-    :param host_url: host url of datarun
-    :param username: username for datarun
-    :param userpassd: user password for datarun
     :param priority: training priority of the submissions on datarun,\
         'L' for low and 'H' for high
-
-    :type data_id: integer
-    :type host_url: string
-    :type username: string
-    :type userpassd: string
-    :type priority: string
      """
     from databoard.config import sandbox_d_name
 
     force = strtobool(force)
 
-    from databoard.db_tools import train_test_submissions_datarun,\
-        get_submissions, get_submissions_of_state
+    from databoard.db_tools import\
+        get_submissions, get_submissions_of_state, send_submission_datarun
 
     if state is not None:
         submissions = get_submissions_of_state(state)
@@ -279,13 +307,35 @@ def train_test_datarun(data_id, host_url, username, userpassd, e=None, t=None,
                    if submission.name != sandbox_d_name]
 
     print(submissions)
-    train_test_submissions_datarun(data_id, host_url, username, userpassd,
-                                   submissions, force_retrain_test=force,
-                                   priority=priority)
+    for submission in submissions:
+        send_submission_datarun(
+            submission.name, submission.team.name, submission.event.name,
+            priority='L', force_retrain_test=True)
 
 
-def get_trained_tested_datarun(host_url, username, userpassd,
-                               e=None, t=None, s=None):
+# def get_trained_tested_datarun(host_url, username, userpassd,
+#                                e=None, t=None, s=None):
+#     """
+#     Get submissions from datarun and save predictions to databoard database
+
+#     :param host_url: host url of datarun
+#     :param username: username for datarun
+#     :param userpassd: user password for datarun
+
+#     :type host_url: string
+#     :type username: string
+#     :type userpassd: string
+#     """
+#     from databoard.db_tools import get_trained_tested_submissions_datarun
+#     from databoard.db_tools import get_submissions
+#     submissions = get_submissions(event_name=e, team_name=t, submission_name=s)
+#     print(submissions)
+#     get_trained_tested_submissions_datarun(submissions, host_url,
+#                                            username, userpassd)
+#     compute_contributivity(event_name=e)
+
+
+def get_trained_tested_datarun(e=None, t=None, s=None):
     """
     Get submissions from datarun and save predictions to databoard database
 
@@ -297,13 +347,14 @@ def get_trained_tested_datarun(host_url, username, userpassd,
     :type username: string
     :type userpassd: string
     """
-    from databoard.db_tools import get_trained_tested_submissions_datarun
+    from databoard.db_tools import get_submissions_datarun
     from databoard.db_tools import get_submissions
     submissions = get_submissions(event_name=e, team_name=t, submission_name=s)
     print(submissions)
-    get_trained_tested_submissions_datarun(submissions, host_url,
-                                           username, userpassd)
-    compute_contributivity(event_name=e)
+    submission_details = [
+        [submission.name, submission.team.name, submission.event.name]
+        for submission in submissions]
+    get_submissions_datarun(submission_details)
 
 
 def train_test(e, t=None, s=None, state=None, force='False'):
@@ -321,19 +372,14 @@ def train_test(e, t=None, s=None, state=None, force='False'):
     submissions = [submission for submission in submissions
                    if submission.name != sandbox_d_name]
     train_test_submissions(submissions, force_retrain_test=force)
-    compute_contributivity(event_name=e)
+    compute_contributivity(e)
 
 
-def compute_contributivity(event_name):
+def compute_contributivity(e):
     from databoard.db_tools import compute_contributivity
     from databoard.db_tools import compute_historical_contributivity
-    compute_contributivity(event_name)
-    compute_historical_contributivity(event_name)
-
-
-def compute_contributivity_and_save_leaderboards(event_name):
-    from databoard.db_tools import compute_contributivity_and_save_leaderboards
-    compute_contributivity_and_save_leaderboards(event_name)
+    compute_contributivity(e)
+    compute_historical_contributivity(e)
 
 
 def print_submissions(e=None, t=None, s=None):
@@ -558,8 +604,42 @@ def sign_up_event_users_from_file(users_to_add_f_name, event):
         except DuplicateSubmissionError:
             print 'user already signed up'
 
+
 def dump_user_interactions():
     from databoard.db_tools import get_user_interactions_df
     user_interactions_df = get_user_interactions_df()
-    user_interactions_df.to_csv('user_interactions.csv')
+    user_interactions_df.to_csv('user_interactions_dump.csv')
 
+
+def update_leaderboards(e):
+    from databoard.db_tools import update_leaderboards
+    update_leaderboards(e)
+
+
+def update_user_leaderboards(e, u):
+    from databoard.db_tools import update_user_leaderboards
+    update_user_leaderboards(e, u)
+
+
+def update_all_user_leaderboards(e):
+    from databoard.db_tools import update_all_user_leaderboards
+    update_all_user_leaderboards(e)
+
+
+def prepare_data(problem_name):
+    from databoard.model import Problem
+    problem = Problem.query.filter_by(name=problem_name).one_or_none()
+    problem.module.prepare_data()
+
+
+def backend_train_test_loop(e=None, timeout=30):
+    from databoard.db_tools import backend_train_test_loop
+    backend_train_test_loop(e, timeout)
+
+
+# The following function was implemented to handle user interaction dump
+# but it turned out that the db insertion was not the CPU sink. Keep it
+# for a while if the site is still slow.
+# def update_user_interactions():
+#     from databoard.db_tools import update_user_interactions
+#     update_user_interactions()

@@ -176,6 +176,9 @@ fab serve:80 > server_logs/server16.txt 2>&1
  - new:
 sudo service apache2 restart
 
+ - inspect server log file:
+tail -n1000 -f /var/log/apache2/error.log
+
 sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" /home/datacamp/code/databoard/config.py
 
 ### Mac bug
@@ -342,3 +345,57 @@ Follow **instructions 1 to 6** from above.
 02 0    * * *   root    bash /mnt/ramp_data/code/databoard/tools/dump_db.sh
 22 1    * * *   root    bash /mnt/ramp_data/code/databoard/tools/housekeeping.sh
 ```
+
+## Set up the backend
+
+Normally, given a large enough frontend server, you are good to go using manual training (fab train_test) on the frontend server. The principle of the RAMP backend is the following:
+
+1. We mount the databoard root directory $DATABOARD_PATH/datacamp/databoard on the backend server, and make the database visible.
+
+2. We launch a job (fab backend_train_test_loop) which loops infinitely with 30s waiting times between each iteration of:
+    1. get all new submissions
+    2. select the one earliest submission time (FIFO)
+    3. set its state to "training"
+    4. train/test it, compute contributivities, update leaderboards, set its state to trained/validated/tested/training_error/validating_error/testing_error (same as train_test)
+
+### What to do on the frontend
+
+(make the postgres db visible to outside servers; Mehdi will fill this out)
+
+### What to do at each backend server
+
+1. Create an Ubuntu14.04 virtual machine. We typically use 8 CPUs and 4-64GB RAM, depending on the size of the data used in the RAMP. We assume that you can log into this machine as user 'ubuntu'.
+
+2. Run tools/setup_virgin_ubuntu.sh. If your backend has these packages installed, you can skip this step. If it's a virgin server, you will need to manually upload this script or copy-paste it at command line.
+
+3. Clone the databoard code from github, eg. by executing tools/clone_databoard.sh. It will also install all the requirements in requirements.txt. Feel free to edit this file, add or delete libraries needed/not needed for the training jobs of the RAMP.
+
+4. cd tools and edit env.sh. It should contain the following environment variables:
+```
+export DATABOARD_IP='xx.xx.xx.xx'  # the IP of the frontent
+export DATABOARD_PATH='/mnt/ramp_data/'  # databoard path: on the frontend server it is in $DATABOARD_PATH/datacamp/databoard. It will be mounted on this server to the same path.
+export DATABOARD_DB_NAME='databoard'  # the name of the DB at the frontend
+export DATABOARD_DB_USER='xxxx'  # the username of the DB at the frontend
+export DATABOARD_DB_PASSWORD='yyyy'  # the username of the DB at the frontend
+export DATABOARD_DB_URL='postgresql://'$DATABOARD_DB_USER':'$DATABOARD_DB_PASSWORD'@'$DATABOARD_IP':'$DATABOARD_DB_PORT'/'$DATABOARD_DB_NAME
+export DATABOARD_IDENTITY_FILE='/home/ubuntu/.ssh/ramp/id_rsa'  # the private key to log in to root@$DATABOARD_IP
+```
+
+5. Make sure that you can log in as a user root to the frontend server. Eg, 
+    1. mkdir /home/ubuntu/.ssh/ramp
+    2. Add
+    ```
+    Host xx.xx.xx.xx # ramp frontend
+        User root
+        ForwardAgent yes
+        IdentityFile /home/ubuntu/.ssh/ramp/id_rsa
+    ```
+    to /home/ubuntu/.ssh/config
+    Make sure the $DATABOARD_IDENTITY_FILE variable is set to wherever the private key is (/home/ubuntu/.ssh/ramp/id_rsa in the example)
+    3. Copy the private key that allows you to log in to the databoard frontend as root to /home/ubuntu/.ssh/ramp/id_rsa. Don't forget to change its rights to chmod 400
+
+6. Execute deploy_databoard_backend.sh. This script will install additional libraires, e.g., xgboost and python-netcdf4, which may take long time. You can comment out these installations if they are not needed in your ramp. The script then mounts the frontend directory $DATABOARD_IP:$DATABOARD_PATH/datacamp/databoard to the local directory $DATABOARD_PATH/datacamp/databoard.
+
+7. cd to $DATABOARD_PATH/datacamp/databoard. At this point you can execute any fab statements that you can execute at the frontend server. If you want this server to start training automatically, launch
+fab backend_train_test_loop.
+

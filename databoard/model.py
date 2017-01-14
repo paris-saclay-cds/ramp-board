@@ -144,14 +144,17 @@ class Team(db.Model):
 
 
 def get_team_members(team):
-    if team.initiator is not None:
-        # "yield from" in Python 3.3
-        for member in get_team_members(team.initiator):
-            yield member
-        for member in get_team_members(team.acceptor):
-            yield member
-    else:
-        yield team.admin
+    # This works only if no team mergers. The commented code below
+    # is general but slow.
+    yield team.admin
+    # if team.initiator is not None:
+    #     # "yield from" in Python 3.3
+    #     for member in get_team_members(team.initiator):
+    #         yield member
+    #     for member in get_team_members(team.acceptor):
+    #         yield member
+    # else:
+    #     yield team.admin
 
 
 def get_n_team_members(team):
@@ -159,19 +162,31 @@ def get_n_team_members(team):
 
 
 def get_user_teams(user):
-    teams = Team.query.all()
-    for team in teams:
-        if user in get_team_members(team):
-            yield team
+    # This works only if no team mergers. The commented code below
+    # is general but slow.
+    team = Team.query.filter_by(name=user.name).one()
+    yield team
+    # teams = Team.query.all()
+    # for team in teams:
+    #     if user in get_team_members(team):
+    #         yield team
 
 
 def get_user_event_teams(event_name, user_name):
+    # This works only if no team mergers. The commented code below
+    # is general but slow.
     event = Event.query.filter_by(name=event_name).one()
-    user = User.query.filter_by(name=user_name).one()
-    event_teams = EventTeam.query.filter_by(event=event).all()
-    for event_team in event_teams:
-        if user in get_team_members(event_team.team):
-            yield event_team
+    team = Team.query.filter_by(name=user_name).one()
+    event_team = EventTeam.query.filter_by(
+        event=event, team=team).one_or_none()
+    if event_team is not None:
+        yield event_team
+    # event = Event.query.filter_by(name=event_name).one()
+    # user = User.query.filter_by(name=user_name).one()
+    # event_teams = EventTeam.query.filter_by(event=event).all()
+    # for event_team in event_teams:
+    #     if user in get_team_members(event_team.team):
+    #         yield event_team
 
 
 def get_n_user_teams(user):
@@ -321,6 +336,12 @@ class Event(db.Model):
     combined_combined_test_score = db.Column(db.Float, default=None)
     combined_foldwise_valid_score = db.Column(db.Float, default=None)
     combined_foldwise_test_score = db.Column(db.Float, default=None)
+
+    public_leaderboard_html_no_links = db.Column(db.String, default=None)
+    public_leaderboard_html_with_links = db.Column(db.String, default=None)
+    private_leaderboard_html = db.Column(db.String, default=None)
+    failed_leaderboard_html = db.Column(db.String, default=None)
+    new_leaderboard_html = db.Column(db.String, default=None)
 
     def __init__(self, name):
         self.name = name
@@ -538,6 +559,10 @@ class EventTeam(db.Model):
     signup_timestamp = db.Column(db.DateTime, nullable=False)
     approved = db.Column(db.Boolean, default=False)
 
+    leaderboard_html = db.Column(db.String, default=None)
+    failed_leaderboard_html = db.Column(db.String, default=None)
+    new_leaderboard_html = db.Column(db.String, default=None)
+
     db.UniqueConstraint(event_id, team_id, name='et_constraint')
 
     def __init__(self, event, team):
@@ -552,10 +577,17 @@ class EventTeam(db.Model):
 
 def get_active_user_event_team(event, user):
     # There should always be an active user team, if not, throw an exception
-    event_teams = EventTeam.query.filter_by(event=event).all()
-    for event_team in event_teams:
-        if user in get_team_members(event_team.team) and event_team.is_active:
-            return event_team
+    # The current code works only if each user admins a single team.
+    event_team = EventTeam.query.filter_by(
+        event=event, team=user.admined_teams[0]).one_or_none()
+    return event_team
+
+    # This below works for the general case with teams with more than
+    # on members but it is slow, eg in constructing user interactions
+    # event_teams = EventTeam.query.filter_by(event=event).all()
+    # for event_team in event_teams:
+    #     if user in get_team_members(event_team.team) and event_team.is_active:
+    #         return event_team
 
 
 class SubmissionFileType(db.Model):
@@ -799,7 +831,7 @@ class SubmissionFile(db.Model):
 
     @property
     def name_with_link(self):
-        return '<a href="' + self.link + '">' + self.name[:20] + '</a>'
+        return '<a href="' + self.link + '">' + self.name + '</a>'
 
     def get_code(self):
         with open(self.path) as f:
@@ -954,33 +986,33 @@ class SubmissionScore(db.Model):
 
     @property
     def train_score_cv_mean(self):
-        return np.array([ts.train_score for ts in self.on_cv_folds]).mean()
+        return np.mean([ts.train_score for ts in self.on_cv_folds])
 
     @property
     def valid_score_cv_mean(self):
-        return np.array([ts.valid_score for ts in self.on_cv_folds]).mean()
+        return np.mean([ts.valid_score for ts in self.on_cv_folds])
 
     @property
     def test_score_cv_mean(self):
-        return np.array([ts.test_score for ts in self.on_cv_folds]).mean()
+        return np.mean([ts.test_score for ts in self.on_cv_folds])
 
     @property
     def train_score_cv_std(self):
-        return np.array([ts.train_score for ts in self.on_cv_folds]).std()
+        return np.std([ts.train_score for ts in self.on_cv_folds])
 
     @property
     def valid_score_cv_std(self):
-        return np.array([ts.valid_score for ts in self.on_cv_folds]).std()
+        return np.std([ts.valid_score for ts in self.on_cv_folds])
 
     @property
     def test_score_cv_std(self):
-        return np.array([ts.test_score for ts in self.on_cv_folds]).std()
+        return np.std([ts.test_score for ts in self.on_cv_folds])
 
 
 # evaluate right after train/test, so no need for 'scored' states
 submission_states = db.Enum(
     'new', 'checked', 'checking_error', 'trained', 'training_error',
-    'validated', 'validating_error', 'tested', 'testing_error',
+    'validated', 'validating_error', 'tested', 'testing_error', 'training',
     name='submission_states')
 
 submission_types = db.Enum('live', 'test', name='submission_types')
@@ -1163,27 +1195,27 @@ class Submission(db.Model):
     # now redundant) can be deleted and these can be uncommented.
     # @property
     # def train_time_cv_mean(self):
-    #     return np.array([ts.train_time for ts in self.on_cv_folds]).mean()
+    #     return np.mean([ts.train_time for ts in self.on_cv_folds])
 
     # @property
     # def valid_time_cv_mean(self):
-    #     return np.array([ts.valid_time for ts in self.on_cv_folds]).mean()
+    #     return np.mean([ts.valid_time for ts in self.on_cv_folds])
 
     # @property
     # def test_time_cv_mean(self):
-    #     return np.array([ts.test_time for ts in self.on_cv_folds]).mean()
+    #     return np.mean([ts.test_time for ts in self.on_cv_folds])
 
     # @property
     # def train_time_cv_std(self):
-    #     return np.array([ts.train_time for ts in self.on_cv_folds]).std()
+    #     return np.std([ts.train_time for ts in self.on_cv_folds])
 
     # @property
     # def valid_time_cv_std(self):
-    #     return np.array([ts.valid_time for ts in self.on_cv_folds]).std()
+    #     return np.std([ts.valid_time for ts in self.on_cv_folds])
 
     # @property
     # def test_time_cv_std(self):
-    #     return np.array([ts.test_time for ts in self.on_cv_folds]).std()
+    #     return np.std([ts.test_time for ts in self.on_cv_folds])
 
     def set_state(self, state):
         self.state = state
@@ -1657,20 +1689,86 @@ class UserInteraction(db.Model):
     submission_file = db.relationship('SubmissionFile', backref=db.backref(
         'user_interactions', cascade='all, delete-orphan'))
 
-    def __init__(self, interaction, user=None, event=None, note=None,
-                 submission=None, submission_file=None, diff=None,
-                 similarity=None):
+    def __init__(self, interaction=None, user=None, event=None,
+                 ip=None, note=None, submission=None, submission_file=None,
+                 diff=None, similarity=None):
         self.timestamp = datetime.datetime.utcnow()
         self.interaction = interaction
         self.user = user
-        if event is not None:
+        if event is not None and user is not None:
             self.event_team = get_active_user_event_team(event, user)
-        self.ip = request.environ['REMOTE_ADDR']
+        if ip is None:
+            self.ip = request.environ['REMOTE_ADDR']
+        else:
+            self.ip = ip
         self.note = note
         self.submission = submission
         self.submission_file = submission_file
         self.submission_file_diff = diff
         self.submission_file_similarity = similarity
+
+# The following function was implemented to handle user interaction dump
+# but it turned out that the db insertion was not the CPU sink. Keep it
+# for a while if the site is still slow.
+
+    # def __init__(self, line=None, interaction=None, user=None, event=None,
+    #              ip=None, note=None, submission=None, submission_file=None,
+    #              diff=None, similarity=None):
+    #     if line is None:
+    #         # normal real-time construction using kwargs
+    #         self.timestamp = datetime.datetime.utcnow()
+    #         self.interaction = interaction
+    #         self.user = user
+    #         if event is not None:
+    #             self.event_team = get_active_user_event_team(event, user)
+    #         if ip is None:
+    #             self.ip = request.environ['REMOTE_ADDR']
+    #         else:
+    #             self.ip = ip
+    #         self.note = note
+    #         self.submission = submission
+    #         self.submission_file = submission_file
+    #         self.submission_file_diff = diff
+    #         self.submission_file_similarity = similarity
+    #     else:
+    #         # off-line construction using dump from 
+    #         # config.user_interactions_f_name
+    #         tokens = line.split(';')
+    #         self.timestamp = eval(tokens[0])
+    #         self.interaction = eval(tokens[1])
+    #         self.note = eval(tokens[2])
+    #         self.submission_file_diff = eval(tokens[3])
+    #         self.submission_file_similarity = eval(tokens[4])
+    #         self.ip = eval(tokens[5])
+    #         self.user_id = eval(tokens[6])
+    #         self.event_team_id = eval(tokens[7])
+    #         self.submission_id = eval(tokens[8])
+    #         self.submission_file_id = eval(tokens[9])
+
+    def __repr__(self):
+        repr = self.timestamp.__repr__()
+        repr += ';' + self.interaction.__repr__()
+        repr += ';' + self.note.__repr__()
+        repr += ';' + self.submission_file_diff.__repr__()
+        repr += ';' + self.submission_file_similarity.__repr__()
+        repr += ';' + self.ip.__repr__()
+        if self.user is None:
+            repr += ';None'
+        else:
+            repr += ';' + self.user.id.__repr__()
+        if self.event_team is None:
+            repr += ';None'
+        else:
+            repr += ';' + self.event_team.id.__repr__()
+        if self.submission is None:
+            repr += ';None'
+        else:
+            repr += ';' + self.submission.id.__repr__()
+        if self.submission_file is None:
+            repr += ';None'
+        else:
+            repr += ';' + self.submission_file.id.__repr__()
+        return repr
 
     @property
     def submission_file_diff_link(self):

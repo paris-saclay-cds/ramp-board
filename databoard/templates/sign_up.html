@@ -2,7 +2,7 @@
 {% block title %}Sign Up{% endblock %}
 {% block content %}
 
-{% with messages = get_flashed_messages() %}
+{% with messages = get_flashed_messages(with_categories=true) %}
 
 {% if messages %}
 

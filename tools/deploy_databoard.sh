@@ -55,6 +55,7 @@ sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force
 pip install numpy
 pip install scipy
 pip install ipython
+pip install htop
 # Install Apache and mod_wsgi
 sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install apache2 libapache2-mod-wsgi
 # Install git 
@@ -110,7 +111,7 @@ cp -r /mnt/datacamp/backup/databoard ${DATABOARD_PATH}/datacamp/.
 # Clone the project
 mkdir code
 cd code
-git clone https://camille24@bitbucket.org/kegl/databoard.git
+git clone https://github.com/paris-saclay-cds/databoard.git
 cd databoard
 
 # Install Postgres

@@ -1,4 +1,6 @@
 import os
+import time
+import codecs
 import shutil
 import bcrypt
 import timeit
@@ -774,7 +776,9 @@ def delete_submission(event_name, team_name, submission_name):
     delete_submission_similarity([submission])
     db.session.delete(submission)
     db.session.commit()
-    compute_contributivity_and_save_leaderboards(event_name)
+    compute_contributivity(event_name)
+    compute_historical_contributivity(event_name)
+    update_user_leaderboards(event_name, team_name)
 
 
 def make_submission_on_cv_folds(cv_folds, submission):
@@ -819,7 +823,7 @@ def make_submission(event_name, team_name, submission_name, submission_path):
         # We allow resubmit for new or failing submissions
         if submission.name != config.sandbox_d_name and\
                 (submission.state == 'new' or submission.is_error):
-            submission.state = 'new'
+            submission.set_state('new')
             submission.submission_timestamp = datetime.datetime.utcnow()
             for submission_on_cv_fold in submission.on_cv_folds:
                 submission_on_cv_fold.reset()
@@ -887,6 +891,9 @@ def make_submission(event_name, team_name, submission_name, submission_path):
     # for remembering it in the sandbox view
     event_team.last_submission_name = submission_name
     db.session.commit()
+
+    update_leaderboards(event_name)
+    update_user_leaderboards(event_name, team.name)
 
     # We should copy files here
     return submission
@@ -1083,17 +1090,21 @@ def get_submissions_datarun(submissions_details=None):
             submissions.append(get_submissions(event_name=event_name,
                                                team_name=team_name,
                                                submission_name=sub_name)[0])
-    list_events = []
+    list_event_names = []
     for submission in submissions:
-        list_events.append(submission.event.name)
-    get_trained_tested_submissions_datarun(submissions, datarun_host_url,
-                                           datarun_username, datarun_userpassd)
+        list_event_names.append(submission.event.name)
+    get_trained_tested_submissions_datarun(
+        submissions, datarun_host_url, datarun_username, datarun_userpassd)
     if Submission.query.filter(Submission.state == 'new').\
             filter(Submission.name != 'starting_kit').\
             count() < len(submissions):
-        for event in list_events:
-            compute_contributivity(event_name=event)
-            compute_historical_contributivity(event_name=event)
+        for event_name in list_event_names:
+            compute_contributivity(event_name=event_name)
+            compute_historical_contributivity(event_name=event_name)
+    for submission in submissions:
+        update_user_leaderboards(
+            submission.event_team.event.name,
+            submission.event_team.team.name)
 
 
 def train_test_submissions_datarun(data_id, host_url, username, userpassd,
@@ -1271,6 +1282,10 @@ def get_trained_tested_submissions_datarun(submissions, host_url,
 
                 if submission.state != 'new':
                     send_trained_mails(submission)
+                    update_user_leaderboards(
+                        submission.event.name,
+                        submission.team.name)
+
         except Exception as e:
             logger.info('PROBLEM when trying to get submission %s - %s - %s '
                         'from datarun: %s'
@@ -1341,6 +1356,24 @@ def process_fold_datarun(pred, y_shape_train, y_shape_test):
                 submission_fold.state = 'testing_error'
 
 
+def backend_train_test_loop(event_name=None, timeout=30):
+    event_names = set()
+    while(True):
+        earliest_new_submission = get_earliest_new_submission(event_name)
+        logger.info('Automatic training {} at {}'.format(
+            earliest_new_submission, datetime.datetime.utcnow()))
+        if earliest_new_submission is not None:
+            train_test_submission(earliest_new_submission)
+            event_names.add(earliest_new_submission.event.name)
+        else:
+            # We only compute contributivity if nobody is waiting
+            for event_name in event_names:
+                compute_contributivity(event_name)
+                compute_historical_contributivity(event_name)
+            event_names = set()
+        time.sleep(timeout)
+
+
 def train_test_submissions(submissions=None, force_retrain_test=False):
     """Train and test submission.
 
@@ -1348,33 +1381,18 @@ def train_test_submissions(submissions=None, force_retrain_test=False):
     """
     if submissions is None:
         submissions = Submission.query.filter(
-            Submission.name != 'sandbox').order_by(Submission.id).all()
+            Submission.name != 'starting_kit').order_by(Submission.id).all()
     for submission in submissions:
         train_test_submission(submission, force_retrain_test)
-        # Means and stds were constructed on demand by fetching fold times.
-        # It was slow because submission_on_folds contain also possibly large
-        # predictions. If postgres solves this issue (which can be tested on
-        # the mean and std scores on the private leaderbord), the
-        # corresponding columns (which are now redundant) can be deleted in
-        # Submission and this computation can also be deleted.
-        submission.train_time_cv_mean = np.array(
-            [ts.train_time for ts in submission.on_cv_folds]).mean()
-        submission.valid_time_cv_mean = np.array(
-            [ts.valid_time for ts in submission.on_cv_folds]).mean()
-        submission.test_time_cv_mean = np.array(
-            [ts.test_time for ts in submission.on_cv_folds]).mean()
-        submission.train_time_cv_std = np.array(
-            [ts.train_time for ts in submission.on_cv_folds]).std()
-        submission.valid_time_cv_std = np.array(
-            [ts.valid_time for ts in submission.on_cv_folds]).std()
-        submission.test_time_cv_std = np.array(
-            [ts.test_time for ts in submission.on_cv_folds]).std()
-        db.session.commit()
 
 
 # For parallel call
 def train_test_submission(submission, force_retrain_test=False):
     """We do it here so it's dockerizable."""
+
+    submission.state = 'training'
+    db.session.commit()
+
     detached_submission_on_cv_folds = [
         DetachedSubmissionOnCVFold(submission_on_cv_fold)
         for submission_on_cv_fold in submission.on_cv_folds]
@@ -1414,6 +1432,24 @@ def train_test_submission(submission, force_retrain_test=False):
     submission.set_state_after_training()
     submission.compute_test_score_cv_bag()
     submission.compute_valid_score_cv_bag()
+    # Means and stds were constructed on demand by fetching fold times.
+    # It was slow because submission_on_folds contain also possibly large
+    # predictions. If postgres solves this issue (which can be tested on
+    # the mean and std scores on the private leaderbord), the
+    # corresponding columns (which are now redundant) can be deleted in
+    # Submission and this computation can also be deleted.
+    submission.train_time_cv_mean = np.mean(
+        [ts.train_time for ts in submission.on_cv_folds])
+    submission.valid_time_cv_mean = np.mean(
+        [ts.valid_time for ts in submission.on_cv_folds])
+    submission.test_time_cv_mean = np.mean(
+        [ts.test_time for ts in submission.on_cv_folds])
+    submission.train_time_cv_std = np.std(
+        [ts.train_time for ts in submission.on_cv_folds])
+    submission.valid_time_cv_std = np.std(
+        [ts.valid_time for ts in submission.on_cv_folds])
+    submission.test_time_cv_std = np.std(
+        [ts.test_time for ts in submission.on_cv_folds])
     db.session.commit()
     for score in submission.scores:
         logger.info('valid_score {} = {}'.format(
@@ -1454,6 +1490,7 @@ def train_test_submission_on_cv_fold(detached_submission_on_cv_fold,
         test_submission_on_cv_fold(
             detached_submission_on_cv_fold, X_test, y_test,
             force_retest=force_retrain_test)
+    detached_submission_on_cv_fold.trained_submission = None
     # When called in a single thread, we don't need the return value,
     # submission_on_cv_fold is modified in place. When called in parallel
     # multiprocessing mode, however, copies are made when the function is
@@ -1566,7 +1603,8 @@ def test_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
     detached_submission_on_cv_fold.test_time = end - start
 
 
-def compute_contributivity(event_name, force_ensemble=False):
+def compute_contributivity(event_name, start_time_stamp=None,
+                           end_time_stamp=None, force_ensemble=False):
     """Computes contributivity leaderboard scores.
 
     Parameters
@@ -1607,7 +1645,8 @@ def compute_contributivity(event_name, force_ensemble=False):
         combined_predictions, best_predictions,\
             combined_test_predictions, best_test_predictions =\
             _compute_contributivity_on_fold(
-                cv_fold, true_predictions_valid, force_ensemble)
+                cv_fold, true_predictions_valid,
+                start_time_stamp, end_time_stamp, force_ensemble)
         # TODO: if we do asynchron CVs, this has to be revisited
         if combined_predictions is None:
             logger.info('No submissions to combine')
@@ -1673,6 +1712,7 @@ def compute_contributivity(event_name, force_ensemble=False):
 
 
 def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
+                                    start_time_stamp=None, end_time_stamp=None,
                                     force_ensemble=False):
     """Construct the best model combination on a single fold.
 
@@ -1701,6 +1741,26 @@ def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
         and submission_on_fold.is_public_leaderboard
         and submission_on_fold.submission.name != config.sandbox_d_name
     ]
+    # reset
+    for submission_on_fold in selected_submissions_on_fold:
+        submission_on_fold.best = False
+        submission_on_fold.contributivity = 0.0
+    # select submissions in time interval
+    if start_time_stamp is not None:
+        selected_submissions_on_fold = [
+            submission_on_fold for submission_on_fold
+            in selected_submissions_on_fold
+            if submission_on_fold.submission.submission_timestamp >
+            start_time_stamp
+        ]
+    if end_time_stamp is not None:
+        selected_submissions_on_fold = [
+            submission_on_fold for submission_on_fold
+            in selected_submissions_on_fold
+            if submission_on_fold.submission.submission_timestamp <
+            end_time_stamp
+        ]
+
     if len(selected_submissions_on_fold) == 0:
         return None, None, None, None
     # TODO: maybe this can be simplified. Don't need to get down
@@ -1723,11 +1783,7 @@ def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
             cv_fold.event, predictions_list, true_predictions_valid,
             best_index_list)
         improvement = len(best_index_list) != len(old_best_index_list)
-        logger.info('\t{}: {}'.format(best_index_list, score))
-    # reset
-    for submission_on_fold in selected_submissions_on_fold:
-        submission_on_fold.best = False
-        submission_on_fold.contributivity = 0.0
+        logger.info('\t{}: {}'.format(old_best_index_list, score))
     # set
     selected_submissions_on_fold[best_index_list[0]].best = True
     # we share a unit of 1. among the contributive submissions
@@ -1783,15 +1839,9 @@ def compute_historical_contributivity(event_name):
                     submission.historical_contributivity -= partial_credit
                     processed_submissions.append(source_submission)
     db.session.commit()
+    update_leaderboards(event_name)
+    update_all_user_leaderboards(event_name)
 
-
-# to "cache" the leaderboards
-def compute_contributivity_and_save_leaderboards(
-        event_name, force_ensemble=False):
-    compute_contributivity(event_name, force_ensemble)
-    compute_historical_contributivity(event_name)
-    # user = User.query.filter_by(name='kegl').one()
-    # public_leaderboard_html = get_public_leaderboard(event_name, user)
 
 
 def is_user_signed_up(event_name, user_name):
@@ -1829,6 +1879,23 @@ def is_public_event(event, user):
     return False
 
 
+def is_open_leaderboard(event, current_user):
+    """
+    True if current_user can look at submission of event.
+
+    If submission is None, it is assumed to be the sandbox.
+    """
+    if not current_user.is_authenticated or not current_user.is_active:
+        return False
+    if is_admin(event, current_user):
+        return True
+    if not is_user_signed_up(event.name, current_user.name):
+        return False
+    if event.is_public_open:
+        return True
+    return False
+
+
 def is_open_code(event, current_user, submission=None):
     """
     True if current_user can look at submission of event.
@@ -1846,51 +1913,56 @@ def is_open_code(event, current_user, submission=None):
         # access right thing will have to be cleaned up anyways
         submission = get_sandbox(event, current_user)
     if current_user in get_team_members(submission.event_team.team):
-        # This may be slow
         return True
     if event.is_public_open:
         return True
     return False
 
 
-def get_public_leaderboard(event_name, current_user, team_name=None,
-                           user_name=None):
+def get_leaderboards(event_name, user_name=None):
     """
     Returns
     -------
-    leaderboard_html : html string
+    leaderboard_html_with_links : html string
+    leaderboard_html_with_no_links : html string
     """
-    submissions = get_submissions(
-        event_name=event_name, team_name=team_name, user_name=user_name)
+    # start = time.time()
+
+    submissions = get_submissions(event_name=event_name, user_name=user_name)
     submissions = [submission for submission in submissions
                    if submission.is_public_leaderboard]
     event = Event.query.filter_by(name=event_name).one()
 
     score_names = [score_type.name for score_type in event.score_types]
-    columns = ['team',
-               'submission',
-               'contributivity',
-               'historical_contributivity'] +\
-              score_names +\
-              ['train time',
-               'test time',
-               'submitted at (UTC)']
-    values = zip(*[
-        [submission.event_team.team.name,
-         submission.name_with_link if is_open_code(
-             event, current_user, submission) else submission.name[:20],
-         int(round(100 * submission.contributivity)),
-         int(round(100 * submission.historical_contributivity))] +
+    scoress = np.array([
         [round(score.valid_score_cv_bag, score.precision)
-            for score in submission.ordered_scores(score_names)] +
-        [int(round(submission.train_time_cv_mean)),
-         int(round(submission.valid_time_cv_mean)),
-         date_time_format(submission.submission_timestamp)]
-        for submission in submissions])
-    leaderboard_dict_list = {column: value for column, value in zip(
-        columns, values)}
-
-    leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
+         for score in submission.ordered_scores(score_names)]
+        for submission in submissions
+    ]).T
+    leaderboard_df = pd.DataFrame()
+    leaderboard_df['team'] = [
+        submission.event_team.team.name for submission in submissions]
+    leaderboard_df['submission'] = [
+        submission.name_with_link for submission in submissions]
+    leaderboard_df['contributivity'] = [
+        int(round(100 * submission.contributivity))
+        for submission in submissions]
+    leaderboard_df['historical_contributivity'] = [
+        int(round(100 * submission.historical_contributivity))
+        for submission in submissions]
+    for score_name in score_names:  # to make sure the column is created
+        leaderboard_df[score_name] = 0
+    for score_name, scores in zip(score_names, scoress):
+        leaderboard_df[score_name] = scores
+    leaderboard_df['train time'] = [
+        int(round(submission.train_time_cv_mean))
+        for submission in submissions]
+    leaderboard_df['test time'] = [
+        int(round(submission.valid_time_cv_mean))
+        for submission in submissions]
+    leaderboard_df['submitted at (UTC)'] = [
+        date_time_format(submission.submission_timestamp)
+        for submission in submissions]
     sort_column = event.official_score_name
     leaderboard_df = leaderboard_df.sort_values(
         sort_column, ascending=event.official_score_type.is_lower_the_better)
@@ -1902,63 +1974,88 @@ def get_public_leaderboard(event_name, current_user, team_name=None,
         justify='left',
         # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
-    leaderboard_html = leaderboard_df.to_html(**html_params)
-    return table_format(leaderboard_html)
+    leaderboard_html_with_links = leaderboard_df.to_html(**html_params)
+    leaderboard_df['submission'] = [
+        submission.name[:20] for submission in submissions]
+    leaderboard_html_no_links = leaderboard_df.to_html(**html_params)
+
+    # logger.info(u'leaderboard construction takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
+
+    return (
+        table_format(leaderboard_html_with_links),
+        table_format(leaderboard_html_no_links)
+    )
 
 
-def get_private_leaderboard(event_name, team_name=None, user_name=None):
+def get_private_leaderboards(event_name, user_name=None):
     """
     Returns
     -------
-    leaderboard_html : html string
+    leaderboard_html_with_links : html string
+    leaderboard_html_with_no_links : html string
     """
+    # start = time.time()
 
-    submissions = get_submissions(
-        event_name=event_name, team_name=team_name, user_name=user_name)
+    submissions = get_submissions(event_name=event_name, user_name=user_name)
     submissions = [submission for submission in submissions
                    if submission.is_private_leaderboard]
     event = Event.query.filter_by(name=event_name).one()
 
     score_names = [score_type.name for score_type in event.score_types]
-    columns = ['team',
-               'submission'] + list(chain.from_iterable([[
-                name + ' pub bag',
-                name + ' pub mean',
-                name + ' pub std',
-                name + ' pr bag',
-                name + ' pr mean',
-                name + ' pr std']
-                for name in score_names])) +\
-              ['contributivity',
-               'historical contributivity',
-               'train time',
-               'trt std',
-               'test time',
-               'tet std',
-               'submitted at (UTC)']
-
-    values = zip(*[
-        [submission.event_team.team.name,
-         submission.name_with_link] +
-         list(chain.from_iterable([[
-          round(score.valid_score_cv_bag, score.precision),
+    scoresss = np.array([
+        [[round(score.valid_score_cv_bag, score.precision),
           round(score.valid_score_cv_mean, score.precision),
           round(score.valid_score_cv_std, score.precision + 1),
           round(score.test_score_cv_bag, score.precision),
           round(score.test_score_cv_mean, score.precision),
-          round(score.test_score_cv_std, score.precision + 1)]
-            for score in submission.ordered_scores(score_names)])) +
-        [int(round(100 * submission.contributivity)),
-         int(round(100 * submission.historical_contributivity)),
-         int(round(submission.train_time_cv_mean)),
-         int(round(submission.train_time_cv_std)),
-         int(round(submission.valid_time_cv_mean)),
-         int(round(submission.valid_time_cv_std)),
-         date_time_format(submission.submission_timestamp)]
-        for submission in submissions])
-    leaderboard_dict_list = {column: value for column, value in zip(
-        columns, values)}
-    leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
+          round(score.test_score_cv_std, score.precision + 1)
+         ]
+         for score in submission.ordered_scores(score_names)]
+        for submission in submissions
+    ])
+    if len(submissions) > 0:
+        scoresss = np.swapaxes(scoresss, 0, 1)
+    leaderboard_df = pd.DataFrame()
+    leaderboard_df['team'] = [
+        submission.event_team.team.name for submission in submissions]
+    leaderboard_df['submission'] = [
+        submission.name_with_link for submission in submissions]
+    for score_name in score_names:  # to make sure the column is created
+        leaderboard_df[score_name + ' pub bag'] = 0
+        leaderboard_df[score_name + ' pub mean'] = 0
+        leaderboard_df[score_name + ' pub std'] = 0
+        leaderboard_df[score_name + ' pr bag'] = 0
+        leaderboard_df[score_name + ' pr mean'] = 0
+        leaderboard_df[score_name + ' pr std'] = 0
+    for score_name, scoress in zip(score_names, scoresss):
+        leaderboard_df[score_name + ' pub bag'] = scoress[:, 0]
+        leaderboard_df[score_name + ' pub mean'] = scoress[:, 1]
+        leaderboard_df[score_name + ' pub std'] = scoress[:, 2]
+        leaderboard_df[score_name + ' pr bag'] = scoress[:, 3]
+        leaderboard_df[score_name + ' pr mean'] = scoress[:, 4]
+        leaderboard_df[score_name + ' pr std'] = scoress[:, 5]
+    leaderboard_df['contributivity'] = [
+        int(round(100 * submission.contributivity))
+        for submission in submissions]
+    leaderboard_df['historical_contributivity'] = [
+        int(round(100 * submission.historical_contributivity))
+        for submission in submissions]
+    leaderboard_df['train time'] = [
+        int(round(submission.train_time_cv_mean))
+        for submission in submissions]
+    leaderboard_df['trt std'] = [
+        int(round(submission.train_time_cv_std))
+        for submission in submissions]
+    leaderboard_df['test time'] = [
+        int(round(submission.valid_time_cv_mean))
+        for submission in submissions]
+    leaderboard_df['tet std'] = [
+        int(round(submission.valid_time_cv_std))
+        for submission in submissions]
+    leaderboard_df['submitted at (UTC)'] = [
+        date_time_format(submission.submission_timestamp)
+        for submission in submissions]
     sort_column = event.official_score_name + ' pr bag'
     leaderboard_df = leaderboard_df.sort_values(
         sort_column, ascending=event.official_score_type.is_lower_the_better)
@@ -1971,7 +2068,56 @@ def get_private_leaderboard(event_name, team_name=None, user_name=None):
         # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
     leaderboard_html = leaderboard_df.to_html(**html_params)
+
+    # logger.info(u'private leaderboard construction takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
+
     return table_format(leaderboard_html)
+
+
+def update_leaderboards(event_name):
+    private_leaderboard_html = get_private_leaderboards(
+        event_name)
+    leaderboards = get_leaderboards(event_name)
+    failed_leaderboard_html = get_failed_leaderboard(event_name)
+    new_leaderboard_html = get_new_leaderboard(event_name)
+
+    event = Event.query.filter_by(name=event_name).one()
+    event.private_leaderboard_html = private_leaderboard_html
+    event.public_leaderboard_html_with_links = leaderboards[0]
+    event.public_leaderboard_html_no_links = leaderboards[1]
+    event.failed_leaderboard_html = failed_leaderboard_html
+    event.new_leaderboard_html = new_leaderboard_html
+
+    db.session.commit()
+
+
+def update_user_leaderboards(event_name, user_name):
+    logger.info('Leaderboard is updated for user {} in event {}.'.format(
+        user_name, event_name))
+    leaderboards = get_leaderboards(event_name, user_name)
+    failed_leaderboard_html = get_failed_leaderboard(event_name, user_name)
+    new_leaderboard_html = get_new_leaderboard(event_name, user_name)
+    for event_team in get_user_event_teams(event_name, user_name):
+        event_team.leaderboard_html = leaderboards[0]
+        event_team.failed_leaderboard_html = failed_leaderboard_html
+        event_team.new_leaderboard_html = new_leaderboard_html
+    db.session.commit()
+
+
+def update_all_user_leaderboards(event_name):
+    event = Event.query.filter_by(name=event_name).one()
+    event_teams = EventTeam.query.filter_by(event=event).all()
+    for event_team in event_teams:
+        user_name = event_team.team.name
+        leaderboards = get_leaderboards(event_name, user_name)
+        failed_leaderboard_html = get_failed_leaderboard(
+            event_name, user_name)
+        new_leaderboard_html = get_new_leaderboard(event_name, user_name)
+        event_team.leaderboard_html = leaderboards[0]
+        event_team.failed_leaderboard_html = failed_leaderboard_html
+        event_team.new_leaderboard_html = new_leaderboard_html
+    db.session.commit()
 
 
 def get_failed_leaderboard(event_name, team_name=None, user_name=None):
@@ -1980,6 +2126,8 @@ def get_failed_leaderboard(event_name, team_name=None, user_name=None):
     -------
     leaderboard_html : html string
     """
+
+    # start = time.time()
 
     submissions = get_submissions(
         event_name=event_name, team_name=team_name, user_name=user_name)
@@ -2008,6 +2156,10 @@ def get_failed_leaderboard(event_name, team_name=None, user_name=None):
         # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
     leaderboard_html = leaderboard_df.to_html(**html_params)
+
+    # logger.info(u'failed leaderboard construction takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
+
     return table_format(leaderboard_html)
 
 
@@ -2017,6 +2169,8 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
     -------
     leaderboard_html : html string
     """
+    # start = time.time()
+
     submissions = get_submissions(
         event_name=event_name, team_name=team_name, user_name=user_name)
     submissions = [submission for submission in submissions
@@ -2041,6 +2195,10 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
         justify='left',
         # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
+
+    # logger.info(u'new leaderboard construction takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
+
     leaderboard_html = leaderboard_df.to_html(**html_params)
     return table_format(leaderboard_html)
 
@@ -2139,10 +2297,24 @@ def get_submissions_of_state(state):
     return Submission.query.filter(Submission.state == state).all()
 
 
-def get_earliest_new_submission():
-    new_submissions = Submission.query.filter_by(
-        state='new').order_by(
-        Submission.submission_timestamp).all()
+def get_earliest_new_submission(event_name=None):
+    if event_name is None:
+        new_submissions = Submission.query.filter_by(
+            state='new').filter(Submission.name != 'starting_kit').order_by(
+            Submission.submission_timestamp).all()
+    else:
+        new_submissions = db.session.query(
+            Submission, Event, EventTeam).filter(
+            Event.name == event_name).filter(
+            Event.id == EventTeam.event_id).filter(
+            EventTeam.id == Submission.event_team_id).filter(
+            Submission.state == 'new').filter(
+            Submission.name != 'starting_kit').order_by(
+            Submission.submission_timestamp).all()
+        if new_submissions:
+            new_submissions = list(zip(*new_submissions)[0])
+        else:
+            new_submissions = []
     if len(new_submissions) == 0:
         return None
     else:
@@ -2229,10 +2401,32 @@ def get_top_score_per_user(closing_timestamp=None):
 
 #################### User interactions #####################
 
+
 def add_user_interaction(**kwargs):
+    # start = time.time()
     user_interaction = UserInteraction(**kwargs)
+    # logger.info(u'user interaction construction takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
+    # start = time.time()
     db.session.add(user_interaction)
     db.session.commit()
+    # logger.info(u'user interaction db insertion takes {}ms'.format(
+    #     int(1000 * (time.time() - start))))
+    # with codecs.open(config.user_interactions_f_name, 'a+') as f:
+    #     f.write(user_interaction.__repr__() + '\n')
+
+# The following function was implemented to handle user interaction dump
+# but it turned out that the db insertion was not the CPU sink. Keep it
+# for a while if the site is still slow.
+# def update_user_interactions():
+#     f = codecs.open(config.user_interactions_f_name, 'r')
+#     shutil.move(
+#         config.user_interactions_f_name,
+#         config.user_interactions_f_name + '.bak')
+#     for line in f:
+#         user_interaction = UserInteraction(line)
+#         db.session.add(user_interaction)
+#     db.session.commit()
 
 
 def print_user_interactions():

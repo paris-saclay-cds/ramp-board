@@ -17,6 +17,10 @@ starting_kit_d_name = 'starting_kit'
 sandbox_path = os.path.join(root_path, sandbox_d_name)
 problems_d_name = 'problems'
 problems_path = os.path.join(root_path, problems_d_name)
+# The following function was implemented to handle user interaction dump
+# but it turned out that the db insertion was not the CPU sink. Keep it
+# for a while if the site is still slow.
+# user_interactions_f_name = os.path.join(root_path, 'user_interactions.csv')
 
 # data_path = os.path.join(root_path, 'data')
 # raw_data_path = os.path.join(data_path, 'raw')
@@ -354,8 +358,7 @@ MAIL_DEFAULT_SENDER = ('Databoard', 'databoardmailer@gmail.com')
 MAIL_RECIPIENTS = ''  # notification_recipients
 ADMIN_MAILS = ['balazs.kegl@gmail.com',
                'alexandre.gramfort@telecom-paristech.fr',
-               'mehdi@cherti.name',
-               'camille.marini@gmail.com']
+               'mehdi@cherti.name']
 if os.environ.get('DATABOARD_DB_PERF'):
     SQLALCHEMY_RECORD_QUERIES = True
 DATABASE_QUERY_TIMEOUT = 0.5  # slow database query threshold (in seconds)
