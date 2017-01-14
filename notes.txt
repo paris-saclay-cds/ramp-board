@@ -14,7 +14,9 @@ class PredictionArrayType:
 - web front end / flask should be isolated from the ML/leaderboard code
 - avoid the ramp_index.txt mess
 
-The production server is deployed. Tell me if you see anything strange or that is not working...
+
+in events page there should be a split between My Ramps and the others.
+I always spend 20s to find the good one.
 
 Important details:
 
