@@ -1438,18 +1438,18 @@ def train_test_submission(submission, force_retrain_test=False):
     # the mean and std scores on the private leaderbord), the
     # corresponding columns (which are now redundant) can be deleted in
     # Submission and this computation can also be deleted.
-    submission.train_time_cv_mean = np.array(
-        [ts.train_time for ts in submission.on_cv_folds]).mean()
-    submission.valid_time_cv_mean = np.array(
-        [ts.valid_time for ts in submission.on_cv_folds]).mean()
-    submission.test_time_cv_mean = np.array(
-        [ts.test_time for ts in submission.on_cv_folds]).mean()
-    submission.train_time_cv_std = np.array(
-        [ts.train_time for ts in submission.on_cv_folds]).std()
-    submission.valid_time_cv_std = np.array(
-        [ts.valid_time for ts in submission.on_cv_folds]).std()
-    submission.test_time_cv_std = np.array(
-        [ts.test_time for ts in submission.on_cv_folds]).std()
+    submission.train_time_cv_mean = np.mean(
+        [ts.train_time for ts in submission.on_cv_folds])
+    submission.valid_time_cv_mean = np.mean(
+        [ts.valid_time for ts in submission.on_cv_folds])
+    submission.test_time_cv_mean = np.mean(
+        [ts.test_time for ts in submission.on_cv_folds])
+    submission.train_time_cv_std = np.std(
+        [ts.train_time for ts in submission.on_cv_folds])
+    submission.valid_time_cv_std = np.std(
+        [ts.valid_time for ts in submission.on_cv_folds])
+    submission.test_time_cv_std = np.std(
+        [ts.test_time for ts in submission.on_cv_folds])
     db.session.commit()
     for score in submission.scores:
         logger.info('valid_score {} = {}'.format(

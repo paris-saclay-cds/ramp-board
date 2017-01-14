@@ -986,27 +986,27 @@ class SubmissionScore(db.Model):
 
     @property
     def train_score_cv_mean(self):
-        return np.array([ts.train_score for ts in self.on_cv_folds]).mean()
+        return np.mean([ts.train_score for ts in self.on_cv_folds])
 
     @property
     def valid_score_cv_mean(self):
-        return np.array([ts.valid_score for ts in self.on_cv_folds]).mean()
+        return np.mean([ts.valid_score for ts in self.on_cv_folds])
 
     @property
     def test_score_cv_mean(self):
-        return np.array([ts.test_score for ts in self.on_cv_folds]).mean()
+        return np.mean([ts.test_score for ts in self.on_cv_folds])
 
     @property
     def train_score_cv_std(self):
-        return np.array([ts.train_score for ts in self.on_cv_folds]).std()
+        return np.std([ts.train_score for ts in self.on_cv_folds])
 
     @property
     def valid_score_cv_std(self):
-        return np.array([ts.valid_score for ts in self.on_cv_folds]).std()
+        return np.std([ts.valid_score for ts in self.on_cv_folds])
 
     @property
     def test_score_cv_std(self):
-        return np.array([ts.test_score for ts in self.on_cv_folds]).std()
+        return np.std([ts.test_score for ts in self.on_cv_folds])
 
 
 # evaluate right after train/test, so no need for 'scored' states
@@ -1195,27 +1195,27 @@ class Submission(db.Model):
     # now redundant) can be deleted and these can be uncommented.
     # @property
     # def train_time_cv_mean(self):
-    #     return np.array([ts.train_time for ts in self.on_cv_folds]).mean()
+    #     return np.mean([ts.train_time for ts in self.on_cv_folds])
 
     # @property
     # def valid_time_cv_mean(self):
-    #     return np.array([ts.valid_time for ts in self.on_cv_folds]).mean()
+    #     return np.mean([ts.valid_time for ts in self.on_cv_folds])
 
     # @property
     # def test_time_cv_mean(self):
-    #     return np.array([ts.test_time for ts in self.on_cv_folds]).mean()
+    #     return np.mean([ts.test_time for ts in self.on_cv_folds])
 
     # @property
     # def train_time_cv_std(self):
-    #     return np.array([ts.train_time for ts in self.on_cv_folds]).std()
+    #     return np.std([ts.train_time for ts in self.on_cv_folds])
 
     # @property
     # def valid_time_cv_std(self):
-    #     return np.array([ts.valid_time for ts in self.on_cv_folds]).std()
+    #     return np.std([ts.valid_time for ts in self.on_cv_folds])
 
     # @property
     # def test_time_cv_std(self):
-    #     return np.array([ts.test_time for ts in self.on_cv_folds]).std()
+    #     return np.std([ts.test_time for ts in self.on_cv_folds])
 
     def set_state(self, state):
         self.state = state
