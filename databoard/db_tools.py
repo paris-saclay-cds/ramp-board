@@ -16,6 +16,7 @@ from itertools import chain
 import xkcdpass.xkcd_password as xp
 from sklearn.externals.joblib import Parallel, delayed
 from databoard import db
+from sklearn.utils.validation import assert_all_finite
 
 from databoard.model import User, Team, Submission, SubmissionFile,\
     SubmissionFileType, SubmissionFileTypeExtension, WorkflowElementType,\
@@ -1541,6 +1542,7 @@ def train_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
         y_pred = detached_submission_on_cv_fold.test_submission(
             detached_submission_on_cv_fold.trained_submission, X,
             range(len(y)))
+        assert_all_finite(y_pred)
         if len(y_pred) == len(y):
             detached_submission_on_cv_fold.full_train_y_pred = y_pred
             detached_submission_on_cv_fold.state = 'validated'
