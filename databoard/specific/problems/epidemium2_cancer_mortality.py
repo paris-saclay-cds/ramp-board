@@ -53,9 +53,10 @@ def prepare_data():
 
     countries_encoded = LabelEncoder().fit_transform(df_private.country)
     skf = StratifiedShuffleSplit(
-        y=countries_encoded, n_iter=2, test_size=None,
+        n_splits=2, test_size=None,
         train_size=train_size, random_state=random_state)
-    train_is, test_is = list(skf)[0]
+    gen_skf = skf.split(countries_encoded, countries_encoded)
+    train_is, test_is = list(gen_skf)[0]
     df_train = df_private.iloc[train_is]
     df_test = df_private.iloc[test_is]
     df_train.to_csv(train_filename, index=False)

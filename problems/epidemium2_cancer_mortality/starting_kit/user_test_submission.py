@@ -1,9 +1,9 @@
+from __future__ import print_function
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import ShuffleSplit
 import feature_extractor
 import regressor
-
 
 if __name__ == '__main__':
     print('Reading file ...')
@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     skf = ShuffleSplit(n_splits=2, test_size=0.5, random_state=67)
     print('Training file ...')
-    for train_is, test_is in skf.split(y_array):
+    for train_is, test_is in skf.split(X_df, y_array):
         X_train_df = X_df.iloc[train_is]
         y_train_array = y_array[train_is]
 

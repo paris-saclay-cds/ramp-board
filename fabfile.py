@@ -637,6 +637,10 @@ def backend_train_test_loop(e=None, timeout=30):
     backend_train_test_loop(e, timeout)
 
 
+def set_state(e, t, s, state):
+    from databoard.db_tools import set_state
+    set_state(e, t, s, state)
+
 # The following function was implemented to handle user interaction dump
 # but it turned out that the db insertion was not the CPU sink. Keep it
 # for a while if the site is still slow.
