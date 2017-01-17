@@ -633,8 +633,9 @@ def prepare_data(problem_name):
 
 
 def backend_train_test_loop(e=None, timeout=30,
-                            is_compute_contributivity=True):
+                            is_compute_contributivity='True'):
     from databoard.db_tools import backend_train_test_loop
+    is_compute_contributivity = strtobool(is_compute_contributivity)
     backend_train_test_loop(e, timeout, is_compute_contributivity)
 
 
