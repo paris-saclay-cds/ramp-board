@@ -1357,7 +1357,32 @@ def process_fold_datarun(pred, y_shape_train, y_shape_test):
                 submission_fold.state = 'testing_error'
 
 
-def backend_train_test_loop(event_name=None, timeout=30):
+def get_earliest_new_submission(event_name=None):
+    if event_name is None:
+        new_submissions = Submission.query.filter_by(
+            state='new').filter(Submission.name != 'starting_kit').order_by(
+            Submission.submission_timestamp).all()
+    else:
+        new_submissions = db.session.query(
+            Submission, Event, EventTeam).filter(
+            Event.name == event_name).filter(
+            Event.id == EventTeam.event_id).filter(
+            EventTeam.id == Submission.event_team_id).filter(
+            Submission.state == 'new').filter(
+            Submission.name != 'starting_kit').order_by(
+            Submission.submission_timestamp).all()
+        if new_submissions:
+            new_submissions = list(zip(*new_submissions)[0])
+        else:
+            new_submissions = []
+    if len(new_submissions) == 0:
+        return None
+    else:
+        return new_submissions[0]
+
+
+def backend_train_test_loop(event_name=None, timeout=30,
+                            is_compute_contributivity=True):
     event_names = set()
     while(True):
         earliest_new_submission = get_earliest_new_submission(event_name)
@@ -1370,9 +1395,10 @@ def backend_train_test_loop(event_name=None, timeout=30):
             update_all_user_leaderboards(earliest_new_submission.event.name)
         else:
             # We only compute contributivity if nobody is waiting
-            for event_name in event_names:
-                compute_contributivity(event_name)
-                compute_historical_contributivity(event_name)
+            if is_compute_contributivity:
+                for event_name in event_names:
+                    compute_contributivity(event_name)
+                    compute_historical_contributivity(event_name)
             event_names = set()
         time.sleep(timeout)
 
@@ -2300,30 +2326,6 @@ def get_submissions(event_name=None, team_name=None, user_name=None,
 
 def get_submissions_of_state(state):
     return Submission.query.filter(Submission.state == state).all()
-
-
-def get_earliest_new_submission(event_name=None):
-    if event_name is None:
-        new_submissions = Submission.query.filter_by(
-            state='new').filter(Submission.name != 'starting_kit').order_by(
-            Submission.submission_timestamp).all()
-    else:
-        new_submissions = db.session.query(
-            Submission, Event, EventTeam).filter(
-            Event.name == event_name).filter(
-            Event.id == EventTeam.event_id).filter(
-            EventTeam.id == Submission.event_team_id).filter(
-            Submission.state == 'new').filter(
-            Submission.name != 'starting_kit').order_by(
-            Submission.submission_timestamp).all()
-        if new_submissions:
-            new_submissions = list(zip(*new_submissions)[0])
-        else:
-            new_submissions = []
-    if len(new_submissions) == 0:
-        return None
-    else:
-        return new_submissions[0]
 
 
 def print_submissions(event_name=None, team_name=None, submission_name=None):
