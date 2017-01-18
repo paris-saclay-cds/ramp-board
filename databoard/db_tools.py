@@ -598,7 +598,7 @@ def get_sandbox(event, user):
     event_team = get_active_user_event_team(event, user)
 
     submission = Submission.query.filter_by(
-        event_team=event_team, name=config.sandbox_d_name).one_or_none()
+        event_team=event_team, is_not_sandbox=False).one_or_none()
     return submission
 
 
@@ -807,8 +807,7 @@ def make_submission(event_name, team_name, submission_name, submission_path):
             last_submission = None
         else:
             last_submission = all_submissions[-1]
-        if last_submission is not None and\
-                last_submission.name != config.sandbox_d_name:
+        if last_submission is not None and last_submission.is_not_sandbox:
             now = datetime.datetime.utcnow()
             last = last_submission.submission_timestamp
             min_diff = event.min_duration_between_submissions
@@ -1360,7 +1359,7 @@ def process_fold_datarun(pred, y_shape_train, y_shape_test):
 def get_earliest_new_submission(event_name=None):
     if event_name is None:
         new_submissions = Submission.query.filter_by(
-            state='new').filter(Submission.name != 'starting_kit').order_by(
+            state='new').filter(Submission.is_not_sandbox).order_by(
             Submission.submission_timestamp).all()
     else:
         new_submissions = db.session.query(
@@ -1369,7 +1368,7 @@ def get_earliest_new_submission(event_name=None):
             Event.id == EventTeam.event_id).filter(
             EventTeam.id == Submission.event_team_id).filter(
             Submission.state == 'new').filter(
-            Submission.name != 'starting_kit').order_by(
+            Submission.is_not_sandbox).order_by(
             Submission.submission_timestamp).all()
         if new_submissions:
             new_submissions = list(zip(*new_submissions)[0])
@@ -1410,7 +1409,7 @@ def train_test_submissions(submissions=None, force_retrain_test=False):
     """
     if submissions is None:
         submissions = Submission.query.filter(
-            Submission.name != 'starting_kit').order_by(Submission.id).all()
+            Submission.is_not_sandbox).order_by(Submission.id).all()
     for submission in submissions:
         train_test_submission(submission, force_retrain_test)
 
@@ -1770,7 +1769,7 @@ def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
         if (submission_on_fold.submission.is_valid or force_ensemble)
         and submission_on_fold.submission.is_to_ensemble
         and submission_on_fold.is_public_leaderboard
-        and submission_on_fold.submission.name != config.sandbox_d_name
+        and submission_on_fold.submission.is_not_sandbox
     ]
     # reset
     for submission_on_fold in selected_submissions_on_fold:
@@ -1978,7 +1977,7 @@ def get_leaderboards(event_name, user_name=None):
     leaderboard_df['contributivity'] = [
         int(round(100 * submission.contributivity))
         for submission in submissions]
-    leaderboard_df['historical_contributivity'] = [
+    leaderboard_df['historical contributivity'] = [
         int(round(100 * submission.historical_contributivity))
         for submission in submissions]
     for score_name in score_names:  # to make sure the column is created
@@ -2069,7 +2068,7 @@ def get_private_leaderboards(event_name, user_name=None):
     leaderboard_df['contributivity'] = [
         int(round(100 * submission.contributivity))
         for submission in submissions]
-    leaderboard_df['historical_contributivity'] = [
+    leaderboard_df['historical contributivity'] = [
         int(round(100 * submission.historical_contributivity))
         for submission in submissions]
     leaderboard_df['train time'] = [
