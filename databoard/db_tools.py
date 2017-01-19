@@ -821,7 +821,7 @@ def make_submission(event_name, team_name, submission_name, submission_path):
         db.session.add(submission)
     else:
         # We allow resubmit for new or failing submissions
-        if submission.name != config.sandbox_d_name and\
+        if submission.is_not_sandbox and\
                 (submission.state == 'new' or submission.is_error):
             submission.set_state('new')
             submission.submission_timestamp = datetime.datetime.utcnow()
@@ -2204,7 +2204,8 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
     submissions = get_submissions(
         event_name=event_name, team_name=team_name, user_name=user_name)
     submissions = [submission for submission in submissions
-                   if submission.state == 'new' and submission.is_not_sandbox]
+                   if submission.state in ['new', 'training']
+                   and submission.is_not_sandbox]
 
     columns = ['team',
                'submission',
