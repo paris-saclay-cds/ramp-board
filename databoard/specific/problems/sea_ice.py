@@ -30,10 +30,12 @@ def prepare_data():
     pass
 
 
+# Both train and test targets are stripped off the first
+# n_burn_in entries
 def get_train_data():
     X_train_ds = xr.open_dataset(X_train_filename, decode_times=False)
     y_train_array = np.load(y_train_filename)
-    return X_train_ds, y_train_array
+    return X_train_ds, y_train_array[X_train_ds.attrs['n_burn_in']:]
 
 
 def get_test_data():

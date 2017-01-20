@@ -3,13 +3,20 @@ from importlib import import_module
 
 
 def train_submission(module_path, X_ds, y_array, train_is):
+    # train_is wrt range(len(y_array)) so we need to make X_test_ds longer
+    # by n_burn_in
     n_burn_in = X_ds.attrs['n_burn_in']
-    X_train_ds = X_ds.isel(time=train_is)
+    burn_in_range = np.arange(train_is[-1], train_is[-1] + n_burn_in)
+    extended_train_is = np.concatenate((train_is, burn_in_range))
+    X_train_ds = X_ds.isel(time=extended_train_is)
     y_train_array = y_array[train_is]
 
     # Feature extraction
     ts_feature_extractor = import_module('.ts_feature_extractor', module_path)
     ts_fe = ts_feature_extractor.FeatureExtractor()
+    # ts_fe.transform should return array corresponding to time points
+    # without burn in, so X_train_array and y_train_array should new have
+    # the same length.
     X_train_array = ts_fe.transform(X_train_ds)
     # Checking if feature extractor looks ahead: we change the input array
     # after index n_burn_in + check_index, and check if the first
@@ -43,15 +50,16 @@ def train_submission(module_path, X_ds, y_array, train_is):
     # Regression
     regressor = import_module('.regressor', module_path)
     reg = regressor.Regressor()
-    reg.fit(X_train_array, y_train_array[n_burn_in:])
+    reg.fit(X_train_array, y_train_array)
     return ts_fe, reg
 
 
 def test_submission(trained_model, X_ds, test_is):
-    burn_in_range = np.arange(test_is[0] - X_ds.attrs['n_burn_in'], test_is[0])
-    extended_test_is = np.concatenate((burn_in_range, test_is))
+    # test_is is range(len(y)) so we need to make X_test_ds longer by n_burn_in
+    n_burn_in = X_ds.attrs['n_burn_in']
+    burn_in_range = np.arange(test_is[-1], test_is[-1] + n_burn_in)
+    extended_test_is = np.concatenate((test_is, burn_in_range))
     X_test_ds = X_ds.isel(time=extended_test_is)
-
     # X_xray = X_xray.copy(deep=True)
     ts_fe, reg = trained_model
     # Feature extraction
