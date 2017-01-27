@@ -1,6 +1,6 @@
 jupyter
 numpy>=1.9.2
-pandas>=0.16.0
+pandas>=0.18.0
 scikit-learn>=0.18
 enum34>=1.0.4
 Fabric>=1.10.1
