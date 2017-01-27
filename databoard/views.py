@@ -836,7 +836,13 @@ def credit(submission_hash):
         for source_submission in source_submissions:
             s_field = get_s_field(source_submission)
             similarity = int(getattr(credit_form, s_field).data) / 100.
-            if similarity > 0:
+            submission_similarity = SubmissionSimilarity.query.filter_by(
+                type='target_credit', user=current_user,
+                source_submission=source_submission,
+                target_submission=submission).all()
+            # if submission_similarity is not empty, we need to 
+            # add zero to cancel previous credits explicitly
+            if similarity > 0 or submission_similarity:
                 submission_similarity = SubmissionSimilarity(
                     type='target_credit', user=current_user,
                     source_submission=source_submission,
