@@ -2,7 +2,7 @@ import datetime
 from sklearn.model_selection import StratifiedShuffleSplit
 from databoard.specific.problems.HEP_detector_anomalies import problem_name  # noqa
 
-event_name = 'HEP_detector_anomalies_M1XMAP583_201617.py'  # should be the same as the file name
+event_name = 'HEP_detector_anomalies_M1XMAP583_201617'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
