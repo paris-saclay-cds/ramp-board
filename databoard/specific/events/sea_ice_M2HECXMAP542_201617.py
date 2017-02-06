@@ -2,11 +2,11 @@ import numpy as np
 import datetime
 from databoard.specific.problems.sea_ice import problem_name  # noqa
 
-event_name = 'sea_ice_M1XMAP583_201617'  # should be the same as the file name
+event_name = 'sea_ice_M2HECXMAP542_201617'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Northern hemisphere sea ice prediction, M1 X MAP583 2016/17'
+event_title = 'Northern hemisphere sea ice prediction, M2 HEC/X MAP542 2016/17'
 
 score_type_descriptors = [
     {'name': 'rmse', 'precision': 3},
@@ -52,6 +52,6 @@ is_send_submitted_mails = True
 min_duration_between_submissions = 24 * 60 * 60  # sec
 opening_timestamp = datetime.datetime(2000, 1, 1, 0, 0, 0)
 # before links to submissions in leaderboard are not alive
-public_opening_timestamp = datetime.datetime(2017, 2, 13, 19, 0, 0)
+public_opening_timestamp = datetime.datetime(2017, 2, 26, 19, 0, 0)
 closing_timestamp = datetime.datetime(4000, 1, 1, 0, 0, 0)
 is_public = True
