@@ -18,13 +18,15 @@ def train_submission(module_path, X_ds, y_array, train_is):
     # without burn in, so X_train_array and y_train_array should new have
     # the same length.
     X_train_array = ts_fe.transform(X_train_ds)
+
     # Checking if feature extractor looks ahead: we change the input array
     # after index n_burn_in + check_index, and check if the first
     # check_features have changed
     check_size = 132
     check_index = 120
     # We use a short prefix to save time
-    X_check_ds = X_ds.isel(time=slice(0, n_burn_in + check_size)).copy(deep=True)
+    X_check_ds = X_ds.isel(
+        time=slice(0, n_burn_in + check_size)).copy(deep=True)
     # Assigning Dataset slices is not yet supported so we need to iterate
     # over the arrays. To generalize we should maybe check the types.
     data_var_names = X_check_ds.data_vars.keys()
@@ -34,7 +36,7 @@ def train_submission(module_path, X_ds, y_array, train_is):
     X_check_array = ts_fe.transform(X_check_ds)
     X_neq = np.not_equal(
         X_train_array[:check_size], X_check_array[:check_size])
-    x_neq = np.all(X_neq, axis=1)
+    x_neq = np.any(X_neq, axis=1)
     x_neq_nonzero = x_neq.nonzero()
     if len(x_neq_nonzero[0]) == 0:  # no change anywhere
         first_modified_index = check_index
