@@ -1788,14 +1788,14 @@ def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
         selected_submissions_on_fold = [
             submission_on_fold for submission_on_fold
             in selected_submissions_on_fold
-            if submission_on_fold.submission.submission_timestamp >
+            if submission_on_fold.submission.submission_timestamp >=
             start_time_stamp
         ]
     if end_time_stamp is not None:
         selected_submissions_on_fold = [
             submission_on_fold for submission_on_fold
             in selected_submissions_on_fold
-            if submission_on_fold.submission.submission_timestamp <
+            if submission_on_fold.submission.submission_timestamp <=
             end_time_stamp
         ]
 
