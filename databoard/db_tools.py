@@ -1636,7 +1636,15 @@ def test_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
 
 def compute_contributivity(event_name, start_time_stamp=None,
                            end_time_stamp=None, force_ensemble=False):
-    """Computes contributivity leaderboard scores.
+    compute_contributivity_no_commit(
+        event_name, start_time_stamp, end_time_stamp, force_ensemble)
+    db.session.commit()
+
+
+def compute_contributivity_no_commit(
+        event_name, start_time_stamp=None, end_time_stamp=None,
+        force_ensemble=False):
+    """Compute contributivity leaderboard scores.
 
     Parameters
     ----------
@@ -1739,7 +1747,6 @@ def compute_contributivity(event_name, start_time_stamp=None,
         event.combined_foldwise_test_score = float(scores[-1])
     else:
         event.combined_foldwise_test_score = None
-    db.session.commit()
 
 
 def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
