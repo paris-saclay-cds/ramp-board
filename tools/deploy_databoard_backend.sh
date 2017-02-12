@@ -18,32 +18,39 @@ cd; git clone --recursive https://github.com/dmlc/xgboost
 cd xgboost; make -j4
 cd python-package; sudo python setup.py install
 cd
+# Install tensorflow from linux binary
+sudo pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.10.0-cp27-none-linux_x86_64.whl
+# Install python-tk
+sudo apt-get install python python-tk idle python-pmw python-imaging
 # Install python-netcdf4 (requires zlib, hdf5, and netCDF-C)
 # Takes a long time, comment it out if you don't need it in your ramp
-sudo apt-get -y install m4
-wget http://zlib.net/zlib-1.2.8.tar.gz
-wget http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.17.tar
-wget https://github.com/Unidata/netcdf-c/archive/v4.4.1.tar.gz
-tar -xzvf zlib-1.2.8.tar.gz
-tar -xvf hdf5-1.8.17.tar
-tar -xzvf v4.4.1.tar.gz
-cd zlib-1.2.8
-export ZDIR=/usr/local
-./configure --prefix=${ZDIR}
-sudo make check
-sudo make install 
-cd ../hdf5-1.8.17
-export H5DIR=/usr/local
-./configure --with-zlib=${ZDIR} --prefix=${H5DIR}
-sudo make check   # Fails here, but seems ok for netcdf
-sudo make install
-cd ../netcdf-c-4.4.1
-export NCDIR=/usr/local
-sudo CPPFLAGS=-I${H5DIR}/include LDFLAGS=-L${H5DIR}/lib ./configure --prefix=${NCDIR}
-sudo make check
-sudo make install  # or sudo make install
-cd
-sudo USE_SETUPCFG=0 pip install netcdf
+function install_hdf5 {
+    sudo apt-get -y install m4
+    wget http://zlib.net/zlib-1.2.8.tar.gz
+    wget http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.17.tar
+    wget https://github.com/Unidata/netcdf-c/archive/v4.4.1.tar.gz
+    tar -xzvf zlib-1.2.8.tar.gz
+    tar -xvf hdf5-1.8.17.tar
+    tar -xzvf v4.4.1.tar.gz
+    cd zlib-1.2.8
+    export ZDIR=/usr/local
+    ./configure --prefix=${ZDIR}
+    sudo make check
+    sudo make install 
+    cd ../hdf5-1.8.17
+    export H5DIR=/usr/local
+    ./configure --with-zlib=${ZDIR} --prefix=${H5DIR}
+    sudo make check   # Fails here, but seems ok for netcdf
+    sudo make install
+    cd ../netcdf-c-4.4.1
+    export NCDIR=/usr/local
+    sudo CPPFLAGS=-I${H5DIR}/include LDFLAGS=-L${H5DIR}/lib ./configure --prefix=${NCDIR}
+    sudo make check
+    sudo make install  # or sudo make install
+    cd
+    sudo USE_SETUPCFG=0 pip install netcdf
+}
+install_hdf5
 
 # Mount the frontend disk (for /submissions and /problems, which are not in the db)
 sudo apt-get -y install sshfs
