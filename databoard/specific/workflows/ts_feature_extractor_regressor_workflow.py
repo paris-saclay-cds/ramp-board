@@ -23,7 +23,7 @@ def train_submission(module_path, X_ds, y_array, train_is):
     # after index n_burn_in + check_index, and check if the first
     # check_features have changed
     check_size = 132
-    check_index = 120
+    check_index = 13
     # We use a short prefix to save time
     X_check_ds = X_ds.isel(
         time=slice(0, n_burn_in + check_size)).copy(deep=True)
