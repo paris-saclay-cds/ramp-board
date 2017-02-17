@@ -254,16 +254,18 @@ def test_leaderboard():
     current_user = User.query.filter_by(name='kegl').one()
     print('\n')
     print('***************** Leaderboard ****************')
-    print(db_tools.get_public_leaderboard('iris_test', current_user))
-    print(db_tools.get_public_leaderboard('boston_housing_test', current_user))
+    print(db_tools.get_leaderboards(
+        'iris_test', user_name=current_user.name))
+    print(db_tools.get_leaderboards(
+        'boston_housing_test', user_name=current_user.name))
     print('***************** Private leaderboard ****************')
-    print(db_tools.get_private_leaderboard('iris_test'))
-    print(db_tools.get_private_leaderboard('boston_housing_test'))
+    print(db_tools.get_private_leaderboards('iris_test'))
+    print(db_tools.get_private_leaderboards('boston_housing_test'))
     print('*********** Leaderboard of kegl ***********')
-    print(db_tools.get_public_leaderboard(
-            'iris_test', current_user, user_name='kegl'))
+    print(db_tools.get_leaderboards(
+            'iris_test', user_name='kegl'))
     print('*********** Private leaderboard of kegl ***********')
-    print(db_tools.get_private_leaderboard('iris_test', user_name='kegl'))
+    print(db_tools.get_private_leaderboards('iris_test', user_name='kegl'))
     print('*********** Failing leaderboard of kegl ***********')
     print(db_tools.get_failed_leaderboard('iris_test', user_name='kegl'))
     print('*********** New leaderboard of kegl ***********')
