@@ -1826,9 +1826,9 @@ class SubmissionSimilarity(db.Model):
             'SubmissionSimilarity.target_submission_id == Submission.id'))
 
     def __repr__(self):
-        repr = 'type={}, user={}, source={}, target={}, similarity={}'.format(
+        repr = 'type={}, user={}, source={}, target={}, similarity={}, timestamp={}'.format(
             self.type, self.user, self.source_submission,
-            self.target_submission, self.similarity)
+            self.target_submission, self.similarity, self.timestamp)
         return repr
 
 

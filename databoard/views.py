@@ -847,7 +847,8 @@ def credit(submission_hash):
                     type='target_credit', user=current_user,
                     source_submission=source_submission,
                     target_submission=submission,
-                    similarity=similarity)
+                    similarity=similarity,
+                    timestamp=datetime.datetime.utcnow())
                 db.session.add(submission_similarity)
         db.session.commit()
 
