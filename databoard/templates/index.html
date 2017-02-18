@@ -40,6 +40,8 @@
                     <li class="active"><a href="/user">Home</a></li>
                     <li><a href="#about">About</a></li>
                     <li><a href="#contact">Contact</a></li>
+                    <li><a href="#team">Team</a></li>
+                    <li><a href="#partners">Partners</a></li>
                     <li><a href="/sign_up">Sign Up</a></li>
                     <li><a href="/login">Login</a></li>
                 </ul>
@@ -58,39 +60,40 @@
         </div>
     </div>
     <div class="container-fluid app-content-a" id="features">
-        <div class="container">        <div class="row text-center">
-            <div class="col-md-4 col-sm-6">
-                <span class="fa-stack fa-lg fa-5x">
-                  <i class="fa fa-circle-thin fa-stack-2x"></i>
-                  <i class="fa fa-users fa-stack-1x"></i>
-                </span>
-                <h2>Collaborative prototyping through a data challenge</h2>
-                <p>During the RAMP, the participants submit predictive solutions (code). The models are trained on our back-end. The scores are displayed on a leaderboard. In the open phase, all participants have access to all code, and they are encouraged to look at and to reuse each other's solutions. This accelerates the development process since good ideas spread fast.</p>
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-md-4 col-sm-6">
+                    <span class="fa-stack fa-lg fa-5x">
+                      <i class="fa fa-circle-thin fa-stack-2x"></i>
+                      <i class="fa fa-users fa-stack-1x"></i>
+                    </span>
+                    <h2>Collaborative prototyping through a data challenge</h2>
+                    <p>During the RAMP, the participants submit predictive solutions (code). The models are trained on our back-end. The scores are displayed on a leaderboard. In the open phase, all participants have access to all code, and they are encouraged to look at and to reuse each other's solutions. This accelerates the development process since good ideas spread fast.</p>
+                </div>
+                <!-- /.col-lg-4 -->
+                <div class="col-md-4 col-sm-6">
+                    <span class="fa-stack fa-lg fa-5x">
+                      <i class="fa fa-circle-thin fa-stack-2x"></i>
+                      <i class="fa fa-graduation-cap fa-stack-1x"></i>
+                    </span>
+                    <h2>Training through a data challenge</h2>
+                    <p>A great tool to learn data science! 
+                    RAMPs are used in the MS Big Data at Telecom ParisTech, 
+                    in three UPSaclay M2 programs (Data Science, AIC, Data and Knowledge), 
+                    in a course on Machine Learning for Finance and Economics at Université Panthéon-Assas, 
+                    in a graduate course in the Data analysis and decision program at Ecole Centrale de Lille.</p>
+                </div>
+                <!-- /.col-lg-4 -->
+                <div class="col-md-4 col-sm-6">
+                    <span class="fa-stack fa-lg fa-5x">
+                      <i class="fa fa-circle-thin fa-stack-2x"></i>
+                      <i class="fa fa-comments-o fa-stack-1x"></i>
+                    </span>
+                    <h2>Networking through a data challenge</h2>
+                    <p>Each RAMP attracts about 30-50 participants, coming from different backgrounds and carreer stages who usually meet for the first time. They develop a working relationship in a relaxed environment, and sometimes keep working together after the event. </p>
+                </div>
+                <!-- /.col-lg-4 -->
             </div>
-            <!-- /.col-lg-4 -->
-            <div class="col-md-4 col-sm-6">
-                <span class="fa-stack fa-lg fa-5x">
-                  <i class="fa fa-circle-thin fa-stack-2x"></i>
-                  <i class="fa fa-graduation-cap fa-stack-1x"></i>
-                </span>
-                <h2>Training through a data challenge</h2>
-                <p>A great tool to learn data science! 
-                RAMPs are used in the MS Big Data at Telecom ParisTech, 
-                in three UPSaclay M2 programs (Data Science, AIC, Data and Knowledge), 
-                in a course on Machine Learning for Finance and Economics at Université Panthéon-Assas, 
-                in a graduate course in the Data analysis and decision program at Ecole Centrale de Lille.</p>
-            </div>
-            <!-- /.col-lg-4 -->
-            <div class="col-md-4 col-sm-6">
-                <span class="fa-stack fa-lg fa-5x">
-                  <i class="fa fa-circle-thin fa-stack-2x"></i>
-                  <i class="fa fa-comments-o fa-stack-1x"></i>
-                </span>
-                <h2>Networking through a data challenge</h2>
-                <p>Each RAMP attracts about 30-50 participants, coming from different backgrounds and carreer stages who usually meet for the first time. They develop a working relationship in a relaxed environment, and sometimes keep working together after the event. </p>
-            </div>
-            <!-- /.col-lg-4 -->
-        </div>
         </div>
     </div>
     <div class="container-fluid app-content-b feature-1">
@@ -136,48 +139,130 @@
             </div>
         </div>
     </div>
-    <div class="container-fluid app-content-a">
+    <div class="container-fluid app-content-a" id="team">
         <div class="container">
             <div class="row">
                 <div class="col-md-12">
                     <h2 class="text-center app-content-header">Team</h2>
-                        <div class="col-md-2">
-                            <center>
-                            <img src="https://media.licdn.com/mpr/mpr/shrinknp_400_400/AAEAAQAAAAAAAABMAAAAJGE0ZDdmMDkyLWY0OTYtNGYzMS1iNDU1LTMwN2I2MjBkODViYQ.jpg" class="img-circle" alt="Balas Kegl" width="175" height="175"><br>
-                            <a href="https://www.linkedin.com/in/balazskegl">Balázs Kégl</a>
-                            </center>
-                        </div>
-                        <div class="col-md-2">
-                            <center>
-                                <img src="{{url_for('static', filename='img/Alex.jpg') }}" class="img-circle" alt="Alexandre Gramfort" width="175" height="175">
-                            <a href="https://www.linkedin.com/in/alexandregramfort">Alex Gramfort</a>
-                            </center>
-                        </div>
-                        <div class="col-md-2">
-                            <center>
+                    <div class="col-lg-1 col-md-0">
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-12">
+                        <center>
+                            <img src="https://media.licdn.com/mpr/mpr/shrinknp_400_400/AAEAAQAAAAAAAABMAAAAJGE0ZDdmMDkyLWY0OTYtNGYzMS1iNDU1LTMwN2I2MjBkODViYQ.jpg" class="img-circle" alt="Balazs Kegl" width="175" height="175">
+                            <br>
+                            <a href="https://www.linkedin.com/in/balazskegl" target="_blank">Balázs Kégl</a>
+                        </center>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                       <center>
+                            <img src="{{url_for('static', filename='img/Alex.jpg') }}" class="img-circle" alt="Alexandre Gramfort" width="175" height="175">
+                            <br>
+                            <a href="https://www.linkedin.com/in/alexandregramfort" target="_blank">Alex Gramfort</a>
+                        </center>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                        <center>
                             <img src="https://media.licdn.com/mpr/mpr/shrinknp_400_400/p/2/005/059/3c4/30ed83b.jpg" class="img-circle" alt="Akin Kazakçi" width="175" height="175">
-                            <a href="https://www.linkedin.com/in/akin-osman-kazakci-ab49516">Akin Kazakçi</a>
-                            </center>
-                        </div>
-                        <div class="col-md-2">
-                            <center>
-                            <img src="https://media.licdn.com/mpr/mpr/shrinknp_400_400/AAEAAQAAAAAAAAQ5AAAAJGUzMmRiNTRmLWM4OWEtNGJkNS1iYWQ2LTgwM2E5MWIyZDNmZQ.jpg" class="img-circle" alt="Camille Marini" width="175" height="175">
-                            <a href="https://www.linkedin.com/in/camille-marini-b585b210">Camille Marini</a>
-                            </center>
-                        </div>
-                        <div class="col-md-2">
-                            <center>
-                                <img src="{{url_for('static', filename='img/Mehdi.png') }}" class="img-circle" alt="Mehdi Cherti" width="175" height="175">
+                            <br>
+                            <a href="https://www.linkedin.com/in/akin-osman-kazakci-ab49516" target="_blank">Akin Kazakçi</a>
+                        </center>
+                    </div>
+                    <div class="col-lg-2 col-md-6 col-sm-6">
+                        <center>
+                            <img src="{{url_for('static', filename='img/Mehdi.png') }}" class="img-circle" alt="Mehdi Cherti" width="175" height="175">
+                            <br>
                             <a href="https://www.linkedin.com/in/mehdi-cherti-38424b20">Mehdi Cherti</a>
                             </center>
-                        </div>
-                        <div class="col-md-2">
-                            <center>
+                    </div>
+                    <div class="col-lg-2 col-md-6 col-sm-6">
+                        <center>
                             <img src="https://media.licdn.com/mpr/mpr/shrinknp_400_400/AAEAAQAAAAAAAAOYAAAAJDRjNmZkNmNjLTViOTYtNGNhMC1iNTU0LWU1MTgzNzk4MWQ5OA.jpg" class="img-circle" alt="Yohann Stiruk" width="175" height="175">
-                            <a href="https://www.linkedin.com/in/yohann-sitruk-47289133">Yohann Sitruk</a>
-                            </center>
-                        </div>
+                            <br>
+                            <a href="https://www.linkedin.com/in/yohann-sitruk-47289133" target="_blank">Yohann Sitruk</a>
+                        </center>
+                    <div class="col-lg-1 col-md-0 col-sm-0">
+                    </div>
+                    </div>
+                </div>
             </div>
+        </div>
+    </div>
+    <div class="container-fluid app-content-a">
+        <div class="container">
+            <div class="row">
+                <h2 class="text-center app-content-header">Alumni</h2>
+                <div class="col-md-3 col-sm-0">
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <center>
+                    <img src="https://media.licdn.com/mpr/mpr/shrinknp_400_400/AAEAAQAAAAAAAAdaAAAAJDdmOGM1YzI0LTkxMzUtNDZjZS1iZjMyLThjOTZhOTBiNjkyNg.jpg" class="img-circle" alt="Akin Kazakçi" width="175" height="175">
+                    <br>
+                    <a href="https://www.linkedin.com/in/djalelbbz/" target="_blank">Djalel Benbouzid</a>
+                    </center>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <center>
+                    <img src="https://media.licdn.com/mpr/mpr/shrinknp_400_400/AAEAAQAAAAAAAAQ5AAAAJGUzMmRiNTRmLWM4OWEtNGJkNS1iYWQ2LTgwM2E5MWIyZDNmZQ.jpg" class="img-circle" alt="Camille Marini" width="175" height="175">
+                    <br>
+                    <a href="https://www.linkedin.com/in/camille-marini-b585b210" target="_blank">Camille Marini</a>
+                    </center>
+                </div>
+                <div class="col-md-3 col-sm-0">
+                </div>
+           </div>
+        </div>
+    </div>
+    <div class="container-fluid app-content-a" id="partners">
+        <div class="container">
+            <div class="row">
+                <h2 class="text-center app-content-header">Partners</h2>
+                <div class="col-md-12 col-sm-12">
+                    <center>
+                    <a href="https://www.universite-paris-saclay.fr/en" target="_blank">
+                    <img src="{{url_for('static', filename='img/partners/upsaclay.jpg') }}" class="img" alt="Université Paris-Saclay" height="100">
+                    </a>
+                    </center>
+                </div>
+                <div class="col-md-1 col-sm-0">
+                </div>
+                <div class="col-md-2 col-sm-4">
+                    <center>
+                    <a href="http://www.cnrs.fr/mi/spip.php?article53&lang=fr" target="_blank">
+                    <img src="{{url_for('static', filename='img/partners/cnrs.png') }}" class="img" alt="CNRS" height="100">
+                    </a>
+                    </center>
+                </div>
+                <div class="col-md-2 col-sm-4">
+                    <center>
+                    <a href="https://www.polytechnique.edu" target="_blank">
+                    <img src="{{url_for('static', filename='img/partners/polytechnique.jpg') }}" class="img" alt="Ecole Polytechnique" height="100">
+                    </a>
+                    </center>
+                </div>
+                <div class="col-md-2 col-sm-4">
+                    <center>
+                    <a href="http://www.u-psud.fr" target="_blank">
+                    <img src="{{url_for('static', filename='img/partners/upsud.jpg') }}" class="img" alt="Université Paris-Sud" height="100">
+                    </a>
+                    </center>
+                </div>
+                <div class="col-md-2 col-sm-6">
+                    <center>
+                    <a href="http://www.mines-paristech.fr" target="_blank">
+                    <img src="{{url_for('static', filename='img/partners/mines.png') }}" class="img" alt="Mines Paris-Tech" height="100">
+                    </a>
+                    </center>
+                </div>
+                <div class="col-md-2 col-sm-6">
+                    <center>
+                    <a href="http://www.telecom-paristech.fr" target="_blank">
+                    <img src="{{url_for('static', filename='img/partners/telecom.png') }}" class="img" alt="Telecom Paris-Tech" height="100">
+                    </a>
+                    </center>
+                </div>
+                <div class="col-md-1 col-sm-0">
+                </div>
+           </div>
         </div>
     </div>
     <!-- /END THE FEATURETTES -->
@@ -186,7 +271,7 @@
       <div class="container">
           <center><span class="pull-left"><i class="icon fa fa-copyright"></i> RAMP version beta <a href="#"><i class="icon fa fa-long-arrow-up"></i><i class="icon fa fa-long-arrow-up"></i></a></span> &nbsp; &nbsp; &nbsp; &nbsp;
           <span><a href="/"><img src="{{ url_for('static', filename='img/logo_CDS_footer.svg') }}" height="20px"></a></span> &nbsp; &nbsp; &nbsp; &nbsp; <span><a href="mailto:admin@ramp.studio">Contact Us <i class="icon fa fa-envelope"></i></a></span>
-          <span class="pull-right">Thanks to <a href="https://github.com/tui2tone/flat-admin-bootstrap-templates">tui2tone</a> for the  template!</span>
+          <span class="pull-right">Thanks to <a href="https://github.com/tui2tone/flat-admin-bootstrap-templates" target="_blank">tui2tone</a> for the  template!</span>
           </center>
       </div>
     </footer>
