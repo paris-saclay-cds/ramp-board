@@ -4,6 +4,7 @@ import os
 from shutil import copyfile
 import subprocess
 
+from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 from sklearn.utils import shuffle
@@ -65,7 +66,7 @@ def split(train_public=0.25, private_train=0.5, private_test=0.25, random_state=
     _copy_imgs(data='priv_train/data.csv', source='imgs', dest='priv_train')
     _copy_imgs(data='priv_test/data.csv', source='imgs', dest='priv_test')
 
-def minibatch_img_iterator(df, batch_size=512, include_y=True, folder='imgs'):
+def minibatch_img_iterator(df, batch_size=512, include_y=True, folder='imgs', n_jobs=8):
     """
     Generator function that yields minibatches of images, optionally with their labels.
 
@@ -78,6 +79,8 @@ def minibatch_img_iterator(df, batch_size=512, include_y=True, folder='imgs'):
         minibatch size
     include_y : bool
         whether to include labels in the yielded value
+    n_jobs : int
+        number of parallel jobs for simultanously load images into files
 
     Yields
     ======
@@ -99,7 +102,7 @@ def minibatch_img_iterator(df, batch_size=512, include_y=True, folder='imgs'):
         id_list_cur = id_list[i:i + batch_size]
         filenames = map(_get_image_filename, id_list_cur)
         filenames = map(lambda filename:os.path.join(folder, filename), filenames)
-        X = map(imread, filenames)
+        X = Parallel(n_jobs=n_jobs)(delayed(imread)(filename) for filename in filenames)
         if include_y:
             y = map(lambda id:df.loc[id]['taxa_code'], id_list)
             yield X, y
