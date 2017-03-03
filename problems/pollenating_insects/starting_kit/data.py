@@ -112,7 +112,7 @@ def minibatch_img_iterator(df, batch_size=512, include_y=True, folder='imgs', n_
         filenames = map(lambda filename:os.path.join(folder, filename), filenames)
         X = Parallel(n_jobs=n_jobs)(delayed(imread)(filename) for filename in filenames)
         if include_y:
-            y = map(lambda id:df.loc[id]['taxa_code'], id_list)
+            y = map(lambda id:df.loc[id]['class'], id_list_cur)
             yield X, y
         else:
             yield X
@@ -122,6 +122,9 @@ def _load_full(filename='spipoll.txt'):
     #remove duplicates in URL
     df = df.drop_duplicates(subset=['picture_url'], keep='first')
     df['taxa_code'] = df['taxa_code'].apply(_taxa_code_to_int)
+    taxa_codes = df['taxa_code'].unique().tolist()
+    code_index = {t: i for i, t in enumerate(taxa_codes)}
+    df['class'] = df['taxa_code'].apply(lambda code:code_index[code])
     return df
 
 def _get_image_filename(unique_id):
