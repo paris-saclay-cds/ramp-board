@@ -12,12 +12,20 @@ class Classifier(object):
     def __init__(self):
         self.model = build_model()
     
-    def predict(self, X):
-        pass
-    
-    def partial_fit(self, X, y):
-        self.model.fit(X, y, nb_epoch=1, batch_size=128, verbose=1)
+    def fit(self, gen_builder):
+        gen_train, gen_valid, nb_train, nb_valid = gen_builder.get_train_valid_generators(batch_size=128, valid_ratio=0.1)
+        self.model.fit_generator(
+                gen_train,
+                samples_per_epoch=nb_train,
+                nb_epoch=10,
+                max_q_size=8,
+                verbose=1,
+                validation_data=gen_valid,
+                nb_val_samples=nb_valid)
 
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+        
 def build_model():
     inp = Input((3, 64, 64))
     # Block 1
