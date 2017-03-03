@@ -35,7 +35,7 @@ def split(train_public=0.25, private_train=0.5, private_test=0.25, random_state=
         public train, private train and private test.
     It puts the images and labels if each in the corresponding folder : 'pub_train/'
     'priv_train' or 'priv_test'. It requires that the images have already been
-    downloaded using the function "download()".
+    downloaded using the function "download".
 
     Parameters
     ==========
@@ -56,17 +56,20 @@ def split(train_public=0.25, private_train=0.5, private_test=0.25, random_state=
     df = _load_full(filename='spipoll.txt')
     df = shuffle(df, random_state=random_state)
     
-    priv_train_start = int(len(df) * train_public)
-    priv_test_start = priv_train_start + int(len(df) * (private_test))
-    
-    df.iloc[0:priv_train_start].to_csv('pub_train/data.csv')
-    df.iloc[priv_train_start:priv_test_start].to_csv('priv_train/data.csv')
-    df.iloc[priv_test_start:].to_csv('priv_test/data.csv')
-    
+    nb_pub_train = int(len(df) * train_public)
+    nb_priv_train = int(len(df) * private_train)
+
+    priv_train_start = nb_pub_train
+    priv_test_start = priv_train_start + nb_priv_train
+
     _silent_mkdir('pub_train')
     _silent_mkdir('priv_train')
     _silent_mkdir('priv_test')
  
+    df.iloc[0:priv_train_start].to_csv('pub_train/data.csv')
+    df.iloc[priv_train_start:priv_test_start].to_csv('priv_train/data.csv')
+    df.iloc[priv_test_start:].to_csv('priv_test/data.csv')
+
     _copy_imgs(data='pub_train/data.csv', source='imgs', dest='pub_train')
     _copy_imgs(data='priv_train/data.csv', source='imgs', dest='priv_train')
     _copy_imgs(data='priv_test/data.csv', source='imgs', dest='priv_test')
@@ -140,7 +143,7 @@ def _taxa_code_to_int(code):
 
 def _silent_mkdir(path):
     if not os.path.exists(path):
-        os.mdkir(path)
+        os.mkdir(path)
 
 def _float_equal(x, y):
     return abs(x - y) <= 1e-10
