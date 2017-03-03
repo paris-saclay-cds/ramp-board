@@ -13,11 +13,10 @@ import pandas as pd
 from data import minibatch_img_iterator
 
 if __name__ == '__main__':
-    split = 'pub_train'
-    df = pd.read_csv('{}/data.csv'.format(split))
+    df = pd.read_csv('pub_train/data.csv'.format(split))
     nb_minibatches = 0
     t0 = time.time()
-    for X, y in minibatch_img_iterator(df, batch_size=1024, include_y=True, folder=split):
+    for X, y in minibatch_img_iterator(df, batch_size=1024, include_y=True, folder='pub_train'):
         nb_minibatches += 1
     elapsed = time.time() - t0
     print('duration : {:.3f} secs'.format(elapsed))

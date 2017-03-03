@@ -17,9 +17,9 @@ def all():
 def download():
     """
     donwload all images and put them in the folder img/.
-    It requires the folder img/ to exist.
     It requires the command 'wget' to exist.
     """
+    _silent_mkdir('imgs')
     df = _load_full('spipoll.txt')
     for _, cols in df.iterrows():
         filename = os.path.join('imgs', _get_image_filename(cols['our_unique_id']))
@@ -34,8 +34,8 @@ def split(train_public=0.25, private_train=0.5, private_test=0.25, random_state=
     Split the data (images + their labels) into three parts : 
         public train, private train and private test.
     It puts the images and labels if each in the corresponding folder : 'pub_train/'
-    'priv_train' or 'priv_test'. It requires that those folders exist and that
-    the images have already been downloaded using "download".
+    'priv_train' or 'priv_test'. It requires that the images have already been
+    downloaded using the function "download()".
 
     Parameters
     ==========
@@ -49,9 +49,10 @@ def split(train_public=0.25, private_train=0.5, private_test=0.25, random_state=
     random_state : int
         seed used to shuffle the raw data
 
-    The three parameters have to sum to 1.
+    The three parameters 'train_public', 'private_train' and 'private_test' 
+    have to sum to 1.
     """
-    assert train_public + private_train + private_test == 1
+    assert _float_equal(train_public + private_train + private_test, 1.0)
     df = _load_full(filename='spipoll.txt')
     df = shuffle(df, random_state=random_state)
     
@@ -62,6 +63,10 @@ def split(train_public=0.25, private_train=0.5, private_test=0.25, random_state=
     df.iloc[priv_train_start:priv_test_start].to_csv('priv_train/data.csv')
     df.iloc[priv_test_start:].to_csv('priv_test/data.csv')
     
+    _silent_mkdir('pub_train')
+    _silent_mkdir('priv_train')
+    _silent_mkdir('priv_test')
+ 
     _copy_imgs(data='pub_train/data.csv', source='imgs', dest='pub_train')
     _copy_imgs(data='priv_train/data.csv', source='imgs', dest='priv_train')
     _copy_imgs(data='priv_test/data.csv', source='imgs', dest='priv_test')
@@ -94,7 +99,7 @@ def minibatch_img_iterator(df, batch_size=512, include_y=True, folder='imgs', n_
         of images. The length of X is 'batch_size' at most (it can be smaller).
     The shape of each element of X in both cases
     is (height, width, color), where color=3 and height/width
-    vary according to examples.
+    vary according to examples (hence the fact that X is a list instead of numpy array).
     """
     df = df.set_index('our_unique_id')
     id_list = df.index.values
@@ -133,12 +138,25 @@ def _taxa_code_to_int(code):
         code = int(code)
     return code
 
+def _silent_mkdir(path):
+    if not os.path.exists(path):
+        os.mdkir(path)
+
+def _float_equal(x, y):
+    return abs(x - y) <= 1e-10
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='A tootl to download and split insects data. It requires spipoll.txt to exist.')
-    parser.add_argument('--action', help='Action to perform.', required=True)
-    args = parser.parse_args(sys.argv)
+    desc = """
+    A tool to download and split insects data. It requires spipoll.txt to exist. 
+    For doing the full setup at once, run : 
+    >> python data.py --action all.
+    """
+    parser = argparse.ArgumentParser(description=desc)
+    parser.add_argument('--action', help='Action to perform. Possible actions : "all", "download" and "split"', required=True)
+    args = parser.parse_args(sys.argv[1:])
     actions = {'all': all, 'download': download, 'split': split}
-    if args.action not in actions:
-        print('Unknown action. action should be "all", "download" or "split".')
+    if args.action in actions:
+        action = actions[args.action]
+        action()
     else:
-        actions[args.action]()
+        print('Unknown action. action should be "all", "download" or "split".')
