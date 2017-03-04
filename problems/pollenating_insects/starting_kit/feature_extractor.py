@@ -1,3 +1,7 @@
+import time
+from joblib import delayed
+from joblib import Parallel
+
 import numpy as np
 from skimage.transform import resize
 from joblib import Parallel, delayed
@@ -5,11 +9,12 @@ from keras.utils.np_utils import to_categorical
 
 class FeatureExtractor(object):
     
+    def __init__(self, n_jobs=8):
+        self.n_jobs = n_jobs
+
     def transform(self, X):
-        n_jobs = 8
-        X = Parallel(n_jobs=n_jobs)(delayed(_transform_single)(x) for x in X)
+        X = Parallel(n_jobs=self.n_jobs, backend='threading')(delayed(_transform_single)(x) for x in X)
         X = np.array(X, dtype='float32')
-        X = X / 255.
         return X
     
     def transform_output(self, y):
