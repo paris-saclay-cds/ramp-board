@@ -15,7 +15,7 @@ class Clusterer(BaseEstimator):
 
     def fit(self, X, y):
         pass
-
+        
     def predict_single_event(self, X_event):
         layers, x, y = X_event[:, 0], X_event[:, 2], X_event[:, 3]
         used = np.zeros(len(x))

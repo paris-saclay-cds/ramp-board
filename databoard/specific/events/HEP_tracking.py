@@ -26,9 +26,9 @@ def get_cv(y_train_array):
     	n_splits=n_cv, test_size=cv_test_size, random_state=random_state)
     for train_event_is, test_event_is in event_cv.split(unique_event_ids):
         train_is = np.where(
-            np.in1d(y_train_array[:, 0], unique_event_ids[train_event_is]))
+            np.in1d(y_train_array[:, 0], unique_event_ids[train_event_is]))[0]
         test_is = np.where(
-            np.in1d(y_train_array[:, 0], unique_event_ids[test_event_is]))
+            np.in1d(y_train_array[:, 0], unique_event_ids[test_event_is]))[0]
         yield train_is, test_is
 
 # Mutable config parameters to initialize database fields
