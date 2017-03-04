@@ -16,6 +16,9 @@ problem_name = 'pollenating_insects'  # should be the same as the file name
 img_folder = os.path.join(
     problems_path, problem_name, 'data', 'raw', 'imgs'
 )
+train_img_folder = os.path.join(
+    problems_path, problem_name, 'data', 'raw', 'train_imgs'
+)
 full_filename = os.path.join(
     problems_path, problem_name, 'data', 'raw', 'spipoll.txt'
 )
@@ -25,8 +28,21 @@ test_filename = os.path.join(
     problems_path, problem_name, 'data', 'test.csv')
 
 def prepare_data():
+    #1) download the images from urls
     #_download()
+    
+    #2) split data into training and test
     _split(test_ratio=test_ratio, random_state=random_state)
+
+    #3) Put links of training images in a 
+    #folder, the folder will be given to users).
+
+    X, y = get_train_data()
+    _silent_mkdir(train_img_folder)
+    for id_ in X:
+        source = os.path.abspath(os.path.join(img_folder, _get_image_filename(id_)))
+        dest = os.path.join(train_img_folder, _get_image_filename(id_))
+        os.link(source, dest)
 
 
 def get_train_data():
