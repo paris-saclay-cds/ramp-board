@@ -188,7 +188,9 @@ export DYLD_FALLBACK_LIBRARY_PATH=$HOME/anaconda/lib/:$DYLD_FALLBACK_LIBRARY_PAT
 
 ### Example sequence of adding ramps
 
- - drug_spectra
+#### drug_spectra
+
+```
 fab add_score_type:error_mare_mixed,"1",0.0,inf
 fab add_score_type:error_mixed,"1",0.0,1.0
 fab add_score_type:mare_mixed,"1",0.0,inf
@@ -199,28 +201,38 @@ fab add_workflow:feature_extractor_classifier_regressor_workflow,feature_extract
 fab add_problem:drug_spectra
 fab add_event:drug_spectra
 fab sign_up_team:drug_spectra,kegl
+```
 
- - air passengers
+#### air passengers
+
+```
 fab add_workflow_element_type:external_data,data
 fab add_workflow:feature_extractor_regressor_with_external_data_workflow,feature_extractor,regressor,external_data
 fab add_problem:air_passengers
 fab add_event:air_passengers_dssp4
 fab sign_up_team:air_passengers_dssp4,kegl
 fab sign_up_team:air_passengers_dssp4,agramfort
+```
 
- - sea ice
+#### sea ice
+
+```
 fab add_workflow_element_type:ts_feature_extractor,code
 fab add_workflow:ts_feature_extractor_regressor_workflow,ts_feature_extractor,regressor
 fab add_problem:sea_ice
 fab add_event:sea_ice_colorado
 fab sign_up_team:sea_ice_colorado,kegl
+```
 
- - el nino (the first two lines are unnecessary if sea ice is already there)
+#### el nino (the first two lines are unnecessary if sea ice is already there)
+
+```
 fab add_workflow_element_type:ts_feature_extractor,code
 fab add_workflow:ts_feature_extractor_regressor_workflow,ts_feature_extractor,regressor
 fab add_problem:el_nino
 fab add_event:el_nino
 fab sign_up_team:el_nino,kegl
+```
 
 ### Batch sign up users
  - make a file users_to_add.csv with header
@@ -247,9 +259,6 @@ To report in the logging system queries that takes too long, define an environme
 3. Set `WTF_CSRF_ENABLED` to `False` in `databoard/config.py`
 4. Run `locust -f locustfile.py`
 5. Go to http://127.0.0.1:8089/ and enter the number of users to simulate
-
-
-
 
 ### Current deployment on stratuslab (openstack)
 
@@ -318,6 +327,7 @@ Below are the instructions to **start a databoard server using the latest state 
 2. Go to `databoard/tools directory` and Make it possible to log in as root: `ssh ubuntu@<VM_IP_ADDRESS> 'bash -s' < root_permissions.sh`
 3. Create a persistent disk and attach it to the VM (via the openstack interface).
 4. Create a file `env.sh` which contain required environment variables **DO NOT COMMIT THIS FILE**:
+
 ```
 export DATABOARD_PATH='/mnt/ramp_data/'  #where to mount the persistent disk
 export DATABOARD_DB_NAME='databoard'
