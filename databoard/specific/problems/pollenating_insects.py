@@ -9,6 +9,8 @@ import databoard.multiclass_prediction as prediction
 from databoard.config import problems_path
 from databoard.specific.workflows.batch_classifier_workflow import ArrayContainer
 
+workflow_name = 'batch_classifier_workflow'
+
 random_state = 42
 test_ratio = 0.5
 # Due to memory constraints, images are not loaded from disk into memory in one shot.
