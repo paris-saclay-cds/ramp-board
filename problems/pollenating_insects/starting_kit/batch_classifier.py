@@ -134,6 +134,11 @@ class BatchGeneratorBuilder(object):
         (see at the top of the file what a chunk is and its difference
          with the mini-batch size of neural nets).
 
+    n_classes : int
+        Total number of classes. This is needed because the array
+        of labels, which is a vector of ints, is transformed into
+        a onehot representation.
+
     n_jobs : int
         the number of jobs used to load images from disk to memory as `chunks`.
     """

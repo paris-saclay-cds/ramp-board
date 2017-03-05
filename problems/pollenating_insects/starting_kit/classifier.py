@@ -36,7 +36,7 @@ class Classifier(object):
                 # of the same data, because the workers are independent and they got 
                 # through the same generator. 
                 # Hence it is necessary to introduce a shared lock between the the 
-                # processes so that they  load different data, this can become a bit 
+                # processes so that they load different data, this can become a bit 
                 # complicated, so I choose to rather load exactly one chunk at a time using 
                 # 1 worker (so `nb_worker` have to be equal to 1), but do this single
                 # chunk loading in parallel with joblib.
