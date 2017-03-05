@@ -28,7 +28,7 @@ attrs = {
 
 def read_data(filename):
     df = pd.read_csv(filename)
-    X_values = df['our_unique_id'].values
+    X_values = df['id'].values
     X = ArrayContainer(X_values, attrs=attrs)
     y = df['class'].values
     return X, y

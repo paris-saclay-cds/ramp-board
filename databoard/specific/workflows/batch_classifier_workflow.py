@@ -73,7 +73,8 @@ def test_submission(trained_model, X_array, test_is):
         for i in range(0, len(X), test_batch_size):
             X_batch = X[i:i + test_batch_size]
             X_batch = Parallel(n_jobs=n_jobs, backend='threading')(delayed(transform_img)(x) for x in X_batch)
-            X_batch = np.array(X_batch, dtype='float32')
+            X_batch = [x[np.newaxis, :, :, :] for x in X_batch]
+            X_batch = np.concatenate(X_batch, axis=0)
             y_proba_batch = clf.predict_proba(X_batch)
             y_proba.append(y_proba_batch)
     y_proba = np.concatenate(y_proba, axis=0)
@@ -184,6 +185,8 @@ class BatchGeneratorBuilder(object):
                 n_jobs=self.n_jobs)
             for X, y in it:
                 X = Parallel(n_jobs=self.n_jobs, backend='threading')(delayed(self.transform_img)(x) for x in X)
+                X = [x[np.newaxis, :, :, :] for x in X]
+                X = np.concatenate(X, axis=0)
                 X = np.array(X, dtype='float32')
                 y = to_categorical(y, nb_classes=self.n_classes)
                 for i in range(0, len(X), batch_size):

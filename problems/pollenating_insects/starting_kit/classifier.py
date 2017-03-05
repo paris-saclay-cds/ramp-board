@@ -19,10 +19,10 @@ class Classifier(object):
                 samples_per_epoch=nb_train,
                 nb_epoch=30,
                 # `max_q_size` Should be large enough otherwise GPU will not be
-                # used (100 should be fine). The queue size is in terms
+                # used (16 should be fine if batch_size=64). The queue size is in terms
                 # of maximum number of mini-batches to hold in memory, rather than
                 # number of examples.
-                max_q_size=100,
+                max_q_size=16,
                 # WARNING : It is obligatory to set `nb_worker` to 1.
                 # This in principle controls the number of workers used
                 # by keras to load mini-batches from disk to memory in parallel

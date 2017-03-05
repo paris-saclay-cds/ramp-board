@@ -1,6 +1,7 @@
 import os
 import sys
 import pandas as pd
+import subprocess
 
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
@@ -41,8 +42,11 @@ img_folder = os.path.join(
 train_img_folder = os.path.join(
     problems_path, problem_name, 'data', 'raw', 'train_imgs'
 )
-full_filename = os.path.join(
+full_filename_raw = os.path.join(
     problems_path, problem_name, 'data', 'raw', 'spipoll.txt'
+)
+full_filename = os.path.join(
+    problems_path, problem_name, 'data', 'full.csv'
 )
 train_filename = os.path.join(
     problems_path, problem_name, 'data', 'train.csv')
@@ -60,15 +64,15 @@ attrs = {
 }
 
 def prepare_data():
-    #1) download the images from urls
-    #_download()
-    
-    #2) split data into training and test
+
+    #1) split data into training and test
     _split(test_ratio=test_ratio, random_state=random_state)
 
-    #3) Put links of training images in a 
-    #folder, the folder will be given to users).
-
+    #2) download the images from urls
+    _download()
+    
+    #3) Put links of training images in a  folder, the folder will be 
+    #   given to users.
     X, y = get_train_data()
     _silent_mkdir(train_img_folder)
     for id_ in X:
@@ -87,7 +91,7 @@ def get_test_data():
 
 def _get_data(filename):
     df = pd.read_csv(filename)
-    X = ArrayContainer(df['our_unique_id'].values, attrs=attrs)
+    X = ArrayContainer(df['id'].values, attrs=attrs)
     y = df['class'].values
     return X, y
 
@@ -98,9 +102,9 @@ def _download():
     It requires the command 'wget' to exist.
     """
     _silent_mkdir(img_folder)
-    df = _load_full(full_filename)
+    df = pd.read_csv(full_filename)
     for _, cols in df.iterrows():
-        filename = os.path.join(img_folder, _get_image_filename(cols['our_unique_id']))
+        filename = os.path.join(img_folder, _get_image_filename(cols['id']))
         if os.path.exists(filename):
             continue
         url = cols['picture_url']
@@ -118,17 +122,17 @@ def _split(test_ratio=0.5, random_state=42):
         seed used to shuffle the raw data
     """
     assert 0 <= test_ratio <= 1
-    df = _load_full(filename=full_filename)
+    df = _load_full_raw(filename=full_filename_raw)
     df = shuffle(df, random_state=random_state)
-    
+    df.to_csv(full_filename, index_label='id')
+    df = df.drop('our_unique_id', axis=1)
     nb_test = int(len(df) * test_ratio)
     nb_train = len(df) - nb_test
+    df.iloc[0:nb_train].to_csv(train_filename, index_label='id')
+    df.iloc[nb_train:].to_csv(test_filename, index_label='id')
 
-    df.iloc[0:nb_train].to_csv(train_filename)
-    df.iloc[nb_train:].to_csv(test_filename)
 
-
-def _load_full(filename='spipoll.txt'):
+def _load_full_raw(filename='spipoll.txt'):
     df = pd.read_table(filename)
     #remove duplicates in URL
     df = df.drop_duplicates(subset=['picture_url'], keep='first')
