@@ -8,6 +8,8 @@ from joblib import Parallel
 import numpy as np
 from skimage.io import imread
 
+from keras.utils.np_utils import to_categorical
+
 from importlib import import_module
 
 # folder containing images to train or test on
@@ -16,7 +18,7 @@ img_folder = 'imgs'
 # Rather, only one chunk of size `chunk_size` is loaded from the disk each time.
 # The size of the chunk is not necessarily the same than `batch_size`, the size
 # of the mini-batch used to train neural nets. The chunk is typically bigger than batch_size.
-# In parallel to training (done in another thread), the next `chunk_size`  images are loaded
+# In parallel to training ( in another thread), the next `chunk_size` images are loaded
 # into memory (it is parallelized over CPUs, the number of jobs is controlled by 'n_img_load_jobs') 
 # and put into a queue. The neural net retrieves each time `batch_size` elements from the queue
 # and updates its parameters using each mini-batch.
@@ -31,12 +33,13 @@ n_img_load_jobs = 8
 # the user. Because there is no backprop in test time, `test_batch_size` can typically
 # be larger than the one used in training.
 test_batch_size = 256
+n_jobs = 8
 
 def train_submission(module_path, X_array, y_array, train_is):
     """
     module_path : str
         folder where the submission is. the folder have to contain
-        classifier.py and feature_extractor.py.
+        classifier.py and image_preprocessor.py.
     X_array : vector of int
         vector of image IDs to train on
         (it is named X_array to be coherent with the current API,
@@ -48,35 +51,39 @@ def train_submission(module_path, X_array, y_array, train_is):
        indices from X_array to train on 
     """
     classifier = import_module('classifier', module_path)
-    feature_extractor = import_module('feature_extractor', module_path)
+    image_preprocessor = import_module('image_preprocessor', module_path)
     # FeatureExtractor require an `n_jobs` argument to allow the users
     # to do CPU parallelism for preprocessing or data augmentation.
     # It is really necessary to do it in parallel, otherwise GPUs will
     # not be used as much as they should be (they will wait for preprocessing
     # to finish if the queue is empty).
-    fe = feature_extractor.FeatureExtractor(n_jobs=n_img_load_jobs)
+    transform_img = image_preprocessor.transform
     clf = classifier.Classifier()
+    # WARNING : assumes all the classes are present in y_array
+    n_classes = len(set(y_array))
     gen_builder = BatchGeneratorBuilder(
         X_array[train_is], y_array[train_is],
-        fe,
-        chunk_size=chunk_size)
+        transform_img,
+        chunk_size=chunk_size,
+        n_classes=n_classes,
+        n_jobs=n_jobs)
     clf.fit(gen_builder)
-    return fe, clf
+    return transform_img, clf
 
 
 def test_submission(trained_model, X_array, test_is):
     """
-    trained_model : tuple (FeatureExtractor, Classifier)
-        tuple of a trained model returned by `ftrain_submission`.
+    trained_model : tuple (function, Classifier)
+        tuple of a trained model returned by `train_submission`.
     X_array : vector of int
         vector of image IDs to test on.
         (it is named X_array to be coherent with the current API,
          but as said here, it does not represent the data itself,
          only image IDs).
     test_is : vector of int
-        ## TODO : not used, it should be removed from the API.
+        ##TODO : not used, it should be removed from the API.
     """
-    fe, clf = trained_model
+    transform_img, clf = trained_model
     it = chunk_iterator(
         X_array, 
         chunk_size=chunk_size, 
@@ -84,8 +91,11 @@ def test_submission(trained_model, X_array, test_is):
     y_proba = []
     for X in it:
         for i in range(0, len(X), test_batch_size):
-            x = fe.transform(X[i:i + test_batch_size])
-            y_proba.append(clf.predict_proba(x))
+            X_batch = X[i:i + test_batch_size]
+            X_batch = Parallel(n_jobs=n_jobs, backend='threading')(delayed(transform_img)(x) for x in X_batch)
+            X_batch = np.array(X_batch, dtype='float32')
+            y_proba_batch = clf.predict_proba(X_batch)
+            y_proba.append(y_proba_batch)
     y_proba = np.concatenate(y_proba, axis=0)
     return y_proba
 
@@ -128,15 +138,17 @@ class BatchGeneratorBuilder(object):
         the number of jobs used to load images from disk to memory as `chunks`.
     """
     def __init__(self, X_array, y_array, 
-                feature_extractor, 
-                folder=img_folder, 
-                chunk_size=1024,
-                n_jobs=8):
+                 transform_img,
+                 folder=img_folder, 
+                 chunk_size=1024,
+                 n_classes=18,
+                 n_jobs=8):
         self.X_array = X_array
         self.y_array = y_array
-        self.feature_extractor = feature_extractor
+        self.transform_img = transform_img
         self.folder = folder
         self.chunk_size = chunk_size
+        self.n_classes = n_classes
         self.n_jobs = n_jobs
         self.nb_examples = len(X_array)
     
@@ -186,8 +198,9 @@ class BatchGeneratorBuilder(object):
                 folder=self.folder,
                 n_jobs=self.n_jobs)
             for X, y in it:
-                X = self.feature_extractor.transform(X)
-                y = self.feature_extractor.transform_output(y) 
+                X = Parallel(n_jobs=self.n_jobs, backend='threading')(delayed(self.transform_img)(x) for x in X)
+                X = np.array(X, dtype='float32')
+                y = to_categorical(y, nb_classes=self.n_classes)
                 for i in range(0, len(X), batch_size):
                     yield X[i:i + batch_size], y[i:i + batch_size]
 
@@ -234,8 +247,8 @@ def chunk_iterator(X_array, y_array=None, chunk_size=1024, folder='imgs', n_jobs
     vary according to examples (hence the fact that X is a list instead of numpy array).
     """
     for i in range(0, len(X_array), chunk_size):
-        id_cur_chunk = X_array[:i + chunk_size]
-        filenames = map(_get_image_filename, id_cur_chunk)
+        X_chunk = X_array[i:i + chunk_size]
+        filenames = map(_get_image_filename, X_chunk)
         filenames = map(lambda filename:os.path.join(folder, filename), filenames)
         X = Parallel(n_jobs=n_jobs, backend='threading')(delayed(imread)(filename) for filename in filenames)
         if y_array is not None:

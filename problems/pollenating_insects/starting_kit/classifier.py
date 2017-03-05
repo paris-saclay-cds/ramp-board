@@ -19,8 +19,10 @@ class Classifier(object):
                 samples_per_epoch=nb_train,
                 nb_epoch=30,
                 # `max_q_size` Should be large enough otherwise GPU will not be
-                # used (1024 should be fine).
-                max_q_size=1024,
+                # used (100 should be fine). The queue size is in terms
+                # of maximum number of mini-batches to hold in memory, rather than
+                # number of examples.
+                max_q_size=100,
                 # WARNING : It is obligatory to set `nb_worker` to 1.
                 # This in principle controls the number of workers used
                 # by keras to load mini-batches from disk to memory in parallel
@@ -39,6 +41,10 @@ class Classifier(object):
                 # 1 worker (so `nb_worker` have to be equal to 1), but do this single
                 # chunk loading in parallel with joblib.
                 nb_worker=1,
+                # if pickle_safe is True, threads are used instead of processes.
+                # As the single worker is operating on CPU, while the training
+                # is done on GPU (which is an I/O operation), there will be no GIL 
+                # issue.
                 pickle_safe=True,
                 validation_data=gen_valid,
                 nb_val_samples=nb_valid,
