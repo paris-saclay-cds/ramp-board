@@ -16,7 +16,7 @@ def train_submission(module_path, X_array, y_array, train_is):
     """
     module_path : str
         folder where the submission is. the folder have to contain
-        classifier.py and image_preprocessor.py.
+        batch_classifier.py and image_preprocessor.py.
     X_array : ArrayContainer vector of int
         vector of image IDs to train on
         (it is named X_array to be coherent with the current API,
@@ -27,10 +27,10 @@ def train_submission(module_path, X_array, y_array, train_is):
     train_is : vector of int
        indices from X_array to train on 
     """
-    classifier = import_module('classifier', module_path)
+    batch_classifier = import_module('batch_classifier', module_path)
     image_preprocessor = import_module('image_preprocessor', module_path)
     transform_img = image_preprocessor.transform
-    clf = classifier.Classifier()
+    clf = batch_classifier.BatchClassifier()
     attrs = X_array.attrs
     test_batch_size = attrs['test_batch_size']
     chunk_size = attrs['chunk_size']

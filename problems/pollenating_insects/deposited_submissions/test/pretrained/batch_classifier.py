@@ -8,7 +8,7 @@ from keras.layers import Flatten
 from keras.applications.vgg16 import VGG16
 from keras.optimizers import Adam, SGD
 
-class Classifier(object):
+class BatchClassifier(object):
     
     def __init__(self):
         self.model = build_model()

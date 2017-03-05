@@ -14,9 +14,9 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import make_scorer
 
-from batch_classifier import train_submission
-from batch_classifier import test_submission
-from batch_classifier import ArrayContainer
+from batch_classifier_workflow import train_submission
+from batch_classifier_workflow import test_submission
+from batch_classifier_workflow import ArrayContainer
 
 attrs = {
     'chunk_size': 1024,
