@@ -16,10 +16,22 @@ from sklearn.metrics import make_scorer
 
 from batch_classifier import train_submission
 from batch_classifier import test_submission
+from batch_classifier import ArrayContainer
+
+attrs = {
+    'chunk_size': 1024,
+    'n_jobs': 8,
+    'test_batch_size': 256,
+    'folder': 'imgs',
+    'n_classes': 18
+}
 
 def read_data(filename):
     df = pd.read_csv(filename)
-    return df['our_unique_id'].values, df['class'].values
+    X_values = df['our_unique_id'].values
+    X = ArrayContainer(X_values, attrs=attrs)
+    y = df['class'].values
+    return X, y
 
 def get_cv(y_train_array):
     return StratifiedShuffleSplit(n_splits=2, test_size=0.5, random_state=43)
@@ -29,7 +41,6 @@ score_function = accuracy_score
 if __name__ == '__main__':
     # PIL image loading logger is a bit annoying, so disable it.
     logging.getLogger('PIL.PngImagePlugin').disabled = True
-
     X, y = read_data('train.csv')
     cv = get_cv(y)
     for train_is, test_is in cv.split(X, y):

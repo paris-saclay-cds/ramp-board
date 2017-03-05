@@ -7,12 +7,32 @@ from sklearn.model_selection import train_test_split
 
 import databoard.multiclass_prediction as prediction
 from databoard.config import problems_path
+from databoard.specific.workflows.batch_classifier_workflow import ArrayContainer
 
 random_state = 42
 test_ratio = 0.5
+# Due to memory constraints, images are not loaded from disk into memory in one shot.
+# Rather, only one chunk of size `chunk_size` is loaded from the disk each time.
+# The size of the chunk is not necessarily the same than `batch_size`, the size
+# of the mini-batch used to train neural nets. The chunk is typically bigger than batch_size.
+# In parallel to training ( in another thread), the next `chunk_size` images are loaded
+# into memory (it is parallelized over CPUs, the number of jobs is controlled by 'n_img_load_jobs') 
+# and put into a queue. The neural net retrieves each time `batch_size` elements from the queue
+# and updates its parameters using each mini-batch.
+# Note that `batch_size` is controlled by the user, it is specified in `Classifier`
+# whereas `chunk_size` is constrolled by the backend.
 chunk_size = 1024
 n_img_load_jobs = 8
+# Due to memory constraints, it is not possible to predict the whole test data at 
+# once, so the predictions are also done using mini-batches.
+# The same `chunk_size` is used at test time. The size of the mini-batches in
+# test time is controlled by `test_batch_size`, and it is set by the backend, not
+# the user. Because there is no backprop in test time, `test_batch_size` can typically
+# be larger than the one used in training.
+test_batch_size = 256
+
 problem_name = 'pollenating_insects'  # should be the same as the file name
+# folder containing images to train or test on
 img_folder = os.path.join(
     problems_path, problem_name, 'data', 'raw', 'imgs'
 )
@@ -26,6 +46,16 @@ train_filename = os.path.join(
     problems_path, problem_name, 'data', 'train.csv')
 test_filename = os.path.join(
     problems_path, problem_name, 'data', 'test.csv')
+# These attributes, `attrs`, are assigned into the `X_array` to give
+# to the batch_classifier_workflow some global variables
+# which are necessary for training and testing.
+attrs = {
+    'chunk_size': chunk_size,
+    'n_jobs': n_img_load_jobs,
+    'test_batch_size': test_batch_size,
+    'folder': img_folder,
+    'n_classes': 18
+}
 
 def prepare_data():
     #1) download the images from urls
@@ -55,7 +85,7 @@ def get_test_data():
 
 def _get_data(filename):
     df = pd.read_csv(filename)
-    X = df['our_unique_id'].values
+    X = ArrayContainer(df['our_unique_id'].values, attrs=attrs)
     y = df['class'].values
     return X, y
 
