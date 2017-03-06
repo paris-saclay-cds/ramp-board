@@ -49,9 +49,9 @@ full_filename = os.path.join(
     problems_path, problem_name, 'data', 'full.csv'
 )
 train_filename = os.path.join(
-    problems_path, problem_name, 'data', 'train.csv')
+    problems_path, problem_name, 'data', 'public', 'train.csv')
 test_filename = os.path.join(
-    problems_path, problem_name, 'data', 'test.csv')
+    problems_path, problem_name, 'data', 'private', 'test.csv')
 # These attributes, `attrs`, are assigned into the `X_array` to give
 # to the batch_classifier_workflow some global variables
 # which are necessary for training and testing.

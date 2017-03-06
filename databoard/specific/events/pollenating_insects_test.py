@@ -9,11 +9,10 @@ event_name = 'pollenating_insects_test'  # should be the same as the file name
 event_title = 'Pollenating Insects (test)'
 
 random_state = 57
-cv_test_size = 0.5
-n_cv = 2
+cv_test_size = 0.2
+n_cv = 1
 score_type_descriptors = [
-    {'name': 'accuracy', 'precision': 1, 'new_name': 'acc'},
-    'error',
+    {'name': 'accuracy', 'precision': 3},
     {'name': 'negative_log_likelihood', 'new_name': 'nll'},
 ]
 
