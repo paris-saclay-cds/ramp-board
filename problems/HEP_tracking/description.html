@@ -1,11 +1,105 @@
-<i>Yetkin Yilmaz (LAL/CNRS), Mikhail Hushchyn (YSDA), Balazs Kegl (LAL/CNRS), David Rousseau (LAL/CNRS)</i>
+<h1> <a href=http://www.datascience-paris-saclay.fr/>Paris Saclay Center for Data Science</a> </h1>
 
-<h2>Introduction</h2>
+<h2> RAMP on charged particle tracking in 2D with a possible future LHC Silicon detector </h2>
 
-Tracking.
+<i> Thomas Boser (CHALEARN), Isabelle Guyon (LRI UPSud/INRIA), Mikhail Hushchyn (YSDA/Russia), Balázs Kégl (LAL/Orsay), David Rousseau (LAL/Orsay), Yetkin Yılmaz (LAL/Orsay) </i>
 
-<h3>The prediction task</h3>
+<h2> Introduction </h2>
 
-Clustering hits.
+Tracking is one of the most important tasks in a high-energy physics experiment, as it provides high-precision position and momentum information belonging to charged particles. Such information is crucial for a diverse variety of physics studies - from Standard Model tests to new particle searches - which requires robust low-level optimization without information loss which can be further refined for a narrower and more specific physics context.
 
-<h2>Data</h2>
+Through the history of high-energy physics, there have been many different types of tracking detectors with very different design principles: from bubble chambers to time-projection chambers, from proportional counters to spark chambers... Although each of these have provided a different data topology, they all relied on simple basics: the small energy deposit of particles in well-defined locations, with particles bending in an externally applied magnetic field.
+
+In this challenge, we focus on the topology of silicon detectors in which there are few locations along the polar axis, however a very high precision along the azimuth. Such topology helps to reduce the tracking problem to layer-by-layer azimuth determination, however, we hope to open room for further innovation as well.
+
+
+<h2> Quick Glossary </h2>
+
+We use the following vocabulary in the context of this challenge. It may be slightly different from the general high-energy physics context. Some terms are not used in the workbook, but kept here in case they are used in the discussions.
+
+**event**: a recorded (or simulated) collision in which many particles are present, the basic unit of particle physics data
+
+**pixel**: the smallest detector unit
+
+**hit**: a pixel through which a particle has passed and left signal in a given event
+
+**cluster**: a set of hits, belonging (or predicted to be belonging) to the trajectory of a single particle
+
+**reconstruct**: same thing as predict, but may also refer to further derived quantities
+
+**track**: a reconstructed particle, that is, a cluster but also including additional derived information, such as the overall curvature and angle
+
+**vertex**: the point close to the center of the detector, from which the particles have originated
+
+**impact parameter**: the shortest distance between a track and the origin
+
+**(momentum/angle/etc) resolution** : width of the normal distribution of the difference between a predicted quantity and the true value of that quantity
+
+<h2> Objectives </h2>
+
+The main objective of the challenge is the optimal matching of the hits in an event. The positions of the hits in the detector are provided as input data, and the user is expected to implement a clustering scheme (trained on data if needed), so that every hit is assigned to a cluster_id.
+
+The value of the cluster_id itself is not relevant for the task, what is relevant is which hits are clustered together, and whether this clustering corresponds well to the input particles. The score function that describes this is included in the notebook, and details will be mentioned there.
+
+<h2> Application </h2>
+
+The user is expected to implement the class *clusterer.py*, which contains the __init__, fit, and predict_single_event functions.
+
+**\__init\__** is where parameters should be set.
+
+**fit** is the training function (not to be confused with track-fitting), where the algorithm has access to the ground-truth. This function is to be run once on an input array that contains a set of training events. The user is able to implement any event-level or particle-level segmentation of the input array in order to set up the training in any desired way.
+
+**predict_single_event** is the function to reconstruct the hit clusters (tracks), returning an array of predicted (reconstructed) ids associated to each hit in the input array. This function takes only the hits from a single event as input, with the event_id dropped, and the RAMP machinery takes care of running this function on each event.
+
+The **task** in the challenge is to implement this class in a way that the predict_single_event function returns a numpy array of assigned cluster_ids. At any level of this task, machine-learning techniques can be employed for sub-tasks defined by the user.
+
+<h2> Detector </h2>
+
+Image from the Atlas Experiment:
+
+<img src="http://atlasexperiment.org/photos/atlas_photos/selected-photos/events/atlas2009-collision-atlantis-141749-405315-hits-web.png" alt="Drawing" style="width: 700px;"/>
+
+The data provided to the user is a list of hit positions from a simple toy detector model that mimics the Atlas detector design (which is generic enough for recent silicon-based tracking detectors). The detector has an onion-like geometry with 9 layers surrounding the origin with polar distances of R = [39,85,155,213,271,405,562,762,1000] cm.
+These layers have a very small thickness compared to the distances, therefore the thickness can be neglected.
+
+Each layer is segmented in azimuth with high granularity. There are ($2\pi$R/pitch)+1 pixels in every layer, where pitch is 0.025 cm for layers 0-4 and 0.05 cm for layers 5-9.
+
+Every "pixel" corresponds to the smallest detector unit defined by **layer** and **iphi** (azimuthal index).
+
+<h2> Simulation </h2>
+
+The challenge uses a toy model for particle generation and simulation, in which a Poisson distribution is sampled to determine the number of particles in each event, with an average of 10 particles per event.
+
+The particles are sampled uniformly in azimuth and momentum, with bounds on the momentum. Each particle originates from a vertex that is also randomly sampled from a narrow normal distribution around the origin. The proper dimensions of the momentum and position and determination of these values for the tracks are beyond the scope of the challenge.
+
+The particles generated this way are simulated in a uniform magnetic field. The detector material is considered to cause multiple-scattering, and this is implemented as a random rotation of the particle momentum at every detector position, sampled from a narrow normal distribution that roughly corresponds to the material of the Atlas tracker.
+
+In addition, some hit inefficiency is simulated by a random drop of some hits (with 3% probability), and a particle stopping probability of 1% is applied at each layer to simulate effects of hadronic interactions. Keeping these in mind, the algorithms might be desired to be able to handle cases when the particle doesn't have a hit on every layer.
+
+Since the detector has a very high granularity in azimuth, the cases where two particles pass through a single pixel are neglected (less than 0.2% probability).
+
+<h2> Submission </h2>
+
+Submissions are to be made in the RAMP sandbox:
+http://ramp.studio/events/HEP_tracking/sandbox
+
+You can choose to either edit the code here directly, or upload your local version of the clusterer.py. You cannot upload any additional files. All code, (additional classes, functions, or constants etc) must be written inside the clusterer.py.
+
+Don't forget to save and submit. You will make several submissions, make sure they are named in a later recognizable way.
+
+Submission are run on a private set of events, different from the one provided, hence slightly different score is expected. You’re supposed to develop your software on your own laptop/platform and infrequently submit to RAMP platform (once you submitted on RAMP you have to wait 15 min before the next submission). Your submission will run in the backend within a few hours, and you will be able to see the score on the larger sample.
+
+It is very <b><span style="color:red">important that you test your submission files before submitting them</span></b>, for this, please see the **unit test** instructions at the very end of this notebook.
+
+<h2> Beyond the challenge </h2>
+
+The following aspects of tracking fall out of scope of the challenge:
+
+* Track fitting
+* Particle efficiency
+* Fake tracks
+* Momentum resolution
+* Vertex finding and impact parameter resolution
+* Tracking in 3D
+
+Fake combinatorial tracks do affect the score in an indirect way, by reducing the efficiency due to one-to-one assignment between true and predicted cluster_ids. If there are fake tracks - that is, clusters that contain hits belonging to many different particles - that means the good cluster attached to each of these particles will be missing some of the hits.

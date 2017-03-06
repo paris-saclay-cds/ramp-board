@@ -1,3 +1,4 @@
+from __future__ import print_function
 import pandas as pd
 import numpy as np
 
@@ -150,5 +151,5 @@ if __name__ == '__main__':
         print("Testing ...")
         y_pred = test_submission(trained_model, X, test_is)
         score = score_function(y[test_is], y_pred)
-        print 'score = ', score
+        print('score = ', score)
 
