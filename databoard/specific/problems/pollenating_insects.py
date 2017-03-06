@@ -33,6 +33,7 @@ n_img_load_jobs = 8
 # the user. Because there is no backprop in test time, `test_batch_size` can typically
 # be larger than the one used in training.
 test_batch_size = 256
+prediction_labels = range(0, 18)
 
 problem_name = 'pollenating_insects'  # should be the same as the file name
 # folder containing images to train or test on

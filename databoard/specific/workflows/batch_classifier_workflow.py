@@ -27,8 +27,13 @@ def train_submission(module_path, X_array, y_array, train_is):
     train_is : vector of int
        indices from X_array to train on 
     """
-    batch_classifier = import_module('batch_classifier', module_path)
-    image_preprocessor = import_module('image_preprocessor', module_path)
+
+    #if module_path is not empty (not a local module)
+    # add the "." prefix.
+    if module_path:
+        module_path += '.'
+    batch_classifier = import_module(module_path + 'batch_classifier')
+    image_preprocessor = import_module(module_path + 'image_preprocessor')
     transform_img = image_preprocessor.transform
     clf = batch_classifier.BatchClassifier()
     attrs = X_array.attrs
@@ -36,9 +41,11 @@ def train_submission(module_path, X_array, y_array, train_is):
     chunk_size = attrs['chunk_size']
     n_jobs = attrs['n_jobs']
     n_classes = attrs['n_classes']
+    folder = attrs['folder']
     gen_builder = BatchGeneratorBuilder(
         X_array[train_is], y_array[train_is],
         transform_img,
+        folder=folder,
         chunk_size=chunk_size,
         n_classes=n_classes,
         n_jobs=n_jobs)
