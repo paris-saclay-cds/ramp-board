@@ -36,9 +36,11 @@ def train_submission(module_path, X_array, y_array, train_is):
     chunk_size = attrs['chunk_size']
     n_jobs = attrs['n_jobs']
     n_classes = attrs['n_classes']
+    folder = attrs['folder']
     gen_builder = BatchGeneratorBuilder(
         X_array[train_is], y_array[train_is],
         transform_img,
+        folder=folder,
         chunk_size=chunk_size,
         n_classes=n_classes,
         n_jobs=n_jobs)
