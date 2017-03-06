@@ -48,6 +48,12 @@ full_filename_raw = os.path.join(
 full_filename = os.path.join(
     problems_path, problem_name, 'data', 'full.csv'
 )
+public_data_folder = os.path.join(
+    problems_path, problem_name, 'data', 'public'
+)
+private_data_folder = os.path.join(
+    problems_path, problem_name, 'data', 'private'
+)
 train_filename = os.path.join(
     problems_path, problem_name, 'data', 'public', 'train.csv')
 test_filename = os.path.join(
@@ -71,7 +77,7 @@ def prepare_data():
     #2) download the images from urls
     _download()
     
-    #3) Put links of training images in a  folder, the folder will be 
+    #3) Put links of training images in a folder, the folder will be 
     #   given to users.
     X, y = get_train_data()
     _silent_mkdir(train_img_folder)
@@ -128,6 +134,8 @@ def _split(test_ratio=0.5, random_state=42):
     df = df.drop('our_unique_id', axis=1)
     nb_test = int(len(df) * test_ratio)
     nb_train = len(df) - nb_test
+    _silent_mkdir(public_data_folder)
+    _silent_mkdir(private_data_folder)
     df.iloc[0:nb_train].to_csv(train_filename, index_label='id')
     df.iloc[nb_train:].to_csv(test_filename, index_label='id')
 
