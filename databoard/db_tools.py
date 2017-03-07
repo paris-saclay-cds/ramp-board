@@ -35,7 +35,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 import databoard.config as config
 from databoard import post_api
-from databoard import celery
+# from databoard import celery
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
@@ -347,15 +347,15 @@ def delete_submission_similarity(submissions):
     db.session.commit()
 
 
-@celery.task(name='tasks.send_data_datarun')
-def send_data_datarun_config(problem_name, split=True):
-    datarun_host_url = config.DATARUN_URL
-    datarun_username = config.DATARUN_USERNAME
-    datarun_userpassd = config.DATARUN_PASSWORD
-    os.chdir(config.DATABOARD_DIR)
-    send_data_datarun(problem_name,
-                      datarun_host_url, datarun_username,
-                      datarun_userpassd, split=split)
+# @celery.task(name='tasks.send_data_datarun')
+# def send_data_datarun_config(problem_name, split=True):
+#     datarun_host_url = config.DATARUN_URL
+#     datarun_username = config.DATARUN_USERNAME
+#     datarun_userpassd = config.DATARUN_PASSWORD
+#     os.chdir(config.DATABOARD_DIR)
+#     send_data_datarun(problem_name,
+#                       datarun_host_url, datarun_username,
+#                       datarun_userpassd, split=split)
 
 
 def send_data_datarun(problem_name, host_url, username, userpassd, split=True):
@@ -1049,62 +1049,62 @@ def send_register_request_mail(user):
         smtpserver.sendmail(gmail_user, recipient, header + body)
 
 
-@celery.task(name='tasks.send_submission_datarun')
-def send_submission_datarun(submission_name, team_name, event_name,
-                            priority='L', force_retrain_test=True):
-    datarun_host_url = config.DATARUN_URL
-    datarun_username = config.DATARUN_USERNAME
-    datarun_userpassd = config.DATARUN_PASSWORD
-    os.chdir(config.DATABOARD_DIR)
-    submission = get_submissions(event_name=event_name, team_name=team_name,
-                                 submission_name=submission_name)[0]
-    data_id = send_data_datarun(submission.event.problem.name,
-                                datarun_host_url, datarun_username,
-                                datarun_userpassd, split=False)
-    train_test_submission_datarun(submission, data_id, datarun_host_url,
-                                  datarun_username, datarun_userpassd,
-                                  force_retrain_test=force_retrain_test,
-                                  priority=priority)
+# @celery.task(name='tasks.send_submission_datarun')
+# def send_submission_datarun(submission_name, team_name, event_name,
+#                             priority='L', force_retrain_test=True):
+#     datarun_host_url = config.DATARUN_URL
+#     datarun_username = config.DATARUN_USERNAME
+#     datarun_userpassd = config.DATARUN_PASSWORD
+#     os.chdir(config.DATABOARD_DIR)
+#     submission = get_submissions(event_name=event_name, team_name=team_name,
+#                                  submission_name=submission_name)[0]
+#     data_id = send_data_datarun(submission.event.problem.name,
+#                                 datarun_host_url, datarun_username,
+#                                 datarun_userpassd, split=False)
+#     train_test_submission_datarun(submission, data_id, datarun_host_url,
+#                                   datarun_username, datarun_userpassd,
+#                                   force_retrain_test=force_retrain_test,
+#                                   priority=priority)
 
 
-@celery.task(name='tasks.get_submissions_datarun')
-def get_submissions_datarun(submissions_details=None):
-    """
-    get submissions from datarun.
-    :param submissions_details: list of list with submission_name, team_name\
-        and event_name [[submission_name1, team_name1, event_name1], ..., \
-        [submission_name2, team_name2, event_name2]]
-    :type submissions_details: list
-    """
-    datarun_host_url = config.DATARUN_URL
-    datarun_username = config.DATARUN_USERNAME
-    datarun_userpassd = config.DATARUN_PASSWORD
-    os.chdir(config.DATABOARD_DIR)
-    if not submissions_details:
-        submissions = Submission.query.filter(Submission.state == 'new').\
-            filter(Submission.name != 'starting_kit').all()
-    else:
-        submissions = []
-        for sub_details in submissions_details:
-            sub_name, team_name, event_name = sub_details
-            submissions.append(get_submissions(event_name=event_name,
-                                               team_name=team_name,
-                                               submission_name=sub_name)[0])
-    list_event_names = []
-    for submission in submissions:
-        list_event_names.append(submission.event.name)
-    get_trained_tested_submissions_datarun(
-        submissions, datarun_host_url, datarun_username, datarun_userpassd)
-    if Submission.query.filter(Submission.state == 'new').\
-            filter(Submission.name != 'starting_kit').\
-            count() < len(submissions):
-        for event_name in list_event_names:
-            compute_contributivity(event_name=event_name)
-            compute_historical_contributivity(event_name=event_name)
-    for submission in submissions:
-        update_user_leaderboards(
-            submission.event_team.event.name,
-            submission.event_team.team.name)
+# @celery.task(name='tasks.get_submissions_datarun')
+# def get_submissions_datarun(submissions_details=None):
+#     """
+#     get submissions from datarun.
+#     :param submissions_details: list of list with submission_name, team_name\
+#         and event_name [[submission_name1, team_name1, event_name1], ..., \
+#         [submission_name2, team_name2, event_name2]]
+#     :type submissions_details: list
+#     """
+#     datarun_host_url = config.DATARUN_URL
+#     datarun_username = config.DATARUN_USERNAME
+#     datarun_userpassd = config.DATARUN_PASSWORD
+#     os.chdir(config.DATABOARD_DIR)
+#     if not submissions_details:
+#         submissions = Submission.query.filter(Submission.state == 'new').\
+#             filter(Submission.name != 'starting_kit').all()
+#     else:
+#         submissions = []
+#         for sub_details in submissions_details:
+#             sub_name, team_name, event_name = sub_details
+#             submissions.append(get_submissions(event_name=event_name,
+#                                                team_name=team_name,
+#                                                submission_name=sub_name)[0])
+#     list_event_names = []
+#     for submission in submissions:
+#         list_event_names.append(submission.event.name)
+#     get_trained_tested_submissions_datarun(
+#         submissions, datarun_host_url, datarun_username, datarun_userpassd)
+#     if Submission.query.filter(Submission.state == 'new').\
+#             filter(Submission.name != 'starting_kit').\
+#             count() < len(submissions):
+#         for event_name in list_event_names:
+#             compute_contributivity(event_name=event_name)
+#             compute_historical_contributivity(event_name=event_name)
+#     for submission in submissions:
+#         update_user_leaderboards(
+#             submission.event_team.event.name,
+#             submission.event_team.team.name)
 
 
 def train_test_submissions_datarun(data_id, host_url, username, userpassd,
@@ -1968,7 +1968,7 @@ def get_leaderboards(event_name, user_name=None):
 
     submissions = get_submissions(event_name=event_name, user_name=user_name)
     submissions = [submission for submission in submissions
-                   if submission.is_public_leaderboard]
+                   if submission.is_public_leaderboard and submission.is_valid]
     event = Event.query.filter_by(name=event_name).one()
 
     score_names = [score_type.name for score_type in event.score_types]
