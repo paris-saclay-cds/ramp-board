@@ -71,7 +71,7 @@ def test_submission(trained_model, X_array, test_is):
          but as said here, it does not represent the data itself,
          only image IDs).
     test_is : vector of int
-        ##TODO : not used, it should be removed from the API.
+       indices from X_array to test on 
     """
     transform_img, clf = trained_model
     attrs = X_array.attrs
@@ -80,13 +80,12 @@ def test_submission(trained_model, X_array, test_is):
     n_jobs = attrs['n_jobs']
     folder = attrs['folder']
     it = chunk_iterator(
-        X_array, 
+        X_array[test_is], 
         chunk_size=chunk_size, 
         folder=folder)
     y_proba = []
     for X in it:
         for i in range(0, len(X), test_batch_size):
-
             # 1) Preprocessing
             X_batch = X[i:i + test_batch_size]
             X_batch = Parallel(n_jobs=n_jobs, backend='threading')(delayed(transform_img)(x) for x in X_batch)
