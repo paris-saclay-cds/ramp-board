@@ -1,6 +1,7 @@
 import os
 import time
 import threading
+from importlib import import_module
 
 from joblib import delayed
 from joblib import Parallel
@@ -10,13 +11,12 @@ from skimage.io import imread
 
 from keras.utils.np_utils import to_categorical
 
-from importlib import import_module
 
 def train_submission(module_path, X_array, y_array, train_is):
     """
     module_path : str
-        folder where the submission is. the folder have to contain
-        batch_classifier.py and image_preprocessor.py.
+        module where the submission is. the folder of the module
+        have to contain batch_classifier.py and image_preprocessor.py.
     X_array : ArrayContainer vector of int
         vector of image IDs to train on
         (it is named X_array to be coherent with the current API,
@@ -28,8 +28,16 @@ def train_submission(module_path, X_array, y_array, train_is):
        indices from X_array to train on 
     """
 
-    #if module_path is not empty (not a local module)
+    # If module_path is not empty (not a local module)
     # add the "." prefix.
+    # This is to deal with the import of batch_classifier.py and 
+    # image_preprocessor.py in two different contexts : 
+    # in the context of a submission (the folder submissions/)
+    # and in the context of the starting kit.
+    # For a submission, module_path refers to 'submissions.submission_name'.
+    # In that case, add a '.' to have e.g 'submissions.submission_name.batch_classifier'.
+    # For the starting kit, module_path is '', in that case we just import
+    # e.g 'batch_classifier'.
     if module_path:
         module_path += '.'
     batch_classifier = import_module(module_path + 'batch_classifier')
@@ -78,10 +86,16 @@ def test_submission(trained_model, X_array, test_is):
     y_proba = []
     for X in it:
         for i in range(0, len(X), test_batch_size):
+
+            # 1) Preprocessing
             X_batch = X[i:i + test_batch_size]
             X_batch = Parallel(n_jobs=n_jobs, backend='threading')(delayed(transform_img)(x) for x in X_batch)
+            # X_batch is a list of numpy arrrays at this point, convert it to a single numpy 
+            # array of size `test_batch_size` (at most).
             X_batch = [x[np.newaxis, :, :, :] for x in X_batch]
             X_batch = np.concatenate(X_batch, axis=0)
+
+            # 2) Prediction
             y_proba_batch = clf.predict_proba(X_batch)
             y_proba.append(y_proba_batch)
     y_proba = np.concatenate(y_proba, axis=0)
@@ -183,6 +197,10 @@ class BatchGeneratorBuilder(object):
     def _get_generator(self, indices=None, batch_size=256):
         if indices is None:
             indices = np.arange(self.nb_examples)
+        # Infinite loop, as required by keras `fit_generator`.
+        # However, as we provide the number of examples per epoch
+        # and the user specifies the total number of epochs, it will
+        # be able to end.
         while True:
             it = chunk_iterator(
                 X_array=self.X_array[indices],
@@ -191,11 +209,16 @@ class BatchGeneratorBuilder(object):
                 folder=self.folder,
                 n_jobs=self.n_jobs)
             for X, y in it:
+                # 1) Preprocessing of X and y
                 X = Parallel(n_jobs=self.n_jobs, backend='threading')(delayed(self.transform_img)(x) for x in X)
+                # X is a list of numpy arrrays at this point, convert it to a single numpy array.
                 X = [x[np.newaxis, :, :, :] for x in X]
                 X = np.concatenate(X, axis=0)
                 X = np.array(X, dtype='float32')
+                # Convert y to onehot representation
                 y = to_categorical(y, nb_classes=self.n_classes)
+
+                # 2) Yielding mini-batches
                 for i in range(0, len(X), batch_size):
                     yield X[i:i + batch_size], y[i:i + batch_size]
 
@@ -238,12 +261,12 @@ def chunk_iterator(X_array, y_array=None, chunk_size=1024, folder='imgs', n_jobs
         This is used for testing, where we don't have/need the labels.
 
     The shape of each element of X in both cases
-    is (height, width, color), where color=3 and height/width
+    is (height, width, color), where color is 1 or 3 or 4 and height/width
     vary according to examples (hence the fact that X is a list instead of numpy array).
     """
     for i in range(0, len(X_array), chunk_size):
         X_chunk = X_array[i:i + chunk_size]
-        filenames = map(_get_image_filename, X_chunk)
+        filenames = map(_get_image_filename_from_id, X_chunk)
         filenames = map(lambda filename:os.path.join(folder, filename), filenames)
         X = Parallel(n_jobs=n_jobs, backend='threading')(delayed(imread)(filename) for filename in filenames)
         if y_array is not None:
@@ -252,7 +275,7 @@ def chunk_iterator(X_array, y_array=None, chunk_size=1024, folder='imgs', n_jobs
         else:
             yield X
 
-def _get_image_filename(unique_id):
+def _get_image_filename_from_id(unique_id):
     return 'id_{}.jpg'.format(unique_id)
 
 class ArrayContainer(np.ndarray):

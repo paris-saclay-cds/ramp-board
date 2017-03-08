@@ -14,16 +14,22 @@ class BatchClassifier(object):
         self.model = build_model()
     
     def fit(self, gen_builder):
-        gen_train, gen_valid, nb_train, nb_valid = gen_builder.get_train_valid_generators(batch_size=8, valid_ratio=0.1)
+        gen_train, gen_valid, nb_train, nb_valid = gen_builder.get_train_valid_generators(batch_size=16, valid_ratio=0.1)
         self.model.fit_generator(
                 gen_train,
                 samples_per_epoch=nb_train,
                 nb_epoch=30,
-                # `max_q_size` Should be large enough otherwise GPU will not be
-                # used (16 should be fine if batch_size=64). The queue size is in terms
-                # of maximum number of mini-batches to hold in memory, rather than
-                # number of examples.
-                max_q_size=16,
+                # In parallel to training, a CPU process loads and preprocesses data from disk and put
+                # it into a queue in the form of mini-batches of size `batch_size`.`max_q_size` controls 
+                # the maximum size of that queue.
+                # The size of the queue should be big enough so that the training process (GPU) never
+                # waits for data (the queue should be never be empty). 
+                # The CPU process loads chunks of 1024 images each time, and
+                # 1024/batch_size mini-batches from that chunk are put into the queue.
+                # Assuming training the model on those 1024/batch_size mini-batches is slower than 
+                # loading a single chunk of 1024 images, a good lower bound for `max_q_size` would be
+                # (1024/batch_size). if `batch_size` is 16, you can put `max_q_size` to 64.
+                max_q_size=64,
                 # WARNING : It is obligatory to set `nb_worker` to 1.
                 # This in principle controls the number of workers used
                 # by keras to load mini-batches from disk to memory in parallel
@@ -42,10 +48,8 @@ class BatchClassifier(object):
                 # 1 worker (so `nb_worker` have to be equal to 1), but do this single
                 # chunk loading in parallel with joblib.
                 nb_worker=1,
-                # if pickle_safe is True, threads are used instead of processes.
-                # As the single worker is operating on CPU, while the training
-                # is done on GPU (which is an I/O operation), there will be no GIL 
-                # issue.
+                # if pickle_safe is True, processes are used instead of threads.
+                # here, 1 process is used because `nb_worker` is 1.
                 pickle_safe=True,
                 validation_data=gen_valid,
                 nb_val_samples=nb_valid,
