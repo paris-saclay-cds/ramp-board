@@ -35,6 +35,24 @@ For a local install (on a unix system) you can do:
 
 For example you do in the postgres terminal: `createdb databoard`
 
+with conda:
+
+conda install postgresql
+conda install -c anaconda psycopg2=2.6.2
+
+make a dir postgres_dbs containing all the dbs (test and prod eventually) and cd there
+then go up and execute
+initdb postgres_dbs
+start the server by
+pg_ctl -D postgres_dbs -l postgres_dbs/logfile start
+Create user by
+createuser --pwprompt mrramp
+mrramp should be the user specified in DATABOARD_DB_USER
+it will prompt you for password
+pwd should be the same spacified in DATABOARD_DB_PASSWORD
+Create db by
+createdb --owner=mrramp databoard_test
+
 2. Set up environment variables:
 
     - `DATABOARD_DB_URL`: `SQLALCHEMY_DATABASE_URI` for the dev database, which should be something like `postgresql://<db_user>:<db_password>@localhost/<db_name>`
@@ -186,7 +204,39 @@ sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" /home/dataca
 Postgres and anaconda are somehow clashing. Add this to ~/.bash_profile:
 export DYLD_FALLBACK_LIBRARY_PATH=$HOME/anaconda/lib/:$DYLD_FALLBACK_LIBRARY_PATH
 
+On MacOS 10.12, maybe you need this:
+
+export DYLD_FALLBACK_LIBRARY_PATH=$HOME/anaconda/lib/:/usr/local/Cellar/openssl/1.0.2k/lib/:/usr/lib/:$DYLD_FALLBACK_LIBRARY_PATH
+
+It seems now that the above stuff doesn't work. Instead, postgres should be installed through conda:
+
+conda install postgresql
+conda install -c anaconda psycopg2=2.6.2
+
 ### Example sequence of adding ramps
+
+#### Pollenating insects
+
+```
+fab add_workflow_element_type:image_preprocessor,code
+fab add_workflow_element_type:batch_classifier,code
+fab add_workflow:batch_classifier_workflow,image_preprocessor,batch_classifier
+fab add_problem:pollenating_insects
+fab add_event:pollenating_insects_M1XMAP583_M2HECXMAP542_201617
+fab sign_up_team:pollenating_insects_M1XMAP583_M2HECXMAP542_201617,kegl
+fab sign_up_team:pollenating_insects_M1XMAP583_M2HECXMAP542_201617,mcherti
+```
+
+#### HEP tracking
+
+```
+fab add_score_type:clustering_efficiency,"0",0.0,1
+fab add_workflow_element_type:clusterer,code
+fab add_workflow:clusterer_workflow,clusterer
+fab add_problem:HEP_tracking
+fab add_event:HEP_tracking
+fab sign_up_team:HEP_tracking,kegl
+```
 
 #### drug_spectra
 

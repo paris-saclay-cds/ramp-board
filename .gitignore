@@ -1,4 +1,5 @@
 databoard/config.py
+postgres_dbs
 build
 dist
 problems/*/data
