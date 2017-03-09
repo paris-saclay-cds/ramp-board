@@ -10,6 +10,8 @@ import databoard.multiclass_prediction as prediction
 from databoard.config import problems_path
 from databoard.specific.workflows.batch_classifier_workflow import ArrayContainer
 
+problem_name = 'pollenating_insects'  # should be the same as the file name
+
 workflow_name = 'batch_classifier_workflow'
 
 random_state = 42
@@ -35,7 +37,6 @@ n_img_load_jobs = 8
 test_batch_size = 256
 prediction_labels = range(0, 18)
 
-problem_name = 'pollenating_insects'  # should be the same as the file name
 # folder containing images to train or test on
 img_folder = os.path.join(
     problems_path, problem_name, 'data', 'raw', 'imgs'
