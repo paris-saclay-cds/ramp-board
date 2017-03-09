@@ -634,6 +634,18 @@ def prepare_data(problem_name):
 
 def backend_train_test_loop(e=None, timeout=30,
                             is_compute_contributivity='True'):
+    """Automated training loop.
+
+    Picks up the earliest new submission and trains it, in an infinite
+    loop.
+
+    Parameters
+    ----------
+    e : string
+        Event name. If set, only train submissions from that event.
+        If event name is prefixed by not, it excludes that event.
+    """
+
     from databoard.db_tools import backend_train_test_loop
     is_compute_contributivity = strtobool(is_compute_contributivity)
     backend_train_test_loop(e, timeout, is_compute_contributivity)

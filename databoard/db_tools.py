@@ -1361,6 +1361,21 @@ def get_earliest_new_submission(event_name=None):
         new_submissions = Submission.query.filter_by(
             state='new').filter(Submission.is_not_sandbox).order_by(
             Submission.submission_timestamp).all()
+    # a fast fix: prefixing event name with 'not_' will exclude the event
+    elif event_name[:4] == 'not_':
+        event_name = event_name[4:]
+        new_submissions = db.session.query(
+            Submission, Event, EventTeam).filter(
+            Event.name != event_name).filter(
+            Event.id == EventTeam.event_id).filter(
+            EventTeam.id == Submission.event_team_id).filter(
+            Submission.state == 'new').filter(
+            Submission.is_not_sandbox).order_by(
+            Submission.submission_timestamp).all()
+        if new_submissions:
+            new_submissions = list(zip(*new_submissions)[0])
+        else:
+            new_submissions = []
     else:
         new_submissions = db.session.query(
             Submission, Event, EventTeam).filter(
