@@ -61,8 +61,8 @@ class BatchClassifier(object):
 def build_model():
     vgg16 = VGG16(include_top=False, weights='imagenet')
     vgg16.trainable = False
-    inp = _get_layer_by_name(vgg16, 'input_1')
-    hid = _get_layer_by_name(vgg16, 'block3_conv3')
+    inp = vgg16.get_layer(name='input_1')
+    hid = vgg16.get_layer(name='block3_conv3')
     vgg16_hid = Model(inp.input, hid.output)
 
     inp = Input((3, 224, 224))
@@ -73,8 +73,3 @@ def build_model():
     model = Model(inp, out)
     model.compile(loss='categorical_crossentropy', optimizer=SGD(lr=1e-4, momentum=0.95), metrics=['accuracy'])
     return model
-
-def _get_layer_by_name(model, name):
-    for layer in model.layers:
-        if layer.name == name:
-            return layer
