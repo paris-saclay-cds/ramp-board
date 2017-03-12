@@ -47,6 +47,5 @@ if __name__ == '__main__':
         trained_model = train_submission('', X, y, train_is)
         print("Testing ...")
         y_pred = test_submission(trained_model, X, test_is)
-        print(y[test_is].shape, y_pred[test_is].shape)
-        score = score_function(y[test_is], y_pred[test_is].argmax(axis=1))
+        score = score_function(y[test_is], y_pred.argmax(axis=1))
         print('accuracy = ', score)
