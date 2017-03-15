@@ -22,7 +22,6 @@ class BatchClassifier(object):
         batch_size = 16 
         nb_epochs = 3
         lr = 1e-3
-
         gen_train, gen_valid, nb_train, nb_valid = gen_builder.get_train_valid_generators(batch_size=batch_size, valid_ratio=0.1)
         self.net = self.net.cuda()
         net = self.net
@@ -30,16 +29,14 @@ class BatchClassifier(object):
         nb_train_minibatches = _get_nb_minibatches(nb_train, batch_size)
         nb_valid_minibatches = _get_nb_minibatches(nb_valid, batch_size)
         criterion = nn.CrossEntropyLoss().cuda()
-
-        train_loss = np.empty(nb_train_minibatches)
-        train_acc = np.empty(nb_train)
-        valid_acc = np.empty(nb_valid)
-
+        
         for epoch in range(nb_epochs):
             t0 = time.time()
             net.train() # train mode
-            nb_train = 0
+            nb_trained = 0
             nb_updates = 0
+            train_loss = []
+            train_acc = []
             for X, y in islice(gen_train, nb_train_minibatches):
                 y = y.argmax(axis=1) # convert onehot to integers, pytorch require the class indices.
                 X = _make_variable(X)
@@ -51,21 +48,22 @@ class BatchClassifier(object):
                 optimizer.step() # update params
 
                 # Loss and accuracy
-                train_acc[nb_train:nb_train + y.size(0)] = self._get_acc(y_pred, y)
-                train_loss[nb_updates] = loss.data[0]
-                nb_train += X.size(0)
+                train_acc.extend(self._get_acc(y_pred, y))
+                train_loss.append(loss.data[0])
+                nb_trained += X.size(0)
                 nb_updates += 1
                 if nb_updates % 100 == 0 or nb_updates == nb_train_minibatches:
-                    print('Epoch [{}/{}], [trained {}/{}], avg_loss: {:.4f}, avg_train_acc: {:.4f}'.format(epoch+1, nb_epochs, nb_train, nb_train, np.mean(train_loss), np.mean(train_acc)))
+                    print('Epoch [{}/{}], [trained {}/{}], avg_loss: {:.4f}, avg_train_acc: {:.4f}'.format(epoch+1, nb_epochs, nb_trained, nb_train, np.mean(train_loss), np.mean(train_acc)))
 
             net.eval() # eval mode
             nb_valid = 0
+            valid_acc = []
             for X, y in islice(gen_valid, nb_valid_minibatches):
                 y = y.argmax(axis=1)
                 X = _make_variable(X)
                 y = _make_variable(y)
                 y_pred = net(X)
-                valid_acc[nb_valid:nb_valid + y.size(0)] = self._get_acc(y_pred, y)
+                valid_acc.extend(self._get_acc(y_pred, y))
                 nb_valid += y.size(0)
 
             delta_t = time.time() - t0
