@@ -9,8 +9,6 @@ from joblib import Parallel
 import numpy as np
 from skimage.io import imread
 
-from keras.utils.np_utils import to_categorical
-
 
 def train_submission(module_path, X_array, y_array, train_is):
     """
@@ -215,7 +213,7 @@ class BatchGeneratorBuilder(object):
                 X = np.concatenate(X, axis=0)
                 X = np.array(X, dtype='float32')
                 # Convert y to onehot representation
-                y = to_categorical(y, nb_classes=self.n_classes)
+                y = _to_categorical(y, num_classes=self.n_classes)
 
                 # 2) Yielding mini-batches
                 for i in range(0, len(X), batch_size):
@@ -306,4 +304,28 @@ class ArrayContainer(np.ndarray):
         # see InfoArray.__array_finalize__ for comments
         if obj is None: return
         self.attrs = getattr(obj, 'attrs', None)
+
+
+def _to_categorical(y, num_classes=None):
+    """
+    Taken from keras  : https://github.com/fchollet/keras/blob/master/keras/utils/np_utils.py
+    The reason it was taken from keras is to avoid importing theano which
+    clashes with pytorch.
+
+    Converts a class vector (integers) to binary class matrix.
+    E.g. for use with categorical_crossentropy.
+    # Arguments
+        y: class vector to be converted into a matrix
+            (integers from 0 to num_classes).
+        num_classes: total number of classes.
+    # Returns
+        A binary matrix representation of the input.
+    """
+    y = np.array(y, dtype='int').ravel()
+    if not num_classes:
+        num_classes = np.max(y) + 1
+    n = y.shape[0]
+    categorical = np.zeros((n, num_classes))
+    categorical[np.arange(n), y] = 1
+    return categorical
 
