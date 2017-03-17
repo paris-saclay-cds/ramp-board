@@ -18,7 +18,7 @@ class BatchClassifier(object):
         self.model.fit_generator(
                 gen_train,
                 samples_per_epoch=nb_train,
-                nb_epoch=30,
+                nb_epoch=3,
                 # In parallel to training, a CPU process loads and preprocesses data from disk and put
                 # it into a queue in the form of mini-batches of size `batch_size`.`max_q_size` controls 
                 # the maximum size of that queue.

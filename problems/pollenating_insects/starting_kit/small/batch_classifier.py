@@ -5,8 +5,7 @@ from keras.layers import Convolution2D
 from keras.layers import ZeroPadding2D
 from keras.layers import MaxPooling2D
 from keras.layers import Flatten
-from keras.applications.vgg16 import VGG16
-from keras.optimizers import Adam, SGD
+from keras.optimizers import Adam
 
 class BatchClassifier(object):
     
@@ -14,7 +13,7 @@ class BatchClassifier(object):
         self.model = build_model()
     
     def fit(self, gen_builder):
-        gen_train, gen_valid, nb_train, nb_valid = gen_builder.get_train_valid_generators(batch_size=16, valid_ratio=0.1)
+        gen_train, gen_valid, nb_train, nb_valid = gen_builder.get_train_valid_generators(batch_size=64, valid_ratio=0.1)
         self.model.fit_generator(
                 gen_train,
                 samples_per_epoch=nb_train,
@@ -28,7 +27,7 @@ class BatchClassifier(object):
                 # 1024/batch_size mini-batches from that chunk are put into the queue.
                 # Assuming training the model on those 1024/batch_size mini-batches is slower than 
                 # loading a single chunk of 1024 images, a good lower bound for `max_q_size` would be
-                # (1024/batch_size). if `batch_size` is 16, you can put `max_q_size` to 64.
+                # (1024/batch_size). if `batch_size` is 64, you can put `max_q_size` to 16.
                 max_q_size=16,
                 # WARNING : It is obligatory to set `nb_worker` to 1.
                 # This in principle controls the number of workers used
@@ -59,17 +58,20 @@ class BatchClassifier(object):
         return self.model.predict(X)
         
 def build_model():
-    vgg16 = VGG16(include_top=False, weights='imagenet')
-    vgg16.trainable = False
-    inp = vgg16.get_layer(name='input_1')
-    hid = vgg16.get_layer(name='block3_conv3')
-    vgg16_hid = Model(inp.input, hid.output)
-
-    inp = Input((3, 224, 224))
-    x = vgg16_hid(inp)
+    # This is VGG16
+    inp = Input((3, 32, 32))
+    # Block 1
+    x = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block1_conv1')(inp)
+    x = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block1_conv2')(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(x)
+    # Block 2
+    x = Convolution2D(64, 3, 3, activation='relu', border_mode='same', name='block2_conv1')(x)
+    x = Convolution2D(64, 3, 3, activation='relu', border_mode='same', name='block2_conv2')(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(x)
+    # dense
     x = Flatten(name='flatten')(x)
-    x = Dense(500, activation='relu', name='fc')(x)
+    x = Dense(512, activation='relu', name='fc1')(x)
     out = Dense(18, activation='softmax', name='predictions')(x)
     model = Model(inp, out)
-    model.compile(loss='categorical_crossentropy', optimizer=SGD(lr=1e-4, momentum=0.95), metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=1e-4), metrics=['accuracy'])
     return model
