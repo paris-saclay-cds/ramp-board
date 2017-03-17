@@ -215,6 +215,16 @@ conda install -c anaconda psycopg2=2.6.2
 
 ### Example sequence of adding ramps
 
+#### Titanic
+
+```
+fab add_score_type:auc,"0",0.0,1.0
+fab add_workflow:feature_extractor_classifier_workflow,feature_extractor,classifier
+fab add_problem:titanic
+fab add_event:titanic
+fab sign_up_team:titanic,kegl
+```
+
 #### Pollenating insects
 
 ```
