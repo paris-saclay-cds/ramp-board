@@ -1866,7 +1866,7 @@ def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
         combined_test_predictions, best_test_predictions
 
 
-def compute_historical_contributivity(event_name):
+def compute_historical_contributivity_no_commit(event_name):
     submissions = get_submissions(event_name=event_name)
     submissions.sort(key=lambda x: x.submission_timestamp, reverse=True)
     for submission in submissions:
@@ -1891,10 +1891,13 @@ def compute_historical_contributivity(event_name):
                         partial_credit
                     submission.historical_contributivity -= partial_credit
                     processed_submissions.append(source_submission)
+
+
+def compute_historical_contributivity(event_name):
+    compute_historical_contributivity_no_commit(event_name)
     db.session.commit()
     update_leaderboards(event_name)
     update_all_user_leaderboards(event_name)
-
 
 
 def is_user_signed_up(event_name, user_name):
