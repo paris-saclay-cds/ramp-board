@@ -1763,6 +1763,12 @@ def compute_contributivity_no_commit(
     else:
         event.combined_foldwise_test_score = None
 
+    return event.combined_combined_valid_score,\
+        event.combined_foldwise_valid_score,\
+        event.combined_combined_test_score,\
+        event.combined_foldwise_test_score
+
+
 
 def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
                                     start_time_stamp=None, end_time_stamp=None,
