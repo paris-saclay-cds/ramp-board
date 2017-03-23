@@ -1395,11 +1395,12 @@ def get_earliest_new_submission(event_name=None):
         return new_submissions[0]
 
 
-def backend_train_test_loop(event_name=None, timeout=30,
+def backend_train_test_loop(event_name=None, timeout=20,
                             is_compute_contributivity=True):
     event_names = set()
     while(True):
         earliest_new_submission = get_earliest_new_submission(event_name)
+        time.sleep(10)  # wait a bit so files are copied
         logger.info('Automatic training {} at {}'.format(
             earliest_new_submission, datetime.datetime.utcnow()))
         if earliest_new_submission is not None:
