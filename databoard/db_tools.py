@@ -1400,7 +1400,6 @@ def backend_train_test_loop(event_name=None, timeout=20,
     event_names = set()
     while(True):
         earliest_new_submission = get_earliest_new_submission(event_name)
-        time.sleep(10)  # wait a bit so files are copied
         logger.info('Automatic training {} at {}'.format(
             earliest_new_submission, datetime.datetime.utcnow()))
         if earliest_new_submission is not None:
@@ -1436,6 +1435,10 @@ def train_test_submission(submission, force_retrain_test=False):
 
     submission.state = 'training'
     db.session.commit()
+
+    # Wait a bit so files are copied. Can be eliminated if submissions
+    # go into database.
+    time.sleep(10)
 
     detached_submission_on_cv_folds = [
         DetachedSubmissionOnCVFold(submission_on_cv_fold)
