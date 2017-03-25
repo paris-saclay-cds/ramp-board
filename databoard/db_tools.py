@@ -1389,6 +1389,13 @@ def get_earliest_new_submission(event_name=None):
             new_submissions = list(zip(*new_submissions)[0])
         else:
             new_submissions = []
+    # Give ten seconds to upload submission files. Can be eliminated
+    # once submission files go into database.
+    new_submissions = [
+        s for s in new_submissions
+        if datetime.datetime.utcnow() - s.submission_timestamp >
+        datetime.timedelta(0, 10)]
+
     if len(new_submissions) == 0:
         return None
     else:
@@ -1435,10 +1442,6 @@ def train_test_submission(submission, force_retrain_test=False):
 
     submission.state = 'training'
     db.session.commit()
-
-    # Wait a bit so files are copied. Can be eliminated if submissions
-    # go into database.
-    time.sleep(10)
 
     detached_submission_on_cv_folds = [
         DetachedSubmissionOnCVFold(submission_on_cv_fold)
