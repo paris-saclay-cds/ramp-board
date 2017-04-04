@@ -18,9 +18,9 @@ from batch_classifier_workflow import test_submission
 from batch_classifier_workflow import ArrayContainer
 
 attrs = {
-    'chunk_size': 1024,
+    'chunk_size': 256,
     'n_jobs': 8,
-    'test_batch_size': 256,
+    'test_batch_size': 16,
     'folder': 'imgs',
     'n_classes': 18
 }
