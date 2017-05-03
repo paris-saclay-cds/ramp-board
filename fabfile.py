@@ -98,35 +98,6 @@ def test_setup():
         'boston_housing_test', 'camille_marini', 'rf2',
         'problems/boston_housing/deposited_submissions/kegl/rf2')
 
-    # send data to datarun
-    host_url = os.environ.get('DATARUN_URL')
-    username = os.environ.get('DATARUN_USERNAME')
-    userpassd = os.environ.get('DATARUN_PASSWORD')
-    if host_url is None or username is None or userpassd is None:
-        print('*** Configure your datarun parameters to test with datarun ***')
-    else:
-        data_id_iris = db_tools.send_data_datarun('iris', host_url, username,
-                                                  userpassd)
-        data_id_boston = db_tools.send_data_datarun('boston_housing', host_url,
-                                                    username, userpassd)
-        # send submissions to datarun
-        print('**** TRAIN-TEST DATARUN ****')
-        from databoard.db_tools import get_submissions
-        list_data = [data_id_iris, data_id_boston]
-        list_event = ['iris_test', 'boston_housing_test']
-        for data_id, event_name in zip(list_data, list_event):
-            submissions = get_submissions(event_name=event_name)
-            submissions = [sub for sub in submissions if sub.name != 'sandbox']
-            db_tools.train_test_submissions_datarun(data_id, host_url,
-                                                    username, userpassd,
-                                                    submissions=submissions,
-                                                    force_retrain_test=True,
-                                                    priority='L')
-            time.sleep(228)
-            db_tools.get_trained_tested_submissions_datarun(submissions, host_url,
-                                                            username, userpassd)
-            db_tools.compute_contributivity(event_name)
-
     # compare results with local train and test
     print('**** TRAIN-TEST LOCAL ****')
     db_tools.train_test_submissions(force_retrain_test=True)
