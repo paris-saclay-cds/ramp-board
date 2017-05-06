@@ -309,27 +309,32 @@ def user_event(event_name):
     # if not db_tools.is_public_event(event, current_user):
     #     return _redirect_to_user(u'{}: no event named "{}"'.format(
     #         current_user, event_name))
-    if current_user.is_authenticated:
-        db_tools.add_user_interaction(
-            interaction='looking at event', user=current_user, event=event)
+    if event:
+        if current_user.is_authenticated:
+            db_tools.add_user_interaction(
+                interaction='looking at event', user=current_user, event=event)
+        else:
+            db_tools.add_user_interaction(
+                interaction='looking at event', event=event)
+        with codecs.open(os.path.join(
+            config.problems_path, event.problem.name, 'description.html'),
+                'r', 'utf-8')\
+                as description_file:
+            description = description_file.read()
+        admin = check_admin(current_user, event)
+        if current_user.is_anonymous:
+            approved = False
+        else:
+            approved = db_tools.is_user_signed_up(event_name, current_user.name)
+        return render_template('event.html',
+                               description=description,
+                               event=event,
+                               admin=admin,
+                               approved=approved)
     else:
-        db_tools.add_user_interaction(
-            interaction='looking at event', event=event)
-    with codecs.open(os.path.join(
-        config.problems_path, event.problem.name, 'description.html'),
-            'r', 'utf-8')\
-            as description_file:
-        description = description_file.read()
-    admin = check_admin(current_user, event)
-    if current_user.is_anonymous:
-        approved = False
-    else:
-        approved = db_tools.is_user_signed_up(event_name, current_user.name)
-    return render_template('event.html',
-                           description=description,
-                           event=event,
-                           admin=admin,
-                           approved=approved)
+        return _redirect_to_user(u'Event {} does not exist.'.format(
+            event_name), is_error=True)
+
 
 
 @app.route("/events/<event_name>/starting_kit")
