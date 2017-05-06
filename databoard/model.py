@@ -442,6 +442,17 @@ class Event(db.Model):
         """
         return sum(1 for cv_fold in self.cv_folds if cv_fold.type == 'live')
 
+    @property
+    def n_participants(self):
+        return len(self.event_teams)
+
+    @property
+    def n_submissions(self):
+        n_submissions_ = 0
+        for event_team in self.event_teams:
+            n_submissions_ += len(event_team.submissions)
+        return n_submissions_
+
 
 # many-to-many
 class EventScoreType(db.Model):
