@@ -163,7 +163,7 @@ def user():
         db_tools.add_user_interaction(
             interaction='looking at user', user=current_user)
 
-        events = Event.query.order_by(Event.opening_timestamp.desc())
+        events = Event.query.order_by(Event.public_opening_timestamp.desc())
         event_urls_f_names = [
             (event.name,
              event.title,
