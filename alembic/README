@@ -1,4 +1,0 @@
-Generic single-database configuration.
-
-cp user_batches/dssp_20151203/databoard.db db/
-alembic upgrade head

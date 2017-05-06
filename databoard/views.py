@@ -26,7 +26,7 @@ from databoard import app, login_manager
 import databoard.db_tools as db_tools
 import databoard.config as config
 from databoard.model import User, Submission, WorkflowElement,\
-    Event, Team, SubmissionFile, UserInteraction, SubmissionSimilarity,\
+    Event, Problem, Team, SubmissionFile, UserInteraction, SubmissionSimilarity,\
     EventTeam, DuplicateSubmissionError, TooEarlySubmissionError,\
     MissingExtensionError
 from databoard.forms import LoginForm, CodeForm, SubmitForm, ImportForm,\
@@ -180,6 +180,44 @@ def user():
     return render_template('user.html',
                            event_urls_f_names=event_urls_f_names,
                            admin=admin)
+
+
+@app.route("/problems")
+def problems():
+    #maybe at next migration
+    #db_tools.add_user_interaction(
+    #    interaction='looking at problems', user=current_user)
+
+    problems = Problem.query.order_by(Problem.id.desc())
+    return render_template('problems.html',
+                           problems=problems)
+
+
+@app.route("/problems/<problem_name>")
+def problem(problem_name):
+    problem = Problem.query.filter_by(name=problem_name).one_or_none()
+    # if not db_tools.is_public_event(event, current_user):
+    #     return _redirect_to_user(u'{}: no event named "{}"'.format(
+    #         current_user, event_name))
+    if problem:
+        # maybe at next migration
+        # if current_user.is_authenticated:
+        #     db_tools.add_user_interaction(
+        #         interaction='looking at problem', user=current_user, event=problem)
+        # else:
+        #     db_tools.add_user_interaction(
+        #         interaction='looking at event', event=event)
+        with codecs.open(os.path.join(
+            config.problems_path, problem.name, 'description.html'),
+                'r', 'utf-8')\
+                as description_file:
+            description = description_file.read()
+        return render_template('problem.html',
+                               problem=problem,
+                               description=description)
+    else:
+        return _redirect_to_user(u'Problem {} does not exist.'.format(
+            problem.name), is_error=True)
 
 
 def _redirect_to_user(message_str, is_error=True, category=None):
