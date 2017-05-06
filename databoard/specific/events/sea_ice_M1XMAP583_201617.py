@@ -6,7 +6,7 @@ event_name = 'sea_ice_M1XMAP583_201617'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Northern hemisphere sea ice prediction, M1 X MAP583 2016/17'
+event_title = 'Polytechnique MAP583 2016/17'
 
 score_type_descriptors = [
     {'name': 'rmse', 'precision': 3},

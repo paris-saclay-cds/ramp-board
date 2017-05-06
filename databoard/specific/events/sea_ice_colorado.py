@@ -6,7 +6,7 @@ event_name = 'sea_ice_colorado'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Northern hemisphere sea ice prediction'
+event_title = 'single-day RAMP at Climate Informatics Workshop 2016'
 
 score_type_descriptors = [
     {'name': 'rmse', 'precision': 3},

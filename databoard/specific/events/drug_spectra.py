@@ -6,8 +6,7 @@ event_name = 'drug_spectra'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
-event_title =\
-    'Drug classification and concentration estimation from Raman spectra'
+event_title = 'initial single-day RAMP 2016; Saclay Data Camp 2016/17'
 
 random_state = 57
 cv_test_size = 0.2

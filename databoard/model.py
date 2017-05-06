@@ -227,6 +227,10 @@ class Problem(db.Model):
         return import_module('.' + self.name, config.problems_module)
 
     @property
+    def title(self):
+        return self.module.problem_title
+
+    @property
     def prediction(self):
         return self.module.prediction
 

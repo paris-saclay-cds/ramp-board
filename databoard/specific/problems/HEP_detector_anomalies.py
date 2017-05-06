@@ -9,6 +9,7 @@ from databoard.config import submissions_path, problems_path,\
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 problem_name = 'HEP_detector_anomalies'  # should be the same as the file name
+problem_title = 'Detecting anomalies in the LHC ATLAS detector'
 
 random_state = 57
 public_train_size = 100000

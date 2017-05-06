@@ -6,7 +6,7 @@ event_name = 'pollenating_insects_dssp5'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Pollenating insects DSSP5'
+event_title = 'DSSP5 2017'
 
 random_state = 57
 cv_test_size = 0.2

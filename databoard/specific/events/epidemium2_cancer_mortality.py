@@ -6,7 +6,7 @@ event_name = 'epidemium2_cancer_mortality'  # should be the same as the file nam
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Epidemium cancer mortality rate prediction (2nd RAMP)'
+event_title = 'initial single-day RAMP 2016'
 
 random_state = 57
 cv_test_size = 0.5

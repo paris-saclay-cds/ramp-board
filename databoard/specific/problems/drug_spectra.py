@@ -10,6 +10,8 @@ from databoard.config import submissions_path, problems_path
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 problem_name = 'drug_spectra'  # should be the same as the file name
+problem_title =\
+    'Drug classification and concentration estimation from Raman spectra'
 
 random_state = 57
 held_out_test_size = 0.3

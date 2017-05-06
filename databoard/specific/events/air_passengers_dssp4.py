@@ -6,7 +6,7 @@ event_name = 'air_passengers_dssp4'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Number of air passengers prediction (DSSP4)'
+event_title = 'DSSP4/5 2016'
 
 random_state = 57
 cv_test_size = 0.5

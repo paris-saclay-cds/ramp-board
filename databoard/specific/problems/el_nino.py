@@ -8,6 +8,7 @@ import databoard.regression_prediction as prediction  # noqa
 sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 problem_name = 'el_nino'  # should be the same as the file name
+problem_title = 'El Nino forecast'
 
 prediction_labels = None
 workflow_name = 'ts_feature_extractor_regressor_workflow'

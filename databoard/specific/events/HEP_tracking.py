@@ -7,7 +7,7 @@ event_name = 'HEP_tracking'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Particle tracking in the LHC ATLAS detector'
+event_title = 'initial single-day RAMP 2017'
 
 random_state = 57
 cv_test_size = 0.5

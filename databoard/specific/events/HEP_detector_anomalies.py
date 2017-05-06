@@ -6,7 +6,7 @@ event_name = 'HEP_detector_anomalies'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Detecting anomalies in the LHC ATLAS detector'
+event_title = 'initial single-day RAMP 2016'
 
 random_state = 57
 cv_test_size = 0.5
