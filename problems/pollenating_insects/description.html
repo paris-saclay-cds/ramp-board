@@ -1,0 +1,37 @@
+<h1><a href="http://www.datascience-paris-saclay.fr">Paris Saclay Center for Data Science</a></h1>
+<h2>RAMP on Pollinating insect classification</h2>
+
+<i> Mehdi Cherti (CNRS), Romain Julliard (MNHN), Gregoire Lois (MNHN), Balázs Kégl (CNRS)</i><br>
+    
+<h2>Introduction</h2>
+
+Pollinating insects play a fundamental role in the stability of ecosystems. An insect is said to be pollinator when it transports pollen from one flower to another, helping them to accomplish fertilization. The vast majority of plants pollinates using insects, and at the same time, these insects depend on plants for their survival. However, because of human intensified agrigulture, urbanisation and climate change, these species are threatened. 35% of human alimentation is based on plants pollinated by insects. Diversity of these insects is also important, the more diverse they are the best overall assistance is provided by these insects.
+
+The <a href=http://www.spipoll.org/>SPIPOLL</a> (Suivi Photographique des Insectes POLLinisateurs) project proposes to quantitatively study pollinating insects in France. For this, they created a crowdsourcing platform where anyone can upload pictures of insects and identify their species through a series of questions. These data are then used by specialists for further analyses.
+
+<h2>Data</h2>
+
+In this RAMP, we propose a dataset of pictures of insects from different species gathered from the SPIPOLL project and labeled by specialists. The dataset contains a set of 21004 labeled pictures of insects coming from 18 different insect species. Each picture is a color image. The size of the images (number of pixels) vary.
+
+<h2>The prediction task</h2>
+
+The goal of this RAMP is to classify correctly the species of the insects. For each submission, you will have to provide an image preprocessor (to standardize, resize, crop, augment images) and batch classifier, which will fit a training set and predict the classes (species) on a test set. The images are big so loading them into the memory at once is impossible. The batch classifier therefore will access them through a generator which can be "asked for" a certain number of training and validation images at a time. You will typically run one minibatch of stochastique gradient descent on these images to train a deep convolutional neural networks which are the state of the art in image classification.
+
+<h2>Hints</h2>
+
+First of all, even though 21K images is relatively small compared to industrial level data sets, to achieve state-of-the-art performance, you will need big networks which will take ages (days) to train on a CPU. If you want to have a faster turnaround for tuning your net, you will need a GPU-equipped server of could instance. Setting up an AWS instance is easy, just follow <a href=https://medium.com/@mateuszsieniawski/keras-with-gpu-on-amazon-ec2-a-step-by-step-instruction-4f90364e49ac#.dariq7i2u>this tutorial</a>. 
+
+Your main bottleneck is memory. E.g., increasing the resolution to 128x128, you will need to decrease batch size. You should always run user_test_submission.py on the AWS node before submitting.
+
+For learning the nuts and bolts of convolutional nets, we suggest that you follow <a href=http://cs231n.github.io/>Andrej Karpathy’s excellent course</a>.
+
+You have some trivial "classical" options to explore. You should set the epoch size to something more than three (in the starting kit). You should check when the validation error curve flattens because you will also be graded on training and test time. You can change the network architecture, apply different regularization techniques to control overfitting, optimization options to control underfitting.
+
+You can use pretrained nets from <a href=https://github.com/fchollet/deep-learning-models>here</a>. There are a couple of examples in the starting kit. Your options are the following.
+<ol>
+<li> Retrain or not the weights. If you do not, you are using the pretrained net as fixed a feature extractor. You can add some layers on the top of the output of the pretrained net, and only train your layers. If you retrain all the layers, you use the pretrained net as an initialization. Again, your goal is not only to increase accuracy but also to be frugal. Retraining the full net is obviously more expensive.
+<li> You can "read out" the activations from any layer, you do not need to keep the full net, not even the full convolutional stack.
+<li> The training kit contains examples with the VGG16 net, but feel free to use any of the other popular nets. Just note that there is no way to change the architecture of these nets. In partticular, each net expects images of a given dimension so your image preprocessing needs to resize or crop the images to the right size.
+</ol>
+
+You can also adjust the image preprocessing. Resizing to small (64x64 or even 32x32) will make the training faster so you can explore more hyperparameters, but the details will be lost so your final result will probably be suboptimal. Insects are mostly centered in the images but there are a lot of smaller insects which could be cropped for a better performance. You can also rotate the images or apply other data augmentation tricks (google "convolutional nets data augmentation"). You should also look at the actual images to get some inspiration to find meaningful preprocessing ideas.

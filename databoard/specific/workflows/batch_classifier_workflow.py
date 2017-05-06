@@ -9,8 +9,6 @@ from joblib import Parallel
 import numpy as np
 from skimage.io import imread
 
-from keras.utils.np_utils import to_categorical
-
 
 def train_submission(module_path, X_array, y_array, train_is):
     """
@@ -71,7 +69,7 @@ def test_submission(trained_model, X_array, test_is):
          but as said here, it does not represent the data itself,
          only image IDs).
     test_is : vector of int
-        ##TODO : not used, it should be removed from the API.
+       indices from X_array to test on 
     """
     transform_img, clf = trained_model
     attrs = X_array.attrs
@@ -80,13 +78,12 @@ def test_submission(trained_model, X_array, test_is):
     n_jobs = attrs['n_jobs']
     folder = attrs['folder']
     it = chunk_iterator(
-        X_array, 
+        X_array[test_is], 
         chunk_size=chunk_size, 
         folder=folder)
     y_proba = []
     for X in it:
         for i in range(0, len(X), test_batch_size):
-
             # 1) Preprocessing
             X_batch = X[i:i + test_batch_size]
             X_batch = Parallel(n_jobs=n_jobs, backend='threading')(delayed(transform_img)(x) for x in X_batch)
@@ -216,7 +213,7 @@ class BatchGeneratorBuilder(object):
                 X = np.concatenate(X, axis=0)
                 X = np.array(X, dtype='float32')
                 # Convert y to onehot representation
-                y = to_categorical(y, nb_classes=self.n_classes)
+                y = _to_categorical(y, num_classes=self.n_classes)
 
                 # 2) Yielding mini-batches
                 for i in range(0, len(X), batch_size):
@@ -307,4 +304,28 @@ class ArrayContainer(np.ndarray):
         # see InfoArray.__array_finalize__ for comments
         if obj is None: return
         self.attrs = getattr(obj, 'attrs', None)
+
+
+def _to_categorical(y, num_classes=None):
+    """
+    Taken from keras  : https://github.com/fchollet/keras/blob/master/keras/utils/np_utils.py
+    The reason it was taken from keras is to avoid importing theano which
+    clashes with pytorch.
+
+    Converts a class vector (integers) to binary class matrix.
+    E.g. for use with categorical_crossentropy.
+    # Arguments
+        y: class vector to be converted into a matrix
+            (integers from 0 to num_classes).
+        num_classes: total number of classes.
+    # Returns
+        A binary matrix representation of the input.
+    """
+    y = np.array(y, dtype='int').ravel()
+    if not num_classes:
+        num_classes = np.max(y) + 1
+    n = y.shape[0]
+    categorical = np.zeros((n, num_classes))
+    categorical[np.arange(n), y] = 1
+    return categorical
 

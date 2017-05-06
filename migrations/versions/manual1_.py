@@ -1,4 +1,4 @@
-"""Adding a new value to an Enum is not handled by alembic
+"""Adding a new value to an Enum is not handled by alembic.
 
 Revision ID: manual1
 Revises: 4211b7c3e1e8

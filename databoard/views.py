@@ -163,7 +163,7 @@ def user():
         db_tools.add_user_interaction(
             interaction='looking at user', user=current_user)
 
-        events = Event.query.order_by(Event.opening_timestamp.desc())
+        events = Event.query.order_by(Event.public_opening_timestamp.desc())
         event_urls_f_names = [
             (event.name,
              event.title,
@@ -309,27 +309,32 @@ def user_event(event_name):
     # if not db_tools.is_public_event(event, current_user):
     #     return _redirect_to_user(u'{}: no event named "{}"'.format(
     #         current_user, event_name))
-    if current_user.is_authenticated:
-        db_tools.add_user_interaction(
-            interaction='looking at event', user=current_user, event=event)
+    if event:
+        if current_user.is_authenticated:
+            db_tools.add_user_interaction(
+                interaction='looking at event', user=current_user, event=event)
+        else:
+            db_tools.add_user_interaction(
+                interaction='looking at event', event=event)
+        with codecs.open(os.path.join(
+            config.problems_path, event.problem.name, 'description.html'),
+                'r', 'utf-8')\
+                as description_file:
+            description = description_file.read()
+        admin = check_admin(current_user, event)
+        if current_user.is_anonymous:
+            approved = False
+        else:
+            approved = db_tools.is_user_signed_up(event_name, current_user.name)
+        return render_template('event.html',
+                               description=description,
+                               event=event,
+                               admin=admin,
+                               approved=approved)
     else:
-        db_tools.add_user_interaction(
-            interaction='looking at event', event=event)
-    with codecs.open(os.path.join(
-        config.problems_path, event.problem.name, 'description.html'),
-            'r', 'utf-8')\
-            as description_file:
-        description = description_file.read()
-    admin = check_admin(current_user, event)
-    if current_user.is_anonymous:
-        approved = False
-    else:
-        approved = db_tools.is_user_signed_up(event_name, current_user.name)
-    return render_template('event.html',
-                           description=description,
-                           event=event,
-                           admin=admin,
-                           approved=approved)
+        return _redirect_to_user(u'Event {} does not exist.'.format(
+            event_name), is_error=True)
+
 
 
 @app.route("/events/<event_name>/starting_kit")
@@ -747,16 +752,6 @@ def sandbox(event_name):
         db_tools.add_user_interaction(
             interaction='submit', user=current_user, event=event,
             submission=new_submission)
-        # try:
-        #     # Send submission to datarun
-        #     db_tools.send_submission_datarun.\
-        #         apply_async(args=[new_submission.name,
-        #                           new_submission.team.name,
-        #                           new_submission.event.name],
-        #                     kwargs={'priority': 'L',
-        #                             'force_retrain_test': True})
-        # except:
-        #     logger.info(u'{} is not sent to datarun'.format(new_submission))
 
         return flask.redirect(u'/credit/{}'.format(new_submission.hash_))
     admin = check_admin(current_user, event)
@@ -1054,80 +1049,6 @@ def dashboard_submissions(event_name):
         return _redirect_to_user(
             u'Sorry {}, you do not have admin access for {}"'.
             format(current_user, event_name))
-
-
-# @app.route("/<submission_hash>/send_submission_datarun")
-# @fl.login_required
-# def send_submission_datarun(submission_hash):
-#     submission = Submission.query.filter_by(
-#         hash_=submission_hash).one_or_none()
-#     if submission is None:
-#         error_str = u'Missing submission: {}'.format(submission_hash)
-#         return _redirect_to_user(error_str)
-#     if current_user.access_level == 'admin' or\
-#             db_tools.is_admin(submission.event, current_user):
-#         # Send submission to datarun
-#         db_tools.send_submission_datarun.\
-#             apply_async(args=[submission.name,
-#                               submission.team.name,
-#                               submission.event.name],
-#                         kwargs={'priority': 'L',
-#                                 'force_retrain_test': True})
-#         message_str = u'Submission has been sent to datarun {}'.\
-#             format(submission.name)
-#         logger.info(message_str)
-#         flask.flash(message_str, category='Info')
-#         return flask.redirect(u'/events/{}/dashboard_submissions'.
-#                               format(submission.event.name))
-#     else:
-#         return _redirect_to_user(
-#             u'Sorry {}, you do not have admin rights"'.format(current_user))
-
-
-# @app.route("/<submission_hash>/get_submission_datarun")
-# @fl.login_required
-# def get_submission_datarun(submission_hash):
-#     submission = Submission.query.filter_by(
-#         hash_=submission_hash).one_or_none()
-#     if submission is None:
-#         error_str = u'Missing submission: {}'.format(submission_hash)
-#         return _redirect_to_user(error_str)
-#     if current_user.access_level == 'admin' or\
-#             db_tools.is_admin(submission.event, current_user):
-#         # Get submission from datarun
-#         db_tools.get_submissions_datarun.\
-#             apply_async(args=[[[submission.name,
-#                                submission.event_team.team.name,
-#                                submission.event.name]]])
-#         message_str = u'Getting submission {} from datarun'.format(submission.
-#                                                                    name)
-#         logger.info(message_str)
-#         flask.flash(message_str, category='Info')
-#         return flask.redirect(u'/events/{}/dashboard_submissions'.
-#                               format(submission.event.name))
-#     else:
-#         return _redirect_to_user(
-#             u'Sorry {}, you do not have admin rights"'.format(current_user))
-
-
-# @app.route("/<event_name>/send_data_datarun")
-# @fl.login_required
-# def send_data_datarun(event_name):
-#     event = Event.query.filter_by(name=event_name).one_or_none()
-#     if current_user.access_level == 'admin' or\
-#             db_tools.is_admin(event, current_user):
-#         # Send data to datarun
-#         db_tools.send_data_datarun_config.\
-#             apply_async(args=[event.problem.name],
-#                         kwargs={'split': True})
-#         message_str = u'Sending data for {} to datarun'.format(event.name)
-#         logger.info(message_str)
-#         flask.flash(message_str, category='Info')
-#         return flask.redirect(u'/events/{}/dashboard_submissions'.
-#                               format(event.name))
-#     else:
-#         return _redirect_to_user(
-#             u'Sorry {}, you do not have admin rights"'.format(current_user))
 
 
 @app.route('/reset_password', methods=["GET", "POST"])
