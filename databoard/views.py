@@ -184,8 +184,12 @@ def user():
 
 @app.route("/problems")
 def problems():
-    db_tools.add_user_interaction(
-        interaction='looking at problems', user=current_user)
+    if current_user.is_authenticated:
+        db_tools.add_user_interaction(
+            interaction='looking at problems', user=current_user)
+    else:
+        db_tools.add_user_interaction(
+            interaction='looking at problems')
 
     problems = Problem.query.order_by(Problem.id.desc())
     return render_template('problems.html',
@@ -196,9 +200,13 @@ def problems():
 def problem(problem_name):
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
     if problem:
-        db_tools.add_user_interaction(
-            interaction='looking at problem', user=current_user,
-            problem=problem)
+        if current_user.is_authenticated:
+            db_tools.add_user_interaction(
+                interaction='looking at problem', user=current_user,
+                problem=problem)
+        else:
+            db_tools.add_user_interaction(
+                interaction='looking at problem', problem=problem)
         with codecs.open(os.path.join(
             config.problems_path, problem.name, 'description.html'),
                 'r', 'utf-8')\
