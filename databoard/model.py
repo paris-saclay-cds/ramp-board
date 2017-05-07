@@ -1661,8 +1661,8 @@ user_interaction_type = db.Enum(
     'logout',
     'looking at error',
     'looking at event',
-#    'looking at problem',
-#    'looking at problems',
+    'looking at problem',
+    'looking at problems',
     'looking at leaderboard',
     'looking at my_submissions',
     'looking at private leaderboard',
@@ -1909,4 +1909,3 @@ class HistoricalContributivity(db.Model):
 
     contributivity = db.Column(db.Float, default=0.0)
     historical_contributivity = db.Column(db.Float, default=0.0)
-
