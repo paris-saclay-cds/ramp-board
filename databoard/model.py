@@ -1691,6 +1691,11 @@ class UserInteraction(db.Model):
         db.Integer, db.ForeignKey('users.id'))
     user = db.relationship('User', backref=db.backref('user_interactions'))
 
+    problem_id = db.Column(
+        db.Integer, db.ForeignKey('problems.id'))
+    problem = db.relationship('Problem', backref=db.backref(
+        'user_interactions', cascade='all, delete-orphan'))
+
     event_team_id = db.Column(
         db.Integer, db.ForeignKey('event_teams.id'))
     event_team = db.relationship('EventTeam', backref=db.backref(
@@ -1706,12 +1711,13 @@ class UserInteraction(db.Model):
     submission_file = db.relationship('SubmissionFile', backref=db.backref(
         'user_interactions', cascade='all, delete-orphan'))
 
-    def __init__(self, interaction=None, user=None, event=None,
+    def __init__(self, interaction=None, user=None, problem=None, event=None,
                  ip=None, note=None, submission=None, submission_file=None,
                  diff=None, similarity=None):
         self.timestamp = datetime.datetime.utcnow()
         self.interaction = interaction
         self.user = user
+        self.problem = problem
         if event is not None and user is not None:
             self.event_team = get_active_user_event_team(event, user)
         if ip is None:
@@ -1773,6 +1779,10 @@ class UserInteraction(db.Model):
             repr += ';None'
         else:
             repr += ';' + self.user.id.__repr__()
+        if self.problem is None:
+            repr += ';None'
+        else:
+            repr += ';' + self.problem.id.__repr__()
         if self.event_team is None:
             repr += ';None'
         else:

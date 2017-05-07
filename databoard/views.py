@@ -184,9 +184,8 @@ def user():
 
 @app.route("/problems")
 def problems():
-    #maybe at next migration
-    #db_tools.add_user_interaction(
-    #    interaction='looking at problems', user=current_user)
+    db_tools.add_user_interaction(
+        interaction='looking at problems', user=current_user)
 
     problems = Problem.query.order_by(Problem.id.desc())
     return render_template('problems.html',
@@ -196,17 +195,10 @@ def problems():
 @app.route("/problems/<problem_name>")
 def problem(problem_name):
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
-    # if not db_tools.is_public_event(event, current_user):
-    #     return _redirect_to_user(u'{}: no event named "{}"'.format(
-    #         current_user, event_name))
     if problem:
-        # maybe at next migration
-        # if current_user.is_authenticated:
-        #     db_tools.add_user_interaction(
-        #         interaction='looking at problem', user=current_user, event=problem)
-        # else:
-        #     db_tools.add_user_interaction(
-        #         interaction='looking at event', event=event)
+        db_tools.add_user_interaction(
+            interaction='looking at problem', user=current_user,
+            problem=problem)
         with codecs.open(os.path.join(
             config.problems_path, problem.name, 'description.html'),
                 'r', 'utf-8')\
