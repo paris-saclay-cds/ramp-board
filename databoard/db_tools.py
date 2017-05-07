@@ -1282,6 +1282,22 @@ def compute_contributivity(event_name, start_time_stamp=None,
     db.session.commit()
 
 
+# contributivity_df = score_plot_df.copy()
+# contributivity_df = contributivity_df[
+#     (contributivity_df['test pareto'] == 1) | (contributivity_df['valid pareto'] == 1)]
+# contributivity_df['valid combined combined score'] = 0.0
+# contributivity_df['test combined combined score'] = 0.0
+# contributivity_df['valid combined foldwise score'] = 0.0
+# contributivity_df['test combined foldwise score'] = 0.0
+# for i, row in contributivity_df.iterrows():
+#     print i
+#     db_tools.compute_contributivity_no_commit(
+#         event_name, end_time_stamp=row['submission timestamp (UTC)'])
+#     contributivity_df.set_value(i, 'valid combined combined score', event.combined_combined_valid_score)
+#     contributivity_df.set_value(i, 'test combined combined score', event.combined_combined_test_score)
+#     contributivity_df.set_value(i, 'valid combined foldwise score', event.combined_foldwise_valid_score)
+#     contributivity_df.set_value(i, 'test combined foldwise score', event.combined_foldwise_test_score)
+
 def compute_contributivity_no_commit(
         event_name, start_time_stamp=None, end_time_stamp=None,
         force_ensemble=False):
@@ -1607,14 +1623,12 @@ def is_open_code(event, current_user, submission=None):
     return False
 
 
-def get_leaderboards(event_name, user_name=None):
+def get_leaderboard_df(event_name, user_name=None):
     """
     Returns
     -------
-    leaderboard_html_with_links : html string
-    leaderboard_html_with_no_links : html string
+    leaderboard_df : DataFrame with table content
     """
-    # start = time.time()
 
     submissions = get_submissions(event_name=event_name, user_name=user_name)
     submissions = [submission for submission in submissions
@@ -1654,6 +1668,18 @@ def get_leaderboards(event_name, user_name=None):
     sort_column = event.official_score_name
     leaderboard_df = leaderboard_df.sort_values(
         sort_column, ascending=event.official_score_type.is_lower_the_better)
+    return leaderboard_df
+
+
+def get_leaderboards(event_name, user_name=None):
+    """
+    Returns
+    -------
+    leaderboard_html_with_links : html string
+    leaderboard_html_with_no_links : html string
+    """
+
+    leaderboard_df = get_leaderboard_df(event_name, user_name)
     html_params = dict(
         escape=False,
         index=False,
@@ -1666,9 +1692,6 @@ def get_leaderboards(event_name, user_name=None):
     leaderboard_df['submission'] = [
         submission.name[:20] for submission in submissions]
     leaderboard_html_no_links = leaderboard_df.to_html(**html_params)
-
-    # logger.info(u'leaderboard construction takes {}ms'.format(
-    #     int(1000 * (time.time() - start))))
 
     return (
         table_format(leaderboard_html_with_links),
