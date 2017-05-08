@@ -153,8 +153,10 @@ def score_plot(event):
     pareto_df = pareto_df.append(pareto_df.iloc[-1])
     print pareto_df
     pareto_df.iloc[-1]['x'] = max(score_plot_df['x'])
+    print pareto_df
     pareto_df = make_step_df(
         pareto_df, event.official_score_type.is_lower_the_better)
+    print pareto_df
     source_pareto = ColumnDataSource(pareto_df)
 
     tools = ['pan,wheel_zoom,box_zoom,reset,previewsave,tap']
