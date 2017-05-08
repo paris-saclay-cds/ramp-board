@@ -132,7 +132,6 @@ def score_plot(event):
         fill_color_2, score_plot_df['historical contributivity'].values /
         max_historical_contributivity)
     fill_colors = np.minimum(fill_colors_1, fill_colors_2)
-    print max_historical_contributivity
     fill_colors = ["#%02x%02x%02x" % (c[0], c[1], c[2]) for c in fill_colors]
 
     score_plot_df['x'] = score_plot_df['submitted at (UTC)']
@@ -151,12 +150,9 @@ def score_plot(event):
     pareto_df = score_plot_df[
         score_plot_df[score_name + ' pareto'] == 1].copy()
     pareto_df = pareto_df.append(pareto_df.iloc[-1])
-    print pareto_df
-    pareto_df.iloc[-1]['x'] = max(score_plot_df['x'])
-    print pareto_df
+    pareto_df.iloc[-1, pareto_df.columns.get_loc('x')] = max(score_plot_df['x'])
     pareto_df = make_step_df(
         pareto_df, event.official_score_type.is_lower_the_better)
-    print pareto_df
     source_pareto = ColumnDataSource(pareto_df)
 
     tools = ['pan,wheel_zoom,box_zoom,reset,previewsave,tap']
