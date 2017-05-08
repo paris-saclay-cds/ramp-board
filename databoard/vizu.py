@@ -7,7 +7,19 @@ from bokeh.models.formatters import DatetimeTickFormatter
 from skimage.color import gray2rgb, rgb2gray
 
 
-def make_step_df(pareto_df, event):
+def make_step_df(pareto_df, is_lower_the_better):
+    """Make a step function from pareto_df['x', 'y'].
+
+    Parameters
+    ----------
+    pareto_df : pd.DataFrame
+        Should contain 'x' and 'y' columns, sorted by 'x'.
+    is_lower_the_better : boolean
+
+    Returns
+    ----------
+    pareto_df : pd.DataFrame
+    """
     n_pareto = len(pareto_df)
     pareto_df = pareto_df.set_index(1 + 2 * np.arange(n_pareto))
     for i in range(2, 2 * n_pareto, 2):
@@ -16,7 +28,7 @@ def make_step_df(pareto_df, event):
     pareto_df.loc[2 * n_pareto] = pareto_df.loc[2 * n_pareto - 1]
     pareto_df.set_value(2 * n_pareto, 'x', max(pareto_df['x']))
     pareto_df.loc[0] = pareto_df.loc[1]
-    if event.official_score_type.is_lower_the_better:
+    if is_lower_the_better:
         pareto_df.set_value(0, 'y', max(pareto_df['y']))
     else:
         pareto_df.set_value(0, 'y', min(pareto_df['y']))
@@ -24,6 +36,7 @@ def make_step_df(pareto_df, event):
 
 
 def color_gradient(rgb, factor_array):
+    """Rescale rgb by factor_array."""
     colors = np.array(
         [(255 - rgb[0], 255 - rgb[2], 255 - rgb[2]) for _ in factor_array])
     colors = rgb2gray(colors)
@@ -135,8 +148,13 @@ def score_plot(event):
     score_plot_df['label'][is_open] = 'open phase'
 
     source = ColumnDataSource(score_plot_df)
-    pareto_df = make_step_df(score_plot_df[
-        score_plot_df[score_name + ' pareto'] == 1].copy(), event)
+    pareto_df = score_plot_df[
+        score_plot_df[score_name + ' pareto'] == 1].copy()
+    pareto_df = pareto_df.append(pareto_df.iloc[-1])
+    print pareto_df
+    pareto_df.iloc[-1]['x'] = max(score_plot_df['x'])
+    pareto_df = make_step_df(
+        pareto_df, event.official_score_type.is_lower_the_better)
     source_pareto = ColumnDataSource(pareto_df)
 
     tools = ['pan,wheel_zoom,box_zoom,reset,previewsave,tap']
