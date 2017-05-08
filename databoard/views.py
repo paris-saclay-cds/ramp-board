@@ -19,12 +19,14 @@ from werkzeug import secure_filename
 from wtforms import StringField
 from wtforms.widgets import TextArea
 from databoard import db
+from bokeh.embed import components
 
 import flask
 import flask.ext.login as fl
 from flask.ext.sqlalchemy import get_debug_queries
 from databoard import app, login_manager
 import databoard.db_tools as db_tools
+import databoard.vizu as vizu
 import databoard.config as config
 from databoard.model import User, Submission, WorkflowElement,\
     Event, Problem, Team, SubmissionFile, UserInteraction, SubmissionSimilarity,\
@@ -221,12 +223,6 @@ def problem(problem_name):
             problem.name), is_error=True)
 
 
-from bokeh.plotting import figure
-from bokeh.resources import CDN
-from bokeh.embed import components
-from bokeh.models import DatetimeTickFormatter
-from bokeh.models.sources import ColumnDataSource
-
 @app.route("/event_plots/<event_name>")
 def event_plots(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
@@ -234,76 +230,7 @@ def event_plots(event_name):
     #     return _redirect_to_user(u'{}: no event named "{}"'.format(
     #         current_user, event_name))
     if event:
-        leaderboard_df = db_tools.get_leaderboard_df(event_name)
-        leaderboard_df = leaderboard_df.sort_values('submitted at (UTC)')
-        leaderboard_df['cicle_size'] =\
-            2 + 0.05 * leaderboard_df['historical contributivity']
-        score_name = event.official_score_name
-        leaderboard_df['pareto'] = 0
-        best_score = event.official_score_type.worst
-        if event.official_score_type.is_lower_the_better:
-            for i, row in leaderboard_df.iterrows():
-                score = row[score_name]
-                if score < best_score:
-                    best_score = score
-                    leaderboard_df['pareto'][i] = 1
-        else:
-            for i, row in leaderboard_df.iterrows():
-                score = row[score_name]
-                if score > best_score:
-                    best_score = score
-                    leaderboard_df['pareto'][i] = 1
-        tools = ['pan,wheel_zoom,box_zoom,reset,previewsave,tap']
-        plot_title = event.problem.title.capitalize() + ', ' +\
-            event.title.capitalize() + ' scores'
-        p = figure(
-            plot_width=900, plot_height=600, tools=tools, title=plot_title, 
-            # y_range=Range1d(y_min, y_max)
-        )
-
-        # # public opening separator
-        # p.line(
-        #     x=[public_opening_timestamp, public_opening_timestamp],
-        #     y=[event.official_score_type.minimum, event.official_score_type.maximum],
-        #     line_width=0, line_color='gray', legend='opening timestamp'
-        # )
-        p.circle(
-            'submitted at (UTC)', event.official_score_name,
-            source=ColumnDataSource(leaderboard_df),
-        )
-        # p.circle(
-        #     'submitted at (UTC)', event.official_score_name, size='circle_size',
-        #     line_color='royalblue', line_width=1, source=ColumnDataSource(leaderboard_df),
-        #     legend='submissions'
-        # )
-        p.line(
-            'submitted at (UTC)', 'pareto', line_width=3,
-            line_color='goldenrod', source=ColumnDataSource(leaderboard_df),
-            legend='best ' + score_name, alpha=0.9
-        )
-
-        p.xaxis.formatter = DatetimeTickFormatter(formats=dict(
-            hours=["%d %B %Y"],
-            days=["%d %B %Y"],
-            months=["%d %B %Y"],
-            years=["%d %B %Y"],
-        ))
-        p.xaxis.major_label_orientation = np.pi / 4
-
-        if event.official_score_type.is_lower_the_better:
-            p.yaxis.axis_label = score_name + ' (the lower the better)'
-            p.legend.location = 'top_right'
-        else:
-            p.yaxis.axis_label = score_name + ' (the greater the better)'
-            p.legend.location = 'bottom_right'
-        p.xaxis.axis_label = 'submission timestamp (UTC)'
-        p.xaxis.axis_label_text_font_size = '14pt'
-        p.yaxis.axis_label_text_font_size = '14pt'
-        p.legend.label_text_font_size = '14pt'
-        p.title.text_font_size = '16pt'
-        p.xaxis.major_label_text_font_size = '10pt'
-        p.yaxis.major_label_text_font_size = '10pt'
-
+        p = vizu.score_plot(event)
         script, div = components(p)
         return render_template('event_plots.html',
                                script=script,
