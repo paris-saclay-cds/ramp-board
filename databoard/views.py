@@ -169,7 +169,7 @@ def user():
         events = Event.query.order_by(Event.public_opening_timestamp.desc())
         event_urls_f_names = [
             (event.name,
-             event.title,
+             event.problem.title + ', ' + event.title,
              db_tools.is_user_signed_up(event.name, current_user.name),
              db_tools.is_user_asked_sign_up(event.name, current_user.name))
             for event in events
@@ -177,8 +177,9 @@ def user():
 
     else:
         events = Event.query.filter_by(is_public=True).all()
-        event_urls_f_names = [(event.name, event.title, False, False)
-                              for event in events]
+        event_urls_f_names = [(
+            event.name, event.problem.title + ', ' + event.title, False, False)
+            for event in events]
     admin = check_admin(current_user, None)
     return render_template('user.html',
                            event_urls_f_names=event_urls_f_names,
