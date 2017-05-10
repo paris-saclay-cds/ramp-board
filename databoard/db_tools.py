@@ -1623,11 +1623,13 @@ def is_open_code(event, current_user, submission=None):
     return False
 
 
-def get_leaderboard_df(event_name, user_name=None):
+
+def get_leaderboards(event_name, user_name=None):
     """
     Returns
     -------
-    leaderboard_df : DataFrame with table content
+    leaderboard_html_with_links : html string
+    leaderboard_html_with_no_links : html string
     """
 
     submissions = get_submissions(event_name=event_name, user_name=user_name)
@@ -1668,18 +1670,7 @@ def get_leaderboard_df(event_name, user_name=None):
     sort_column = event.official_score_name
     leaderboard_df = leaderboard_df.sort_values(
         sort_column, ascending=event.official_score_type.is_lower_the_better)
-    return leaderboard_df
 
-
-def get_leaderboards(event_name, user_name=None):
-    """
-    Returns
-    -------
-    leaderboard_html_with_links : html string
-    leaderboard_html_with_no_links : html string
-    """
-
-    leaderboard_df = get_leaderboard_df(event_name, user_name)
     html_params = dict(
         escape=False,
         index=False,
