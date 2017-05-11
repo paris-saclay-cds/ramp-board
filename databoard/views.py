@@ -80,7 +80,7 @@ def login():
     # If there is already a user logged in, don't let another log in
     if current_user.is_authenticated:
         session['logged_in'] = True
-        return redirect(url_for('user'))
+        return redirect(url_for('problems'))
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -105,7 +105,7 @@ def login():
         # if not fl.next_is_valid(next):
         #     return flask.abort(400)
 
-        return flask.redirect(flask.url_for('user'))
+        return flask.redirect(flask.url_for('problems'))
 
     return render_template(
         'login.html',
