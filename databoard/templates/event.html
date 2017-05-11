@@ -32,6 +32,21 @@
     <span class="title">{{ event.problem.title }}, {{ event.title }}</span>
 </div>
 
+{% if approved %}
+{% elif current_user.access_level in ['user', 'admin'] %}
+    {% if asked %}
+        <strong><font color="#e84b3a">Waiting for approval...</font></strong>
+    {% else %}
+        <div class="col-xs-12">
+          <div class="card">
+            <div class="card-body">
+              <a class="btn btn-warning" href="/events/{{ event.name }}/sign_up">Sign up <span"></span></a>
+            </div>
+          </div>
+        </div>
+     {% endif %}
+{% endif %}
+
 <div class="col-xs-12">
   <div class="card">
     <div class="card-header">
