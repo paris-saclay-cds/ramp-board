@@ -248,7 +248,7 @@ def _redirect_to_user(message_str, is_error=True, category=None):
         logger.error(message_str)
     else:
         logger.info(message_str)
-    return redirect(url_for('user'))
+    return redirect(url_for('problems'))
 
 
 def _redirect_to_sandbox(event, message_str, is_error=True, category=None):
