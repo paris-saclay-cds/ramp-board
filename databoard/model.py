@@ -903,17 +903,8 @@ def combine_predictions_list(predictions_list, index_list=None):
     combined_predictions : instance of Predictions
         A predictions instance containing the combined (averaged) predictions.
     """
-    if index_list is None:  # we combine the full list
-        index_list = range(len(predictions_list))
-
-    y_comb_list = np.array(
-        [predictions_list[i].y_pred_comb for i in index_list])
-
     Predictions = type(predictions_list[0])
-
-    y_comb = np.nanmean(y_comb_list, axis=0)
-    combined_predictions = Predictions(labels=predictions_list[0].labels,
-                                       y_pred=y_comb)
+    combined_predictions = Predictions.combine(predictions_list, index_list)
     return combined_predictions
 
 
