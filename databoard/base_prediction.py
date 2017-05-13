@@ -43,7 +43,7 @@ class BasePrediction(object):
             index_list = range(len(predictions_list))
 
         y_comb_list = np.array(
-            [predictions_list[i].y_pred_comb for i in index_list])
+            [predictions_list[i].y_pred for i in index_list])
 
         y_comb = np.nanmean(y_comb_list, axis=0)
         combined_predictions = cls(

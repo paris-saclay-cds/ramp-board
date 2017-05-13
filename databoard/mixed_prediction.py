@@ -50,10 +50,5 @@ class Predictions(BasePrediction):
             axis=1)
 
     @property
-    def y_pred_comb(self):
-        """Return an array which can be combined by taking means."""
-        return self.y_pred
-
-    @property
     def n_samples(self):
         return self.multiclass_prediction.n_samples
