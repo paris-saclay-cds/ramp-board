@@ -19,8 +19,7 @@ def test_save_and_load():
     predictions.save(f_name)
     loaded_predictions = Predictions(f_name=f_name)
     assert_array_equal(predictions.y_pred, loaded_predictions.y_pred)
-    assert_equal(predictions.n_samples, (3,))
-    assert_array_equal(predictions.y_pred_comb, predictions.y_pred)
+    assert_equal(predictions.n_samples, 3)
     os.remove(f_name)
 
 

@@ -21,6 +21,7 @@ class Predictions(BasePrediction):
                              "or n_samples")
 
     def set_valid_in_train(self, predictions, test_is):
+        """Set a cross validation slice."""
         self.y_pred[test_is] = predictions.y_pred
 
     @property
@@ -29,4 +30,4 @@ class Predictions(BasePrediction):
 
     @property
     def n_samples(self):
-        return self.y_pred.shape
+        return len(self.y_pred)

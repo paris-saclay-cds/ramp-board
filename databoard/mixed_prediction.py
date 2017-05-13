@@ -48,7 +48,3 @@ class Predictions(BasePrediction):
             [self.multiclass_prediction.y_pred,
              self.regression_prediction.y_pred.reshape(-1, 1)],
             axis=1)
-
-    @property
-    def n_samples(self):
-        return self.multiclass_prediction.n_samples
