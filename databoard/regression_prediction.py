@@ -27,6 +27,6 @@ class Predictions(BasePrediction):
     def valid_indexes(self):
         return ~np.isnan(self.y_pred)
 
-   @property
+    @property
     def n_samples(self):
         return self.y_pred.shape
