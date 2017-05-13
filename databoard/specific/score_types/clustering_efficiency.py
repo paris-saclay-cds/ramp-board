@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def score_function(true_predictions, predictions, valid_indexes=None):
+def score_function(ground_truths, predictions, valid_indexes=None):
     """Compute a clustering score.
 
     Cluster ids should be nonnegative integers. A negative integer
@@ -17,8 +17,8 @@ def score_function(true_predictions, predictions, valid_indexes=None):
 
     Parameters
     ----------
-    true_predictions : Predictions from regression_predictions
-        true_predictions.y_pred: np.array, shape = (n, 2)
+    ground_truths : Predictions from regression_predictions
+        ground_truths.y_pred: np.array, shape = (n, 2)
         The ground truth.
         first column: event_id
         second column: cluster_id
@@ -27,9 +27,9 @@ def score_function(true_predictions, predictions, valid_indexes=None):
         The predicted cluster assignment (predicted cluster_id)
     """
     if valid_indexes is None:
-        valid_indexes = range(true_predictions.n_samples)
+        valid_indexes = range(ground_truths.n_samples)
     y_pred = predictions.y_pred[valid_indexes]
-    y_true = true_predictions.y_pred[valid_indexes]
+    y_true = ground_truths.y_pred[valid_indexes]
 
     score = 0.
     event_ids = y_true[:, 0]

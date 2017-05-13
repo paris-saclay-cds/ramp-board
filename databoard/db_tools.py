@@ -1326,8 +1326,8 @@ def compute_contributivity_no_commit(
     event = Event.query.filter_by(name=event_name).one()
     submissions = get_submissions(event_name=event_name)
 
-    true_predictions_train = event.problem.true_predictions_train()
-    true_predictions_test = event.problem.true_predictions_test()
+    ground_truths_train = event.problem.ground_truths_train()
+    ground_truths_test = event.problem.ground_truths_test()
 
     combined_predictions_list = []
     best_predictions_list = []
@@ -1336,12 +1336,12 @@ def compute_contributivity_no_commit(
     test_is_list = []
     for cv_fold in CVFold.query.filter_by(event=event).all():
         logger.info('{}'.format(cv_fold))
-        true_predictions_valid = event.problem.true_predictions_valid(
+        ground_truths_valid = event.problem.ground_truths_valid(
             cv_fold.test_is)
         combined_predictions, best_predictions,\
             combined_test_predictions, best_test_predictions =\
             _compute_contributivity_on_fold(
-                cv_fold, true_predictions_valid,
+                cv_fold, ground_truths_valid,
                 start_time_stamp, end_time_stamp, force_ensemble)
         # TODO: if we do asynchron CVs, this has to be revisited
         if combined_predictions is None:
@@ -1361,7 +1361,7 @@ def compute_contributivity_no_commit(
     if len(combined_predictions_list) > 0:
         combined_predictions, scores = _get_score_cv_bags(
             event, event.official_score_type, combined_predictions_list,
-            true_predictions_train, test_is_list=test_is_list,
+            ground_truths_train, test_is_list=test_is_list,
             is_return_combined_predictions=True)
         np.savetxt(
             'y_train_pred.csv', combined_predictions.y_pred, delimiter=',')
@@ -1375,7 +1375,7 @@ def compute_contributivity_no_commit(
     if len(best_predictions_list) > 0:
         scores = _get_score_cv_bags(
             event, event.official_score_type, best_predictions_list,
-            true_predictions_train, test_is_list=test_is_list)
+            ground_truths_train, test_is_list=test_is_list)
         logger.info('Combined foldwise best valid score = {}'.format(scores))
         event.combined_foldwise_valid_score = float(scores[-1])
     else:
@@ -1386,7 +1386,7 @@ def compute_contributivity_no_commit(
     if len(combined_test_predictions_list) > 0:
         combined_predictions, scores = _get_score_cv_bags(
             event, event.official_score_type, combined_test_predictions_list,
-            true_predictions_test, is_return_combined_predictions=True)
+            ground_truths_test, is_return_combined_predictions=True)
         np.savetxt(
             'y_test_pred.csv', combined_predictions.y_pred, delimiter=',')
         logger.info('Combined combined test score = {}'.format(scores))
@@ -1399,7 +1399,7 @@ def compute_contributivity_no_commit(
     if len(best_test_predictions_list) > 0:
         scores = _get_score_cv_bags(
             event, event.official_score_type, best_test_predictions_list,
-            true_predictions_test)
+            ground_truths_test)
         logger.info('Combined foldwise best valid score = {}'.format(scores))
         event.combined_foldwise_test_score = float(scores[-1])
     else:
@@ -1412,7 +1412,7 @@ def compute_contributivity_no_commit(
 
 
 
-def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
+def _compute_contributivity_on_fold(cv_fold, ground_truths_valid,
                                     start_time_stamp=None, end_time_stamp=None,
                                     force_ensemble=False):
     """Construct the best model combination on a single fold.
@@ -1481,7 +1481,7 @@ def _compute_contributivity_on_fold(cv_fold, true_predictions_valid,
     while improvement and len(best_index_list) < cv_fold.event.max_n_ensemble:
         old_best_index_list = best_index_list
         best_index_list, score = get_next_best_single_fold(
-            cv_fold.event, predictions_list, true_predictions_valid,
+            cv_fold.event, predictions_list, ground_truths_valid,
             best_index_list)
         improvement = len(best_index_list) != len(old_best_index_list)
         logger.info('\t{}: {}'.format(old_best_index_list, score))

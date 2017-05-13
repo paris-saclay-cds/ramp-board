@@ -1,11 +1,11 @@
 import numpy as np
 
 
-def score_function(true_predictions, predictions, valid_indexes=None):
+def score_function(ground_truths, predictions, valid_indexes=None):
     if valid_indexes is None:
-        valid_indexes = range(true_predictions.n_samples)
+        valid_indexes = range(ground_truths.n_samples)
     y_proba = predictions.y_pred[valid_indexes]
-    y_true_proba = true_predictions.y_pred[valid_indexes]
+    y_true_proba = ground_truths.y_pred[valid_indexes]
     # Normalize rows
     y_proba_normalized = y_proba / np.sum(y_proba, axis=1, keepdims=True)
     # Kaggle's rule
