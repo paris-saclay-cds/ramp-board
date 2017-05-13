@@ -27,11 +27,6 @@ class Predictions(BasePrediction):
     def valid_indexes(self):
         return ~np.isnan(self.y_pred)
 
-    @property
-    def y_pred_comb(self):
-        """Return an array which can be combined by taking means."""
-        return self.y_pred
-
-    @property
+   @property
     def n_samples(self):
         return self.y_pred.shape
