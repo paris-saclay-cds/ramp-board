@@ -6,7 +6,7 @@ class Predictions(BasePrediction):
 
     def __init__(self, labels=None, y_pred=None, y_pred_labels=None,
                  y_pred_indexes=None, y_true=None, f_name=None,
-                 n_samples=None):
+                 shape=None):
         self.labels = labels
         if y_pred is not None:
             self.y_proba = np.array(y_pred)
@@ -16,13 +16,13 @@ class Predictions(BasePrediction):
             self._init_from_pred_labels(y_true)
 #        elif f_name is not None:
 #            self.y_proba = np.load(f_name)
-        elif n_samples is not None:
+        elif shape is not None:
             self.y_proba = np.empty(
-                (n_samples, len(self.labels)), dtype=np.float64)
+                (shape[0], len(self.labels)), dtype=np.float64)
             self.y_proba.fill(np.nan)
         else:
             raise ValueError('Missing init argument: y_pred, y_pred_labels, '
-                             'y_pred_indexes, y_true, f_name, or n_samples)')
+                             'y_pred_indexes, y_true, f_name, or shape)')
         shape = self.y_proba.shape
         if len(shape) != 2:
             raise ValueError('Multiclass y_proba should be 2-dimensional, '

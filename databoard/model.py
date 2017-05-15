@@ -934,11 +934,10 @@ def _get_score_cv_bags(event, score_type, predictions_list, ground_truths,
         test_is_list = [range(len(predictions.y_pred))
                         for predictions in predictions_list]
 
-    n_samples = ground_truths.n_samples
     y_comb = np.array(
-        [event.prediction.Predictions(labels=event.problem.module.
-                                      prediction_labels,
-                                      n_samples=n_samples)
+        [event.prediction.Predictions(
+            labels=event.problem.module.prediction_labels,
+            shape=ground_truths.y_pred.shape)
          for _ in predictions_list])
     score_cv_bags = []
     for i, test_is in enumerate(test_is_list):

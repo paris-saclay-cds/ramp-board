@@ -49,7 +49,7 @@ Create user by
 createuser --pwprompt mrramp
 mrramp should be the user specified in DATABOARD_DB_USER
 it will prompt you for password
-pwd should be the same spacified in DATABOARD_DB_PASSWORD
+pwd should be the same specified in DATABOARD_DB_PASSWORD
 Create db by
 createdb --owner=mrramp databoard_test
 
@@ -292,6 +292,17 @@ fab add_workflow:ts_feature_extractor_regressor_workflow,ts_feature_extractor,re
 fab add_problem:el_nino
 fab add_event:el_nino
 fab sign_up_team:el_nino,kegl
+```
+
+#### epidemium2 cancer mortality
+
+```
+fab add_workflow_element_type:feature_extractor,code
+fab add_workflow_element_type:regressor,code
+fab add_workflow:feature_extractor_regressor_workflow,feature_extractor,regressor
+fab add_problem:epidemium2_cancer_mortality
+fab add_event:epidemium2_cancer_mortality
+fab sign_up_team:epidemium2_cancer_mortality,kegl
 ```
 
 ### Batch sign up users
