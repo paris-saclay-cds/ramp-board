@@ -3,6 +3,8 @@ from importlib import import_module
 
 
 def train_submission(module_path, X_ds, y_array, train_is=None):
+    if train_is is None:
+        train_is = range(len(y_array))
     # train_is wrt range(len(y_array)) so we need to make X_test_ds longer
     # by n_burn_in
     n_burn_in = X_ds.attrs['n_burn_in']
