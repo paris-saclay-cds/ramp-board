@@ -11,8 +11,8 @@ class Predictions(BasePrediction):
             self.y_pred = np.array(y_pred)
         elif y_true is not None:
             self.y_pred = np.array(y_true)
-        elif f_name is not None:
-            self.y_pred = np.load(f_name)
+#        elif f_name is not None:
+#            self.y_pred = np.load(f_name)
         elif n_samples is not None:
             self.y_pred = np.empty((n_samples, 2))
             self.y_pred.fill(np.nan)

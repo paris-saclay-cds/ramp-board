@@ -10,7 +10,7 @@ import numpy as np
 from skimage.io import imread
 
 
-def train_submission(module_path, X_array, y_array, train_is):
+def train_submission(module_path, X_array, y_array, train_is=None):
     """
     module_path : str
         module where the submission is. the folder of the module
@@ -36,6 +36,8 @@ def train_submission(module_path, X_array, y_array, train_is):
     # In that case, add a '.' to have e.g 'submissions.submission_name.batch_classifier'.
     # For the starting kit, module_path is '', in that case we just import
     # e.g 'batch_classifier'.
+    if train_is is None:
+        train_is = range(len(y_array))
     if module_path:
         module_path += '.'
     batch_classifier = import_module(module_path + 'batch_classifier')
@@ -59,7 +61,7 @@ def train_submission(module_path, X_array, y_array, train_is):
     return transform_img, clf
 
 
-def test_submission(trained_model, X_array, test_is):
+def test_submission(trained_model, X_array):
     """
     trained_model : tuple (function, Classifier)
         tuple of a trained model returned by `train_submission`.
@@ -68,8 +70,6 @@ def test_submission(trained_model, X_array, test_is):
         (it is named X_array to be coherent with the current API,
          but as said here, it does not represent the data itself,
          only image IDs).
-    test_is : vector of int
-       indices from X_array to test on 
     """
     transform_img, clf = trained_model
     attrs = X_array.attrs
@@ -78,7 +78,7 @@ def test_submission(trained_model, X_array, test_is):
     n_jobs = attrs['n_jobs']
     folder = attrs['folder']
     it = chunk_iterator(
-        X_array[test_is], 
+        X_array, 
         chunk_size=chunk_size, 
         folder=folder)
     y_proba = []

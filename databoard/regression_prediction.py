@@ -11,8 +11,8 @@ class Predictions(BasePrediction):
             self.y_pred = np.array(y_pred)
         elif y_true is not None:
             self.y_pred = np.array(y_true)
-        elif f_name is not None:
-            self.y_pred = np.load(f_name)
+#        elif f_name is not None:
+#            self.y_pred = np.load(f_name)
         elif n_samples is not None:
             self.y_pred = np.empty(n_samples, dtype=float)
             self.y_pred.fill(np.nan)
@@ -27,7 +27,3 @@ class Predictions(BasePrediction):
     @property
     def valid_indexes(self):
         return ~np.isnan(self.y_pred)
-
-    @property
-    def n_samples(self):
-        return len(self.y_pred)

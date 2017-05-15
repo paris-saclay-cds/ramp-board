@@ -20,12 +20,12 @@ class Predictions(BasePrediction):
                 labels=self.labels, y_true=y_true[:, 0])
             self.regression_prediction = regression_prediction.Predictions(
                 labels=self.labels, y_true=y_true[:, 1])
-        elif f_name is not None:
-            y_true = np.load(f_name)
-            self.multiclass_prediction = multiclass_prediction.Predictions(
-                labels=self.labels, y_true=y_true[:, 0])
-            self.regression_prediction = regression_prediction.Predictions(
-                labels=self.labels, y_true=y_true[:, 1])
+#        elif f_name is not None:
+#            y_true = np.load(f_name)
+#            self.multiclass_prediction = multiclass_prediction.Predictions(
+#                labels=self.labels, y_true=y_true[:, 0])
+#            self.regression_prediction = regression_prediction.Predictions(
+#                labels=self.labels, y_true=y_true[:, 1])
         elif n_samples is not None:
             self.multiclass_prediction = multiclass_prediction.Predictions(
                 labels=self.labels, n_samples=n_samples)

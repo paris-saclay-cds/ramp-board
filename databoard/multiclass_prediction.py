@@ -14,8 +14,8 @@ class Predictions(BasePrediction):
             self._init_from_pred_labels(y_pred_labels)
         elif y_true is not None:
             self._init_from_pred_labels(y_true)
-        elif f_name is not None:
-            self.y_proba = np.load(f_name)
+#        elif f_name is not None:
+#            self.y_proba = np.load(f_name)
         elif n_samples is not None:
             self.y_proba = np.empty(
                 (n_samples, len(self.labels)), dtype=np.float64)
