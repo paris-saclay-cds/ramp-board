@@ -415,6 +415,19 @@ def download_starting_kit(event_name):
         mimetype='application/octet-stream')
 
 
+@app.route("/problems/<problem_name>/starting_kit")
+def download_problem_starting_kit(problem_name):
+    problem = Problem.query.filter_by(name=problem_name).one_or_none()
+    starting_kit_path = os.path.abspath(os.path.join(
+        config.root_path, config.problems_d_name, problem.name))
+    f_name = u'{}.zip'.format(config.sandbox_d_name)
+    print(starting_kit_path)
+    return send_from_directory(
+        starting_kit_path, f_name, as_attachment=True,
+        attachment_filename=u'{}_{}'.format(problem_name, f_name),
+        mimetype='application/octet-stream')
+
+
 @app.route("/events/<event_name>/my_submissions")
 @fl.login_required
 def my_submissions(event_name):
