@@ -25,4 +25,4 @@ class Predictions(BasePrediction):
 
     @property
     def valid_indexes(self):
-        return ~np.isnan(self.y_pred[:, 1])
+        return ~np.isnan(self.y_pred)
