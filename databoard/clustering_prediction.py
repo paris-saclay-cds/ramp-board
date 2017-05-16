@@ -14,7 +14,7 @@ class Predictions(BasePrediction):
 #        elif f_name is not None:
 #            self.y_pred = np.load(f_name)
         elif shape is not None:
-            self.y_pred = np.empty((shape[0], 2))
+            self.y_pred = np.empty(shape[0])
             self.y_pred.fill(np.nan)
         else:
             raise ValueError("Missing init argument: y_pred, y_true, f_name "
