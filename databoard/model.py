@@ -450,7 +450,8 @@ class Event(db.Model):
     def n_submissions(self):
         n_submissions_ = 0
         for event_team in self.event_teams:
-            n_submissions_ += len(event_team.submissions)
+            # substract one for starting kit
+            n_submissions_ += len(event_team.submissions) - 1
         return n_submissions_
 
 
