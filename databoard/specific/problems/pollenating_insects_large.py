@@ -37,7 +37,7 @@ n_img_load_jobs = 8
 # the user. Because there is no backprop in test time, `test_batch_size` can typically
 # be larger than the one used in training.
 test_batch_size = 16 
-prediction_labels = range(0, 208)
+prediction_labels = range(0, 209)
 
 min_class_examples = 100
 
