@@ -11,7 +11,7 @@ import databoard.multiclass_prediction as prediction
 from databoard.config import problems_path
 from databoard.specific.workflows.batch_classifier_workflow import ArrayContainer
 
-problem_name = 'pollenating_insects_large'  # should be the same as the file name
+problem_name = 'pollenating_insects_2'  # should be the same as the file name
 problem_title = 'Pollenating insect classification'
     
 workflow_name = 'batch_classifier_workflow'
