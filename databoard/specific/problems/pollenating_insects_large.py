@@ -72,7 +72,7 @@ attrs = {
     'n_jobs': n_img_load_jobs,
     'test_batch_size': test_batch_size,
     'folder': img_folder,
-    'n_classes': 18
+    'n_classes': len(prediction_labels)
 }
 
 def prepare_data():
@@ -156,9 +156,7 @@ def _load_full_raw(filename='spipoll.txt'):
     cnt = df['taxon'].value_counts()
     cnt = cnt[cnt >= min_class_examples]
     unique_taxons = set(cnt.index)
-    print('before filter : {}'.format(len(df)))
     df = df[df.apply(lambda x: x['taxon'] in unique_taxons, axis=1)]
-    print('after filter : {}'.format(len(df)))
     code_index = {t: i for i, t in enumerate(unique_taxons)}
     df['class'] = df['taxon'].apply(lambda code:code_index[code])
     return df
@@ -166,10 +164,6 @@ def _load_full_raw(filename='spipoll.txt'):
 
 def _get_image_filename(unique_id):
     return 'id_{}.jpg'.format(unique_id)
-
-
-def _taxa_code_to_int(code):
-    return hash(code)
 
 
 def _silent_mkdir(path):
