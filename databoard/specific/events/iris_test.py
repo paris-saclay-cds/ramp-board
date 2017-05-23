@@ -6,7 +6,7 @@ event_name = 'iris_test'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Iris classification (test)'
+event_title = 'test event'
 
 random_state = 57
 cv_test_size = 0.5

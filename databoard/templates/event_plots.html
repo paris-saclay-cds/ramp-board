@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block head %}
+    {{ super() }}
+    <link
+        href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.4.min.css"
+        rel="stylesheet" type="text/css">
+    <link
+        href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.4.min.css"
+        rel="stylesheet" type="text/css">
+
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.4.min.js"></script>
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.4.min.js"></script>
+{% endblock %}
+{% block title %}{{ event.name }} Plots{% endblock %}
+{% block content %}
+
+<div class="page-title">
+    <span class="title">{{ event.problem.title }}, {{ event.title }}</span>
+</div>
+<div class="col-xs-12">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">Plots</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ div|safe }}
+{{ script|safe }}
+
+{% endblock %}
+

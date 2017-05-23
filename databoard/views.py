@@ -10,6 +10,7 @@ import tempfile
 import datetime
 import io
 import zipfile
+import numpy as np
 from flask import request, redirect, url_for, render_template, abort,\
     send_from_directory, session, g, send_file
 from flask.ext.login import current_user
@@ -18,15 +19,17 @@ from werkzeug import secure_filename
 from wtforms import StringField
 from wtforms.widgets import TextArea
 from databoard import db
+from bokeh.embed import components
 
 import flask
 import flask.ext.login as fl
 from flask.ext.sqlalchemy import get_debug_queries
 from databoard import app, login_manager
 import databoard.db_tools as db_tools
+import databoard.vizu as vizu
 import databoard.config as config
 from databoard.model import User, Submission, WorkflowElement,\
-    Event, Team, SubmissionFile, UserInteraction, SubmissionSimilarity,\
+    Event, Problem, Team, SubmissionFile, UserInteraction, SubmissionSimilarity,\
     EventTeam, DuplicateSubmissionError, TooEarlySubmissionError,\
     MissingExtensionError
 from databoard.forms import LoginForm, CodeForm, SubmitForm, ImportForm,\
@@ -77,7 +80,7 @@ def login():
     # If there is already a user logged in, don't let another log in
     if current_user.is_authenticated:
         session['logged_in'] = True
-        return redirect(url_for('user'))
+        return redirect(url_for('problems'))
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -102,7 +105,7 @@ def login():
         # if not fl.next_is_valid(next):
         #     return flask.abort(400)
 
-        return flask.redirect(flask.url_for('user'))
+        return flask.redirect(flask.url_for('problems'))
 
     return render_template(
         'login.html',
@@ -166,7 +169,7 @@ def user():
         events = Event.query.order_by(Event.public_opening_timestamp.desc())
         event_urls_f_names = [
             (event.name,
-             event.title,
+             event.problem.title + ', ' + event.title,
              db_tools.is_user_signed_up(event.name, current_user.name),
              db_tools.is_user_asked_sign_up(event.name, current_user.name))
             for event in events
@@ -174,12 +177,69 @@ def user():
 
     else:
         events = Event.query.filter_by(is_public=True).all()
-        event_urls_f_names = [(event.name, event.title, False, False)
-                              for event in events]
+        event_urls_f_names = [(
+            event.name, event.problem.title + ', ' + event.title, False, False)
+            for event in events]
     admin = check_admin(current_user, None)
     return render_template('user.html',
                            event_urls_f_names=event_urls_f_names,
                            admin=admin)
+
+
+@app.route("/problems")
+def problems():
+    if current_user.is_authenticated:
+        db_tools.add_user_interaction(
+            interaction='looking at problems', user=current_user)
+    else:
+        db_tools.add_user_interaction(
+            interaction='looking at problems')
+
+    problems = Problem.query.order_by(Problem.id.desc())
+    return render_template('problems.html',
+                           problems=problems)
+
+
+@app.route("/problems/<problem_name>")
+def problem(problem_name):
+    problem = Problem.query.filter_by(name=problem_name).one_or_none()
+    if problem:
+        if current_user.is_authenticated:
+            db_tools.add_user_interaction(
+                interaction='looking at problem', user=current_user,
+                problem=problem)
+        else:
+            db_tools.add_user_interaction(
+                interaction='looking at problem', problem=problem)
+        with codecs.open(os.path.join(
+            config.problems_path, problem.name, 'description.html'),
+                'r', 'utf-8')\
+                as description_file:
+            description = description_file.read()
+        return render_template('problem.html',
+                               problem=problem,
+                               description=description)
+    else:
+        return _redirect_to_user(u'Problem {} does not exist.'.format(
+            problem.name), is_error=True)
+
+
+@app.route("/event_plots/<event_name>")
+def event_plots(event_name):
+    event = Event.query.filter_by(name=event_name).one_or_none()
+    # if not db_tools.is_public_event(event, current_user):
+    #     return _redirect_to_user(u'{}: no event named "{}"'.format(
+    #         current_user, event_name))
+    if event:
+        p = vizu.score_plot(event)
+        script, div = components(p)
+        return render_template('event_plots.html',
+                               script=script,
+                               div=div,
+                               event=event)
+    else:
+        return _redirect_to_user(u'Event {} does not exist.'.format(
+            event_name), is_error=True)
 
 
 def _redirect_to_user(message_str, is_error=True, category=None):
@@ -188,7 +248,7 @@ def _redirect_to_user(message_str, is_error=True, category=None):
         logger.error(message_str)
     else:
         logger.info(message_str)
-    return redirect(url_for('user'))
+    return redirect(url_for('problems'))
 
 
 def _redirect_to_sandbox(event, message_str, is_error=True, category=None):
@@ -324,17 +384,21 @@ def user_event(event_name):
         admin = check_admin(current_user, event)
         if current_user.is_anonymous:
             approved = False
+            asked = False
         else:
-            approved = db_tools.is_user_signed_up(event_name, current_user.name)
+            approved = db_tools.is_user_signed_up(
+                event_name, current_user.name)
+            asked = db_tools.is_user_asked_sign_up(
+                event.name, current_user.name)
         return render_template('event.html',
                                description=description,
                                event=event,
                                admin=admin,
-                               approved=approved)
+                               approved=approved,
+                               asked=asked)
     else:
         return _redirect_to_user(u'Event {} does not exist.'.format(
             event_name), is_error=True)
-
 
 
 @app.route("/events/<event_name>/starting_kit")

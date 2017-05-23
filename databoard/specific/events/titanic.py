@@ -6,7 +6,7 @@ event_name = 'titanic'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Titanic survival classification'
+event_title = 'Ecole des Mines 2016/17'
 
 random_state = 57
 cv_test_size = 0.8

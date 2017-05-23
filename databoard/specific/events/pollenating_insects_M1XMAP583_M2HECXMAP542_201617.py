@@ -6,7 +6,7 @@ event_name = 'pollenating_insects_M1XMAP583_M2HECXMAP542_201617'  # should be th
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Pollenating insects M1 X MAP583, M2 HEC/X MAP542 2016/17'
+event_title = 'Polytechnique MAP583/MAP542 2016/17'
 
 random_state = 57
 cv_test_size = 0.2

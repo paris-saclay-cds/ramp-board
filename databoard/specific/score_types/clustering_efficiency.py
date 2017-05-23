@@ -1,37 +1,35 @@
 import numpy as np
 
 
-def score_function(true_predictions, predictions, valid_indexes=None):
-    '''Compute a clustering score.
+def score_function(ground_truths, predictions, valid_indexes=None):
+    """Compute a clustering score.
 
     Cluster ids should be nonnegative integers. A negative integer
     will mean that the corresponding point does not belong to any
     cluster.
 
-    We first identify assigned clusters by taking the max count of 
+    We first identify assigned clusters by taking the max count of
     unique assigned ids for each true cluster. We remove all unassigned
     clusters (all assigned ids are -1) and all duplicates (the same
     assigned id has majority in several true clusters) except the one
     with the largest count. We add the counts, then divide by the number
-    of events. The score should be between 0 and 1. 
+    of events. The score should be between 0 and 1.
 
     Parameters
     ----------
-    true_predictions : Predictions from regression_predictions
-        true_predictions.y_pred: np.array, shape = (n, 2)
+    ground_truths : Predictions from regression_predictions
+        ground_truths.y_pred: np.array, shape = (n, 2)
         The ground truth.
         first column: event_id
         second column: cluster_id
     predictions : Predictions from regression_predictions
         predictions.ypred: np.array, shape = n
         The predicted cluster assignment (predicted cluster_id)
-    '''
+    """
     if valid_indexes is None:
-        y_pred = predictions.y_pred
-        y_true = true_predictions.y_pred
-    else:
-        y_pred = predictions.y_pred[valid_indexes]
-        y_true = true_predictions.y_pred[valid_indexes]
+        valid_indexes = range(ground_truths.n_samples)
+    y_pred = predictions.y_pred[valid_indexes]
+    y_true = ground_truths.y_pred[valid_indexes]
 
     score = 0.
     event_ids = y_true[:, 0]
@@ -40,7 +38,7 @@ def score_function(true_predictions, predictions, valid_indexes=None):
 
     unique_event_ids = np.unique(event_ids)
     for event_id in unique_event_ids:
-        event_indices = (event_ids==event_id)
+        event_indices = (event_ids == event_id)
         cluster_ids_true = y_true_cluster_ids[event_indices]
         cluster_ids_pred = y_pred_cluster_ids[event_indices]
 
@@ -49,14 +47,12 @@ def score_function(true_predictions, predictions, valid_indexes=None):
         n_sample = len(cluster_ids_true)
 
         # assigned_clusters[i] will be the predicted cluster id
-        # we assign (by majority) to true cluster i 
+        # we assign (by majority) to true cluster i
         assigned_clusters = np.empty(n_cluster, dtype='int64')
-        # true_positives[i] will be the number of points in 
+        # true_positives[i] will be the number of points in
         # predicted cluster[assigned_clusters[i]]
         true_positives = np.full(n_cluster, fill_value=0, dtype='int64')
         for i, cluster_id in enumerate(unique_cluster_ids):
-            # true points belonging to a cluster
-            true_points = cluster_ids_true[cluster_ids_true == cluster_id]
             # predicted points belonging to a cluster
             found_points = cluster_ids_pred[cluster_ids_true == cluster_id]
             # nonnegative cluster_ids (negative ones are unassigned)
@@ -68,15 +64,15 @@ def score_function(true_predictions, predictions, valid_indexes=None):
                 # sizes of predicted assigned cluster in true cluster[i]
                 predicted_cluster_sizes = np.bincount(
                     assigned_points.astype(dtype='int64'))
-                # If there are ties, we assign the tre cluster to the predicted
-                # cluster with the smallest id (combined behavior of np.unique
-                # which sorts the ids and np.argmax which returns the first 
-                # occurence of a tie).
+                # If there are ties, we assign the true cluster to the
+                # predicted cluster with the smallest id (combined behavior of
+                # np.unique which sorts the ids and np.argmax which returns
+                # the first occurence of a tie).
                 assigned_clusters[i] = np.argmax(predicted_cluster_sizes)
                 true_positives[i] = len(
                     found_points[found_points == assigned_clusters[i]])
-            # If none of the assigned ids are positive, the cluster is unassigned
-            # and true_positive = 0
+            # If none of the assigned ids are positive, the cluster is
+            # unassigned and true_positive = 0
             else:
                 assigned_clusters[i] = -1
                 true_positives[i] = 0
@@ -90,7 +86,7 @@ def score_function(true_predictions, predictions, valid_indexes=None):
             assigned_cluster = assigned_clusters_sorted[i]
             # duplicates: only keep the last count (which is the largest
             # because of sorting)
-            if assigned_cluster in assigned_clusters_sorted[i+1:]:
+            if assigned_cluster in assigned_clusters_sorted[i + 1:]:
                 good_clusters[i] = False
         n_good = np.sum(true_positives_sorted[good_clusters])
         score += 1. * n_good / n_sample

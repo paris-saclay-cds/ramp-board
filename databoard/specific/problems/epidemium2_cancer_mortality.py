@@ -11,6 +11,7 @@ sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 # should be the same as the file name
 problem_name = 'epidemium2_cancer_mortality'
+problem_title = 'Epidemium cancer mortality rate prediction (2nd RAMP)'
 
 random_state = 57
 n_CV = 2

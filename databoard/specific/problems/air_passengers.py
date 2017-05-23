@@ -10,6 +10,7 @@ sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 # should be the same as the file name
 problem_name = 'air_passengers'
+problem_title = 'Number of air passengers prediction'
 
 random_state = 57
 held_out_test_size = 0.2

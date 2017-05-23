@@ -6,7 +6,7 @@ event_name = 'HEP_detector_anomalies_M1XMAP583_201617'  # should be the same as 
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Detecting anomalies in the LHC ATLAS detector, M1 X MAP583 2016/17'
+event_title = 'Polytechnique MAP583 2016/17'
 
 random_state = 57
 cv_test_size = 0.5

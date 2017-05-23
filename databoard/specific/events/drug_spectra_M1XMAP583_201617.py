@@ -6,8 +6,7 @@ event_name = 'drug_spectra_M1XMAP583_201617'  # should be the same as the file n
 
 # Unmutable config parameters that we always read from here
 
-event_title =\
-    'Drug classification and concentration estimation from Raman spectra, M1 X MAP583 2016/17'
+event_title = 'Polytechnique MAP583 2016/17'
 
 random_state = 57
 cv_test_size = 0.2

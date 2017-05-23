@@ -1,13 +1,11 @@
 from sklearn.metrics import roc_auc_score
 
 
-def score_function(true_predictions, predictions, valid_indexes=None):
+def score_function(ground_truths, predictions, valid_indexes=None):
     if valid_indexes is None:
-        y_proba = predictions.y_pred
-        y_true_proba = true_predictions.y_pred_label_index
-    else:
-        y_proba = predictions.y_pred[valid_indexes]
-        y_true_proba = true_predictions.y_pred_label_index[valid_indexes]
+        valid_indexes = range(ground_truths.n_samples)
+    y_proba = predictions.y_pred[valid_indexes]
+    y_true_proba = ground_truths.y_pred_label_index[valid_indexes]
     score = roc_auc_score(y_true_proba, y_proba[:, 1])
     return score
 

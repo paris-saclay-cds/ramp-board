@@ -37,7 +37,7 @@ old_options = (
     'upload',
 )
 
-new_options = sorted(old_options + ('looking at problems',))
+new_options = sorted(old_options + ('looking at problem', 'looking at problems',))
 
 new_type = sa.Enum(*new_options, name=name)
 old_type = sa.Enum(*old_options, name=name)
@@ -58,6 +58,8 @@ def upgrade():
 
 
 def downgrade():
+    op.execute(tcr_1.update().where(tcr_1.c.state == 'looking at problem')
+               .values(state='looking at event'))
     op.execute(tcr_1.update().where(tcr_1.c.state == 'looking at problems')
                .values(state='looking at event'))
     op.execute('ALTER TYPE ' + name + ' RENAME TO ' + tmp_name)

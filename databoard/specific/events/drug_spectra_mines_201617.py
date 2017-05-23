@@ -6,8 +6,7 @@ event_name = 'drug_spectra_mines_201617'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
-event_title =\
-    'Drug classification and concentration estimation from Raman spectra, Ecole des Mines'
+event_title = 'Ecole des Mines 2016/17'
 
 random_state = 57
 cv_test_size = 0.2

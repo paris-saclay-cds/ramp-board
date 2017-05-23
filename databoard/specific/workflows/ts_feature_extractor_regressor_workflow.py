@@ -2,7 +2,9 @@ import numpy as np
 from importlib import import_module
 
 
-def train_submission(module_path, X_ds, y_array, train_is):
+def train_submission(module_path, X_ds, y_array, train_is=None):
+    if train_is is None:
+        train_is = range(len(y_array))
     # train_is wrt range(len(y_array)) so we need to make X_test_ds longer
     # by n_burn_in
     n_burn_in = X_ds.attrs['n_burn_in']
@@ -56,16 +58,11 @@ def train_submission(module_path, X_ds, y_array, train_is):
     return ts_fe, reg
 
 
-def test_submission(trained_model, X_ds, test_is):
-    # test_is is range(len(y)) so we need to make X_test_ds longer by n_burn_in
-    n_burn_in = X_ds.attrs['n_burn_in']
-    burn_in_range = np.arange(test_is[-1], test_is[-1] + n_burn_in)
-    extended_test_is = np.concatenate((test_is, burn_in_range))
-    X_test_ds = X_ds.isel(time=extended_test_is)
+def test_submission(trained_model, X_ds):
     # X_xray = X_xray.copy(deep=True)
     ts_fe, reg = trained_model
     # Feature extraction
-    X_test_array = ts_fe.transform(X_test_ds)
+    X_test_array = ts_fe.transform(X_ds)
     # Regression
     y_pred_array = reg.predict(X_test_array)
     return y_pred_array

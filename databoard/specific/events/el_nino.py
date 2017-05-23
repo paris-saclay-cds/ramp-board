@@ -6,7 +6,7 @@ event_name = 'el_nino_colorado'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'El Nino forecast'
+event_title = 'single-day RAMP at Climate Informatics Workshop 2015; Saclay Data Camp 2016/17'
 
 score_type_descriptors = [
     {'name': 'rmse', 'precision': 3},

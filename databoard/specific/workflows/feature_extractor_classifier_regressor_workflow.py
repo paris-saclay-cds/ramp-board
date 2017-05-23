@@ -4,7 +4,9 @@ from importlib import import_module
 labels = ['A', 'B', 'Q', 'R']
 
 
-def train_submission(module_path, X_df, y_array, train_is):
+def train_submission(module_path, X_df, y_array, train_is=None):
+    if train_is is None:
+        train_is = range(len(y_array))
     # Preparing the training set
     X_train_df = X_df.iloc[train_is].copy()
     y_train_array = y_array[train_is].copy()
@@ -42,11 +44,11 @@ def train_submission(module_path, X_df, y_array, train_is):
     return fe_clf, clf, fe_reg, reg
 
 
-def test_submission(trained_model, X_df, test_is):
+def test_submission(trained_model, X_df):
     fe_clf, clf, fe_reg, reg = trained_model
 
     # Preparing the test set
-    X_test_df = X_df.iloc[test_is].copy()
+    X_test_df = X_df#.copy()
 
     # Classifier feature extraction
     X_test_array_clf = fe_clf.transform(X_test_df)

@@ -5,7 +5,8 @@ from databoard.base_prediction import BasePrediction
 class Predictions(BasePrediction):
 
     def __init__(self, labels=None, y_pred=None, y_pred_labels=None,
-                 y_pred_indexes=None, y_true=None, f_name=None, n_samples=None):
+                 y_pred_indexes=None, y_true=None, f_name=None,
+                 n_samples=None):
         self.labels = labels
         if y_pred is not None:
             self.y_proba = np.array(y_pred)
@@ -13,8 +14,8 @@ class Predictions(BasePrediction):
             self._init_from_pred_labels(y_pred_labels)
         elif y_true is not None:
             self._init_from_pred_labels(y_true)
-        elif f_name is not None:
-            self.y_proba = np.load(f_name)
+#        elif f_name is not None:
+#            self.y_proba = np.load(f_name)
         elif n_samples is not None:
             self.y_proba = np.empty(
                 (n_samples, len(self.labels)), dtype=np.float64)
@@ -62,31 +63,3 @@ class Predictions(BasePrediction):
     @property
     def y_pred_label(self):
         return self.labels[self.y_pred_label_index]
-
-    @property
-    def y_pred_comb(self):
-        """Return an array which can be combined by taking means."""
-        return self.y_proba
-
-    @property
-    def n_samples(self):
-        return len(self.y_proba)
-
-    # def combine(self, indexes=[]):
-        # Not yet used
-
-        # usually the class contains arrays corresponding to predictions
-        # for a set of different data points. Here we assume that it is
-        # a list of predictions produced by different functions on the same
-        # data point. We return a single PrdictionType
-
-        # Just saving here in case we want to go back there how to
-        # combine based on simply ranks, k = len(indexes)
-        # n = len(y_preds[0])
-        # n_ones = n * k - y_preds[indexes].sum() # number of zeros
-        # if len(indexes) == 0:  # we combine the full list
-        #     indexes = range(len(self.y_proba_array))
-        # combined_y_proba = self.y_proba_array.mean(axis=0)
-        # combined_prediction = PredictionType((labels[0], combined_y_proba))
-        # combined_prediction.make_consistent()
-        # return combined_prediction

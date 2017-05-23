@@ -6,7 +6,7 @@ event_name = 'boston_housing_test'  # should be the same as the file name
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Boston housing regression (test)'
+event_title = 'test event'
 
 random_state = 57
 cv_test_size = 0.5

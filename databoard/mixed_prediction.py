@@ -20,12 +20,12 @@ class Predictions(BasePrediction):
                 labels=self.labels, y_true=y_true[:, 0])
             self.regression_prediction = regression_prediction.Predictions(
                 labels=self.labels, y_true=y_true[:, 1])
-        elif f_name is not None:
-            y_true = np.load(f_name)
-            self.multiclass_prediction = multiclass_prediction.Predictions(
-                labels=self.labels, y_true=y_true[:, 0])
-            self.regression_prediction = regression_prediction.Predictions(
-                labels=self.labels, y_true=y_true[:, 1])
+#        elif f_name is not None:
+#            y_true = np.load(f_name)
+#            self.multiclass_prediction = multiclass_prediction.Predictions(
+#                labels=self.labels, y_true=y_true[:, 0])
+#            self.regression_prediction = regression_prediction.Predictions(
+#                labels=self.labels, y_true=y_true[:, 1])
         elif n_samples is not None:
             self.multiclass_prediction = multiclass_prediction.Predictions(
                 labels=self.labels, n_samples=n_samples)
@@ -48,12 +48,3 @@ class Predictions(BasePrediction):
             [self.multiclass_prediction.y_pred,
              self.regression_prediction.y_pred.reshape(-1, 1)],
             axis=1)
-
-    @property
-    def y_pred_comb(self):
-        """Return an array which can be combined by taking means."""
-        return self.y_pred
-
-    @property
-    def n_samples(self):
-        return self.multiclass_prediction.n_samples

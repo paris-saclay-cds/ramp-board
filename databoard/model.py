@@ -227,20 +227,24 @@ class Problem(db.Model):
         return import_module('.' + self.name, config.problems_module)
 
     @property
+    def title(self):
+        return self.module.problem_title
+
+    @property
     def prediction(self):
         return self.module.prediction
 
-    def true_predictions_train(self):
+    def ground_truths_train(self):
         _, y_train = self.module.get_train_data()
         return self.prediction.Predictions(labels=self.module.prediction_labels,
                                            y_true=y_train)
 
-    def true_predictions_test(self):
+    def ground_truths_test(self):
         _, y_test = self.module.get_test_data()
         return self.prediction.Predictions(labels=self.module.prediction_labels,
                                            y_true=y_test)
 
-    def true_predictions_valid(self, test_is):
+    def ground_truths_valid(self, test_is):
         _, y_train = self.module.get_train_data()
         return self.prediction.Predictions(labels=self.module.prediction_labels,
                                            y_true=y_train[test_is])
@@ -437,6 +441,17 @@ class Event(db.Model):
         return: number of live cv folds.
         """
         return sum(1 for cv_fold in self.cv_folds if cv_fold.type == 'live')
+
+    @property
+    def n_participants(self):
+        return len(self.event_teams)
+
+    @property
+    def n_submissions(self):
+        n_submissions_ = 0
+        for event_team in self.event_teams:
+            n_submissions_ += len(event_team.submissions)
+        return n_submissions_
 
 
 # many-to-many
@@ -888,21 +903,12 @@ def combine_predictions_list(predictions_list, index_list=None):
     combined_predictions : instance of Predictions
         A predictions instance containing the combined (averaged) predictions.
     """
-    if index_list is None:  # we combine the full list
-        index_list = range(len(predictions_list))
-
-    y_comb_list = np.array(
-        [predictions_list[i].y_pred_comb for i in index_list])
-
     Predictions = type(predictions_list[0])
-
-    y_comb = np.nanmean(y_comb_list, axis=0)
-    combined_predictions = Predictions(labels=predictions_list[0].labels,
-                                       y_pred=y_comb)
+    combined_predictions = Predictions.combine(predictions_list, index_list)
     return combined_predictions
 
 
-def _get_score_cv_bags(event, score_type, predictions_list, true_predictions,
+def _get_score_cv_bags(event, score_type, predictions_list, ground_truths,
                        test_is_list=None,
                        is_return_combined_predictions=False):
     """
@@ -916,7 +922,7 @@ def _get_score_cv_bags(event, score_type, predictions_list, true_predictions,
     event : instance of Event
         Needed for the type of y_comb and
     predictions_list : list of instances of Predictions
-    true_predictions : instance of Predictions
+    ground_truths : instance of Predictions
     test_is_list : list of integers
         Indices of points that should be bagged in each prediction. If None,
         the full prediction vectors will be bagged.
@@ -928,7 +934,7 @@ def _get_score_cv_bags(event, score_type, predictions_list, true_predictions,
         test_is_list = [range(len(predictions.y_pred))
                         for predictions in predictions_list]
 
-    n_samples = true_predictions.n_samples
+    n_samples = ground_truths.n_samples
     y_comb = np.array(
         [event.prediction.Predictions(labels=event.problem.module.
                                       prediction_labels,
@@ -940,7 +946,7 @@ def _get_score_cv_bags(event, score_type, predictions_list, true_predictions,
         combined_predictions = combine_predictions_list(y_comb[:i + 1])
         valid_indexes = combined_predictions.valid_indexes
         score_cv_bags.append(score_type.score_function(
-            true_predictions, combined_predictions, valid_indexes))
+            ground_truths, combined_predictions, valid_indexes))
         # XXX maybe use masked arrays rather than passing valid_indexes
     if is_return_combined_predictions:
         return combined_predictions, score_cv_bags
@@ -1245,7 +1251,7 @@ class Submission(db.Model):
         The predictions in predictions_list[i] belong to those indicated
         by self.on_cv_folds[i].test_is.
         """
-        true_predictions_train = self.event.problem.true_predictions_train()
+        ground_truths_train = self.event.problem.ground_truths_train()
 
         if self.is_public_leaderboard:
             predictions_list = [submission_on_cv_fold.valid_predictions for
@@ -1255,7 +1261,7 @@ class Submission(db.Model):
             for score in self.scores:
                 score.valid_score_cv_bags = _get_score_cv_bags(
                     self.event, score.event_score_type, predictions_list,
-                    true_predictions_train, test_is_list)
+                    ground_truths_train, test_is_list)
                 score.valid_score_cv_bag = float(score.valid_score_cv_bags[-1])
         else:
             for score in self.scores:
@@ -1278,7 +1284,7 @@ class Submission(db.Model):
         if self.is_private_leaderboard:
             # When we have submission id in Predictions, we should get the
             # team and submission from the db
-            true_predictions = self.event.problem.true_predictions_test()
+            ground_truths = self.event.problem.ground_truths_test()
             predictions_list = [submission_on_cv_fold.test_predictions for
                                 submission_on_cv_fold in self.on_cv_folds]
             combined_predictions_list = [
@@ -1287,7 +1293,7 @@ class Submission(db.Model):
             for score in self.scores:
                 score.test_score_cv_bags = [
                     score.score_function(
-                        true_predictions, combined_predictions) for
+                        ground_truths, combined_predictions) for
                     combined_predictions in combined_predictions_list]
                 score.test_score_cv_bag = float(score.test_score_cv_bags[-1])
         else:
@@ -1335,7 +1341,7 @@ class Submission(db.Model):
             self.error_msg = ''
 
 
-def get_next_best_single_fold(event, predictions_list, true_predictions,
+def get_next_best_single_fold(event, predictions_list, ground_truths,
                               best_index_list):
     """.
 
@@ -1356,7 +1362,7 @@ def get_next_best_single_fold(event, predictions_list, true_predictions,
     predictions_list : list of instances of Predictions
         Each element of the list is an instance of Predictions of a model
         on the same (cross-validation valid) data points.
-    true_predictions : instance of Predictions
+    ground_truths : instance of Predictions
         The ground truth.
     best_index_list : list of integers
         Indices of the current best model.
@@ -1370,7 +1376,7 @@ def get_next_best_single_fold(event, predictions_list, true_predictions,
     best_predictions = combine_predictions_list(
         predictions_list, index_list=best_index_list)
     best_score = event.official_score_function(
-        true_predictions, best_predictions)
+        ground_truths, best_predictions)
     best_index = -1
     # Combination with replacement, what Caruana suggests. Basically, if a
     # model is added several times, it's upweighted, leading to
@@ -1383,7 +1389,7 @@ def get_next_best_single_fold(event, predictions_list, true_predictions,
         combined_predictions = combine_predictions_list(
             predictions_list, index_list=np.append(best_index_list, i))
         new_score = event.official_score_function(
-            true_predictions, combined_predictions)
+            ground_truths, combined_predictions)
         is_lower_the_better = event.official_score_type.is_lower_the_better
         if (is_lower_the_better and new_score < best_score) or\
                 (not is_lower_the_better and new_score > best_score):
@@ -1558,7 +1564,7 @@ class SubmissionOnCVFold(db.Model):
 
     def compute_train_scores(self):
         true_full_train_predictions =\
-            self.submission.event.problem.true_predictions_train()
+            self.submission.event.problem.ground_truths_train()
         for score in self.scores:
             score.train_score = float(score.score_function(
                 true_full_train_predictions, self.full_train_predictions,
@@ -1567,7 +1573,7 @@ class SubmissionOnCVFold(db.Model):
 
     def compute_valid_scores(self):
         true_full_train_predictions =\
-            self.submission.event.problem.true_predictions_train()
+            self.submission.event.problem.ground_truths_train()
         for score in self.scores:
             score.valid_score = float(score.score_function(
                 true_full_train_predictions, self.full_train_predictions,
@@ -1576,7 +1582,7 @@ class SubmissionOnCVFold(db.Model):
 
     def compute_test_scores(self):
         true_test_predictions =\
-            self.submission.event.problem.true_predictions_test()
+            self.submission.event.problem.ground_truths_test()
         for score in self.scores:
             score.test_score = float(score.score_function(
                 true_test_predictions, self.test_predictions))
@@ -1646,6 +1652,7 @@ user_interaction_type = db.Enum(
     'logout',
     'looking at error',
     'looking at event',
+    'looking at problem',
     'looking at problems',
     'looking at leaderboard',
     'looking at my_submissions',
@@ -1675,6 +1682,11 @@ class UserInteraction(db.Model):
         db.Integer, db.ForeignKey('users.id'))
     user = db.relationship('User', backref=db.backref('user_interactions'))
 
+    problem_id = db.Column(
+        db.Integer, db.ForeignKey('problems.id'))
+    problem = db.relationship('Problem', backref=db.backref(
+        'user_interactions', cascade='all, delete-orphan'))
+
     event_team_id = db.Column(
         db.Integer, db.ForeignKey('event_teams.id'))
     event_team = db.relationship('EventTeam', backref=db.backref(
@@ -1690,12 +1702,13 @@ class UserInteraction(db.Model):
     submission_file = db.relationship('SubmissionFile', backref=db.backref(
         'user_interactions', cascade='all, delete-orphan'))
 
-    def __init__(self, interaction=None, user=None, event=None,
+    def __init__(self, interaction=None, user=None, problem=None, event=None,
                  ip=None, note=None, submission=None, submission_file=None,
                  diff=None, similarity=None):
         self.timestamp = datetime.datetime.utcnow()
         self.interaction = interaction
         self.user = user
+        self.problem = problem
         if event is not None and user is not None:
             self.event_team = get_active_user_event_team(event, user)
         if ip is None:
@@ -1757,6 +1770,10 @@ class UserInteraction(db.Model):
             repr += ';None'
         else:
             repr += ';' + self.user.id.__repr__()
+        if self.problem is None:
+            repr += ';None'
+        else:
+            repr += ';' + self.problem.id.__repr__()
         if self.event_team is None:
             repr += ';None'
         else:
@@ -1893,4 +1910,3 @@ class HistoricalContributivity(db.Model):
 
     contributivity = db.Column(db.Float, default=0.0)
     historical_contributivity = db.Column(db.Float, default=0.0)
-

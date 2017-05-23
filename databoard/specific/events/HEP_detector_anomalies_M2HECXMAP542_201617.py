@@ -6,7 +6,7 @@ event_name = 'HEP_detector_anomalies_M2HECXMAP542_201617.py'  # should be the sa
 
 # Unmutable config parameters that we always read from here
 
-event_title = 'Detecting anomalies in the LHC ATLAS detector, M2 HEC/X MAP542 2016/17'
+event_title = 'Polytechnique MAP542 2016/17'
 
 random_state = 57
 cv_test_size = 0.5
