@@ -1,0 +1,533 @@
+taxon	nb_pict_valid
+|L'Abeille mellifère <Apis mellifera>|	12076
+|Les Eristales (autres) <Eristalis>|	10208
+|Les Bourdons noirs à bande(s) jaune(s) et cul blanc <Bombus>|	6263
+|Les Bourdons à pilosité fauve à grise <Bombus>|	4200
+|Le Syrphe ceinturé <Episyrphus balteatus>|	3589
+|Les Mouches difficiles à déterminer|	3353
+|Les Halictes (femelles) <Halictus, Lasioglossum et autres>|	2708
+|Les Oedemères verts <Oedemera>|	2310
+|Les Mouches aux reflets métalliques <Neomyia, Calliphora et autres>|	2090
+|Les Guêpes Polistes <Polistes>|	1933
+|Les Coccinelles <Coccinellidae>|	1865
+|Les Bourdons noirs à cul rouge <Bombus>|	1860
+|La Coccinelle à 7 points <Coccinella septempunctata>|	1726
+|Les Sauterelles <Tettigonoidea>|	1635
+|Le Drap mortuaire <Oxythyrea funesta>|	1621
+|Les Bourdons noirs à bande(s) jaune(s) et cul rouge <Bombus>|	1496
+|Les Fourmis à pétiole simple <Formicinae>|	1479
+|Les Syrittes <Syritta>|	1476
+|L'Araignée crabe Napoléon <Synema globosum>|	1461
+|Les Mouches pâles <Scathophaga et autres>|	1407
+|Les Bombyles <Bombylius, Systoechus>|	1369
+|Les Moustiques, Tipules et autres Diptères Nématocères|	1357
+|Les Halictes (mâles) <Halictidae>|	1353
+|La Stomorhina <Stomorhina lunata>|	1304
+|Les Ichneumons et autres <Ichneumonidae>|	1279
+|Les Mordelles <Mordellidae>|	1245
+|Les Fourmis difficiles à déterminer <Formicidae>|	1231
+|L'Eristale des fleurs <Myathropa florea>|	1139
+|Les Abeilles Hylaeus à taches blanches <Hylaeus>|	1120
+|Les Hélophiles <Helophilus, Parhelophilus>|	1112
+|Le Téléphore fauve et autres <Rhagonycha fulva et autres>|	1001
+|Les Dermestes <Dermestidae>|	997
+|Les Guêpes Crabronidae difficiles à déterminer <Crabronidae>|	985
+|Les Cétoines métalliques à marques blanches <Cetonia, Protaetia>|	983
+|Taxon inconnu de la clé|	976
+|Les Xylocopes <Xylocopa>|	952
+|Les Syrphes Sphaerophoria (femelle) <Sphaerophoria>|	892
+|Les Abeilles difficiles à déterminer <Apidae et autres>|	884
+|Les Guêpes maçonnes à abdomen court <Odynerus et autres>|	883
+|Les Andrènes rayées difficiles à déterminer <Andrenidae et autres>|	878
+|Les Mouches à damier <Sarcophaga>|	874
+|Le Moro-sphinx <Macroglossum stellatarum>|	852
+|Le Pentatome rayé <Graphosoma lineatum>|	828
+|Les Nitidulides <Nitidulidae>|	795
+|Les Homoptères autres <Cicadelles, Cercopes et autres>|	777
+|Les Piérides <Pieris>|	765
+|Les Guêpes Vespula <Vespula, Dolichovespula>|	762
+|Les Anthidies <Anthidium et autres>|	761
+|Les Hespéries fauves <Ochlodes, Thymelicus>|	744
+|Les Abeilles coucou noir, jaune et rouge <Nomada et autres>|	720
+|Les Chenilles et fausses-Chenilles|	693
+|Les Criquets <Acrididae>|	658
+|Les Pucerons <Aphididae>|	644
+|Les Bruches <Bruchus et autres>|	639
+|Les larves de Punaises <Heteroptera>|	626
+|Les Bibions et autres <Bibio et autres>|	608
+|Le Syrphe porte-plume (mâle) <Sphaerophoria scripta>|	601
+|Les Eristales aux yeux ponctués <Eristalinus>|	596
+|Le Vulcain <Vanessa atalanta>|	584
+|Le Paon du jour <Aglais io>|	577
+|Le Gendarme <Pyrrhocoris apterus>|	557
+|Les Conopides (autres) <Conopidae>|	556
+|Les Azurés marrons à chevrons oranges <Polyommatus, Plebeius et autres>|	531
+|Le Xylocope violet (mâle) <Xylocopa violacea>|	526
+|Les Araignées crabes sombres <Xysticus, Coriarachne, Ozyptila et autres>|	519
+|Les Araignées (autres)|	512
+|Le Clairon des ruches <Trichodes alvearius>|	493
+|Les Cétoines sombres soyeuses <Tropinota>|	492
+|Les Araignées sauteuses <Salticidae>|	489
+|Les Rhingies <Rhingia>|	460
+|Les Tenthrèdes noir et jaune <Tenthredo et autres>|	456
+|Les Tachinaires fauves à abdomen aplati <Ectophasia, Phasia>|	433
+|Les Gastéruptions <Gasteruption>|	432
+|L'Amaryllis <Pyronia tithonus>|	430
+|Les Microlépidoptères difficiles à déterminer <Lepidoptera>|	422
+|Les Coléoptères difficiles à déterminer|	393
+|Les Mélitées et Damiers autres <Melitaea et autres>|	391
+|La Lepture tachetée <Rutpela maculata>|	390
+|Les Mégachiles <Megachile>|	385
+|Les Syrphes à abdomen fin <Meliscaeva et autres>|	384
+|Les Tachinaires fauves à abdomen rond <Gymnosoma>|	384
+|Les Epeires et autres Araneidae|	382
+|Le Flambé <Iphiclides podalirius>|	375
+|Le Cuivré commun <Lycaena phlaeas>|	372
+|Les Syrphes à l'aspect de bourdon <Merodon et autres>|	366
+|Les Taupins unis <Ampedus et autres>|	365
+|Les Punaises difficiles à déterminer|	362
+|Les Chrysides <Chrysididae>|	361
+|La Belle-Dame <Vanessa cardui>|	359
+|Le Souci et autres <Colias>|	357
+|Les Citrons <Gonepteryx>|	354
+|Les Fadets sans bande blanche <Coenonympha>|	350
+|Les Syrphes difficiles à déterminer|	335
+|Les Empidides <Empis et autres>|	332
+|Les Tenthrèdes noir et fauve/orangé <Allantus, Dolerus et autres>|	330
+|Le Frelon européen <Vespa crabro>|	330
+|Les Andrènes difficiles à déterminer <Andrenidae>|	327
+|Les Sténoptères fauves <Stenopterus>|	325
+|Les Nacrés et autres <Argynnis et autres>|	319
+|Les Malachides à points rouges <Malachius et autres>|	316
+|Les Collètes (autres) <Colletidae>|	311
+|Le Tircis <Pararge aegeria>|	310
+|Les Pisaures <Dolomedes, Pisaura>|	310
+|La Valgue hémiptère <Valgus hemipterus>|	305
+|Le Robert-le-Diable <Polygonia>|	302
+|Les Chrysopes <Chrysopidae>|	299
+|Les Téphritides et autres <Tephritidae et autres>|	298
+|Les Dasytides bleus et verts <plusieurs Dasytidae>|	296
+|Le Demi-Deuil <Melanargia galathea>|	296
+|La Petite Tortue <Aglais urticae>|	296
+|Les Terebrants Chalcidiens et autres|	294
+|Les Leptures fauves <Paracorymbia fulva et autres>|	290
+|Les Mirides <Miridae>|	287
+|La Volucelle zonée <Volucella zonaria>|	283
+|Les larves de Coccinelles <Coccinellidae>|	276
+|Le Frelon asiatique <Vespa velutina>|	272
+|Les Trichies <Trichius>|	269
+|Les Scraptides <Scraptiidae>|	258
+|Les Opilions <Phalangiidae>|	255
+|Les Panorpes <Panorpidae>|	252
+|Les Syrphes Syrphus et autres <Syrphus, Dasysyrphus et autres>|	251
+|Les Tachinaires fauves velues <Tachina et autres>|	250
+|Les Osmies noir et roux (mâles) <Osmia cornuta et autres>|	250
+|Les Lygées rouges à points blancs <Lygaeus>|	247
+|Les Noctuelles <Noctuidae>|	245
+|Les Abeilles à abdomen rouge <Sphecodes et autres>|	244
+|Les Longicornes entièrement noirs <Grammoptera et autres>|	243
+|Le Tabac d'Espagne <Argynnis paphia>|	241
+|Les Guêpes maçonnes à abdomen long <Delta, Discoelius, Eumenes>|	234
+|La Collète du Lierre <Colletes hederae>|	232
+|Les Araignées lynx <Oxyopes>|	231
+|Les Araignées crabes Thomisus <Thomisus>|	231
+|Le Myrtil <Maniola jurtina>|	230
+|Les Punaises Eurydema <Eurydema>|	225
+|Les Pentatomes <Pentatomidae>|	224
+|Les Anthracines Villa <Villa>|	222
+|Les Abeilles Ceratina bleutées <Ceratina>|	218
+|Les Scolies à taches jaunes (autres) <Scolia et autres>|	216
+|Le Clairon des abeilles <Trichodes apiarius>|	213
+|Les Andrènes à pilosité noir et blanc <Andrena>|	209
+|Les Osmies noir et roux (femelles) <Osmia cornuta et autres>|	209
+|Le Satyre et autres <Lasiommata>|	204
+|Les Abeilles à thorax roux <Andrena clarkella et autres>|	203
+|Les Adèles à motifs <plusieurs Adelidae>|	203
+|Les Zygènes à taches simples <Zygaena>|	203
+|Le Machaon <Papilio machaon>|	203
+|Les Perce-oreilles <Dermaptera>|	195
+|Les Clytes noir et jaune <Clytus et autres>|	192
+|La Volucelle transparente <Volucella pellucens>|	192
+|Les Longicornes porte-coeur <Stictoleptura cordigera et autres>|	189
+|Le Sphégien noir à ailes fumées <Isodontia mexicana>|	188
+|Les Araignées crabes Misumena <Misumena>|	188
+|Les Anthophores autres et espèces proches <Anthophora, Eucera>|	184
+|Les Mégachiles de petite taille <Stelis, Heriades>|	181
+|Les Pompiles <Pompilidae>|	180
+|Les Epeires concombre <Araniella>|	179
+|Les Guêpes fouisseuses <Bembix>|	178
+|Les Azurés bleus à chevrons oranges <Lysandra, Plebejus, Polyommatus>|	175
+|Les Anthophores rayés et espèces proches <Amegilla et autres>|	174
+|Les Coréides <Coreidae>|	172
+|Les Syrphes à taches en virgules <Eupeodes, Scaeva>|	170
+|Les Longicornes rouges au thorax noir <Acmaeops et autres>|	168
+|Les Araignées crabes Philodromus <Philodromus>|	162
+|Les Sepsides <Sepsidae>|	160
+|Les Chloromyies <Chloromyia>|	158
+|Les Charançons (autres) <Larinus et autres>|	157
+|Les Syrphes Sphaerophoria (mâle) <Sphaerophoria>|	155
+|L'Eristale taeniops <Eristalinus taeniops>|	149
+|Les Ptérophores <Pterophoridae>|	147
+|La Chrysomèle américaine <Chrysolina americana>|	146
+|Les Mylabres à bandes <Hycleus, Mylabris>|	146
+|La Punaise du Chou <Eurydema oleracea>|	146
+|Les Réduves <Rhynocoris>|	142
+|Les Punaises prédatrices ternes|	141
+|Les Guêpes Cerceris <Cerceris>|	141
+|Les Pachytes <Pachyta et autres>|	139
+|Les Hannetons <Anisoplia, Phyllopertha>|	138
+|Les Bourdons (autres) <Bombus>|	138
+|Les Sésies <Sesiidae>|	137
+|L'Athalie des roses <Athalia rosae>|	135
+|La Mélitée orangée <Melitaea didyma>|	133
+|Les Chrysanthies et autres <Chrysanthia, Ischnomera>|	131
+|L'Andrène fauve (femelle) <Andrena fulva>|	131
+|La Tachinaire corpulente <Tachina grossa>|	130
+|Le Brun des Pélargoniums <Cacyreus marshalli>|	129
+|Les larves de Chrysopes <Chrysopidae>|	127
+|Les Fourmis à double pétiole <Myrmicinae>|	125
+|Les Araignées Loup <Lycosidae>|	125
+|Photo insuffisante pour aller plus loin dans la détermination|	124
+|Les Conopides jaune et noir <Conops et autres>|	123
+|L'Ecaille chinée <Euplagia quadripunctaria>|	123
+|La Tiphide aux pattes rouges <Tiphia femorata>|	122
+|L'Azuré des Nerpruns (femelle) <Celastrina argiolus>|	120
+|Les Chloropides jaunes <Thaumatomyia>|	119
+|Les Azurés migrateurs <Lampides, Leptotes>|	117
+|La Punaise de la Jusquiame <Corizus hyoscyami>|	116
+|L'Abeille Ceratina noire <Ceratina cucurbitina>|	115
+|Les Bourdons à thorax fauve et à abdomen noir et blanc <Bombus>|	113
+|Le Gazé <Aporia crataegi>|	111
+|L'Araignée crabe Ebrechtella <Ebrechtella tricuspidata>|	110
+|Les Asilides <Asilidae>|	109
+|La Silène <Brintesia circe>|	109
+|Les Chrysotoxes <Chrysotoxum>|	108
+|Le Criocère du Lis et autres <Exosoma, Lilioceris lilii>|	108
+|Les Eucères (mâles) <Eucera et autres>|	107
+|Les Mouches Platystoma <Platystoma>|	106
+|La Carte géographique forme sombre <Araschnia levana>|	105
+|Le Dinoptère <Dinoptera collaris>|	103
+|Les Mouches tachetées <Anthomyia et autres>|	100
+|L'Hoplie argentée <Hoplia argentea>|	99
+|Les Zygènes à taches cerclées <Zygaena>|	98
+|La Viole rouge <Spilostethus pandurus>|	98
+|Les Blattes <Blattellidae>|	93
+|Les Tachinaires à abdomen cylindrique <Cylindromyia>|	93
+|Les Cuivrés <Lycaena>|	93
+|La Volucelle vide <Volucella inanis>|	92
+|Les Abeilles coucou noir et blanc <Thyreus et autres>|	91
+|Les Chloropides jaunes à fémurs enflés <Meromyza>|	90
+|Les Tenebrions jaunes <Cteniopus>|	90
+|Les Piérides nervurées <Pieris>|	87
+|Les Sylvains <Limenitis>|	87
+|Les Téphritides sans taches <Tephritidae et autres>|	87
+|Les Mégachiles coucou <Coelioxys et autres>|	87
+|Les Tenthrèdes noir et blanc <Allantus, Macrophya et autres>|	86
+|La Punaise à damier <Spilostethus saxatilis>|	86
+|Les Osmies (autres)|	84
+|Les Agrestes <Hipparchia et autres>|	84
+|Les Anthophores mâles <Anthophora et autres>|	83
+|Les Conopides à abdomen rétréci <Physocephala>|	82
+|Les Piérides marbrées <Euchloe et autres>|	79
+|Le Grammoptère couleur de tabac <Alosterna tabacicolor>|	79
+|Le Thécla de la Ronce <Callophrys rubi>|	79
+|Les Andrènes à abdomen rouge et noir (autres) <Andrena>|	78
+|Le Petit Nacré <Issoria lathonia>|	78
+|L'Argus myope (mâle) <Lycaena tityrus>|	78
+|Les Oedemères fauves <Anogcodes, Oedemera>|	77
+|Les Chrysomèles unies <Cryptocephalus et autres>|	76
+|Les Adèles unies <plusieurs Adelidae>|	76
+|Les Dasytides noirs <plusieurs Dasytidae>|	75
+|Le Petit Capricorne <Cerambyx scopolii>|	73
+|Les Hespéries brunes sans taches <Carcharodus et autres>|	73
+|Les Syrphes aux fémurs enflés|	71
+|L'Araignée crabe Runcinia <Runcinia grammica>|	70
+|Les Mylabres à points <Mylabris et autres>|	70
+|L'Aurore (mâle) <Anthocharis cardamines>|	70
+|Les Tachinaires difficiles à déterminer|	70
+|Le Citron de Provence (mâle) <Gonepteryx cleopatra>|	69
+|Le Pélopée à pattes noir et jaune <Sceliphron caementarium>|	68
+|Le Trichopode <Trichopoda pennipes>|	68
+|Le Gamma et autres <Autographa gamma et autres>|	68
+|Les Mouches Mesembrina <Mesembrina>|	67
+|Les Epeires à dessin de feuille de Chêne <Aculepeira, Neoscona>|	66
+|Les Sphégiens à abdomen orange et noir <Sphex et autres>|	66
+|Les Charançons verts <Phyllobius, Polydrusus>|	65
+|Les Taons sombres <plusieurs Tabanidae>|	64
+|La Punaise guitare <Phymata crassipes>|	64
+|La Ferdinandea cuprea <Ferdinandea cuprea>|	63
+|Les Piérides à ailes rondes <Leptidea>|	63
+|Le Grand Damier <Melitaea phoebe>|	62
+|Le Clyte varié <Chlorophorus varius>|	62
+|La Milésie frelon <Milesia crabroniformis>|	60
+|Les Taons clairs <Atylotus, Silvius>|	60
+|Les Turquoises <Adscita, Jordanita>|	59
+|L'Anthaxie demi-cuivrée et autres <Anthaxia>|	59
+|Le Pentatome ponctué <Graphosoma semipunctatum>|	59
+|Les Abeilles coucou Melecta <Melecta>|	59
+|Les Mégachiles à pattes blanches (mâles) <Megachile>|	58
+|Les Théclas marrons (autres) <Satyrium>|	58
+|Les Géomètres <Geometridae>|	57
+|Les Abeilles à culottes <Dasypoda>|	57
+|Les Pyrales pourpres aux dessins jaunes <Pyrausta>|	57
+|Le juvénile d'Himacerus <Himacerus mirmicoides>|	56
+|La Lepture à 6 taches <Anoplodera sexguttata>|	56
+|Les Taupins mouchetés <Elateridae>|	55
+|Le Clyte figuré <Chlorophorus>|	55
+|Le Sphinx gazé <Hemaris fuciformis>|	54
+|Les Cantharides <Cantharis>|	53
+|La Mélitée du Plantain <Melitaea cinxia>|	53
+|Le Bibion précoce (femelle) <Bibio hortulanus>|	53
+|Les Oedemères fauves (Alpes et Pyrénées) <Anogcodes, Oedemera>|	53
+|Les Graphomyies <Graphomya>|	53
+|Les Oedemères noirs <Oedemera>|	52
+|Le Cardinal à tête rouge <Pyrochroa serraticornis>|	49
+|Le Tristan <Aphantopus hyperantus>|	49
+|Le Satyre et autres (montagne) <Lasiommata>|	49
+|Les Ulidides allongés <Dorycera, Otites>|	49
+|Les Araignées crabes velues <Heriaeus>|	48
+|Les Ulidides métalliques <Physophora et autres>|	47
+|Les Apions <Curculionidae, Apionidae>|	46
+|Les Scatopsides <Scatopsidae>|	46
+|Les Criocères bicolores <Oulema>|	45
+|Les Stratiomes métalliques fins <Sargus et autres>|	45
+|L'Anthracine morio <Hemipenthes morio>|	44
+|Les Ammophiles <Ammophila, Hoplammophila>|	43
+|Les Malachides à thorax rouge <Ebaeus>|	43
+|Les Sciarides <Sciaridae>|	42
+|Les Collemboles <Collembola>|	42
+|Les Lépidoptères difficiles à déterminer <Lepidoptera>|	41
+|L'Eumène unguiculé <Delta unguiculatum>|	41
+|Le Sphinx pygmée <Thyris fenestrella>|	40
+|Les Chrysomèles bicolores <Chrysomelidae>|	40
+|La Scolie des jardins (femelle) <Megascolia maculata>|	40
+|La Lepture à suture noire <Stenurella melanura>|	39
+|L'Amaryllis et l'Ocelle de la Canche <Pyronia>|	39
+|Les Apollons <Parnassius>|	39
+|Le Céphale <Coenonympha arcania>|	38
+|Les Théclas verts (Méditerranée) <Callophrys>|	38
+|Les Stratiomes blanc et noir <Nemotelus>|	37
+|La Volucelle enflée <Volucella inflata>|	36
+|Les Abeilles Panurgus <Panurgus>|	36
+|Les Buprestes à points <Acmaeodera et autres>|	36
+|L'Arlequinette jaune <Emmelia trabealis>|	36
+|Les Myctères <Mycterus>|	35
+|Les Halictes noir et jaune <Nomioides, Celhalictus>|	35
+|Les Malachides rouges <Malachius et autres>|	35
+|Les Stratiomes verts <Odontomyia, Oplodontha>|	35
+|Les Lycides <Lycidae>|	34
+|Les Azurés bleus sans chevrons oranges <Polyommatus et autres>|	32
+|La Lepture rouge (femelle) <Stictoleptura rubra>|	32
+|Les Bourdons jaune et noir <Bombus>|	31
+|Le Grand Nègre des bois <Minois dryas>|	31
+|La Grande Tortue <Nymphalis polychloros>|	31
+|L'Echiquier d'Ibérie <Melanargia lachesis>|	31
+|Les Azurés à taches bleues brillantes <Plebeius>|	29
+|L'Andrène des fleurs <Andrena florea>|	28
+|Les Tenthrèdes (autres)|	28
+|Les Syrphes aux antennes à bout blanc <Callicera>|	28
+|Le Clairon à 8 points <Trichodes octopunctatus>|	27
+|Le Clairon commun <Trichodes leucopsideus>|	27
+|Les Oedemères fauves (de méditerranée) <Anogcodes, Oedemera>|	25
+|Les Longicornes noirs au thorax rouge <Cantharis et autres>|	25
+|La Virgule <Hesperia comma>|	25
+|Les Azurés marrons sans chevrons oranges <Cupido et autres>|	25
+|Les Cétoines sombres glabres <Protaetia>|	25
+|Le Myrtil et autres (Méditerranée) <Maniola jurtina et autres>|	24
+|Les Cimbicides <Cimbicidae>|	24
+|Les Oedemères variés <Anogcodes, Ischnomera>|	24
+|Les Cydnides unis <Cydnidae>|	24
+|Les Sapygides <Sapigidae>|	23
+|L'Ocelle rubanné <Pyronia bathseba>|	23
+|Le Cuivré de la Verge d'or (mâle) <Lycaena virgaureae>|	23
+|Les Ephémères <Ephemeroptera>|	23
+|La Carte géographique forme orangé <Araschnia levana>|	22
+|Les Buprestes unis brillants <Anthaxia et autres>|	22
+|L'Anthaxie hongroise (mâle) et autres <Anthaxia>|	21
+|Le Cryptocéphale à bandes blanches <Cryptocephalus vittatus>|	21
+|Les Stratiomes jaune et noir <Stratiomys>|	21
+|Les Molorches et autres <Glaphyra et autres>|	21
+|Les Taons aux ailes tachetées <Chrysops>|	20
+|Les Céphides (autres) <Cephidae>|	20
+|Les Taupins rouges <Ampedus et autres>|	20
+|Les Cassides <Cassida>|	20
+|Les Charançons longs <Lixus et autres>|	19
+|Le Cardinal <Argynnis pandora>|	19
+|L'Andrène à points blancs <Andrena albopunctata>|	19
+|Les Balanins <Curculio et autres>|	18
+|Le Chrysotoxe à double ceinture <Chrysotoxum bicinctum>|	18
+|Les Araignées crabes minces <Tibellus, Paratibellus>|	18
+|Les Longicornes entièrement fauves <Cantharis, Obrium et autres>|	17
+|Les Agapanthies fauves <Agapanthia>|	17
+|Les Hespéries brunes à taches (montagne) <Pyrgus et autres>|	17
+|Les Hespéries brunes à taches <Pyrgus et autres>|	17
+|Le Damier de la Succise <Euphydryas aurinia>|	16
+|Le Géomètre à barreaux <Chiasmia clathrata>|	16
+|Les Tenthrèdes noires <Allantus et autres>|	15
+|Les Clytres et autres <Clytra et autres>|	15
+|Les Lithosies et Manteaux <Eilema>|	15
+|Le Sphinx-Bourdon <Hemaris tityus>|	15
+|La Lucine <Hamearis lucina>|	15
+|Les Araignées crabes Diaea <Diaea>|	15
+|La Rosette <Miltochrista miniata>|	15
+|L'Agapanthie des Chardons <Agapanthia cardui>|	14
+|Les Tenthrèdes vert et noir <Tenthredo, Rhogogaster>|	14
+|Le Thécla des Nerpruns <Satyrium spini>|	14
+|Les Zygènes rouges <Zygaena>|	14
+|Les Sablés <Polyommatus>|	14
+|La Panthère <Pseudopanthera macularia>|	14
+|La Milésie vespiforme <Temnostoma vespiforme>|	14
+|Les Cerocomes <Cerocoma>|	14
+|Le Thécla du Bouleau <Thecla betulae>|	14
+|Le Cuivré de la Verge d'or (femelle) <Lycaena virgaureae>|	14
+|Le Grillon d'Italie <Oecanthus pellucens>|	14
+|Les Abeilles coucou noir et blanc à pattes rouges <Epeolus>|	14
+|Les Craches-sang <Timarcha>|	14
+|Le Bombyle Atra <Bombylella atra>|	13
+|Le Clyte à 3 bandes <Chlorophorus trifasciatus>|	13
+|La Punaise Ancyrosoma <Ancyrosoma leucogrammes>|	13
+|Les Chrysomèles Oulema bleues <Oulema>|	13
+|La Diane <Zerynthia polyxena>|	13
+|Les Taupins (autres)|	13
+|La Vadonie à 1 point <Vadonia unipunctata>|	12
+|Le Fadet des garrigues <Coenonympha dorus>|	12
+|La Phytoécie bleuâtre <Opsilia coerulescens>|	12
+|La Pyrale de l'Ortie <Eurrhypara hortulata>|	12
+|Le Gaurotes vierge <Gaurotes virginea>|	12
+|Les Cydnides à motifs <Cydnidae>|	12
+|Les Syrphes Anasimyia <Anasimyia>|	12
+|Le Cardinal à tête noire <Pyrochroa coccinea>|	11
+|Le Thécla de l'Orme <Satyrium w-album>|	11
+|L'Azuré des Cytises <Glaucopsyche alexis>|	11
+|L'Echancré <Libythea celtis>|	11
+|Les Sténoptères noirs <Stenopterus>|	11
+|L'Azuré du Thym (mâle) <Pseudophilotes baton>|	10
+|Les Buprestes unis ternes <Anthaxia et autres>|	9
+|Le Sphégien à abdomen orange, noir et blanc <Prionyx kirbii>|	9
+|Le Grand Nacré <Argynnis aglaja>|	9
+|Le Cuivré des marais (mâle) <Lycaena dispar>|	9
+|Les Pélopées à pétiole jaune <Sceliphron>|	9
+|Les Megalodontides <Megalodontes>|	9
+|Le Malachide à bandes rouges <Anthocomus fasciatus>|	8
+|Le Ramoneur <Odezia atrata>|	8
+|Les Chrysomèles à motifs <Oreina et autres>|	8
+|Les Lomaties <Lomatia>|	8
+|Les Thérèves <Therevidae>|	8
+|Le Gnorimus vert <Gnorimus nobilis>|	8
+|Les Bombyles bossus <Geron>|	8
+|Les Moirés à bande blanche <Erebia>|	8
+|L'Azuré de la Badasse <Glaucopsyche melanops>|	8
+|Les Longicornes noirs aux pattes rouges <Ropalopus et autres>|	8
+|Les Micropterix <Micropterix>|	7
+|Les Stratiomes fauves <Odontomyia>|	7
+|Le Thécla du Chêne <Quercusia quercus>|	7
+|Les Rhagies <Rhagium>|	7
+|L'Aromie musquée <Aromia moschata>|	7
+|La Guêpe rousse <Vespula rufa>|	7
+|L'Azuré du Trèfle <Cupido argiades>|	7
+|La Scolie Colpa (mâle) <Colpa sexmaculata>|	7
+|Les Raphidies <Raphidiidae>|	7
+|Les Sphégiens noirs <Sphex et autres>|	6
+|La Zygène de la Badasse <Zygaena lavandulae>|	6
+|L'Echiquier d'Occitanie <Melanargia occitanica>|	6
+|L'Hoplie bleue <Hoplia coerulea>|	6
+|Le Cuivré écarlate (mâle) <Lycaena hippothoe>|	6
+|L'Anthracine velutina <Hemipenthes velutina>|	6
+|Les Tiphides <Meria, Myzinum>|	6
+|Les Longicornes à bandes <Leptura et autres>|	6
+|La Mutille européenne (mâle) <Mutilla europaea>|	6
+|Les Azurés des fourmis <Maculinea>|	6
+|L'Azuré du Thym (femelle) <Pseudophilotes baton>|	6
+|L'Argus de la Sanguinaire <Eumedonia eumedon>|	6
+|Le Clyte poilu <Chlorophorus pilosus>|	5
+|La Brocatelle d'or <Camptogramma bilineata>|	5
+|La Lepture couleur d'or (à antennes jaunes) <Leptura aurulenta>|	5
+|Les Anthracines Exoprosopa <Exoprosopa>|	5
+|Le Stratiome terne <Stratiomys longicornis>|	5
+|La Lepture couleur d'or (à antennes noires) <Leptura aurulenta>|	5
+|Les Moirés à dessous sombre <Erebia>|	5
+|La Zygène de l'Esparcette <Zygaena rhadamanthus>|	5
+|Les Araignées crabes Thanatus <Thanatus>|	5
+|Le Dascillide <Dascillus cervinus>|	5
+|L'Andrène marginée <Andrena marginata>|	5
+|La Méticuleuse <Phlogophora meticulosa>|	5
+|Les Tenebrions marrons <Isomira et autres>|	5
+|Le Thécla du Prunier <Satyrium pruni>|	4
+|Le Chlorophore soufré <Chlorophorus ruficornis>|	4
+|Les Purpuricènes <Purpuricenus>|	4
+|L'Anthracine maura <Hemipenthes maura>|	4
+|Les petits clavicornes <Cucujidae, Cryptophagidae et autres>|	4
+|Les Collètes de printemps <Colletes cunicularius et autres>|	4
+|La Baccha allongée <Baccha elongata>|	4
+|Les Scutellerides <Scutelleridae>|	4
+|Les Malachides sombres <Clanoptilus>|	4
+|Le Byturide aux petits yeux <Byturus tomentosus>|	4
+|Le Clyte mystique <Anaglyptus mysticus>|	4
+|La Doublure jaune <Euclidia glyphica>|	4
+|Le Capricorne Callimus <Callimus angulatus>|	4
+|L'Hespérie Echiquier <Carterocephalus palaemon>|	4
+|La Lygée familière <Tropidothorax leucopterus>|	4
+|Les Téléphores fauves à thorax noir <Rhagonycha>|	4
+|La Timandre aimée <Timandra comae>|	3
+|La Divisée <Siona lineata>|	3
+|La Milésie bourdon <Temnostoma bombylans>|	3
+|L'Abia fasciata <Abia fasciata>|	3
+|L'Aurore de Provence (mâle) <Anthocharis euphenoides>|	3
+|Les Labidostomes <Labidostomis>|	3
+|Les Fadets à bande blanche <Coenonympha>|	3
+|L'Ecaille du Myosotis <Utetheisa pulchella>|	3
+|La Citronnelle rouillée <Opisthograptis luteolata>|	3
+|Le Morio <Nymphalis antiopa>|	3
+|La Proserpine <Zerynthia rumina>|	3
+|Le Semi-Apollon <Parnassius mnemosyne>|	3
+|Les Mutilles (autres mâles) <Mutillidae>|	3
+|Les Cétoines métalliques unies <Protaetia>|	2
+|Le Byturide aux gros yeux <Byturus ochraceus>|	2
+|Le M noir <Euclidia mi>|	2
+|Les Conophores <Conophorus>|	2
+|Le Bombyle Eclimus <Eclimus gracilis>|	2
+|Le Thécla du Frêne <Laeosopis roboris>|	2
+|Le Syrphe Leucozona <Leucozona glaucia>|	2
+|Les Agapanthies violacées <Agapanthia>|	2
+|Le Coptosoma <Coptosoma scutellatum>|	2
+|La Scolie sans taches jaunes <Colpa quinquecincta>|	2
+|Le Hibou <Noctua pronuba>|	2
+|Les Moirés à dessous marbré <Erebia>|	2
+|Les Agrestes (Corse) <Hipparchia et autres>|	2
+|Les Chrysomèles allongées des milieux humides <Donacia, Plateumaris>|	2
+|L'Azuré de l'Orobe <Polyommatus daphnis>|	2
+|Le Damier noir <Melitaea diamina>|	2
+|Les Mutilles (femelles) <Mutillidae>|	2
+|Le Taon des pluies <Haematopota pluvialis>|	2
+|Les Alucitides <Alucitidae>|	2
+|Les Triongulins <Meloe>|	2
+|Le Céphide à abdomen orange <Calameuta pygmaea>|	2
+|L'Andrène noire <Andrena morio>|	2
+|Les Noctuelles à museau <Hypena et autres>|	2
+|Les Usies <Usia>|	1
+|L'Angéronie du Prunier <Angerona prunaria>|	1
+|Le Bupreste à taches jaunes <Ptosima undecimmaculata>|	1
+|Le Chevron blanc <Hipparchia fidia>|	1
+|L'Abeille coucou Epeloides (femelle) <Epeoloides coecutiens>|	1
+|La Frangée <Noctua fimbriata>|	1
+|Le Myrmus <Myrmus miriformis>|	1
+|La Pyrale du Houblon <Pleuroptya ruralis>|	1
+|L'Intruse, l'Illégitime et la Bréphine <Boudinotiana et autres>|	1
+|Le Dermeste à points blancs <Attagenus punctatus>|	1
+|Les Asilides velues <Laphria>|	1
+|Le Moiré variable <Erebia manto>|	1
+|Les Rayures <Aplocera>|	1
+|Le Stratiome singularior <Stratiomys singularior>|	1
+|L'Acméodère de la Piloselle <Acmaeodera pilosellae>|	1
+|La Rhagie à 2 bandes <Rhagium bifasciatum>|	1
+|L'Ecaille marbrée <Callimorpha dominula>|	1
+|Le Sphinx du Liseron <Agrius convolvuli>|	1
+|L'Acidalie double-ceinture <Idaea aureolaria>|	1
+|L'Echiquier de Russie <Melanargia russiae>|	1
+|La Scolie Colpa (femelle) <Colpa sexmaculata>|	1
+|Le Petit Sphinx de la Vigne <Deilephila porcellus>|	1
+|Le Gnorimus sombre <Gnorimus variabilis>|	1
+|Le Cyrtus <Cyrtus gibbus>|	1
+|L'Anthaxie nitidula (femelle) <Anthaxia nitidula>|	1
+|Le Fadet tyrrhénien <Coenonympha corinna>|	1
+|Le Pélopée à pattes roussâtres <Sceliphron curvatum>|	1
