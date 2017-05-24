@@ -7,7 +7,7 @@ import databoard.regression_prediction as regression_prediction
 class Predictions(BasePrediction):
 
     def __init__(self, labels=None, y_pred=None, y_true=None, f_name=None,
-                 n_samples=None):
+                 shape=None):
         self.labels = labels
         # multiclass_prediction.labels = labels
         if y_pred is not None:
@@ -26,11 +26,12 @@ class Predictions(BasePrediction):
 #                labels=self.labels, y_true=y_true[:, 0])
 #            self.regression_prediction = regression_prediction.Predictions(
 #                labels=self.labels, y_true=y_true[:, 1])
-        elif n_samples is not None:
+        elif shape is not None:
+            # last col is reg, first shape[1] - 1 cols are clf
             self.multiclass_prediction = multiclass_prediction.Predictions(
-                labels=self.labels, n_samples=n_samples)
+                labels=self.labels, shape=(shape[0], shape[1] - 1))
             self.regression_prediction = regression_prediction.Predictions(
-                labels=self.labels, n_samples=n_samples)
+                labels=self.labels, shape=shape[0])
 
     def set_valid_in_train(self, predictions, test_is):
         self.multiclass_prediction.set_valid_in_train(
