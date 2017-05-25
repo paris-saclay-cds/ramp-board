@@ -14,6 +14,7 @@ n_cv = 1
 score_type_descriptors = [
     {'name': 'accuracy', 'precision': 3},
     {'name': 'negative_log_likelihood', 'new_name': 'nll', 'precision': 3},
+    {'name': 'f1_above', 'new_name': 'f1a', 'precision': 2},
 ]
 
 
