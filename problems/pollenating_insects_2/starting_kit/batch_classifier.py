@@ -14,11 +14,11 @@ class BatchClassifier(object):
         self.model = build_model()
     
     def fit(self, gen_builder):
-        gen_train, gen_valid, nb_train, nb_valid = gen_builder.get_train_valid_generators(batch_size=16, valid_ratio=0.1)
+        gen_train, gen_valid, nb_train, nb_valid = gen_builder.get_train_valid_generators(batch_size=32, valid_ratio=0.1)
         self.model.fit_generator(
                 gen_train,
                 samples_per_epoch=nb_train,
-                nb_epoch=30,
+                nb_epoch=1,
                 # In parallel to training, a CPU process loads and preprocesses data from disk and put
                 # it into a queue in the form of mini-batches of size `batch_size`.`max_q_size` controls 
                 # the maximum size of that queue.
@@ -59,13 +59,9 @@ class BatchClassifier(object):
         return self.model.predict(X)
         
 def build_model():
-    vgg16 = VGG16(include_top=False, weights='imagenet')
-    #vgg16.trainable = False
-    inp = Input((3, 224, 224))
-    x = vgg16(inp)
-    x = Flatten(name='flatten')(x)
-    x = Dense(4096, activation='relu', name='fc1')(x)
-    x = Dense(4096, activation='relu', name='fc2')(x)
+    inp = Input((3, 32, 32))
+    x = Flatten(name='flatten')(inp)
+    x = Dense(100, activation='relu', name='fc1')(x)
     out = Dense(209, activation='softmax', name='predictions')(x)
     model = Model(inp, out)
     model.compile(loss='categorical_crossentropy', optimizer=SGD(lr=1e-4), metrics=['accuracy'])

@@ -4,7 +4,7 @@ from skimage.transform import resize
 def transform(x):
     if x.shape[2] == 4:
         x = x[:, :, 0:3]
-    x = resize(x, (224, 224), preserve_range=True)
+    x = resize(x, (32, 32), preserve_range=True)
     x = x.transpose((2, 0, 1))
     # 'RGB'->'BGR'
     x = x[::-1, :, :]
