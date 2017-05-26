@@ -112,11 +112,11 @@ def send_password_mail(user_name, password, port=None):
     logger.info('Sending mail to {}'.format(user.email))
     subject = 'RAMP signup information'
     header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
-        user.email, gmail_user, subject)
+        user.email, gmail_user, subject.encode('utf-8'))
 
     body = 'Here is your login and other information ' +\
         'for the RAMP site:\n\n'
-    body += 'username: {}\n'.format(user.name)
+    body += 'username: {}\n'.format(user.name.encode('utf-8'))
     body += 'password: {}\n'.format(password)
     body += 'submission site: http://www.ramp.studio'
     smtpserver.sendmail(gmail_user, user.email, header + body)
@@ -892,9 +892,9 @@ def send_submission_mails(user, submission, event_team):
     smtpserver.ehlo
     smtpserver.login(gmail_user, gmail_pwd)
     subject = 'fab train_test:e="{}",t="{}",s="{}"'.format(
-        event.name, team.name, submission.name)
+        event.name, team.name.encode('utf-8'), submission.name.encode('utf-8'))
     header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
-        recipient_list, gmail_user, subject)
+        recipient_list, gmail_user, subject.encode('utf-8'))
     # body = 'user = {}\nevent = {}\nserver = {}\nsubmission dir = {}\n'.format(
     #     user,
     #     event.name
@@ -925,17 +925,19 @@ def send_sign_up_request_mail(event, user):
     header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
         recipient_list, gmail_user, subject)
     body = 'event = {}\n'.format(event.name)
-    body += 'user = {}\n'.format(user.name)
-    body += 'name = {} {}\n'.format(user.firstname, user.lastname)
+    body += 'user = {}\n'.format(user.name.encode('utf-8'))
+    body += 'name = {} {}\n'.format(
+        user.firstname.encode('utf-8'), user.lastname.encode('utf-8'))
     body += 'email = {}\n'.format(user.email)
     body += 'linkedin = {}\n'.format(user.linkedin_url)
     body += 'twitter = {}\n'.format(user.twitter_url)
     body += 'facebook = {}\n'.format(user.facebook_url)
     body += 'github = {}\n'.format(user.github_url)
-    body += 'notes = {}\n'.format(user.hidden_notes)
-    body += 'bio = {}\n\n'.format(user.bio)
-    url_approve = 'http://{}/events/{}/sign_up/{}'.\
-        format(config.current_server_name, event.name, user.name)
+    body += 'notes = {}\n'.format(user.hidden_notes.encode('utf-8'))
+    body += 'bio = {}\n\n'.format(user.bio.encode('utf-8'))
+    url_approve = 'http://{}/events/{}/sign_up/{}'.format(
+        config.current_server_name, event.name,
+        user.name.encode('utf-8'))
     body += 'Click on this link to approve this user for this event: {}\n'.\
         format(url_approve)
 
@@ -955,17 +957,18 @@ def send_register_request_mail(user):
     subject = 'fab approve_user:u="{}"'.format(user.name)
     header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
         recipient_list, gmail_user, subject)
-    body = 'user = {}\n'.format(user.name)
-    body += 'name = {} {}\n'.format(user.firstname, user.lastname)
+    body = 'user = {}\n'.format(user.name.encode('utf-8'))
+    body += 'name = {} {}\n'.format(
+        user.firstname.encode('utf-8'), user.lastname.encode('utf-8'))
     body += 'email = {}\n'.format(user.email)
     body += 'linkedin = {}\n'.format(user.linkedin_url)
     body += 'twitter = {}\n'.format(user.twitter_url)
     body += 'facebook = {}\n'.format(user.facebook_url)
     body += 'github = {}\n'.format(user.github_url)
-    body += 'notes = {}\n'.format(user.hidden_notes)
-    body += 'bio = {}\n\n'.format(user.bio)
+    body += 'notes = {}\n'.format(user.hidden_notes.encode('utf-8'))
+    body += 'bio = {}\n\n'.format(user.bio.encode('utf-8'))
     url_approve = 'http://{}/sign_up/{}'.\
-        format(config.current_server_name, user.name)
+        format(config.current_server_name, user.name.encode('utf-8'))
     body += 'Click on the link to approve the registration of this user: {}\n'.\
         format(url_approve)
 
