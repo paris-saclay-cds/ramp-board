@@ -1148,7 +1148,7 @@ def reset_password():
             header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
                 user.email, config.MAIL_USERNAME, subject)
             body = ('Hi %s, \n\nclick on the link to reset your password:\n' %
-                    user.firstname)
+                    user.firstname.encode('utf-8'))
             body += recover_url
             body += '\n\nSee you on the RAMP website!'
             db_tools.send_mail(user.email, subject, header + body)
