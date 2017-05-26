@@ -225,6 +225,16 @@ fab add_event:titanic
 fab sign_up_team:titanic,kegl
 ```
 
+#### Pollenating insects 2
+
+```
+fab add_score_type:f1_above,"0",0.0,1.0
+fab add_problem:pollenating_insects_2,force=True
+fab add_event:pollenating_insects_2_paillasse,force=True
+fab sign_up_team:pollenating_insects_2_paillasse,kegl
+fab sign_up_team:pollenating_insects_2_paillasse,mcherti
+```
+
 #### Pollenating insects
 
 ```

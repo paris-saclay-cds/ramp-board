@@ -13,6 +13,21 @@ The <a href=http://www.spipoll.org/>SPIPOLL</a> (Suivi Photographique des Insect
 
 In this RAMP, we propose a dataset of pictures of insects from different species gathered from the SPIPOLL project and labeled by specialists. The dataset contains a set of 21004 labeled pictures of insects coming from 18 different insect species. Each picture is a color image. The size of the images (number of pixels) vary.
 
+<table>
+<tr>
+<td><img src="http://indicia.mnhn.fr/indicia/upload/13445438201344543820637.jpg" height=150></td>
+<td><img src="http://indicia.mnhn.fr/indicia/upload/1308298245130830659923.jpg" height=150><td><img src="http://indicia.mnhn.fr/indicia/upload/12867375181286736717433.jpg" height=150></td>
+</tr>
+<tr>
+<td><img src="http://indicia.mnhn.fr/indicia/upload/13168664251316877427879.jpg" height=150></td>
+<td><img src="http://indicia.mnhn.fr/indicia/upload/13397918601339791860366.jpg" height=150><td><img src="http://indicia.mnhn.fr/indicia/upload/1428397531195.jpg" height=150></td>
+</tr>
+<tr>
+<td><img src="http://indicia.mnhn.fr/indicia/upload/1434043357446.jpg" height=150></td>
+<td><img src="http://indicia.mnhn.fr/indicia/upload/13417550241341755024251.jpg" height=150><td><img src="http://indicia.mnhn.fr/indicia/upload/1419796975002.jpg" height=150></td>
+</tr>
+</table>
+
 <h2>The prediction task</h2>
 
 The goal of this RAMP is to classify correctly the species of the insects. For each submission, you will have to provide an image preprocessor (to standardize, resize, crop, augment images) and batch classifier, which will fit a training set and predict the classes (species) on a test set. The images are big so loading them into the memory at once is impossible. The batch classifier therefore will access them through a generator which can be "asked for" a certain number of training and validation images at a time. You will typically run one minibatch of stochastique gradient descent on these images to train a deep convolutional neural networks which are the state of the art in image classification.
