@@ -1152,7 +1152,9 @@ def reset_password():
             body += recover_url
             body += '\n\nSee you on the RAMP website!'
             db_tools.send_mail(user.email, subject, header + body)
-            logger.info('Password reset requested for user %s' % user.name)
+            logger.info(
+                'Password reset requested for user {}'.format(user.name))
+            logger.info(recover_url)
             return redirect(url_for('login'))
         else:
             error = ('Sorry, but this user was not approved or the email was '
