@@ -1650,6 +1650,8 @@ def get_leaderboards(event_name, user_name=None):
         submission.event_team.team.name for submission in submissions]
     leaderboard_df['submission'] = [
         submission.name_with_link for submission in submissions]
+    leaderboard_df['submission no link'] = [
+        submission.name[:20] for submission in submissions]
     leaderboard_df['contributivity'] = [
         int(round(100 * submission.contributivity))
         for submission in submissions]
@@ -1681,9 +1683,11 @@ def get_leaderboards(event_name, user_name=None):
         justify='left',
         # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
-    leaderboard_html_with_links = leaderboard_df.to_html(**html_params)
-    leaderboard_df['submission'] = [
-        submission.name[:20] for submission in submissions]
+    leaderboard_html_with_links = leaderboard_df.drop(
+        'submission no link', axis=1).to_html(**html_params)
+    leaderboard_df = leaderboard_df.drop('submission', axis=1)
+    leaderboard_df = leaderboard_df.rename(
+        columns={'submission no link': 'submission'})
     leaderboard_html_no_links = leaderboard_df.to_html(**html_params)
 
     return (
