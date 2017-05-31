@@ -23,7 +23,6 @@ test_filename = os.path.join(
 prediction_type = rw.prediction_types.multiclass
 prediction_labels = ['setosa', 'versicolor', 'virginica']
 target_column_name = 'species'
-
 workflow = rw.workflows.Classifier()
 score_types = [
     rw.score_types.Accuracy(name='acc', n_columns=len(prediction_labels)),
