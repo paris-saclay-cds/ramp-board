@@ -1,6 +1,7 @@
 import os
 import sys
 import pandas as pd
+import rampwf as rw
 from sklearn.model_selection import train_test_split
 from databoard.config import submissions_path, problems_path
 import databoard.regression_prediction as prediction  # noqa
@@ -27,6 +28,7 @@ workflow_name = 'regressor_workflow'
 prediction_labels = None
 extra_files = [os.path.join(problems_path, problem_name,
                             'boston_housing_datarun.py')]
+workflow = rw.workflows.Regressor()
 
 
 def prepare_data():

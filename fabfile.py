@@ -16,8 +16,8 @@ def publish_local_test():
     destination_path = config.local_root + '/datacamp/databoard'
     os.system('rm -rf ' + destination_path)
     os.makedirs(destination_path)
-    os.system('rsync -rRultv problems/iris ' + destination_path)
-    os.system('rsync -rRultv problems/boston_housing ' + destination_path)
+    publish_problem('iris', target='local')
+    publish_problem('boston_housing', target='local')
     os.system('rsync -rultv fabfile.py ' + destination_path)
 
 
@@ -67,10 +67,6 @@ def test_setup():
         name='mcherti', password='blown ashcan manful dost', lastname='Cherti',
         firstname='Mehdi', email='mehdicherti@gmail.com',
         access_level='admin')
-    db_tools.create_user(
-        name='camille_marini', password='therm pasha tootle stoney',
-        lastname='Marini', firstname='Camille',
-        email='camille.marini@gmail.com', access_level='admin')
 
     db_tools.create_user(
         name='test_user', password='test',
@@ -89,24 +85,22 @@ def test_setup():
     db_tools.sign_up_team('boston_housing_test', 'akazakci')
     db_tools.sign_up_team('iris_test', 'mcherti')
     db_tools.sign_up_team('boston_housing_test', 'mcherti')
-    db_tools.sign_up_team('iris_test', 'camille_marini')
-    db_tools.sign_up_team('boston_housing_test', 'camille_marini')
     db_tools.sign_up_team('iris_test', 'test_user')
 
     db_tools.make_event_admin('iris_test', 'test_iris_admin')
 
     db_tools.make_submission_and_copy_files(
-        'iris_test', 'kegl', 'rf',
+        'iris_test', 'kegl', 'starting_kit_test',
         'problems/iris/deposited_submissions/kegl/rf')
     db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf2',
         'problems/iris/deposited_submissions/kegl/rf2')
 
     db_tools.make_submission_and_copy_files(
-        'boston_housing_test', 'camille_marini', 'rf',
+        'boston_housing_test', 'kegl', 'starting_kit_test',
         'problems/boston_housing/deposited_submissions/kegl/rf')
     db_tools.make_submission_and_copy_files(
-        'boston_housing_test', 'camille_marini', 'rf2',
+        'boston_housing_test', 'kegl', 'rf2',
         'problems/boston_housing/deposited_submissions/kegl/rf2')
 
     # compare results with local train and test

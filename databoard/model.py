@@ -211,8 +211,7 @@ class Problem(db.Model):
         # to check if the module and all required fields are there
         self.module
         self.prediction
-        self.train_submission
-        self.test_submission
+        self.workflow_object
 
     def __repr__(self):
         repr = 'Problem({})\n{}'.format(self.name, self.workflow)
@@ -250,12 +249,8 @@ class Problem(db.Model):
                                            y_true=y_train[test_is])
 
     @property
-    def train_submission(self):
-        return self.workflow.train_submission
-
-    @property
-    def test_submission(self):
-        return self.workflow.test_submission
+    def workflow_object(self):
+        return self.module.workflow
 
 
 class ScoreType(db.Model):
@@ -394,14 +389,6 @@ class Event(db.Model):
     @property
     def official_score_function(self):
         return self.official_score_type.score_function
-
-    @property
-    def train_submission(self):
-        return self.problem.train_submission
-
-    @property
-    def test_submission(self):
-        return self.problem.test_submission
 
     @property
     def combined_combined_valid_score_str(self):
@@ -700,9 +687,6 @@ class Workflow(db.Model):
     def __init__(self, name):
         self.name = name
         # to check if the module and all required fields are there
-        self.module
-        self.train_submission
-        self.test_submission
 
     def __repr__(self):
         repr = 'Workflow({})'.format(self.name)
@@ -711,16 +695,8 @@ class Workflow(db.Model):
         return repr
 
     @property
-    def module(self):
-        return import_module('.' + self.name, config.workflows_module)
-
-    @property
-    def train_submission(self):
-        return self.module.train_submission
-
-    @property
-    def test_submission(self):
-        return self.module.test_submission
+    def object(self):
+        return self.problem.module.workflow
 
 
 # In lists we will order files according to their ids
@@ -1627,16 +1603,14 @@ class DetachedSubmissionOnCVFold(object):
         self.name = submission_on_cv_fold.submission.event.name + '/'\
             + submission_on_cv_fold.submission.team.name + '/'\
             + submission_on_cv_fold.submission.name
-        self.module = submission_on_cv_fold.submission.module
+        self.path = submission_on_cv_fold.submission.path
         self.error_msg = submission_on_cv_fold.error_msg
         self.train_time = submission_on_cv_fold.train_time
         self.valid_time = submission_on_cv_fold.valid_time
         self.test_time = submission_on_cv_fold.test_time
         self.trained_submission = None
-        self.train_submission =\
-            submission_on_cv_fold.submission.event.train_submission
-        self.test_submission =\
-            submission_on_cv_fold.submission.event.test_submission
+        self.workflow =\
+            submission_on_cv_fold.submission.event.problem.workflow_object
 
     def __repr__(self):
         repr = 'Submission({}) on fold {}'.format(
