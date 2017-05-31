@@ -1205,8 +1205,8 @@ def train_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
     start = timeit.default_timer()
     try:
         detached_submission_on_cv_fold.trained_submission =\
-            detached_submission_on_cv_fold.train_submission(
-                detached_submission_on_cv_fold.module, X, y, train_is)
+            detached_submission_on_cv_fold.workflow.train_submission(
+                detached_submission_on_cv_fold.path, X, y, train_is)
         detached_submission_on_cv_fold.state = 'trained'
     except Exception as e:
         detached_submission_on_cv_fold.state = 'training_error'
@@ -1223,7 +1223,7 @@ def train_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
     start = timeit.default_timer()
     try:
         # Computing predictions on full training set
-        y_pred = detached_submission_on_cv_fold.test_submission(
+        y_pred = detached_submission_on_cv_fold.workflow.test_submission(
             detached_submission_on_cv_fold.trained_submission, X)
         assert_all_finite(y_pred)
         if len(y_pred) == len(y):
@@ -1264,7 +1264,7 @@ def test_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
     logger.info('Testing {}'.format(detached_submission_on_cv_fold))
     start = timeit.default_timer()
     try:
-        y_pred = detached_submission_on_cv_fold.test_submission(
+        y_pred = detached_submission_on_cv_fold.workflow.test_submission(
             detached_submission_on_cv_fold.trained_submission, X)
         assert_all_finite(y_pred)
         if len(y_pred) == len(y):

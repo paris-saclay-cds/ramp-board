@@ -1,6 +1,7 @@
 import os
 import sys
 import pandas as pd
+import rampwf as rw
 from sklearn.model_selection import train_test_split
 import databoard.multiclass_prediction as prediction
 from databoard.config import submissions_path, problems_path
@@ -26,6 +27,7 @@ test_filename = os.path.join(
 prediction_labels = ['setosa', 'versicolor', 'virginica']
 target_column_name = 'species'
 workflow_name = 'classifier_workflow'
+workflow = rw.workflows.Classifier()
 
 
 def prepare_data():
