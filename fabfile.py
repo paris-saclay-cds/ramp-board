@@ -582,9 +582,15 @@ def dump_user_interactions():
     user_interactions_df.to_csv('user_interactions_dump.csv')
 
 
-def update_leaderboards(e):
+def update_leaderboards(e=None):
+    from databoard.model import Event
     from databoard.db_tools import update_leaderboards
-    update_leaderboards(e)
+    if e is None:
+        es = Event.query.all()
+        for e in es:
+            update_leaderboards(e.name)
+    else:
+        update_leaderboards(e)
 
 
 def update_user_leaderboards(e, u):
@@ -592,9 +598,15 @@ def update_user_leaderboards(e, u):
     update_user_leaderboards(e, u)
 
 
-def update_all_user_leaderboards(e):
+def update_all_user_leaderboards(e=None):
+    from databoard.model import Event
     from databoard.db_tools import update_all_user_leaderboards
-    update_all_user_leaderboards(e)
+    if e is None:
+        es = Event.query.all()
+        for e in es:
+            update_all_user_leaderboards(e.name)
+    else:
+        update_all_user_leaderboards(e)
 
 
 def prepare_data(problem_name):
