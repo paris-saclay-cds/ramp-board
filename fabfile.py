@@ -161,18 +161,6 @@ def profile(port=None, profiling_file='profiler.log'):
                 processes=1000)
 
 
-def add_workflow_element_type(name, type):
-    from databoard.db_tools import add_workflow_element_type
-
-    add_workflow_element_type(name, type)
-
-
-def add_workflow(name, *element_type_names):
-    from databoard.db_tools import add_workflow
-
-    add_workflow(name, element_type_names)
-
-
 def add_score_type(name, is_lower_the_better, minimum, maximum):
     from databoard.db_tools import add_score_type
 
