@@ -219,7 +219,7 @@ class Problem(db.Model):
 
     def reset(self):
         self.workflow = Workflow.query.filter_by(
-            name=self.module.workflow_name).one()
+            name=type(self.module.workflow).__name__).one()
 
     @property
     def module(self):

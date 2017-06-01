@@ -1,6 +1,6 @@
 import datetime
-from sklearn.model_selection import ShuffleSplit
-from databoard.specific.problems.boston_housing import problem_name  # noqa
+from databoard.specific.problems.boston_housing import (  # noqa
+    problem_name, score_types, get_cv)
 
 event_name = 'boston_housing_test'  # should be the same as the file name
 
@@ -8,19 +8,10 @@ event_name = 'boston_housing_test'  # should be the same as the file name
 
 event_title = 'test event'
 
-random_state = 57
-cv_test_size = 0.5
-n_cv = 2
 score_type_descriptors = [
     'rmse',
     {'name': 'relative_rmse', 'new_name': 'rel_rmse'},
 ]
-
-
-def get_cv(y_train_array):
-    cv = ShuffleSplit(n_splits=n_cv, test_size=cv_test_size,
-                      random_state=random_state)
-    return cv.split(y_train_array)
 
 # Mutable config parameters to initialize database fields
 
