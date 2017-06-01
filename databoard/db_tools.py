@@ -203,7 +203,6 @@ def add_submission_file_type_extension(type_name, extension_name):
 
 def add_workflow(workflow_object):
     """Adding a new workflow.
-
     Workflow class should exist in rampwf.workflows. The name of the
     workflow will be the classname (e.g. Classifier). Element names 
     are taken from workflow.element_names. Element types are inferred
