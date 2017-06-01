@@ -1,5 +1,7 @@
 # Databoard
 
+export OMP_NUM_THREADS=1
+
 ## Dependencies
 
 Install dependencies with `pip install -Ur requirements.txt`
