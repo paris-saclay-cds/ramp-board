@@ -181,21 +181,6 @@ def setup_workflows():
     for type_name, extension_name in submission_file_type_extensions:
         add_submission_file_type_extension(type_name, extension_name)
 
-    workflow_element_types = [
-        ('feature_extractor', 'code'),
-        ('ts_feature_extractor', 'code'),
-        ('imputer', 'code'),
-        ('classifier', 'code'),
-        ('regressor', 'code'),
-        ('calibrator', 'code'),
-        ('comments', 'text'),
-        ('external_data', 'data'),
-    ]
-    for workflow_element_type_name, submission_file_type_name in\
-            workflow_element_types:
-        add_workflow_element_type(
-            workflow_element_type_name, submission_file_type_name)
-
 
 def add_extension(name):
     """Adding a new extension, e.g., 'py'."""
@@ -240,24 +225,6 @@ def add_submission_file_type_extension(type_name, extension_name):
         db.session.commit()
 
 
-def add_workflow_element_type(workflow_element_type_name,
-                              submission_file_type_name):
-    """Adding a new workflow element type, e.g., ('classifier', 'code').
-
-    Should be preceded by adding submission file types and extensions.
-    """
-    submission_file_type = SubmissionFileType.query.filter_by(
-        name=submission_file_type_name).one()
-    workflow_element_type = WorkflowElementType.query.filter_by(
-        name=workflow_element_type_name).one_or_none()
-    if workflow_element_type is None:
-        workflow_element_type = WorkflowElementType(
-            name=workflow_element_type_name, type=submission_file_type)
-        logger.info('Adding {}'.format(workflow_element_type))
-        db.session.add(workflow_element_type)
-        db.session.commit()
-
-
 def add_workflow(workflow_object):
     """Adding a new workflow, e.g., ('classifier_workflow', ['classifier']).
 
@@ -265,6 +232,8 @@ def add_workflow(workflow_object):
     databoard/specific/workflows/<workflow_name>. Should be preceded by adding
     workflow element types.
     """
+
+    # name is the name of the workflow *Class*, not the module
     workflow_name = type(workflow_object).__name__
     workflow_element_names = workflow_object.element_names
     workflow = Workflow.query.filter_by(name=workflow_name).one_or_none()
@@ -272,8 +241,35 @@ def add_workflow(workflow_object):
         db.session.add(Workflow(name=workflow_name))
         workflow = Workflow.query.filter_by(name=workflow_name).one()
     for element_name in workflow_element_names:
+        tokens = element_name.split('.')
+        element_file_name = tokens[0]
+        # inferring that file is code if there is no extension
+        element_file_extension_name = 'py'
+        if len(tokens) > 1:
+            element_file_extension_name = tokens[1]
+        if len(tokens) > 2:
+            raise ValueError(
+                'File name {} should contain at most one "."'.format(
+                    element_name))
+        extension = Extension.query.filter_by(
+            name=element_file_extension_name).one_or_none()
+        if extension is None:
+            raise ValueError(
+                'Unknown extension {}'.format(element_file_extension_name))
+        type_extension = SubmissionFileTypeExtension.query.filter_by(
+            extension=extension).one_or_none()
+        if type_extension is None:
+            raise ValueError(
+                'Unknown file type {}'.format(element_file_extension_name))
+
         workflow_element_type = WorkflowElementType.query.filter_by(
-            name=element_name).one()
+            name=element_file_name).one_or_none()
+        if workflow_element_type is None:
+            workflow_element_type = WorkflowElementType(
+                name=element_file_name, type=type_extension.type)
+            logger.info('Adding {}'.format(workflow_element_type))
+            db.session.add(workflow_element_type)
+            db.session.commit()
         workflow_element =\
             WorkflowElement.query.filter_by(
                 workflow=workflow,
@@ -285,6 +281,7 @@ def add_workflow(workflow_object):
             logger.info('Adding {}'.format(workflow_element))
             db.session.add(workflow_element)
     db.session.commit()
+
 
 def add_problem(problem_name, force=False):
     """Adding a new RAMP problem.
