@@ -210,6 +210,12 @@ def add_workflow(workflow_object):
     from the extension. This is important because e.g. the max size
     and the editability will depend on the type.
 
+    Workflow class should exist in rampwf.workflows. The name of the
+    workflow will be the classname (e.g. Classifier). Element names 
+    are taken from workflow.element_names. Element types are inferred
+    from the extension. This is important because e.g. the max size
+    and the editability will depend on the type.
+
     add_workflow is called by add_problem, taking the workflow to add
     from the problem.py file of the starting kit.
     """
