@@ -210,16 +210,24 @@ def add_workflow(workflow_object):
     from the extension. This is important because e.g. the max size
     and the editability will depend on the type.
 
+<<<<<<< HEAD
     Workflow class should exist in rampwf.workflows. The name of the
     workflow will be the classname (e.g. Classifier). Element names 
     are taken from workflow.element_names. Element types are inferred
     from the extension. This is important because e.g. the max size
     and the editability will depend on the type.
+=======
+def add_workflow(workflow_object):
+    """Adding a new workflow, e.g., ('classifier_workflow', ['classifier']).
+>>>>>>> 1) get_cv now complies with sklearn (X and y)
 
     add_workflow is called by add_problem, taking the workflow to add
     from the problem.py file of the starting kit.
     """
+<<<<<<< HEAD
     # name is the name of the workflow *Class*, not the module
+=======
+>>>>>>> 1) get_cv now complies with sklearn (X and y)
     workflow_name = type(workflow_object).__name__
     workflow_element_names = workflow_object.element_names
     workflow = Workflow.query.filter_by(name=workflow_name).one_or_none()
@@ -227,6 +235,7 @@ def add_workflow(workflow_object):
         db.session.add(Workflow(name=workflow_name))
         workflow = Workflow.query.filter_by(name=workflow_name).one()
     for element_name in workflow_element_names:
+<<<<<<< HEAD
         tokens = element_name.split('.')
         element_file_name = tokens[0]
         # inferring that file is code if there is no extension
@@ -256,6 +265,10 @@ def add_workflow(workflow_object):
             logger.info('Adding {}'.format(workflow_element_type))
             db.session.add(workflow_element_type)
             db.session.commit()
+=======
+        workflow_element_type = WorkflowElementType.query.filter_by(
+            name=element_name).one()
+>>>>>>> 1) get_cv now complies with sklearn (X and y)
         workflow_element =\
             WorkflowElement.query.filter_by(
                 workflow=workflow,
@@ -267,7 +280,6 @@ def add_workflow(workflow_object):
             logger.info('Adding {}'.format(workflow_element))
             db.session.add(workflow_element)
     db.session.commit()
-
 
 def add_problem(problem_name, force=False):
     """Adding a new RAMP problem.
