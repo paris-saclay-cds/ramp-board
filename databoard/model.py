@@ -268,9 +268,9 @@ class ScoreType(db.Model):
         self.minimum = minimum
         self.maximum = maximum
         # to check if the module and all required fields are there
-        self.module
-        self.score_function
-        self.precision
+        # self.module
+        # self.score_function
+        # self.precision
 
     def __repr__(self):
         repr = 'ScoreType(name={})'.format(self.name)
@@ -441,6 +441,9 @@ class Event(db.Model):
             n_submissions_ += len(event_team.submissions) - 1
         return n_submissions_
 
+# XXX
+import uuid
+
 
 # many-to-many
 class EventScoreType(db.Model):
@@ -467,37 +470,52 @@ class EventScoreType(db.Model):
     db.UniqueConstraint(event_id, score_type_id, name='es_constraint')
     db.UniqueConstraint(event_id, name, name='en_constraint')
 
-    def __init__(self, event, score_type, name=None, precision=None):
+    def __init__(self, event, score_type_object):
         self.event = event
-        self.score_type = score_type
-        if name is None:
-            self.name = score_type.name
-        if precision is None:
-            self.precision = score_type.precision
+        # XXX
+        self.score_type = ScoreType(uuid.uuid4(), True, 0, 1)
+        # XXX after migration we should store the index of the
+        # score_type so self.score_type_object (should be renamed
+        # score_type) wouldn't have to do a search each time.
+        self.name = score_type_object.name
+        self.precision = score_type_object.precision
+        self.score_type_object
+        self.score_function
+        self.is_lower_the_better
+        self.minimum
+        self.maximum
+        self.worst
 
     def __repr__(self):
-        repr = '{}: {}/{}'.format(self.name, self.event, self.score_type)
+        repr = '{}: {}/{}'.format(self.name, self.event)
         return repr
 
     @property
+    def score_type_object(self):
+        score_types = self.event.module.score_types
+        for score_type in score_types:
+            if score_type.name == self.name:
+                return score_type
+
+    @property
     def score_function(self):
-        return self.score_type.score_function
+        return self.score_type_object.score_function
 
     @property
     def is_lower_the_better(self):
-        return self.score_type.is_lower_the_better
+        return self.score_type_object.is_lower_the_better
 
     @property
     def minimum(self):
-        return self.score_type.minimum
+        return self.score_type_object.minimum
 
     @property
     def maximum(self):
-        return self.score_type.maximum
+        return self.score_type_object.maximum
 
     @property
     def worst(self):
-        return self.score_type.worst
+        return self.score_type_object.worst
 
 cv_fold_types = db.Enum('live', 'test', name='cv_fold_types')
 
