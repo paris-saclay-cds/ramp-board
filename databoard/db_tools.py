@@ -382,6 +382,7 @@ def add_event(event_name, force=False):
         db.session.add(event_score_type)
     event.official_score_name = score_types[0].name
 <<<<<<< HEAD
+<<<<<<< HEAD
     db.session.commit()
 
 
