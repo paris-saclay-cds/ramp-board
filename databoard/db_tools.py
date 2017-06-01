@@ -157,6 +157,24 @@ def setup_workflows():
     for type_name, extension_name in submission_file_type_extensions:
         add_submission_file_type_extension(type_name, extension_name)
 
+<<<<<<< HEAD
+=======
+    workflow_element_types = [
+        ('feature_extractor', 'code'),
+        ('ts_feature_extractor', 'code'),
+        ('imputer', 'code'),
+        ('classifier', 'code'),
+        ('regressor', 'code'),
+        ('calibrator', 'code'),
+        ('comments', 'text'),
+        ('external_data', 'data'),
+    ]
+    for workflow_element_type_name, submission_file_type_name in\
+            workflow_element_types:
+        add_workflow_element_type(
+            workflow_element_type_name, submission_file_type_name)
+
+>>>>>>> 1) get_cv now complies with sklearn (X and y)
 
 def add_extension(name):
     """Adding a new extension, e.g., 'py'."""
@@ -262,7 +280,6 @@ def add_workflow(workflow_object):
             logger.info('Adding {}'.format(workflow_element))
             db.session.add(workflow_element)
     db.session.commit()
-
 
 def add_problem(problem_name, force=False):
     """Adding a new RAMP problem.
