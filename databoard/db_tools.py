@@ -194,7 +194,7 @@ def add_extension(name):
 
 def add_submission_file_type(name, is_editable, max_size):
     """Adding a new submission file type, e.g., ('code', True, 10 ** 5).
-
+`
     Should be preceded by adding extensions.
     """
     submission_file_type = SubmissionFileType.query.filter_by(
@@ -226,11 +226,16 @@ def add_submission_file_type_extension(type_name, extension_name):
 
 
 def add_workflow(workflow_object):
-    """Adding a new workflow, e.g., ('classifier_workflow', ['classifier']).
+    """Adding a new workflow.
 
-    Workflow file should be set up in
-    databoard/specific/workflows/<workflow_name>. Should be preceded by adding
-    workflow element types.
+    Workflow class should exist in rampwf.workflows. The name of the
+    workflow will be the classname (e.g. Classifier). Element names 
+    are taken from workflow.element_names. Element types are inferred
+    from the extension. This is important because e.g. the max size
+    and the editability will depend on the type.
+
+    add_workflow is called by add_problem, taking the workflow to add
+    from the problem.py file of the starting kit.
     """
 
     # name is the name of the workflow *Class*, not the module
