@@ -17,6 +17,7 @@ import xkcdpass.xkcd_password as xp
 from sklearn.externals.joblib import Parallel, delayed
 from databoard import db
 from sklearn.utils.validation import assert_all_finite
+from importlib import import_module
 
 from databoard.model import User, Team, Submission, SubmissionFile,\
     SubmissionFileType, SubmissionFileTypeExtension, WorkflowElementType,\
@@ -195,13 +196,6 @@ def setup_workflows():
         add_workflow_element_type(
             workflow_element_type_name, submission_file_type_name)
 
-    workflows = [
-        ('classifier_workflow', ['classifier']),
-        ('regressor_workflow', ['regressor']),
-    ]
-    for name, element_type_names in workflows:
-        add_workflow(name, element_type_names)
-
 
 def add_extension(name):
     """Adding a new extension, e.g., 'py'."""
@@ -264,20 +258,22 @@ def add_workflow_element_type(workflow_element_type_name,
         db.session.commit()
 
 
-def add_workflow(workflow_name, element_type_names):
+def add_workflow(workflow_object):
     """Adding a new workflow, e.g., ('classifier_workflow', ['classifier']).
 
     Workflow file should be set up in
     databoard/specific/workflows/<workflow_name>. Should be preceded by adding
     workflow element types.
     """
+    workflow_name = type(workflow_object).__name__
+    workflow_element_names = workflow_object.element_names
     workflow = Workflow.query.filter_by(name=workflow_name).one_or_none()
     if workflow is None:
         db.session.add(Workflow(name=workflow_name))
         workflow = Workflow.query.filter_by(name=workflow_name).one()
-    for element_type_name in element_type_names:
+    for element_name in workflow_element_names:
         workflow_element_type = WorkflowElementType.query.filter_by(
-            name=element_type_name).one()
+            name=element_name).one()
         workflow_element =\
             WorkflowElement.query.filter_by(
                 workflow=workflow,
@@ -289,7 +285,6 @@ def add_workflow(workflow_name, element_type_names):
             logger.info('Adding {}'.format(workflow_element))
             db.session.add(workflow_element)
     db.session.commit()
-
 
 def add_problem(problem_name, force=False):
     """Adding a new RAMP problem.
@@ -308,6 +303,8 @@ def add_problem(problem_name, force=False):
                 'Attempting to delete problem and all linked events, ' +
                 'use "force=True" if you know what you are doing.')
             return
+    problem_module = import_module('.' + problem_name, config.problems_module)
+    add_workflow(problem_module.workflow)
     problem = Problem(name=problem_name)
     logger.info('Adding {}'.format(problem))
     db.session.add(problem)
@@ -395,8 +392,8 @@ def add_event(event_name, force=False):
     _set_table_attribute(event, 'is_public')
     _set_table_attribute(event, 'is_controled_signup')
 
-    _, y_train = event.problem.module.get_train_data()
-    cv = event.module.get_cv(y_train)
+    X_train, y_train = event.problem.module.get_train_data()
+    cv = event.module.get_cv(X_train, y_train)
     for train_is, test_is in cv:
         cv_fold = CVFold(event=event, train_is=train_is, test_is=test_is)
         db.session.add(cv_fold)
