@@ -213,7 +213,6 @@ def add_workflow(workflow_object):
     add_workflow is called by add_problem, taking the workflow to add
     from the problem.py file of the starting kit.
     """
-
     # name is the name of the workflow *Class*, not the module
     workflow_name = type(workflow_object).__name__
     workflow_element_names = workflow_object.element_names
