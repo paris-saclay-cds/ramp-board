@@ -130,30 +130,6 @@ def send_password_mails(password_f_name, port):
         send_password_mail(u['name'], u['password'], port)
 
 
-def setup_score_types():
-    score_types = [
-        ('rmse', True, 0.0, float('inf')),
-        ('error', True, 0.0, 1.0),
-        ('accuracy', False, 0.0, 1.0),
-        ('negative_log_likelihood', True, 0.0, float('inf')),
-        ('relative_rmse', True, 0.0, float('inf')),
-    ]
-    for name, is_lower_the_better, minimum, maximum in score_types:
-        add_score_type(name, is_lower_the_better, minimum, maximum)
-
-
-def add_score_type(name, is_lower_the_better, minimum, maximum):
-    """Adding a new score type, e.g., RMSE."""
-    score_type = ScoreType.query.filter_by(name=name).one_or_none()
-    if score_type is None:
-        score_type = ScoreType(
-            name=name, is_lower_the_better=is_lower_the_better,
-            minimum=minimum, maximum=maximum)
-        logger.info('Adding {}'.format(score_type))
-        db.session.add(score_type)
-        db.session.commit()
-
-
 def setup_workflows():
     """Setting up database.
 
@@ -400,41 +376,13 @@ def add_event(event_name, force=False):
         cv_fold = CVFold(event=event, train_is=train_is, test_is=test_is)
         db.session.add(cv_fold)
 
-    score_type_descriptors = event.module.score_type_descriptors
-    if type(score_type_descriptors) is not list:
-        score_type_descriptors = [score_type_descriptors]
-    for i, score_type_descriptor in enumerate(score_type_descriptors):
-        if type(score_type_descriptor) is not dict:
-            # this is ugly, needed a fast fix for official_score_name below
-            score_type_descriptors[i] = {'name': score_type_descriptor}
-            score_type_descriptor = {'name': score_type_descriptor}
-        score_type = ScoreType.query.filter_by(
-            name=score_type_descriptor['name']).one()
-        event_score_type = EventScoreType.query.filter_by(
-            event=event, score_type=score_type).one_or_none()
-        if event_score_type is None:
-            event_score_type = EventScoreType(
-                event=event, score_type=score_type)
-            db.session.add(event_score_type)
-        if 'precision' in score_type_descriptor:
-            event_score_type.precision = score_type_descriptor['precision']
-        if 'new_name' in score_type_descriptor:
-            event_score_type.name = score_type_descriptor['new_name']
-        print(score_type)
-    # I thought that event.score_types will be sorted by the order we add
-    # event_score_types, but no, it's ordered by id (I guess), so we have to
-    # excplicitly assign event.official_score_index here.
-    try:
-        event.official_score_name = event.module.official_score_name
-    except AttributeError:
-        score_type_descriptor = score_type_descriptors[0]
-        if 'new_name' in score_type_descriptor:
-            event.official_score_name = score_type_descriptor['new_name']
-        else:
-            event.official_score_name = score_type_descriptor['name']
-    print(event.official_score_name)
+    score_types = event.module.score_types
+    for score_type in score_types:
+        event_score_type = EventScoreType(
+            event=event, score_type_object=score_type)
+        db.session.add(event_score_type)
+    event.official_score_name = score_types[0].name
     db.session.commit()
-    print(event.official_score_type)
 
 
 def add_keyword(name, type, category=None, description=None, force=False):
