@@ -341,6 +341,8 @@ class Event(db.Model):
     combined_foldwise_valid_score = db.Column(db.Float, default=None)
     combined_foldwise_test_score = db.Column(db.Float, default=None)
 
+    n_submissions = db.Column(db.Integer, default=0)
+
     public_leaderboard_html_no_links = db.Column(db.String, default=None)
     public_leaderboard_html_with_links = db.Column(db.String, default=None)
     private_leaderboard_html = db.Column(db.String, default=None)
@@ -446,13 +448,13 @@ class Event(db.Model):
     def n_participants(self):
         return len(self.event_teams)
 
-    @property
-    def n_submissions(self):
-        n_submissions_ = 0
-        for event_team in self.event_teams:
-            # substract one for starting kit
-            n_submissions_ += len(event_team.submissions) - 1
-        return n_submissions_
+    # @property
+    # def n_submissions(self):
+    #     n_submissions_ = 0
+    #     for event_team in self.event_teams:
+    #         # substract one for starting kit
+    #         n_submissions_ += len(event_team.submissions) - 1
+    #     return n_submissions_
 
 
 # many-to-many
