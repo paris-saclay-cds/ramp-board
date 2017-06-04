@@ -346,11 +346,17 @@ def train_test(e, t=None, s=None, state=None, force='False'):
     compute_contributivity(e)
 
 
+def set_n_submissions(e=None):
+    from databoard.db_tools import set_n_submissions
+    set_n_submissions(e)
+
+
 def compute_contributivity(e):
     from databoard.db_tools import compute_contributivity
     from databoard.db_tools import compute_historical_contributivity
     compute_contributivity(e)
     compute_historical_contributivity(e)
+    set_n_submissions(e)
 
 
 def print_submissions(e=None, t=None, s=None):

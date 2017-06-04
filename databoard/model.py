@@ -363,6 +363,13 @@ class Event(db.Model):
         repr = 'Event({})'.format(self.name)
         return repr
 
+    def set_n_submissions(self):
+        self.n_submissions = 0
+        for event_team in self.event_teams:
+            # substract one for starting kit
+            self.n_submissions += len(event_team.submissions) - 1
+        db.session.commit()
+
     @property
     def module(self):
         return import_module('.' + self.name, config.events_module)
@@ -447,14 +454,6 @@ class Event(db.Model):
     @property
     def n_participants(self):
         return len(self.event_teams)
-
-    # @property
-    # def n_submissions(self):
-    #     n_submissions_ = 0
-    #     for event_team in self.event_teams:
-    #         # substract one for starting kit
-    #         n_submissions_ += len(event_team.submissions) - 1
-    #     return n_submissions_
 
 
 # many-to-many

@@ -704,6 +704,7 @@ def delete_submission(event_name, team_name, submission_name):
     compute_contributivity(event_name)
     compute_historical_contributivity(event_name)
     update_user_leaderboards(event_name, team_name)
+    set_n_submissions(event_name)
 
 
 def make_submission_on_cv_folds(cv_folds, submission):
@@ -1024,6 +1025,16 @@ def get_earliest_new_submission(event_name=None):
         return new_submissions[0]
 
 
+def set_n_submissions(event_name=None):
+    if event_name is None:
+        events = Event.query.all()
+        for event in events:
+            event.set_n_submissions()
+    else:
+        event = Event.query.filter_by(name=event_name).one()
+        event.set_n_submissions()
+
+
 def backend_train_test_loop(event_name=None, timeout=20,
                             is_compute_contributivity=True):
     event_names = set()
@@ -1042,6 +1053,7 @@ def backend_train_test_loop(event_name=None, timeout=20,
                 for event_name in event_names:
                     compute_contributivity(event_name)
                     compute_historical_contributivity(event_name)
+                    set_n_submissions(event_name)
             event_names = set()
         time.sleep(timeout)
 
