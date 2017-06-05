@@ -1911,3 +1911,33 @@ class HistoricalContributivity(db.Model):
 
     contributivity = db.Column(db.Float, default=0.0)
     historical_contributivity = db.Column(db.Float, default=0.0)
+
+
+class Keyword(db.Model):
+    __tablename__ = 'keywords'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(), nullable=False, unique=True)
+    # 'data_domain' or 'data_science_theme'
+    type = db.Column(db.String(), nullable=False)
+    # 'industrial', 'research', etc.
+    category = db.Column(db.String())
+    description = db.Column(db.String())
+
+
+class ProblemKeyword(db.Model):
+    __tablename__ = 'problem_keywords'
+
+    id = db.Column(db.Integer, primary_key=True)
+    # optional description of the keyword particular to a problem
+    description = db.Column(db.String)
+
+    problem_id = db.Column(
+        db.Integer, db.ForeignKey('problems.id'), nullable=False)
+    problem = db.relationship(
+        'Problem', backref=db.backref('keywords'))
+
+    data_domain_id = db.Column(
+        db.Integer, db.ForeignKey('keywords.id'), nullable=False)
+    data_domain = db.relationship(
+        'Keyword', backref=db.backref('problems'))
