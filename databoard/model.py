@@ -1938,8 +1938,8 @@ class ProblemKeyword(db.Model):
         'Problem', backref=db.backref(
             'keywords', cascade='all, delete-orphan'))
 
-    data_domain_id = db.Column(
+    keyword_id = db.Column(
         db.Integer, db.ForeignKey('keywords.id'), nullable=False)
-    data_domain = db.relationship(
+    keyword = db.relationship(
         'Keyword', backref=db.backref(
             'problems', cascade='all, delete-orphan'))
