@@ -26,7 +26,7 @@ from databoard.model import User, Team, Submission, SubmissionFile,\
     UserInteraction, EventAdmin,\
     NameClashError, TooEarlySubmissionError,\
     DuplicateSubmissionError, MissingSubmissionFileError,\
-    MissingExtensionError,\
+    MissingExtensionError, Keyword, ProblemKeyword,\
     combine_predictions_list, get_next_best_single_fold,\
     get_active_user_event_team, get_user_teams,\
     get_team_members, get_user_event_teams
@@ -436,6 +436,46 @@ def add_event(event_name, force=False):
     print(event.official_score_name)
     db.session.commit()
     print(event.official_score_type)
+
+
+def add_keyword(name, type, category=None, description=None, force=False):
+    keyword = Keyword.query.filter_by(name=name).one_or_none()
+    if keyword is not None:
+        if force:
+            keyword.type = type
+            keyword.category = category
+            keyword.description = description
+        else:
+            logger.info(
+                'Attempting to update existing keyword, use ' +
+                '"force=True" if you really want to update.')
+            return
+    else:
+        keyword = Keyword(
+            name=name, type=type, category=category, description=description)
+        db.session.add(keyword)
+    db.session.commit()
+
+
+def add_problem_keyword(
+        problem_name, keyword_name, description=None, force=False):
+    problem = Problem.query.filter_by(name=problem_name).one()
+    keyword = Keyword.query.filter_by(name=keyword_name).one()
+    problem_keyword = ProblemKeyword.query.filter_by(
+        problem=problem, keyword=keyword).one_or_none()
+    if problem_keyword is not None:
+        if force:
+            problem_keyword.description = description
+        else:
+            logger.info(
+                'Attempting to update existing problem-keyword, use ' +
+                '"force=True" if you really want to update.')
+            return
+    else:
+        problem_keyword = ProblemKeyword(
+            problem=problem, keyword=keyword, description=description)
+        db.session.add(problem_keyword)
+    db.session.commit()
 
 
 def print_events():

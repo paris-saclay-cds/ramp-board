@@ -29,9 +29,9 @@ import databoard.db_tools as db_tools
 import databoard.vizu as vizu
 import databoard.config as config
 from databoard.model import User, Submission, WorkflowElement,\
-    Event, Problem, Team, SubmissionFile, UserInteraction, SubmissionSimilarity,\
-    EventTeam, DuplicateSubmissionError, TooEarlySubmissionError,\
-    MissingExtensionError
+    Event, Problem, Keyword, Team, SubmissionFile, UserInteraction,\
+    SubmissionSimilarity, EventTeam, DuplicateSubmissionError,\
+    TooEarlySubmissionError, MissingExtensionError
 from databoard.forms import LoginForm, CodeForm, SubmitForm, ImportForm,\
     UploadForm, UserProfileForm, CreditForm, EmailForm, PasswordForm
 from databoard.security import ts
@@ -184,6 +184,24 @@ def user():
     return render_template('user.html',
                            event_urls_f_names=event_urls_f_names,
                            admin=admin)
+
+
+@app.route("/data_domains")
+def data_domains():
+    keywords = Keyword.query.order_by(Keyword.name)
+    return render_template('data_domains.html', keywords=keywords)
+
+
+@app.route("/data_science_themes")
+def data_science_themes():
+    keywords = Keyword.query.order_by(Keyword.name)
+    return render_template('data_science_themes.html', keywords=keywords)
+
+
+@app.route("/keywords/<keyword_name>")
+def keywords(keyword_name):
+    keyword = Keyword.query.filter_by(name=keyword_name).one()
+    return render_template('keyword.html', keyword=keyword)
 
 
 @app.route("/problems")
