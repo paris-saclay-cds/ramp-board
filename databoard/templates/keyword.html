@@ -31,15 +31,22 @@
     <span class="title">{{ keyword.name }}</span>
 </div>
 
-{{ keyword.description | safe }}
-
-<div class="title"><font size=+1><strong>Related problems</strong></font></div>
-    <ul>
-        {% for problem in keyword.problems %}
-            <li> <a href="problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
-        {% endfor %}
-    </ul>
+<div class="col-xs-12">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        {{ keyword.description | safe }}
+        <div class="title">Related problems</div>
+        <ul>
+            {% for problem in keyword.problems %}
+                <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
+            {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
 </div>
+
 
 {% endblock %}
 {% block scripts %}

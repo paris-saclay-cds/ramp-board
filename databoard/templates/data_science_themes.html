@@ -34,10 +34,10 @@
 <ul>
 {% for keyword in keywords %}
     {% if keyword.type == 'data_science_theme' %}
-        <li> <a href="keywords/{{ keyword.name }}"><strong><font size="+1">{{ keyword.name }}</font></strong></a><br>
+        <li> <a href="/keywords/{{ keyword.name }}"><strong><font size="+1">{{ keyword.name }}</font></strong></a><br>
         <ul>
         {% for problem in keyword.problems %}
-            <li> <a href="problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
+            <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
         {% endfor %}
         </ul>
     {% endif %}

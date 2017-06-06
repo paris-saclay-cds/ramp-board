@@ -40,7 +40,7 @@
           <ul>
             {% for event in problem.events %}
               {% if event.is_public %}
-                  <li> <a href="events/{{ event.name }}">{{ event.title }}</a>,
+                  <li> <a href="/events/{{ event.name }}">{{ event.title }}</a>,
                   number of participants = <strong><font color=darkgreen>{{ event.n_participants }}</font></strong>,
                   number of submissions = <strong><font color=darkblue>{{ event.n_submissions }}</font></strong>,
                   combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong>,
@@ -51,7 +51,7 @@
         <div class="title">Keywords</div>
           <ul>
             {% for problem_keyword in problem.keywords %}
-              <li> <a href="keywords/{{ problem_keyword.keyword.name }}">{{ problem_keyword.keyword.name }}</a>
+              <li> <a href="/keywords/{{ problem_keyword.keyword.name }}">{{ problem_keyword.keyword.name }}</a>
             {% endfor %}
           </ul>
       </div>
