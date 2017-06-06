@@ -33,6 +33,14 @@
 
 {{ keyword.description | safe }}
 
+<div class="title"><font size=+1><strong>Related problems</strong></font></div>
+    <ul>
+        {% for problem in keyword.problems %}
+            <li> <a href="problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
+        {% endfor %}
+    </ul>
+</div>
+
 {% endblock %}
 {% block scripts %}
 <script>

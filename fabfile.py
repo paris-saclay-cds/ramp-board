@@ -39,6 +39,17 @@ def test_setup():
     db_tools.add_event('iris_test')
     db_tools.add_problem('boston_housing')
     db_tools.add_event('boston_housing_test')
+    db_tools.add_keyword('botany', 'data_domain', 'scientific data', 'Botany.')
+    db_tools.add_keyword(
+        'real estate', 'data_domain', 'industrial data', 'Real estate.')
+    db_tools.add_keyword(
+        'regression', 'data_science_theme', None, 'Regression.')
+    db_tools.add_keyword(
+        'classification', 'data_science_theme', None, 'Classification.')
+    db_tools.add_problem_keyword('iris', 'classification')
+    db_tools.add_problem_keyword('iris', 'botany')
+    db_tools.add_problem_keyword('boston_housing', 'regression')
+    db_tools.add_problem_keyword('boston_housing', 'real estate')
 
     db_tools.create_user(
         name='kegl', password='wine fulcra kook homy',
