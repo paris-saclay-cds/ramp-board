@@ -1145,14 +1145,13 @@ def train_test_submission(submission, force_retrain_test=False):
             try:
                 submission_on_cv_fold.update(detached_submission_on_cv_fold)
             except Exception as e:
-                submission_on_cv_fold.state = 'training_error'
-                log_msg, submission_on_cv_fold.error_msg =\
+                detached_submission_on_cv_folds.state = 'training_error'
+                log_msg, detached_submission_on_cv_folds.error_msg =\
                     _make_error_message(e)
                 logger.error(
                     'Training {} failed with exception: \n{}'.format(
                         detached_submission_on_cv_fold, log_msg))
-                db.session.commit()
-                return
+                submission_on_cv_fold.update(detached_submission_on_cv_fold)
     else:
         # detached_submission_on_cv_folds = []
         for detached_submission_on_cv_fold, submission_on_cv_fold in\
