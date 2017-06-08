@@ -1142,7 +1142,16 @@ def train_test_submission(submission, force_retrain_test=False):
             for submission_on_cv_fold in detached_submission_on_cv_folds)
         for detached_submission_on_cv_fold, submission_on_cv_fold in\
                 zip(detached_submission_on_cv_folds, submission.on_cv_folds):
-            submission_on_cv_fold.update(detached_submission_on_cv_fold)
+            try:
+                submission_on_cv_fold.update(detached_submission_on_cv_fold)
+            except Exception as e:
+                detached_submission_on_cv_fold.state = 'training_error'
+                log_msg, detached_submission_on_cv_fold.error_msg =\
+                    _make_error_message(e)
+                logger.error(
+                    'Training {} failed with exception: \n{}'.format(
+                        detached_submission_on_cv_fold, log_msg))
+                return
     else:
         # detached_submission_on_cv_folds = []
         for detached_submission_on_cv_fold, submission_on_cv_fold in\
