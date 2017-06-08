@@ -11,7 +11,7 @@ from databoard.config import problems_path
 from databoard.specific.workflows.batch_classifier_workflow import ArrayContainer
 
 problem_name = 'pollenating_insects'  # should be the same as the file name
-problem_title = 'Pollenating insect classification'
+problem_title = 'Pollenating insect classification (18 classes)'
     
 workflow_name = 'batch_classifier_workflow'
 
