@@ -12,8 +12,7 @@ random_state = 57
 cv_test_size = 0.5
 n_cv = 8
 score_type_descriptors = [
-    'rmse',
-#    {'name': 'relative_rmse', 'new_name': 'rel_rmse'},
+    {'name': 'rmse', 'precision': 3},
 ]
 
 
