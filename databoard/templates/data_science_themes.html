@@ -33,7 +33,7 @@
 
 <ul>
 {% for keyword in keywords %}
-    {% if keyword.type == 'data_science_theme' and len(keyword.problems) > 0%}
+    {% if keyword.type == 'data_science_theme' and keyword.problems|length > 0 %}
         <li> <a href="/keywords/{{ keyword.name }}"><strong><font size="+1">{{ keyword.name }}</font></strong></a><br>
         <ul>
         {% for problem in keyword.problems %}
