@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}User{% endblock %}
+{% block content %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+{% if messages %}
+
+    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    {% for category, message in messages %}
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+                </div>
+                <div class="modal-body">
+                    {{ message }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+{% endif %}
+{% endwith %}
+
+<h1>RAMP for teaching support</h1>
+
+<font size=+1>The RAMP tool <a href="problems">has been used</a> for teaching various <a href="data_science_themes">data science themes</a> on various <a href="data_domains">data domains</a> in dozen courses at various levels. Students usually love the platform for
+</ul>
+<li>its competitive gaming aspect,</li>
+<li>being able to learn from each other in the open phase, and</li>
+<li>to compete as a group with other students groups on the same problem.</li>
+</ul>
+<strong>Contact us by <a href="mailto:admin@ramp.studio?subject=opening a new RAMP event"><strong>email at admin@ramp.studio</strong></a> if you are interested in using the platform in your classroom.</strong></p>
+<p>We can open a new event on any of the running RAMPs. You can choose them from <a href="/problems" role="button">this list</a>, or from the list of <a href="data_science_themes">data science themes</a> or <a href="data_domains">data domains</a>.
+
+You will have full control over
+<ul>
+<li>choosing the problem,</li>
+<li>the users who can sign up for the classroom event, and</li>
+<li>the timeline of opening the challenge, passing from closed to open code, and to finish the challenge.</li>
+</ul>
+At the end of your challenge we will give you a csv file with the various performance metrics of each student.</p>
+
+<p>We may also consider adding a new data set and problem. <a href="mailto:admin@ramp.studio?subject=adding a new RAMP problem"><strong>Let us know</strong></a> if this is what you have in mind.
+</font>
+{% endblock %}
+{% block scripts %}
+<script>
+$(function () {
+   $('#formerror').modal('toggle')
+});
+</script>
+{% endblock %}

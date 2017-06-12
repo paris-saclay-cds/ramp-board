@@ -192,6 +192,11 @@ def data_domains():
     return render_template('data_domains.html', keywords=keywords)
 
 
+@app.route("/teaching")
+def teaching():
+    return render_template('teaching.html')
+
+
 @app.route("/data_science_themes")
 def data_science_themes():
     keywords = Keyword.query.order_by(Keyword.name)
