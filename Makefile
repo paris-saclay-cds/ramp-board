@@ -24,9 +24,9 @@ test-local:  # test using a local sqlite database
 	make test
 
 test:
-	nosetests databoard/tests
+	# nosetests databoard/tests
 	fab publish_local_test
-	cd /tmp/datacamp/databoard; fab test_setup; fab test_setup
+	cd /tmp/databoard; fab test_setup
 
 test-all: test
 	fab publish_test:amadeus_local

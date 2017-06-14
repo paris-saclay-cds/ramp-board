@@ -234,10 +234,10 @@ def problem(problem_name):
         else:
             db_tools.add_user_interaction(
                 interaction='looking at problem', problem=problem)
-        with codecs.open(os.path.join(
-            config.problems_path, problem.name, 'description.html'),
-                'r', 'utf-8')\
-                as description_file:
+        description_f_name = os.path.join(
+            config.ramp_kits_path, problem.name, '{}_starting_kit.html'.format(
+                problem_name))  
+        with codecs.open(description_f_name, 'r', 'utf-8') as description_file:
             description = description_file.read()
         return render_template('problem.html',
                                problem=problem,
@@ -399,10 +399,10 @@ def user_event(event_name):
         else:
             db_tools.add_user_interaction(
                 interaction='looking at event', event=event)
-        with codecs.open(os.path.join(
-            config.problems_path, event.problem.name, 'description.html'),
-                'r', 'utf-8')\
-                as description_file:
+        description_f_name = os.path.join(
+            config.ramp_kits_path, event.problem.name,
+            '{}_starting_kit.html'.format(event.problem.name))  
+        with codecs.open(description_f_name, 'r', 'utf-8') as description_file:
             description = description_file.read()
         admin = check_admin(current_user, event)
         if current_user.is_anonymous:

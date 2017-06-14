@@ -1,4 +1,5 @@
 import os
+import imp
 import time
 import codecs
 import shutil
@@ -279,13 +280,15 @@ def add_problem(problem_name, force=False):
                 'Attempting to delete problem and all linked events, ' +
                 'use "force=True" if you know what you are doing.')
             return
-    problem_module = import_module('.' + problem_name, config.problems_module)
+    # XXX it's a bit ugly that we need to load the module here
+    # perhaps if we can get rid of the workflow db table completely
+    problem_module = imp.load_source(
+        '', os.path.join(config.ramp_kits_path, problem_name, 'problem.py'))
     add_workflow(problem_module.workflow)
     problem = Problem(name=problem_name)
     logger.info('Adding {}'.format(problem))
     db.session.add(problem)
     db.session.commit()
-    problem.module.prepare_data()
 
 
 # these could go into a delete callback in problem and event, I just don't know
@@ -320,6 +323,7 @@ def delete_submission_similarity(submissions):
     db.session.commit()
 
 
+# XXX probably deprecated
 def _set_table_attribute(table, attr):
     """Setting attributes from config file.
 
@@ -333,7 +337,8 @@ def _set_table_attribute(table, attr):
     setattr(table, attr, value)
 
 
-def add_event(event_name, force=False):
+def add_event(problem_name, event_name, event_title, is_public=False,
+              force=False):
     """Adding a new RAMP event.
 
     Event file should be set up in
@@ -350,31 +355,20 @@ def add_event(event_name, force=False):
                 'Attempting to delete event, use "force=True" ' +
                 'if you know what you are doing')
             return
-    event = Event(name=event_name)
+    event = Event(
+        name=event_name, problem_name=problem_name, event_title=event_title)
+    event.is_public = is_public
     logger.info('Adding {}'.format(event))
     db.session.add(event)
     db.session.commit()
 
-    _set_table_attribute(event, 'max_members_per_team')
-    _set_table_attribute(event, 'max_n_ensemble')
-    _set_table_attribute(event, 'score_precision')
-    # _set_table_attribute(event, 'n_cv')
-    _set_table_attribute(event, 'is_send_trained_mails')
-    _set_table_attribute(event, 'is_send_submitted_mails')
-    _set_table_attribute(event, 'min_duration_between_submissions')
-    _set_table_attribute(event, 'opening_timestamp')
-    _set_table_attribute(event, 'public_opening_timestamp')
-    _set_table_attribute(event, 'closing_timestamp')
-    _set_table_attribute(event, 'is_public')
-    _set_table_attribute(event, 'is_controled_signup')
-
-    X_train, y_train = event.problem.module.get_train_data()
-    cv = event.module.get_cv(X_train, y_train)
+    X_train, y_train = event.problem.get_train_data()
+    cv = event.problem.module.get_cv(X_train, y_train)
     for train_is, test_is in cv:
         cv_fold = CVFold(event=event, train_is=train_is, test_is=test_is)
         db.session.add(cv_fold)
 
-    score_types = event.module.score_types
+    score_types = event.problem.module.score_types
     for score_type in score_types:
         event_score_type = EventScoreType(
             event=event, score_type_object=score_type)
@@ -612,7 +606,8 @@ def sign_up_team(event_name, team_name):
             event=event, team=team).one_or_none()
     # submitting the starting kit for team
     from_submission_path = os.path.join(
-        config.problems_path, event.problem.name, config.sandbox_d_name)
+        config.ramp_kits_path, event.problem.name, config.submissions_d_name,
+        config.sandbox_d_name)
     make_submission_and_copy_files(
         event_name, team_name, config.sandbox_d_name, from_submission_path)
     for user in get_team_members(team):
@@ -620,6 +615,20 @@ def sign_up_team(event_name, team_name):
             event_name, team_name), '')
     event_team.approved = True
     db.session.commit()
+
+
+def submit_starting_kit(event_name, team_name):
+    """Submit all starting kits in ramp_kits_path/ramp_name/submissions."""
+    event = Event.query.filter_by(name=event_name).one()
+    submission_path = os.path.join(
+        config.ramp_kits_path, event.problem.name, config.submissions_d_name)
+    submission_names = os.listdir(submission_path)
+    for submission_name in submission_names:
+        from_submission_path = os.path.join(submission_path, submission_name)
+        if submission_name == config.sandbox_d_name:
+            submission_name = config.sandbox_d_name + '_test'
+        make_submission_and_copy_files(
+            event_name, team_name, submission_name, from_submission_path)
 
 
 def send_mail(to, subject, body):
@@ -1069,8 +1078,8 @@ def train_test_submission(submission, force_retrain_test=False):
     if force_retrain_test:
         logger.info('Forced retraining/testing {}'.format(submission))
 
-    X_train, y_train = submission.event.problem.module.get_train_data()
-    X_test, y_test = submission.event.problem.module.get_test_data()
+    X_train, y_train = submission.event.problem.get_train_data()
+    X_test, y_test = submission.event.problem.get_test_data()
 
     # Parallel, dict
     if config.is_parallelize:

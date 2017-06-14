@@ -1,4 +1,5 @@
 import os
+import imp
 import zlib
 import hashlib
 import logging
@@ -210,7 +211,7 @@ class Problem(db.Model):
         self.reset()
         # to check if the module and all required fields are there
         self.module
-        self.prediction
+        self.prediction_type
         self.workflow_object
 
     def __repr__(self):
@@ -223,30 +224,39 @@ class Problem(db.Model):
 
     @property
     def module(self):
-        return import_module('.' + self.name, config.problems_module)
+        return imp.load_source(
+            '', os.path.join(config.ramp_kits_path, self.name, 'problem.py'))
 
     @property
     def title(self):
         return self.module.problem_title
 
     @property
-    def prediction(self):
-        return self.module.prediction
+    def prediction_type(self):
+        return self.module.prediction_type
+
+    def get_train_data(self):
+        path = os.path.join(config.ramp_data_path, self.name)
+        return self.module.get_train_data(path=path)
+
+    def get_test_data(self):
+        path = os.path.join(config.ramp_data_path, self.name)
+        return self.module.get_test_data(path=path)
 
     def ground_truths_train(self):
-        _, y_train = self.module.get_train_data()
-        return self.prediction.Predictions(labels=self.module.prediction_labels,
-                                           y_true=y_train)
+        _, y_train = self.get_train_data()
+        return self.prediction_type.Predictions(
+            labels=self.module.prediction_labels, y_true=y_train)
 
     def ground_truths_test(self):
-        _, y_test = self.module.get_test_data()
-        return self.prediction.Predictions(labels=self.module.prediction_labels,
-                                           y_true=y_test)
+        _, y_test = self.get_test_data()
+        return self.prediction_type.Predictions(
+            labels=self.module.prediction_labels, y_true=y_test)
 
     def ground_truths_valid(self, test_is):
-        _, y_train = self.module.get_train_data()
-        return self.prediction.Predictions(labels=self.module.prediction_labels,
-                                           y_true=y_train[test_is])
+        _, y_train = self.get_train_data()
+        return self.prediction_type.Predictions(
+            labels=self.module.prediction_labels, y_true=y_train[test_is])
 
     @property
     def workflow_object(self):
@@ -324,7 +334,7 @@ class Event(db.Model):
     public_opening_timestamp = db.Column(
         db.DateTime, default=datetime.datetime(2000, 1, 1, 0, 0, 0))
     closing_timestamp = db.Column(
-        db.DateTime, default=datetime.datetime(4000, 1, 1, 0, 0, 0))
+        db.DateTime, default=datetime.datetime(2100, 1, 1, 0, 0, 0))
 
     # the name of the score in self.event_score_types which is used for
     # ensembling and contributivity.
@@ -344,15 +354,15 @@ class Event(db.Model):
     failed_leaderboard_html = db.Column(db.String, default=None)
     new_leaderboard_html = db.Column(db.String, default=None)
 
-    def __init__(self, name):
+    def __init__(self, problem_name, name, event_title):
+        # XXX after migration event_title should be a field, filled
+        # at the GUI (together with all the other fields
         self.name = name
         # to check if the module and all required fields are there
         # db fields are later initialized by db.tools._set_table_attribute
-        self.module
-        self.problem = Problem.query.filter_by(
-            name=self.module.problem_name).one()
+        self.problem = Problem.query.filter_by(name=problem_name).one()
         self.title
-        self.prediction
+        self.prediction_type
 
     def __repr__(self):
         repr = 'Event({})'.format(self.name)
@@ -366,16 +376,14 @@ class Event(db.Model):
         db.session.commit()
 
     @property
-    def module(self):
-        return import_module('.' + self.name, config.events_module)
-
-    @property
     def title(self):
-        return self.module.event_title
+        # XXX after migration this should be a field, filled
+        # at the GUI (together with all the other fields
+        return self.problem.title
 
     @property
-    def prediction(self):
-        return self.problem.prediction
+    def prediction_type(self):
+        return self.problem.prediction_type
 
     @property
     def workflow(self):
@@ -493,7 +501,7 @@ class EventScoreType(db.Model):
 
     @property
     def score_type_object(self):
-        score_types = self.event.module.score_types
+        score_types = self.event.problem.module.score_types
         for score_type in score_types:
             if score_type.name == self.name:
                 return score_type
@@ -931,7 +939,7 @@ def _get_score_cv_bags(event, score_type, predictions_list, ground_truths,
                         for predictions in predictions_list]
 
     y_comb = np.array(
-        [event.prediction.Predictions(
+        [event.prediction_type.Predictions(
             labels=event.problem.module.prediction_labels,
             shape=ground_truths.y_pred.shape)
          for _ in predictions_list])
@@ -1115,8 +1123,8 @@ class Submission(db.Model):
         return self.event.score_types
 
     @property
-    def prediction(self):
-        return self.event.prediction
+    def prediction_type(self):
+        return self.event.prediction_type
 
     @hybrid_property
     def is_not_sandbox(self):
@@ -1508,25 +1516,25 @@ class SubmissionOnCVFold(db.Model):
     # <>_y_pred into Prediction instances
     @property
     def full_train_predictions(self):
-        return self.submission.prediction.Predictions(
+        return self.submission.prediction_type.Predictions(
             labels=self.submission.event.problem.module.prediction_labels,
             y_pred=self.full_train_y_pred)
 
     @property
     def train_predictions(self):
-        return self.submission.prediction.Predictions(
+        return self.submission.prediction_type.Predictions(
             labels=self.submission.event.problem.module.prediction_labels,
             y_pred=self.full_train_y_pred[self.cv_fold.train_is])
 
     @property
     def valid_predictions(self):
-        return self.submission.prediction.Predictions(
+        return self.submission.prediction_type.Predictions(
             labels=self.submission.event.problem.module.prediction_labels,
             y_pred=self.full_train_y_pred[self.cv_fold.test_is])
 
     @property
     def test_predictions(self):
-        return self.submission.prediction.Predictions(
+        return self.submission.prediction_type.Predictions(
             labels=self.submission.event.problem.module.prediction_labels,
             y_pred=self.test_y_pred)
 

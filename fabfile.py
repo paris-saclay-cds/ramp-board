@@ -10,15 +10,30 @@ from distutils.util import strtobool
 
 logger = logging.getLogger('databoard')
 
+test_kits = ['iris', 'boston_housing']
+
 
 def publish_local_test():
     import databoard.config as config
-    destination_path = config.local_root + '/datacamp/databoard'
+    destination_path = os.path.join(config.local_root, 'databoard')
     os.system('rm -rf ' + destination_path)
     os.makedirs(destination_path)
-    publish_problem('iris', target='local')
-    publish_problem('boston_housing', target='local')
     os.system('rsync -rultv fabfile.py ' + destination_path)
+
+    ramp_kits_path = os.path.join(destination_path, config.ramp_kits_path)
+    os.makedirs(ramp_kits_path)
+    ramp_data_path = os.path.join(destination_path, config.ramp_data_path)
+    os.makedirs(ramp_data_path)
+    for test_kit in test_kits:
+        os.system('git clone https://github.com/ramp-kits/{}.git {}/{}'.format(
+            test_kit, ramp_kits_path, test_kit))
+        os.system('git clone https://github.com/ramp-data/{}.git {}/{}'.format(
+            test_kit, ramp_data_path, test_kit))
+        os.chdir(os.path.join(ramp_data_path, test_kit))
+        os.system('python prepare_data.py')
+        os.chdir(os.path.join(ramp_kits_path, test_kit))
+        os.system('jupyter nbconvert --to html {}_starting_kit.ipynb'.format(
+            test_kit))
 
 
 def test_setup():
@@ -30,14 +45,15 @@ def test_setup():
         os.mkdir(config.submissions_path)
     if not os.path.exists(config.db_path):
         os.mkdir(config.db_path)
-    open(os.path.join(config.submissions_path, '__init__.py'), 'a').close()
+    #open(os.path.join(config.submissions_path, '__init__.py'), 'a').close()
 
     recreate_test_db()
     db_tools.setup_workflows()
     db_tools.add_problem('iris')
-    db_tools.add_event('iris_test')
+    db_tools.add_event('iris', 'iris_test', 'test event', is_public=True)
     db_tools.add_problem('boston_housing')
-    db_tools.add_event('boston_housing_test')
+    db_tools.add_event(
+        'boston_housing', 'boston_housing_test', 'test event', is_public=True)
     db_tools.add_keyword('botany', 'data_domain', 'scientific data', 'Botany.')
     db_tools.add_keyword(
         'real estate', 'data_domain', 'industrial data', 'Real estate.')
@@ -88,25 +104,22 @@ def test_setup():
 
     db_tools.make_event_admin('iris_test', 'test_iris_admin')
 
-    db_tools.make_submission_and_copy_files(
-        'iris_test', 'kegl', 'starting_kit_test',
-        'problems/iris/deposited_submissions/kegl/rf')
-    db_tools.make_submission_and_copy_files(
-        'iris_test', 'kegl', 'rf2',
-        'problems/iris/deposited_submissions/kegl/rf2')
+    db_tools.submit_starting_kit('iris_test', 'kegl')
+    db_tools.submit_starting_kit('boston_housing_test', 'kegl')
 
-    db_tools.make_submission_and_copy_files(
-        'boston_housing_test', 'kegl', 'starting_kit_test',
-        'problems/boston_housing/deposited_submissions/kegl/rf')
-    db_tools.make_submission_and_copy_files(
-        'boston_housing_test', 'kegl', 'rf2',
-        'problems/boston_housing/deposited_submissions/kegl/rf2')
-
-    # compare results with local train and test
-    print('**** TRAIN-TEST LOCAL ****')
     db_tools.train_test_submissions(force_retrain_test=True)
+
     db_tools.compute_contributivity('iris_test')
+    db_tools.compute_historical_contributivity('iris_test')
+    db_tools.update_leaderboards('iris_test')
+    db_tools.update_all_user_leaderboards('iris_test')
+    db_tools.set_n_submissions('iris_test')
+
     db_tools.compute_contributivity('boston_housing_test')
+    db_tools.compute_historical_contributivity('boston_housing_test')
+    db_tools.update_leaderboards('boston_housing_test')
+    db_tools.update_all_user_leaderboards('boston_housing_test')
+    db_tools.set_n_submissions('boston_housing_test')
 
 
 def sign_up_team(e, t):
@@ -176,13 +189,13 @@ def add_problem(name, force='False'):
     add_problem(name, force)
 
 
-def add_event(name, force='False'):
+def add_event(problem_name, event_name, force='False'):
     """Add new event. If force=True, deletes event (with all submissions) if exists."""
     force = strtobool(force)
 
     from databoard.db_tools import add_event
 
-    add_event(name, force)
+    add_event(problem_name, event_name, force)
 
 
 def make_event_admin(e, u):
