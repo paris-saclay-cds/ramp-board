@@ -30,6 +30,7 @@ def publish_local_test():
         os.system('git clone https://github.com/ramp-data/{}.git {}/{}'.format(
             test_kit, ramp_data_path, test_kit))
         os.chdir(os.path.join(ramp_data_path, test_kit))
+        logger.info('Preparing {} data...'.format(test_kit))
         os.system('python prepare_data.py')
         os.chdir(os.path.join(ramp_kits_path, test_kit))
         os.system('jupyter nbconvert --to html {}_starting_kit.ipynb'.format(
