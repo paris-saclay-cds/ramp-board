@@ -35,13 +35,14 @@ createdb --owner=mrramp databoard_test
 ```
 git clone https://github.com/paris-saclay-cds/ramp-workflow.git
 cd ramp-workflow
-git checkout origine titanic
+git checkout titanic
 python setup.py develop
+cd ..
 git clone https://github.com/paris-saclay-cds/ramp-board.git
 cd ramp-board
-git checkout origine migrate
+git checkout migrate
 cp databoard/config_local.py databoard/config.py
-python setup.py
+python setup.py develop
 make test
 ```
 or
