@@ -36,7 +36,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 import databoard.config as config
-from databoard import post_api
 # from databoard import celery
 
 logger = logging.getLogger('databoard')
