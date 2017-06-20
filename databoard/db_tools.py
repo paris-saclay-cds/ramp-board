@@ -272,18 +272,34 @@ def add_problem(problem_name, force=False):
     is acting as a pointer for the join). Also prepares the data.
     """
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
+    problem_data_path = os.path.join(config.ramp_data_path, problem_name)
+    problem_kits_path = os.path.join(config.ramp_kits_path, problem_name)
     if problem is not None:
         if force:
             delete_problem(problem)
+            os.system('rm -rf {}'.format(problem_data_path))
+            os.system('rm -rf {}'.format(problem_kits_path))
         else:
             logger.info(
                 'Attempting to delete problem and all linked events, ' +
                 'use "force=True" if you know what you are doing.')
             return
+
+    os.system('git clone https://github.com/ramp-data/{}.git {}'.format(
+        problem_name, problem_data_path))
+    os.system('git clone https://github.com/ramp-kits/{}.git {}'.format(
+        problem_name, problem_kits_path))
+    os.chdir(problem_data_path)
+    logger.info('Preparing {} data...'.format(problem_name))
+    os.system('python prepare_data.py')
+    os.chdir(problem_kits_path)
+    os.system('jupyter nbconvert --to html {}_starting_kit.ipynb'.format(
+        problem_name))
+
     # XXX it's a bit ugly that we need to load the module here
     # perhaps if we can get rid of the workflow db table completely
     problem_module = imp.load_source(
-        '', os.path.join(config.ramp_kits_path, problem_name, 'problem.py'))
+        '', os.path.join(problem_kits_path, 'problem.py'))
     add_workflow(problem_module.workflow)
     problem = Problem(name=problem_name)
     logger.info('Adding {}'.format(problem))
@@ -346,6 +362,7 @@ def add_event(problem_name, event_name, event_title, is_public=False,
     a problem, then problem_name imported in the event file (problem_name
     is acting as a pointer for the join). Also adds CV folds.
     """
+    print event_title
     event = Event.query.filter_by(name=event_name).one_or_none()
     if event is not None:
         if force:

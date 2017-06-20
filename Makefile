@@ -25,30 +25,20 @@ test-local:  # test using a local sqlite database
 
 test:
 	# nosetests databoard/tests
-	fab publish_local_test
-	cd /tmp/databoard; fab test_setup
+	fab deploy_locally
+	fab test_problem:iris,kegl
+	fab test_problem:boston_housing,kegl
+	fab test_keywords
+	fab test_make_event_admin
 
 test-all: test
-	fab publish_test:amadeus_local
-	cd /tmp/databoard_amadeus_8080; fab test_ramp
-
-	fab publish_test:el_nino_bagged_cv_future_local
-	cd /tmp/databoard_el_nino_bagged_cv_future_8080; fab test_ramp
-
-	fab publish_test:el_nino_block_cv_local
-	cd /tmp/databoard_el_nino_block_cv_8080; fab test_ramp
-
-	fab publish_test:kaggle_otto_local
-	cd /tmp/databoard_kaggle_otto_8080; fab test_ramp
-
-	fab publish_test:mortality_prediction_local
-	cd /tmp/databoard_mortality_prediction_8080; fab test_ramp
-
-	fab publish_test:pollenating_insects_local
-	cd /tmp/databoard_pollenating_insects_8080; fab test_ramp
-
-	fab publish_test:variable_stars_local
-	cd /tmp/databoard_variable_stars_8080; fab test_ramp
+	# nosetests databoard/tests
+	fab deploy_locally
+	fab test_problem:iris,kegl
+	fab test_problem:boston_housing,kegl
+	fab test_keywords
+	fab test_make_event_admin
+	fab test_problem:titanic,kegl
 
 trailing-spaces:
 	find databoard -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
