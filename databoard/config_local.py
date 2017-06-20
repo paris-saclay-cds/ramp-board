@@ -1,17 +1,18 @@
 import os
 from celery.schedules import crontab
 
-root_path = '.'
-
-# paths
-# repos_path = os.path.join(root_path, 'git_submissions')
-# ground_truth_path = os.path.join(root_path, 'ground_truth')
-templates_path = os.path.join(root_path, 'submissions_d_name')
+# There is a dangerous rm -rf test_deployment_path operation
+# in local test. To avoid deleting the deployment directory
+# on the production server accidentally, the local test
+# deletes test_deployment_path. It's important to set these
+# to different directories on the production server.
+local_test_deployment_path = '/tmp/databoard'  # edit this!
+deployment_path = '/tmp/databoard'  # edit this!
+ramp_kits_path = os.path.join(deployment_path, 'ramp-kits')
+ramp_data_path = os.path.join(deployment_path, 'ramp-data')
 submissions_d_name = 'submissions'
-submissions_path = os.path.join(root_path, submissions_d_name)
-# deposited_submissions_d_name = 'deposited_submissions'
-# deposited_submissions_path = os.path.join(
-#     root_path, deposited_submissions_d_name)
+submissions_path = os.path.join(deployment_path, submissions_d_name)
+
 sandbox_d_name = 'starting_kit'
 starting_kit_d_name = 'starting_kit'
 sandbox_path = os.path.join(root_path, sandbox_d_name)

@@ -1,5 +1,61 @@
 # Databoard
 
+## Fresh local test
+
+### Add environment variables
+
+```
+export DATABOARD_TEST=True
+export DATABOARD_DB_NAME='databoard'
+export DATABOARD_DB_USER='mrramp'
+export DATABOARD_DB_PASSWORD=<fill this>
+export DATABOARD_DB_URL=postgresql://$DATABOARD_DB_USER:$DATABOARD_DB_PASSWORD@localhost/$DATABOARD_DB_NAME
+export DATABOARD_DB_URL_TEST=postgresql://$DATABOARD_DB_USER:$DATABOARD_DB_PASSWORD@localhost/databoard_test
+```
+
+### Set up db
+
+You only have to do this once after each time you restart your computer.
+
+```
+conda install postgresql
+mkdir postgres_dbs
+initdb postgres_dbs
+pg_ctl -D postgres_dbs -l postgres_dbs/logfile start
+createuser --pwprompt mrramp
+```
+`mrramp` should be the user specified in $DATABOARD_DB_USER. It will prompt you for password which should be the same specified in $DATABOARD_DB_PASSWORD.
+Create db by
+```
+createdb --owner=mrramp databoard_test
+```
+
+### Test
+
+```
+git clone https://github.com/paris-saclay-cds/ramp-workflow.git
+cd ramp-workflow
+git checkout origine titanic
+python setup.py develop
+git clone https://github.com/paris-saclay-cds/ramp-board.git
+cd ramp-board
+git checkout origine migrate
+cp databoard/config_local.py databoard/config.py
+python setup.py
+make test
+```
+or
+```
+make test-all
+```
+The deployment directory is `/tmp/databoard`. You can change it in `config.py`
+```
+cd /tmp/databoard
+fab serve
+```
+
+## On the backend
+
 export OMP_NUM_THREADS=1
 
 ## Dependencies
