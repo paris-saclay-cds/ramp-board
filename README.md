@@ -35,6 +35,7 @@ createdb --owner=mrramp databoard_test
 ```
 git clone https://github.com/paris-saclay-cds/ramp-workflow.git
 cd ramp-workflow
+pip install -r requirements.txt
 git checkout titanic
 python setup.py develop
 cd ..
