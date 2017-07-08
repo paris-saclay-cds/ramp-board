@@ -39,6 +39,9 @@ test-all: test
 	fab test_keywords
 	fab test_make_event_admin
 	fab test_problem:titanic,kegl
+	fab test_problem:epidemium2_cancer_mortality,kegl
+	fab test_problem:HEP_detector_anomalies,kegl
+	fab test_problem:drug_spectra,kegl
 
 trailing-spaces:
 	find databoard -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;

@@ -211,7 +211,7 @@ class Problem(db.Model):
         self.reset()
         # to check if the module and all required fields are there
         self.module
-        self.prediction_type
+        self.Predictions
         self.workflow_object
 
     def __repr__(self):
@@ -232,8 +232,8 @@ class Problem(db.Model):
         return self.module.problem_title
 
     @property
-    def prediction_type(self):
-        return self.module.prediction_type
+    def Predictions(self):
+        return self.module.Predictions
 
     def get_train_data(self):
         path = os.path.join(config.ramp_data_path, self.name)
@@ -245,18 +245,15 @@ class Problem(db.Model):
 
     def ground_truths_train(self):
         _, y_train = self.get_train_data()
-        return self.prediction_type.Predictions(
-            labels=self.module.prediction_labels, y_true=y_train)
+        return self.Predictions(y_true=y_train)
 
     def ground_truths_test(self):
         _, y_test = self.get_test_data()
-        return self.prediction_type.Predictions(
-            labels=self.module.prediction_labels, y_true=y_test)
+        return self.Predictions(y_true=y_test)
 
     def ground_truths_valid(self, test_is):
         _, y_train = self.get_train_data()
-        return self.prediction_type.Predictions(
-            labels=self.module.prediction_labels, y_true=y_train[test_is])
+        return self.Predictions(y_true=y_train[test_is])
 
     @property
     def workflow_object(self):
@@ -362,7 +359,7 @@ class Event(db.Model):
         # db fields are later initialized by db.tools._set_table_attribute
         self.problem = Problem.query.filter_by(name=problem_name).one()
         self.title
-        self.prediction_type
+        self.Predictions
 
     def __repr__(self):
         repr = 'Event({})'.format(self.name)
@@ -382,8 +379,8 @@ class Event(db.Model):
         return self.problem.title
 
     @property
-    def prediction_type(self):
-        return self.problem.prediction_type
+    def Predictions(self):
+        return self.problem.Predictions
 
     @property
     def workflow(self):
@@ -913,8 +910,7 @@ def combine_predictions_list(predictions_list, index_list=None):
 
 
 def _get_score_cv_bags(event, score_type, predictions_list, ground_truths,
-                       test_is_list=None,
-                       is_return_combined_predictions=False):
+                       test_is_list=None):
     """
     Computes the bagged score of the predictions in predictions_list.
 
@@ -939,9 +935,7 @@ def _get_score_cv_bags(event, score_type, predictions_list, ground_truths,
                         for predictions in predictions_list]
 
     y_comb = np.array(
-        [event.prediction_type.Predictions(
-            labels=event.problem.module.prediction_labels,
-            shape=ground_truths.y_pred.shape)
+        [event.Predictions(n_samples=len(ground_truths.y_pred))
          for _ in predictions_list])
     score_cv_bags = []
     for i, test_is in enumerate(test_is_list):
@@ -951,10 +945,7 @@ def _get_score_cv_bags(event, score_type, predictions_list, ground_truths,
         score_cv_bags.append(score_type.score_function(
             ground_truths, combined_predictions, valid_indexes))
         # XXX maybe use masked arrays rather than passing valid_indexes
-    if is_return_combined_predictions:
-        return combined_predictions, score_cv_bags
-    else:
-        return score_cv_bags
+    return combined_predictions, score_cv_bags
 
 
 class SubmissionScore(db.Model):
@@ -1123,8 +1114,8 @@ class Submission(db.Model):
         return self.event.score_types
 
     @property
-    def prediction_type(self):
-        return self.event.prediction_type
+    def Predictions(self):
+        return self.event.Predictions
 
     @hybrid_property
     def is_not_sandbox(self):
@@ -1255,14 +1246,13 @@ class Submission(db.Model):
         by self.on_cv_folds[i].test_is.
         """
         ground_truths_train = self.event.problem.ground_truths_train()
-
         if self.is_public_leaderboard:
             predictions_list = [submission_on_cv_fold.valid_predictions for
                                 submission_on_cv_fold in self.on_cv_folds]
             test_is_list = [submission_on_cv_fold.cv_fold.test_is for
                             submission_on_cv_fold in self.on_cv_folds]
             for score in self.scores:
-                score.valid_score_cv_bags = _get_score_cv_bags(
+                _, score.valid_score_cv_bags = _get_score_cv_bags(
                     self.event, score.event_score_type, predictions_list,
                     ground_truths_train, test_is_list)
                 score.valid_score_cv_bag = float(score.valid_score_cv_bags[-1])
@@ -1516,32 +1506,25 @@ class SubmissionOnCVFold(db.Model):
     # <>_y_pred into Prediction instances
     @property
     def full_train_predictions(self):
-        return self.submission.prediction_type.Predictions(
-            labels=self.submission.event.problem.module.prediction_labels,
-            y_pred=self.full_train_y_pred)
+        return self.submission.Predictions(y_pred=self.full_train_y_pred)
 
     @property
     def train_predictions(self):
-        return self.submission.prediction_type.Predictions(
-            labels=self.submission.event.problem.module.prediction_labels,
+        return self.submission.Predictions(
             y_pred=self.full_train_y_pred[self.cv_fold.train_is])
 
     @property
     def valid_predictions(self):
-        return self.submission.prediction_type.Predictions(
-            labels=self.submission.event.problem.module.prediction_labels,
+        return self.submission.Predictions(
             y_pred=self.full_train_y_pred[self.cv_fold.test_is])
 
     @property
     def test_predictions(self):
-        return self.submission.prediction_type.Predictions(
-            labels=self.submission.event.problem.module.prediction_labels,
-            y_pred=self.test_y_pred)
+        return self.submission.Predictions(y_pred=self.test_y_pred)
 
     @property
     def official_score(self):
         for score in self.scores:
-            # print score.name, self.submission.official_score_name
             if self.submission.official_score_name == score.name:
                 return score
 

@@ -1394,8 +1394,7 @@ def compute_contributivity_no_commit(
     if len(combined_predictions_list) > 0:
         combined_predictions, scores = _get_score_cv_bags(
             event, event.official_score_type, combined_predictions_list,
-            ground_truths_train, test_is_list=test_is_list,
-            is_return_combined_predictions=True)
+            ground_truths_train, test_is_list=test_is_list)
         np.savetxt(
             'y_train_pred.csv', combined_predictions.y_pred, delimiter=',')
         logger.info('Combined combined valid score = {}'.format(scores))
@@ -1406,7 +1405,7 @@ def compute_contributivity_no_commit(
     best_predictions_list = [c for c in best_predictions_list
                              if c is not None]
     if len(best_predictions_list) > 0:
-        scores = _get_score_cv_bags(
+        _, scores = _get_score_cv_bags(
             event, event.official_score_type, best_predictions_list,
             ground_truths_train, test_is_list=test_is_list)
         logger.info('Combined foldwise best valid score = {}'.format(scores))
@@ -1419,7 +1418,7 @@ def compute_contributivity_no_commit(
     if len(combined_test_predictions_list) > 0:
         combined_predictions, scores = _get_score_cv_bags(
             event, event.official_score_type, combined_test_predictions_list,
-            ground_truths_test, is_return_combined_predictions=True)
+            ground_truths_test)
         np.savetxt(
             'y_test_pred.csv', combined_predictions.y_pred, delimiter=',')
         logger.info('Combined combined test score = {}'.format(scores))
@@ -1430,7 +1429,7 @@ def compute_contributivity_no_commit(
     best_test_predictions_list = [c for c in best_test_predictions_list
                                   if c is not None]
     if len(best_test_predictions_list) > 0:
-        scores = _get_score_cv_bags(
+        _, scores = _get_score_cv_bags(
             event, event.official_score_type, best_test_predictions_list,
             ground_truths_test)
         logger.info('Combined foldwise best valid score = {}'.format(scores))
