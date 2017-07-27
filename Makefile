@@ -42,6 +42,14 @@ test-all: test
 	fab test_problem:epidemium2_cancer_mortality,kegl
 	fab test_problem:HEP_detector_anomalies,kegl
 	fab test_problem:drug_spectra,kegl
+	fab test_problem:air_passengers,kegl
+	fab test_problem:HEP_tracking,kegl
+	fab test_problem:MNIST,kegl
+
+test-heavy:
+	fab deploy_locally
+	fab test_problem:el_nino,kegl
+	fab test_problem:sea_ice,kegl
 
 trailing-spaces:
 	find databoard -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;

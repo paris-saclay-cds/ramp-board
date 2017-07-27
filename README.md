@@ -66,6 +66,8 @@ export OMP_NUM_THREADS=1
 Install dependencies with `pip install -Ur requirements.txt`
 (You might want to create a virtualenv beforehand)
 
+pip install --upgrade https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-1.0.0-py2-none-any.whl
+
 ## Configuration
 
 **Copy `databoard/config_local.py` to `databoard/config.py`**. If you need special settings, you can modify `databoard/config.py`.

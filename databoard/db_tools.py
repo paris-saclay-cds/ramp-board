@@ -19,6 +19,7 @@ from sklearn.externals.joblib import Parallel, delayed
 from databoard import db
 from sklearn.utils.validation import assert_all_finite
 from importlib import import_module
+from subprocess import call
 
 from databoard.model import User, Team, Submission, SubmissionFile,\
     SubmissionFileType, SubmissionFileTypeExtension, WorkflowElementType,\
@@ -294,6 +295,10 @@ def add_problem(problem_name, force=False):
     os.chdir(problem_kits_path)
     os.system('jupyter nbconvert --to html {}_starting_kit.ipynb'.format(
         problem_name))
+    # optional data download
+    if os.path.isfile('download_data.py'):
+        call("python download_data.py", shell=True)
+
 
     # XXX it's a bit ugly that we need to load the module here
     # perhaps if we can get rid of the workflow db table completely
