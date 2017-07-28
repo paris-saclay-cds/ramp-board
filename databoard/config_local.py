@@ -1,5 +1,4 @@
 import os
-from celery.schedules import crontab
 
 # There is a dangerous rm -rf test_deployment_path operation
 # in local test. To avoid deleting the deployment directory
