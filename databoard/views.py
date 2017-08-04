@@ -244,7 +244,7 @@ def problem(problem_name):
                                description=description)
     else:
         return _redirect_to_user(u'Problem {} does not exist.'.format(
-            problem.name), is_error=True)
+            problem_name), is_error=True)
 
 
 @app.route("/event_plots/<event_name>")
