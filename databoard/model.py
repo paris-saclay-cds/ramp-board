@@ -310,6 +310,7 @@ class Event(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
+    title = db.Column(db.String, nullable=False)
 
     problem_id = db.Column(
         db.Integer, db.ForeignKey('problems.id'), nullable=False)
@@ -352,13 +353,11 @@ class Event(db.Model):
     new_leaderboard_html = db.Column(db.String, default=None)
 
     def __init__(self, problem_name, name, event_title):
-        # XXX after migration event_title should be a field, filled
-        # at the GUI (together with all the other fields
         self.name = name
         # to check if the module and all required fields are there
         # db fields are later initialized by db.tools._set_table_attribute
         self.problem = Problem.query.filter_by(name=problem_name).one()
-        self.title
+        self.title = event_title
         self.Predictions
 
     def __repr__(self):
@@ -371,12 +370,6 @@ class Event(db.Model):
             # substract one for starting kit
             self.n_submissions += len(event_team.submissions) - 1
         db.session.commit()
-
-    @property
-    def title(self):
-        # XXX after migration this should be a field, filled
-        # at the GUI (together with all the other fields
-        return self.problem.title
 
     @property
     def Predictions(self):
