@@ -1,6 +1,6 @@
 import datetime
-from sklearn.model_selection import StratifiedShuffleSplit
-from databoard.specific.problems.iris import problem_name  # noqa
+from databoard.specific.problems.iris import (  # noqa
+    problem_name, score_types, get_cv)
 
 event_name = 'iris_test'  # should be the same as the file name
 
@@ -8,20 +8,12 @@ event_name = 'iris_test'  # should be the same as the file name
 
 event_title = 'test event'
 
-random_state = 57
-cv_test_size = 0.5
-n_cv = 2
 score_type_descriptors = [
     {'name': 'accuracy', 'precision': 1, 'new_name': 'acc'},
     'error',
     {'name': 'negative_log_likelihood', 'new_name': 'nll'},
 ]
 
-
-def get_cv(y_train_array):
-    cv = StratifiedShuffleSplit(n_splits=n_cv, test_size=cv_test_size,
-                                random_state=random_state)
-    return cv.split(y_train_array, y_train_array)
 
 # Mutable config parameters to initialize database fields
 

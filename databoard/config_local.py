@@ -1,28 +1,36 @@
 import os
-from celery.schedules import crontab
 
-root_path = '.'
+# There is a dangerous rm -rf test_deployment_path operation
+# in local test. To avoid deleting the deployment directory
+# on the production server accidentally, the local test
+# deletes test_deployment_path. It's important to set these
+# to different directories on the production server.
+local_test_deployment_path = '/tmp/databoard'  # edit this!
+deployment_path = '/tmp/databoard'  # edit this!
+ramp_kits_path = os.path.join(deployment_path, 'ramp-kits')
+ramp_data_path = os.path.join(deployment_path, 'ramp-data')
+submissions_d_name = 'submissions'
+submissions_path = os.path.join(deployment_path, submissions_d_name)
+
 
 # paths
-# repos_path = os.path.join(root_path, 'git_submissions')
-# ground_truth_path = os.path.join(root_path, 'ground_truth')
-templates_path = os.path.join(root_path, 'submissions_d_name')
-submissions_d_name = 'submissions'
-submissions_path = os.path.join(root_path, submissions_d_name)
+# repos_path = os.path.join(deployment_path, 'git_submissions')
+# ground_truth_path = os.path.join(deployment_path, 'ground_truth')
+templates_path = os.path.join(deployment_path, 'submissions_d_name')
 # deposited_submissions_d_name = 'deposited_submissions'
 # deposited_submissions_path = os.path.join(
-#     root_path, deposited_submissions_d_name)
+#     deployment_path, deposited_submissions_d_name)
 sandbox_d_name = 'starting_kit'
 starting_kit_d_name = 'starting_kit'
-sandbox_path = os.path.join(root_path, sandbox_d_name)
+sandbox_path = os.path.join(deployment_path, sandbox_d_name)
 problems_d_name = 'problems'
-problems_path = os.path.join(root_path, problems_d_name)
+problems_path = os.path.join(deployment_path, problems_d_name)
 # The following function was implemented to handle user interaction dump
 # but it turned out that the db insertion was not the CPU sink. Keep it
 # for a while if the site is still slow.
-# user_interactions_f_name = os.path.join(root_path, 'user_interactions.csv')
+# user_interactions_f_name = os.path.join(deployment_path, 'user_interactions.csv')
 
-# data_path = os.path.join(root_path, 'data')
+# data_path = os.path.join(deployment_path, 'data')
 # raw_data_path = os.path.join(data_path, 'raw')
 # public_data_path = os.path.join(data_path, 'public')
 # private_data_path = os.path.join(data_path, 'private')
@@ -381,17 +389,6 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABOARD_DB_URL')
     SQLALCHEMY_MIGRATE_REPO = db_migrate_dir
     TESTING = False
-    # Celery conf
-    CELERY_BROKER_URL = 'amqp://guest@localhost//'
-    CELERY_TIMEZONE = 'UTC'
-
-    # get trained tested submission from datarun
-    CELERYBEAT_SCHEDULE = {
-        'get-trained-tested-submission-datarun': {
-            'task': 'tasks.get_submissions_datarun',
-            'schedule': crontab(minute='*/2')
-        }
-    }
 
 
 class TestingConfig(Config):

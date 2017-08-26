@@ -33,7 +33,6 @@ def test_password_hashing():
 
 
 def test_setup_problem():
-    db_tools.setup_score_types()
     db_tools.setup_workflows()
     db_tools.add_problem('iris')
     db_tools.add_event('iris_test')
@@ -70,10 +69,6 @@ def test_create_user():
         name='mcherti', password='blown ashcan manful dost', lastname='Cherti',
         firstname='Mehdi', email='mehdicherti@gmail.com',
         access_level='admin')
-    db_tools.create_user(
-        name='camille_marini', password='therm pasha tootle stoney',
-        lastname='Marini', firstname='Camille',
-        email='camille.marini@gmail.com', access_level='admin')
 
     try:
         db_tools.create_user(
@@ -148,7 +143,7 @@ def test_make_submission():
     print(event.combined_combined_valid_score)
     print(event.combined_combined_valid_score_str)
     db_tools.make_submission_and_copy_files(
-        'iris_test', 'kegl', 'rf',
+        'iris_test', 'kegl', 'starting_kit_test',
         'problems/iris/deposited_submissions/kegl/rf')
 
     db_tools.make_submission_and_copy_files(
@@ -183,7 +178,8 @@ def test_make_submission():
     # team = Team.query.filter_by(name='kemfort').one()
     # submission = Submission.query.filter_by(team=team, name='rf').one()
 
-    db_tools.set_state('iris_test', 'kegl', 'rf', 'training_error')
+    db_tools.set_state(
+        'iris_test', 'kegl', 'starting_kit_test', 'training_error')
     # resubmitting 'error' is OK
     db_tools.make_submission_and_copy_files(
         'iris_test', 'kegl', 'rf',
@@ -192,32 +188,33 @@ def test_make_submission():
     #     'kemfort', 'rf',
     #     'test_submissions/kemfort/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
 
-    db_tools.set_state('iris_test', 'kegl', 'rf', 'testing_error')
+    db_tools.set_state(
+        'iris_test', 'kegl', 'starting_kit_test', 'testing_error')
     # resubmitting 'error' is OK
     db_tools.make_submission_and_copy_files(
-        'iris_test', 'kegl', 'rf',
+        'iris_test', 'kegl', 'starting_kit_test',
         'problems/iris/deposited_submissions/kegl/rf')
     # db_tools.make_submission_and_copy_files(
     #     'kemfort', 'rf',
     #     'test_submissions/kemfort/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
 
-    db_tools.set_state('iris_test', 'kegl', 'rf', 'trained')
+    db_tools.set_state('iris_test', 'kegl', 'starting_kit_test', 'trained')
     # resubmitting 'trained' is not OK
     try:
         db_tools.make_submission_and_copy_files(
-            'iris_test', 'kegl', 'rf',
+            'iris_test', 'kegl', 'starting_kit_test',
             'problems/iris/deposited_submissions/kegl/rf')
         # db_tools.make_submission_and_copy_files(
         #     'kemfort', 'rf',
         #     'test_submissions/m3af2c986ca68d1598e93f653c0c0ae4b5e3449ae')
     except db_tools.DuplicateSubmissionError as e:
-        assert e.value == 'Submission "rf" of team "kegl" at event "iris_test" exists already'
+        assert e.value == 'Submission "starting_kit_test" of team "kegl" at event "iris_test" exists already'
         # assert e.value == 'Submission "rf" of team "kemfort" exists already'
 
-    db_tools.set_state('iris_test', 'kegl', 'rf', 'testing_error')
+    db_tools.set_state('iris_test', 'kegl', 'starting_kit_test', 'testing_error')
 
     db_tools.make_submission_and_copy_files(
-        'boston_housing_test', 'kegl', 'rf',
+        'boston_housing_test', 'kegl', 'starting_kit_test',
         'problems/boston_housing/deposited_submissions/kegl/rf')
     event = Event.query.filter_by(name='boston_housing_test').one()
     event.min_duration_between_submissions = 0

@@ -11,34 +11,54 @@ from distutils.util import strtobool
 logger = logging.getLogger('databoard')
 
 
-def publish_local_test():
+def add_test_users():
+    import databoard.db_tools as db_tools
+
+    db_tools.create_user(
+        name='kegl', password='pwd',
+        lastname='Kegl', firstname='Balazs',
+        email='balazs.kegl@gmail.com', access_level='admin')
+    db_tools.create_user(
+        name='agramfort', password='pwd',
+        lastname='Gramfort', firstname='Alexandre',
+        email='alexandre.gramfort@gmail.com', access_level='admin')
+    db_tools.create_user(
+        name='akazakci', password='pwd',
+        lastname='Akin', firstname='Kazakci',
+        email='osmanakin@gmail.com', access_level='admin')
+    db_tools.create_user(
+        name='mcherti', password='pwd', lastname='Cherti',
+        firstname='Mehdi', email='mehdicherti@gmail.com',
+        access_level='admin')
+    db_tools.create_user(
+        name='test_user', password='test',
+        lastname='Test', firstname='User',
+        email='test.user@gmail.com', access_level='user')
+    db_tools.create_user(
+        name='test_iris_admin', password='test',
+        lastname='Admin', firstname='Iris',
+        email='iris.admin@gmail.com', access_level='user')
+
+
+def deploy_locally():
     import databoard.config as config
-    destination_path = config.local_root + '/datacamp/databoard'
-    os.system('rm -rf ' + destination_path)
-    os.makedirs(destination_path)
-    os.system('rsync -rRultv problems/iris ' + destination_path)
-    os.system('rsync -rRultv problems/boston_housing ' + destination_path)
-    os.system('rsync -rultv fabfile.py ' + destination_path)
-
-
-def test_setup():
     from databoard.remove_test_db import recreate_test_db
     import databoard.db_tools as db_tools
-    import databoard.config as config
 
-    if not os.path.exists(config.submissions_path):
-        os.mkdir(config.submissions_path)
-    if not os.path.exists(config.db_path):
-        os.mkdir(config.db_path)
-    open(os.path.join(config.submissions_path, '__init__.py'), 'a').close()
+    os.system('rm -rf ' + config.local_test_deployment_path)
+    os.makedirs(config.local_test_deployment_path)
+    os.system('rsync -rultv fabfile.py ' + config.deployment_path)
+    os.makedirs(config.ramp_kits_path)
+    os.makedirs(config.ramp_data_path)
+    os.makedirs(config.submissions_path)
 
     recreate_test_db()
-    db_tools.setup_score_types()
+    add_test_users()
     db_tools.setup_workflows()
-    db_tools.add_problem('iris')
-    db_tools.add_event('iris_test')
-    db_tools.add_problem('boston_housing')
-    db_tools.add_event('boston_housing_test')
+
+
+def test_keywords():
+    import databoard.db_tools as db_tools
     db_tools.add_keyword('botany', 'data_domain', 'scientific data', 'Botany.')
     db_tools.add_keyword(
         'real estate', 'data_domain', 'industrial data', 'Real estate.')
@@ -51,69 +71,27 @@ def test_setup():
     db_tools.add_problem_keyword('boston_housing', 'regression')
     db_tools.add_problem_keyword('boston_housing', 'real estate')
 
-    db_tools.create_user(
-        name='kegl', password='wine fulcra kook homy',
-        lastname='Kegl', firstname='Balazs',
-        email='balazs.kegl@gmail.com', access_level='admin')
-    db_tools.create_user(
-        name='agramfort', password='Fushun helium pigeon radon',
-        lastname='Gramfort', firstname='Alexandre',
-        email='alexandre.gramfort@gmail.com', access_level='admin')
-    db_tools.create_user(
-        name='akazakci', password='Sept. bestir Ottawa seven',
-        lastname='Akin', firstname='Kazakci',
-        email='osmanakin@gmail.com', access_level='admin')
-    db_tools.create_user(
-        name='mcherti', password='blown ashcan manful dost', lastname='Cherti',
-        firstname='Mehdi', email='mehdicherti@gmail.com',
-        access_level='admin')
-    db_tools.create_user(
-        name='camille_marini', password='therm pasha tootle stoney',
-        lastname='Marini', firstname='Camille',
-        email='camille.marini@gmail.com', access_level='admin')
 
-    db_tools.create_user(
-        name='test_user', password='test',
-        lastname='Test', firstname='User',
-        email='test.user@gmail.com', access_level='user')
-    db_tools.create_user(
-        name='test_iris_admin', password='test',
-        lastname='Admin', firstname='Iris',
-        email='iris.admin@gmail.com', access_level='user')
+def test_make_event_admin():
+    import databoard.db_tools as db_tools
+    db_tools.make_event_admin('iris', 'test_iris_admin')
 
-    db_tools.sign_up_team('iris_test', 'kegl')
-    db_tools.sign_up_team('boston_housing_test', 'kegl')
-    db_tools.sign_up_team('iris_test', 'agramfort')
-    db_tools.sign_up_team('boston_housing_test', 'agramfort')
-    db_tools.sign_up_team('iris_test', 'akazakci')
-    db_tools.sign_up_team('boston_housing_test', 'akazakci')
-    db_tools.sign_up_team('iris_test', 'mcherti')
-    db_tools.sign_up_team('boston_housing_test', 'mcherti')
-    db_tools.sign_up_team('iris_test', 'camille_marini')
-    db_tools.sign_up_team('boston_housing_test', 'camille_marini')
-    db_tools.sign_up_team('iris_test', 'test_user')
 
-    db_tools.make_event_admin('iris_test', 'test_iris_admin')
+def test_problem(problem_name, test_user_name):
+    add_problem(problem_name)
+    event_name = '{}'.format(problem_name)
+    event_title = 'test event'
+    add_event(problem_name, event_name, event_title, is_public="True")
+    sign_up_team(event_name, test_user_name)
+    submit_starting_kit(event_name, test_user_name)
+    train_test(event_name, test_user_name)
+    update_leaderboards(event_name)
+    update_user_leaderboards(event_name, test_user_name)
 
-    db_tools.make_submission_and_copy_files(
-        'iris_test', 'kegl', 'rf',
-        'problems/iris/deposited_submissions/kegl/rf')
-    db_tools.make_submission_and_copy_files(
-        'iris_test', 'kegl', 'rf2',
-        'problems/iris/deposited_submissions/kegl/rf2')
 
-    db_tools.make_submission_and_copy_files(
-        'boston_housing_test', 'camille_marini', 'rf',
-        'problems/boston_housing/deposited_submissions/kegl/rf')
-    db_tools.make_submission_and_copy_files(
-        'boston_housing_test', 'camille_marini', 'rf2',
-        'problems/boston_housing/deposited_submissions/kegl/rf2')
-
-    # compare results with local train and test
-    print('**** TRAIN-TEST LOCAL ****')
-    db_tools.train_test_submissions(force_retrain_test=True)
-    db_tools.compute_contributivity('iris_test')
-    db_tools.compute_contributivity('boston_housing_test')
+def submit_starting_kit(e, t):
+    from databoard.db_tools import submit_starting_kit
+    submit_starting_kit(event_name=e, team_name=t)
 
 
 def sign_up_team(e, t):
@@ -167,18 +145,6 @@ def profile(port=None, profiling_file='profiler.log'):
                 processes=1000)
 
 
-def add_workflow_element_type(name, type):
-    from databoard.db_tools import add_workflow_element_type
-
-    add_workflow_element_type(name, type)
-
-
-def add_workflow(name, *element_type_names):
-    from databoard.db_tools import add_workflow
-
-    add_workflow(name, element_type_names)
-
-
 def add_score_type(name, is_lower_the_better, minimum, maximum):
     from databoard.db_tools import add_score_type
 
@@ -195,13 +161,14 @@ def add_problem(name, force='False'):
     add_problem(name, force)
 
 
-def add_event(name, force='False'):
+def add_event(problem_name, event_name, event_title, is_public='True',
+              force='False'):
     """Add new event. If force=True, deletes event (with all submissions) if exists."""
-    force = strtobool(force)
-
+    force = bool(strtobool(force))
+    is_public = bool(strtobool(is_public))
     from databoard.db_tools import add_event
 
-    add_event(name, force)
+    add_event(problem_name, event_name, event_title, is_public, force)
 
 
 def make_event_admin(e, u):

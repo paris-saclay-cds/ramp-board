@@ -1,4 +1,5 @@
 import os
+import imp
 import zlib
 import hashlib
 import logging
@@ -210,9 +211,8 @@ class Problem(db.Model):
         self.reset()
         # to check if the module and all required fields are there
         self.module
-        self.prediction
-        self.train_submission
-        self.test_submission
+        self.Predictions
+        self.workflow_object
 
     def __repr__(self):
         repr = 'Problem({})\n{}'.format(self.name, self.workflow)
@@ -220,42 +220,44 @@ class Problem(db.Model):
 
     def reset(self):
         self.workflow = Workflow.query.filter_by(
-            name=self.module.workflow_name).one()
+            name=type(self.module.workflow).__name__).one()
 
     @property
     def module(self):
-        return import_module('.' + self.name, config.problems_module)
+        return imp.load_source(
+            '', os.path.join(config.ramp_kits_path, self.name, 'problem.py'))
 
     @property
     def title(self):
         return self.module.problem_title
 
     @property
-    def prediction(self):
-        return self.module.prediction
+    def Predictions(self):
+        return self.module.Predictions
+
+    def get_train_data(self):
+        path = os.path.join(config.ramp_data_path, self.name)
+        return self.module.get_train_data(path=path)
+
+    def get_test_data(self):
+        path = os.path.join(config.ramp_data_path, self.name)
+        return self.module.get_test_data(path=path)
 
     def ground_truths_train(self):
-        _, y_train = self.module.get_train_data()
-        return self.prediction.Predictions(labels=self.module.prediction_labels,
-                                           y_true=y_train)
+        _, y_train = self.get_train_data()
+        return self.Predictions(y_true=y_train)
 
     def ground_truths_test(self):
-        _, y_test = self.module.get_test_data()
-        return self.prediction.Predictions(labels=self.module.prediction_labels,
-                                           y_true=y_test)
+        _, y_test = self.get_test_data()
+        return self.Predictions(y_true=y_test)
 
     def ground_truths_valid(self, test_is):
-        _, y_train = self.module.get_train_data()
-        return self.prediction.Predictions(labels=self.module.prediction_labels,
-                                           y_true=y_train[test_is])
+        _, y_train = self.get_train_data()
+        return self.Predictions(y_true=y_train[test_is])
 
     @property
-    def train_submission(self):
-        return self.workflow.train_submission
-
-    @property
-    def test_submission(self):
-        return self.workflow.test_submission
+    def workflow_object(self):
+        return self.module.workflow
 
 
 class ScoreType(db.Model):
@@ -273,9 +275,9 @@ class ScoreType(db.Model):
         self.minimum = minimum
         self.maximum = maximum
         # to check if the module and all required fields are there
-        self.module
-        self.score_function
-        self.precision
+        # self.module
+        # self.score_function
+        # self.precision
 
     def __repr__(self):
         repr = 'ScoreType(name={})'.format(self.name)
@@ -308,6 +310,7 @@ class Event(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
+    title = db.Column(db.String, nullable=False)
 
     problem_id = db.Column(
         db.Integer, db.ForeignKey('problems.id'), nullable=False)
@@ -329,7 +332,7 @@ class Event(db.Model):
     public_opening_timestamp = db.Column(
         db.DateTime, default=datetime.datetime(2000, 1, 1, 0, 0, 0))
     closing_timestamp = db.Column(
-        db.DateTime, default=datetime.datetime(4000, 1, 1, 0, 0, 0))
+        db.DateTime, default=datetime.datetime(2100, 1, 1, 0, 0, 0))
 
     # the name of the score in self.event_score_types which is used for
     # ensembling and contributivity.
@@ -349,15 +352,13 @@ class Event(db.Model):
     failed_leaderboard_html = db.Column(db.String, default=None)
     new_leaderboard_html = db.Column(db.String, default=None)
 
-    def __init__(self, name):
+    def __init__(self, problem_name, name, event_title):
         self.name = name
         # to check if the module and all required fields are there
         # db fields are later initialized by db.tools._set_table_attribute
-        self.module
-        self.problem = Problem.query.filter_by(
-            name=self.module.problem_name).one()
-        self.title
-        self.prediction
+        self.problem = Problem.query.filter_by(name=problem_name).one()
+        self.title = event_title
+        self.Predictions
 
     def __repr__(self):
         repr = 'Event({})'.format(self.name)
@@ -371,16 +372,8 @@ class Event(db.Model):
         db.session.commit()
 
     @property
-    def module(self):
-        return import_module('.' + self.name, config.events_module)
-
-    @property
-    def title(self):
-        return self.module.event_title
-
-    @property
-    def prediction(self):
-        return self.problem.prediction
+    def Predictions(self):
+        return self.problem.Predictions
 
     @property
     def workflow(self):
@@ -394,14 +387,6 @@ class Event(db.Model):
     @property
     def official_score_function(self):
         return self.official_score_type.score_function
-
-    @property
-    def train_submission(self):
-        return self.problem.train_submission
-
-    @property
-    def test_submission(self):
-        return self.problem.test_submission
 
     @property
     def combined_combined_valid_score_str(self):
@@ -456,6 +441,9 @@ class Event(db.Model):
         return len(self.event_teams)
 
 
+# XXX
+import uuid
+
 # many-to-many
 class EventScoreType(db.Model):
     __tablename__ = 'event_score_types'
@@ -481,37 +469,52 @@ class EventScoreType(db.Model):
     db.UniqueConstraint(event_id, score_type_id, name='es_constraint')
     db.UniqueConstraint(event_id, name, name='en_constraint')
 
-    def __init__(self, event, score_type, name=None, precision=None):
+    def __init__(self, event, score_type_object):
         self.event = event
-        self.score_type = score_type
-        if name is None:
-            self.name = score_type.name
-        if precision is None:
-            self.precision = score_type.precision
+        # XXX
+        self.score_type = ScoreType(uuid.uuid4(), True, 0, 1)
+        # XXX after migration we should store the index of the
+        # score_type so self.score_type_object (should be renamed
+        # score_type) wouldn't have to do a search each time.
+        self.name = score_type_object.name
+        self.precision = score_type_object.precision
+        self.score_type_object
+        self.score_function
+        self.is_lower_the_better
+        self.minimum
+        self.maximum
+        self.worst
 
     def __repr__(self):
-        repr = '{}: {}/{}'.format(self.name, self.event, self.score_type)
+        repr = '{}: {}/{}'.format(self.name, self.event)
         return repr
 
     @property
+    def score_type_object(self):
+        score_types = self.event.problem.module.score_types
+        for score_type in score_types:
+            if score_type.name == self.name:
+                return score_type
+
+    @property
     def score_function(self):
-        return self.score_type.score_function
+        return self.score_type_object.score_function
 
     @property
     def is_lower_the_better(self):
-        return self.score_type.is_lower_the_better
+        return self.score_type_object.is_lower_the_better
 
     @property
     def minimum(self):
-        return self.score_type.minimum
+        return self.score_type_object.minimum
 
     @property
     def maximum(self):
-        return self.score_type.maximum
+        return self.score_type_object.maximum
 
     @property
     def worst(self):
-        return self.score_type.worst
+        return self.score_type_object.worst
 
 cv_fold_types = db.Enum('live', 'test', name='cv_fold_types')
 
@@ -700,9 +703,6 @@ class Workflow(db.Model):
     def __init__(self, name):
         self.name = name
         # to check if the module and all required fields are there
-        self.module
-        self.train_submission
-        self.test_submission
 
     def __repr__(self):
         repr = 'Workflow({})'.format(self.name)
@@ -711,16 +711,8 @@ class Workflow(db.Model):
         return repr
 
     @property
-    def module(self):
-        return import_module('.' + self.name, config.workflows_module)
-
-    @property
-    def train_submission(self):
-        return self.module.train_submission
-
-    @property
-    def test_submission(self):
-        return self.module.test_submission
+    def object(self):
+        return self.problem.module.workflow
 
 
 # In lists we will order files according to their ids
@@ -911,8 +903,7 @@ def combine_predictions_list(predictions_list, index_list=None):
 
 
 def _get_score_cv_bags(event, score_type, predictions_list, ground_truths,
-                       test_is_list=None,
-                       is_return_combined_predictions=False):
+                       test_is_list=None):
     """
     Computes the bagged score of the predictions in predictions_list.
 
@@ -937,9 +928,7 @@ def _get_score_cv_bags(event, score_type, predictions_list, ground_truths,
                         for predictions in predictions_list]
 
     y_comb = np.array(
-        [event.prediction.Predictions(
-            labels=event.problem.module.prediction_labels,
-            shape=ground_truths.y_pred.shape)
+        [event.Predictions(n_samples=len(ground_truths.y_pred))
          for _ in predictions_list])
     score_cv_bags = []
     for i, test_is in enumerate(test_is_list):
@@ -949,10 +938,7 @@ def _get_score_cv_bags(event, score_type, predictions_list, ground_truths,
         score_cv_bags.append(score_type.score_function(
             ground_truths, combined_predictions, valid_indexes))
         # XXX maybe use masked arrays rather than passing valid_indexes
-    if is_return_combined_predictions:
-        return combined_predictions, score_cv_bags
-    else:
-        return score_cv_bags
+    return combined_predictions, score_cv_bags
 
 
 class SubmissionScore(db.Model):
@@ -1121,8 +1107,8 @@ class Submission(db.Model):
         return self.event.score_types
 
     @property
-    def prediction(self):
-        return self.event.prediction
+    def Predictions(self):
+        return self.event.Predictions
 
     @hybrid_property
     def is_not_sandbox(self):
@@ -1253,14 +1239,13 @@ class Submission(db.Model):
         by self.on_cv_folds[i].test_is.
         """
         ground_truths_train = self.event.problem.ground_truths_train()
-
         if self.is_public_leaderboard:
             predictions_list = [submission_on_cv_fold.valid_predictions for
                                 submission_on_cv_fold in self.on_cv_folds]
             test_is_list = [submission_on_cv_fold.cv_fold.test_is for
                             submission_on_cv_fold in self.on_cv_folds]
             for score in self.scores:
-                score.valid_score_cv_bags = _get_score_cv_bags(
+                _, score.valid_score_cv_bags = _get_score_cv_bags(
                     self.event, score.event_score_type, predictions_list,
                     ground_truths_train, test_is_list)
                 score.valid_score_cv_bag = float(score.valid_score_cv_bags[-1])
@@ -1514,32 +1499,25 @@ class SubmissionOnCVFold(db.Model):
     # <>_y_pred into Prediction instances
     @property
     def full_train_predictions(self):
-        return self.submission.prediction.Predictions(
-            labels=self.submission.event.problem.module.prediction_labels,
-            y_pred=self.full_train_y_pred)
+        return self.submission.Predictions(y_pred=self.full_train_y_pred)
 
     @property
     def train_predictions(self):
-        return self.submission.prediction.Predictions(
-            labels=self.submission.event.problem.module.prediction_labels,
+        return self.submission.Predictions(
             y_pred=self.full_train_y_pred[self.cv_fold.train_is])
 
     @property
     def valid_predictions(self):
-        return self.submission.prediction.Predictions(
-            labels=self.submission.event.problem.module.prediction_labels,
+        return self.submission.Predictions(
             y_pred=self.full_train_y_pred[self.cv_fold.test_is])
 
     @property
     def test_predictions(self):
-        return self.submission.prediction.Predictions(
-            labels=self.submission.event.problem.module.prediction_labels,
-            y_pred=self.test_y_pred)
+        return self.submission.Predictions(y_pred=self.test_y_pred)
 
     @property
     def official_score(self):
         for score in self.scores:
-            # print score.name, self.submission.official_score_name
             if self.submission.official_score_name == score.name:
                 return score
 
@@ -1627,16 +1605,14 @@ class DetachedSubmissionOnCVFold(object):
         self.name = submission_on_cv_fold.submission.event.name + '/'\
             + submission_on_cv_fold.submission.team.name + '/'\
             + submission_on_cv_fold.submission.name
-        self.module = submission_on_cv_fold.submission.module
+        self.path = submission_on_cv_fold.submission.path
         self.error_msg = submission_on_cv_fold.error_msg
         self.train_time = submission_on_cv_fold.train_time
         self.valid_time = submission_on_cv_fold.valid_time
         self.test_time = submission_on_cv_fold.test_time
         self.trained_submission = None
-        self.train_submission =\
-            submission_on_cv_fold.submission.event.train_submission
-        self.test_submission =\
-            submission_on_cv_fold.submission.event.test_submission
+        self.workflow =\
+            submission_on_cv_fold.submission.event.problem.workflow_object
 
     def __repr__(self):
         repr = 'Submission({}) on fold {}'.format(

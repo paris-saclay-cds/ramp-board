@@ -1,4 +1,5 @@
 jupyter
+nose
 numpy>=1.9.2
 pandas>=0.18.0
 scikit-learn>=0.18
@@ -20,7 +21,6 @@ sqlalchemy>=1.0.9
 xkcdpass<=1.4.2
 matplotlib
 theano
-tensorflow
 keras
 lasagne
 nolearn
@@ -39,3 +39,5 @@ scikit-neuralnetwork
 git+https://github.com/scikit-learn-contrib/py-earth
 fancyimpute
 pydot
+bokeh
+scikit-image

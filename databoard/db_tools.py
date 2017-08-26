@@ -1,4 +1,5 @@
 import os
+import imp
 import time
 import codecs
 import shutil
@@ -17,6 +18,8 @@ import xkcdpass.xkcd_password as xp
 from sklearn.externals.joblib import Parallel, delayed
 from databoard import db
 from sklearn.utils.validation import assert_all_finite
+from importlib import import_module
+from subprocess import call
 
 from databoard.model import User, Team, Submission, SubmissionFile,\
     SubmissionFileType, SubmissionFileTypeExtension, WorkflowElementType,\
@@ -34,7 +37,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 import databoard.config as config
-from databoard import post_api
 # from databoard import celery
 
 logger = logging.getLogger('databoard')
@@ -129,30 +131,6 @@ def send_password_mails(password_f_name, port):
         send_password_mail(u['name'], u['password'], port)
 
 
-def setup_score_types():
-    score_types = [
-        ('rmse', True, 0.0, float('inf')),
-        ('error', True, 0.0, 1.0),
-        ('accuracy', False, 0.0, 1.0),
-        ('negative_log_likelihood', True, 0.0, float('inf')),
-        ('relative_rmse', True, 0.0, float('inf')),
-    ]
-    for name, is_lower_the_better, minimum, maximum in score_types:
-        add_score_type(name, is_lower_the_better, minimum, maximum)
-
-
-def add_score_type(name, is_lower_the_better, minimum, maximum):
-    """Adding a new score type, e.g., RMSE."""
-    score_type = ScoreType.query.filter_by(name=name).one_or_none()
-    if score_type is None:
-        score_type = ScoreType(
-            name=name, is_lower_the_better=is_lower_the_better,
-            minimum=minimum, maximum=maximum)
-        logger.info('Adding {}'.format(score_type))
-        db.session.add(score_type)
-        db.session.commit()
-
-
 def setup_workflows():
     """Setting up database.
 
@@ -180,28 +158,6 @@ def setup_workflows():
     for type_name, extension_name in submission_file_type_extensions:
         add_submission_file_type_extension(type_name, extension_name)
 
-    workflow_element_types = [
-        ('feature_extractor', 'code'),
-        ('ts_feature_extractor', 'code'),
-        ('imputer', 'code'),
-        ('classifier', 'code'),
-        ('regressor', 'code'),
-        ('calibrator', 'code'),
-        ('comments', 'text'),
-        ('external_data', 'data'),
-    ]
-    for workflow_element_type_name, submission_file_type_name in\
-            workflow_element_types:
-        add_workflow_element_type(
-            workflow_element_type_name, submission_file_type_name)
-
-    workflows = [
-        ('classifier_workflow', ['classifier']),
-        ('regressor_workflow', ['regressor']),
-    ]
-    for name, element_type_names in workflows:
-        add_workflow(name, element_type_names)
-
 
 def add_extension(name):
     """Adding a new extension, e.g., 'py'."""
@@ -215,7 +171,7 @@ def add_extension(name):
 
 def add_submission_file_type(name, is_editable, max_size):
     """Adding a new submission file type, e.g., ('code', True, 10 ** 5).
-
+`
     Should be preceded by adding extensions.
     """
     submission_file_type = SubmissionFileType.query.filter_by(
@@ -246,38 +202,54 @@ def add_submission_file_type_extension(type_name, extension_name):
         db.session.commit()
 
 
-def add_workflow_element_type(workflow_element_type_name,
-                              submission_file_type_name):
-    """Adding a new workflow element type, e.g., ('classifier', 'code').
+def add_workflow(workflow_object):
+    """Adding a new workflow.
+    Workflow class should exist in rampwf.workflows. The name of the
+    workflow will be the classname (e.g. Classifier). Element names 
+    are taken from workflow.element_names. Element types are inferred
+    from the extension. This is important because e.g. the max size
+    and the editability will depend on the type.
 
-    Should be preceded by adding submission file types and extensions.
+    add_workflow is called by add_problem, taking the workflow to add
+    from the problem.py file of the starting kit.
     """
-    submission_file_type = SubmissionFileType.query.filter_by(
-        name=submission_file_type_name).one()
-    workflow_element_type = WorkflowElementType.query.filter_by(
-        name=workflow_element_type_name).one_or_none()
-    if workflow_element_type is None:
-        workflow_element_type = WorkflowElementType(
-            name=workflow_element_type_name, type=submission_file_type)
-        logger.info('Adding {}'.format(workflow_element_type))
-        db.session.add(workflow_element_type)
-        db.session.commit()
-
-
-def add_workflow(workflow_name, element_type_names):
-    """Adding a new workflow, e.g., ('classifier_workflow', ['classifier']).
-
-    Workflow file should be set up in
-    databoard/specific/workflows/<workflow_name>. Should be preceded by adding
-    workflow element types.
-    """
+    # name is the name of the workflow *Class*, not the module
+    workflow_name = type(workflow_object).__name__
+    workflow_element_names = workflow_object.element_names
     workflow = Workflow.query.filter_by(name=workflow_name).one_or_none()
     if workflow is None:
         db.session.add(Workflow(name=workflow_name))
         workflow = Workflow.query.filter_by(name=workflow_name).one()
-    for element_type_name in element_type_names:
+    for element_name in workflow_element_names:
+        tokens = element_name.split('.')
+        element_file_name = tokens[0]
+        # inferring that file is code if there is no extension
+        element_file_extension_name = 'py'
+        if len(tokens) > 1:
+            element_file_extension_name = tokens[1]
+        if len(tokens) > 2:
+            raise ValueError(
+                'File name {} should contain at most one "."'.format(
+                    element_name))
+        extension = Extension.query.filter_by(
+            name=element_file_extension_name).one_or_none()
+        if extension is None:
+            raise ValueError(
+                'Unknown extension {}'.format(element_file_extension_name))
+        type_extension = SubmissionFileTypeExtension.query.filter_by(
+            extension=extension).one_or_none()
+        if type_extension is None:
+            raise ValueError(
+                'Unknown file type {}'.format(element_file_extension_name))
+
         workflow_element_type = WorkflowElementType.query.filter_by(
-            name=element_type_name).one()
+            name=element_file_name).one_or_none()
+        if workflow_element_type is None:
+            workflow_element_type = WorkflowElementType(
+                name=element_file_name, type=type_extension.type)
+            logger.info('Adding {}'.format(workflow_element_type))
+            db.session.add(workflow_element_type)
+            db.session.commit()
         workflow_element =\
             WorkflowElement.query.filter_by(
                 workflow=workflow,
@@ -300,19 +272,43 @@ def add_problem(problem_name, force=False):
     is acting as a pointer for the join). Also prepares the data.
     """
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
+    problem_data_path = os.path.join(config.ramp_data_path, problem_name)
+    problem_kits_path = os.path.join(config.ramp_kits_path, problem_name)
     if problem is not None:
         if force:
             delete_problem(problem)
+            os.system('rm -rf {}'.format(problem_data_path))
+            os.system('rm -rf {}'.format(problem_kits_path))
         else:
             logger.info(
                 'Attempting to delete problem and all linked events, ' +
                 'use "force=True" if you know what you are doing.')
             return
+
+    os.system('git clone https://github.com/ramp-data/{}.git {}'.format(
+        problem_name, problem_data_path))
+    os.system('git clone https://github.com/ramp-kits/{}.git {}'.format(
+        problem_name, problem_kits_path))
+    os.chdir(problem_data_path)
+    logger.info('Preparing {} data...'.format(problem_name))
+    os.system('python prepare_data.py')
+    os.chdir(problem_kits_path)
+    os.system('jupyter nbconvert --to html {}_starting_kit.ipynb'.format(
+        problem_name))
+    # optional data download
+    if os.path.isfile('download_data.py'):
+        call("python download_data.py", shell=True)
+
+
+    # XXX it's a bit ugly that we need to load the module here
+    # perhaps if we can get rid of the workflow db table completely
+    problem_module = imp.load_source(
+        '', os.path.join(problem_kits_path, 'problem.py'))
+    add_workflow(problem_module.workflow)
     problem = Problem(name=problem_name)
     logger.info('Adding {}'.format(problem))
     db.session.add(problem)
     db.session.commit()
-    problem.module.prepare_data()
 
 
 # these could go into a delete callback in problem and event, I just don't know
@@ -347,6 +343,7 @@ def delete_submission_similarity(submissions):
     db.session.commit()
 
 
+# XXX probably deprecated
 def _set_table_attribute(table, attr):
     """Setting attributes from config file.
 
@@ -360,7 +357,8 @@ def _set_table_attribute(table, attr):
     setattr(table, attr, value)
 
 
-def add_event(event_name, force=False):
+def add_event(problem_name, event_name, event_title, is_public=False,
+              force=False):
     """Adding a new RAMP event.
 
     Event file should be set up in
@@ -368,6 +366,7 @@ def add_event(event_name, force=False):
     a problem, then problem_name imported in the event file (problem_name
     is acting as a pointer for the join). Also adds CV folds.
     """
+    print event_title
     event = Event.query.filter_by(name=event_name).one_or_none()
     if event is not None:
         if force:
@@ -377,65 +376,26 @@ def add_event(event_name, force=False):
                 'Attempting to delete event, use "force=True" ' +
                 'if you know what you are doing')
             return
-    event = Event(name=event_name)
+    event = Event(
+        name=event_name, problem_name=problem_name, event_title=event_title)
+    event.is_public = is_public
     logger.info('Adding {}'.format(event))
     db.session.add(event)
     db.session.commit()
 
-    _set_table_attribute(event, 'max_members_per_team')
-    _set_table_attribute(event, 'max_n_ensemble')
-    _set_table_attribute(event, 'score_precision')
-    # _set_table_attribute(event, 'n_cv')
-    _set_table_attribute(event, 'is_send_trained_mails')
-    _set_table_attribute(event, 'is_send_submitted_mails')
-    _set_table_attribute(event, 'min_duration_between_submissions')
-    _set_table_attribute(event, 'opening_timestamp')
-    _set_table_attribute(event, 'public_opening_timestamp')
-    _set_table_attribute(event, 'closing_timestamp')
-    _set_table_attribute(event, 'is_public')
-    _set_table_attribute(event, 'is_controled_signup')
-
-    _, y_train = event.problem.module.get_train_data()
-    cv = event.module.get_cv(y_train)
+    X_train, y_train = event.problem.get_train_data()
+    cv = event.problem.module.get_cv(X_train, y_train)
     for train_is, test_is in cv:
         cv_fold = CVFold(event=event, train_is=train_is, test_is=test_is)
         db.session.add(cv_fold)
 
-    score_type_descriptors = event.module.score_type_descriptors
-    if type(score_type_descriptors) is not list:
-        score_type_descriptors = [score_type_descriptors]
-    for i, score_type_descriptor in enumerate(score_type_descriptors):
-        if type(score_type_descriptor) is not dict:
-            # this is ugly, needed a fast fix for official_score_name below
-            score_type_descriptors[i] = {'name': score_type_descriptor}
-            score_type_descriptor = {'name': score_type_descriptor}
-        score_type = ScoreType.query.filter_by(
-            name=score_type_descriptor['name']).one()
-        event_score_type = EventScoreType.query.filter_by(
-            event=event, score_type=score_type).one_or_none()
-        if event_score_type is None:
-            event_score_type = EventScoreType(
-                event=event, score_type=score_type)
-            db.session.add(event_score_type)
-        if 'precision' in score_type_descriptor:
-            event_score_type.precision = score_type_descriptor['precision']
-        if 'new_name' in score_type_descriptor:
-            event_score_type.name = score_type_descriptor['new_name']
-        print(score_type)
-    # I thought that event.score_types will be sorted by the order we add
-    # event_score_types, but no, it's ordered by id (I guess), so we have to
-    # excplicitly assign event.official_score_index here.
-    try:
-        event.official_score_name = event.module.official_score_name
-    except AttributeError:
-        score_type_descriptor = score_type_descriptors[0]
-        if 'new_name' in score_type_descriptor:
-            event.official_score_name = score_type_descriptor['new_name']
-        else:
-            event.official_score_name = score_type_descriptor['name']
-    print(event.official_score_name)
+    score_types = event.problem.module.score_types
+    for score_type in score_types:
+        event_score_type = EventScoreType(
+            event=event, score_type_object=score_type)
+        db.session.add(event_score_type)
+    event.official_score_name = score_types[0].name
     db.session.commit()
-    print(event.official_score_type)
 
 
 def add_keyword(name, type, category=None, description=None, force=False):
@@ -667,7 +627,8 @@ def sign_up_team(event_name, team_name):
             event=event, team=team).one_or_none()
     # submitting the starting kit for team
     from_submission_path = os.path.join(
-        config.problems_path, event.problem.name, config.sandbox_d_name)
+        config.ramp_kits_path, event.problem.name, config.submissions_d_name,
+        config.sandbox_d_name)
     make_submission_and_copy_files(
         event_name, team_name, config.sandbox_d_name, from_submission_path)
     for user in get_team_members(team):
@@ -675,6 +636,20 @@ def sign_up_team(event_name, team_name):
             event_name, team_name), '')
     event_team.approved = True
     db.session.commit()
+
+
+def submit_starting_kit(event_name, team_name):
+    """Submit all starting kits in ramp_kits_path/ramp_name/submissions."""
+    event = Event.query.filter_by(name=event_name).one()
+    submission_path = os.path.join(
+        config.ramp_kits_path, event.problem.name, config.submissions_d_name)
+    submission_names = os.listdir(submission_path)
+    for submission_name in submission_names:
+        from_submission_path = os.path.join(submission_path, submission_name)
+        if submission_name == config.sandbox_d_name:
+            submission_name = config.sandbox_d_name + '_test'
+        make_submission_and_copy_files(
+            event_name, team_name, submission_name, from_submission_path)
 
 
 def send_mail(to, subject, body):
@@ -1124,8 +1099,8 @@ def train_test_submission(submission, force_retrain_test=False):
     if force_retrain_test:
         logger.info('Forced retraining/testing {}'.format(submission))
 
-    X_train, y_train = submission.event.problem.module.get_train_data()
-    X_test, y_test = submission.event.problem.module.get_test_data()
+    X_train, y_train = submission.event.problem.get_train_data()
+    X_test, y_test = submission.event.problem.get_test_data()
 
     # Parallel, dict
     if config.is_parallelize:
@@ -1254,8 +1229,8 @@ def train_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
     start = timeit.default_timer()
     try:
         detached_submission_on_cv_fold.trained_submission =\
-            detached_submission_on_cv_fold.train_submission(
-                detached_submission_on_cv_fold.module, X, y, train_is)
+            detached_submission_on_cv_fold.workflow.train_submission(
+                detached_submission_on_cv_fold.path, X, y, train_is)
         detached_submission_on_cv_fold.state = 'trained'
     except Exception as e:
         detached_submission_on_cv_fold.state = 'training_error'
@@ -1272,7 +1247,7 @@ def train_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
     start = timeit.default_timer()
     try:
         # Computing predictions on full training set
-        y_pred = detached_submission_on_cv_fold.test_submission(
+        y_pred = detached_submission_on_cv_fold.workflow.test_submission(
             detached_submission_on_cv_fold.trained_submission, X)
         assert_all_finite(y_pred)
         if len(y_pred) == len(y):
@@ -1313,7 +1288,7 @@ def test_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
     logger.info('Testing {}'.format(detached_submission_on_cv_fold))
     start = timeit.default_timer()
     try:
-        y_pred = detached_submission_on_cv_fold.test_submission(
+        y_pred = detached_submission_on_cv_fold.workflow.test_submission(
             detached_submission_on_cv_fold.trained_submission, X)
         assert_all_finite(y_pred)
         if len(y_pred) == len(y):
@@ -1424,8 +1399,7 @@ def compute_contributivity_no_commit(
     if len(combined_predictions_list) > 0:
         combined_predictions, scores = _get_score_cv_bags(
             event, event.official_score_type, combined_predictions_list,
-            ground_truths_train, test_is_list=test_is_list,
-            is_return_combined_predictions=True)
+            ground_truths_train, test_is_list=test_is_list)
         np.savetxt(
             'y_train_pred.csv', combined_predictions.y_pred, delimiter=',')
         logger.info('Combined combined valid score = {}'.format(scores))
@@ -1436,7 +1410,7 @@ def compute_contributivity_no_commit(
     best_predictions_list = [c for c in best_predictions_list
                              if c is not None]
     if len(best_predictions_list) > 0:
-        scores = _get_score_cv_bags(
+        _, scores = _get_score_cv_bags(
             event, event.official_score_type, best_predictions_list,
             ground_truths_train, test_is_list=test_is_list)
         logger.info('Combined foldwise best valid score = {}'.format(scores))
@@ -1449,7 +1423,7 @@ def compute_contributivity_no_commit(
     if len(combined_test_predictions_list) > 0:
         combined_predictions, scores = _get_score_cv_bags(
             event, event.official_score_type, combined_test_predictions_list,
-            ground_truths_test, is_return_combined_predictions=True)
+            ground_truths_test)
         np.savetxt(
             'y_test_pred.csv', combined_predictions.y_pred, delimiter=',')
         logger.info('Combined combined test score = {}'.format(scores))
@@ -1460,7 +1434,7 @@ def compute_contributivity_no_commit(
     best_test_predictions_list = [c for c in best_test_predictions_list
                                   if c is not None]
     if len(best_test_predictions_list) > 0:
-        scores = _get_score_cv_bags(
+        _, scores = _get_score_cv_bags(
             event, event.official_score_type, best_test_predictions_list,
             ground_truths_test)
         logger.info('Combined foldwise best valid score = {}'.format(scores))

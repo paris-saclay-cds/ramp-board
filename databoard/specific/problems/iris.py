@@ -1,8 +1,9 @@
 import os
 import sys
 import pandas as pd
-from sklearn.model_selection import train_test_split
-import databoard.multiclass_prediction as prediction
+import rampwf as rw
+from sklearn.model_selection import train_test_split, StratifiedShuffleSplit
+import databoard.multiclass_prediction as prediction  # noqa
 from databoard.config import submissions_path, problems_path
 from distutils.dir_util import mkpath
 
@@ -10,9 +11,6 @@ sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 
 problem_name = 'iris'  # should be the same as the file name
 problem_title = 'Iris classification'
-
-random_state = 57
-held_out_test_size = 0.2
 
 
 raw_filename = os.path.join(
@@ -22,16 +20,29 @@ train_filename = os.path.join(
 test_filename = os.path.join(
     problems_path, problem_name, 'data', 'private', 'test.csv')
 
-# prediction.labels = ['setosa', 'versicolor', 'virginica']
+prediction_type = rw.prediction_types.multiclass
 prediction_labels = ['setosa', 'versicolor', 'virginica']
 target_column_name = 'species'
-workflow_name = 'classifier_workflow'
+workflow = rw.workflows.Classifier()
+score_types = [
+    rw.score_types.Accuracy(name='acc', n_columns=len(prediction_labels)),
+    rw.score_types.ClassificationError(
+        name='err', n_columns=len(prediction_labels)),
+    rw.score_types.NegativeLogLikelihood(
+        name='nll', n_columns=len(prediction_labels)),
+    rw.score_types.F1Above(
+        name='f1_70', n_columns=len(prediction_labels), threshold=0.7),
+]
+
+
+def get_cv(X, y):
+    cv = StratifiedShuffleSplit(n_splits=2, test_size=0.2, random_state=57)
+    return cv.split(X, y)
 
 
 def prepare_data():
     df = pd.read_csv(raw_filename)
-    df_train, df_test = train_test_split(
-        df, test_size=held_out_test_size, random_state=random_state)
+    df_train, df_test = train_test_split(df, test_size=0.2, random_state=57)
     mkpath(os.path.dirname(train_filename))
     df_train.to_csv(train_filename, index=False)
     mkpath(os.path.dirname(test_filename))

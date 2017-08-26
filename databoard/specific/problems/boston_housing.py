@@ -1,7 +1,8 @@
 import os
 import sys
 import pandas as pd
-from sklearn.model_selection import train_test_split
+import rampwf as rw
+from sklearn.model_selection import train_test_split, ShuffleSplit
 from databoard.config import submissions_path, problems_path
 import databoard.regression_prediction as prediction  # noqa
 from distutils.dir_util import mkpath
@@ -11,9 +12,6 @@ sys.path.append(os.path.dirname(os.path.abspath(submissions_path)))
 problem_name = 'boston_housing'  # should be the same as the file name
 problem_title = 'Boston housing price regression'
 
-random_state = 57
-n_CV = 2
-held_out_test_size = 0.2
 
 raw_filename = os.path.join(
     problems_path, problem_name, 'data', 'raw', 'boston_housing.csv')
@@ -22,17 +20,25 @@ train_filename = os.path.join(
 test_filename = os.path.join(
     problems_path, problem_name, 'data', 'private', 'test.csv')
 
+prediction_type = rw.prediction_types.regression
 target_column_name = 'medv'
-workflow_name = 'regressor_workflow'
 prediction_labels = None
-extra_files = [os.path.join(problems_path, problem_name,
-                            'boston_housing_datarun.py')]
+
+workflow = rw.workflows.Regressor()
+score_types = [
+    rw.score_types.RMSE(),
+    rw.score_types.RelativeRMSE(name='rel_rmse'),
+]
+
+
+def get_cv(X, y):
+    cv = ShuffleSplit(n_splits=2, test_size=0.2, random_state=57)
+    return cv.split(X)
 
 
 def prepare_data():
     df = pd.read_csv(raw_filename, index_col=0)
-    df_train, df_test = train_test_split(
-        df, test_size=held_out_test_size, random_state=random_state)
+    df_train, df_test = train_test_split(df, test_size=0.2, random_state=57)
     mkpath(os.path.dirname(train_filename))
     df_train.to_csv(train_filename, index=False)
     mkpath(os.path.dirname(test_filename))
