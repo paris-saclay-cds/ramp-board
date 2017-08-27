@@ -57,14 +57,6 @@
 
 <div class="col-xs-12">
   <div class="card">
-    <div class="card-body">
-	  {{ description|safe }}
-    </div>
-  </div>
-</div>
-
-<div class="col-xs-12">
-  <div class="card">
     <div class="card-header">
       <div class="card-title">
           <div class="title">Rules</div>
@@ -79,6 +71,14 @@
       <li> After each succesfully trained submission, you have to wait {{ event.min_duration_between_submissions }}s to resubmit. </li>
       <li>The leaderboard is in "hidden" mode until (UTC) {{ event.public_opening_timestamp }} which means that all scores are visible, but the links pointing to the code of the participants are hidden. After (UTC) {{ event.public_opening_timestamp }}, all submitted codes are public. <b>You will be encouraged to look at and reuse each other's code.</b>
       </ul>
+    </div>
+  </div>
+</div>
+
+<div class="col-xs-12">
+  <div class="card">
+    <div class="card-body">
+	  {{ description|safe }}
     </div>
   </div>
 </div>
