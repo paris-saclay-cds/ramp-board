@@ -37,7 +37,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 import databoard.config as config
-# from databoard import celery
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
@@ -263,7 +262,7 @@ def add_workflow(workflow_object):
     db.session.commit()
 
 
-def add_problem(problem_name, force=False):
+def add_problem(problem_name, force=False, with_download=False):
     """Adding a new RAMP problem.
 
     Problem file should be set up in
@@ -277,27 +276,28 @@ def add_problem(problem_name, force=False):
     if problem is not None:
         if force:
             delete_problem(problem)
-            os.system('rm -rf {}'.format(problem_data_path))
-            os.system('rm -rf {}'.format(problem_kits_path))
+            if with_download:
+                os.system('rm -rf {}'.format(problem_data_path))
+                os.system('rm -rf {}'.format(problem_kits_path))
         else:
             logger.info(
                 'Attempting to delete problem and all linked events, ' +
                 'use "force=True" if you know what you are doing.')
             return
-
-    os.system('git clone https://github.com/ramp-data/{}.git {}'.format(
-        problem_name, problem_data_path))
-    os.system('git clone https://github.com/ramp-kits/{}.git {}'.format(
-        problem_name, problem_kits_path))
-    os.chdir(problem_data_path)
-    logger.info('Preparing {} data...'.format(problem_name))
-    os.system('python prepare_data.py')
-    os.chdir(problem_kits_path)
-    os.system('jupyter nbconvert --to html {}_starting_kit.ipynb'.format(
-        problem_name))
-    # optional data download
-    if os.path.isfile('download_data.py'):
-        call("python download_data.py", shell=True)
+    if with_download:
+        os.system('git clone https://github.com/ramp-data/{}.git {}'.format(
+            problem_name, problem_data_path))
+        os.system('git clone https://github.com/ramp-kits/{}.git {}'.format(
+            problem_name, problem_kits_path))
+        os.chdir(problem_data_path)
+        logger.info('Preparing {} data...'.format(problem_name))
+        os.system('python prepare_data.py')
+        os.chdir(problem_kits_path)
+        os.system('jupyter nbconvert --to html {}_starting_kit.ipynb'.format(
+            problem_name))
+        # optional data download
+        if os.path.isfile('download_data.py'):
+            call("python download_data.py", shell=True)
 
 
     # XXX it's a bit ugly that we need to load the module here

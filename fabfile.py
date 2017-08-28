@@ -78,7 +78,7 @@ def test_make_event_admin():
 
 
 def test_problem(problem_name, test_user_name):
-    add_problem(problem_name)
+    add_problem(problem_name, with_download='True')
     event_name = '{}'.format(problem_name)
     event_title = 'test event'
     add_event(problem_name, event_name, event_title, is_public="True")
@@ -152,13 +152,14 @@ def add_score_type(name, is_lower_the_better, minimum, maximum):
         name, is_lower_the_better, float(minimum), float(maximum))
 
 
-def add_problem(name, force='False'):
+def add_problem(name, force='False', with_download='False'):
     """Add new problem. If force=True, deletes problem (with all events) if exists."""
     force = strtobool(force)
+    with_download = strtobool(with_download)
 
     from databoard.db_tools import add_problem
 
-    add_problem(name, force)
+    add_problem(name, force, with_download)
 
 
 def add_event(problem_name, event_name, event_title, is_public='True',
