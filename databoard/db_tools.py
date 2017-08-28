@@ -949,11 +949,13 @@ def send_sign_up_request_mail(event, user):
     body += 'twitter = {}\n'.format(user.twitter_url)
     body += 'facebook = {}\n'.format(user.facebook_url)
     body += 'github = {}\n'.format(user.github_url)
-    body += 'notes = {}\n'.format(user.hidden_notes.encode('utf-8'))
-    body += 'bio = {}\n\n'.format(user.bio.encode('utf-8'))
-    url_approve = 'http://{}/events/{}/sign_up/{}'.format(
-        config.current_server_name, event.name,
-        user.name.encode('utf-8'))
+    if user.hidden_notes is not None:
+        body += 'notes = {}\n'.format(user.hidden_notes.encode('utf-8'))
+    if user.bio is not None:
+        body += 'bio = {}\n\n'.format(user.bio.encode('utf-8'))
+    body += '\n'
+    url_approve = 'https://www.ramp.studio/events/{}/sign_up/{}'.format(
+        event.name, user.name.encode('utf-8'))
     body += 'Click on this link to approve this user for this event: {}\n'.\
         format(url_approve)
 
