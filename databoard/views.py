@@ -205,8 +205,12 @@ def data_science_themes():
 
 @app.route("/keywords/<keyword_name>")
 def keywords(keyword_name):
-    keyword = Keyword.query.filter_by(name=keyword_name).one()
-    return render_template('keyword.html', keyword=keyword)
+    keyword = Keyword.query.filter_by(name=keyword_name).one_or_none()
+    if keyword:
+        return render_template('keyword.html', keyword=keyword)
+    else:
+        return _redirect_to_user(u'Keyword {} does not exist.'.format(
+            keyword_name), is_error=True)
 
 
 @app.route("/problems")
