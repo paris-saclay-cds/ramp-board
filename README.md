@@ -60,6 +60,15 @@ fab serve
 
 export OMP_NUM_THREADS=1
 
+### Adding a new problems
+
+```
+cd <frontend>/ramp-kits
+git clone https://github.com/ramp-kits/<problem>
+cd <problem>
+jupyter nbconvert --to html <problem>_starting_kit.ipynb
+
+
 ## Dependencies
 
 
@@ -102,6 +111,11 @@ with conda:
 
 conda install postgresql
 conda install -c anaconda psycopg2=2.6.2
+
+un ubuntu:
+
+sudo apt-get install postgresql postgresql-contrib
+
 
 make a dir postgres_dbs containing all the dbs (test and prod eventually) and cd there
 then go up and execute

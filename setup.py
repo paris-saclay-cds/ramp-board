@@ -60,10 +60,5 @@ if __name__ == "__main__":
           packages=[
               'databoard',
               'databoard.tests',
-              'databoard.specific',
-              'databoard.specific.workflows',
-              'databoard.specific.problems',
-              'databoard.specific.events',
-              'databoard.specific.score_types',
           ],
           scripts=['fabfile.py'])

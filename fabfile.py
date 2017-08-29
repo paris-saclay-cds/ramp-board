@@ -1,11 +1,7 @@
 import sys
-if '' not in sys.path:  # Balazs bug
-    sys.path.insert(0, '')
-
 import pandas as pd
 import os
 import logging
-import time
 from distutils.util import strtobool
 
 logger = logging.getLogger('databoard')
@@ -153,7 +149,10 @@ def add_score_type(name, is_lower_the_better, minimum, maximum):
 
 
 def add_problem(name, force='False', with_download='False'):
-    """Add new problem. If force=True, deletes problem (with all events) if exists."""
+    """Add new problem.
+
+    If force=True, deletes problem (with all events) if exists.
+    """
     force = strtobool(force)
     with_download = strtobool(with_download)
 
@@ -164,7 +163,10 @@ def add_problem(name, force='False', with_download='False'):
 
 def add_event(problem_name, event_name, event_title, is_public='True',
               force='False'):
-    """Add new event. If force=True, deletes event (with all submissions) if exists."""
+    """Add new event.
+
+    If force=True, deletes event (with all submissions) if exists.
+    """
     force = bool(strtobool(force))
     is_public = bool(strtobool(is_public))
     from databoard.db_tools import add_event
@@ -176,135 +178,6 @@ def make_event_admin(e, u):
     from databoard.db_tools import make_event_admin
 
     make_event_admin(event_name=e, admin_name=u)
-
-
-def send_data_datarun(problem_name, host_url, username, userpassd):
-    """
-    Send data to datarun and prepare data (split train test)
-
-    :param problem_name: name of the problem
-    :param host_url: host url of datarun
-    :param username: username for datarun
-    :param userpassd: user password for datarun
-
-    :type problem_name: string
-    :type host_url: string
-    :type username: string
-    :type userpassd: string
-    """
-    from databoard.db_tools import send_data_datarun
-    send_data_datarun(problem_name, host_url, username, userpassd)
-
-
-# def train_test_datarun(data_id, host_url, username, userpassd, e=None, t=None,
-#                        s=None, state=None, force='False', priority='L'):
-#     """Train and test submission using datarun.
-
-#     :param data_id: id of the associated dataset on datarun platform, created when sending the data
-#     :param host_url: host url of datarun
-#     :param username: username for datarun
-#     :param userpassd: user password for datarun
-#     :param priority: training priority of the submissions on datarun,\
-#         'L' for low and 'H' for high
-
-#     :type data_id: integer
-#     :type host_url: string
-#     :type username: string
-#     :type userpassd: string
-#     :type priority: string
-#      """
-#     from databoard.config import sandbox_d_name
-
-#     force = strtobool(force)
-
-#     from databoard.db_tools import train_test_submissions_datarun,\
-#         get_submissions, get_submissions_of_state
-
-#     if state is not None:
-#         submissions = get_submissions_of_state(state)
-#     else:
-#         submissions = get_submissions(
-#             event_name=e, team_name=t, submission_name=s)
-#     submissions = [submission for submission in submissions
-#                    if submission.name != sandbox_d_name]
-
-#     print(submissions)
-#     train_test_submissions_datarun(data_id, host_url, username, userpassd,
-#                                    submissions, force_retrain_test=force,
-#                                    priority=priority)
-
-
-def train_test_datarun(e=None, t=None, s=None, state=None,
-                       force='False', priority='L'):
-    """Train and test submission using datarun.
-
-    :param priority: training priority of the submissions on datarun,\
-        'L' for low and 'H' for high
-     """
-    from databoard.config import sandbox_d_name
-
-    force = strtobool(force)
-
-    from databoard.db_tools import\
-        get_submissions, get_submissions_of_state, send_submission_datarun
-
-    if state is not None:
-        submissions = get_submissions_of_state(state)
-    else:
-        submissions = get_submissions(
-            event_name=e, team_name=t, submission_name=s)
-    submissions = [submission for submission in submissions
-                   if submission.name != sandbox_d_name]
-
-    print(submissions)
-    for submission in submissions:
-        send_submission_datarun(
-            submission.name, submission.team.name, submission.event.name,
-            priority='L', force_retrain_test=True)
-
-
-# def get_trained_tested_datarun(host_url, username, userpassd,
-#                                e=None, t=None, s=None):
-#     """
-#     Get submissions from datarun and save predictions to databoard database
-
-#     :param host_url: host url of datarun
-#     :param username: username for datarun
-#     :param userpassd: user password for datarun
-
-#     :type host_url: string
-#     :type username: string
-#     :type userpassd: string
-#     """
-#     from databoard.db_tools import get_trained_tested_submissions_datarun
-#     from databoard.db_tools import get_submissions
-#     submissions = get_submissions(event_name=e, team_name=t, submission_name=s)
-#     print(submissions)
-#     get_trained_tested_submissions_datarun(submissions, host_url,
-#                                            username, userpassd)
-#     compute_contributivity(event_name=e)
-
-
-def get_trained_tested_datarun(e=None, t=None, s=None):
-    """
-    Get submissions from datarun and save predictions to databoard database
-
-    :param host_url: host url of datarun
-    :param username: username for datarun
-    :param userpassd: user password for datarun
-
-    :type host_url: string
-    :type username: string
-    :type userpassd: string
-    """
-    from databoard.db_tools import get_submissions_datarun
-    from databoard.db_tools import get_submissions
-    submissions = get_submissions(event_name=e, team_name=t, submission_name=s)
-    print(submissions)
-    submission_details = [
-        [submission.name, submission.team.name, submission.event.name]
-        for submission in submissions]
-    get_submissions_datarun(submission_details)
 
 
 def train_test(e, t=None, s=None, state=None, force='False'):
@@ -500,11 +373,8 @@ def publish_problem(problem_name, target='local'):
     os.system(command)
 
 
-### Batch add users ###
-
 def create_user(name, password, lastname, firstname, email,
                 access_level='user', hidden_notes=''):
-    from databoard.config import sandbox_d_name
     from databoard.db_tools import create_user
     create_user(
         name, password, lastname, firstname, email, access_level, hidden_notes)
@@ -521,7 +391,10 @@ def generate_passwords(users_to_add_f_name, password_f_name):
 
 
 def add_users_from_file(users_to_add_f_name, password_f_name):
-    """Users whould be the same in the same order in the two files."""
+    """Add users.
+
+    Users whould be the same in the same order in the two files.
+    """
     from databoard.model import NameClashError
 
     users_to_add = pd.read_csv(users_to_add_f_name)
@@ -534,20 +407,35 @@ def add_users_from_file(users_to_add_f_name, password_f_name):
                 acces_level = u['access_level']
             else:
                 acces_level = 'user'
-            create_user(u['name'], u['password'], u['lastname'], u['firstname'],
-                        u['email'], acces_level, u['hidden_notes'])
+            create_user(
+                u['name'], u['password'], u['lastname'], u['firstname'],
+                u['email'], acces_level, u['hidden_notes'])
         except NameClashError:
             print 'user already in database'
 
 
 def send_password_mail(user_name, password):
+    """Update <user_name>'s password to <password> and mail it to him/her.
+
+    Parameters
+    ----------
+    user_name : user name
+    password : new password
+    """
     from databoard.db_tools import send_password_mail
     send_password_mail(user_name, password)
 
 
-def send_password_mails(password_f_name, port=None):
+def send_password_mails(password_f_name):
+    """Update <name>'s password to <password>, read from <password_f_name>.
+
+    Can be generated by `generate_passwords <generate_passwords>`.
+    Parameters
+    ----------
+    password_f_name : a csv file with columns `name` and `password`
+    """
     from databoard.db_tools import send_password_mails
-    send_password_mails(password_f_name, port)
+    send_password_mails(password_f_name)
 
 
 def sign_up_event_users_from_file(users_to_add_f_name, event):
@@ -613,7 +501,6 @@ def backend_train_test_loop(e=None, timeout=30,
         Event name. If set, only train submissions from that event.
         If event name is prefixed by not, it excludes that event.
     """
-
     from databoard.db_tools import backend_train_test_loop
     is_compute_contributivity = strtobool(is_compute_contributivity)
     backend_train_test_loop(e, timeout, is_compute_contributivity)

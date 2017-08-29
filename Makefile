@@ -30,6 +30,11 @@ test:
 	fab test_problem:boston_housing,kegl
 	fab test_keywords
 	fab test_make_event_admin
+	fab send_password_mail:kegl,bla
+	echo 'name,password\nkegl,bla' > pwds.csv
+	fab send_password_mails:pwds.csv
+	rm -rf pwds.csv
+
 
 test-all: test
 	# nosetests databoard/tests
