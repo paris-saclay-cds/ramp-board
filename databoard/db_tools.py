@@ -497,18 +497,18 @@ def update_user(user, form):
     logger.info('Updating {}'.format(user))
     if user.lastname != form.lastname.data:
         logger.info('Updating lastname from {} to {}'.format(
-            user.lastname, form.lastname.data))
+            user.lastname.encode('utf-8'), form.lastname.data.encode('utf-8')))
     if user.firstname != form.firstname.data:
         logger.info('Updating firstname from {} to {}'.format(
-            user.firstname, form.firstname.data))
+            user.firstname.encode('utf-8'), form.firstname.encode('utf-8').data))
     if user.email != form.email.data:
         logger.info('Updating email from {} to {}'.format(
             user.email, form.email.data))
     if user.is_want_news != form.is_want_news.data:
         logger.info('Updating is_want_news from {} to {}'.format(
             user.is_want_news, form.is_want_news.data))
-    user.lastname = form.lastname.data
-    user.firstname = form.firstname.data
+    user.lastname = form.lastname.data.encode('utf-8')
+    user.firstname = form.firstname.data.encode('utf-8')
     user.email = form.email.data
     user.linkedin_url = form.linkedin_url.data
     user.twitter_url = form.twitter_url.data
