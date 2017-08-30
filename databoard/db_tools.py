@@ -373,7 +373,6 @@ def add_event(problem_name, event_name, event_title, is_public=False,
     a problem, then problem_name imported in the event file (problem_name
     is acting as a pointer for the join). Also adds CV folds.
     """
-    print event_title
     event = Event.query.filter_by(name=event_name).one_or_none()
     if event is not None:
         if force:
@@ -1531,10 +1530,10 @@ def get_leaderboards(event_name, user_name=None):
         leaderboard_df[score_name] = 0
     for score_name, scores in zip(score_names, scoress):
         leaderboard_df[score_name] = scores
-    leaderboard_df['train time'] = [
+    leaderboard_df['train time [s]'] = [
         int(round(submission.train_time_cv_mean))
         for submission in submissions]
-    leaderboard_df['test time'] = [
+    leaderboard_df['test time [s]'] = [
         int(round(submission.valid_time_cv_mean))
         for submission in submissions]
     leaderboard_df['submitted at (UTC)'] = [
@@ -1616,13 +1615,13 @@ def get_private_leaderboards(event_name, user_name=None):
     leaderboard_df['historical contributivity'] = [
         int(round(100 * submission.historical_contributivity))
         for submission in submissions]
-    leaderboard_df['train time'] = [
+    leaderboard_df['train time [s]'] = [
         int(round(submission.train_time_cv_mean))
         for submission in submissions]
     leaderboard_df['trt std'] = [
         int(round(submission.train_time_cv_std))
         for submission in submissions]
-    leaderboard_df['test time'] = [
+    leaderboard_df['test time [s]'] = [
         int(round(submission.valid_time_cv_mean))
         for submission in submissions]
     leaderboard_df['tet std'] = [
@@ -1831,40 +1830,6 @@ def get_submissions_of_state(state):
     return Submission.query.filter(Submission.state == state).all()
 
 
-def print_submissions(event_name=None, team_name=None, submission_name=None):
-    submissions = get_submissions(
-        event_name=event_name, team_name=team_name,
-        submission_name=submission_name)
-    print('***************** List of submissions ****************')
-    for submission in submissions:
-        print(submission)
-        print('\tstate = {}'.format(submission.state))
-        print('\tcontributivity = {0:.2f}'.format(
-            submission.contributivity))
-        print('\thistorical contributivity = {0:.2f}'.format(
-            submission.historical_contributivity))
-        for score in submission.scores:
-            print('\tscore_name = {}'.format(score.score_name))
-            print('\t\tvalid_score_cv_mean = {0:.2f}'.format(
-                score.valid_score_cv_mean))
-            print('\t\tvalid_score_cv_bag = {0:.2f}'.format(
-                float(score.valid_score_cv_bag)))
-            print('\t\tvalid_score_cv_bags = {}'.format(
-                score.valid_score_cv_bags))
-            print('\t\ttest_score_cv_mean = {0:.2f}'.format(
-                score.test_score_cv_mean))
-            print('\t\ttest_score_cv_bag = {0:.2f}'.format(
-                float(score.test_score_cv_bag)))
-            print('\t\ttest_score_cv_bags = {}'.format(
-                score.test_score_cv_bags))
-        print('\tpath = {}'.format(submission.path))
-        print('\tcv folds')
-        submission_on_cv_folds = db.session.query(SubmissionOnCVFold).filter(
-            SubmissionOnCVFold.submission == submission).all()
-        for submission_on_cv_fold in submission_on_cv_folds:
-            print('\t\t' + str(submission_on_cv_fold))
-
-
 def set_error(team_name, submission_name, error, error_msg):
     team = Team.query.filter_by(name=team_name).one()
     submission = Submission.query.filter_by(
@@ -1918,19 +1883,6 @@ def add_user_interaction(**kwargs):
     user_interaction = UserInteraction(**kwargs)
     db.session.add(user_interaction)
     db.session.commit()
-
-
-def print_user_interactions():
-    print('*********** User interactions ****************')
-    for user_interaction in UserInteraction.query.all():
-        print(date_time_format(user_interaction.timestamp),
-              user_interaction.user, user_interaction.interaction)
-        if user_interaction.submission_file_diff is not None:
-            print(user_interaction.submission_file_diff)
-        if user_interaction.submission_file_similarity is not None:
-            print(user_interaction.submission_file_similarity)
-        if user_interaction.submission is not None:
-            print(user_interaction.submission)
 
 
 def get_user_interactions_df():
