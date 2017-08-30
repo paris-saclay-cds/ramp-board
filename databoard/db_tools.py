@@ -500,7 +500,8 @@ def update_user(user, form):
             user.lastname.encode('utf-8'), form.lastname.data.encode('utf-8')))
     if user.firstname != form.firstname.data:
         logger.info('Updating firstname from {} to {}'.format(
-            user.firstname.encode('utf-8'), form.firstname.encode('utf-8').data))
+            user.firstname.encode('utf-8'),
+            form.firstname.data.encode('utf-8')))
     if user.email != form.email.data:
         logger.info('Updating email from {} to {}'.format(
             user.email, form.email.data))
