@@ -1,4 +1,4 @@
-from flask_wtf import FlaskForm
+from flask_wtf import Form
 from flask_wtf.file import FileField
 from wtforms import (
     StringField, PasswordField, SelectMultipleField, BooleanField, validators)
@@ -10,12 +10,12 @@ class MultiCheckboxField(SelectMultipleField):
     option_widget = CheckboxInput()
 
 
-class LoginForm(FlaskForm):
+class LoginForm(Form):
     user_name = StringField('user_name', [validators.Required()])
     password = PasswordField('password', [validators.Required()])
 
 
-class UserUpdateProfileForm(FlaskForm):
+class UserUpdateProfileForm(Form):
     user_name = StringField('user_name', [
         validators.Required(), validators.Length(min=1, max=20)])
     firstname = StringField('firstname', [validators.Required()])
@@ -35,33 +35,33 @@ class UserCreateProfileForm(UserUpdateProfileForm):
     password = PasswordField('password', [validators.Required()])
 
 
-class CodeForm(FlaskForm):
+class CodeForm(Form):
     names_codes = []
 
 
-class SubmitForm(FlaskForm):
+class SubmitForm(Form):
     submission_name = StringField('submission_name', [validators.Required()])
 
 
-class CreditForm(FlaskForm):
+class CreditForm(Form):
     note = StringField('submission_name')
     self_credit = StringField('self credit')
     name_credits = []
 
 
-class ImportForm(FlaskForm):
+class ImportForm(Form):
     selected_f_names = MultiCheckboxField('selected_f_names')
 
 
-class UploadForm(FlaskForm):
+class UploadForm(Form):
     file = FileField('file')
 
 
-class EmailForm(FlaskForm):
+class EmailForm(Form):
     email = StringField('Email', validators=[
         validators.DataRequired(), validators.Email()])
 
 
-class PasswordForm(FlaskForm):
+class PasswordForm(Form):
     password = PasswordField(
         'Password', validators=[validators.DataRequired()])
