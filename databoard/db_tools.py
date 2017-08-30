@@ -495,10 +495,10 @@ def create_user(name, password, lastname, firstname, email,
 
 def update_user(user, form):
     logger.info('Updating {}'.format(user))
-    if user.lastname != form.lastname.data:
+    if user.lastname.encode('utf-8') != form.lastname.data.encode('utf-8'):
         logger.info('Updating lastname from {} to {}'.format(
             user.lastname.encode('utf-8'), form.lastname.data.encode('utf-8')))
-    if user.firstname != form.firstname.data:
+    if user.firstname.encode('utf-8') != form.firstname.data.encode('utf-8'):
         logger.info('Updating firstname from {} to {}'.format(
             user.firstname.encode('utf-8'),
             form.firstname.data.encode('utf-8')))
