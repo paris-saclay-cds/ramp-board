@@ -68,7 +68,7 @@
                        {% endfor %}
                    </div>
                    <div class="checkbox">
-                       {{ form.is_want_news(placeholder="is_want_news", checked=True) }}
+                       {{ form.is_want_news(placeholder="is_want_news") }}
                        <label>I would like to receive news about future RAMP events</label>
                        {% for error in form.is_want_news.errors %}
                            <span style="color: red;">[{{ error }}]</span>

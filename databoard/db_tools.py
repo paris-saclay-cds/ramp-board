@@ -507,17 +507,17 @@ def update_user(user, form):
     if user.is_want_news != form.is_want_news.data:
         logger.info('Updating is_want_news from {} to {}'.format(
             user.is_want_news, form.is_want_news.data))
-    user.lastname = form.lastname.data,
-    user.firstname = form.firstname.data,
-    user.email = form.email.data,
-    user.linkedin_url = form.linkedin_url.data,
-    user.twitter_url = form.twitter_url.data,
-    user.facebook_url = form.facebook_url.data,
-    user.google_url = form.google_url.data,
-    user.github_url = form.github_url.data,
-    user.website_url = form.website_url.data,
-    user.bio = form.bio.data,
-    user.is_want_news = form.is_want_news.data,
+    user.lastname = form.lastname.data
+    user.firstname = form.firstname.data
+    user.email = form.email.data
+    user.linkedin_url = form.linkedin_url.data
+    user.twitter_url = form.twitter_url.data
+    user.facebook_url = form.facebook_url.data
+    user.google_url = form.google_url.data
+    user.github_url = form.github_url.data
+    user.website_url = form.website_url.data
+    user.bio = form.bio.data
+    user.is_want_news = form.is_want_news.data
     try:
         db.session.commit()
     except IntegrityError as e:
