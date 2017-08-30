@@ -168,12 +168,12 @@ def score_plot(event):
         legend='best score', alpha=0.9
     )
 
-    p.xaxis.formatter = DatetimeTickFormatter(formats=dict(
-        hours=["%d %B %Y"],
-        days=["%d %B %Y"],
-        months=["%d %B %Y"],
-        years=["%d %B %Y"],
-    ))
+    p.xaxis.formatter = DatetimeTickFormatter(
+        hours=['%d %B %Y'],
+        days=['%d %B %Y'],
+        months=['%d %B %Y'],
+        years=['%d %B %Y'],
+    )
     p.xaxis.major_label_orientation = np.pi / 4
 
     if event.official_score_type.is_lower_the_better:
