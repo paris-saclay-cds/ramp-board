@@ -1,8 +1,8 @@
-from flask.ext.wtf import Form
-from wtforms import StringField, PasswordField, SelectMultipleField,\
-    BooleanField, validators
-from wtforms.widgets import ListWidget, CheckboxInput
+from flask_wtf import Form
 from flask_wtf.file import FileField
+from wtforms import (
+    StringField, PasswordField, SelectMultipleField, BooleanField, validators)
+from wtforms.widgets import ListWidget, CheckboxInput
 
 
 class MultiCheckboxField(SelectMultipleField):
@@ -16,8 +16,8 @@ class LoginForm(Form):
 
 
 class UserProfileForm(Form):
-    user_name = StringField('user_name', [validators.Required(),
-                                          validators.Length(min=1, max=20)])
+    user_name = StringField('user_name', [
+        validators.Required(), validators.Length(min=1, max=20)])
     password = PasswordField('password', [validators.Required()])
     firstname = StringField('firstname', [validators.Required()])
     lastname = StringField('lastname', [validators.Required()])
@@ -55,9 +55,10 @@ class UploadForm(Form):
 
 
 class EmailForm(Form):
-    email = StringField('Email', validators=[validators.DataRequired(),
-                                             validators.Email()])
+    email = StringField('Email', validators=[
+        validators.DataRequired(), validators.Email()])
 
 
 class PasswordForm(Form):
-    password = PasswordField('Password', validators=[validators.DataRequired()])
+    password = PasswordField(
+        'Password', validators=[validators.DataRequired()])

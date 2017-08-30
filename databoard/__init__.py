@@ -3,8 +3,8 @@ import logging
 
 from flask import Flask
 from flask_mail import Mail
-from flask.ext.login import LoginManager
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
+from flask_sqlalchemy import SQLAlchemy
 from distutils.util import strtobool
 
 __version__ = '0.1.dev'
