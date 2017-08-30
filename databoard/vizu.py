@@ -189,5 +189,4 @@ def score_plot(event):
     p.title.text_font_size = '16pt'
     p.xaxis.major_label_text_font_size = '10pt'
     p.yaxis.major_label_text_font_size = '10pt'
-
     return p
