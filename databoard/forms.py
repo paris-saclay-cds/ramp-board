@@ -15,10 +15,9 @@ class LoginForm(Form):
     password = PasswordField('password', [validators.Required()])
 
 
-class UserProfileForm(Form):
+class UserUpdateProfileForm(Form):
     user_name = StringField('user_name', [
         validators.Required(), validators.Length(min=1, max=20)])
-    password = PasswordField('password', [validators.Required()])
     firstname = StringField('firstname', [validators.Required()])
     lastname = StringField('lastname', [validators.Required()])
     email = StringField('email', [validators.Required()])
@@ -30,6 +29,10 @@ class UserProfileForm(Form):
     website_url = StringField('website_url')
     bio = StringField('bio')
     is_want_news = BooleanField()
+
+
+class UserCreateProfileForm(UserUpdateProfileForm):
+    password = PasswordField('password', [validators.Required()])
 
 
 class CodeForm(Form):

@@ -105,7 +105,7 @@
                                 </li>
                             </ul>
                         </li>
-                        --!>
+                        -->
                         {% if session.logged_in %}
                         <li class="dropdown profile">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Hi {{ current_user.firstname }}!<span class="caret"></span></a>
@@ -115,8 +115,8 @@
                                     <h4 class="username">{{ current_user.name }}</h4>
                                     <p>{{ current_user.email }}</p>
                                         <div class="btn-group margin-bottom-2x" role="group">
-                                        <!-- <button type="button" class="btn btn-default"><i class="fa fa-user"></i> Profile</button> --!>
-                                            <a href="{{ url_for('logout') }}" role="button" class="btn btn-default"><i class="fa fa-sign-out"></i>Logout</a>
+                                        <a href="{{ url_for('update_profile') }}" role="button" class="btn btn-default"><i class="fa fa-user"></i>update profile</a>
+                                        <a href="{{ url_for('logout') }}" role="button" class="btn btn-default"><i class="fa fa-sign-out"></i>log out</a>
                                         </div>
                                     </div>
                                 </li>

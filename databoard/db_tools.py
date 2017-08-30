@@ -493,6 +493,49 @@ def create_user(name, password, lastname, firstname, email,
     return user
 
 
+def update_user(user, form):
+    logger.info('Updating {}'.format(user))
+    if user.lastname != form.lastname.data:
+        logger.info('Updating lastname from {} to {}'.format(
+            user.lastname, form.lastname.data))
+    if user.firstname != form.firstname.data:
+        logger.info('Updating firstname from {} to {}'.format(
+            user.firstname, form.firstname.data))
+    if user.email != form.email.data:
+        logger.info('Updating email from {} to {}'.format(
+            user.email, form.email.data))
+    if user.is_want_news != form.is_want_news.data:
+        logger.info('Updating is_want_news from {} to {}'.format(
+            user.is_want_news, form.is_want_news.data))
+    user.lastname = form.lastname.data,
+    user.firstname = form.firstname.data,
+    user.email = form.email.data,
+    user.linkedin_url = form.linkedin_url.data,
+    user.twitter_url = form.twitter_url.data,
+    user.facebook_url = form.facebook_url.data,
+    user.google_url = form.google_url.data,
+    user.github_url = form.github_url.data,
+    user.website_url = form.website_url.data,
+    user.bio = form.bio.data,
+    user.is_want_news = form.is_want_news.data,
+    try:
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        message = ''
+        try:
+            User.query.filter_by(email=user.email).one()
+            message += 'email is already in use'
+        except NoResultFound:
+            pass
+        if len(message) > 0:
+            logger.error(message)
+            raise NameClashError(message)
+        else:
+            logger.error(repr(e))
+            raise e
+
+
 def validate_user(user):
     # from 'asked' to 'user'
     user.access_level = 'user'
@@ -655,9 +698,10 @@ def make_submission(event_name, team_name, submission_name, submission_path):
             for submission_on_cv_fold in submission.on_cv_folds:
                 submission_on_cv_fold.reset()
         else:
-            raise DuplicateSubmissionError(
-                'Submission "{}" of team "{}" at event "{}" exists already'.format(
-                    submission_name, team_name, event_name))
+            error_msg = 'Submission "{}" '.format(submission_name)
+            error_msg = 'of team "{}" '.format(team_name)
+            error_msg += 'at event "{}" exists already'.format(event_name)
+            raise DuplicateSubmissionError(error_msg)
 
     # All file names with at least a . in them
     deposited_f_name_list = os.listdir(submission_path)
