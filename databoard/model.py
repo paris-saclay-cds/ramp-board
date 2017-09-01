@@ -486,7 +486,7 @@ class EventScoreType(db.Model):
         self.worst
 
     def __repr__(self):
-        repr = '{}: {}/{}'.format(self.name, self.event)
+        repr = '{}: {}'.format(self.name, self.event)
         return repr
 
     @property
