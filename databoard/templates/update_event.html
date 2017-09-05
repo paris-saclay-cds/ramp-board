@@ -101,22 +101,25 @@
                            <span style="color: red;">[{{ error }}]</span>
                        {% endfor %}
                    </div>
-                  Opening timestamp (UTC). The event will appear at this time in the list of events, sign-ups and submissions will be opened.
+                  The event will appear at this time in the list of events, sign-ups and submissions will be opened.
                    <div class="form-group">
+                       <label>opening timestamp (UTC)</label>
                        {{ form.opening_timestamp() }}
                        {% for error in form.opening_timestamp.errors %}
                            <span style="color: red;">[{{ error }}]</span>
                        {% endfor %}
                    </div>
-                  Closing timestamp (UTC). The event will disappear at this time from the list of events. The private leaderboard will be opened for participants.
+                  The private leaderboard will be opened for participants at this time.
                    <div class="form-group">
+                       <label>closing timestamp (UTC)</label>
                        {{ form.closing_timestamp() }}
                        {% for error in form.closing_timestamp.errors %}
                            <span style="color: red;">[{{ error }}]</span>
                        {% endfor %}
                    </div>
-                  Public opening timestamp (UTC). The links to submission codes will come alive at this time, signaling the start of the collaborative phase.
+                  The links to submission codes will come alive at this time, signaling the start of the collaborative phase.
                    <div class="form-group">
+                       <label>public opening timestamp (UTC)</label>
                        {{ form.public_opening_timestamp() }}
                        {% for error in form.public_opening_timestamp.errors %}
                            <span style="color: red;">[{{ error }}]</span>

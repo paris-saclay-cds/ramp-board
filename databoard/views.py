@@ -1112,6 +1112,9 @@ def ask_for_event(problem_name):
                 form.min_duration_between_submissions_second.data)
             event.opening_timestamp = form.opening_date.data
             event.closing_timestamp = form.closing_date.data
+            flash(
+                'Thank you. Your request has been sent to RAMP ' +
+                'administrators.', category='Event request')
             db_tools.send_ask_for_event_mails(
                 fl.current_user, event, form.n_students.data)
         except IntegrityError as e:
