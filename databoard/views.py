@@ -404,7 +404,7 @@ def approve_user(user_name):
 
 
 @app.route("/events/<event_name>")
-# @fl.login_required
+@fl.login_required
 def user_event(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, fl.current_user):
