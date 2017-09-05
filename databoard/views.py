@@ -104,13 +104,10 @@ def login():
         logger.info(u'{} is logged in'.format(fl.current_user.name))
         db_tools.add_user_interaction(
             interaction='login', user=fl.current_user)
-        # next = request.args.get('next')
-        # next_is_valid should check if the user has valid
-        # permission to access the `next` url
-        # if not fl.next_is_valid(next):
-        #     return abort(400)
-
-        return redirect(url_for('problems'))
+        next = request.args.get('next')
+        if next is None:
+            next = url_for('problems')
+        return redirect(next)
 
     return render_template(
         'login.html',
@@ -261,6 +258,7 @@ def problem(problem_name):
 
 
 @app.route("/event_plots/<event_name>")
+@fl.login_required
 def event_plots(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, fl.current_user):
@@ -457,10 +455,16 @@ def my_submissions(event_name):
     db_tools.add_user_interaction(
         interaction='looking at my_submissions',
         user=fl.current_user, event=event)
+    if not db_tools.is_open_code(event, fl.current_user):
+        error_str = u'No access to my submissions for event {}. '\
+            u'If you have already signed up, please wait for approval.'.\
+            format(event.name)
+        return _redirect_to_user(error_str)
+
     # Doesn't work if team mergers are allowed
     team = Team.query.filter_by(name=fl.current_user.name).one()
-    event_team = EventTeam.query.filter_by(event=event, team=team).one()
-
+    event_team = EventTeam.query.filter_by(
+        event=event, team=team).one_or_none()
     leaderboard_html = event_team.leaderboard_html
     failed_leaderboard_html = event_team.failed_leaderboard_html
     new_leaderboard_html = event_team.new_leaderboard_html
@@ -543,17 +547,12 @@ def view_model(submission_hash, f_name):
     """
     submission = Submission.query.filter_by(
         hash_=submission_hash).one_or_none()
-    if submission is None:
-        error_str = u'Missing submission {}: {}/{}'.format(
-            fl.current_user.name, submission_hash, f_name)
+    if submission is None or\
+            not db_tools.is_open_code(
+                submission.event_team.event, fl.current_user, submission):
+        error_str = u'Missing submission: {}'.format(submission_hash)
         return _redirect_to_user(error_str)
     event = submission.event_team.event
-    if not db_tools.is_open_code(event, fl.current_user, submission):
-        error_str = u'{} has no permission to look at {}/{}/{}\n'.format(
-            fl.current_user.firstname, event, submission, f_name)
-        error_str += u'The code links will open at (UTC) {}'.format(
-            db_tools.date_time_format(event.public_opening_timestamp))
-        return _redirect_to_user(error_str)
     team = submission.event_team.team
     workflow_element_name = f_name.split('.')[0]
     workflow_element = WorkflowElement.query.filter_by(
@@ -647,13 +646,10 @@ def view_model(submission_hash, f_name):
 def download_submission(submission_hash):
     submission = Submission.query.filter_by(
         hash_=submission_hash).one_or_none()
-    if submission is None:
+    if submission is None or\
+            not db_tools.is_open_code(
+                submission.event_team.event, fl.current_user, submission):
         error_str = u'Missing submission: {}'.format(submission_hash)
-        return _redirect_to_user(error_str)
-    event = submission.event_team.event
-    if not db_tools.is_open_code(event, fl.current_user, submission):
-        error_str = u'{} has no right to look at {}/{}'.format(
-            fl.current_user.name, event, submission)
         return _redirect_to_user(error_str)
     memory_file = io.BytesIO()
     with zipfile.ZipFile(memory_file, 'w') as zf:
@@ -674,12 +670,13 @@ def download_submission(submission_hash):
 def sandbox(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, fl.current_user):
-        return _redirect_to_user(u'{}: no access or no event named "{}"'.
-                                 format(fl.current_user.firstname, event_name))
+        return _redirect_to_user(
+            u'{}: no access or no event named "{}"'.format(
+                fl.current_user.firstname, event_name))
     if not db_tools.is_open_code(event, fl.current_user):
         error_str = u'No access to sandbox for event {}. '\
-            u'If you have already signed up, please wait for approval'.\
-            format(event)
+            u'If you have already signed up, please wait for approval.'.\
+            format(event.name)
         return _redirect_to_user(error_str)
 
     sandbox_submission = db_tools.get_sandbox(event, fl.current_user)
@@ -858,16 +855,13 @@ def sandbox(event_name):
 def credit(submission_hash):
     submission = Submission.query.filter_by(
         hash_=submission_hash).one_or_none()
-    if submission is None:
-        error_str = u'Missing submission {}: {}'.format(
-            fl.current_user.name, submission_hash)
+    if submission is None or\
+            not db_tools.is_open_code(
+                submission.event_team.event, fl.current_user, submission):
+        error_str = u'Missing submission: {}'.format(submission_hash)
         return _redirect_to_user(error_str)
     event_team = submission.event_team
     event = event_team.event
-    if not db_tools.is_open_code(event, fl.current_user, submission):
-        error_str = u'{} has no right to look at {}/{}'.format(
-            fl.current_user.name, event, submission)
-        return _redirect_to_user(error_str)
     source_submissions = db_tools.get_source_submissions(submission)
 
     def get_s_field(source_submission):
@@ -980,7 +974,7 @@ def private_leaderboard(event_name):
     if (not db_tools.is_admin(event, fl.current_user) and
         (event.closing_timestamp is None or
             event.closing_timestamp > datetime.datetime.utcnow())):
-        return redirect(url_for('problem'))
+        return redirect(url_for('problems'))
 
     db_tools.add_user_interaction(
         interaction='looking at private leaderboard',
@@ -1012,7 +1006,7 @@ def update_event(event_name):
         return _redirect_to_user(u'{}: no event named "{}"'.format(
             fl.current_user.firstname, event_name))
     if not db_tools.is_admin(event, fl.current_user):
-        return redirect(url_for('problem'))
+        return redirect(url_for('problems'))
     logger.info(u'{} is updating event {}'.format(
         fl.current_user.name, event.name))
     admin = check_admin(fl.current_user, event)
