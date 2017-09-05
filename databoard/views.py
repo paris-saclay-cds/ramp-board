@@ -101,7 +101,7 @@ def login():
         session['logged_in'] = True
         user.is_authenticated = True
         db.session.commit()
-        logger.info(u'{} is logged in'.format(fl.current_user.firstname))
+        logger.info(u'{} is logged in'.format(fl.current_user.name))
         db_tools.add_user_interaction(
             interaction='login', user=fl.current_user)
         # next = request.args.get('next')
