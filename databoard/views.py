@@ -1,3 +1,4 @@
+from __future__ import division
 import os
 # import sys
 import codecs
@@ -29,12 +30,15 @@ import databoard.config as config
 from databoard.model import (
     User, Submission, WorkflowElement, Event, Problem, Keyword, Team,
     SubmissionFile, UserInteraction, SubmissionSimilarity, EventTeam,
-    DuplicateSubmissionError, TooEarlySubmissionError, MissingExtensionError)
+    DuplicateSubmissionError, TooEarlySubmissionError, MissingExtensionError,
+    NameClashError)
 from databoard.forms import (
     LoginForm, CodeForm, SubmitForm, ImportForm, UploadForm,
     UserCreateProfileForm, UserUpdateProfileForm,
-    CreditForm, EmailForm, PasswordForm)
+    CreditForm, EmailForm, PasswordForm, EventUpdateProfileForm,
+    AskForEventForm)
 from databoard.security import ts
+from sqlalchemy.exc import IntegrityError
 
 
 app.secret_key = os.urandom(24)
@@ -97,7 +101,7 @@ def login():
         session['logged_in'] = True
         user.is_authenticated = True
         db.session.commit()
-        logger.info(u'{} is logged in'.format(fl.current_user))
+        logger.info(u'{} is logged in'.format(fl.current_user.firstname))
         db_tools.add_user_interaction(
             interaction='login', user=fl.current_user)
         # next = request.args.get('next')
@@ -259,9 +263,9 @@ def problem(problem_name):
 @app.route("/event_plots/<event_name>")
 def event_plots(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
-    # if not db_tools.is_public_event(event, fl.current_user):
-    #     return _redirect_to_user(u'{}: no event named "{}"'.format(
-    #         fl.current_user, event_name))
+    if not db_tools.is_public_event(event, fl.current_user):
+        return _redirect_to_user(u'{}: no event named "{}"'.format(
+            fl.current_user.firstname, event_name))
     if event:
         p = vizu.score_plot(event)
         script, div = components(p)
@@ -308,7 +312,7 @@ def sign_up_for_event(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, fl.current_user):
         return _redirect_to_user(u'{}: no event named "{}"'.format(
-            fl.current_user, event_name))
+            fl.current_user.firstname, event_name))
     db_tools.add_user_interaction(
         interaction='signing up at event', user=fl.current_user, event=event)
 
@@ -321,7 +325,8 @@ def sign_up_for_event(event_name):
     else:
         db_tools.sign_up_team(event.name, fl.current_user.name)
         return _redirect_to_sandbox(
-            event, u'{} is signed up for {}.'.format(fl.current_user, event),
+            event, u'{} is signed up for {}.'.format(
+                fl.current_user.firstname, event),
             is_error=False, category='Successful sign-up')
 
 
@@ -332,8 +337,9 @@ def approve_sign_up_for_event(event_name, user_name):
     user = User.query.filter_by(name=user_name).one_or_none()
     if not fl.current_user.access_level == 'admin' or\
             not db_tools.is_admin(event, fl.current_user):
-        return _redirect_to_user(u'Sorry {}, you do not have admin rights'.
-                                 format(fl.current_user), is_error=True)
+        return _redirect_to_user(
+            u'Sorry {}, you do not have admin rights'.format(
+                fl.current_user.firstname), is_error=True)
     if not event or not user:
         return _redirect_to_user(u'Oups, no event {} or no user {}.'.
                                  format(event_name, user_name), is_error=True)
@@ -347,8 +353,9 @@ def approve_sign_up_for_event(event_name, user_name):
 @fl.login_required
 def approve_users():
     if not fl.current_user.access_level == 'admin':
-        return _redirect_to_user(u'Sorry {}, you do not have admin rights'.
-                                 format(fl.current_user), is_error=True)
+        return _redirect_to_user(
+            u'Sorry {}, you do not have admin rights'.format(
+                fl.current_user.firstname), is_error=True)
     if request.method == 'GET':
         asked_users = User.query.filter_by(access_level='asked')
         asked_sign_up = EventTeam.query.filter_by(approved=False)
@@ -384,11 +391,12 @@ def approve_users():
 def approve_user(user_name):
     user = User.query.filter_by(name=user_name).one_or_none()
     if not fl.current_user.access_level == 'admin':
-        return _redirect_to_user(u'Sorry {}, you do not have admin rights'.
-                                 format(fl.current_user), is_error=True)
+        return _redirect_to_user(
+            u'Sorry {}, you do not have admin rights'.format(
+                fl.current_user.firstname), is_error=True)
     if not user:
-        return _redirect_to_user(u'Oups, no user {}.'.format(user_name),
-                                 is_error=True)
+        return _redirect_to_user(
+            u'Oups, no user {}.'.format(user_name), is_error=True)
     db_tools.approve_user(user.name)
     return _redirect_to_user(
         u'{} is signed up.'.format(user),
@@ -399,9 +407,13 @@ def approve_user(user_name):
 # @fl.login_required
 def user_event(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
-    # if not db_tools.is_public_event(event, fl.current_user):
-    #     return _redirect_to_user(u'{}: no event named "{}"'.format(
-    #         fl.current_user, event_name))
+    if not db_tools.is_public_event(event, fl.current_user):
+        if fl.current_user.is_authenticated:
+            return _redirect_to_user(u'{}: no event named "{}"'.format(
+                fl.current_user.firstname, event_name))
+        else:
+            return _redirect_to_user(u'no event named "{}"'.format(
+                event_name))
     if event:
         if fl.current_user.is_authenticated:
             db_tools.add_user_interaction(
@@ -441,7 +453,7 @@ def my_submissions(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, fl.current_user):
         return _redirect_to_user(u'{}: no event named "{}"'.format(
-            fl.current_user, event_name))
+            fl.current_user.firstname, event_name))
     db_tools.add_user_interaction(
         interaction='looking at my_submissions',
         user=fl.current_user, event=event)
@@ -465,28 +477,18 @@ def my_submissions(event_name):
 @app.route("/events/<event_name>/leaderboard")
 @fl.login_required
 def leaderboard(event_name):
-    # start = time.time()
-
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, fl.current_user):
         return _redirect_to_user(u'{}: no event named "{}"'.format(
-            fl.current_user, event_name))
+            fl.current_user.firstname, event_name))
     db_tools.add_user_interaction(
         interaction='looking at leaderboard',
         user=fl.current_user, event=event)
-
-    # logger.info(u'leaderboard user_interaction takes {}ms'.format(
-    #     int(1000 * (time.time() - start))))
-    # start = time.time()
 
     if db_tools.is_open_leaderboard(event, fl.current_user):
         leaderboard_html = event.public_leaderboard_html_with_links
     else:
         leaderboard_html = event.public_leaderboard_html_no_links
-
-    # logger.info(u'leaderboard db access takes {}ms'.format(
-    #     int(1000 * (time.time() - start))))
-    # start = time.time()
 
     leaderboard_kwargs = dict(
         leaderboard=leaderboard_html,
@@ -508,9 +510,6 @@ def leaderboard(event_name):
         template = render_template(
             'leaderboard.html',
             **leaderboard_kwargs)
-
-    # logger.info(u'leaderboard rendering takes {}ms'.format(
-    #     int(1000 * (time.time() - start))))
 
     return template
 
@@ -546,12 +545,12 @@ def view_model(submission_hash, f_name):
         hash_=submission_hash).one_or_none()
     if submission is None:
         error_str = u'Missing submission {}: {}/{}'.format(
-            fl.current_user, submission_hash, f_name)
+            fl.current_user.name, submission_hash, f_name)
         return _redirect_to_user(error_str)
     event = submission.event_team.event
     if not db_tools.is_open_code(event, fl.current_user, submission):
         error_str = u'{} has no permission to look at {}/{}/{}\n'.format(
-            fl.current_user, event, submission, f_name)
+            fl.current_user.firstname, event, submission, f_name)
         error_str += u'The code links will open at (UTC) {}'.format(
             db_tools.date_time_format(event.public_opening_timestamp))
         return _redirect_to_user(error_str)
@@ -561,14 +560,14 @@ def view_model(submission_hash, f_name):
         name=workflow_element_name, workflow=event.workflow).one_or_none()
     if workflow_element is None:
         error_str = u'{} is not a valid workflow element by {} '.\
-            format(workflow_element_name, fl.current_user)
+            format(workflow_element_name, fl.current_user.name)
         error_str += u'in {}/{}/{}/{}'.format(event, team, submission, f_name)
         return _redirect_to_user(error_str)
     submission_file = SubmissionFile.query.filter_by(
         submission=submission, workflow_element=workflow_element).one_or_none()
     if submission_file is None:
         error_str = u'No submission file by {} in {}/{}/{}/{}'.format(
-            fl.current_user, event, team, submission, f_name)
+            fl.current_user.name, event, team, submission, f_name)
         return _redirect_to_user(error_str)
 
     # superfluous, perhaps when we'll have different extensions?
@@ -577,7 +576,7 @@ def view_model(submission_hash, f_name):
     submission_abspath = os.path.abspath(submission.path)
     if not os.path.exists(submission_abspath):
         error_str = u'{} does not exist by {} in {}/{}/{}/{}'.format(
-            submission_abspath, fl.current_user, event, team, submission,
+            submission_abspath, fl.current_user.name, event, team, submission,
             f_name)
         return _redirect_to_user(error_str)
 
@@ -586,7 +585,7 @@ def view_model(submission_hash, f_name):
         submission=submission, submission_file=submission_file)
 
     logger.info(u'{} is looking at {}/{}/{}/{}'.format(
-        fl.current_user, event, team, submission, f_name))
+        fl.current_user.name, event, team, submission, f_name))
 
     # Downloading file if it is not editable (e.g., external_data.csv)
     if not workflow_element.is_editable:
@@ -611,7 +610,7 @@ def view_model(submission_hash, f_name):
         sandbox_submission = db_tools.get_sandbox(event, fl.current_user)
         for f_name in import_form.selected_f_names.data:
             logger.info(u'{} is importing {}/{}/{}/{}'.format(
-                fl.current_user, event, team, submission, f_name))
+                fl.current_user.name, event, team, submission, f_name))
 
             # TODO: deal with different extensions of the same file
             src = os.path.join(submission.path, f_name)
@@ -654,7 +653,7 @@ def download_submission(submission_hash):
     event = submission.event_team.event
     if not db_tools.is_open_code(event, fl.current_user, submission):
         error_str = u'{} has no right to look at {}/{}'.format(
-            fl.current_user, event, submission)
+            fl.current_user.name, event, submission)
         return _redirect_to_user(error_str)
     memory_file = io.BytesIO()
     with zipfile.ZipFile(memory_file, 'w') as zf:
@@ -676,7 +675,7 @@ def sandbox(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, fl.current_user):
         return _redirect_to_user(u'{}: no access or no event named "{}"'.
-                                 format(fl.current_user, event_name))
+                                 format(fl.current_user.firstname, event_name))
     if not db_tools.is_open_code(event, fl.current_user):
         error_str = u'No access to sandbox for event {}. '\
             u'If you have already signed up, please wait for approval'.\
@@ -738,7 +737,7 @@ def sandbox(event_name):
             return _redirect_to_sandbox(event, u'Error: {}'.format(e))
         return _redirect_to_sandbox(
             event, u'{} saved submission files for {}.'.format(
-                fl.current_user, event_team, event),
+                fl.current_user.name, event_team, event),
             is_error=False, category='File saved')
 
     if upload_form.validate_on_submit() and upload_form.file.data:
@@ -776,7 +775,7 @@ def sandbox(event_name):
             dst = os.path.join(sandbox_submission.path, upload_f_name)
             shutil.copy2(tmp_f_name, dst)
         logger.info(u'{} uploaded {} in {}'.format(
-            fl.current_user, upload_f_name, event))
+            fl.current_user.name, upload_f_name, event))
 
         if submission_file.is_editable:
             new_code = submission_file.get_code()
@@ -824,18 +823,19 @@ def sandbox(event_name):
             return _redirect_to_sandbox(event, e.value)
 
         logger.info(u'{} submitted {} for {}.'.format(
-            fl.current_user, new_submission.name, event_team))
+            fl.current_user.name, new_submission.name, event_team))
         if event.is_send_submitted_mails:
             try:
                 db_tools.send_submission_mails(
                     fl.current_user, new_submission, event_team)
             except Exception as e:
-                error_str = u'mail was not sent {} '.format(fl.current_user)
+                error_str = u'mail was not sent {} '.format(
+                    fl.current_user.name)
                 error_str += u'submitted {} for {}\n{}.'.format(
                     new_submission.name, event_team, e)
                 logger.error(error_str)
         flash(u'{} submitted {} for {}.'.format(
-            fl.current_user, new_submission.name, event_team),
+            fl.current_user.firstname, new_submission.name, event_team),
             category='Submission')
 
         db_tools.add_user_interaction(
@@ -860,13 +860,13 @@ def credit(submission_hash):
         hash_=submission_hash).one_or_none()
     if submission is None:
         error_str = u'Missing submission {}: {}'.format(
-            fl.current_user, submission_hash)
+            fl.current_user.name, submission_hash)
         return _redirect_to_user(error_str)
     event_team = submission.event_team
     event = event_team.event
     if not db_tools.is_open_code(event, fl.current_user, submission):
         error_str = u'{} has no right to look at {}/{}'.format(
-            fl.current_user, event, submission)
+            fl.current_user.name, event, submission)
         return _redirect_to_user(error_str)
     source_submissions = db_tools.get_source_submissions(submission)
 
@@ -976,7 +976,7 @@ def private_leaderboard(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, fl.current_user):
         return _redirect_to_user(u'{}: no event named "{}"'.format(
-            fl.current_user, event_name))
+            fl.current_user.firstname, event_name))
     if (not db_tools.is_admin(event, fl.current_user) and
         (event.closing_timestamp is None or
             event.closing_timestamp > datetime.datetime.utcnow())):
@@ -1000,6 +1000,140 @@ def private_leaderboard(event_name):
     #     int(1000 * (time.time() - start))))
 
     return template
+
+
+@app.route("/events/<event_name>/update", methods=['GET', 'POST'])
+@fl.login_required
+def update_event(event_name):
+    if not fl.current_user.is_authenticated:
+        return redirect(url_for('login'))
+    event = Event.query.filter_by(name=event_name).one_or_none()
+    if not db_tools.is_public_event(event, fl.current_user):
+        return _redirect_to_user(u'{}: no event named "{}"'.format(
+            fl.current_user.firstname, event_name))
+    if not db_tools.is_admin(event, fl.current_user):
+        return redirect(url_for('problem'))
+    logger.info(u'{} is updating event {}'.format(
+        fl.current_user.name, event.name))
+    admin = check_admin(fl.current_user, event)
+    # We assume here that event name has the syntax <problem_name>_<suffix>
+    suffix = event.name[len(event.problem.name) + 1:]
+
+    h = event.min_duration_between_submissions // 3600
+    m = event.min_duration_between_submissions // 60 % 60
+    s = event.min_duration_between_submissions % 60
+    form = EventUpdateProfileForm(
+        suffix=suffix, title=event.title,
+        is_send_trained_mails=event.is_send_trained_mails,
+        is_send_submitted_mails=event.is_send_submitted_mails,
+        is_public=event.is_public,
+        is_controled_signup=event.is_controled_signup,
+        min_duration_between_submissions_hour=h,
+        min_duration_between_submissions_minute=m,
+        min_duration_between_submissions_second=s,
+        opening_timestamp=event.opening_timestamp,
+        closing_timestamp=event.closing_timestamp,
+        public_opening_timestamp=event.public_opening_timestamp,
+    )
+    if form.validate_on_submit():
+        try:
+            if form.suffix.data == '':
+                event.name = event.problem.name
+            else:
+                event.name = event.problem.name + '_' + form.suffix.data
+            event.title = form.title.data
+            event.is_send_trained_mails = form.is_send_trained_mails.data
+            event.is_send_submitted_mails = form.is_send_submitted_mails.data
+            event.is_public = form.is_public.data
+            event.is_controled_signup = form.is_controled_signup.data
+            event.min_duration_between_submissions = (
+                form.min_duration_between_submissions_hour.data * 3600 +
+                form.min_duration_between_submissions_minute.data * 60 +
+                form.min_duration_between_submissions_second.data)
+            event.opening_timestamp = form.opening_timestamp.data
+            event.closing_timestamp = form.closing_timestamp.data
+            event.public_opening_timestamp = form.public_opening_timestamp.data
+            db.session.commit()
+
+        except IntegrityError as e:
+            db.session.rollback()
+            message = ''
+            existing_event = Event.query.filter_by(
+                name=event.name).one_or_none()
+            if existing_event is not None:
+                message += 'event name is already in use'
+            # # try:
+            # #     User.query.filter_by(email=email).one()
+            # #     if len(message) > 0:
+            # #         message += ' and '
+            # #     message += 'email is already in use'
+            # except NoResultFound:
+            #     pass
+            if len(message) > 0:
+                e = NameClashError(message)
+            flash(u'{}'.format(e), category='Update event error')
+            return redirect(url_for('update_event', event_name=event.name))
+
+        return redirect(url_for('problems'))
+
+    return render_template(
+        'update_event.html',
+        form=form,
+        event=event,
+        admin=admin,
+    )
+
+
+@app.route("/problems/<problem_name>/ask_for_event", methods=['GET', 'POST'])
+@fl.login_required
+def ask_for_event(problem_name):
+    if not fl.current_user.is_authenticated:
+        return redirect(url_for('login'))
+    problem = Problem.query.filter_by(name=problem_name).one_or_none()
+    if problem is None:
+        return _redirect_to_user(u'{}: no problem named "{}"'.format(
+            fl.current_user.firstname, problem_name))
+    logger.info(u'{} is asking for event on {}'.format(
+        fl.current_user.name, problem.name))
+    # We assume here that event name has the syntax <problem_name>_<suffix>
+    form = AskForEventForm(
+        min_duration_between_submissions_hour=8,
+        min_duration_between_submissions_minute=0,
+        min_duration_between_submissions_second=0,
+    )
+    if form.validate_on_submit():
+        try:
+            event_name = problem.name + '_' + form.suffix.data
+            event_title = form.title.data
+            event = db_tools.add_event(problem_name, event_name, event_title)
+            event.min_duration_between_submissions = (
+                form.min_duration_between_submissions_hour.data * 3600 +
+                form.min_duration_between_submissions_minute.data * 60 +
+                form.min_duration_between_submissions_second.data)
+            event.opening_timestamp = form.opening_date.data
+            event.closing_timestamp = form.closing_date.data
+            db_tools.send_ask_for_event_mails(
+                fl.current_user, event, form.n_students.data)
+        except IntegrityError as e:
+            db.session.rollback()
+            message = ''
+            existing_event = Event.query.filter_by(
+                name=event_name).one_or_none()
+            if existing_event is not None:
+                message += 'event name is already in use'
+            if len(message) > 0:
+                e = NameClashError(message)
+            flash(u'{}'.format(e), category='Ask for event error')
+            return redirect(url_for(
+                'ask_for_event', problem_name=problem_name))
+
+        return redirect(url_for('problems'))
+
+    return render_template(
+        'ask_for_event.html',
+        form=form,
+        problem=problem,
+    )
 
 
 @app.route("/<submission_hash>/error.txt")
@@ -1030,7 +1164,7 @@ def view_submission_error(submission_hash):
     submission = Submission.query.filter_by(hash_=submission_hash).one()
     if submission is None:
         error_str = u'Missing submission {}: {}'.format(
-            fl.current_user, submission_hash)
+            fl.current_user.name, submission_hash)
         return _redirect_to_user(error_str)
     event = submission.event_team.event
     team = submission.event_team.team
@@ -1131,7 +1265,7 @@ def dashboard_submissions(event_name):
     else:
         return _redirect_to_user(
             u'Sorry {}, you do not have admin access for {}"'.
-            format(fl.current_user, event_name))
+            format(fl.current_user.firstname, event_name))
 
 
 @app.route('/reset_password', methods=["GET", "POST"])

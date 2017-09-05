@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Sign Up{% endblock %}
+{% block content %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+{% if messages %}
+
+    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    {% for category, message in messages %}
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+                </div>
+                <div class="modal-body">
+                   	{{ message }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+	{% endfor %}
+    </div>
+
+{% endif %}
+{% endwith %}
+ <!-- style="padding-bottom: 20px " -->
+<div class="col-xs-12">
+     <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <div class="title">Update event {{ event.name }}</div>
+            </div>
+        </div>                   
+         <div class="card-body">
+           <form class="ui form" method="post" action="" name="update_event">
+               {{ form.hidden_tag() }}
+                   Event name will be {{ event.problem.name }} if you leave suffix empty, or {{ event.problem.name }}_&lt;suffix&gt;. The length should be less than 20 characters, only ascii, no space. It will be used to identify the event, primarily in the url. If you open several events for the same class or hackaton, please use the same suffix consistently.
+                   <div class="form-group">
+                       <label>event suffix</label>
+                       {{ form.suffix(placeholder="event_suffix") }}
+                       {% for error in form.suffix.errors %}
+                           <span style="color: red;">[{{ error }}]</span>
+                       {% endfor %}
+                   </div>
+                   The title will be used on web pages to name the event. The length should be less than 80 characters. If you open several events for the same class or hackaton, please use the same title consistently.
+                   <div class="form-group">
+                       <label>event title</label>
+                       {{ form.title(placeholder="event_title") }}
+                       {% for error in form.title.errors %}
+                           <span style="color: red;">[{{ error }}]</span>
+                       {% endfor %}
+                   </div>
+                   Check if RAMP admin should send mails to participants when their submissions have been trained.
+                   <div class="form-group">
+                       <label>"trained" mails</label>
+                       {{ form.is_send_trained_mails() }}
+                       {% for error in form.is_send_trained_mails.errors %}
+                           <span style="color: red;">[{{ error }}]</span>
+                       {% endfor %}
+                   </div>
+                   Check if RAMP admin should send mails to event admins when participants submit.
+                   <div class="form-group">
+                       <label>"submitted" mails</label>
+                       {{ form.is_send_submitted_mails() }}
+                       {% for error in form.is_send_submitted_mails.errors %}
+                           <span style="color: red;">[{{ error }}]</span>
+                       {% endfor %}
+                   </div>
+                   Check if event is public. Private events can only be seen and interacted with by event admins.
+                   <div class="form-group">
+                       <label>public</label>
+                       {{ form.is_public() }}
+                       {% for error in form.is_public.errors %}
+                           <span style="color: red;">[{{ error }}]</span>
+                       {% endfor %}
+                   </div>
+                   Check if event admins control sign up. If not checked, any RAMP user can sign up.
+                   <div class="form-group">
+                       <label>controled signup</label>
+                       {{ form.is_controled_signup() }}
+                       {% for error in form.is_controled_signup.errors %}
+                           <span style="color: red;">[{{ error }}]</span>
+                       {% endfor %}
+                   </div>
+                   Minimum duration between submissions.
+                   <div class="form-group">
+                       {{ form.min_duration_between_submissions_hour() }}hours
+                       {% for error in form.min_duration_between_submissions_hour.errors %}
+                           <span style="color: red;">[{{ error }}]</span>
+                       {% endfor %}
+                       {{ form.min_duration_between_submissions_minute() }}minutes
+                       {% for error in form.min_duration_between_submissions_minute.errors %}
+                           <span style="color: red;">[{{ error }}]</span>
+                       {% endfor %}
+                       {{ form.min_duration_between_submissions_second() }}seconds
+                       {% for error in form.min_duration_between_submissions_second.errors %}
+                           <span style="color: red;">[{{ error }}]</span>
+                       {% endfor %}
+                   </div>
+                  Opening timestamp (UTC). The event will appear at this time in the list of events, sign-ups and submissions will be opened.
+                   <div class="form-group">
+                       {{ form.opening_timestamp() }}
+                       {% for error in form.opening_timestamp.errors %}
+                           <span style="color: red;">[{{ error }}]</span>
+                       {% endfor %}
+                   </div>
+                  Closing timestamp (UTC). The event will disappear at this time from the list of events. The private leaderboard will be opened for participants.
+                   <div class="form-group">
+                       {{ form.closing_timestamp() }}
+                       {% for error in form.closing_timestamp.errors %}
+                           <span style="color: red;">[{{ error }}]</span>
+                       {% endfor %}
+                   </div>
+                  Public opening timestamp (UTC). The links to submission codes will come alive at this time, signaling the start of the collaborative phase.
+                   <div class="form-group">
+                       {{ form.public_opening_timestamp() }}
+                       {% for error in form.public_opening_timestamp.errors %}
+                           <span style="color: red;">[{{ error }}]</span>
+                       {% endfor %}
+                   </div>
+                   <input type="submit" value="Update" class="ui submit button">
+               </div>
+           </form>
+    </div>
+   </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+$(function () {
+   $('#formerror').modal('toggle')
+});
+</script>
+{% endblock %}

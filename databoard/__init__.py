@@ -5,6 +5,7 @@ from flask import Flask
 from flask_mail import Mail
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
 from distutils.util import strtobool
 
 __version__ = '0.1.dev'
@@ -17,6 +18,7 @@ if test_config is not None:
     if strtobool(test_config):
         app.config.from_object('databoard.config.TestingConfig')
 app.debug = False
+# CSRFProtect(app)
 # app.debug_mode = True
 db = SQLAlchemy(app)
 mail = Mail(app)

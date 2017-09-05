@@ -377,11 +377,6 @@ def add_event(problem_name, event_name, event_title, is_public=False,
     if event is not None:
         if force:
             delete_event(event)
-        else:
-            logger.info(
-                'Attempting to delete event, use "force=True" ' +
-                'if you know what you are doing')
-            return
     event = Event(
         name=event_name, problem_name=problem_name, event_title=event_title)
     event.is_public = is_public
@@ -402,6 +397,7 @@ def add_event(problem_name, event_name, event_title, is_public=False,
         db.session.add(event_score_type)
     event.official_score_name = score_types[0].name
     db.session.commit()
+    return event
 
 
 def add_keyword(name, type, category=None, description=None, force=False):
@@ -833,6 +829,29 @@ def send_submission_mails(user, submission, event_team):
         user,
         event.name,
         submission.path)
+    for recipient in recipient_list:
+        send_mail(recipient, subject, body)
+
+
+def send_ask_for_event_mails(user, event, n_students):
+    #  later can be joined to the ramp admins
+    recipient_list = config.ADMIN_MAILS[:]
+
+    subject = '{} is asking for an event on {}'.format(
+        user.name.encode('utf-8'), event.problem.name)
+    body = 'user name = {} {}\n'.format(
+        user.firstname.encode('utf-8'), user.lastname.encode('utf-8'))
+    body += 'user email = {}\n'.format(user.email)
+    body += 'event name = {}\n'.format(event.name)
+    body += 'event title = {}\n'.format(event.title.encode('utf-8'))
+    body += 'event start = {}\n'.format(event.opening_timestamp)
+    body += 'event end = {}\n'.format(event.closing_timestamp)
+    body += 'approximate number of students = {}\n'.format(n_students)
+    body += 'minimum duration between submissions = {}s\n'.format(
+        event.min_duration_between_submissions)
+    # this is too important to miss in case mailing bugs
+    logger.info(subject)
+    logger.info(body)
     for recipient in recipient_list:
         send_mail(recipient, subject, body)
 

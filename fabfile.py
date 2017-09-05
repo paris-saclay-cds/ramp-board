@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import logging
 from distutils.util import strtobool
+from sqlalchemy.exc import IntegrityError
 
 logger = logging.getLogger('databoard')
 
@@ -170,8 +171,12 @@ def add_event(problem_name, event_name, event_title, is_public='True',
     force = bool(strtobool(force))
     is_public = bool(strtobool(is_public))
     from databoard.db_tools import add_event
-
-    add_event(problem_name, event_name, event_title, is_public, force)
+    try:
+        add_event(problem_name, event_name, event_title, is_public, force)
+    except IntegrityError:
+        logger.info(
+            'Attempting to delete event, use "force=True" ' +
+            'if you know what you are doing')
 
 
 def make_event_admin(e, u):
