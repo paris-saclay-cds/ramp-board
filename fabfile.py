@@ -1,5 +1,4 @@
 import sys
-import pandas as pd
 import os
 import logging
 from distutils.util import strtobool
@@ -253,6 +252,7 @@ def add_users_from_file(users_to_add_f_name, password_f_name):
 
     Users whould be the same in the same order in the two files.
     """
+    import pandas as pd
     from databoard.model import NameClashError
 
     users_to_add = pd.read_csv(users_to_add_f_name)
@@ -297,6 +297,7 @@ def send_password_mails(password_f_name):
 
 
 def sign_up_event_users_from_file(users_to_add_f_name, event):
+    import pandas as pd
     from databoard.model import DuplicateSubmissionError
     users_to_sign_up = pd.read_csv(users_to_add_f_name)
     for _, u in users_to_sign_up.iterrows():

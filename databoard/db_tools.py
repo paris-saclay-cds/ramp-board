@@ -1050,7 +1050,6 @@ def train_test_submission(submission, force_retrain_test=False):
                 force_retrain_test)
             submission_on_cv_fold.update(detached_submission_on_cv_fold)
     submission.training_timestamp = datetime.datetime.utcnow()
-    submission.set_state_after_training()
     submission.compute_test_score_cv_bag()
     submission.compute_valid_score_cv_bag()
     # Means and stds were constructed on demand by fetching fold times.
@@ -1079,6 +1078,7 @@ def train_test_submission(submission, force_retrain_test=False):
             score.score_name, score.test_score_cv_bag))
 
     send_trained_mails(submission)
+    submission.set_state_after_training()
 
 
 def _make_error_message(e):
