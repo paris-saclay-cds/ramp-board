@@ -202,6 +202,20 @@ def train_test(e, t=None, s=None, state=None, force='False'):
     compute_contributivity(e)
 
 
+def train_test_on_server(e, t, s, force='False'):
+    """Train and test a single names submission, without scoring it.
+
+    Typically used on a remote server so scoring does not take server time.
+    """
+    force = strtobool(force)
+
+    from databoard.db_tools import train_test_submission, get_submissions
+
+    submission = get_submissions(
+        event_name=e, team_name=t, submission_name=s)[0]
+    train_test_submission(submission, force_retrain_test=force)
+
+
 def set_n_submissions(e=None):
     from databoard.db_tools import set_n_submissions
     set_n_submissions(e)
