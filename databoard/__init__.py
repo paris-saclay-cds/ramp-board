@@ -33,6 +33,8 @@ logging.basicConfig(
     level=logging.DEBUG,
     format='%(levelname)s: %(message)s',
     filename=app.config['LOG_FILENAME'])
+# get rid of annoying skimage debug messages
+logging.getLogger('PIL.PngImagePlugin').disabled = True
 # else:
 # toaddrs=app.config['MAIL_RECIPIENTS'],
 #         subject='Databoard error')
