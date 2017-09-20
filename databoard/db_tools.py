@@ -970,6 +970,7 @@ def backend_train_test_loop(event_name=None, timeout=20,
             earliest_new_submission, datetime.datetime.utcnow()))
         if earliest_new_submission is not None:
             train_test_submission(earliest_new_submission)
+            score_submission(earliest_new_submission)
             event_names.add(earliest_new_submission.event.name)
             update_leaderboards(earliest_new_submission.event.name)
             update_all_user_leaderboards(earliest_new_submission.event.name)
@@ -994,6 +995,7 @@ def train_test_submissions(submissions=None, force_retrain_test=False):
             Submission.is_not_sandbox).order_by(Submission.id).all()
     for submission in submissions:
         train_test_submission(submission, force_retrain_test)
+        score_submission(submission)
 
 
 # For parallel call
@@ -1050,6 +1052,10 @@ def train_test_submission(submission, force_retrain_test=False):
                 force_retrain_test)
             submission_on_cv_fold.update(detached_submission_on_cv_fold)
     submission.training_timestamp = datetime.datetime.utcnow()
+    submission.set_state_after_training()
+
+
+def score_submission(submission):
     submission.compute_test_score_cv_bag()
     submission.compute_valid_score_cv_bag()
     # Means and stds were constructed on demand by fetching fold times.
@@ -1078,7 +1084,6 @@ def train_test_submission(submission, force_retrain_test=False):
             score.score_name, score.test_score_cv_bag))
 
     send_trained_mails(submission)
-    submission.set_state_after_training()
 
 
 def _make_error_message(e):
