@@ -63,8 +63,6 @@ def check_password(plain_text_password, hashed_password):
 
     Using bcrypt, the salt is saved into the hash itself.
     """
-    print type(plain_text_password)
-    print type(hashed_password)
     return bcrypt.checkpw(
         plain_text_password.encode('utf8'), hashed_password.encode('utf8'))
 
