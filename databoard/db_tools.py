@@ -55,7 +55,7 @@ def get_hashed_password(plain_text_password):
 
     (Using bcrypt, the salt is saved into the hash itself)
     """
-    return bcrypt.hashpw(plain_text_password, bcrypt.gensalt())
+    return bcrypt.hashpw(plain_text_password.encode('utf8'), bcrypt.gensalt())
 
 
 def check_password(plain_text_password, hashed_password):
@@ -63,7 +63,10 @@ def check_password(plain_text_password, hashed_password):
 
     Using bcrypt, the salt is saved into the hash itself.
     """
-    return bcrypt.checkpw(plain_text_password, hashed_password)
+    print type(plain_text_password)
+    print type(hashed_password)
+    return bcrypt.checkpw(
+        plain_text_password.encode('utf8'), hashed_password.encode('utf8'))
 
 
 def generate_single_password(mywords=None):
