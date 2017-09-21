@@ -1053,7 +1053,7 @@ def train_test_submission(submission, force_retrain_test=False):
             submission_on_cv_fold.update(detached_submission_on_cv_fold)
     submission.training_timestamp = datetime.datetime.utcnow()
     submission.set_state_after_training()
-
+    db.session.commit()
 
 def score_submission(submission):
     submission.compute_test_score_cv_bag()
