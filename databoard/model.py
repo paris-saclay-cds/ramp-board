@@ -444,6 +444,7 @@ class Event(db.Model):
 # XXX
 import uuid
 
+
 # many-to-many
 class EventScoreType(db.Model):
     __tablename__ = 'event_score_types'
@@ -1004,8 +1005,18 @@ class SubmissionScore(db.Model):
 
 # evaluate right after train/test, so no need for 'scored' states
 submission_states = db.Enum(
-    'new', 'checked', 'checking_error', 'trained', 'training_error',
-    'validated', 'validating_error', 'tested', 'testing_error', 'training',
+    'new',  # submitted by user to frontend server
+    'checked',  # not used, checking is part of the workflow now
+    'checking_error',  # not used, checking is part of the workflow now
+    'trained',  # training finished normally on the backend server
+    'training_error',  # training finished abnormally on the backend server
+    'validated',  # validation finished normally on the backend server
+    'validating_error',  # validation finished abnormally on the backend server
+    'tested',  # testing finished normally on the backend server
+    'testing_error',  # testing finished abnormally on the backend server
+    'training',  # training is running normally on the backend server
+    'sent_to_training',  # frontend server sent submission to backend server
+    'scored',  # submission scored on the frontend server: final state
     name='submission_states')
 
 submission_types = db.Enum('live', 'test', name='submission_types')
@@ -1026,13 +1037,14 @@ class Submission(db.Model):
     name = db.Column(db.String(20, convert_unicode=True), nullable=False)
     hash_ = db.Column(db.String, nullable=False, index=True, unique=True)
     submission_timestamp = db.Column(db.DateTime, nullable=False)
-    training_timestamp = db.Column(db.DateTime)
+    sent_to_training_timestamp = db.Column(db.DateTime)
+    training_timestamp = db.Column(db.DateTime)  # end of training
 
     contributivity = db.Column(db.Float, default=0.0)
     historical_contributivity = db.Column(db.Float, default=0.0)
 
     type = db.Column(submission_types, default='live')
-    state = db.Column(submission_states, default='new')
+    state = db.Column(db.String, default='new')
     # TODO: hide absolute path in error
     error_msg = db.Column(db.String, default='')
     # user can delete but we keep
@@ -1123,13 +1135,11 @@ class Submission(db.Model):
 
     @hybrid_property
     def is_public_leaderboard(self):
-        return self.is_not_sandbox & self.is_valid & (
-            (self.state == 'validated') |
-            (self.state == 'tested'))
+        return self.is_not_sandbox & self.is_valid & (self.state == 'scored')
 
     @hybrid_property
     def is_private_leaderboard(self):
-        return self.is_not_sandbox & self.is_valid & (self.state == 'tested')
+        return self.is_not_sandbox & self.is_valid & (self.state == 'scored')
 
     @property
     def path(self):
@@ -1239,7 +1249,7 @@ class Submission(db.Model):
         by self.on_cv_folds[i].test_is.
         """
         ground_truths_train = self.event.problem.ground_truths_train()
-        if self.is_public_leaderboard:
+        if self.state == 'tested':
             predictions_list = [submission_on_cv_fold.valid_predictions for
                                 submission_on_cv_fold in self.on_cv_folds]
             test_is_list = [submission_on_cv_fold.cv_fold.test_is for
@@ -1267,7 +1277,7 @@ class Submission(db.Model):
         curves should be assessed in compute_valid_score_cv_bag on the
         (cross-)validation sets).
         """
-        if self.is_private_leaderboard:
+        if self.state == 'tested':
             # When we have submission id in Predictions, we should get the
             # team and submission from the db
             ground_truths = self.event.problem.ground_truths_test()
@@ -1486,7 +1496,21 @@ class SubmissionOnCVFold(db.Model):
 
     @hybrid_property
     def is_public_leaderboard(self):
-        return (self.state == 'validated') | (self.state == 'tested')
+        return self.state == 'scored'
+
+    @hybrid_property
+    def is_trained(self):
+        return self.state in\
+            ['trained', 'validated', 'tested', 'validating_error',
+             'testing_error', 'scored']
+
+    @hybrid_property
+    def is_validated(self):
+        return self.state in ['validated', 'tested', 'testing_error', 'scored']
+
+    @hybrid_property
+    def is_tested(self):
+        return self.state in ['tested', 'scored']
 
     @hybrid_property
     def is_error(self):
@@ -1542,29 +1566,41 @@ class SubmissionOnCVFold(db.Model):
         self.error_msg = error_msg
 
     def compute_train_scores(self):
-        true_full_train_predictions =\
-            self.submission.event.problem.ground_truths_train()
-        for score in self.scores:
-            score.train_score = float(score.score_function(
-                true_full_train_predictions, self.full_train_predictions,
-                self.cv_fold.train_is))
+        if self.is_trained:
+            true_full_train_predictions =\
+                self.submission.event.problem.ground_truths_train()
+            for score in self.scores:
+                score.train_score = float(score.score_function(
+                    true_full_train_predictions, self.full_train_predictions,
+                    self.cv_fold.train_is))
+        else:
+            for score in self.scores:
+                score.train_score = score.event_score_type.worst
         db.session.commit()
 
     def compute_valid_scores(self):
-        true_full_train_predictions =\
-            self.submission.event.problem.ground_truths_train()
-        for score in self.scores:
-            score.valid_score = float(score.score_function(
-                true_full_train_predictions, self.full_train_predictions,
-                self.cv_fold.test_is))
+        if self.is_validated:
+            true_full_train_predictions =\
+                self.submission.event.problem.ground_truths_train()
+            for score in self.scores:
+                score.valid_score = float(score.score_function(
+                    true_full_train_predictions, self.full_train_predictions,
+                    self.cv_fold.test_is))
+        else:
+            for score in self.scores:
+                score.valid_score = score.event_score_type.worst
         db.session.commit()
 
     def compute_test_scores(self):
-        true_test_predictions =\
-            self.submission.event.problem.ground_truths_test()
-        for score in self.scores:
-            score.test_score = float(score.score_function(
-                true_test_predictions, self.test_predictions))
+        if self.is_tested:
+            true_test_predictions =\
+                self.submission.event.problem.ground_truths_test()
+            for score in self.scores:
+                score.test_score = float(score.score_function(
+                    true_test_predictions, self.test_predictions))
+        else:
+            for score in self.scores:
+                score.test_score = score.event_score_type.worst
         db.session.commit()
 
     def update(self, detached_submission_on_cv_fold):
@@ -1573,18 +1609,19 @@ class SubmissionOnCVFold(db.Model):
         if self.is_error:
             self.error_msg = detached_submission_on_cv_fold.error_msg
         else:
-            if self.state in ['trained', 'validated', 'tested']:
+            if self.is_trained:
                 self.train_time = detached_submission_on_cv_fold.train_time
-            if self.state in ['validated', 'tested']:
+            if self.is_validated:
                 self.valid_time = detached_submission_on_cv_fold.valid_time
+                logger.info('Saving full_train_y_pred for fold {}'.format(
+                    self.cv_fold_id))
                 self.full_train_y_pred =\
                     detached_submission_on_cv_fold.full_train_y_pred
-                self.compute_train_scores()
-                self.compute_valid_scores()
-            if self.state in ['tested']:
+            if self.is_tested:
                 self.test_time = detached_submission_on_cv_fold.test_time
+                logger.info('Saving test_y_pred for fold {}'.format(
+                    self.cv_fold_id))
                 self.test_y_pred = detached_submission_on_cv_fold.test_y_pred
-                self.compute_test_scores()
         db.session.commit()
 
 
