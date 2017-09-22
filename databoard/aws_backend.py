@@ -237,6 +237,7 @@ def train_loop(event_name='pollenating_insects_3_JNI_2017',
                 # the submission is training, so just rsync the log
                 logging.info('Rsync the log of "{}"...'.format(submission))
                 _rsync_log(user=ami_username, ip=inst.public_ip_address, ssh_key=ssh_key, submission=submission)
+        db.session.close()
         time.sleep(sleep_time_secs)
 
 
