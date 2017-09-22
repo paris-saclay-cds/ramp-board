@@ -151,7 +151,7 @@ def train_loop(event_name='pollenating_insects_3_JNI_2017',
         instance_statuses = ec2_client.describe_instance_status(InstanceIds=instance_ids)['InstanceStatuses']
         # process each instance, depending on its state
         for instance_id, status in zip(instance_ids, instance_statuses):
-            check_status = state['SystemStatus']['Details'][0]['Status']
+            check_status = status['SystemStatus']['Details'][0]['Status']
             if check_status != 'passed':
                 continue
             # check_status is 'passed', it means the aws instance can be used.
