@@ -381,6 +381,8 @@ def add_event(problem_name, event_name, event_title, is_public=False,
     event = Event(
         name=event_name, problem_name=problem_name, event_title=event_title)
     event.is_public = is_public
+    event.is_send_submitted_mails = False
+    event.is_send_trained_mails = False
     logger.info('Adding {}'.format(event))
     db.session.add(event)
     db.session.commit()
@@ -1005,9 +1007,6 @@ def train_test_submission(submission, force_retrain_test=False):
 
     We do it here so it's dockerizable.
     """
-    submission.state = 'training'
-    db.session.commit()
-
     detached_submission_on_cv_folds = [
         DetachedSubmissionOnCVFold(submission_on_cv_fold)
         for submission_on_cv_fold in submission.on_cv_folds]
@@ -1017,6 +1016,9 @@ def train_test_submission(submission, force_retrain_test=False):
 
     X_train, y_train = submission.event.problem.get_train_data()
     X_test, y_test = submission.event.problem.get_test_data()
+
+    submission.state = 'training'
+    db.session.commit()
 
     # Parallel, dict
     if config.is_parallelize:
@@ -1056,34 +1058,46 @@ def train_test_submission(submission, force_retrain_test=False):
     submission.set_state_after_training()
     db.session.commit()
 
-def score_submission(submission):
-    submission.compute_test_score_cv_bag()
-    submission.compute_valid_score_cv_bag()
-    # Means and stds were constructed on demand by fetching fold times.
-    # It was slow because submission_on_folds contain also possibly large
-    # predictions. If postgres solves this issue (which can be tested on
-    # the mean and std scores on the private leaderbord), the
-    # corresponding columns (which are now redundant) can be deleted in
-    # Submission and this computation can also be deleted.
-    submission.train_time_cv_mean = np.mean(
-        [ts.train_time for ts in submission.on_cv_folds])
-    submission.valid_time_cv_mean = np.mean(
-        [ts.valid_time for ts in submission.on_cv_folds])
-    submission.test_time_cv_mean = np.mean(
-        [ts.test_time for ts in submission.on_cv_folds])
-    submission.train_time_cv_std = np.std(
-        [ts.train_time for ts in submission.on_cv_folds])
-    submission.valid_time_cv_std = np.std(
-        [ts.valid_time for ts in submission.on_cv_folds])
-    submission.test_time_cv_std = np.std(
-        [ts.test_time for ts in submission.on_cv_folds])
-    db.session.commit()
-    for score in submission.scores:
-        logger.info('valid_score {} = {}'.format(
-            score.score_name, score.valid_score_cv_bag))
-        logger.info('test_score {} = {}'.format(
-            score.score_name, score.test_score_cv_bag))
 
+def score_submission(submission):
+    # We are conservative: only score if all stages (train, test, validation)
+    # were completed. submission_on_cv_fold compute scores can be called
+    # manually if needed for submission in various error states.
+    if submission.state == 'tested':
+        logger.info('Scoring  {}'.format(submission))
+        for submission_on_cv_fold in submission.on_cv_folds:
+            submission_on_cv_fold.compute_train_scores()
+            submission_on_cv_fold.compute_valid_scores()
+            submission_on_cv_fold.compute_test_scores()
+        db.session.commit()
+        submission.compute_test_score_cv_bag()
+        submission.compute_valid_score_cv_bag()
+        # Means and stds were constructed on demand by fetching fold times.
+        # It was slow because submission_on_folds contain also possibly large
+        # predictions. If postgres solves this issue (which can be tested on
+        # the mean and std scores on the private leaderbord), the
+        # corresponding columns (which are now redundant) can be deleted in
+        # Submission and this computation can also be deleted.
+        submission.train_time_cv_mean = np.mean(
+            [ts.train_time for ts in submission.on_cv_folds])
+        submission.valid_time_cv_mean = np.mean(
+            [ts.valid_time for ts in submission.on_cv_folds])
+        submission.test_time_cv_mean = np.mean(
+            [ts.test_time for ts in submission.on_cv_folds])
+        submission.train_time_cv_std = np.std(
+            [ts.train_time for ts in submission.on_cv_folds])
+        submission.valid_time_cv_std = np.std(
+            [ts.valid_time for ts in submission.on_cv_folds])
+        submission.test_time_cv_std = np.std(
+            [ts.test_time for ts in submission.on_cv_folds])
+        db.session.commit()
+        for score in submission.scores:
+            logger.info('valid_score {} = {}'.format(
+                score.score_name, score.valid_score_cv_bag))
+            logger.info('test_score {} = {}'.format(
+                score.score_name, score.test_score_cv_bag))
+        submission.state = 'scored'
+        db.session.commit()
     send_trained_mails(submission)
 
 
@@ -1147,6 +1161,7 @@ def train_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
     logger.info('Training {}'.format(detached_submission_on_cv_fold))
     start = timeit.default_timer()
     try:
+        detached_submission_on_cv_fold.state = 'training'
         detached_submission_on_cv_fold.trained_submission =\
             detached_submission_on_cv_fold.workflow.train_submission(
                 detached_submission_on_cv_fold.path, X, y, train_is)
@@ -1380,7 +1395,7 @@ def _compute_contributivity_on_fold(cv_fold, ground_truths_valid,
         submission_on_fold for submission_on_fold in cv_fold.submissions
         if (submission_on_fold.submission.is_valid or force_ensemble) and
         submission_on_fold.submission.is_to_ensemble and
-        submission_on_fold.is_public_leaderboard and
+        submission_on_fold.state == 'tested' and
         submission_on_fold.submission.is_not_sandbox
     ]
     # reset
