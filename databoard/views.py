@@ -333,8 +333,7 @@ def sign_up_for_event(event_name):
 def approve_sign_up_for_event(event_name, user_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
     user = User.query.filter_by(name=user_name).one_or_none()
-    if not fl.current_user.access_level == 'admin' or\
-            not db_tools.is_admin(event, fl.current_user):
+    if not db_tools.is_admin(event, fl.current_user):
         return _redirect_to_user(
             u'Sorry {}, you do not have admin rights'.format(
                 fl.current_user.firstname), is_error=True)
