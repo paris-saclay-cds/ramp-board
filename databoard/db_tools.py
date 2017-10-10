@@ -1069,6 +1069,7 @@ def score_submission(submission):
             submission_on_cv_fold.compute_train_scores()
             submission_on_cv_fold.compute_valid_scores()
             submission_on_cv_fold.compute_test_scores()
+            submission_on_cv_fold.state = 'scored'
         db.session.commit()
         submission.compute_test_score_cv_bag()
         submission.compute_valid_score_cv_bag()
@@ -1395,7 +1396,7 @@ def _compute_contributivity_on_fold(cv_fold, ground_truths_valid,
         submission_on_fold for submission_on_fold in cv_fold.submissions
         if (submission_on_fold.submission.is_valid or force_ensemble) and
         submission_on_fold.submission.is_to_ensemble and
-        submission_on_fold.state == 'tested' and
+        submission_on_fold.state == 'scored' and
         submission_on_fold.submission.is_not_sandbox
     ]
     # reset
