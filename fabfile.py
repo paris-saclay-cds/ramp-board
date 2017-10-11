@@ -184,8 +184,10 @@ def make_event_admin(e, u):
     make_event_admin(event_name=e, admin_name=u)
 
 
-def train_test(e, t=None, s=None, state=None, force='False'):
+def train_test(e, t=None, s=None, state=None, force='False',
+               is_save_y_pred='False'):
     force = strtobool(force)
+    is_save_y_pred = strtobool(is_save_y_pred)
 
     from databoard.db_tools import train_test_submissions,\
         get_submissions, get_submissions_of_state
@@ -199,7 +201,7 @@ def train_test(e, t=None, s=None, state=None, force='False'):
     submissions = [submission for submission in submissions
                    if submission.name != sandbox_d_name]
     train_test_submissions(submissions, force_retrain_test=force)
-    compute_contributivity(e)
+    compute_contributivity(e, is_save_y_pred)
 
 
 def train_test_on_server(e, t, s, force='False'):
@@ -221,10 +223,12 @@ def set_n_submissions(e=None):
     set_n_submissions(e)
 
 
-def compute_contributivity(e):
+def compute_contributivity(e, is_save_y_pred='False'):
+    is_save_y_pred = strtobool(is_save_y_pred)
+
     from databoard.db_tools import compute_contributivity
     from databoard.db_tools import compute_historical_contributivity
-    compute_contributivity(e)
+    compute_contributivity(e, is_save_y_pred)
     compute_historical_contributivity(e)
     set_n_submissions(e)
 

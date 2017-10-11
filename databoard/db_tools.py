@@ -1251,15 +1251,17 @@ def test_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
 
 
 def compute_contributivity(event_name, start_time_stamp=None,
-                           end_time_stamp=None, force_ensemble=False):
+                           end_time_stamp=None, force_ensemble=False,
+                           is_save_y_pred=False):
     compute_contributivity_no_commit(
-        event_name, start_time_stamp, end_time_stamp, force_ensemble)
+        event_name, start_time_stamp, end_time_stamp, force_ensemble,
+        is_save_y_pred)
     db.session.commit()
 
 
 def compute_contributivity_no_commit(
         event_name, start_time_stamp=None, end_time_stamp=None,
-        force_ensemble=False):
+        force_ensemble=False, is_save_y_pred=False):
     """Compute contributivity leaderboard scores.
 
     Parameters
@@ -1321,8 +1323,9 @@ def compute_contributivity_no_commit(
         combined_predictions, scores = _get_score_cv_bags(
             event, event.official_score_type, combined_predictions_list,
             ground_truths_train, test_is_list=test_is_list)
-        np.savetxt(
-            'y_train_pred.csv', combined_predictions.y_pred, delimiter=',')
+        if is_save_y_pred:
+            np.savetxt(
+                'y_train_pred.csv', combined_predictions.y_pred, delimiter=',')
         logger.info('Combined combined valid score = {}'.format(scores))
         event.combined_combined_valid_score = float(scores[-1])
     else:
@@ -1345,8 +1348,9 @@ def compute_contributivity_no_commit(
         combined_predictions, scores = _get_score_cv_bags(
             event, event.official_score_type, combined_test_predictions_list,
             ground_truths_test)
-        np.savetxt(
-            'y_test_pred.csv', combined_predictions.y_pred, delimiter=',')
+        if is_save_y_pred:
+            np.savetxt(
+                'y_test_pred.csv', combined_predictions.y_pred, delimiter=',')
         logger.info('Combined combined test score = {}'.format(scores))
         event.combined_combined_test_score = float(scores[-1])
     else:
