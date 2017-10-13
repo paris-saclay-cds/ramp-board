@@ -267,7 +267,7 @@ def generate_passwords(users_to_add_f_name, password_f_name):
 
 
 def remove_non_ascii(text):
-    return unidecode(unicode(text, encoding='utf-8'))
+    return str(unidecode(unicode(text, encoding='utf-8')))
 
 
 def add_users_from_file(users_to_add_f_name, password_f_name):
