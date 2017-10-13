@@ -187,7 +187,6 @@ def make_event_admin(e, u):
 def train_test(e, t=None, s=None, state=None, force='False',
                is_save_y_pred='False'):
     force = strtobool(force)
-    is_save_y_pred = strtobool(is_save_y_pred)
 
     from databoard.db_tools import train_test_submissions,\
         get_submissions, get_submissions_of_state
@@ -201,7 +200,7 @@ def train_test(e, t=None, s=None, state=None, force='False',
     submissions = [submission for submission in submissions
                    if submission.name != sandbox_d_name]
     train_test_submissions(submissions, force_retrain_test=force)
-    compute_contributivity(e, is_save_y_pred)
+    compute_contributivity(e, is_save_y_pred=is_save_y_pred)
 
 
 def train_test_on_server(e, t, s, force='False'):
@@ -228,7 +227,7 @@ def compute_contributivity(e, is_save_y_pred='False'):
 
     from databoard.db_tools import compute_contributivity
     from databoard.db_tools import compute_historical_contributivity
-    compute_contributivity(e, is_save_y_pred)
+    compute_contributivity(e, is_save_y_pred=is_save_y_pred)
     compute_historical_contributivity(e)
     set_n_submissions(e)
 
@@ -251,8 +250,9 @@ def delete_submission(e, t, s):
 def create_user(name, password, lastname, firstname, email,
                 access_level='user', hidden_notes=''):
     from databoard.db_tools import create_user
-    create_user(
+    user = create_user(
         name, password, lastname, firstname, email, access_level, hidden_notes)
+    return user
 
 
 def generate_single_password():
@@ -276,6 +276,7 @@ def add_users_from_file(users_to_add_f_name, password_f_name):
     users_to_add = pd.read_csv(users_to_add_f_name)
     passwords = pd.read_csv(password_f_name)
     users_to_add['password'] = passwords['password']
+    ids = []
     for _, u in users_to_add.iterrows():
         print u
         try:
@@ -283,11 +284,14 @@ def add_users_from_file(users_to_add_f_name, password_f_name):
                 acces_level = u['access_level']
             else:
                 acces_level = 'user'
-            create_user(
+            user = create_user(
                 u['name'], u['password'], u['lastname'], u['firstname'],
                 u['email'], acces_level, u['hidden_notes'])
+            ids += user.id
         except NameClashError:
             print 'user already in database'
+    for id in ids:
+        print id
 
 
 def send_password_mail(user_name, password):
