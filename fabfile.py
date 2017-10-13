@@ -328,9 +328,10 @@ def sign_up_event_users_from_file(users_to_add_f_name, event):
     from databoard.model import DuplicateSubmissionError
     users_to_sign_up = pd.read_csv(users_to_add_f_name)
     for _, u in users_to_sign_up.iterrows():
-        print 'signing up {} to {}'.format(u['name'], event)
+        username = remove_non_ascii(u['name'])
+        print 'signing up {} to {}'.format(username, event)
         try:
-            sign_up_team(event, u['name'])
+            sign_up_team(event, username)
         except DuplicateSubmissionError:
             print 'user already signed up'
 
