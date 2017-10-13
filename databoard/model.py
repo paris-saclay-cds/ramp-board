@@ -99,7 +99,8 @@ class User(db.Model):
     def __repr__(self):
         repr = '''User(name={}, lastname={}, firstname={}, email={},
                   admined_teams={})'''.format(
-            self.name, self.lastname, self.firstname, self.email,
+            self.name.encode('utf-8'), self.lastname.encode('utf-8'),
+            self.firstname.encode('utf-8'), self.email.encode('utf-8'),
             self.admined_teams)
         return repr
 

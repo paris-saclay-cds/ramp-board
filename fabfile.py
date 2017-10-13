@@ -267,7 +267,7 @@ def generate_passwords(users_to_add_f_name, password_f_name):
 
 
 def remove_non_ascii(text):
-    return str(unidecode(unicode(text, encoding='utf-8')))
+    return unicode(unidecode(unicode(text, encoding='utf-8')), "utf-8")
 
 
 def add_users_from_file(users_to_add_f_name, password_f_name):
@@ -329,7 +329,7 @@ def sign_up_event_users_from_file(users_to_add_f_name, event):
     users_to_sign_up = pd.read_csv(users_to_add_f_name)
     for _, u in users_to_sign_up.iterrows():
         username = remove_non_ascii(u['name'])
-        print 'signing up {} to {}'.format(username, event)
+        print 'signing up {} to {}'.format(username.encode('utf-8'), event)
         try:
             sign_up_team(event, username)
         except DuplicateSubmissionError:
