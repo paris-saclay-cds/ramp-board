@@ -135,13 +135,14 @@ class Team(db.Model):
         self.creation_timestamp = datetime.datetime.utcnow()
 
     def __str__(self):
-        str_ = 'Team({})'.format(self.name)
+        str_ = 'Team({})'.format(self.name.encode('utf-8'))
         return str_
 
     def __repr__(self):
         repr = '''Team(name={}, admin_name={},
                   initiator={}, acceptor={})'''.format(
-            self.name, self.admin.name, self.initiator, self.acceptor)
+            self.name.encode('utf-8'), self.admin.name.encode('utf-8'),
+            self.initiator, self.acceptor)
         return repr
 
 
