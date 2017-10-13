@@ -41,3 +41,4 @@ fancyimpute
 pydot
 bokeh
 scikit-image
+unidecode

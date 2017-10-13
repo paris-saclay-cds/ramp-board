@@ -292,7 +292,7 @@ def add_users_from_file(users_to_add_f_name, password_f_name):
             user = create_user(
                 remove_non_ascii(u['name']), u['password'], u['lastname'],
                 u['firstname'], u['email'], acces_level, u['hidden_notes'])
-            ids += user.id
+            ids.append(user.id)
         except NameClashError:
             print 'user already in database'
     for id in ids:
