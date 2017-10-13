@@ -2,8 +2,8 @@ import sys
 import os
 import logging
 from distutils.util import strtobool
-from unidecode import unidecode
 from sqlalchemy.exc import IntegrityError
+
 
 logger = logging.getLogger('databoard')
 
@@ -266,10 +266,6 @@ def generate_passwords(users_to_add_f_name, password_f_name):
     print(generate_passwords(users_to_add_f_name, password_f_name))
 
 
-def remove_non_ascii(text):
-    return unicode(unidecode(unicode(text, encoding='utf-8')), "utf-8")
-
-
 def add_users_from_file(users_to_add_f_name, password_f_name):
     """Add users.
 
@@ -277,6 +273,7 @@ def add_users_from_file(users_to_add_f_name, password_f_name):
     """
     import pandas as pd
     from databoard.model import NameClashError
+    from databoard.db_tools import remove_non_ascii
 
     users_to_add = pd.read_csv(users_to_add_f_name)
     passwords = pd.read_csv(password_f_name)
@@ -290,8 +287,9 @@ def add_users_from_file(users_to_add_f_name, password_f_name):
             else:
                 acces_level = 'user'
             user = create_user(
-                remove_non_ascii(u['name']), u['password'], u['lastname'],
-                u['firstname'], u['email'], acces_level, u['hidden_notes'])
+                remove_non_ascii(u['name']), u['password'],
+                u['lastname'], u['firstname'], u['email'], acces_level,
+                u['hidden_notes'])
             ids.append(user.id)
         except NameClashError:
             print 'user already in database'
@@ -326,6 +324,8 @@ def send_password_mails(password_f_name):
 def sign_up_event_users_from_file(users_to_add_f_name, event):
     import pandas as pd
     from databoard.model import DuplicateSubmissionError
+    from databoard.db_tools import remove_non_ascii
+
     users_to_sign_up = pd.read_csv(users_to_add_f_name)
     for _, u in users_to_sign_up.iterrows():
         username = remove_non_ascii(u['name'])

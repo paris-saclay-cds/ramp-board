@@ -10,6 +10,7 @@ import datetime
 import numpy as np
 import pandas as pd
 import xkcdpass.xkcd_password as xp
+from unidecode import unidecode
 from sklearn.externals.joblib import Parallel, delayed
 from databoard import db
 from sklearn.utils.validation import assert_all_finite
@@ -34,6 +35,10 @@ import databoard.config as config
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
+
+
+def remove_non_ascii(text):
+    return unicode(unidecode(unicode(text, encoding='utf-8')), 'utf-8')
 
 
 def date_time_format(date_time):
@@ -135,7 +140,7 @@ def send_password_mails(password_f_name):
     passwords = pd.read_csv(password_f_name)
 
     for _, u in passwords.iterrows():
-        send_password_mail(u['name'], u['password'])
+        send_password_mail(remove_non_ascii(u['name']), u['password'])
 
 
 def setup_workflows():
