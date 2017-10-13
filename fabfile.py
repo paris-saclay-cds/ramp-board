@@ -2,6 +2,7 @@ import sys
 import os
 import logging
 from distutils.util import strtobool
+from unidecode import unidecode
 from sqlalchemy.exc import IntegrityError
 
 logger = logging.getLogger('databoard')
@@ -265,6 +266,10 @@ def generate_passwords(users_to_add_f_name, password_f_name):
     print(generate_passwords(users_to_add_f_name, password_f_name))
 
 
+def remove_non_ascii(text):
+    return unidecode(unicode(text, encoding='utf-8'))
+
+
 def add_users_from_file(users_to_add_f_name, password_f_name):
     """Add users.
 
@@ -285,8 +290,8 @@ def add_users_from_file(users_to_add_f_name, password_f_name):
             else:
                 acces_level = 'user'
             user = create_user(
-                u['name'], u['password'], u['lastname'], u['firstname'],
-                u['email'], acces_level, u['hidden_notes'])
+                remove_non_ascii(u['name']), u['password'], u['lastname'],
+                u['firstname'], u['email'], acces_level, u['hidden_notes'])
             ids += user.id
         except NameClashError:
             print 'user already in database'
