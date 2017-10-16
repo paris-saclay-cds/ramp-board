@@ -204,6 +204,15 @@ def train_test(e, t=None, s=None, state=None, force='False',
     compute_contributivity(e, is_save_y_pred=is_save_y_pred)
 
 
+def score_submission(e, t, s, is_save_y_pred='False'):
+    from databoard.db_tools import score_submission, get_submissions
+
+    submissions = get_submissions(
+        event_name=e, team_name=t, submission_name=s)
+    score_submission(submissions[0])
+    compute_contributivity(e, is_save_y_pred=is_save_y_pred)
+
+
 def train_test_on_server(e, t, s, force='False'):
     """Train and test a single names submission, without scoring it.
 
