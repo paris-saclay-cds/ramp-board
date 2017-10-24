@@ -42,3 +42,5 @@ pydot
 bokeh
 scikit-image
 unidecode
+termcolor
+

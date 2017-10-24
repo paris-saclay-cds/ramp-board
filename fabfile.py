@@ -3,7 +3,7 @@ import os
 import logging
 from distutils.util import strtobool
 from sqlalchemy.exc import IntegrityError
-
+from termcolor import colored
 
 logger = logging.getLogger('databoard')
 
@@ -301,7 +301,9 @@ def add_users_from_file(users_to_add_f_name, password_f_name):
                 u['hidden_notes'])
             ids.append(user.id)
         except NameClashError:
-            print 'user already in database'
+            print colored(
+                'user {}:{} already in database'.format(u.name, u.email),
+                'red')
     for id in ids:
         print id
 
@@ -342,7 +344,9 @@ def sign_up_event_users_from_file(users_to_add_f_name, event):
         try:
             sign_up_team(event, username)
         except DuplicateSubmissionError:
-            print 'user already signed up'
+            print colored(
+                'user {}:{} already signed up'.format(username, u.email),
+                'red')
 
 
 def dump_user_interactions():
