@@ -186,8 +186,12 @@ def make_event_admin(e, u):
 
 
 def train_test(e, t=None, s=None, state=None, force='False',
-               is_save_y_pred='False'):
+               is_save_y_pred='False', is_parallelize=''):
     force = strtobool(force)
+    if is_parallelize == '':
+        is_parallelize = None
+    else:
+        is_parallelize = strtobool(is_parallelize)
 
     from databoard.db_tools import train_test_submissions,\
         get_submissions, get_submissions_of_state
@@ -200,7 +204,8 @@ def train_test(e, t=None, s=None, state=None, force='False',
             event_name=e, team_name=t, submission_name=s)
     submissions = [submission for submission in submissions
                    if submission.name != sandbox_d_name]
-    train_test_submissions(submissions, force_retrain_test=force)
+    train_test_submissions(submissions, force_retrain_test=force,
+                           is_parallelize=is_parallelize)
     compute_contributivity(e, is_save_y_pred=is_save_y_pred)
 
 
@@ -389,7 +394,8 @@ def prepare_data(problem_name):
 
 
 def backend_train_test_loop(e=None, timeout=30,
-                            is_compute_contributivity='True'):
+                            is_compute_contributivity='True',
+                            is_parallelize=''):
     """Automated training loop.
 
     Picks up the earliest new submission and trains it, in an infinite
@@ -401,9 +407,15 @@ def backend_train_test_loop(e=None, timeout=30,
         Event name. If set, only train submissions from that event.
         If event name is prefixed by not, it excludes that event.
     """
+    if is_parallelize == '':
+        is_parallelize = None
+    else:
+        is_parallelize = strtobool(is_parallelize)
+
     from databoard.db_tools import backend_train_test_loop
     is_compute_contributivity = strtobool(is_compute_contributivity)
-    backend_train_test_loop(e, timeout, is_compute_contributivity)
+    backend_train_test_loop(
+        e, timeout, is_compute_contributivity, is_parallelize)
 
 
 def set_state(e, t, s, state):

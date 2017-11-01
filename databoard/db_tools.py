@@ -972,14 +972,15 @@ def set_n_submissions(event_name=None):
 
 
 def backend_train_test_loop(event_name=None, timeout=20,
-                            is_compute_contributivity=True):
+                            is_compute_contributivity=True,
+                            is_parallelize=None):
     event_names = set()
     while(True):
         earliest_new_submission = get_earliest_new_submission(event_name)
         logger.info('Automatic training {} at {}'.format(
             earliest_new_submission, datetime.datetime.utcnow()))
         if earliest_new_submission is not None:
-            train_test_submission(earliest_new_submission)
+            train_test_submission(earliest_new_submission, is_parallelize)
             score_submission(earliest_new_submission)
             event_names.add(earliest_new_submission.event.name)
             update_leaderboards(earliest_new_submission.event.name)
@@ -995,11 +996,14 @@ def backend_train_test_loop(event_name=None, timeout=20,
         time.sleep(timeout)
 
 
-def train_test_submissions(submissions=None, force_retrain_test=False):
+def train_test_submissions(submissions=None, force_retrain_test=False,
+                           is_parallelize=None):
     """Train and test submission.
 
     If submissions is None, trains and tests all submissions.
     """
+    if is_parallelize is not None:
+        config.is_parallelize = is_parallelize
     if submissions is None:
         submissions = Submission.query.filter(
             Submission.is_not_sandbox).order_by(Submission.id).all()
