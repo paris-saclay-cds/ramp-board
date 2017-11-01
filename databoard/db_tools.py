@@ -12,7 +12,7 @@ import pandas as pd
 import xkcdpass.xkcd_password as xp
 from unidecode import unidecode
 # temporary fix for importing torch before sklearn
-import torch  # noqa
+# import torch  # noqa
 from sklearn.externals.joblib import Parallel, delayed
 from databoard import db
 from sklearn.utils.validation import assert_all_finite
