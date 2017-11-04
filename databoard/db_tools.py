@@ -643,6 +643,8 @@ def exclude_from_ensemble(event_name, team_name, submission_name):
     submission = Submission.query.filter_by(
         name=submission_name, event_team=event_team).one()
     submission.is_to_ensemble = False
+    submission.contributivity = 0
+    submission.historical_contributivity = 0
     for submission_on_cv_fold in submission.on_cv_folds:
         submission_on_cv_fold.contributivity = 0
         submission_on_cv_fold.best = False
