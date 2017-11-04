@@ -636,6 +636,19 @@ def set_state(event_name, team_name, submission_name, state):
     db.session.commit()
 
 
+def exclude_from_ensemble(event_name, team_name, submission_name):
+    event = Event.query.filter_by(name=event_name).one()
+    team = Team.query.filter_by(name=team_name).one()
+    event_team = EventTeam.query.filter_by(event=event, team=team).one()
+    submission = Submission.query.filter_by(
+        name=submission_name, event_team=event_team).one()
+    submission.is_to_ensemble = False
+    for submission_on_cv_fold in submission.on_cv_folds:
+        submission_on_cv_fold.contributivity = 0
+        submission_on_cv_fold.best = False
+    db.session.commit()
+
+
 def delete_submission(event_name, team_name, submission_name):
     event = Event.query.filter_by(name=event_name).one()
     team = Team.query.filter_by(name=team_name).one()

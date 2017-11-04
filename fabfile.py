@@ -422,6 +422,11 @@ def set_state(e, t, s, state):
     from databoard.db_tools import set_state
     set_state(e, t, s, state)
 
+
+def exclude_from_ensemble(e, t, s):
+    from databoard.db_tools import exclude_from_ensemble
+    exclude_from_ensemble(e, t, s)
+
 # The following function was implemented to handle user interaction dump
 # but it turned out that the db insertion was not the CPU sink. Keep it
 # for a while if the site is still slow.
