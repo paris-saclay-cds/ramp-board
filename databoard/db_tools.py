@@ -980,7 +980,8 @@ def backend_train_test_loop(event_name=None, timeout=20,
         logger.info('Automatic training {} at {}'.format(
             earliest_new_submission, datetime.datetime.utcnow()))
         if earliest_new_submission is not None:
-            train_test_submission(earliest_new_submission, is_parallelize)
+            train_test_submission(
+                earliest_new_submission, is_parallelize=is_parallelize)
             score_submission(earliest_new_submission)
             event_names.add(earliest_new_submission.event.name)
             update_leaderboards(earliest_new_submission.event.name)
