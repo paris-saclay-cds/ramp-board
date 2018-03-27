@@ -4,13 +4,11 @@ import time
 import shutil
 import bcrypt
 import timeit
-import smtplib
 import logging
 import datetime
 import numpy as np
 import pandas as pd
-import xkcdpass.xkcd_password as xp
-from unidecode import unidecode
+
 # temporary fix for importing torch before sklearn
 # import torch  # noqa
 from sklearn.externals.joblib import Parallel, delayed
@@ -40,6 +38,7 @@ pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 
 def remove_non_ascii(text):
+    from unidecode import unidecode
     return unicode(unidecode(unicode(text, encoding='utf-8')), 'utf-8')
 
 
@@ -75,6 +74,7 @@ def check_password(plain_text_password, hashed_password):
 
 
 def generate_single_password(mywords=None):
+    import xkcdpass.xkcd_password as xp
     if mywords is None:
         words = xp.locate_wordfile()
         mywords = xp.generate_wordlist(
@@ -83,6 +83,7 @@ def generate_single_password(mywords=None):
 
 
 def generate_passwords(users_to_add_f_name, password_f_name):
+    import xkcdpass.xkcd_password as xp
     users_to_add = pd.read_csv(users_to_add_f_name)
     words = xp.locate_wordfile()
     mywords = xp.generate_wordlist(wordfile=words, min_length=4, max_length=6)
@@ -94,6 +95,7 @@ def generate_passwords(users_to_add_f_name, password_f_name):
 
 def send_mail(to, subject, body):
     try:
+        import smtplib
         logger.info('Sending "{}" mail to {}'.format(subject, to))
         sender_user = config.MAIL_USERNAME
         sender_pwd = config.MAIL_PASSWORD

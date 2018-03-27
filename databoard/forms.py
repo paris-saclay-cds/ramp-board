@@ -1,7 +1,9 @@
+from __future__ import print_function
+
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField
 from wtforms import (
-    StringField, PasswordField, SelectMultipleField, BooleanField, SelectField,
+    StringField, PasswordField, SelectMultipleField, BooleanField,
     IntegerField, DateField, DateTimeField, validators)
 from wtforms.widgets import ListWidget, CheckboxInput
 from wtforms.validators import ValidationError
@@ -12,7 +14,7 @@ def ascii_check(form, field):
         # XXX may not work in python 3, should probably be field.data.encode
         field.data.decode('ascii')
     except Exception:
-        print 'bla'
+        print('bla')
         raise ValidationError('Field cannot contain non-ascii characters.')
 
 
