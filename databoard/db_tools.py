@@ -1403,7 +1403,7 @@ def compute_contributivity_no_commit(
 
 def _compute_contributivity_on_fold(cv_fold, ground_truths_valid,
                                     start_time_stamp=None, end_time_stamp=None,
-                                    force_ensemble=False):
+                                    force_ensemble=False, min_improvement=0.0):
     """Construct the best model combination on a single fold.
 
     Using greedy forward selection with replacement. See
@@ -1471,7 +1471,7 @@ def _compute_contributivity_on_fold(cv_fold, ground_truths_valid,
         old_best_index_list = best_index_list
         best_index_list, score = get_next_best_single_fold(
             cv_fold.event, predictions_list, ground_truths_valid,
-            best_index_list)
+            best_index_list, min_improvement)
         improvement = len(best_index_list) != len(old_best_index_list)
         logger.info('\t{}: {}'.format(old_best_index_list, score))
     # set
