@@ -1340,7 +1340,7 @@ class Submission(db.Model):
 
 
 def get_next_best_single_fold(event, predictions_list, ground_truths,
-                              best_index_list):
+                              best_index_list, min_improvement=0.0):
     """.
 
     Find the model that minimizes the score if added to
