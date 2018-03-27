@@ -3,6 +3,5 @@ jupyter_client
 enum34>=1.0.4
 nose
 bokeh
-smtplib
 xkcdpass<=1.4.2
 scikit-image

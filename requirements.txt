@@ -15,3 +15,4 @@ celery==3.1.23
 six==1.10.0
 unidecode
 termcolor
+smtplib

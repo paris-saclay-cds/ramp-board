@@ -1,11 +1,13 @@
 import os
 import imp
 import time
-import shutil
-import bcrypt
 import timeit
+import shutil
 import logging
 import datetime
+
+import bcrypt
+import smtplib
 import numpy as np
 import pandas as pd
 
@@ -95,7 +97,6 @@ def generate_passwords(users_to_add_f_name, password_f_name):
 
 def send_mail(to, subject, body):
     try:
-        import smtplib
         logger.info('Sending "{}" mail to {}'.format(subject, to))
         sender_user = config.MAIL_USERNAME
         sender_pwd = config.MAIL_PASSWORD
