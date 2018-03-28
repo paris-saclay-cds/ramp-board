@@ -619,7 +619,7 @@ def get_active_user_event_team(event, user):
     # on members but it is slow, eg in constructing user interactions
     # event_teams = EventTeam.query.filter_by(event=event).all()
     # for event_team in event_teams:
-    #     if user in get_team_members(event_team.team) and event_team.is_active:
+    #     if user in get_team_members(event_team.team) and event_team.is_active
     #         return event_team
 
 
@@ -683,9 +683,12 @@ class WorkflowElementType(Base):
         'SubmissionFileType', backref=backref('workflow_element_types'))
 
     def __repr__(self):
-        repr = 'WorkflowElementType(name={}, type={}, is_editable={}, max_size={})'.format(
-            self.name, self.type.name, self.type.is_editable,
-            self.type.max_size)
+        repr = ("WorkflowElementType(name={}, type={}, is_editable={}, "
+                "max_size={})"
+                .format(self.name,
+                        self.type.name,
+                        self.type.is_editable,
+                        self.type.max_size))
         return repr
 
     @property
