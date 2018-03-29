@@ -1,2 +1,2 @@
 include versioneer.py
-include rampwf/_version.py
+include rampbkd/_version.py
