@@ -60,7 +60,7 @@ def main():
     # Read config from external file
     try:
         conf = read_backend_config(args.config)
-    except FileNotFoundError:
+    except (OSError, IOError):
         print('Config file not found')
         sys.exit(1)
     except ValueError as e:
