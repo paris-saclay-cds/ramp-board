@@ -6,6 +6,32 @@ This file is currently inherited from ramp-board
 from __future__ import absolute_import, unicode_literals
 
 import os
+import yaml
+
+MANDATORY_KEYS = ['sqlalchemy', 'ramp']
+MANDATORY_URL_KEYS = ['drivername', 'username', 'password',
+                      'host', 'port', 'database']
+
+
+def read_backend_config(config_file):
+    """Parse YAML configuration file"""
+    with open(config_file, 'r') as f:
+        config = yaml.safe_load(f)
+
+    missing_keys = [key
+                    for key in MANDATORY_KEYS
+                    if key not in config]
+
+    missing_keys.extend(['sqlalchemy.' + key
+                         for key in MANDATORY_URL_KEYS
+                         if key not in config['sqlalchemy']])
+
+    if missing_keys:
+        raise ValueError("Missing '{}' value in config"
+                         .format(', '.join(missing_keys)))
+
+    return config
+
 
 deployment_path = '/tmp/databoard'  # edit this!
 ramp_kits_path = os.path.join(deployment_path, 'ramp-kits')

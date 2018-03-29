@@ -1,7 +1,6 @@
 from __future__ import print_function, absolute_import, unicode_literals
 
 import sys
-import yaml
 import argparse
 
 from sqlalchemy import create_engine
@@ -10,10 +9,8 @@ from sqlalchemy.engine.url import URL
 
 from .model import Base
 from .tools import set_state
+from .config import read_backend_config
 
-MANDATORY_KEYS = ['sqlalchemy', 'ramp']
-MANDATORY_URL_KEYS = ['drivername', 'username', 'password',
-                      'host', 'port', 'database']
 SUBSTATES = [
     'new',               # submitted by user to frontend server
     'checked',           # not used, checking is part of the workflow now
@@ -29,26 +26,6 @@ SUBSTATES = [
     'scored',            # submission scored on the frontend server.Final state
 ]
 """list of int: enumeration of available submission states"""
-
-
-def read_backend_config(config_file):
-    """Parse YAML configuration file"""
-    with open(config_file, 'r') as f:
-        config = yaml.safe_load(f)
-
-    missing_keys = [key
-                    for key in MANDATORY_KEYS
-                    if key not in config]
-
-    missing_keys.extend(['sqlalchemy.' + key
-                         for key in MANDATORY_URL_KEYS
-                         if key not in config['sqlalchemy']])
-
-    if missing_keys:
-        raise ValueError("Missing '{}' value in config"
-                         .format(', '.join(missing_keys)))
-
-    return config
 
 
 def init_parser():
