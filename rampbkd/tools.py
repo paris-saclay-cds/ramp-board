@@ -14,7 +14,7 @@ def set_state(event_name, team_name, submission_name, state):
     submission.set_state(state)
 
 
-def get_earliest_new_submission(session, event_name=None):
+def get_new_submissions(session, event_name=None, team_name=None):
     if event_name is None:
         new_submissions = Submission.query.filter_by(
             state='new').filter(Submission.is_not_sandbox).order_by(
@@ -57,4 +57,4 @@ def get_earliest_new_submission(session, event_name=None):
     if len(new_submissions) == 0:
         return None
     else:
-        return new_submissions[0]
+        return new_submissions

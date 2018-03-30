@@ -53,4 +53,6 @@ if __name__ == "__main__":
             'console_scripts': [
                 'ramp_set_state='
                 'rampbkd.ramp_set_state:main',
+                'ramp_new_submissions='
+                'rampbkd.ramp_new_submissions:main',
             ]})
