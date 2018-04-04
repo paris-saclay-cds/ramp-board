@@ -45,8 +45,9 @@ if __name__ == "__main__":
             'Operating System :: MacOS'],
         install_requires=[
             'numpy',
+            'pyyaml',
             'sqlalchemy',
-            'psycopg2'],
+            'psycopg2-binary'],
         platforms='any',
         packages=find_packages(),
         entry_points={
