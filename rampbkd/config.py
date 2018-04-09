@@ -9,6 +9,7 @@ import os
 import sys
 import yaml
 
+SANDBOX_NAME = 'starting_kit'
 MANDATORY_KEYS = ['sqlalchemy']
 MANDATORY_URL_KEYS = ['drivername', 'username', 'password',
                       'host', 'port', 'database']
@@ -70,23 +71,20 @@ def read_backend_config(config_file):
         raise ValueError("Missing '{}' value in config"
                          .format(', '.join(missing_keys)))
 
+    if 'test' in config:
+        os.environ['RAMP_SERVER_TYPE'] = 'TEST'
+    else:
+        os.environ['RAMP_SERVER_TYPE'] = 'PROD'
+
     return config
 
 
-deployment_path = '/tmp/databoard'  # edit this!
-ramp_kits_path = os.path.join(deployment_path, 'ramp-kits')
-ramp_data_path = os.path.join(deployment_path, 'ramp-data')
-submissions_d_name = 'submissions'
-submissions_path = os.path.join(deployment_path, submissions_d_name)
-
-sandbox_d_name = 'starting_kit'
-starting_kit_d_name = 'starting_kit'
-sandbox_path = os.path.join(deployment_path, sandbox_d_name)
-problems_d_name = 'problems'
-problems_path = os.path.join(deployment_path, problems_d_name)
-
-specific_module = 'databoard.specific'
-workflows_module = specific_module + '.workflows'
-problems_module = specific_module + '.problems'
-events_module = specific_module + '.events'
-score_types_module = specific_module + '.score_types'
+def get_deployment_path():
+    server_type = os.environ.get('RAMP_SERVER_TYPE', 'UNKNOWN')
+    if server_type == 'TEST':
+        return '/mnt/ramp/frontend'
+    elif server_type == 'PROD':
+        return '/mnt/ramp_data/frontend'
+    else:
+        raise AttributeError("The RAMP_SERVER_TYPE environment variable was "
+                             "not found.")

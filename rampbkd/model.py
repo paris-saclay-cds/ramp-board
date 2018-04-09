@@ -243,7 +243,10 @@ class Problem(Base):
     @property
     def module(self):
         return imp.load_source(
-            '', os.path.join(config.ramp_kits_path, self.name, 'problem.py'))
+            '', os.path.join(config.get_deployment_path(),
+                             'ramp-kits',
+                             self.name,
+                             'problem.py'))
 
     @property
     def title(self):
@@ -254,11 +257,15 @@ class Problem(Base):
         return self.module.Predictions
 
     def get_train_data(self):
-        path = os.path.join(config.ramp_data_path, self.name)
+        path = os.path.join(config.get_deployment_path(),
+                            'ramp-data',
+                            self.name)
         return self.module.get_train_data(path=path)
 
     def get_test_data(self):
-        path = os.path.join(config.ramp_data_path, self.name)
+        path = os.path.join(config.get_deployment_path(),
+                            'ramp-data',
+                            self.name)
         return self.module.get_test_data(path=path)
 
     def ground_truths_train(self):
@@ -303,7 +310,7 @@ class ScoreType(Base):
 
     @property
     def module(self):
-        return import_module('.' + self.name, config.score_types_module)
+        return import_module('.' + self.name, 'databoard.specific.score_types')
 
     @property
     def score_function(self):
@@ -1143,7 +1150,7 @@ class Submission(Base):
 
     @hybrid_property
     def is_not_sandbox(self):
-        return self.name != config.sandbox_d_name
+        return self.name != config.SANDBOX_NAME
 
     @hybrid_property
     def is_error(self):
@@ -1163,7 +1170,9 @@ class Submission(Base):
     @property
     def path(self):
         return os.path.join(
-            config.submissions_path, 'submission_' + '{0:09d}'.format(self.id))
+            config.get_deployment_path(),
+            'submissions'
+            'submission_' + '{0:09d}'.format(self.id))
 
     @property
     def module(self):
