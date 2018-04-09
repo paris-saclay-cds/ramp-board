@@ -1171,7 +1171,7 @@ class Submission(Base):
     def path(self):
         return os.path.join(
             config.get_deployment_path(),
-            'submissions'
+            'submissions',
             'submission_' + '{0:09d}'.format(self.id))
 
     @property
