@@ -28,9 +28,9 @@ def select_submissions_by_id(session, submission_id):
     submission = (session
                   .query(Submission)
                   .filter(Submission.id == submission_id)
-                  .all())
+                  .first())
 
-    return submission[0]
+    return submission
 
 
 def select_submissions_by_state(session, event_name, state):
