@@ -1,10 +1,6 @@
 import numpy as np
 import pandas as pd
 from databoard import db_tools
-from bokeh.plotting import figure
-from bokeh.models.sources import ColumnDataSource
-from bokeh.models.formatters import DatetimeTickFormatter
-from skimage.color import gray2rgb, rgb2gray
 
 
 def make_step_df(pareto_df, is_lower_the_better):
@@ -37,6 +33,7 @@ def make_step_df(pareto_df, is_lower_the_better):
 
 def color_gradient(rgb, factor_array):
     """Rescale rgb by factor_array."""
+    from skimage.color import gray2rgb, rgb2gray
     colors = np.array(
         [(255 - rgb[0], 255 - rgb[2], 255 - rgb[2]) for _ in factor_array])
     colors = rgb2gray(colors)
@@ -85,6 +82,10 @@ def add_pareto(df, col, worst, is_lower_the_better):
 
 
 def score_plot(event):
+    from bokeh.plotting import figure
+    from bokeh.models.sources import ColumnDataSource
+    from bokeh.models.formatters import DatetimeTickFormatter
+
     submissions = db_tools.get_submissions(event.name)
     submissions = [submission for submission in submissions
                    if submission.is_public_leaderboard and submission.is_valid]

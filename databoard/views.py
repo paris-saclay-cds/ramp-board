@@ -1,12 +1,11 @@
-from __future__ import division
+from __future__ import print_function, division, absolute_import
+
 import os
-# import sys
+import time
 import codecs
 import shutil
 import difflib
 import logging
-import os.path
-import time
 import tempfile
 import datetime
 import io
@@ -18,27 +17,29 @@ from sqlalchemy.orm.exc import NoResultFound
 from werkzeug import secure_filename
 from wtforms import StringField
 from wtforms.widgets import TextArea
-from databoard import db
-from bokeh.embed import components
 
 import flask_login as fl
 import flask_sqlalchemy as fs
+from sqlalchemy.exc import IntegrityError
+
+from databoard import db
 from databoard import app, login_manager
-import databoard.db_tools as db_tools
-import databoard.vizu as vizu
-import databoard.config as config
-from databoard.model import (
+
+from . import db_tools
+from . import vizu
+from . import config
+from .model import (
     User, Submission, WorkflowElement, Event, Problem, Keyword, Team,
     SubmissionFile, UserInteraction, SubmissionSimilarity, EventTeam,
     DuplicateSubmissionError, TooEarlySubmissionError, MissingExtensionError,
     NameClashError)
-from databoard.forms import (
+from .forms import (
     LoginForm, CodeForm, SubmitForm, ImportForm, UploadForm,
     UserCreateProfileForm, UserUpdateProfileForm,
     CreditForm, EmailForm, PasswordForm, EventUpdateProfileForm,
     AskForEventForm)
-from databoard.security import ts
-from sqlalchemy.exc import IntegrityError
+from .security import ts
+
 
 
 app.secret_key = os.urandom(24)
@@ -260,6 +261,7 @@ def problem(problem_name):
 @app.route("/event_plots/<event_name>")
 @fl.login_required
 def event_plots(event_name):
+    from bokeh.embed import components
     event = Event.query.filter_by(name=event_name).one_or_none()
     if not db_tools.is_public_event(event, fl.current_user):
         return _redirect_to_user(u'{}: no event named "{}"'.format(

@@ -1,0 +1,7 @@
+nbconvert
+jupyter_client
+enum34>=1.0.4
+nose
+bokeh
+xkcdpass<=1.4.2
+scikit-image
