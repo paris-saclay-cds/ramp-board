@@ -15,10 +15,16 @@ from sqlalchemy.engine.url import URL
 
 from .model import Base
 from .query import select_submissions_by_state, select_submissions_by_id
-from .config import read_backend_config, STATES, UnknownStateError
+from .config import STATES, UnknownStateError
 
 
-__all__ = ['get_submissions', 'set_submission_state', 'set_predictions']
+__all__ = [
+    'get_submissions',
+    'get_submission_by_id',
+    'set_submission_state',
+    'get_submission_state',
+    'set_predictions'
+]
 
 
 def get_submissions(config, event_name, state='new'):
@@ -28,8 +34,8 @@ def get_submissions(config, event_name, state='new'):
 
     Parameters
     ----------
-    config : str
-        path to the ramp-backend YAML configuration file
+    config : dict
+        configuration
     event_name : str
         name of the RAMP event
     state : str, optional
@@ -51,11 +57,8 @@ def get_submissions(config, event_name, state='new'):
     if state not in STATES:
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
 
-    # Read config from external file
-    conf = read_backend_config(config)
-
     # Create database url
-    db_url = URL(**conf['sqlalchemy'])
+    db_url = URL(**config['sqlalchemy'])
     db = create_engine(db_url)
 
     # Create a configured "Session" class
@@ -80,14 +83,52 @@ def get_submissions(config, event_name, state='new'):
     return list(zip(subids, filenames))
 
 
+def get_submission_by_id(config, submission_id):
+    """
+    Get a `Submission` instance given a submission id
+
+    Parameters
+    ----------
+
+    config : dict
+        configuration
+
+    submission_id : int
+        submission id
+
+    Returns
+    -------
+
+    `Submission` instance
+    """
+    # Create database url
+    db_url = URL(**config['sqlalchemy'])
+    db = create_engine(db_url)
+
+    # Create a configured "Session" class
+    Session = sessionmaker(db)
+
+    # Link the relational model to the database
+    Base.metadata.create_all(db)
+
+    # Connect to the dabase and perform action
+    with db.connect() as conn:
+        session = Session(bind=conn)
+        submission = select_submissions_by_id(session, submission_id)
+        # force event name and team name to be cached
+        submission.event.name
+        submission.team.name
+    return submission
+
+
 def set_submission_state(config, submission_id, state):
     """
     Modify the state of a submission in the RAMP database
 
     Parameters
     ----------
-    config : str
-        path to the ramp-backend YAML configuration file
+    config : dict
+        configuration
     submission_id : int
         id of the requested submission
     state : str
@@ -104,11 +145,8 @@ def set_submission_state(config, submission_id, state):
     if state not in STATES:
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
 
-    # Read config from external file
-    conf = read_backend_config(config)
-
     # Create database url
-    db_url = URL(**conf['sqlalchemy'])
+    db_url = URL(**config['sqlalchemy'])
     db = create_engine(db_url)
 
     # Create a configured "Session" class
@@ -127,14 +165,50 @@ def set_submission_state(config, submission_id, state):
         session.commit()
 
 
+def get_submission_state(config, submission_id):
+    """
+    Modify the state of a submission in the RAMP database
+
+    Parameters
+    ----------
+    config : dict
+        configuration
+    submission_id : int
+        id of the requested submission
+
+    Raises
+    ------
+    ValueError :
+        when mandatory connexion parameters are missing from config
+    UnknownStateError :
+        when the requested state does not exist in the database
+
+    """
+    # Create database url
+    db_url = URL(**config['sqlalchemy'])
+    db = create_engine(db_url)
+
+    # Create a configured "Session" class
+    Session = sessionmaker(db)
+
+    # Link the relational model to the database
+    Base.metadata.create_all(db)
+
+    # Connect to the dabase and perform action
+    with db.connect() as conn:
+        session = Session(bind=conn)
+        submission = select_submissions_by_id(session, submission_id)
+    return submission.state
+
+
 def set_predictions(config, submission_id, prediction_path, ext='npy'):
     """
     Insert predictions in the database after training/testing
 
     Parameters
     ----------
-    config : str
-        path to the ramp-backend YAML configuration file
+    config : dict
+        configuration
     submission_id : int
         id of the related submission
     prediction_path : str
@@ -149,11 +223,8 @@ def set_predictions(config, submission_id, prediction_path, ext='npy'):
         when the extension cannot be read properly
 
     """
-    # Read config from external file
-    conf = read_backend_config(config)
-
     # Create database url
-    db_url = URL(**conf['sqlalchemy'])
+    db_url = URL(**config['sqlalchemy'])
     db = create_engine(db_url)
 
     # Create a configured "Session" class
