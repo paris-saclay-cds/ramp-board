@@ -108,6 +108,7 @@ from rampbkd.api import set_submission_state
 from rampbkd.api import get_submissions
 from rampbkd.api import get_submission_state
 from rampbkd.api import get_submission_by_id
+from rampbkd.api import score_submission
 
 __all__ = [
     'train_loop',
@@ -228,8 +229,7 @@ def train_loop(config, event_name):
                 # in any case download the log
                 download_log(config, instance_id, submission_id)
             elif state == 'tested':
-                # TODO scoring
-                pass
+                score_submission(config, submission_id)
         time.sleep(secs)
 
 
@@ -290,6 +290,7 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
         4) download the predictions
         5) download th log
         6) set the predictions in the database
+        7) score the submission
     """
     upload_submission(config, instance_id, submission_id)
     launch_train(config, instance_id, submission_id)
@@ -305,6 +306,7 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
         set_predictions(config, submission_id,
                         predictions_folder_path, ext='npz')
         set_submission_state(config, submission_id, 'tested')
+        score_submission(config, submission_id)
     else:
         logger.info('Training of "{}" in "{}" failed'.format(
             submission_id, instance_id))
