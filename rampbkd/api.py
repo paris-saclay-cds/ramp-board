@@ -294,6 +294,24 @@ def _load_submission(path, fold_id, typ, ext):
 
 
 def score_submission(config, submission_id):
+    """
+    Score a submission and change its state to 'scored'
+
+    Parameters
+    ----------
+    config : dict
+        configuration
+    
+    submission_id : int
+        submission id
+
+    Raises
+    ------
+    ValueError :
+        when the state of the submission is not 'tested'
+        (only a submission with state 'tested' can be scored)
+    """
+
     # Create database url
     db_url = URL(**config['sqlalchemy'])
     db = create_engine(db_url)
@@ -310,20 +328,22 @@ def score_submission(config, submission_id):
 
         submission = select_submissions_by_id(session, submission_id)
         if submission.state != 'tested':
-            raise ValueError('submission state must be "tested" to score')
+            raise ValueError('Submission state must be "tested"'
+                             ' to score, not "{}"'.format(submission.state))
 
         # We are conservative:
         # only score if all stages (train, test, validation)
         # were completed. submission_on_cv_fold compute scores can be called
         # manually if needed for submission in various error states.
         for submission_on_cv_fold in submission.on_cv_folds:
-            submission_on_cv_fold.compute_train_scores()
-            submission_on_cv_fold.compute_valid_scores()
-            submission_on_cv_fold.compute_test_scores()
+            submission_on_cv_fold.session = session
+            submission_on_cv_fold.compute_train_scores(session)
+            submission_on_cv_fold.compute_valid_scores(session)
+            submission_on_cv_fold.compute_test_scores(session)
             submission_on_cv_fold.state = 'scored'
         session.commit()
-        submission.compute_test_score_cv_bag()
-        submission.compute_valid_score_cv_bag()
+        submission.compute_test_score_cv_bag(session)
+        submission.compute_valid_score_cv_bag(session)
         # Means and stds were constructed on demand by fetching fold times.
         # It was slow because submission_on_folds contain also possibly large
         # predictions. If postgres solves this issue (which can be tested on
@@ -342,6 +362,5 @@ def score_submission(config, submission_id):
             [ts.valid_time for ts in submission.on_cv_folds])
         submission.test_time_cv_std = np.std(
             [ts.test_time for ts in submission.on_cv_folds])
-        session.commit()
         submission.state = 'scored'
         session.commit()

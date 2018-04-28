@@ -377,8 +377,7 @@ class Event(Base):
     failed_leaderboard_html = Column(String, default=None)
     new_leaderboard_html = Column(String, default=None)
 
-    def __init__(self, problem_name, name, event_title, session):
-        self.session = session
+    def __init__(self, problem_name, name, event_title):
         self.name = name
         # to check if the module and all required fields are there
         # db fields are later initialized by tools._set_table_attribute
@@ -390,12 +389,12 @@ class Event(Base):
         repr = 'Event({})'.format(self.name)
         return repr
 
-    def set_n_submissions(self):
+    def set_n_submissions(self, session):
         self.n_submissions = 0
         for event_team in self.event_teams:
             # substract one for starting kit
             self.n_submissions += len(event_team.submissions) - 1
-        self.session.commit()
+        session.commit()
 
     @property
     def Predictions(self):
@@ -1089,7 +1088,6 @@ class Submission(Base):
     UniqueConstraint(event_team_id, name, name='ts_constraint')
 
     def __init__(self, name, event_team, session):
-        self.session = session
         self.name = name
         self.event_team = event_team
         sha_hasher = hashlib.sha1()
@@ -1105,7 +1103,7 @@ class Submission(Base):
         for event_score_type in event_score_types:
             submission_score = SubmissionScore(
                 submission=self, event_score_type=event_score_type)
-            self.session.add(submission_score)
+            session.add(submission_score)
         self.reset()
 
     def __str__(self):
@@ -1270,7 +1268,7 @@ class Submission(Base):
         for submission_on_cv_fold in self.on_cv_folds:
             submission_on_cv_fold.set_error(error, error_msg)
 
-    def compute_valid_score_cv_bag(self):
+    def compute_valid_score_cv_bag(self, session):
         """Cv-bag cv_fold.valid_predictions using combine_predictions_list.
 
         The predictions in predictions_list[i] belong to those indicated
@@ -1291,9 +1289,9 @@ class Submission(Base):
             for score in self.scores:
                 score.valid_score_cv_bag = float(score.event_score_type.worst)
                 score.valid_score_cv_bags = None
-        self.session.commit()
+        session.commit()
 
-    def compute_test_score_cv_bag(self):
+    def compute_test_score_cv_bag(self, session):
         """Bag cv_fold.test_predictions using combine_predictions_list.
 
         And stores the score of the bagged predictor in test_score_cv_bag. The
@@ -1324,10 +1322,10 @@ class Submission(Base):
             for score in self.scores:
                 score.test_score_cv_bag = float(score.event_score_type.worst)
                 score.test_score_cv_bags = None
-        self.session.commit()
+        session.commit()
 
     # contributivity could be a property but then we could not query on it
-    def set_contributivity(self, is_commit=True):
+    def set_contributivity(self, session):
         self.contributivity = 0.0
         if self.is_public_leaderboard:
             # we share a unit of 1. among folds
@@ -1335,8 +1333,7 @@ class Submission(Base):
             for submission_on_cv_fold in self.on_cv_folds:
                 self.contributivity +=\
                     unit_contributivity * submission_on_cv_fold.contributivity
-        if is_commit:
-            self.session.commit()
+        session.commit()
 
     def set_state_after_training(self):
         self.training_timestamp = datetime.datetime.utcnow()
@@ -1508,13 +1505,12 @@ class SubmissionOnCVFold(Base):
     UniqueConstraint(submission_id, cv_fold_id, name='sc_constraint')
 
     def __init__(self, submission, cv_fold, session):
-        self.session = session
         self.submission = submission
         self.cv_fold = cv_fold
         for score in submission.scores:
             submission_score_on_cv_fold = SubmissionScoreOnCVFold(
                 submission_on_cv_fold=self, submission_score=score)
-            self.session.add(submission_score_on_cv_fold)
+            session.add(submission_score_on_cv_fold)
         self.reset()
 
     def __repr__(self):
@@ -1594,7 +1590,7 @@ class SubmissionOnCVFold(Base):
         self.state = error
         self.error_msg = error_msg
 
-    def compute_train_scores(self):
+    def compute_train_scores(self, session):
         if self.is_trained:
             true_full_train_predictions =\
                 self.submission.event.problem.ground_truths_train()
@@ -1605,9 +1601,9 @@ class SubmissionOnCVFold(Base):
         else:
             for score in self.scores:
                 score.train_score = score.event_score_type.worst
-        self.session.commit()
+        session.commit()
 
-    def compute_valid_scores(self):
+    def compute_valid_scores(self, session):
         if self.is_validated:
             true_full_train_predictions =\
                 self.submission.event.problem.ground_truths_train()
@@ -1618,9 +1614,9 @@ class SubmissionOnCVFold(Base):
         else:
             for score in self.scores:
                 score.valid_score = score.event_score_type.worst
-        self.session.commit()
+        session.commit()
 
-    def compute_test_scores(self):
+    def compute_test_scores(self, session):
         if self.is_tested:
             true_test_predictions =\
                 self.submission.event.problem.ground_truths_test()
@@ -1630,9 +1626,9 @@ class SubmissionOnCVFold(Base):
         else:
             for score in self.scores:
                 score.test_score = score.event_score_type.worst
-        self.session.commit()
+        session.commit()
 
-    def update(self, detached_submission_on_cv_fold):
+    def update(self, detached_submission_on_cv_fold, session):
         """From trained DetachedSubmissionOnCVFold."""
         self.state = detached_submission_on_cv_fold.state
         if self.is_error:
@@ -1647,7 +1643,7 @@ class SubmissionOnCVFold(Base):
             if self.is_tested:
                 self.test_time = detached_submission_on_cv_fold.test_time
                 self.test_y_pred = detached_submission_on_cv_fold.test_y_pred
-        self.session.commit()
+        session.commit()
 
 
 class DetachedSubmissionOnCVFold(object):
