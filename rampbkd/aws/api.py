@@ -178,7 +178,11 @@ def train_loop(config, event_name):
             logger.info('Launched instance "{}" for submission "{}"'.format(
                 instance.id, submission))
             set_submission_state(config, submission.id, 'sent_to_training')
-
+        # Score tested submissions
+        submissions = get_submissions(config, event_name, 'tested')
+        for submission_id, _ in submissions:
+            logger.info('Scoring submission : {}'.format(submission_id))
+            score_submission(config, submission_id)
         # Get running instances and process events
         instance_ids = list_ec2_instance_ids(config)
         for instance_id in instance_ids:
@@ -228,8 +232,6 @@ def train_loop(config, event_name):
                     terminate_ec2_instance(config, instance_id)
                 # in any case download the log
                 download_log(config, instance_id, submission_id)
-            elif state == 'tested':
-                score_submission(config, submission_id)
         time.sleep(secs)
 
 
