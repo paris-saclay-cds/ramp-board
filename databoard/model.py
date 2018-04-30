@@ -1851,13 +1851,15 @@ class SubmissionSimilarity(db.Model):
         db.Integer, db.ForeignKey('submissions.id'))
     source_submission = db.relationship(
         'Submission', primaryjoin=(
-            'SubmissionSimilarity.source_submission_id == Submission.id'))
+            'SubmissionSimilarity.source_submission_id == Submission.id'),
+        backref=db.backref('sources', cascade='all, delete-orphan'))
 
     target_submission_id = db.Column(
         db.Integer, db.ForeignKey('submissions.id'))
     target_submission = db.relationship(
         'Submission', primaryjoin=(
-            'SubmissionSimilarity.target_submission_id == Submission.id'))
+            'SubmissionSimilarity.target_submission_id == Submission.id'),
+        backref=db.backref('targets', cascade='all, delete-orphan'))
 
     def __repr__(self):
         repr = 'type={}, user={}, source={}, target={}, similarity={}, timestamp={}'.format(
