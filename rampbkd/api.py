@@ -301,7 +301,6 @@ def score_submission(config, submission_id):
     ----------
     config : dict
         configuration
-    
     submission_id : int
         submission id
 
