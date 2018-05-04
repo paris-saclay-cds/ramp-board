@@ -1,0 +1,34 @@
+language: python
+dist: trusty
+cache: pip
+branches:
+  only:
+  - master
+env:
+  - PYTHON_VERSION=2.7
+services:
+  - postgres
+before_install:
+    - wget -q http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh -O miniconda.sh
+    - chmod +x miniconda.sh
+    - ./miniconda.sh -b -p /home/travis/miniconda
+    - export PATH=/home/travis/miniconda/bin:$PATH
+    - conda update --yes --quiet conda
+install:
+    - conda create -n testenv --yes pip python=$PYTHON_VERSION ipykernel
+    - source activate testenv
+    - pip install -r testing-requirements.txt
+    - pip install git+https://github.com/paris-saclay-cds/ramp-workflow
+    - python setup.py develop
+script:
+    - psql -U postgres -c "CREATE USER mrramp WITH PASSWORD 'mrramp';ALTER USER mrramp WITH SUPERUSER;"
+    - createdb --owner=mrramp databoard_test
+    - export DATABOARD_TEST=True
+    - export DATABOARD_DB_URL=postgresql://mrramp:mrramp@localhost/databoard_test
+    - export DATABOARD_DB_URL_TEST=postgresql://mrramp:mrramp@localhost/databoard_test
+    - cp databoard/config_local.py databoard/config.py
+    - make test
+after_success:
+    - make code-analysis
+notifications:
+  email: true
