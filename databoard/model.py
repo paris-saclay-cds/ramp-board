@@ -326,6 +326,9 @@ class Event(db.Model):
     is_send_submitted_mails = db.Column(db.Boolean, default=True)
     is_public = db.Column(db.Boolean, default=False)
     is_controled_signup = db.Column(db.Boolean, default=True)
+    # in competitive events participants can select the submission
+    # with which they want to participate in the competition
+    is_competitive = db.Column(db.Boolean, default=False)
 
     min_duration_between_submissions = db.Column(db.Integer, default=15 * 60)
     opening_timestamp = db.Column(
@@ -1054,6 +1057,10 @@ class Submission(db.Model):
     # We can forget bad models.
     # If false, don't combine and set contributivity to zero
     is_to_ensemble = db.Column(db.Boolean, default=True)
+    # in competitive events participants can select the submission
+    # with which they want to participate in the competition
+    is_in_competition = db.Column(db.Boolean, default=False)
+
     notes = db.Column(db.String, default='')  # eg, why is it disqualified
 
     train_time_cv_mean = db.Column(db.Float, default=0.0)
@@ -1062,6 +1069,8 @@ class Submission(db.Model):
     train_time_cv_std = db.Column(db.Float, default=0.0)
     valid_time_cv_std = db.Column(db.Float, default=0.0)
     test_time_cv_std = db.Column(db.Float, default=0.0)
+    # the maximum memory size used when training/testing, in MB
+    max_ram = db.Column(db.Float, default=0.0)
     # later also ramp_id
     db.UniqueConstraint(event_team_id, name, name='ts_constraint')
 
