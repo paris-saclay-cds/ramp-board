@@ -1748,6 +1748,9 @@ def get_private_leaderboards(event_name, user_name=None):
     leaderboard_df['tet std'] = [
         int(round(submission.valid_time_cv_std))
         for submission in submissions]
+    leaderboard_df['max RAM [MB]'] = [
+        int(round(submission.max_ram))
+        for submission in submissions]
     leaderboard_df['submitted at (UTC)'] = [
         date_time_format(submission.submission_timestamp)
         for submission in submissions]
