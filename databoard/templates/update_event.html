@@ -86,6 +86,14 @@
                            <span style="color: red;">[{{ error }}]</span>
                        {% endfor %}
                    </div>
+                   Check if the event is competitive. In competitive events users may dedicate the submission with which they would like to enter in the competition. It is not mandatory: if there is no dedicated submission, the best one according to the public leaderboard score will enter in the competition.
+                   <div class="form-group">
+                       <label>competitive</label>
+                       {{ form.is_competitive() }}
+                       {% for error in form.is_competitive.errors %}
+                           <span style="color: red;">[{{ error }}]</span>
+                       {% endfor %}
+                   </div>
                    Minimum duration between submissions.
                    <div class="form-group">
                        {{ form.min_duration_between_submissions_hour() }}hours
