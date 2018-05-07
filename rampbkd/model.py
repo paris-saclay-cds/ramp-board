@@ -1044,7 +1044,7 @@ submission_states = Enum(
     name='submission_states')
 
 submission_types = Enum('live', 'test', name='submission_types')
-
+SANDBOX_NAME = 'starting_kit'
 
 class Submission(Base):
     """An abstract (untrained) submission."""
@@ -1084,6 +1084,7 @@ class Submission(Base):
     train_time_cv_std = Column(Float, default=0.0)
     valid_time_cv_std = Column(Float, default=0.0)
     test_time_cv_std = Column(Float, default=0.0)
+    max_ram = Column(Float, default=0.0)
     # later also ramp_id
     UniqueConstraint(event_team_id, name, name='ts_constraint')
 
@@ -1147,8 +1148,8 @@ class Submission(Base):
         return self.event.Predictions
 
     @hybrid_property
-    def is_not_sandbox(self):
-        return self.name != config.SANDBOX_NAME
+    def is_sandbox(self):
+        return self.name == SANDBOX_NAME
 
     @hybrid_property
     def is_error(self):

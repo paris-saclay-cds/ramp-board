@@ -1,100 +1,11 @@
-"""
-Backend support for Amazon EC2 instances.
-The goal of this module is to provide a set of
-helper functions to train a submission on an ec2 instance.
-The first step is to add a section 'aws' on the configuration
-file as the following.
-
-## Configuration details
-
-aws:
-    ami_image_id : ami-0bc19972
-    ami_user_name : ubuntu
-    instance_type : t2.micro
-    key_name: key
-    key_path: /home/user/.ssh/id_rsa
-    security_group : launch-wizard-1
-    remote_ramp_kit_folder : ~/ramp/iris
-    local_predictions_folder : ./predictions
-    local_log_folder : ./logs
-    check_status_interval_secs : 60
-    check_finished_training_interval_secs : 60
-    train_loop_interval_secs : 60
-
-`ami_image_id` is the id of the image to use, it should start with 'ami-'.
-The AMI should contain a folder `remote_ramp_kit_folder` (see below)
-which contains the ramp kit.
-
-`ami_user_name` is the username to connect with remotely on ec2 instances.
-
-`instance_type` is the instance type (check https://ec2instances.info/).
-
-`key_name` is the name of the key to connect with, so `key_name` should
-exist im amazon. It can be created using their web app, or manually via
-`aws` like this :
-> aws ec2 import-key-pair --key-name <put key name here>
-  --public-key-material "<put public key here>"
-
-`security_group` is the name of the security group to use.
-Security groups control which ports are accepted/blocked inbound or outbound.
-They can be created in the web app of amazon. Use `default`
-to use the default one.
-
-`remote_ramp_kit_folder` is the folder in the ec2 instance
-where the ramp-kit will reside. It should
-be possible to launch `ramp_test_submission` in that folder.
-
-`local_predictions_folder` is the local folder where the predictions are
-downloaded (from the ec2 instance).
-
-`local_log_folder` is the local folder where the logs are downloaded
-(from the ec2 instance). The logs contain the standard output obtained
-from running `ramp_test_submission` for a given submission.
-
-`check_status_interval_secs` is the number of secs to wait until we
-recheck whether an ec2 instance is ready to be used.
-
-`check_finished_training_interval_secs` is the number of secs to wait
-until we recheck whether the training of a submission in an ec2
-instance is finished.
-
-`train_loop_interval_secs` is the number of secs to wait each time we
-process new events in `train_loop`
-
-## Using the API
-
-Once configuration is ready, the most straighforward way to use the API is
-to use the function `launch_ec2_instance_and_train`. It does the full pipeline
-in one pass. That is, it launches an ec2 instance, waits until it is
-ready, upload submission, starts training, wait for training to
-finish, download the predictions and logs, store the predictions on the
-database, then terminate the ec2 instance.
-
-from rampbkd.config import read_backend_config
-conf = read_backend_config('config.yml')
-launch_ec2_instance_and_train(conf, submission_id)
-
-Another way to use the API is to run a loop that listens for new
-submissions and  run them.
-
-from rampbkd.config import read_backend_config
-conf = read_backend_config('config.yml')
-train_loop(conf)
-
-The other available functions can be used to do something more custom.
-One could imagine to launch a pool of ec2 instances first, then have
-a training loop which waits for submissions and run them in an ec2 instance
-(nothing prevents us to train multiple submissions in the same ec2 instance).
-The pool size could be adapted automatically to the need. Also, different
-submissions could need different types of machines (GPU vs CPU).
-"""
 from __future__ import print_function, absolute_import, unicode_literals
 import os
 import time
 import logging
 from subprocess import call
 from subprocess import check_output
-
+from glob import glob
+import re
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import URL
@@ -108,7 +19,9 @@ from rampbkd.api import set_submission_state
 from rampbkd.api import get_submissions
 from rampbkd.api import get_submission_state
 from rampbkd.api import get_submission_by_id
+from rampbkd.api import set_submission_max_ram
 from rampbkd.api import score_submission
+from rampbkd.api import set_submission_error_msg
 
 __all__ = [
     'train_loop',
@@ -125,6 +38,8 @@ __all__ = [
     'abort_training',
 ]
 
+for name, l in logging.Logger.manager.loggerDict.items():
+    l.disabled = True
 logging.basicConfig(
     format='%(asctime)s ## %(message)s',
     level=logging.INFO,
@@ -148,6 +63,7 @@ CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD = (
     'check_finished_training_interval_secs')
 LOCAL_LOG_FOLDER_FIELD = 'local_log_folder'
 TRAIN_LOOP_INTERVAL_SECS_FIELD = 'train_loop_interval_secs'
+MEMORY_PROFILING_FIELD = 'memory_profiling'
 
 # constants
 RAMP_AWS_BACKEND_TAG = 'ramp_aws_backend_instance'
@@ -173,6 +89,8 @@ def train_loop(config, event_name):
         submissions = get_submissions(config, event_name, 'new')
         for submission_id, _ in submissions:
             submission = get_submission_by_id(config, submission_id)
+            if submission.is_sandbox():
+                continue
             instance, = launch_ec2_instances(config, nb=1)
             _tag_instance_by_submission(instance.id, submission)
             logger.info('Launched instance "{}" for submission "{}"'.format(
@@ -181,7 +99,8 @@ def train_loop(config, event_name):
         # Score tested submissions
         submissions = get_submissions(config, event_name, 'tested')
         for submission_id, _ in submissions:
-            logger.info('Scoring submission : {}'.format(submission_id))
+            label = _get_submission_label_by_id(config, submission_id)
+            logger.info('Scoring submission : {}'.format(label))
             score_submission(config, submission_id)
         # Get running instances and process events
         instance_ids = list_ec2_instance_ids(config)
@@ -191,7 +110,7 @@ def train_loop(config, event_name):
             tags = _get_tags(instance_id)
             if 'submission_id' not in tags:
                 continue
-            name = tags['Name']
+            label = tags['Name']
             submission_id = int(tags['submission_id'])
             state = get_submission_state(config, submission_id)
             if state == 'sent_to_training':
@@ -200,26 +119,37 @@ def train_loop(config, event_name):
                 if exit_status != 0:
                     logger.error(
                         'Cannot upload submission "{}"'
-                        ', an error occured'.format(name))
+                        ', an error occured'.format(label))
                     continue
                 # start training HERE
                 exit_status = launch_train(config, instance_id, submission_id)
                 if exit_status != 0:
                     logger.error(
                         'Cannot start training of submission "{}"'
-                        ', an error occured.'.format(name))
+                        ', an error occured.'.format(label))
                     continue
                 set_submission_state(config, submission_id, 'training')
             elif state == 'training':
-                if _training_finished(config, instance_id, submission_id):
+                # in any case (successful training or not)
+                # download the log 
+                download_log(config, instance_id, submission_id)
+                if _training_finished(config, instance_id, submission_id):                   
                     logger.info(
                         'Training of "{}" finished, checking '
-                        'if successful or not...'.format(name))
+                        'if successful or not...'.format(label))
                     if _training_successful(
                             config,
                             instance_id,
                             submission_id):
-                        logger.info('Training of "{}" successful'.format(name))
+                        logger.info('Training of "{}" was successful'.format(label))
+                        if conf.get(MEMORY_PROFILING_FIELD):
+                            logger.info('Download max ram usage info of "{}"'.format(label))
+                            download_mprof_data(config, instance_id, submission_id)
+                            max_ram = _get_submission_max_ram(config, submission_id)
+                            logger.info('Max ram usage of "{}": {}MB'.format(label, max_ram))
+                            set_submission_max_ram(config, submission_id, max_ram)
+                            
+                        logger.info('Downloading the predictions of "{}"'.format(label))
                         path = download_predictions(
                             config, instance_id, submission_id)
                         set_predictions(config, submission_id, path, ext='npz')
@@ -228,10 +158,13 @@ def train_loop(config, event_name):
                         logger.info('Training of "{}" failed'.format(name))
                         set_submission_state(
                             config, submission_id, 'training_error')
+                        error_msg = _get_traceback(
+                            _get_log_content(config, submission_id)
+                        )
+                        set_submission_error_msg(
+                            config, submission_id, error_msg)
                     # training finished, so terminate the instance
                     terminate_ec2_instance(config, instance_id)
-                # in any case download the log
-                download_log(config, instance_id, submission_id)
         time.sleep(secs)
 
 
@@ -294,25 +227,40 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
         6) set the predictions in the database
         7) score the submission
     """
+    conf = config[AWS_CONFIG_SECTION]
     upload_submission(config, instance_id, submission_id)
     launch_train(config, instance_id, submission_id)
     set_submission_state(config, submission_id, 'training')
     _wait_until_train_finished(config, instance_id, submission_id)
     download_log(config, instance_id, submission_id)
-
+    
+    label = _get_submission_label_by_id(config, submission_id)
     if _training_successful(config, instance_id, submission_id):
-        logger.info('Training of "{}" in "{}" was success'.format(
-            submission_id, instance_id))
+
+        logger.info('Training of "{}" was successful'.format(
+            label, instance_id))
+        if conf[MEMORY_PROFILING_FIELD]:
+            logger.info('Download max ram usage info of "{}"'.format(label))
+            download_mprof_data(config, instance_id, submission_id)
+            max_ram = _get_submission_max_ram(config, submission_id)
+            logger.info('Max ram usage of "{}": {}MB'.format(label, max_ram))
+            set_submission_max_ram(config, submission_id, max_ram)
+            
+        logger.info('Downloading predictions of : "{}"'.format(label))
         predictions_folder_path = download_predictions(
             config, instance_id, submission_id)
         set_predictions(config, submission_id,
                         predictions_folder_path, ext='npz')
         set_submission_state(config, submission_id, 'tested')
+        logger.info('Scoring "{}"'.format(label))
         score_submission(config, submission_id)
     else:
         logger.info('Training of "{}" in "{}" failed'.format(
-            submission_id, instance_id))
+            name, instance_id))
         set_submission_state(config, submission_id, 'training_error')
+        error_msg = _get_traceback(
+            _get_log_content(config, submission_id))
+        set_submission_error_msg(config, submission_id, error_msg)
 
 
 def _wait_until_train_finished(config, instance_id, submission_id):
@@ -492,10 +440,95 @@ def download_log(config, instance_id, submission_id, folder=None):
         ramp_kit_folder, SUBMISSIONS_FOLDER, submission_folder_name, 'log')
     if folder is None:
         dest_path = os.path.join(
-            conf[LOCAL_LOG_FOLDER_FIELD], submission_folder_name)
+            conf[LOCAL_LOG_FOLDER_FIELD], submission_folder_name, 'log')
+    else:
+        dest_path = folder
+    try:
+        os.makedirs(os.path.dirname(dest_path))
+    except OSError:
+        pass
+    return _download(config, instance_id, source_path, dest_path)
+
+
+def _get_log_content(config, submission_id):
+    conf = config[AWS_CONFIG_SECTION]
+    ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
+    submission_folder_name = _get_submission_folder_name(submission_id)
+    path = os.path.join(
+        conf[LOCAL_LOG_FOLDER_FIELD], 
+        submission_folder_name, 
+        'log')
+    try: 
+        content = open(path).read()
+        content = _filter_colors(content)
+    except IOError:
+        logger.error('Could not open log file of "{}" when trying to get log content'.format(submission_id))
+        return ''
+
+
+def _get_traceback(content):
+    cut_exception_text = content.rfind('--->')
+    if cut_exception_text > 0:
+        content = content[cut_exception_text:]
+   	return content
+ 
+
+def _filter_colors(content):
+    # filter linux colors from a string
+    # check (https://pypi.org/project/colored/)
+    return re.sub(r'(\x1b\[)([\d]+;[\d]+;)?[\d]+m', '', content)
+
+
+def download_mprof_data(config, instance_id, submission_id, folder=None):
+    """
+    Download the dat file for memory profiling from an ec2 instance to a local folder `folder`.
+    If `folder` is not given, then the dat file is downloaded on
+    the value in config corresponding to `LOCAL_LOG_FOLDER_FIELD`.
+    If `folder` is given, then the dat file is put in `folder`.
+    IMPORTANT: memory_profiler >= 0.52.0 should be installed in the remote instances.
+    
+    Parameters
+    ----------
+
+    config : dict
+        configuration
+
+    instance_id : str
+        instance id
+
+    submission_id : int
+        submission id
+
+    folder : str or None
+        folder where to download the log
+    """
+    conf = config[AWS_CONFIG_SECTION]
+    ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
+    submission_folder_name = _get_submission_folder_name(submission_id)
+    source_path = os.path.join(
+        ramp_kit_folder,
+        SUBMISSIONS_FOLDER,
+        submission_folder_name,
+        'mprof.dat')
+    if folder is None:
+        dest_path = os.path.join(
+            conf[LOCAL_LOG_FOLDER_FIELD], submission_folder_name) + os.sep
     else:
         dest_path = folder
     return _download(config, instance_id, source_path, dest_path)
+
+
+def _get_submission_max_ram(config, submission_id):
+    conf = config[AWS_CONFIG_SECTION]
+    ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
+    submission_folder_name = _get_submission_folder_name(submission_id)
+    dest_path = os.path.join(conf[LOCAL_LOG_FOLDER_FIELD], submission_folder_name)
+    filename = os.path.join(dest_path, 'mprof.dat')
+    max_mem = 0.
+    for line in open(filename).readlines()[1:]:
+        _, mem, _ = line.split()
+        max_mem = max(max_mem, float(mem))
+    return max_mem
 
 
 def download_predictions(config, instance_id, submission_id, folder=None):
@@ -575,13 +608,20 @@ def launch_train(config, instance_id, submission_id):
         'log': os.path.join(ramp_kit_folder, SUBMISSIONS_FOLDER,
                             submission_folder_name, 'log')
     }
+    run_cmd = "ramp_test_submission --submission {submission} --save-y-preds "
+    if conf.get(MEMORY_PROFILING_FIELD):
+        run_cmd = "mprof run --output={submission_folder}/mprof.dat --include-children " + run_cmd
     cmd = (
-        "screen -dm -S {submission} sh -c '. ~/.profile;"
-        "cd {ramp_kit_folder};"
-        "rm -fr {submission_folder}/training_output;"
-        "ramp_test_submission --submission {submission} --save-y-preds "
-        "2>&1 > {log}"
-        "'".format(**values))
+        "screen -dm -S {submission} sh -c '. ~/.profile;"+
+        "cd {ramp_kit_folder};"+
+        "rm -fr {submission_folder}/training_output;"+
+        "rm -f {submission_folder}/log;"+
+        "rm -f {submission_folder}/mprof.dat;"+
+        run_cmd+
+        "2>&1 >{log}"+
+        "'"
+    )
+    cmd = cmd.format(**values)
     # tag the ec2 instance with info about submission
     _tag_instance_by_submission(instance_id, submission)
     logger.info('Launch training of {}..'.format(submission))
@@ -614,6 +654,16 @@ def _get_submission_folder_name(submission_id):
 def _get_submission_path(config, submission_id):
     submission = get_submission_by_id(config, submission_id)
     return submission.path
+
+def _get_submission_label_by_id(config, submission_id):
+    submission = get_submission_by_id(config, submission_id)
+    return _get_submission_label(submission)
+
+
+def _get_submission_label(submission):
+    label = '{}_{}'.format(submission.id, submission.name)
+    return label
+
 
 
 def _upload(config, instance_id, source, dest):
@@ -775,7 +825,17 @@ def _training_successful(config, instance_id, submission_id):
     """
     folder = _get_remote_training_output_folder(
         config, instance_id, submission_id)
-    return _folder_exists(config, instance_id, folder)
+    
+    cmd = "ls -l {}|grep fold_|wc -l".format(folder)
+    nb_folds = int(_run(config, instance_id, cmd, return_output=True))
+
+    cmd = "find {}|egrep 'fold.*/y_pred_train.npz'|wc -l".format(folder)
+    nb_train_files = int(_run(config, instance_id, cmd, return_output=True))
+
+    cmd = "find {}|egrep 'fold.*/y_pred_test.npz'|wc -l".format(folder)
+    nb_test_files = int(_run(config, instance_id, cmd, return_output=True))
+
+    return nb_folds == nb_train_files == nb_test_files
 
 
 def _folder_exists(config, instance_id, folder):
@@ -807,7 +867,7 @@ def _tag_instance_by_submission(instance_id, submission):
     _add_or_update_tag(instance_id, 'submission_name', submission.name)
     _add_or_update_tag(instance_id, 'event_name', submission.event.name)
     _add_or_update_tag(instance_id, 'team_name', submission.team.name)
-    name = '{}_{}'.format(submission.id, submission.name)
+    name = _get_submission_label(submission)
     _add_or_update_tag(instance_id, 'Name', name)
 
 

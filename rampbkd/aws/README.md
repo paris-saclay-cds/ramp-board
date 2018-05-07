@@ -20,7 +20,8 @@ aws:
     check_status_interval_secs : 60
     check_finished_training_interval_secs : 60
     train_loop_interval_secs : 60
- ```
+    memory_profiling : true
+```
  
 `ami_image_id` is the id of the image to use, it should start with 'ami-'.
 The AMI should contain a folder `remote_ramp_kit_folder` (see below)
@@ -60,6 +61,9 @@ instance is finished.
 
 `train_loop_interval_secs` is the number of secs to wait each time we
 process new events in `train_loop`
+
+`memory_profiling` turns on memory profiling to know how much memory was
+needed by a submission
 
 ## Using the API
 Once configuration is ready, the most straighforward way to use the API is

@@ -23,6 +23,8 @@ __all__ = [
     'get_submission_by_id',
     'set_submission_state',
     'get_submission_state',
+    'set_submission_max_ram',
+    'set_submission_error_msg',
     'set_predictions',
     'score_submission',
 ]
@@ -363,3 +365,70 @@ def score_submission(config, submission_id):
             [ts.test_time for ts in submission.on_cv_folds])
         submission.state = 'scored'
         session.commit()
+
+
+def set_submission_max_ram(config, submission_id, max_ram_mb):
+    """
+    Modify the max RAM mb usage of a submission
+
+    Parameters
+    ----------
+    config : dict
+        configuration
+    submission_id : int
+        id of the requested submission
+    max_ram_mb : float
+        max ram usage in MB
+    """
+    # Create database url
+    db_url = URL(**config['sqlalchemy'])
+    db = create_engine(db_url)
+
+    # Create a configured "Session" class
+    Session = sessionmaker(db)
+
+    # Link the relational model to the database
+    Base.metadata.create_all(db)
+
+    # Connect to the dabase and perform action
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submissions_by_id(session, submission_id)
+        submission.max_ram = max_ram_mb
+        session.commit()
+
+
+def set_submission_error_msg(config, submission_id, error_msg):
+    """
+    Set submission message error
+
+    Parameters
+    ----------
+    config : dict
+        configuration
+    submission_id : int
+        id of the requested submission
+    error_msg : str
+        message error
+    """
+ 
+    # Create database url
+    db_url = URL(**config['sqlalchemy'])
+    db = create_engine(db_url)
+
+    # Create a configured "Session" class
+    Session = sessionmaker(db)
+
+    # Link the relational model to the database
+    Base.metadata.create_all(db)
+
+    # Connect to the dabase and perform action
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submissions_by_id(session, submission_id)
+        submission.error_msg = error_msg
+        session.commit()
+
+
