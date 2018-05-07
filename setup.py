@@ -59,5 +59,7 @@ if __name__ == "__main__":
                 'ramp_aws_train='
                 'rampbkd.aws.ramp_aws_train:main',
                 'ramp_aws_train_loop='
-                'rampbkd.aws.ramp_aws_train_loop:main'
+                'rampbkd.aws.ramp_aws_train_loop:main',
+                'ramp_score_submission='
+                'rampbkd.ramp_score_submission:main'
             ]})

@@ -108,6 +108,7 @@ from rampbkd.api import set_submission_state
 from rampbkd.api import get_submissions
 from rampbkd.api import get_submission_state
 from rampbkd.api import get_submission_by_id
+from rampbkd.api import score_submission
 
 __all__ = [
     'train_loop',
@@ -177,7 +178,11 @@ def train_loop(config, event_name):
             logger.info('Launched instance "{}" for submission "{}"'.format(
                 instance.id, submission))
             set_submission_state(config, submission.id, 'sent_to_training')
-
+        # Score tested submissions
+        submissions = get_submissions(config, event_name, 'tested')
+        for submission_id, _ in submissions:
+            logger.info('Scoring submission : {}'.format(submission_id))
+            score_submission(config, submission_id)
         # Get running instances and process events
         instance_ids = list_ec2_instance_ids(config)
         for instance_id in instance_ids:
@@ -227,9 +232,6 @@ def train_loop(config, event_name):
                     terminate_ec2_instance(config, instance_id)
                 # in any case download the log
                 download_log(config, instance_id, submission_id)
-            elif state == 'tested':
-                # TODO scoring
-                pass
         time.sleep(secs)
 
 
@@ -290,6 +292,7 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
         4) download the predictions
         5) download th log
         6) set the predictions in the database
+        7) score the submission
     """
     upload_submission(config, instance_id, submission_id)
     launch_train(config, instance_id, submission_id)
@@ -305,6 +308,7 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
         set_predictions(config, submission_id,
                         predictions_folder_path, ext='npz')
         set_submission_state(config, submission_id, 'tested')
+        score_submission(config, submission_id)
     else:
         logger.info('Training of "{}" in "{}" failed'.format(
             submission_id, instance_id))

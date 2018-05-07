@@ -23,7 +23,8 @@ __all__ = [
     'get_submission_by_id',
     'set_submission_state',
     'get_submission_state',
-    'set_predictions'
+    'set_predictions',
+    'score_submission',
 ]
 
 
@@ -290,3 +291,75 @@ def _load_submission(path, fold_id, typ, ext):
     else:
         return NotImplementedError("No reader implemented for extension {ext}"
                                    .format(ext))
+
+
+def score_submission(config, submission_id):
+    """
+    Score a submission and change its state to 'scored'
+
+    Parameters
+    ----------
+    config : dict
+        configuration
+    submission_id : int
+        submission id
+
+    Raises
+    ------
+    ValueError :
+        when the state of the submission is not 'tested'
+        (only a submission with state 'tested' can be scored)
+    """
+
+    # Create database url
+    db_url = URL(**config['sqlalchemy'])
+    db = create_engine(db_url)
+
+    # Create a configured "Session" class
+    Session = sessionmaker(db)
+
+    # Link the relational model to the database
+    Base.metadata.create_all(db)
+
+    # Connect to the dabase and perform action
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submissions_by_id(session, submission_id)
+        if submission.state != 'tested':
+            raise ValueError('Submission state must be "tested"'
+                             ' to score, not "{}"'.format(submission.state))
+
+        # We are conservative:
+        # only score if all stages (train, test, validation)
+        # were completed. submission_on_cv_fold compute scores can be called
+        # manually if needed for submission in various error states.
+        for submission_on_cv_fold in submission.on_cv_folds:
+            submission_on_cv_fold.session = session
+            submission_on_cv_fold.compute_train_scores(session)
+            submission_on_cv_fold.compute_valid_scores(session)
+            submission_on_cv_fold.compute_test_scores(session)
+            submission_on_cv_fold.state = 'scored'
+        session.commit()
+        submission.compute_test_score_cv_bag(session)
+        submission.compute_valid_score_cv_bag(session)
+        # Means and stds were constructed on demand by fetching fold times.
+        # It was slow because submission_on_folds contain also possibly large
+        # predictions. If postgres solves this issue (which can be tested on
+        # the mean and std scores on the private leaderbord), the
+        # corresponding columns (which are now redundant) can be deleted in
+        # Submission and this computation can also be deleted.
+        submission.train_time_cv_mean = np.mean(
+            [ts.train_time for ts in submission.on_cv_folds])
+        submission.valid_time_cv_mean = np.mean(
+            [ts.valid_time for ts in submission.on_cv_folds])
+        submission.test_time_cv_mean = np.mean(
+            [ts.test_time for ts in submission.on_cv_folds])
+        submission.train_time_cv_std = np.std(
+            [ts.train_time for ts in submission.on_cv_folds])
+        submission.valid_time_cv_std = np.std(
+            [ts.valid_time for ts in submission.on_cv_folds])
+        submission.test_time_cv_std = np.std(
+            [ts.test_time for ts in submission.on_cv_folds])
+        submission.state = 'scored'
+        session.commit()
