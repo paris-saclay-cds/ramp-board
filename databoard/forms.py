@@ -62,18 +62,19 @@ class EventUpdateProfileForm(FlaskForm):
     is_send_submitted_mails = BooleanField()
     is_public = BooleanField()
     is_controled_signup = BooleanField()
+    is_competitive = BooleanField()
     min_duration_between_submissions_hour = IntegerField('min_h', [
         validators.NumberRange(min=0)])
     min_duration_between_submissions_minute = IntegerField('min_m', [
         validators.NumberRange(min=0, max=59)])
     min_duration_between_submissions_second = IntegerField('min_s', [
         validators.NumberRange(min=0, max=59)])
-    opening_timestamp = DateTimeField('opening_timestamp', [
-        ], format='%Y-%m-%d %H:%M:%S')
-    closing_timestamp = DateTimeField('closing_timestamp', [
-        ], format='%Y-%m-%d %H:%M:%S')
-    public_opening_timestamp = DateTimeField('public_opening_timestamp', [
-        ], format='%Y-%m-%d %H:%M:%S')
+    opening_timestamp = DateTimeField(
+        'opening_timestamp', [], format='%Y-%m-%d %H:%M:%S')
+    closing_timestamp = DateTimeField(
+        'closing_timestamp', [], format='%Y-%m-%d %H:%M:%S')
+    public_opening_timestamp = DateTimeField(
+        'public_opening_timestamp', [], format='%Y-%m-%d %H:%M:%S')
 
 
 class AskForEventForm(FlaskForm):

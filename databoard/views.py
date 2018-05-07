@@ -41,7 +41,6 @@ from .forms import (
 from .security import ts
 
 
-
 app.secret_key = os.urandom(24)
 
 logger = logging.getLogger('databoard')
@@ -666,6 +665,22 @@ def download_submission(submission_hash):
                      as_attachment=True)
 
 
+@app.route("/toggle_competition/<submission_hash>")
+@fl.login_required
+def toggle_competition(submission_hash):
+    submission = Submission.query.filter_by(
+        hash_=submission_hash).one_or_none()
+    logger.info(submission)
+    if submission is None or\
+            submission.event_team.team.admin != fl.current_user:
+        error_str = u'Missing submission: {}'.format(submission_hash)
+        return _redirect_to_user(error_str)
+    submission.is_in_competition = not submission.is_in_competition
+    db.session.commit()
+    return redirect(
+        u'/{}/{}'.format(submission_hash, submission.files[0].f_name))
+
+
 @app.route("/events/<event_name>/sandbox", methods=['GET', 'POST'])
 @fl.login_required
 def sandbox(event_name):
@@ -1023,6 +1038,7 @@ def update_event(event_name):
         is_send_submitted_mails=event.is_send_submitted_mails,
         is_public=event.is_public,
         is_controled_signup=event.is_controled_signup,
+        is_competitive=event.is_competitive,
         min_duration_between_submissions_hour=h,
         min_duration_between_submissions_minute=m,
         min_duration_between_submissions_second=s,
@@ -1041,6 +1057,7 @@ def update_event(event_name):
             event.is_send_submitted_mails = form.is_send_submitted_mails.data
             event.is_public = form.is_public.data
             event.is_controled_signup = form.is_controled_signup.data
+            event.is_competitive = form.is_competitive.data
             event.min_duration_between_submissions = (
                 form.min_duration_between_submissions_hour.data * 3600 +
                 form.min_duration_between_submissions_minute.data * 60 +
