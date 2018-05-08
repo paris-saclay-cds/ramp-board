@@ -6,18 +6,36 @@ import argparse
 from argparse import RawTextHelpFormatter
 
 from rampbkd.aws.api import launch_ec2_instance_and_train
+from rampbkd.aws.api import train_on_existing_ec2_instance
 from rampbkd.config import read_backend_config
 from rampbkd.api import get_submission_by_name
 
+desc = """
+Train a submission on AWS.
+Two ways of specifying the submission are available.
+Either we give the submission id or name.
+
+Use ramp_aws_train config.yml --id=<submission id> if you want to 
+specify submission by id.
+
+Use ramp_aws_train config.yml --event=<event name> --team=<team name> --name=<submission name> 
+if you want to specify submission by name.
+
+By default a new ec2 instance will be created then training will be done there, 
+then the instance will be killed after training.
+
+If you want to train on an existing instance just add the option
+--instance-id. Example:
+
+ramp_aws_train config.yml --event=<event name> --team=<team name> --name=<submission name>  --instance-id=<instance id>
+
+To find the instance id, you have to check the AWS EC2 console
+or use the cli `aws` provided by amazon.
+
+"""
+
 def init_parser():
     """Defines command-line interface"""
-    desc = (
-        'Train a submission on AWS.\nTwo ways of specifying the submission '
-        'are available.\nEither we give the submission id or name.\n\n'
-        'Use ramp_aws_train config.yml --id=<submission id> if you want to '
-        'specify submission by name.\n\nUse ramp_aws_train config.yml '
-        '--event=<event name> --team=<team name> --name=<submission name>'
-        '\nif you want to specify submission by name.')
     parser = argparse.ArgumentParser(
         prog=__file__,
         description=desc,
@@ -32,6 +50,8 @@ def init_parser():
                         help='Team name')
     parser.add_argument('--name', type=str,
                         help='Submission name')
+    parser.add_argument('--instance-id', type=str,
+                        help='Instance id')
     parser.add_argument('--log-level', type=str, default='INFO',
                         help='Log level : DEBUG/INFO/WARNING/ERROR/CRITICAL')
     return parser
@@ -59,7 +79,11 @@ def main():
             print(ex)
             sys.exit(1)
         submission_id = submission.id
-    launch_ec2_instance_and_train(config, submission_id)
+    
+    if args.instance_id:
+        train_on_existing_ec2_instance(config, args.instance_id, submission_id)
+    else:
+        launch_ec2_instance_and_train(config, submission_id)
 
 
 if __name__ == '__main__':
