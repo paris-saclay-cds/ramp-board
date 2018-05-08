@@ -64,9 +64,18 @@ The actual name does not matter, we will just need the AMI id.
 # Step 2 : configuration file for ramp-backend
 
 The second step is to prepare a configuration file in the ramp server.
-It can be anywhere, by convention it is in /mnt/ramp_data/backend/config.yml. An example is provided in the following:
+It can be anywhere, by convention it is in /mnt/ramp_data/backend/<event_name>/config.yml
+where here event_name is iris. An example is provided in the following:
 
 ```
+
+sqlalchemy:
+    drivername: postgresql
+    username: username
+    password: *****
+    host: localhost
+    port: *****
+    database: *****
 ramp:
     event_name : iris
 aws:
@@ -85,7 +94,7 @@ aws:
     memory_profiling : true
 ```
 
-The following is an explanation of each field.
+The following is an explanation of each field in the aws section.
 
 `event_name` is the event name. This is used by `ramp_aws_train_loop`
 (see below) to know the event for which to train new submissions.
