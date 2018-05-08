@@ -67,6 +67,8 @@ The second step is to prepare a configuration file in the ramp server.
 It can be anywhere, by convention it is in /mnt/ramp_data/backend/config.yml. An example is provided in the following:
 
 ```
+ramp:
+    event_name : iris
 aws:
     ami_image_id : ami-0bc19972
     ami_user_name : ubuntu
@@ -85,6 +87,8 @@ aws:
 
 The following is an explanation of each field.
 
+`event_name` is the event name. This is used by `ramp_aws_train_loop`
+(see below) to know the event for which to train new submissions.
 
 `ami_image_id` is the id of the image to use for training the submissions
 (the one we created in Step 1). You can get the AMI image ID in the EC2
