@@ -863,8 +863,8 @@ def _training_finished(config, instance_id, submission_id):
 def _training_successful(config, instance_id, submission_id):
     """
     Return True if a finished submission have been trained successfully.
-    If the folder training_output exists we consider that training
-    is successfully finished.
+    If the folder training_output exists and each fold directory contains
+    .npz prediction files we consider that the training was successful.
     """
     folder = _get_remote_training_output_folder(
         config, instance_id, submission_id)
