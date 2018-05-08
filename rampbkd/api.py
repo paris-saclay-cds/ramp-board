@@ -14,7 +14,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import URL
 
 from .model import Base
-from .query import select_submissions_by_state, select_submissions_by_id
+from .query import select_submissions_by_state
+from .query import select_submissions_by_id
+from .query import select_submission_by_name
 from .config import STATES, UnknownStateError
 
 
@@ -122,6 +124,55 @@ def get_submission_by_id(config, submission_id):
         submission.event.name
         submission.team.name
     return submission
+
+
+def get_submission_by_name(config, event_name, team_name, name):
+    """
+    Get a submission by name
+    
+    Parameters
+    ----------
+
+    config : dict
+        configuration
+    session :
+        database connexion session
+    event_name : str
+        name of the RAMP event
+    team_name : str
+        name of the RAMP team
+    name : str
+        name of the submission
+
+    Returns
+    -------
+    `Submission` instance
+
+    """
+    # Create database url
+    db_url = URL(**config['sqlalchemy'])
+    db = create_engine(db_url)
+
+    # Create a configured "Session" class
+    Session = sessionmaker(db)
+
+    # Link the relational model to the database
+    Base.metadata.create_all(db)
+
+    # Connect to the dabase and perform action
+    with db.connect() as conn:
+        session = Session(bind=conn)
+        submission = select_submission_by_name(
+            session, 
+            event_name,
+            team_name,
+            name)
+        # force event name and team name to be cached
+        submission.event.name
+        submission.team.name
+    return submission
+
+
 
 
 def set_submission_state(config, submission_id, state):
