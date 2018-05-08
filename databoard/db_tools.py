@@ -1749,7 +1749,8 @@ def get_private_leaderboards(event_name, user_name=None):
         int(round(submission.valid_time_cv_std))
         for submission in submissions]
     leaderboard_df['max RAM [MB]'] = [
-        int(round(submission.max_ram))
+        int(round(submission.max_ram)) if type(submission.max_ram) == float
+        else 0
         for submission in submissions]
     leaderboard_df['submitted at (UTC)'] = [
         date_time_format(submission.submission_timestamp)
