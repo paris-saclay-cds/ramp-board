@@ -463,6 +463,7 @@ def _get_log_content(config, submission_id):
     try: 
         content = open(path).read()
         content = _filter_colors(content)
+        return content
     except IOError:
         logger.error('Could not open log file of "{}" when trying to get log content'.format(submission_id))
         return ''
@@ -471,10 +472,15 @@ def _get_log_content(config, submission_id):
 def _get_traceback(content):
     if not content:
         return ''
-    cut_exception_text = content.rfind('--->')
+    #cut_exception_text = content.rfind('--->') 
+    # was like commented line above in ramp-board
+    # but there is no ---> in logs when we use
+    # ramp_test_submission, so we just search for the
+    # first occurence of 'Traceback'.
+    cut_exception_text = content.find('Traceback')
     if cut_exception_text > 0:
         content = content[cut_exception_text:]
-   	return content
+    return content
  
 
 def _filter_colors(content):
@@ -576,6 +582,11 @@ def download_predictions(config, instance_id, submission_id, folder=None):
 
 
 def _get_remote_training_output_folder(config, instance_id, submission_id):
+    """
+    Get remote training output folder for a submission in an instance.
+    For instance, it returns something like :
+    ~/ramp-kits/iris/submissions/submission_000001/training_output.
+    """
     conf = config[AWS_CONFIG_SECTION]
     ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
     submission_folder_name = _get_submission_folder_name(submission_id)
@@ -626,7 +637,7 @@ def launch_train(config, instance_id, submission_id):
         "rm -fr {submission_folder}/training_output;"+
         "rm -f {submission_folder}/log;"+
         "rm -f {submission_folder}/mprof.dat;"+
-        run_cmd+"2>&1 >{log}'"
+        run_cmd+">{log} 2>&1'"
     )
     cmd = cmd.format(**values)
     # tag the ec2 instance with info about submission
@@ -659,8 +670,10 @@ def _get_submission_folder_name(submission_id):
 
 
 def _get_submission_path(config, submission_id):
+    # Get local submission path
     submission = get_submission_by_id(config, submission_id)
     return submission.path
+
 
 def _get_submission_label_by_id(config, submission_id):
     submission = get_submission_by_id(config, submission_id)
@@ -668,9 +681,9 @@ def _get_submission_label_by_id(config, submission_id):
 
 
 def _get_submission_label(submission):
+    # Submissions in AWS are tagged by the label
     label = '{}_{}'.format(submission.id, submission.name)
     return label
-
 
 
 def _upload(config, instance_id, source, dest):
