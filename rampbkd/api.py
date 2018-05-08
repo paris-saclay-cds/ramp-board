@@ -23,6 +23,7 @@ from .config import STATES, UnknownStateError
 __all__ = [
     'get_submissions',
     'get_submission_by_id',
+    'get_submission_by_name',
     'set_submission_state',
     'get_submission_state',
     'set_submission_max_ram',

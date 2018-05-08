@@ -46,7 +46,7 @@ logging.basicConfig(
     format='%(asctime)s ## %(message)s',
     level=logging.INFO,
     datefmt='%m/%d/%Y,%I:%M:%S')
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('ramp_aws')
 
 
 # configuration fields

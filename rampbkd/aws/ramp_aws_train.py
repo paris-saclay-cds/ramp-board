@@ -1,6 +1,7 @@
 from __future__ import print_function, absolute_import, unicode_literals
 
 import sys
+import logging
 import argparse
 from argparse import RawTextHelpFormatter
 
@@ -31,13 +32,18 @@ def init_parser():
                         help='Team name')
     parser.add_argument('--name', type=str,
                         help='Submission name')
+    parser.add_argument('--log-level', type=str, default='INFO',
+                        help='Log level : DEBUG/INFO/WARNING/ERROR/CRITICAL')
     return parser
 
 
 def main():
     parser = init_parser()
     args = parser.parse_args()
+    logger = logging.getLogger('ramp_aws')
+    logger.setLevel(args.log_level)
     config = read_backend_config(args.config)
+    
     if args.id:
         submission_id = args.id
     else:
