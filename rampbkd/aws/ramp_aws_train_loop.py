@@ -1,5 +1,6 @@
 from __future__ import print_function, absolute_import, unicode_literals
 
+import sys
 import logging
 import argparse
 
@@ -15,7 +16,6 @@ def init_parser():
     parser.add_argument('config', type=str,
                         help='Backend configuration file with database '
                              'connexion and RAMP event details.')
-    parser.add_argument('event_name', type=str, help='Event name')
     parser.add_argument('--log-level', type=str, default='INFO',
                         help='Log level : DEBUG/INFO/WARNING/ERROR/CRITICAL')
     return parser
@@ -27,7 +27,12 @@ def main():
     logger = logging.getLogger('ramp_aws')
     logger.setLevel(args.log_level)
     config = read_backend_config(args.config)
-    train_loop(config, args.event_name)
+    try:
+        event_name = config['ramp']['event_name']
+    except KeyError:
+        print('Cannot find event_name in section ramp of the {}'.format(args.config))
+        sys.exit(1)
+    train_loop(config, event_name)
 
 
 if __name__ == '__main__':
