@@ -247,8 +247,9 @@ def set_predictions(config, submission_id, prediction_path, ext='npy'):
                 prediction_path, fold_id, 'train', ext)
             cv_fold.test_y_pred = _load_submission(
                 prediction_path, fold_id, 'test', ext)
-            cv_fold.valid_time = 0.0
-            cv_fold.test_time = 0.0
+            cv_fold.train_time = _get_time(prediction_path, fold_id, 'train')
+            cv_fold.valid_time = _get_time(prediction_path, fold_id, 'valid')
+            cv_fold.test_time = _get_time(prediction_path, fold_id, 'test')
             cv_fold.state = 'tested'
             session.commit()
 
@@ -293,6 +294,30 @@ def _load_submission(path, fold_id, typ, ext):
     else:
         return NotImplementedError("No reader implemented for extension {ext}"
                                    .format(ext))
+
+
+def _get_time(path, fold_id, typ):
+    """
+    get time duration in seconds of train or valid
+    or test for a given fold.
+    
+    Parameters
+    ----------
+    path : str
+        local path where predictions are saved
+    fold_id : int
+        id of the current CV fold
+    typ : {'train', 'valid, 'test'}
+    
+    Raises
+    ------
+    ValueError :
+        when typ is neither is not 'train' or 'valid' or test'
+    """
+    if typ not in ['train', 'valid', 'test']:
+        raise ValueError("Only 'train' or 'valid' or 'test' are expected for arg 'typ'")
+    time_file = os.path.join(path, 'fold_{}'.format(fold_id), typ + '_time')
+    return float(open(time_file).read())
 
 
 def score_submission(config, submission_id):
@@ -430,5 +455,3 @@ def set_submission_error_msg(config, submission_id, error_msg):
         submission = select_submissions_by_id(session, submission_id)
         submission.error_msg = error_msg
         session.commit()
-
-

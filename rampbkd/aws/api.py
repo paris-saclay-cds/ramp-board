@@ -38,6 +38,8 @@ __all__ = [
     'abort_training',
 ]
 
+# we disable all the other loggers partly because loggers
+# from boto3 are too verbose
 for name, l in logging.Logger.manager.loggerDict.items():
     l.disabled = True
 logging.basicConfig(
@@ -89,7 +91,7 @@ def train_loop(config, event_name):
         submissions = get_submissions(config, event_name, 'new')
         for submission_id, _ in submissions:
             submission = get_submission_by_id(config, submission_id)
-            if submission.is_sandbox():
+            if submission.is_sandbox:
                 continue
             instance, = launch_ec2_instances(config, nb=1)
             _tag_instance_by_submission(instance.id, submission)
@@ -155,7 +157,7 @@ def train_loop(config, event_name):
                         set_predictions(config, submission_id, path, ext='npz')
                         set_submission_state(config, submission_id, 'tested')
                     else:
-                        logger.info('Training of "{}" failed'.format(name))
+                        logger.info('Training of "{}" failed'.format(label))
                         set_submission_state(
                             config, submission_id, 'training_error')
                         error_msg = _get_traceback(
@@ -256,7 +258,7 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
         score_submission(config, submission_id)
     else:
         logger.info('Training of "{}" in "{}" failed'.format(
-            name, instance_id))
+            label, instance_id))
         set_submission_state(config, submission_id, 'training_error')
         error_msg = _get_traceback(
             _get_log_content(config, submission_id))
@@ -467,6 +469,8 @@ def _get_log_content(config, submission_id):
 
 
 def _get_traceback(content):
+    if not content:
+        return ''
     cut_exception_text = content.rfind('--->')
     if cut_exception_text > 0:
         content = content[cut_exception_text:]
@@ -608,7 +612,12 @@ def launch_train(config, instance_id, submission_id):
         'log': os.path.join(ramp_kit_folder, SUBMISSIONS_FOLDER,
                             submission_folder_name, 'log')
     }
-    run_cmd = "ramp_test_submission --submission {submission} --save-y-preds "
+    # we use python -u so that standard input/output are flushed
+    # and thus we can retrieve the log file live during training
+    # without waiting for the process to finish.
+    # We use an espace character around "$" because it is interpreted
+    # before being run remotely and leads to an empty string
+    run_cmd = r"python -u \$(which ramp_test_submission) --submission {submission} --save-y-preds "
     if conf.get(MEMORY_PROFILING_FIELD):
         run_cmd = "mprof run --output={submission_folder}/mprof.dat --include-children " + run_cmd
     cmd = (
@@ -617,9 +626,7 @@ def launch_train(config, instance_id, submission_id):
         "rm -fr {submission_folder}/training_output;"+
         "rm -f {submission_folder}/log;"+
         "rm -f {submission_folder}/mprof.dat;"+
-        run_cmd+
-        "2>&1 >{log}"+
-        "'"
+        run_cmd+"2>&1 >{log}'"
     )
     cmd = cmd.format(**values)
     # tag the ec2 instance with info about submission
@@ -834,7 +841,9 @@ def _training_successful(config, instance_id, submission_id):
 
     cmd = "find {}|egrep 'fold.*/y_pred_test.npz'|wc -l".format(folder)
     nb_test_files = int(_run(config, instance_id, cmd, return_output=True))
-
+    
+    if nb_folds == 0 or nb_train_files == 0 or nb_test_files == 0:
+        return False
     return nb_folds == nb_train_files == nb_test_files
 
 
