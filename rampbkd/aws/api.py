@@ -43,7 +43,8 @@ __all__ = [
 for name, l in logging.Logger.manager.loggerDict.items():
     l.disabled = True
 logging.basicConfig(
-    format='%(asctime)s ## %(message)s',
+    #format='%(asctime)s ## %(message)s',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO,
     datefmt='%m/%d/%Y,%I:%M:%S')
 logger = logging.getLogger('ramp_aws')
@@ -453,6 +454,16 @@ def download_log(config, instance_id, submission_id, folder=None):
 
 
 def _get_log_content(config, submission_id):
+    """
+    Get the content of the log file.
+    The log file must have been downloaded locally with `download_log`
+    for this to work.
+
+    Returns
+    -------
+    
+    a str with the content of the log file
+    """
     conf = config[AWS_CONFIG_SECTION]
     ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
     submission_folder_name = _get_submission_folder_name(submission_id)
@@ -470,6 +481,17 @@ def _get_log_content(config, submission_id):
 
 
 def _get_traceback(content):
+    """
+    get the traceback part from the content where content
+    is a str containing the standard error/output of 
+    a python process. It is used to get the traceback
+    of `ramp_test_submission` when there is an error.
+
+    Returns
+    -------
+
+    str with the traceback
+    """
     if not content:
         return ''
     #cut_exception_text = content.rfind('--->') 
@@ -642,7 +664,8 @@ def launch_train(config, instance_id, submission_id):
     cmd = cmd.format(**values)
     # tag the ec2 instance with info about submission
     _tag_instance_by_submission(instance_id, submission)
-    logger.info('Launch training of {}..'.format(submission))
+    label = _get_submission_label(submission)
+    logger.info('Launch training of {}..'.format(label))
     return _run(config, instance_id, cmd)
 
 
