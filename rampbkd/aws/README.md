@@ -1,10 +1,70 @@
 Backend support for Amazon EC2 instances.
 The goal of this module is to provide a set of
-helper functions to train a submission on an ec2 instance.
-The first step is to add a section 'aws' on the configuration
-file as the following.
+helper functions and CLI command lines 
+to train submission(s) on EC2.
 
-## Configuration details
+In the following is a tutorial showing the full steps starting
+from creating the AMI to running submissions on EC2.
+
+# Step 1 : Creating the AMI
+
+In order to create the AMI for a new RAMP challenge, you need to launch an instance on EC2.
+Go to https://us-west-2.console.aws.amazon.com/ec2/v2/home, then launch a new instance.
+You will need to choose a base AMI. For most cases you will probably just need
+the default AMIs provided by amazon such as Ubuntu Server 16.04 LTS.
+
+Once you run the instance, you will need to first install
+ramp-workflow (https://github.com/paris-saclay-cds/ramp-workflow).
+Then, you should clone the ramp-kits in any folder (we will provide later
+the folder in the configuration file), but as a convention we put the 
+kit in the folder ~/ramp-kits. Here is an example with the iris
+kit:
+
+```
+pip install git+https://github.com/paris-saclay-cds/ramp-workflow
+mkdir ~/ramp-kits
+cd ~/ramp-kits
+git clone https://github.com/ramp-kits/iris
+```
+
+The second step is to put the private data in the folder data of the kit.
+To do that you will have to rsync the private data from the ramp server.
+In the ramp server, do this:
+
+```
+rsync -avzP /mnt/ramp_data/frontend/ramp-data/iris/data ubuntu@ip:~/ramp-kits/iris
+```
+
+where ip is the public ip of the ec2 instance (check the EC2 console to get the IP).
+
+To make sure everything works, try :
+
+```
+ramp_test_submission
+```
+
+
+The last step is to install the remaining required packages.
+
+Make sure you install memory_profiler from master if you want to enable memory profiling.
+
+```
+pip install git+https://github.com/pythonprofilers/memory_profiler/
+```
+
+You can now install all the other packages needed for training the submissions.
+
+Now, you can create the AMI in amazon in the EC2 console.
+Go to https://us-west-2.console.aws.amazon.com/ec2/v2/home.
+Select the instance, then actions, image, create image.
+You can name it according to the ramp kit, e.g., "iris_backend"
+to follow the convention.
+The actual name does not matter, we will just need the AMI id.
+
+# Step 2 : configuration file for ramp-backend
+
+The second step is to prepare a configuration file in the ramp server.
+It can be anywhere, by convention it is in /mnt/ramp_data/backend/config.yml. An example is provided in the following:
 
 ```
 aws:
@@ -14,7 +74,7 @@ aws:
     key_name: key
     key_path: /home/user/.ssh/id_rsa
     security_group : launch-wizard-1
-    remote_ramp_kit_folder : ~/ramp/iris
+    remote_ramp_kit_folder : ~/ramp-kits/iris
     local_predictions_folder : ./predictions
     local_log_folder : ./logs
     check_status_interval_secs : 60
@@ -22,28 +82,33 @@ aws:
     train_loop_interval_secs : 60
     memory_profiling : true
 ```
- 
-`ami_image_id` is the id of the image to use, it should start with 'ami-'.
+
+The following is an explanation of each field.
+
+
+`ami_image_id` is the id of the image to use for training the submissions
+(the one we created in Step 1). You can get the AMI image ID in the EC2
+console, in the tab AMI. It should start with 'ami-'.
 The AMI should contain a folder `remote_ramp_kit_folder` (see below)
-which contains the ramp kit.
+which contains the ramp kit. In Step 1 we chose `remote_ramp_kit_folder` to be ~/ramp-kits/iris.
 
 `ami_user_name` is the username to connect with remotely on ec2 instances.
 
 `instance_type` is the instance type (check https://ec2instances.info/).
 
 `key_name` is the name of the key to connect with, so `key_name` should
-exist im amazon. It can be created using their web app, or manually via
-`aws` like this :
-```aws ec2 import-key-pair --key-name <put key name here> --public-key-material "<put public key here>"```
+exist im amazon (check key pairs in EC2 console). 
 
 `security_group` is the name of the security group to use.
 Security groups control which ports are accepted/blocked inbound or outbound.
 They can be created in the web app of amazon. Use `default`
-to use the default one.
+to use the default one or choose one from the EC2 console, in the tab
+security group.
 
 `remote_ramp_kit_folder` is the folder in the ec2 instance
-where the ramp-kit will reside. It should
-be possible to launch `ramp_test_submission` in that folder.
+where the ramp-kit will reside. In Step 1 we chose to put it 
+in ~/ramp-kits/iris. It should be possible to launch 
+`ramp_test_submission` with success in that folder.
 
 `local_predictions_folder` is the local folder where the predictions are
 downloaded (from the ec2 instance).
@@ -62,49 +127,39 @@ instance is finished.
 `train_loop_interval_secs` is the number of secs to wait each time we
 process new events in `train_loop`
 
-`memory_profiling` turns on memory profiling to know how much memory was
+`memory_profiling` turns on (or off) memory profiling to know how much memory was
 needed by a submission
 
-## Using the API
-Once configuration is ready, the most straighforward way to use the API is
-to use the function `launch_ec2_instance_and_train`. It does the full pipeline
-in one pass. That is, it launches an ec2 instance, waits until it is
-ready, upload submission, starts training, wait for training to
-finish, download the predictions and logs, store the predictions on the
-database, then terminate the ec2 instance.
+# Step 3: Using the CLI
 
- ```python
-from rampbkd.config import read_backend_config
-conf = read_backend_config('config.yml')
-launch_ec2_instance_and_train(conf, submission_id)
- ```
- 
-Another way to use the API is to run a loop that listens for new
-submissions and  run them.
+Two command line interfaces are provided, ramp_aws_train and
+ramp_aws_train_loop.
 
-```python
-from rampbkd.config import read_backend_config
-conf = read_backend_config('config.yml')
-train_loop(conf)
-```
+## ramp_aws_train
 
-The other available functions can be used to do something more custom.
-One could imagine to launch a pool of ec2 instances first, then have
-a training loop which waits for submissions and run them in an ec2 instance
-(nothing prevents us to train multiple submissions in the same ec2 instance).
-The pool size could be adapted automatically to the need. Also, different
-submissions could need different types of machines (GPU vs CPU).
-
-## Using the CLI
-
-Two command line interfaces are provided.
-To train a single submission on aws, you can use:
+To train a single submission on aws, you can use ramp_aws_train.
+To train a submission, use the following:
 
 ```
-ramp_aws_train config.yml <submission_id>
+ramp_aws_train config.yml --event=<event name> --team=<team name> --name=<submission name>
 ```
 
-To launch the training loop, you can use:
+By default a new ec2 instance will be created then training will be done there, 
+then the instance will be killed after training.
+
+If you want to train on an existing (running) instance just add the option
+--instance-id like the following:
+
+```
+ramp_aws_train config.yml --event=<event name> --team=<team name> --name=<submission name>  --instance-id=<instance id>
+```
+
+To find the instance id, you have to check the EC2 console.
+
+
+### ramp_aws_train_loop
+
+To launch a training loop that will automatically listen for new submissions and run them, use the following:
 
 ```
 ramp_aws_train_loop config.yml
