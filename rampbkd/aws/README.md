@@ -92,6 +92,8 @@ aws:
     check_finished_training_interval_secs : 60
     train_loop_interval_secs : 60
     memory_profiling : true
+    hooks :
+        after_sucessful_training: cd /mnt/ramp_data/frontend;fab compute_contributivity:iris;fab update_leaderboards:e=iris
 ```
 
 The following is an explanation of each field in the aws section.
@@ -142,6 +144,13 @@ process new events in `train_loop`
 
 `memory_profiling` turns on (or off) memory profiling to know how much memory was
 needed by a submission
+
+`hooks` is for specifying local commands that will run for after some event such as when
+a submission has been trained successfully. Hooks available are:
+
+
+after_sucessful_training: `command`. it runs the given command each time a submission is 
+successfully trained
 
 # Step 3: Using the CLI
 

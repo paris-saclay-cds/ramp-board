@@ -67,6 +67,9 @@ CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD = (
 LOCAL_LOG_FOLDER_FIELD = 'local_log_folder'
 TRAIN_LOOP_INTERVAL_SECS_FIELD = 'train_loop_interval_secs'
 MEMORY_PROFILING_FIELD = 'memory_profiling'
+HOOKS_SECTION = 'hooks'
+HOOK_AFTER_SUCCESSFUL_TRAINING = 'after_successful_training'
+HOOKS = [HOOK_AFTER_SUCCESSFUL_TRAINING]
 
 # constants
 RAMP_AWS_BACKEND_TAG = 'ramp_aws_backend_instance'
@@ -157,6 +160,7 @@ def train_loop(config, event_name):
                             config, instance_id, submission_id)
                         set_predictions(config, submission_id, path, ext='npz')
                         set_submission_state(config, submission_id, 'tested')
+                        _run_hook(config, HOOK_AFTER_SUCCESSFUL_TRAINING)
                     else:
                         logger.info('Training of "{}" failed'.format(label))
                         set_submission_state(
@@ -257,6 +261,7 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
         set_submission_state(config, submission_id, 'tested')
         logger.info('Scoring "{}"'.format(label))
         score_submission(config, submission_id)
+        _run_hook(config, HOOK_AFTER_SUCCESSFUL_TRAINING)
     else:
         logger.info('Training of "{}" in "{}" failed'.format(
             label, instance_id))
@@ -850,6 +855,22 @@ def _is_ready(config, instance_id):
         return check == 'passed'
     else:
         return False
+
+
+def _run_hook(config, hook_name):
+    """
+    run hooks corresponding to hook_name
+    """
+    conf = config[AWS_CONFIG_SECTION]
+    hooks = conf.get(HOOKS_SECTION)
+    if not hooks:
+        return
+    if hook_name in hooks:
+        if hook_name not in HOOKS:
+            raise ValueError('Invalid hook name : {}, hooks should be one of these :'.format(hook_name, HOOKS))
+        cmd = hooks[hook_name]
+        logger.info('Running "{}" for hook {}'.format(cmd, hook_name))
+        return call(cmd, shell=True)
 
 
 def _training_finished(config, instance_id, submission_id):
