@@ -58,8 +58,8 @@ Now, you can create the AMI in amazon in the EC2 console.
 Go to https://us-west-2.console.aws.amazon.com/ec2/v2/home.
 Select the instance, then actions, image, create image.
 You can name it according to the ramp kit, e.g., "iris_backend"
-to follow the convention.
-The actual name does not matter, we will just need the AMI id.
+to follow the convention. To use the image, you will need to either provide
+the image ID, or the image name, as we will se below in Step 2.
 
 # Step 2 : configuration file for ramp-backend
 
@@ -79,7 +79,7 @@ sqlalchemy:
 ramp:
     event_name : iris
 aws:
-    ami_image_id : ami-0bc19972
+    ami_image_id : ami-0bc19972 OR ami_image_name : iris_backend
     ami_user_name : ubuntu
     instance_type : t2.micro
     key_name: key
@@ -106,6 +106,12 @@ The following is an explanation of each field in the aws section.
 console, in the tab AMI. It should start with 'ami-'.
 The AMI should contain a folder `remote_ramp_kit_folder` (see below)
 which contains the ramp kit. In Step 1 we chose `remote_ramp_kit_folder` to be ~/ramp-kits/iris.
+Alternatively you can specify the image name rather than the image id, especially if you modify
+the image a lot. To do that, you need to use the field `ami_image_name`.
+
+`ami_image_name` is the  name of the image to use for training the submissions.
+It is an alternative to `ami_image_id`. That is, you either specify `ami_image_id`
+or `ami_image_name`, not both at the same time.
 
 `ami_user_name` is the username to connect with remotely on ec2 instances.
 
@@ -129,8 +135,8 @@ in ~/ramp-kits/iris. It should be possible to launch
 downloaded (from the ec2 instance).
 
 `local_log_folder` is the local folder where the logs are downloaded
-(from the ec2 instance). The logs contain the standard output obtained
-from running `ramp_test_submission` for a given submission.
+(from the ec2 instance). The logs contain the standard output and error 
+obtained from running `ramp_test_submission` for a given submission.
 
 `check_status_interval_secs` is the number of secs to wait until we
 recheck whether an ec2 instance is ready to be used.
@@ -148,9 +154,10 @@ needed by a submission
 `hooks` is for specifying local commands that will run for after some event such as when
 a submission has been trained successfully. Hooks available are:
 
+### hooks
 
 after_sucessful_training: `command`. it runs the given command each time a submission is 
-successfully trained
+successfully trained.
 
 # Step 3: Using the CLI
 
