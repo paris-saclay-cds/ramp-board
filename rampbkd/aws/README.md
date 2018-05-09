@@ -106,6 +106,12 @@ The following is an explanation of each field in the aws section.
 console, in the tab AMI. It should start with 'ami-'.
 The AMI should contain a folder `remote_ramp_kit_folder` (see below)
 which contains the ramp kit. In Step 1 we chose `remote_ramp_kit_folder` to be ~/ramp-kits/iris.
+Alternatively you can specify the image name rather than the image id, especially if you modify
+the image a lot. To do that, you need to use the field `ami_image_name`.
+
+`ami_image_name` is the  name of the image to use for training the submissions.
+It is an alternative to `ami_image_id`. That is, you either specify `ami_image_id`
+or `ami_image_name`, not both at the same time.
 
 `ami_user_name` is the username to connect with remotely on ec2 instances.
 

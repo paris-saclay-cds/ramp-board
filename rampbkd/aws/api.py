@@ -53,6 +53,7 @@ logger = logging.getLogger('ramp_aws')
 # configuration fields
 AWS_CONFIG_SECTION = 'aws'
 AMI_IMAGE_ID_FIELD = 'ami_image_id'
+AMI_IMAGE_NAME_FIELD = 'ami_image_name'
 AMI_USER_NAME_FIELD = 'ami_user_name'
 INSTANCE_TYPE_FIELD = 'instance_type'
 KEY_PATH_FIELD = 'key_path'
@@ -292,7 +293,15 @@ def launch_ec2_instances(config, nb=1):
     Launch new ec2 instance(s)
     """
     conf = config[AWS_CONFIG_SECTION]
-    ami_image_id = conf[AMI_IMAGE_ID_FIELD]
+    ami_image_id = conf.get(AMI_IMAGE_ID_FIELD)
+    ami_name = conf.get(AMI_IMAGE_NAME_FIELD)
+    if ami_image_id and ami_name:
+        raise ValueError('The fields ami_image_id and ami_image_name cannot be both'
+                         'specified at the same time. Please specify either ami_image_id'
+                         'or ami_image_name')
+    if ami_name:
+        ami_image_id = _get_image_id(ami_name)
+
     instance_type = conf[INSTANCE_TYPE_FIELD]
     key_name = conf[KEY_NAME_FIELD]
     security_group = conf[SECURITY_GROUP_FIELD]
@@ -318,6 +327,26 @@ def launch_ec2_instances(config, nb=1):
         SecurityGroups=[security_group],
     )
     return instances
+
+def _get_image_id(image_name):
+    client = boto3.client('ec2')
+    result = client.describe_images(Filters=[
+        {
+            'Name': 'name',
+            'Values': [
+                image_name
+            ]
+        }
+    ])
+    images = result['Images']
+    if len(images) == 0:
+        raise ValueError('No image corresponding to the name "{}"'.format(image_name))
+    elif len(images) > 1:
+        raise ValueError('Multiple images corresponding to the name "{}". Please fix that'.format(image_name))
+    else:
+        image = images[0]
+        image_id = image['ImageId']
+        return image_id
 
 
 def terminate_ec2_instance(config, instance_id):
