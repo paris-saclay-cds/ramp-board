@@ -161,6 +161,9 @@ successfully trained.
 
 # Step 3: Using the CLI
 
+Before using the CLI, you need to provided your account details.
+To do that, please follow https://docs.aws.amazon.com/en_en/lambda/latest/dg/setup-awscli.html
+
 Two command line interfaces are provided, ramp_aws_train and
 ramp_aws_train_loop.
 
