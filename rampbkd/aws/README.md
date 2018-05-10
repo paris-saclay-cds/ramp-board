@@ -58,8 +58,8 @@ Now, you can create the AMI in amazon in the EC2 console.
 Go to https://us-west-2.console.aws.amazon.com/ec2/v2/home.
 Select the instance, then actions, image, create image.
 You can name it according to the ramp kit, e.g., "iris_backend"
-to follow the convention.
-The actual name does not matter, we will just need the AMI id.
+to follow the convention. To use the image, you will need to either provide
+the image ID, or the image name, as we will se below in Step 2.
 
 # Step 2 : configuration file for ramp-backend
 
@@ -79,7 +79,7 @@ sqlalchemy:
 ramp:
     event_name : iris
 aws:
-    ami_image_id : ami-0bc19972
+    ami_image_id : ami-0bc19972 OR ami_image_name : iris_backend
     ami_user_name : ubuntu
     instance_type : t2.micro
     key_name: key
@@ -135,8 +135,8 @@ in ~/ramp-kits/iris. It should be possible to launch
 downloaded (from the ec2 instance).
 
 `local_log_folder` is the local folder where the logs are downloaded
-(from the ec2 instance). The logs contain the standard output obtained
-from running `ramp_test_submission` for a given submission.
+(from the ec2 instance). The logs contain the standard output and error 
+obtained from running `ramp_test_submission` for a given submission.
 
 `check_status_interval_secs` is the number of secs to wait until we
 recheck whether an ec2 instance is ready to be used.
@@ -154,9 +154,10 @@ needed by a submission
 `hooks` is for specifying local commands that will run for after some event such as when
 a submission has been trained successfully. Hooks available are:
 
+### hooks
 
 after_sucessful_training: `command`. it runs the given command each time a submission is 
-successfully trained
+successfully trained.
 
 # Step 3: Using the CLI
 
