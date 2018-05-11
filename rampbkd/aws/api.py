@@ -60,7 +60,6 @@ KEY_PATH_FIELD = 'key_path'
 KEY_NAME_FIELD = 'key_name'
 SECURITY_GROUP_FIELD = 'security_group'
 REMOTE_RAMP_KIT_FOLDER_FIELD = 'remote_ramp_kit_folder'
-LOCAL_RAMP_KIT_FOLDER_FIELD = 'local_ramp_kit_folder'
 LOCAL_PREDICTIONS_FOLDER_FIELD = 'local_predictions_folder'
 CHECK_STATUS_INTERVAL_SECS_FIELD = 'check_status_interval_secs'
 CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD = (
@@ -68,9 +67,30 @@ CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD = (
 LOCAL_LOG_FOLDER_FIELD = 'local_log_folder'
 TRAIN_LOOP_INTERVAL_SECS_FIELD = 'train_loop_interval_secs'
 MEMORY_PROFILING_FIELD = 'memory_profiling'
+
 HOOKS_SECTION = 'hooks'
 HOOK_AFTER_SUCCESSFUL_TRAINING = 'after_successful_training'
 HOOKS = [HOOK_AFTER_SUCCESSFUL_TRAINING]
+
+ALL_FIELDS = [
+    AMI_IMAGE_ID_FIELD,
+    AMI_IMAGE_NAME_FIELD,
+    AMI_USER_NAME_FIELD,
+    INSTANCE_TYPE_FIELD,
+    KEY_PATH_FIELD,
+    KEY_NAME_FIELD,
+    SECURITY_GROUP_FIELD,
+    REMOTE_RAMP_KIT_FOLDER_FIELD,
+    LOCAL_PREDICTIONS_FOLDER_FIELD,
+    CHECK_STATUS_INTERVAL_SECS_FIELD,
+    CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD,
+    LOCAL_LOG_FOLDER_FIELD,
+    TRAIN_LOOP_INTERVAL_SECS_FIELD,
+    MEMORY_PROFILING_FIELD,
+    HOOKS_SECTION,
+]
+ALL_FIELDS = set(ALL_FIELDS)
+REQUIRED_FIELDS = ALL_FIELDS - set([HOOKS_SECTION])
 
 # constants
 RAMP_AWS_BACKEND_TAG = 'ramp_aws_backend_instance'
@@ -895,8 +915,6 @@ def _run_hook(config, hook_name):
     if not hooks:
         return
     if hook_name in hooks:
-        if hook_name not in HOOKS:
-            raise ValueError('Invalid hook name : {}, hooks should be one of these :'.format(hook_name, HOOKS))
         cmd = hooks[hook_name]
         logger.info('Running "{}" for hook {}'.format(cmd, hook_name))
         return call(cmd, shell=True)
@@ -989,3 +1007,35 @@ def _delete_tag(instance_id, key):
     client = boto3.client('ec2')
     tags = [{'Key': key}]
     return client.delete_tags(Resources=[instance_id], Tags=tags)
+
+
+def validate_config(config):
+    """
+    Check whether configuration is correct
+    raises ValueError if it is not correct.
+    """
+    if AWS_CONFIG_SECTION not in config:
+        raise ValueError('Expects "{}" section in config'.format(AWS_CONFIG_SECTION))
+    conf = config[AWS_CONFIG_SECTION]
+    for k in conf.keys():
+        if k not in ALL_FIELDS:
+            raise ValueError('Invalid field : "{}"'.format(k))
+    required_fields_ = REQUIRED_FIELDS - set([AMI_IMAGE_NAME_FIELD, AMI_IMAGE_ID_FIELD])
+    for k in required_fields_:
+        if k not in conf:
+            raise ValueError('Required field "{}" missing from config'.format(k))
+    if AMI_IMAGE_NAME_FIELD in conf and AMI_IMAGE_ID_FIELD in conf:
+        raise ValueError('The fields "{}" and "{}" cannot be both '
+                         'specified at the same time. Please specify only '
+                         'one of them'.format(AMI_IMAGE_NAME_FIELD, AMI_IMAGE_ID_FIELD))
+    if AMI_IMAGE_NAME_FIELD not in conf and AMI_IMAGE_ID_FIELD not in conf:
+        raise ValueError(
+            'Please specify either  "{}" or "{}" in config.'.format(
+                AMI_IMAGE_NAME_FIELD, AMI_IMAGE_ID_FIELD))
+    hooks = conf.get(HOOKS_SECTION)
+    if hooks:
+        for hook_name in hooks.keys():
+            if hook_name not in HOOKS:
+                hook_names = ','.join(HOOKS)
+                raise ValueError('Invalid hook name : {}, hooks should be one of these : {}'.format(
+                    hook_name, hook_names))
