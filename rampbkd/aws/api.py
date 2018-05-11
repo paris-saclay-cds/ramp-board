@@ -137,6 +137,8 @@ def train_loop(config, event_name):
             tags = _get_tags(instance_id)
             if 'submission_id' not in tags:
                 continue
+            if tags.get('event_name') != event_name:
+                continue
             label = tags['Name']
             submission_id = int(tags['submission_id'])
             state = get_submission_state(config, submission_id)
