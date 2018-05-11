@@ -5,6 +5,7 @@ import logging
 import argparse
 
 from rampbkd.aws.api import train_loop
+from rampbkd.aws.api import validate_config
 from rampbkd.config import read_backend_config
 
 
@@ -27,6 +28,7 @@ def main():
     logger = logging.getLogger('ramp_aws')
     logger.setLevel(args.log_level)
     config = read_backend_config(args.config)
+    validate_config(config)
     try:
         event_name = config['ramp']['event_name']
     except KeyError:

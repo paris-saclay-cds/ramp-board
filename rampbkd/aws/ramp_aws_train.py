@@ -7,6 +7,7 @@ from argparse import RawTextHelpFormatter
 
 from rampbkd.aws.api import launch_ec2_instance_and_train
 from rampbkd.aws.api import train_on_existing_ec2_instance
+from rampbkd.aws.api import validate_config
 from rampbkd.config import read_backend_config
 from rampbkd.api import get_submission_by_name
 
@@ -63,10 +64,10 @@ def main():
     logger = logging.getLogger('ramp_aws')
     logger.setLevel(args.log_level)
     config = read_backend_config(args.config)
-    
+    validate_config(config) 
     if args.id:
         submission_id = args.id
-    else:
+    elif args.name and args.event and args.team:
         try:
             submission = get_submission_by_name(
                 config,
@@ -79,7 +80,10 @@ def main():
             print(ex)
             sys.exit(1)
         submission_id = submission.id
-    
+    else:
+        print('Please specify either submission id, or alternatively submission'
+              'event/team/name. Use ramp_aws_train --help for help.')
+        sys.exit(1)
     if args.instance_id:
         train_on_existing_ec2_instance(config, args.instance_id, submission_id)
     else:
