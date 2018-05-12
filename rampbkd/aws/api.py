@@ -120,6 +120,7 @@ def train_loop(config, event_name):
                 continue
             instance, = launch_ec2_instances(config, nb=1)
             _tag_instance_by_submission(instance.id, submission)
+            _add_or_update_tag(instance.id, 'train_loop', '1')
             logger.info('Launched instance "{}" for submission "{}"'.format(
                 instance.id, submission))
             set_submission_state(config, submission.id, 'sent_to_training')
@@ -138,6 +139,8 @@ def train_loop(config, event_name):
             if 'submission_id' not in tags:
                 continue
             if tags.get('event_name') != event_name:
+                continue
+            if 'train_loop' not in tags:
                 continue
             label = tags['Name']
             submission_id = int(tags['submission_id'])
