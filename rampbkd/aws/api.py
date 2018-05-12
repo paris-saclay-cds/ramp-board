@@ -183,7 +183,7 @@ def train_loop(config, event_name):
                             config, instance_id, submission_id)
                         set_predictions(config, submission_id, path, ext='npz')
                         set_submission_state(config, submission_id, 'tested')
-                        _run_hook(config, HOOK_AFTER_SUCCESSFUL_TRAINING)
+                        _run_hook(config, HOOK_AFTER_SUCCESSFUL_TRAINING, submission_id)
                     else:
                         logger.info('Training of "{}" failed'.format(label))
                         set_submission_state(
@@ -284,7 +284,7 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
         set_submission_state(config, submission_id, 'tested')
         logger.info('Scoring "{}"'.format(label))
         score_submission(config, submission_id)
-        _run_hook(config, HOOK_AFTER_SUCCESSFUL_TRAINING)
+        _run_hook(config, HOOK_AFTER_SUCCESSFUL_TRAINING, submission_id)
     else:
         logger.info('Training of "{}" in "{}" failed'.format(
             label, instance_id))
@@ -908,7 +908,7 @@ def _is_ready(config, instance_id):
         return False
 
 
-def _run_hook(config, hook_name):
+def _run_hook(config, hook_name, submission_id):
     """
     run hooks corresponding to hook_name
     """
@@ -917,9 +917,23 @@ def _run_hook(config, hook_name):
     if not hooks:
         return
     if hook_name in hooks:
+        submission = get_submission_by_id(config, submission_id)
+        submission_folder_name = _get_submission_folder_name(submission_id)
+        submission_folder = os.path.join(
+            conf[LOCAL_LOG_FOLDER_FIELD], 
+            submission_folder_name)
+        env = {
+            'RAMP_AWS_SUBMISSION_ID': str(submission_id),
+            'RAMP_AWS_SUBMISSION_NAME': submission.name,
+            'RAMP_AWS_EVENT': submission.event.name,
+            'RAMP_AWS_TEAM': submission.team.name,
+            'RAMP_AWS_HOOK': hook_name,
+            'RAMP_AWS_SUBMISSION_FOLDER': submission_folder
+        }
+        env.update(os.environ)
         cmd = hooks[hook_name]
         logger.info('Running "{}" for hook {}'.format(cmd, hook_name))
-        return call(cmd, shell=True)
+        return call(cmd, shell=True, env=env)
 
 
 def _training_finished(config, instance_id, submission_id):
