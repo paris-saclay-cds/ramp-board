@@ -70,8 +70,11 @@ MEMORY_PROFILING_FIELD = 'memory_profiling'
 
 HOOKS_SECTION = 'hooks'
 HOOK_AFTER_SUCCESSFUL_TRAINING = 'after_successful_training'
-HOOKS = [HOOK_AFTER_SUCCESSFUL_TRAINING]
-
+HOOK_AFTER_FAILED_TRAINING = 'after_failed_training'
+HOOKS = [
+    HOOK_AFTER_SUCCESSFUL_TRAINING,
+    HOOK_AFTER_FAILED_TRAINING,
+]
 ALL_FIELDS = [
     AMI_IMAGE_ID_FIELD,
     AMI_IMAGE_NAME_FIELD,
@@ -196,6 +199,7 @@ def train_loop(config, event_name):
                         )
                         set_submission_error_msg(
                             config, submission_id, error_msg)
+                        _run_hook(config, HOOK_AFTER_FAILED_TRAINING, submission_id)
                     # training finished, so terminate the instance
                     terminate_ec2_instance(config, instance_id)
         time.sleep(secs)
@@ -295,7 +299,8 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
         error_msg = _get_traceback(
             _get_log_content(config, submission_id))
         set_submission_error_msg(config, submission_id, error_msg)
-
+        _run_hook(config, HOOK_AFTER_FAILED_TRAINING, submission_id)
+ 
 
 def _wait_until_train_finished(config, instance_id, submission_id):
     """
