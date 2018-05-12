@@ -69,11 +69,13 @@ TRAIN_LOOP_INTERVAL_SECS_FIELD = 'train_loop_interval_secs'
 MEMORY_PROFILING_FIELD = 'memory_profiling'
 
 HOOKS_SECTION = 'hooks'
-HOOK_AFTER_SUCCESSFUL_TRAINING = 'after_successful_training'
-HOOK_AFTER_FAILED_TRAINING = 'after_failed_training'
+HOOK_START_TRAINING = 'start_training'
+HOOK_SUCCESSFUL_TRAINING = 'successful_training'
+HOOK_FAILED_TRAINING = 'failed_training'
 HOOKS = [
-    HOOK_AFTER_SUCCESSFUL_TRAINING,
-    HOOK_AFTER_FAILED_TRAINING,
+    HOOK_START_TRAINING,
+    HOOK_SUCCESSFUL_TRAINING,
+    HOOK_FAILED_TRAINING,
 ]
 ALL_FIELDS = [
     AMI_IMAGE_ID_FIELD,
@@ -164,6 +166,8 @@ def train_loop(config, event_name):
                         ', an error occured.'.format(label))
                     continue
                 set_submission_state(config, submission_id, 'training')
+                _run_hook(config, HOOK_START_TRAINING, submission_id)
+ 
             elif state == 'training':
                 # in any case (successful training or not)
                 # download the log 
@@ -189,7 +193,7 @@ def train_loop(config, event_name):
                             config, instance_id, submission_id)
                         set_predictions(config, submission_id, path, ext='npz')
                         set_submission_state(config, submission_id, 'tested')
-                        _run_hook(config, HOOK_AFTER_SUCCESSFUL_TRAINING, submission_id)
+                        _run_hook(config, HOOK_SUCCESSFUL_TRAINING, submission_id)
                     else:
                         logger.info('Training of "{}" failed'.format(label))
                         set_submission_state(
@@ -199,7 +203,7 @@ def train_loop(config, event_name):
                         )
                         set_submission_error_msg(
                             config, submission_id, error_msg)
-                        _run_hook(config, HOOK_AFTER_FAILED_TRAINING, submission_id)
+                        _run_hook(config, HOOK_FAILED_TRAINING, submission_id)
                     # training finished, so terminate the instance
                     terminate_ec2_instance(config, instance_id)
         time.sleep(secs)
@@ -268,6 +272,7 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
     upload_submission(config, instance_id, submission_id)
     launch_train(config, instance_id, submission_id)
     set_submission_state(config, submission_id, 'training')
+    _run_hook(config, HOOK_START_TRAINING, submission_id)
     _wait_until_train_finished(config, instance_id, submission_id)
     download_log(config, instance_id, submission_id)
     
@@ -291,7 +296,7 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
         set_submission_state(config, submission_id, 'tested')
         logger.info('Scoring "{}"'.format(label))
         score_submission(config, submission_id)
-        _run_hook(config, HOOK_AFTER_SUCCESSFUL_TRAINING, submission_id)
+        _run_hook(config, HOOK_SUCCESSFUL_TRAINING, submission_id)
     else:
         logger.info('Training of "{}" in "{}" failed'.format(
             label, instance_id))
@@ -299,7 +304,7 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
         error_msg = _get_traceback(
             _get_log_content(config, submission_id))
         set_submission_error_msg(config, submission_id, error_msg)
-        _run_hook(config, HOOK_AFTER_FAILED_TRAINING, submission_id)
+        _run_hook(config, HOOK_FAILED_TRAINING, submission_id)
  
 
 def _wait_until_train_finished(config, instance_id, submission_id):
@@ -940,6 +945,8 @@ def _run_hook(config, hook_name, submission_id):
         }
         env.update(os.environ)
         cmd = hooks[hook_name]
+        if type(cmd) == list:
+            cmd = ';'.join(cmd)
         logger.info('Running "{}" for hook {}'.format(cmd, hook_name))
         return call(cmd, shell=True, env=env)
 
