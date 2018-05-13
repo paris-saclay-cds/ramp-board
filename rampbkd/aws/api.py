@@ -135,6 +135,7 @@ def train_loop(config, event_name):
             label = _get_submission_label_by_id(config, submission_id)
             logger.info('Scoring submission : {}'.format(label))
             score_submission(config, submission_id)
+            _run_hook(config, HOOK_SUCCESSFUL_TRAINING, submission_id)
         # Get running instances and process events
         instance_ids = list_ec2_instance_ids(config)
         for instance_id in instance_ids:
@@ -193,7 +194,6 @@ def train_loop(config, event_name):
                             config, instance_id, submission_id)
                         set_predictions(config, submission_id, path, ext='npz')
                         set_submission_state(config, submission_id, 'tested')
-                        _run_hook(config, HOOK_SUCCESSFUL_TRAINING, submission_id)
                     else:
                         logger.info('Training of "{}" failed'.format(label))
                         set_submission_state(
