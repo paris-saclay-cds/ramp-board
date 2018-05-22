@@ -19,12 +19,13 @@
       <div class="col-xs-12">
         <div class="card">
           <div class="card-body">
-            {% if submission.is_in_competition %} 
+            {% if submission.is_in_competition %}
+              By default, all your submissions enter the competition, and the one with the highest public leaderboard score will become your official entry. If you don't want that this submission becomes a candidate, pull it out by pressing the button.
+              <a class="btn btn-warning" href="/toggle_competition/{{ submission.hash_ }}">Pull out this submission from the competition<span"></span></a>
+            {% else %}
               At this time, this submission is not a candidate in the official competition. You can re-enter it into the competition by pushing this button.<BR>
               <a class="btn btn-warning" href="/toggle_competition/{{ submission.hash_ }}">Enter this submission into the competition<span"></span></a>
-            {% else %}
-              By default, all your submissions enter the competition, and the one with the highest public leaderboard score will become your official entry. If you don't want that this submission becomes a candidate, pull it out by pressing the button.<BR>
-              <a class="btn btn-warning" href="/toggle_competition/{{ submission.hash_ }}">Pull out this submission from the competition<span"></span></a>
+              <BR>
             {% endif %}  
           </div>
         </div>
