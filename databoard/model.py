@@ -1059,7 +1059,7 @@ class Submission(db.Model):
     is_to_ensemble = db.Column(db.Boolean, default=True)
     # in competitive events participants can select the submission
     # with which they want to participate in the competition
-    is_in_competition = db.Column(db.Boolean, default=False)
+    is_in_competition = db.Column(db.Boolean, default=True)
 
     notes = db.Column(db.String, default='')  # eg, why is it disqualified
 
