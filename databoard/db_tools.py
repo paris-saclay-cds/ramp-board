@@ -1803,7 +1803,8 @@ def get_competition_leaderboards(event_name):
             submission.official_score.valid_score_cv_bag, score_type.precision)
         for submission in submissions]
     leaderboard_df['private ' + score_name] = [
-        submission.official_score.test_score_cv_bag
+        round(
+            submission.official_score.test_score_cv_bag, score_type.precision)
         for submission in submissions]
     leaderboard_df['train time [s]'] = [
         int(round(submission.train_time_cv_mean))
@@ -1828,6 +1829,18 @@ def get_competition_leaderboards(event_name):
         leaderboard_df, best_df, how='left',
         left_on=['team', 'public ' + score_name],
         right_on=['team', 'public ' + score_name])
+    leaderboard_df = leaderboard_df.fillna(False)
+    leaderboard_df = leaderboard_df[leaderboard_df['best']]
+    leaderboard_df = leaderboard_df.drop(columns='best')
+
+    # dealing with ties: we need the lowest timestamp
+    best_df = leaderboard_df.groupby('team').min()
+    best_df = best_df[['submitted at (UTC)']].reset_index()
+    best_df['best'] = True
+    leaderboard_df = pd.merge(
+        leaderboard_df, best_df, how='left',
+        left_on=['team', 'submitted at (UTC)'],
+        right_on=['team', 'submitted at (UTC)'])
     leaderboard_df = leaderboard_df.fillna(False)
     leaderboard_df = leaderboard_df[leaderboard_df['best']]
     leaderboard_df = leaderboard_df.drop(columns='best')
