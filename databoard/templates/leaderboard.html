@@ -104,7 +104,7 @@ $(function () {
 
 $(document).ready(function() {
         $('#leaderboard').DataTable({
-             "order": [[ 2, "desc" ]],
+             "order": [[ {{ sorting_column_index }}, "{{ sorting_direction }}" ]],
              "scrollX": true
              });
 } );
