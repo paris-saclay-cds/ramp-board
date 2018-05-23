@@ -356,7 +356,9 @@ class Event(db.Model):
     private_leaderboard_html = db.Column(db.String, default=None)
     failed_leaderboard_html = db.Column(db.String, default=None)
     new_leaderboard_html = db.Column(db.String, default=None)
-
+    public_competition_leaderboard_html = db.Column(db.String, default=None)
+    private_competition_leaderboard_html = db.Column(db.String, default=None)
+    
     def __init__(self, problem_name, name, event_title):
         self.name = name
         # to check if the module and all required fields are there
