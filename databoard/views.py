@@ -715,6 +715,7 @@ def toggle_competition(submission_hash):
         return _redirect_to_user(error_str)
     submission.is_in_competition = not submission.is_in_competition
     db.session.commit()
+    db_tools.update_leaderboards(submission.event_team.event.name)
     return redirect(
         u'/{}/{}'.format(submission_hash, submission.files[0].f_name))
 
