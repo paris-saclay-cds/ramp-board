@@ -23,4 +23,5 @@ bokeh
 scikit-image
 matplotlib
 unidecode
-Fabric
+pycrypto
+Fabric==1.13.0
