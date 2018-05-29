@@ -124,6 +124,10 @@ def train_loop(config, event_name):
             if submission.is_sandbox:
                 continue
             instance, = launch_ec2_instances(config, nb=1)
+            nb_trials = 0
+            while instance.state['name'] != 'running' and nb_trials < conf.get('new_instance_nb_trials', 20):
+                time.sleep(conf.get('new_instance_check_interval'))
+                nb_trials += 1
             _tag_instance_by_submission(instance.id, submission)
             _add_or_update_tag(instance.id, 'train_loop', '1')
             logger.info('Launched instance "{}" for submission "{}"'.format(
@@ -142,12 +146,15 @@ def train_loop(config, event_name):
             if not _is_ready(config, instance_id):
                 continue
             tags = _get_tags(instance_id)
+            # Filter instances that were not launched
+            # by the training loop API
             if 'submission_id' not in tags:
                 continue
             if tags.get('event_name') != event_name:
                 continue
             if 'train_loop' not in tags:
                 continue
+            # Process each instance
             label = tags['Name']
             submission_id = int(tags['submission_id'])
             state = get_submission_state(config, submission_id)
