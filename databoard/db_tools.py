@@ -1997,7 +1997,8 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
     submissions = get_submissions(
         event_name=event_name, team_name=team_name, user_name=user_name)
     submissions = [submission for submission in submissions
-                   if submission.state in ['new', 'training'] and
+                   if submission.state in 
+                   ['new', 'training', 'sent_to_training'] and
                    submission.is_not_sandbox]
 
     columns = ['team',
