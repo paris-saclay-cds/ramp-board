@@ -1431,6 +1431,7 @@ def _compute_contributivity_on_fold(cv_fold, ground_truths_valid,
         submission_on_fold for submission_on_fold in cv_fold.submissions
         if (submission_on_fold.submission.is_valid or force_ensemble) and
         submission_on_fold.submission.is_to_ensemble and
+        submission_on_fold.submission.is_in_competition and
         submission_on_fold.state == 'scored' and
         submission_on_fold.submission.is_not_sandbox
     ]
@@ -1774,12 +1775,135 @@ def get_private_leaderboards(event_name, user_name=None):
     return table_format(leaderboard_html)
 
 
+def get_competition_leaderboards(event_name):
+    """Create leaderboards.
+
+    Returns
+    -------
+    leaderboard_html_with_links : html string
+    leaderboard_html_with_no_links : html string
+    """
+    submissions = get_submissions(event_name=event_name)
+    submissions = [
+        submission for submission in submissions
+        if submission.is_public_leaderboard and submission.is_valid and
+        submission.is_in_competition]
+    event = Event.query.filter_by(name=event_name).one()
+    score_type = event.official_score_type
+    score_name = event.official_score_name
+
+    # construct full leaderboard
+    leaderboard_df = pd.DataFrame()
+    leaderboard_df['team'] = [
+        submission.event_team.team.name for submission in submissions]
+    leaderboard_df['submission'] = [
+        submission.name[:20] for submission in submissions]
+    leaderboard_df['public ' + score_name] = [
+        round(
+            submission.official_score.valid_score_cv_bag, score_type.precision)
+        for submission in submissions]
+    leaderboard_df['private ' + score_name] = [
+        round(
+            submission.official_score.test_score_cv_bag, score_type.precision)
+        for submission in submissions]
+    leaderboard_df['train time [s]'] = [
+        int(round(submission.train_time_cv_mean))
+        for submission in submissions]
+    leaderboard_df['test time [s]'] = [
+        int(round(submission.valid_time_cv_mean))
+        for submission in submissions]
+    leaderboard_df['submitted at (UTC)'] = [
+        date_time_format(submission.submission_timestamp)
+        for submission in submissions]
+
+    # select best submission for each team
+    if score_type.is_lower_the_better:
+        best_df = leaderboard_df.groupby('team').min()
+    else:
+        best_df = leaderboard_df.groupby('team').max()
+    best_df = best_df[['public ' + score_name]].reset_index()
+    best_df['best'] = True
+
+    # merge to get a best indicator column then select best
+    leaderboard_df = pd.merge(
+        leaderboard_df, best_df, how='left',
+        left_on=['team', 'public ' + score_name],
+        right_on=['team', 'public ' + score_name])
+    leaderboard_df = leaderboard_df.fillna(False)
+    leaderboard_df = leaderboard_df[leaderboard_df['best']]
+    leaderboard_df = leaderboard_df.drop(columns='best')
+
+    # dealing with ties: we need the lowest timestamp
+    best_df = leaderboard_df.groupby('team').min()
+    best_df = best_df[['submitted at (UTC)']].reset_index()
+    best_df['best'] = True
+    leaderboard_df = pd.merge(
+        leaderboard_df, best_df, how='left',
+        left_on=['team', 'submitted at (UTC)'],
+        right_on=['team', 'submitted at (UTC)'])
+    leaderboard_df = leaderboard_df.fillna(False)
+    leaderboard_df = leaderboard_df[leaderboard_df['best']]
+    leaderboard_df = leaderboard_df.drop(columns='best')
+
+    # sort by public score then by submission timestamp, compute rank
+    leaderboard_df = leaderboard_df.sort_values(
+        by=['public ' + score_name, 'submitted at (UTC)'],
+        ascending=[score_type.is_lower_the_better, True])
+    leaderboard_df['public rank'] = np.arange(len(leaderboard_df)) + 1
+
+    # sort by private score then by submission timestamp, compute rank
+    leaderboard_df = leaderboard_df.sort_values(
+        by=['private ' + score_name, 'submitted at (UTC)'],
+        ascending=[score_type.is_lower_the_better, True])
+    leaderboard_df['private rank'] = np.arange(len(leaderboard_df)) + 1
+
+    leaderboard_df['move'] =\
+        leaderboard_df['public rank'] - leaderboard_df['private rank']
+    leaderboard_df['move'] = [
+        '{0:+d}'.format(m) if m != 0 else '-' for m in leaderboard_df['move']]
+
+    public_leaderboard_df = leaderboard_df[[
+        'public rank', 'team', 'submission', 'public ' + score_name,
+        'train time [s]', 'test time [s]', 'submitted at (UTC)']]
+    public_leaderboard_df = public_leaderboard_df.rename(columns={
+        'public ' + score_name: score_name,
+        'public rank': 'rank'
+    })
+    public_leaderboard_df = public_leaderboard_df.sort_values(by='rank')
+
+    private_leaderboard_df = leaderboard_df[[
+        'private rank', 'move', 'team', 'submission', 'private ' + score_name,
+        'train time [s]', 'test time [s]', 'submitted at (UTC)']]
+    private_leaderboard_df = private_leaderboard_df.rename(columns={
+        'private ' + score_name: score_name,
+        'private rank': 'rank'
+    })
+    private_leaderboard_df = private_leaderboard_df.sort_values(by='rank')
+
+    html_params = dict(
+        escape=False,
+        index=False,
+        max_cols=None,
+        max_rows=None,
+        justify='left',
+        # classes=['ui', 'blue', 'celled', 'table', 'sortable']
+    )
+    public_leaderboard_html = public_leaderboard_df.to_html(**html_params)
+    private_leaderboard_html = private_leaderboard_df.to_html(**html_params)
+
+    return (
+        table_format(public_leaderboard_html),
+        table_format(private_leaderboard_html)
+    )
+
+
 def update_leaderboards(event_name):
     private_leaderboard_html = get_private_leaderboards(
         event_name)
     leaderboards = get_leaderboards(event_name)
     failed_leaderboard_html = get_failed_leaderboard(event_name)
     new_leaderboard_html = get_new_leaderboard(event_name)
+    competition_leaderboards_html = get_competition_leaderboards(event_name)
 
     event = Event.query.filter_by(name=event_name).one()
     event.private_leaderboard_html = private_leaderboard_html
@@ -1787,7 +1911,10 @@ def update_leaderboards(event_name):
     event.public_leaderboard_html_no_links = leaderboards[1]
     event.failed_leaderboard_html = failed_leaderboard_html
     event.new_leaderboard_html = new_leaderboard_html
-
+    event.public_competition_leaderboard_html =\
+        competition_leaderboards_html[0]
+    event.private_competition_leaderboard_html = \
+        competition_leaderboards_html[1]
     db.session.commit()
 
 

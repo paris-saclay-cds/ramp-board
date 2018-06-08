@@ -165,12 +165,14 @@
                                             {% if (approved is not defined) or (approved == True) %}
                                             <li><a href="https://github.com/ramp-kits/{{ event.problem.name }}">starting kit</a></li>
                                             <li><a href="/events/{{ event.name }}/leaderboard">leaderboard</a></li>
+                                            <li><a href="/events/{{ event.name }}/competition_leaderboard">competition leaderboard</a></li>
                                             <li><a href="/events/{{ event.name }}/sandbox">sandbox</a></li>
                                             <li><a href="/events/{{ event.name }}/my_submissions">my submissions</a></li>
                                             {% endif %}
                                             {% if admin %}
                                             <li><a href="/events/{{ event.name }}/dashboard_submissions">dashboard admin</a></li>
-                                            <li><a href="/events/{{ event.name }}/private_leaderboard">private_leaderboard</a></li>
+                                            <li><a href="/events/{{ event.name }}/private_leaderboard">private leaderboard</a></li>
+                                            <li><a href="/events/{{ event.name }}/private_competition_leaderboard">private competition leaderboard</a></li>
                                             <li><a href="/events/{{ event.name }}/update">update event</a></li>
                                             {% endif %}
                                         </ul>

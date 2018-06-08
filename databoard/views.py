@@ -469,11 +469,17 @@ def my_submissions(event_name):
     failed_leaderboard_html = event_team.failed_leaderboard_html
     new_leaderboard_html = event_team.new_leaderboard_html
     admin = check_admin(fl.current_user, event)
+    if event.official_score_type.is_lower_the_better:
+        sorting_direction = 'asc'
+    else:
+        sorting_direction = 'desc'
     return render_template('leaderboard.html',
                            leaderboard_title='Trained submissions',
                            leaderboard=leaderboard_html,
                            failed_leaderboard=failed_leaderboard_html,
                            new_leaderboard=new_leaderboard_html,
+                           sorting_column_index=4,
+                           sorting_direction=sorting_direction,
                            event=event,
                            admin=admin)
 
@@ -493,10 +499,16 @@ def leaderboard(event_name):
         leaderboard_html = event.public_leaderboard_html_with_links
     else:
         leaderboard_html = event.public_leaderboard_html_no_links
+    if event.official_score_type.is_lower_the_better:
+        sorting_direction = 'asc'
+    else:
+        sorting_direction = 'desc'
 
     leaderboard_kwargs = dict(
         leaderboard=leaderboard_html,
         leaderboard_title='Leaderboard',
+        sorting_column_index=4,
+        sorting_direction=sorting_direction,
         event=event
     )
 
@@ -516,6 +528,32 @@ def leaderboard(event_name):
             **leaderboard_kwargs)
 
     return template
+
+
+@app.route("/events/<event_name>/competition_leaderboard")
+@fl.login_required
+def competition_leaderboard(event_name):
+    event = Event.query.filter_by(name=event_name).one_or_none()
+    if not db_tools.is_public_event(event, fl.current_user):
+        return _redirect_to_user(u'{}: no event named "{}"'.format(
+            fl.current_user.firstname, event_name))
+    db_tools.add_user_interaction(
+        interaction='looking at leaderboard',
+        user=fl.current_user, event=event)
+    admin = check_admin(fl.current_user, event)
+
+    leaderboard_html = event.public_competition_leaderboard_html
+
+    leaderboard_kwargs = dict(
+        leaderboard=leaderboard_html,
+        leaderboard_title='Leaderboard',
+        sorting_column_index=0,
+        sorting_direction='asc',
+        event=event,
+        admin=admin
+    )
+
+    return render_template('leaderboard.html', **leaderboard_kwargs)
 
 
 @app.route("/<submission_hash>/<f_name>", methods=['GET', 'POST'])
@@ -677,6 +715,7 @@ def toggle_competition(submission_hash):
         return _redirect_to_user(error_str)
     submission.is_in_competition = not submission.is_in_competition
     db.session.commit()
+    db_tools.update_leaderboards(submission.event_team.event.name)
     return redirect(
         u'/{}/{}'.format(submission_hash, submission.files[0].f_name))
 
@@ -997,10 +1036,17 @@ def private_leaderboard(event_name):
         user=fl.current_user, event=event)
     leaderboard_html = event.private_leaderboard_html
     admin = check_admin(fl.current_user, event)
+    if event.official_score_type.is_lower_the_better:
+        sorting_direction = 'asc'
+    else:
+        sorting_direction = 'desc'
+
     template = render_template(
         'leaderboard.html',
         leaderboard_title='Leaderboard',
         leaderboard=leaderboard_html,
+        sorting_column_index=5,
+        sorting_direction=sorting_direction,
         event=event,
         private=True,
         admin=admin
@@ -1010,6 +1056,39 @@ def private_leaderboard(event_name):
     #     int(1000 * (time.time() - start))))
 
     return template
+
+
+@app.route("/events/<event_name>/private_competition_leaderboard")
+@fl.login_required
+def private_competition_leaderboard(event_name):
+    if not fl.current_user.is_authenticated:
+        return redirect(url_for('login'))
+    event = Event.query.filter_by(name=event_name).one_or_none()
+    if not db_tools.is_public_event(event, fl.current_user):
+        return _redirect_to_user(u'{}: no event named "{}"'.format(
+            fl.current_user.firstname, event_name))
+    if (not db_tools.is_admin(event, fl.current_user) and
+        (event.closing_timestamp is None or
+            event.closing_timestamp > datetime.datetime.utcnow())):
+        return redirect(url_for('problems'))
+
+    db_tools.add_user_interaction(
+        interaction='looking at private leaderboard',
+        user=fl.current_user, event=event)
+
+    admin = check_admin(fl.current_user, event)
+    leaderboard_html = event.private_competition_leaderboard_html
+
+    leaderboard_kwargs = dict(
+        leaderboard=leaderboard_html,
+        leaderboard_title='Leaderboard',
+        sorting_column_index=0,
+        sorting_direction='asc',
+        event=event,
+        admin=admin
+    )
+
+    return render_template('leaderboard.html', **leaderboard_kwargs)
 
 
 @app.route("/events/<event_name>/update", methods=['GET', 'POST'])
