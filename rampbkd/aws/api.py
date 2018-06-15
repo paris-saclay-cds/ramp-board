@@ -22,6 +22,8 @@ from rampbkd.api import get_submission_by_id
 from rampbkd.api import set_submission_max_ram
 from rampbkd.api import score_submission
 from rampbkd.api import set_submission_error_msg
+from rampbkd.api import get_event_nb_folds
+
 
 __all__ = [
     'train_loop',
@@ -986,7 +988,9 @@ def _training_successful(config, instance_id, submission_id):
     
     if nb_folds == 0 or nb_train_files == 0 or nb_test_files == 0:
         return False
-    return nb_folds == nb_train_files == nb_test_files
+    submission = get_submission_by_id(submission_id)
+    actual_nb_folds = get_event_nb_folds(submission.event.name)
+    return nb_folds == nb_train_files == nb_test_files == actual_nb_folds
 
 
 def _folder_exists(config, instance_id, folder):
