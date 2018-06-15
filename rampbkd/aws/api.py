@@ -127,9 +127,12 @@ def train_loop(config, event_name):
                 continue
             instance, = launch_ec2_instances(config, nb=1)
             nb_trials = 0
-            while instance.state['name'] != 'running' and nb_trials < conf.get('new_instance_nb_trials', 20):
-                time.sleep(conf.get('new_instance_check_interval'))
+            while nb_trials < conf.get('new_instance_nb_trials', 20):
+                if instance.state.get('name') == 'running':
+                    break
                 nb_trials += 1
+                time.sleep(conf.get('new_instance_check_interval', 6))
+            
             _tag_instance_by_submission(instance.id, submission)
             _add_or_update_tag(instance.id, 'train_loop', '1')
             logger.info('Launched instance "{}" for submission "{}"'.format(
