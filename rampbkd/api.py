@@ -17,6 +17,7 @@ from .model import Base
 from .query import select_submissions_by_state
 from .query import select_submissions_by_id
 from .query import select_submission_by_name
+from .query import select_event_by_name
 from .config import STATES, UnknownStateError
 
 
@@ -30,6 +31,7 @@ __all__ = [
     'set_submission_error_msg',
     'set_predictions',
     'score_submission',
+    'get_event_nb_folds',
 ]
 
 
@@ -507,3 +509,23 @@ def set_submission_error_msg(config, submission_id, error_msg):
         submission = select_submissions_by_id(session, submission_id)
         submission.error_msg = error_msg
         session.commit()
+
+
+def get_event_nb_folds(config, event_name):
+    # Create database url
+    db_url = URL(**config['sqlalchemy'])
+    db = create_engine(db_url)
+
+    # Create a configured "Session" class
+    Session = sessionmaker(db)
+
+    # Link the relational model to the database
+    Base.metadata.create_all(db)
+
+    # Connect to the dabase and perform action
+    with db.connect() as conn:
+        session = Session(bind=conn)
+        event = select_event_by_name(session, event_name)
+        return len(event.cv_folds)
+
+

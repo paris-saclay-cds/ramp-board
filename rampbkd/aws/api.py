@@ -22,6 +22,8 @@ from rampbkd.api import get_submission_by_id
 from rampbkd.api import set_submission_max_ram
 from rampbkd.api import score_submission
 from rampbkd.api import set_submission_error_msg
+from rampbkd.api import get_event_nb_folds
+
 
 __all__ = [
     'train_loop',
@@ -124,6 +126,10 @@ def train_loop(config, event_name):
             if submission.is_sandbox:
                 continue
             instance, = launch_ec2_instances(config, nb=1)
+            nb_trials = 0
+            while instance.state['name'] != 'running' and nb_trials < conf.get('new_instance_nb_trials', 20):
+                time.sleep(conf.get('new_instance_check_interval'))
+                nb_trials += 1
             _tag_instance_by_submission(instance.id, submission)
             _add_or_update_tag(instance.id, 'train_loop', '1')
             logger.info('Launched instance "{}" for submission "{}"'.format(
@@ -142,12 +148,15 @@ def train_loop(config, event_name):
             if not _is_ready(config, instance_id):
                 continue
             tags = _get_tags(instance_id)
+            # Filter instances that were not launched
+            # by the training loop API
             if 'submission_id' not in tags:
                 continue
             if tags.get('event_name') != event_name:
                 continue
             if 'train_loop' not in tags:
                 continue
+            # Process each instance
             label = tags['Name']
             submission_id = int(tags['submission_id'])
             state = get_submission_state(config, submission_id)
@@ -976,10 +985,9 @@ def _training_successful(config, instance_id, submission_id):
 
     cmd = "find {}|egrep 'fold.*/y_pred_test.npz'|wc -l".format(folder)
     nb_test_files = int(_run(config, instance_id, cmd, return_output=True))
-    
-    if nb_folds == 0 or nb_train_files == 0 or nb_test_files == 0:
-        return False
-    return nb_folds == nb_train_files == nb_test_files
+    submission = get_submission_by_id(config, submission_id)
+    actual_nb_folds = get_event_nb_folds(config, submission.event.name)
+    return nb_folds == nb_train_files == nb_test_files == actual_nb_folds
 
 
 def _folder_exists(config, instance_id, folder):

@@ -93,3 +93,24 @@ def select_submission_by_name(session, event_name, team_name, name):
                    .order_by(Submission.submission_timestamp)
                    .one())
     return submission
+
+
+def select_event_by_name(session, event_name):
+    """
+    Get an event by name
+
+    Parameters
+    ----------
+    session :
+        database connexion session
+    event_name : str
+        name of the RAMP event
+    
+    Returns
+    -------
+    `Event` instance
+
+    """
+    event = session.query(Event).filter(Event.name == event_name).one()
+    return event
+ 
