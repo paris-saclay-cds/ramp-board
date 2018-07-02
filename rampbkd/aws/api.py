@@ -56,6 +56,8 @@ logger = logging.getLogger('ramp_aws')
 # configuration fields
 AWS_CONFIG_SECTION = 'aws'
 PROFILE_NAME_FIELD = 'profile_name'
+ACCESS_KEY_ID_FIELD = 'access_key_id'
+SECRET_ACCESS_KEY_FIELD = 'secret_access_key'
 AMI_IMAGE_ID_FIELD = 'ami_image_id'
 AMI_IMAGE_NAME_FIELD = 'ami_image_name'
 AMI_USER_NAME_FIELD = 'ami_user_name'
@@ -83,6 +85,8 @@ HOOKS = [
 ]
 ALL_FIELDS = [
     PROFILE_NAME_FIELD,
+    ACCESS_KEY_ID_FIELD,
+    SECRET_ACCESS_KEY_FIELD,
     AMI_IMAGE_ID_FIELD,
     AMI_IMAGE_NAME_FIELD,
     AMI_USER_NAME_FIELD,
@@ -131,7 +135,7 @@ def train_loop(config, event_name):
             try:
                 instance, = launch_ec2_instances(config, nb=1)
             except botocore.exceptions.ClientError as ex:
-                logger.info('Exception when launching a new instance : ""'.format(ex))
+                logger.info('Exception when launching a new instance : "{}"'.format(ex))
                 logger.info('Skipping...')
                 continue
             nb_trials = 0
@@ -371,7 +375,7 @@ def launch_ec2_instances(config, nb=1):
             {'Key': RAMP_AWS_BACKEND_TAG, 'Value': '1'},
         ]
     }]
-    sess = boto3.session.Session(profile_name=conf[PROFILE_NAME_FIELD])
+    sess = _get_boto_session(config)
     resource = sess.resource('ec2')
     instances = resource.create_instances(
         ImageId=ami_image_id,
@@ -384,9 +388,9 @@ def launch_ec2_instances(config, nb=1):
     )
     return instances
 
+
 def _get_image_id(config, image_name):
-    sess = boto3.session.Session(
-        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD])
+    sess = _get_boto_session(config)
     client = sess.client('ec2')
     result = client.describe_images(Filters=[
         {
@@ -420,8 +424,7 @@ def terminate_ec2_instance(config, instance_id):
     instance_id : str
         instance id
     """
-    sess = boto3.session.Session(
-        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD])
+    sess = _get_boto_session(config)
     resource = sess.resource('ec2')
     logger.info('Killing the instance {}...'.format(instance_id))
     return resource.instances.filter(InstanceIds=[instance_id]).terminate()
@@ -442,8 +445,7 @@ def list_ec2_instance_ids(config):
 
     list of str
     """
-    sess = boto3.session.Session(
-        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD])
+    sess = _get_boto_session(config)
     client = sess.client('ec2')
     instances = client.describe_instances(
         Filters=[
@@ -478,8 +480,7 @@ def status_of_ec2_instance(config, instance_id):
     if can return None if the instance has just been launched and is
     not even ready to give the status.
     """
-    sess = boto3.session.Session(
-        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD])
+    sess = _get_boto_session(config)
     client = sess.client('ec2')
     responses = client.describe_instance_status(
         InstanceIds=[instance_id])['InstanceStatuses']
@@ -872,8 +873,7 @@ def _rsync(config, instance_id, source, dest):
     key_path = conf[KEY_PATH_FIELD]
     ami_username = conf[AMI_USER_NAME_FIELD]
 
-    sess = boto3.session.Session(
-        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD]) 
+    sess = _get_boto_session(config)
     resource = sess.resource('ec2')
     inst = resource.Instance(instance_id)
     ip = inst.public_ip_address
@@ -923,8 +923,7 @@ def _run(config, instance_id, cmd, return_output=False):
     key_path = conf[KEY_PATH_FIELD]
     ami_username = conf[AMI_USER_NAME_FIELD]
 
-    sess = boto3.session.Session(
-        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD])
+    sess = _get_boto_session(config)
     resource = sess.resource('ec2')
     inst = resource.Instance(instance_id)
     ip = inst.public_ip_address
@@ -1048,8 +1047,7 @@ def _tag_instance_by_submission(config, instance_id, submission):
 
 
 def _add_or_update_tag(config, instance_id, key, value):
-    sess = boto3.session.Session(
-        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD])
+    sess = _get_boto_session(config)
     client = sess.client('ec2')
     tags = [
         {'Key': key, 'Value': value},
@@ -1058,8 +1056,7 @@ def _add_or_update_tag(config, instance_id, key, value):
 
 
 def _get_tags(config, instance_id):
-    sess = boto3.session.Session(
-        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD])
+    sess = _get_boto_session(config)
     client = sess.client('ec2')
     filters = [
         {'Name': 'resource-id', 'Values': [instance_id]}
@@ -1071,11 +1068,27 @@ def _get_tags(config, instance_id):
 
 
 def _delete_tag(config, instance_id, key):
-    sess = boto3.session.Session(
-        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD]) 
+    sess = _get_boto_session(config)
     client = sess.client('ec2')
     tags = [{'Key': key}]
     return client.delete_tags(Resources=[instance_id], Tags=tags)
+
+
+def _get_boto_session(config):
+    conf = config[AWS_CONFIG_SECTION]
+    if PROFILE_NAME_FIELD in conf:
+        sess = boto3.session.Session(profile_name=conf[PROFILE_NAME_FIELD])
+        return sess
+    elif ACCESS_KEY_ID_FIELD in conf and SECRET_ACCESS_KEY_FIELD in conf:
+        sess = boto3.session.Session(
+            aws_access_key_id=conf[ACCESS_KEY_ID_FIELD],
+            aws_secret_access_key=conf[SECRET_ACCESS_KEY_FIELD],
+        )
+        return sess
+    else:
+        raise ValueError('Please specify either "{}" or both of "{}" and "{}"'.format(
+            PROFILE_NAME_FIELD, ACCESS_KEY_ID_FIELD, SECRET_ACCESS_KEY_FIELD,
+        ))
 
 
 def validate_config(config):
@@ -1089,7 +1102,13 @@ def validate_config(config):
     for k in conf.keys():
         if k not in ALL_FIELDS:
             raise ValueError('Invalid field : "{}"'.format(k))
-    required_fields_ = REQUIRED_FIELDS - set([AMI_IMAGE_NAME_FIELD, AMI_IMAGE_ID_FIELD])
+    required_fields_ = REQUIRED_FIELDS - set([
+        AMI_IMAGE_NAME_FIELD, 
+        AMI_IMAGE_ID_FIELD,
+        PROFILE_NAME_FIELD, 
+        ACCESS_KEY_ID_FIELD, 
+        SECRET_ACCESS_KEY_FIELD,
+    ])
     for k in required_fields_:
         if k not in conf:
             raise ValueError('Required field "{}" missing from config'.format(k))
@@ -1101,6 +1120,14 @@ def validate_config(config):
         raise ValueError(
             'Please specify either  "{}" or "{}" in config.'.format(
                 AMI_IMAGE_NAME_FIELD, AMI_IMAGE_ID_FIELD))
+    if PROFILE_NAME_FIELD in conf and (ACCESS_KEY_ID_FIELD in conf or SECRET_ACCESS_KEY_FIELD in conf):
+        raise ValueError('Please specify either "{}" or both of "{}" and "{}"'.format(
+            PROFILE_NAME_FIELD, ACCESS_KEY_ID_FIELD, SECRET_ACCESS_KEY_FIELD,
+        ))
+    if PROFILE_NAME_FIELD not in conf and not(ACCESS_KEY_ID_FIELD in conf and SECRET_ACCESS_KEY_FIELD in conf):
+        raise ValueError('Please specify both "{}" and "{}"'.format(
+            ACCESS_KEY_ID_FIELD, SECRET_ACCESS_KEY_FIELD,
+        ))
     hooks = conf.get(HOOKS_SECTION)
     if hooks:
         for hook_name in hooks.keys():
