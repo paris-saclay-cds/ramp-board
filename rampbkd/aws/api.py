@@ -58,6 +58,7 @@ AWS_CONFIG_SECTION = 'aws'
 PROFILE_NAME_FIELD = 'profile_name'
 ACCESS_KEY_ID_FIELD = 'access_key_id'
 SECRET_ACCESS_KEY_FIELD = 'secret_access_key'
+REGION_NAME_FIELD = 'region_name'
 AMI_IMAGE_ID_FIELD = 'ami_image_id'
 AMI_IMAGE_NAME_FIELD = 'ami_image_name'
 AMI_USER_NAME_FIELD = 'ami_user_name'
@@ -87,6 +88,7 @@ ALL_FIELDS = [
     PROFILE_NAME_FIELD,
     ACCESS_KEY_ID_FIELD,
     SECRET_ACCESS_KEY_FIELD,
+    REGION_NAME_FIELD,
     AMI_IMAGE_ID_FIELD,
     AMI_IMAGE_NAME_FIELD,
     AMI_USER_NAME_FIELD,
@@ -1077,12 +1079,16 @@ def _delete_tag(config, instance_id, key):
 def _get_boto_session(config):
     conf = config[AWS_CONFIG_SECTION]
     if PROFILE_NAME_FIELD in conf:
-        sess = boto3.session.Session(profile_name=conf[PROFILE_NAME_FIELD])
+        sess = boto3.session.Session(
+            profile_name=conf[PROFILE_NAME_FIELD],
+            region_name=conf[REGION_NAME_FIELD],
+        )
         return sess
     elif ACCESS_KEY_ID_FIELD in conf and SECRET_ACCESS_KEY_FIELD in conf:
         sess = boto3.session.Session(
             aws_access_key_id=conf[ACCESS_KEY_ID_FIELD],
             aws_secret_access_key=conf[SECRET_ACCESS_KEY_FIELD],
+            region_name=conf[REGION_NAME_FIELD],
         )
         return sess
     else:
