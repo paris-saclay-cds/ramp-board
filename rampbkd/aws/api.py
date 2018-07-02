@@ -6,6 +6,7 @@ from subprocess import call
 from subprocess import check_output
 from glob import glob
 import re
+import codecs
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import URL
@@ -573,7 +574,7 @@ def _get_log_content(config, submission_id):
         submission_folder_name, 
         'log')
     try: 
-        content = open(path).read()
+        content = codecs.open(path, encoding='utf-8').read()
         content = _filter_colors(content)
         return content
     except IOError:
@@ -658,7 +659,7 @@ def _get_submission_max_ram(config, submission_id):
     dest_path = os.path.join(conf[LOCAL_LOG_FOLDER_FIELD], submission_folder_name)
     filename = os.path.join(dest_path, 'mprof.dat')
     max_mem = 0.
-    for line in open(filename).readlines()[1:]:
+    for line in codecs.open(filename, encoding='utf-8').readlines()[1:]:
         _, mem, _ = line.split()
         max_mem = max(max_mem, float(mem))
     return max_mem
