@@ -54,6 +54,7 @@ logger = logging.getLogger('ramp_aws')
 
 # configuration fields
 AWS_CONFIG_SECTION = 'aws'
+PROFILE_NAME_FIELD = 'profile_name'
 AMI_IMAGE_ID_FIELD = 'ami_image_id'
 AMI_IMAGE_NAME_FIELD = 'ami_image_name'
 AMI_USER_NAME_FIELD = 'ami_user_name'
@@ -80,6 +81,7 @@ HOOKS = [
     HOOK_FAILED_TRAINING,
 ]
 ALL_FIELDS = [
+    PROFILE_NAME_FIELD,
     AMI_IMAGE_ID_FIELD,
     AMI_IMAGE_NAME_FIELD,
     AMI_USER_NAME_FIELD,
@@ -133,8 +135,8 @@ def train_loop(config, event_name):
                 nb_trials += 1
                 time.sleep(conf.get('new_instance_check_interval', 6))
             
-            _tag_instance_by_submission(instance.id, submission)
-            _add_or_update_tag(instance.id, 'train_loop', '1')
+            _tag_instance_by_submission(config, instance.id, submission)
+            _add_or_update_tag(config, instance.id, 'train_loop', '1')
             logger.info('Launched instance "{}" for submission "{}"'.format(
                 instance.id, submission))
             set_submission_state(config, submission.id, 'sent_to_training')
@@ -347,7 +349,7 @@ def launch_ec2_instances(config, nb=1):
                          'specified at the same time. Please specify either ami_image_id'
                          'or ami_image_name')
     if ami_name:
-        ami_image_id = _get_image_id(ami_name)
+        ami_image_id = _get_image_id(config, ami_name)
 
     instance_type = conf[INSTANCE_TYPE_FIELD]
     key_name = conf[KEY_NAME_FIELD]
@@ -363,7 +365,8 @@ def launch_ec2_instances(config, nb=1):
             {'Key': RAMP_AWS_BACKEND_TAG, 'Value': '1'},
         ]
     }]
-    resource = boto3.resource('ec2')
+    sess = boto3.session.Session(profile_name=conf[PROFILE_NAME_FIELD])
+    resource = sess.resource('ec2')
     instances = resource.create_instances(
         ImageId=ami_image_id,
         MinCount=nb,
@@ -375,8 +378,10 @@ def launch_ec2_instances(config, nb=1):
     )
     return instances
 
-def _get_image_id(image_name):
-    client = boto3.client('ec2')
+def _get_image_id(config, image_name):
+    sess = boto3.session.Session(
+        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD])
+    client = sess.client('ec2')
     result = client.describe_images(Filters=[
         {
             'Name': 'name',
@@ -409,7 +414,9 @@ def terminate_ec2_instance(config, instance_id):
     instance_id : str
         instance id
     """
-    resource = boto3.resource('ec2')
+    sess = boto3.session.Session(
+        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD])
+    resource = sess.resource('ec2')
     logger.info('Killing the instance {}...'.format(instance_id))
     return resource.instances.filter(InstanceIds=[instance_id]).terminate()
 
@@ -429,7 +436,9 @@ def list_ec2_instance_ids(config):
 
     list of str
     """
-    client = boto3.client('ec2')
+    sess = boto3.session.Session(
+        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD])
+    client = sess.client('ec2')
     instances = client.describe_instances(
         Filters=[
             {'Name': 'tag:' + RAMP_AWS_BACKEND_TAG, 'Values': ['1']},
@@ -463,7 +472,9 @@ def status_of_ec2_instance(config, instance_id):
     if can return None if the instance has just been launched and is
     not even ready to give the status.
     """
-    client = boto3.client('ec2')
+    sess = boto3.session.Session(
+        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD])
+    client = sess.client('ec2')
     responses = client.describe_instance_status(
         InstanceIds=[instance_id])['InstanceStatuses']
     if len(responses) == 1:
@@ -744,7 +755,7 @@ def launch_train(config, instance_id, submission_id):
     )
     cmd = cmd.format(**values)
     # tag the ec2 instance with info about submission
-    _tag_instance_by_submission(instance_id, submission)
+    _tag_instance_by_submission(config, instance_id, submission)
     label = _get_submission_label(submission)
     logger.info('Launch training of {}..'.format(label))
     return _run(config, instance_id, cmd)
@@ -855,7 +866,9 @@ def _rsync(config, instance_id, source, dest):
     key_path = conf[KEY_PATH_FIELD]
     ami_username = conf[AMI_USER_NAME_FIELD]
 
-    resource = boto3.resource('ec2')
+    sess = boto3.session.Session(
+        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD]) 
+    resource = sess.resource('ec2')
     inst = resource.Instance(instance_id)
     ip = inst.public_ip_address
     fmt = {'user': ami_username, 'ip': ip}
@@ -904,7 +917,9 @@ def _run(config, instance_id, cmd, return_output=False):
     key_path = conf[KEY_PATH_FIELD]
     ami_username = conf[AMI_USER_NAME_FIELD]
 
-    resource = boto3.resource('ec2')
+    sess = boto3.session.Session(
+        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD])
+    resource = sess.resource('ec2')
     inst = resource.Instance(instance_id)
     ip = inst.public_ip_address
     values = {
@@ -1013,29 +1028,33 @@ def _has_screen(config, instance_id, screen_name):
     return nb > 0
 
 
-def _tag_instance_by_submission(instance_id, submission):
+def _tag_instance_by_submission(config, instance_id, submission):
     """
     Add tags to an instance with infos from the submission to know which
     submission is being trained on the instance.
     """
-    _add_or_update_tag(instance_id, 'submission_id', str(submission.id))
-    _add_or_update_tag(instance_id, 'submission_name', submission.name)
-    _add_or_update_tag(instance_id, 'event_name', submission.event.name)
-    _add_or_update_tag(instance_id, 'team_name', submission.team.name)
+    _add_or_update_tag(config, instance_id, 'submission_id', str(submission.id))
+    _add_or_update_tag(config, instance_id, 'submission_name', submission.name)
+    _add_or_update_tag(config, instance_id, 'event_name', submission.event.name)
+    _add_or_update_tag(config, instance_id, 'team_name', submission.team.name)
     name = _get_submission_label(submission)
-    _add_or_update_tag(instance_id, 'Name', name)
+    _add_or_update_tag(config, instance_id, 'Name', name)
 
 
-def _add_or_update_tag(instance_id, key, value):
-    client = boto3.client('ec2')
+def _add_or_update_tag(config, instance_id, key, value):
+    sess = boto3.session.Session(
+        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD])
+    client = sess.client('ec2')
     tags = [
         {'Key': key, 'Value': value},
     ]
     return client.create_tags(Resources=[instance_id], Tags=tags)
 
 
-def _get_tags(instance_id):
-    client = boto3.client('ec2')
+def _get_tags(config, instance_id):
+    sess = boto3.session.Session(
+        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD])
+    client = sess.client('ec2')
     filters = [
         {'Name': 'resource-id', 'Values': [instance_id]}
     ]
@@ -1045,8 +1064,10 @@ def _get_tags(instance_id):
     return {t['Key']: t['Value'] for t in response['Tags']}
 
 
-def _delete_tag(instance_id, key):
-    client = boto3.client('ec2')
+def _delete_tag(config, instance_id, key):
+    sess = boto3.session.Session(
+        profile_name=config[AWS_CONFIG_SECTION][PROFILE_NAME_FIELD]) 
+    client = sess.client('ec2')
     tags = [{'Key': key}]
     return client.delete_tags(Resources=[instance_id], Tags=tags)
 
