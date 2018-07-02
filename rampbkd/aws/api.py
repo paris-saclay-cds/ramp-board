@@ -10,6 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import URL
 
+import botocore # amazon api
 import boto3  # amazon api
 
 from rampbkd.model import Base
@@ -127,7 +128,12 @@ def train_loop(config, event_name):
             submission = get_submission_by_id(config, submission_id)
             if submission.is_sandbox:
                 continue
-            instance, = launch_ec2_instances(config, nb=1)
+            try:
+                instance, = launch_ec2_instances(config, nb=1)
+            except botocore.exceptions.ClientError as ex:
+                logger.info('Exception when launching a new instance : ""'.format(ex))
+                logger.info('Skipping...')
+                continue
             nb_trials = 0
             while nb_trials < conf.get('new_instance_nb_trials', 20):
                 if instance.state.get('name') == 'running':
