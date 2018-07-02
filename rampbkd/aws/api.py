@@ -152,7 +152,7 @@ def train_loop(config, event_name):
         for instance_id in instance_ids:
             if not _is_ready(config, instance_id):
                 continue
-            tags = _get_tags(instance_id)
+            tags = _get_tags(config, instance_id)
             # Filter instances that were not launched
             # by the training loop API
             if 'submission_id' not in tags:
