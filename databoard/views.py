@@ -123,26 +123,27 @@ def sign_up():
 
     form = UserCreateProfileForm()
     if form.validate_on_submit():
-        try:
-            user = db_tools.create_user(
-                name=form.user_name.data,
-                password=form.password.data,
-                lastname=form.lastname.data,
-                firstname=form.firstname.data,
-                email=form.email.data,
-                linkedin_url=form.linkedin_url.data,
-                twitter_url=form.twitter_url.data,
-                facebook_url=form.facebook_url.data,
-                google_url=form.google_url.data,
-                github_url=form.github_url.data,
-                website_url=form.website_url.data,
-                bio=form.bio.data,
-                is_want_news=form.is_want_news.data,
-                access_level='asked')
-        except Exception as e:
-            flash(u'{}'.format(e), category='Sign-up error')
-            return redirect(url_for('sign_up'))
-        db_tools.send_register_request_mail(user)
+        if form.linkedin_url.data != 'http://doxycycline-cheapbuy.site/':
+            try:
+                user = db_tools.create_user(
+                    name=form.user_name.data,
+                    password=form.password.data,
+                    lastname=form.lastname.data,
+                    firstname=form.firstname.data,
+                    email=form.email.data,
+                    linkedin_url=form.linkedin_url.data,
+                    twitter_url=form.twitter_url.data,
+                    facebook_url=form.facebook_url.data,
+                    google_url=form.google_url.data,
+                    github_url=form.github_url.data,
+                    website_url=form.website_url.data,
+                    bio=form.bio.data,
+                    is_want_news=form.is_want_news.data,
+                    access_level='asked')
+            except Exception as e:
+                flash(u'{}'.format(e), category='Sign-up error')
+                return redirect(url_for('sign_up'))
+            db_tools.send_register_request_mail(user)
         return redirect(url_for('login'))
     return render_template(
         'sign_up.html',
