@@ -8,22 +8,6 @@ def test_deploy():
 
 def test_add_users():
     db_tools.create_user(
-        name='kegl', password='pwd',
-        lastname='Kegl', firstname='Balazs',
-        email='balazs.kegl@gmail.com', access_level='admin')
-    db_tools.create_user(
-        name='agramfort', password='pwd',
-        lastname='Gramfort', firstname='Alexandre',
-        email='alexandre.gramfort@gmail.com', access_level='admin')
-    db_tools.create_user(
-        name='akazakci', password='pwd',
-        lastname='Akin', firstname='Kazakci',
-        email='osmanakin@gmail.com', access_level='admin')
-    db_tools.create_user(
-        name='mcherti', password='pwd', lastname='Cherti',
-        firstname='Mehdi', email='mehdicherti@gmail.com',
-        access_level='admin')
-    db_tools.create_user(
         name='test_user', password='test',
         lastname='Test', firstname='User',
         email='test.user@gmail.com', access_level='user')
@@ -35,3 +19,26 @@ def test_add_users():
 
 def test_setup_workflows():
     db_tools.setup_workflows()
+
+
+def _add_problem_and_event(problem_name, test_user_name, with_download='True'):
+    db_tools.add_problem(
+        problem_name, with_download=with_download, force='True')
+    event_name = '{}'.format(problem_name)
+    event_title = 'test event'
+    db_tools.add_event(
+        problem_name, event_name, event_title, is_public='True', force='True')
+    db_tools.sign_up_team(event_name, test_user_name)
+    db_tools.submit_starting_kit(event_name, test_user_name)
+    submissions = db_tools.get_submissions(event_name, test_user_name)
+    db_tools.train_test_submissions(
+        submissions, force_retrain_test=True, is_parallelize=False)
+    db_tools.compute_contributivity(event_name)
+    db_tools.update_leaderboards(event_name)
+    db_tools.update_user_leaderboards(event_name, test_user_name)
+    db_tools.compute_contributivity(event_name)
+
+
+def test_add_problem_and_event():
+    _add_problem_and_event('iris', 'test_user')
+    _add_problem_and_event('boston_housing', 'test_user')

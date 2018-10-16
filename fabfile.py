@@ -28,24 +28,6 @@ def test_make_event_admin():
     db_tools.make_event_admin('iris', 'test_iris_admin')
 
 
-def test_problem(problem_name, test_user_name, with_download='True'):
-    add_problem(problem_name, with_download=with_download, force='True')
-    event_name = '{}'.format(problem_name)
-    event_title = 'test event'
-    add_event(
-        problem_name, event_name, event_title, is_public='True', force='True')
-    sign_up_team(event_name, test_user_name)
-    submit_starting_kit(event_name, test_user_name)
-    train_test(event_name, test_user_name)
-    update_leaderboards(event_name)
-    update_user_leaderboards(event_name, test_user_name)
-
-
-def submit_starting_kit(e, t):
-    from databoard.db_tools import submit_starting_kit
-    submit_starting_kit(event_name=e, team_name=t)
-
-
 def sign_up_team(e, t):
     from databoard.db_tools import sign_up_team, get_submissions
     sign_up_team(event_name=e, team_name=t)

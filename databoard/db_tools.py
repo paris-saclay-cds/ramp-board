@@ -602,12 +602,16 @@ def submit_starting_kit(event_name, team_name):
     submission_path = os.path.join(
         config.ramp_kits_path, event.problem.name, config.submissions_d_name)
     submission_names = os.listdir(submission_path)
+    min_duration_between_submissions = event.min_duration_between_submissions
+    event.min_duration_between_submissions = 0
     for submission_name in submission_names:
         from_submission_path = os.path.join(submission_path, submission_name)
         if submission_name == config.sandbox_d_name:
             submission_name = config.sandbox_d_name + '_test'
         make_submission_and_copy_files(
             event_name, team_name, submission_name, from_submission_path)
+    event.min_duration_between_submissions = min_duration_between_submissions
+    db.session.commit()
 
 
 def approve_user(user_name):
@@ -1997,7 +2001,7 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
     submissions = get_submissions(
         event_name=event_name, team_name=team_name, user_name=user_name)
     submissions = [submission for submission in submissions
-                   if submission.state in 
+                   if submission.state in
                    ['new', 'training', 'sent_to_training'] and
                    submission.is_not_sandbox]
 
