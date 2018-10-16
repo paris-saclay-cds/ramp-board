@@ -18,6 +18,8 @@ export DATABOARD_MAIL_SENDER=<fill this>
 export DATABOARD_ADMIN_MAILS=[<fill this>]
 ```
 
+Alternatively, you can hard-code these variables into `config.py` after copying `config_local.py` to `config.py`.
+
 ### Set up db
 
 You only have to do this once after each time you restart your computer.
