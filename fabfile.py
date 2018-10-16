@@ -39,7 +39,7 @@ def add_test_users():
 
 def deploy_locally():
     import databoard.config as config
-    from databoard.remove_test_db import recreate_test_db
+    from databoard.remove_test_db import recreate_db
     import databoard.db_tools as db_tools
 
     os.system('rm -rf ' + config.local_test_deployment_path)
@@ -51,7 +51,7 @@ def deploy_locally():
     os.makedirs(config.ramp_data_path)
     os.makedirs(config.submissions_path)
 
-    recreate_test_db()
+    recreate_db()
     add_test_users()
     db_tools.setup_workflows()
 
