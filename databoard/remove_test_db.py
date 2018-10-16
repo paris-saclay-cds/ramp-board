@@ -1,5 +1,4 @@
-from databoard import app, db
-app.config.from_object('databoard.config.TestingConfig')
+from databoard import db
 
 
 def recreate_test_db():
