@@ -24,14 +24,16 @@ MAIL_DEFAULT_SENDER = ('RAMP admin', os.environ.get('DATABOARD_MAIL_SENDER'))
 MAIL_RECIPIENTS = ''  # notification_recipients
 ADMIN_MAILS = os.environ.get('DATABOARD_ADMIN_MAILS')
 DATABASE_QUERY_TIMEOUT = 0.5  # slow database query threshold (in seconds)
-databoard_path = os.environ.get('DATABOARD_PATH', '/tmp')
 
 
 class Config(object):
     LOG_FILENAME = None  # if None, output to screen
+<<<<<<< HEAD
     MAX_CONTENT_LENGTH = 1024 * 1024 * 1024
     SECRET_KEY = os.environ.get('DATABOARD_SECRET_KEY')
     SQLALCHEMY_TRACK_MODIFICATIONS = True
+=======
+>>>>>>> further config cleanup
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABOARD_DB_URL')
     TESTING = False
 
