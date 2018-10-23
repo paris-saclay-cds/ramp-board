@@ -28,6 +28,9 @@ DATABASE_QUERY_TIMEOUT = 0.5  # slow database query threshold (in seconds)
 
 class Config(object):
     LOG_FILENAME = None  # if None, output to screen
+    MAX_CONTENT_LENGTH = 1024 * 1024 * 1024
+    SECRET_KEY = os.environ.get('DATABOARD_SECRET_KEY')
+    SQLALCHEMY_TRACK_MODIFICATIONS = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABOARD_DB_URL')
     TESTING = False
 

@@ -16,6 +16,7 @@ export DATABOARD_MAIL_USERNAME=<fill this>
 export DATABOARD_MAIL_PASSWORD=<fill this>
 export DATABOARD_MAIL_SENDER=<fill this>
 export DATABOARD_ADMIN_MAILS=[<fill this>]
+export DATABOARD_SECRET_KEY=<fill this with a random string>
 ```
 
 Alternatively, you can hard-code these variables into `config.py` after copying `config_local.py` to `config.py`.
