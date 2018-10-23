@@ -38,20 +38,10 @@ def add_test_users():
 
 
 def deploy_locally():
-    import databoard.config as config
-    from databoard.remove_test_db import recreate_db
+    from databoard.deploy import deploy
     import databoard.db_tools as db_tools
 
-    os.system('rm -rf ' + config.local_test_deployment_path)
-    os.makedirs(config.local_test_deployment_path)
-    if not os.path.isdir(config.deployment_path):
-        os.makedirs(config.deployment_path)
-    os.system('rsync -rultv fabfile.py ' + config.deployment_path)
-    os.makedirs(config.ramp_kits_path)
-    os.makedirs(config.ramp_data_path)
-    os.makedirs(config.submissions_path)
-
-    recreate_db()
+    deploy()
     add_test_users()
     db_tools.setup_workflows()
 
