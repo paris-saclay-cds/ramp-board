@@ -11,7 +11,15 @@ export DATABOARD_DB_USER='mrramp'
 export DATABOARD_DB_PASSWORD=<fill this>
 export DATABOARD_DB_URL=postgresql://$DATABOARD_DB_USER:$DATABOARD_DB_PASSWORD@localhost/$DATABOARD_DB_NAME
 export DATABOARD_DB_URL_TEST=postgresql://$DATABOARD_DB_USER:$DATABOARD_DB_PASSWORD@localhost/databoard_test
+
+export DATABOARD_MAIL_USERNAME=<fill this>
+export DATABOARD_MAIL_PASSWORD=<fill this>
+export DATABOARD_MAIL_SENDER=<fill this>
+export DATABOARD_ADMIN_MAILS=[<fill this>]
+export DATABOARD_SECRET_KEY=<fill this with a random string>
 ```
+
+Alternatively, you can hard-code these variables into `config.py` after copying `config_local.py` to `config.py`.
 
 ### Set up db
 
