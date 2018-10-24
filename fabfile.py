@@ -59,13 +59,6 @@ def profile(port=None, profiling_file='profiler.log'):
                 processes=1000)
 
 
-def add_score_type(name, is_lower_the_better, minimum, maximum):
-    from databoard.db_tools import add_score_type
-
-    add_score_type(
-        name, is_lower_the_better, float(minimum), float(maximum))
-
-
 def add_problem(name, force='False', with_download='False'):
     """Add new problem.
 
@@ -135,20 +128,6 @@ def score_submission(e, t, s, is_save_y_pred='False'):
     compute_contributivity(e, is_save_y_pred=is_save_y_pred)
 
 
-def train_test_on_server(e, t, s, force='False'):
-    """Train and test a single names submission, without scoring it.
-
-    Typically used on a remote server so scoring does not take server time.
-    """
-    force = strtobool(force)
-
-    from databoard.db_tools import train_test_submission, get_submissions
-
-    submission = get_submissions(
-        event_name=e, team_name=t, submission_name=s)[0]
-    train_test_submission(submission, force_retrain_test=force)
-
-
 def set_n_submissions(e=None):
     from databoard.db_tools import set_n_submissions
     set_n_submissions(e)
@@ -162,16 +141,6 @@ def compute_contributivity(e, is_save_y_pred='False'):
     compute_contributivity(e, is_save_y_pred=is_save_y_pred)
     compute_historical_contributivity(e)
     set_n_submissions(e)
-
-
-def print_submissions(e=None, t=None, s=None):
-    from databoard.db_tools import print_submissions
-    print_submissions(event_name=e, team_name=t, submission_name=s)
-
-
-def print_submission_similaritys():
-    from databoard.db_tools import print_submission_similaritys
-    print_submission_similaritys()
 
 
 def delete_submission(e, t, s):
@@ -271,12 +240,6 @@ def sign_up_event_users_from_file(users_to_add_f_name, event):
                 'red')
 
 
-def dump_user_interactions():
-    from databoard.db_tools import get_user_interactions_df
-    user_interactions_df = get_user_interactions_df()
-    user_interactions_df.to_csv('user_interactions_dump.csv')
-
-
 def update_leaderboards(e=None):
     from databoard.model import Event
     from databoard.db_tools import update_leaderboards
@@ -302,12 +265,6 @@ def update_all_user_leaderboards(e=None):
             update_all_user_leaderboards(e.name)
     else:
         update_all_user_leaderboards(e)
-
-
-def prepare_data(problem_name):
-    from databoard.model import Problem
-    problem = Problem.query.filter_by(name=problem_name).one_or_none()
-    problem.module.prepare_data()
 
 
 def backend_train_test_loop(e=None, timeout=30,
@@ -343,10 +300,3 @@ def set_state(e, t, s, state):
 def exclude_from_ensemble(e, t, s):
     from databoard.db_tools import exclude_from_ensemble
     exclude_from_ensemble(e, t, s)
-
-# The following function was implemented to handle user interaction dump
-# but it turned out that the db insertion was not the CPU sink. Keep it
-# for a while if the site is still slow.
-# def update_user_interactions():
-#     from databoard.db_tools import update_user_interactions
-#     update_user_interactions()
