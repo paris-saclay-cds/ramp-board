@@ -42,3 +42,18 @@ def _add_problem_and_event(problem_name, test_user_name, with_download='True'):
 def test_add_problem_and_event():
     _add_problem_and_event('iris', 'test_user')
     _add_problem_and_event('boston_housing', 'test_user')
+
+
+def test_add_keywords():
+    import databoard.db_tools as db_tools
+    db_tools.add_keyword('botany', 'data_domain', 'scientific data', 'Botany.')
+    db_tools.add_keyword(
+        'real estate', 'data_domain', 'industrial data', 'Real estate.')
+    db_tools.add_keyword(
+        'regression', 'data_science_theme', None, 'Regression.')
+    db_tools.add_keyword(
+        'classification', 'data_science_theme', None, 'Classification.')
+    db_tools.add_problem_keyword('iris', 'classification')
+    db_tools.add_problem_keyword('iris', 'botany')
+    db_tools.add_problem_keyword('boston_housing', 'regression')
+    db_tools.add_problem_keyword('boston_housing', 'real estate')

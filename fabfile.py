@@ -8,21 +8,6 @@ from termcolor import colored
 logger = logging.getLogger('databoard')
 
 
-def test_keywords():
-    import databoard.db_tools as db_tools
-    db_tools.add_keyword('botany', 'data_domain', 'scientific data', 'Botany.')
-    db_tools.add_keyword(
-        'real estate', 'data_domain', 'industrial data', 'Real estate.')
-    db_tools.add_keyword(
-        'regression', 'data_science_theme', None, 'Regression.')
-    db_tools.add_keyword(
-        'classification', 'data_science_theme', None, 'Classification.')
-    db_tools.add_problem_keyword('iris', 'classification')
-    db_tools.add_problem_keyword('iris', 'botany')
-    db_tools.add_problem_keyword('boston_housing', 'regression')
-    db_tools.add_problem_keyword('boston_housing', 'real estate')
-
-
 def test_make_event_admin():
     import databoard.db_tools as db_tools
     db_tools.make_event_admin('iris', 'test_iris_admin')
