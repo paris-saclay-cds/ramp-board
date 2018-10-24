@@ -44,6 +44,10 @@ def test_add_problem_and_event():
     _add_problem_and_event('boston_housing', 'test_user')
 
 
+def test_make_event_admin():
+    db_tools.make_event_admin('iris', 'test_iris_admin')
+
+
 def test_add_keywords():
     import databoard.db_tools as db_tools
     db_tools.add_keyword('botany', 'data_domain', 'scientific data', 'Botany.')

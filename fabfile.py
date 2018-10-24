@@ -8,11 +8,6 @@ from termcolor import colored
 logger = logging.getLogger('databoard')
 
 
-def test_make_event_admin():
-    import databoard.db_tools as db_tools
-    db_tools.make_event_admin('iris', 'test_iris_admin')
-
-
 def sign_up_team(e, t):
     from databoard.db_tools import sign_up_team, get_submissions
     sign_up_team(event_name=e, team_name=t)
