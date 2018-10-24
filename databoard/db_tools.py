@@ -16,7 +16,6 @@ import pandas as pd
 from sklearn.externals.joblib import Parallel, delayed
 from databoard import db
 from sklearn.utils.validation import assert_all_finite
-from subprocess import call
 
 from databoard.model import User, Team, Submission, SubmissionFile,\
     SubmissionFileType, SubmissionFileTypeExtension, WorkflowElementType,\
@@ -282,41 +281,17 @@ def add_workflow(workflow_object):
 
 
 def add_problem(problem_name, force=False, with_download=False):
-    """Adding a new RAMP problem.
-
-    Problem file should be set up in
-    databoard/specific/problems/<problem_name>. Should be preceded by adding
-    a workflow, then workflow_name specified in the event file (workflow_name
-    is acting as a pointer for the join). Also prepares the data.
-    """
+    """Adding a new RAMP problem."""
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
-    problem_data_path = os.path.join(config.ramp_data_path, problem_name)
     problem_kits_path = os.path.join(config.ramp_kits_path, problem_name)
     if problem is not None:
         if force:
-            delete_problem(problem)
-            if with_download:
-                os.system('rm -rf {}'.format(problem_data_path))
-                os.system('rm -rf {}'.format(problem_kits_path))
+            delete_problem(problem_name)
         else:
             logger.info(
                 'Attempting to delete problem and all linked events, ' +
                 'use "force=True" if you know what you are doing.')
             return
-    if with_download:
-        os.system('git clone https://github.com/ramp-data/{}.git {}'.format(
-            problem_name, problem_data_path))
-        os.system('git clone https://github.com/ramp-kits/{}.git {}'.format(
-            problem_name, problem_kits_path))
-        os.chdir(problem_data_path)
-        logger.info('Preparing {} data...'.format(problem_name))
-        os.system('python prepare_data.py')
-        os.chdir(problem_kits_path)
-        os.system('jupyter nbconvert --to html {}_starting_kit.ipynb'.format(
-            problem_name))
-        # optional data download
-        if os.path.isfile('download_data.py'):
-            call("python download_data.py", shell=True)
 
     # XXX it's a bit ugly that we need to load the module here
     # perhaps if we can get rid of the workflow db table completely
@@ -331,17 +306,19 @@ def add_problem(problem_name, force=False, with_download=False):
 
 # these could go into a delete callback in problem and event, I just don't know
 # how to do that.
-def delete_problem(problem):
+def delete_problem(problem_name):
+    problem = Problem.query.filter_by(name=problem_name).one()
     for event in problem.events:
-        delete_event(problem)
+        delete_event(event.name)
     db.session.delete(problem)
     db.session.commit()
 
 
 # the main reason having this is that I couldn't make a cascade delete in
 # SubmissionSimilarity since it has two submission parents
-def delete_event(event):
-    submissions = get_submissions(event_name=event.name)
+def delete_event(event_name):
+    event = Event.query.filter_by(name=event_name).one()
+    submissions = get_submissions(event_name=event_name)
     delete_submission_similarity(submissions)
     db.session.delete(event)
     db.session.commit()

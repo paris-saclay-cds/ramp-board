@@ -1,6 +1,8 @@
+import os
 from databoard.deploy import deploy
 import databoard.db_tools as db_tools
 from databoard.model import NameClashError
+import databoard.config as config
 
 
 def test_deploy():
@@ -36,6 +38,19 @@ def test_setup_workflows():
 
 
 def _add_problem_and_event(problem_name, test_user_name, with_download='True'):
+    problem_kits_path = os.path.join(config.ramp_kits_path, problem_name)
+    problem_data_path = os.path.join(config.ramp_data_path, problem_name)
+    os.system('git clone https://github.com/ramp-data/{}.git {}'.format(
+        problem_name, problem_data_path))
+    os.system('git clone https://github.com/ramp-kits/{}.git {}'.format(
+        problem_name, problem_kits_path))
+    os.chdir(problem_data_path)
+    print('Preparing {} data...'.format(problem_name))
+    os.system('python prepare_data.py')
+    os.chdir(problem_kits_path)
+    os.system('jupyter nbconvert --to html {}_starting_kit.ipynb'.format(
+        problem_name))
+
     db_tools.add_problem(
         problem_name, with_download=with_download, force='True')
     event_name = '{}_test'.format(problem_name)
@@ -54,6 +69,7 @@ def _add_problem_and_event(problem_name, test_user_name, with_download='True'):
 
 
 def test_add_problem_and_event():
+    _add_problem_and_event('iris', 'test_user')
     _add_problem_and_event('iris', 'test_user')
     _add_problem_and_event('boston_housing', 'test_user')
 

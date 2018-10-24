@@ -59,17 +59,16 @@ def profile(port=None, profiling_file='profiler.log'):
                 processes=1000)
 
 
-def add_problem(name, force='False', with_download='False'):
+def add_problem(name, force='False'):
     """Add new problem.
 
     If force=True, deletes problem (with all events) if exists.
     """
     force = strtobool(force)
-    with_download = strtobool(with_download)
 
     from databoard.db_tools import add_problem
 
-    add_problem(name, force, with_download)
+    add_problem(name, force)
 
 
 def add_event(problem_name, event_name, event_title, is_public='True',
