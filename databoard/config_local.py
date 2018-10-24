@@ -24,6 +24,7 @@ MAIL_DEFAULT_SENDER = ('RAMP admin', os.environ.get('DATABOARD_MAIL_SENDER'))
 MAIL_RECIPIENTS = ''  # notification_recipients
 ADMIN_MAILS = os.environ.get('DATABOARD_ADMIN_MAILS')
 DATABASE_QUERY_TIMEOUT = 0.5  # slow database query threshold (in seconds)
+databoard_path = os.environ.get('DATABOARD_PATH', '/tmp')
 
 
 class Config(object):
