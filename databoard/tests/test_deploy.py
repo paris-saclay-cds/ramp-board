@@ -38,7 +38,7 @@ def test_setup_workflows():
 def _add_problem_and_event(problem_name, test_user_name, with_download='True'):
     db_tools.add_problem(
         problem_name, with_download=with_download, force='True')
-    event_name = '{}'.format(problem_name)
+    event_name = '{}_test'.format(problem_name)
     event_title = 'test event'
     db_tools.add_event(
         problem_name, event_name, event_title, is_public='True', force='True')
@@ -59,7 +59,7 @@ def test_add_problem_and_event():
 
 
 def test_make_event_admin():
-    db_tools.make_event_admin('iris', 'test_iris_admin')
+    db_tools.make_event_admin('iris_test', 'test_iris_admin')
 
 
 def test_add_keywords():
@@ -75,3 +75,24 @@ def test_add_keywords():
     db_tools.add_problem_keyword('iris', 'botany')
     db_tools.add_problem_keyword('boston_housing', 'regression')
     db_tools.add_problem_keyword('boston_housing', 'real estate')
+
+
+def test_leaderboard():
+    print('***************** Leaderboard ****************')
+    print(db_tools.get_leaderboards(
+        'iris_test', user_name='test_user'))
+    print(db_tools.get_leaderboards(
+        'boston_housing_test', user_name='test_user'))
+    print('***************** Private leaderboard ****************')
+    print(db_tools.get_private_leaderboards('iris_test'))
+    print(db_tools.get_private_leaderboards('boston_housing_test'))
+    print('*********** Leaderboard of test_user ***********')
+    print(db_tools.get_leaderboards(
+        'iris_test', user_name='test_user'))
+    print('*********** Private leaderboard of test_user ***********')
+    print(db_tools.get_private_leaderboards(
+        'iris_test', user_name='test_user'))
+    print('*********** Failing leaderboard of test_user ***********')
+    print(db_tools.get_failed_leaderboard('iris_test', user_name='test_user'))
+    print('*********** New leaderboard of test_user ***********')
+    print(db_tools.get_new_leaderboard('iris_test', user_name='test_user'))
