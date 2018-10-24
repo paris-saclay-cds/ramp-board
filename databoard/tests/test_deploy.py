@@ -1,5 +1,6 @@
 from databoard.deploy import deploy
 import databoard.db_tools as db_tools
+from databoard.model import NameClashError
 
 
 def test_deploy():
@@ -15,6 +16,19 @@ def test_add_users():
         name='test_iris_admin', password='test',
         lastname='Admin', firstname='Iris',
         email='iris.admin@gmail.com', access_level='user')
+    try:
+        db_tools.create_user(
+            name='test_user', password='test', lastname='Test',
+            firstname='User', email='test.user2@gmail.com')
+    except NameClashError as e:
+        assert e.value == 'username is already in use'
+    try:
+        db_tools.create_user(
+            name='test_user', password='test', lastname='Test',
+            firstname='User', email='test.user@gmail.com')
+    except NameClashError as e:
+        assert e.value ==\
+            'username is already in use and email is already in use'
 
 
 def test_setup_workflows():
