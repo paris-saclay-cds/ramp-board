@@ -11,12 +11,27 @@ __version__ = '0.1.dev'
 
 
 app = Flask('databoard')
-app.config.from_object('databoard.config.Config')
-test_config = os.environ.get('DATABOARD_TEST')
-if test_config is not None:
-    if strtobool(test_config):
-        app.config.from_object('databoard.config.TestingConfig')
-app.debug = False
+
+# Load default main config
+app_stage = os.getenv('DATABOARD_STAGE', 'DEVELOPMENT')
+if app_stage == 'PRODUCTION':
+    app.config.from_object('databoard.default_config.ProductionConfig')
+elif app_stage == 'TESTING':
+    app.config.from_object('databoard.default_config.TestingConfig')
+else:
+    app.config.from_object('databoard.default_config.DevelopmentConfig')
+
+# Load default database config
+app.config.from_object('databoard.default_config.DBConfig')
+
+# Load default internal config
+app.config.from_object('databoard.default_config.RampConfig')
+
+# Load user config
+user_config = os.getenv('DATABOARD_CONFIG')
+if user_config is not None:
+    app.config.from_json(user_config)
+
 db = SQLAlchemy(app)
 mail = Mail(app)
 
@@ -32,4 +47,13 @@ logging.basicConfig(
 # get rid of annoying skimage debug messages
 logging.getLogger('PIL.PngImagePlugin').disabled = True
 
+####################################################################
+
+
 from databoard import views, model  # noqa
+
+ramp_config = app.config.get_namespace('RAMP_')
+
+deployment_path = app.config.get('DEPLOYMENT_PATH')
+ramp_kits_path = os.path.join(deployment_path, ramp_config['kits_dir'])
+ramp_data_path = os.path.join(deployment_path, ramp_config['data_dir'])
