@@ -13,13 +13,20 @@ __version__ = '0.1.dev'
 app = Flask('databoard')
 
 # Load default main config
-app_stage = os.getenv('DATABOARD_STAGE', 'DEVELOPMENT')
-if app_stage == 'PRODUCTION':
+app_stage = os.getenv('DATABOARD_STAGE', 'DEVELOPMENT').upper()
+if app_stage in ['PROD', 'PRODUCTION']:
     app.config.from_object('databoard.default_config.ProductionConfig')
-elif app_stage == 'TESTING':
+elif app_stage in ['TEST', 'TESTING']:
     app.config.from_object('databoard.default_config.TestingConfig')
-else:
+elif app_stage in ['DEV', 'DEVELOP', 'DEVELOPMENT']:
     app.config.from_object('databoard.default_config.DevelopmentConfig')
+else:
+    msg = (
+        "Unknown databoard stage: {}"
+        "Please set the environment variable `DATABOARD_STAGE` to one of the "
+        "available stages : 'TESTING', 'DEVELOPMENT' or 'PRODUCTION'"
+    )
+    raise AttributeError(msg.format(app_stage))
 
 # Load default database config
 app.config.from_object('databoard.default_config.DBConfig')
