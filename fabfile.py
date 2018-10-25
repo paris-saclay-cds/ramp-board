@@ -103,10 +103,9 @@ def approve_user(u):
 def serve(port=None):
     from databoard import app
     import databoard.views  # noqa
-    import databoard.config as config
 
     if port is None:
-        port = config.server_port
+        port = app.config.get('RAMP_SERVER_PORT')
     server_port = int(port)
     app.run(
         debug=False,
@@ -120,7 +119,6 @@ def profile(port=None, profiling_file='profiler.log'):
     from werkzeug.contrib.profiler import ProfilerMiddleware
     from werkzeug.contrib.profiler import MergeStream
     from databoard import app
-    import databoard.config as config
 
     app.config['PROFILE'] = True
     f = open(profiling_file, 'w')
@@ -128,7 +126,7 @@ def profile(port=None, profiling_file='profiler.log'):
     app.wsgi_app = ProfilerMiddleware(app.wsgi_app, stream=stream,
                                       restrictions=[30])
     if port is None:
-        port = config.server_port
+        port = app.config.get('RAMP_SERVER_PORT')
         server_port = int(port)
         app.run(debug=True,
                 port=server_port,
