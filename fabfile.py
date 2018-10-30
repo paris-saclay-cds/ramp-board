@@ -1,8 +1,12 @@
-import sys
-import os
+from __future__ import print_function, unicode_literals
+
 import logging
+import os
+import sys
 from distutils.util import strtobool
+
 from sqlalchemy.exc import IntegrityError
+
 from termcolor import colored
 
 logger = logging.getLogger('databoard')
@@ -23,12 +27,10 @@ def approve_user(u):
 
 
 def serve(port=None):
-    from databoard import app
-    import databoard.views  # noqa
-    import databoard.config as config
+    from databoard import app, views
 
     if port is None:
-        port = config.server_port
+        port = app.config.get('RAMP_SERVER_PORT')
     server_port = int(port)
     app.run(
         debug=False,
@@ -42,7 +44,6 @@ def profile(port=None, profiling_file='profiler.log'):
     from werkzeug.contrib.profiler import ProfilerMiddleware
     from werkzeug.contrib.profiler import MergeStream
     from databoard import app
-    import databoard.config as config
 
     app.config['PROFILE'] = True
     f = open(profiling_file, 'w')
@@ -50,7 +51,7 @@ def profile(port=None, profiling_file='profiler.log'):
     app.wsgi_app = ProfilerMiddleware(app.wsgi_app, stream=stream,
                                       restrictions=[30])
     if port is None:
-        port = config.server_port
+        port = app.config.get('RAMP_SERVER_PORT')
         server_port = int(port)
         app.run(debug=True,
                 port=server_port,
@@ -179,7 +180,7 @@ def add_users_from_file(users_to_add_f_name, password_f_name):
     users_to_add['password'] = passwords['password']
     ids = []
     for _, u in users_to_add.iterrows():
-        print u
+        print(u)
         try:
             if 'access_level' in u:
                 acces_level = u['access_level']
@@ -191,11 +192,11 @@ def add_users_from_file(users_to_add_f_name, password_f_name):
                 u['hidden_notes'])
             ids.append(user.id)
         except NameClashError:
-            print colored(
+            print(colored(
                 'user {}:{} already in database'.format(u.name, u.email),
-                'red')
+                'red'))
     for id in ids:
-        print id
+        print(id)
 
 
 def send_password_mail(user_name, password):
@@ -230,13 +231,13 @@ def sign_up_event_users_from_file(users_to_add_f_name, event):
     users_to_sign_up = pd.read_csv(users_to_add_f_name)
     for _, u in users_to_sign_up.iterrows():
         username = remove_non_ascii(u['name'])
-        print 'signing up {} to {}'.format(username.encode('utf-8'), event)
+        print('signing up {} to {}'.format(username.encode('utf-8'), event))
         try:
             sign_up_team(event, username)
         except DuplicateSubmissionError:
-            print colored(
+            print(colored(
                 'user {}:{} already signed up'.format(username, u.email),
-                'red')
+                'red'))
 
 
 def update_leaderboards(e=None):

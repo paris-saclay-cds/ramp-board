@@ -1,34 +1,36 @@
-import os
+import datetime
 import imp
+import logging
+import os
+import shutil
 import time
 import timeit
-import shutil
-import logging
-import datetime
+from subprocess import call
+
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import NoResultFound
 
 import numpy as np
 import pandas as pd
-
+from flaskext.mail import Message
 # temporary fix for importing torch before sklearn
 # import torch  # noqa
 from sklearn.externals.joblib import Parallel, delayed
-from . import db, utils, config
 from sklearn.utils.validation import assert_all_finite
 
-from databoard.model import User, Team, Submission, SubmissionFile,\
-    SubmissionFileType, SubmissionFileTypeExtension, WorkflowElementType,\
-    WorkflowElement, Workflow, Extension, Problem, Event, EventTeam,\
-    EventScoreType, SubmissionSimilarity,\
-    CVFold, SubmissionOnCVFold, DetachedSubmissionOnCVFold,\
-    UserInteraction, EventAdmin,\
-    NameClashError, TooEarlySubmissionError,\
-    DuplicateSubmissionError, MissingSubmissionFileError,\
-    MissingExtensionError, Keyword, ProblemKeyword,\
-    combine_predictions_list, get_next_best_single_fold,\
-    get_active_user_event_team,\
-    get_team_members, get_user_event_teams
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import NoResultFound
+from . import app, db, mail, utils, ramp_config, ramp_data_path, ramp_kits_path
+from .model import (CVFold, DetachedSubmissionOnCVFold,
+                    DuplicateSubmissionError, Event, EventAdmin,
+                    EventScoreType, EventTeam, Extension, Keyword,
+                    MissingExtensionError, MissingSubmissionFileError,
+                    NameClashError, Problem, ProblemKeyword, Submission,
+                    SubmissionFile, SubmissionFileType,
+                    SubmissionFileTypeExtension, SubmissionOnCVFold,
+                    SubmissionSimilarity, Team, TooEarlySubmissionError, User,
+                    UserInteraction, Workflow, WorkflowElement,
+                    WorkflowElementType, combine_predictions_list,
+                    get_active_user_event_team, get_next_best_single_fold,
+                    get_team_members, get_user_event_teams)
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
@@ -206,7 +208,8 @@ def add_workflow(workflow_object):
 def add_problem(problem_name, force=False, with_download=False):
     """Adding a new RAMP problem."""
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
-    problem_kits_path = os.path.join(config.ramp_kits_path, problem_name)
+    problem_data_path = os.path.join(ramp_data_path, problem_name)
+    problem_kits_path = os.path.join(ramp_kits_path, problem_name)
     if problem is not None:
         if force:
             delete_problem(problem_name)
@@ -482,10 +485,10 @@ def sign_up_team(event_name, team_name):
             event=event, team=team).one_or_none()
     # submitting the starting kit for team
     from_submission_path = os.path.join(
-        config.ramp_kits_path, event.problem.name, config.submissions_d_name,
-        config.sandbox_d_name)
+        ramp_kits_path, event.problem.name, ramp_config['submissions_dir'],
+        ramp_config['sandbox_dir'])
     make_submission_and_copy_files(
-        event_name, team_name, config.sandbox_d_name, from_submission_path)
+        event_name, team_name, ramp_config['sandbox_dir'], from_submission_path)
     for user in get_team_members(team):
         utils.send_mail(
             to=user.email,
@@ -500,14 +503,14 @@ def submit_starting_kit(event_name, team_name):
     """Submit all starting kits in ramp_kits_path/ramp_name/submissions."""
     event = Event.query.filter_by(name=event_name).one()
     submission_path = os.path.join(
-        config.ramp_kits_path, event.problem.name, config.submissions_d_name)
+        ramp_kits_path, event.problem.name, ramp_config['submissions_dir'])
     submission_names = os.listdir(submission_path)
     min_duration_between_submissions = event.min_duration_between_submissions
     event.min_duration_between_submissions = 0
     for submission_name in submission_names:
         from_submission_path = os.path.join(submission_path, submission_name)
-        if submission_name == config.sandbox_d_name:
-            submission_name = config.sandbox_d_name + '_test'
+        if submission_name == ramp_config['sandbox_dir']:
+            submission_name = ramp_config['sandbox_dir'] + '_test'
         make_submission_and_copy_files(
             event_name, team_name, submission_name, from_submission_path)
     event.min_duration_between_submissions = min_duration_between_submissions
@@ -751,7 +754,7 @@ def send_submission_mails(user, submission, event_team):
     #  later can be joined to the ramp admins
     event = event_team.event
     team = event_team.team
-    recipient_list = config.ADMIN_MAILS[:]
+    recipient_list = app.config.get('RAMP_ADMIN_MAILS')
     event_admins = EventAdmin.query.filter_by(event=event)
     recipient_list += [event_admin.admin.email for event_admin in event_admins]
 
@@ -767,7 +770,7 @@ def send_submission_mails(user, submission, event_team):
 
 def send_ask_for_event_mails(user, event, n_students):
     #  later can be joined to the ramp admins
-    recipient_list = config.ADMIN_MAILS[:]
+    recipient_list = app.config.get('RAMP_ADMIN_MAILS')
 
     subject = '{} is asking for an event on {}'.format(
         user.name.encode('utf-8'), event.problem.name)
@@ -808,7 +811,7 @@ def _user_mail_body(user):
 
 def send_sign_up_request_mail(event, user):
     team = Team.query.filter_by(name=user.name).one()
-    recipient_list = config.ADMIN_MAILS[:]
+    recipient_list = app.config.get('RAMP_ADMIN_MAILS')
     event_admins = EventAdmin.query.filter_by(event=event)
     recipient_list += [event_admin.admin.email for event_admin in event_admins]
 
@@ -825,7 +828,7 @@ def send_sign_up_request_mail(event, user):
 
 
 def send_register_request_mail(user):
-    recipient_list = config.ADMIN_MAILS[:]
+    recipient_list = app.config.get('RAMP_ADMIN_MAILS')
     subject = 'fab approve_user:u="{}"'.format(user.name)
     body = _user_mail_body(user)
     url_approve = 'http://www.ramp.studio/sign_up/{}'.format(
@@ -897,7 +900,7 @@ def backend_train_test_loop(event_name=None, timeout=20,
                             is_compute_contributivity=True,
                             is_parallelize=None):
     if is_parallelize is not None:
-        config.is_parallelize = is_parallelize
+        app.config.update({'RAMP_PARALLELIZE': is_parallelize})
     event_names = set()
     while(True):
         earliest_new_submission = get_earliest_new_submission(event_name)
@@ -927,7 +930,7 @@ def train_test_submissions(submissions=None, force_retrain_test=False,
     If submissions is None, trains and tests all submissions.
     """
     if is_parallelize is not None:
-        config.is_parallelize = is_parallelize
+        app.config.update({'RAMP_PARALLELIZE': is_parallelize})
     if submissions is None:
         submissions = Submission.query.filter(
             Submission.is_not_sandbox).order_by(Submission.id).all()
@@ -956,7 +959,7 @@ def train_test_submission(submission, force_retrain_test=False):
     db.session.commit()
 
     # Parallel, dict
-    if config.is_parallelize:
+    if app.config.get('RAMP_PARALLELIZE'):
         # We are using 'threading' so train_test_submission_on_cv_fold
         # updates the detached submission_on_cv_fold objects. If it doesn't
         # work, we can go back to multiprocessing and
