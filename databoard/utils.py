@@ -1,18 +1,24 @@
 import logging
+import sys
 
 import pandas as pd
 
 import bcrypt
 from flask_mail import Message
+from unidecode import unidecode
 
 from . import mail
 
 logger = logging.getLogger('databoard')
 
+PYTHON3 = sys.version_info[0] == 3
+
 
 def remove_non_ascii(text):
-    from unidecode import unidecode
-    return unicode(unidecode(unicode(text, encoding='utf-8')), 'utf-8')
+    if PYTHON3:
+        return unidecode(text)
+    else:
+        return unicode(unidecode(unicode(text, encoding='utf-8')), 'utf-8')
 
 
 def date_time_format(date_time):
@@ -34,16 +40,31 @@ def get_hashed_password(plain_text_password):
 
     (Using bcrypt, the salt is saved into the hash itself)
     """
-    return bcrypt.hashpw(plain_text_password.encode('utf8'), bcrypt.gensalt())
+    if PYTHON3:
+        if isinstance(plain_text_password, str):
+            password = bytes(plain_text_password, 'utf-8')
+        else:
+            password = plain_text_password
+    else:
+        password = plain_text_password.encode('utf8')
+
+    return bcrypt.hashpw(password, bcrypt.gensalt())
 
 
 def check_password(plain_text_password, hashed_password):
-    """Check hased password.
+    """Check hashed password.
 
     Using bcrypt, the salt is saved into the hash itself.
     """
-    return bcrypt.checkpw(
-        plain_text_password.encode('utf8'), hashed_password.encode('utf8'))
+    if PYTHON3:
+        if isinstance(plain_text_password, str):
+            password = bytes(plain_text_password, 'utf-8')
+        else:
+            password = plain_text_password
+    else:
+        password = plain_text_password.encode('utf8')
+
+    return bcrypt.checkpw(password, hashed_password)
 
 
 def generate_single_password(mywords=None):
