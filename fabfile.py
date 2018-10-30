@@ -12,82 +12,6 @@ from termcolor import colored
 logger = logging.getLogger('databoard')
 
 
-def add_test_users():
-    import databoard.db_tools as db_tools
-
-    db_tools.create_user(
-        name='kegl', password='pwd',
-        lastname='Kegl', firstname='Balazs',
-        email='balazs.kegl@gmail.com', access_level='admin')
-    db_tools.create_user(
-        name='agramfort', password='pwd',
-        lastname='Gramfort', firstname='Alexandre',
-        email='alexandre.gramfort@gmail.com', access_level='admin')
-    db_tools.create_user(
-        name='akazakci', password='pwd',
-        lastname='Akin', firstname='Kazakci',
-        email='osmanakin@gmail.com', access_level='admin')
-    db_tools.create_user(
-        name='mcherti', password='pwd', lastname='Cherti',
-        firstname='Mehdi', email='mehdicherti@gmail.com',
-        access_level='admin')
-    db_tools.create_user(
-        name='test_user', password='test',
-        lastname='Test', firstname='User',
-        email='test.user@gmail.com', access_level='user')
-    db_tools.create_user(
-        name='test_iris_admin', password='test',
-        lastname='Admin', firstname='Iris',
-        email='iris.admin@gmail.com', access_level='user')
-
-
-def deploy_locally():
-    from databoard.deploy import deploy
-    import databoard.db_tools as db_tools
-
-    deploy()
-    add_test_users()
-    db_tools.setup_workflows()
-
-
-def test_keywords():
-    import databoard.db_tools as db_tools
-    db_tools.add_keyword('botany', 'data_domain', 'scientific data', 'Botany.')
-    db_tools.add_keyword(
-        'real estate', 'data_domain', 'industrial data', 'Real estate.')
-    db_tools.add_keyword(
-        'regression', 'data_science_theme', None, 'Regression.')
-    db_tools.add_keyword(
-        'classification', 'data_science_theme', None, 'Classification.')
-    db_tools.add_problem_keyword('iris', 'classification')
-    db_tools.add_problem_keyword('iris', 'botany')
-    db_tools.add_problem_keyword('boston_housing', 'regression')
-    db_tools.add_problem_keyword('boston_housing', 'real estate')
-
-
-def test_make_event_admin():
-    import databoard.db_tools as db_tools
-    db_tools.make_event_admin('iris', 'test_iris_admin')
-
-
-def test_problem(problem_name, test_user_name, with_download='True'):
-    add_problem(problem_name, with_download=with_download, force='True')
-    event_name = '{}'.format(problem_name)
-    event_title = 'test event'
-    add_event(
-        problem_name, event_name, event_title, is_public='True', force='True')
-    sign_up_team(event_name, test_user_name)
-    submit_starting_kit(event_name, test_user_name)
-    train_test(event_name, test_user_name)
-    update_leaderboards(event_name)
-    update_user_leaderboards(event_name, test_user_name)
-
-
-def submit_starting_kit(e, t):
-    from databoard.db_tools import submit_starting_kit
-    submit_starting_kit(event_name=e, team_name=t)
-
-
 def sign_up_team(e, t):
     from databoard.db_tools import sign_up_team, get_submissions
     sign_up_team(event_name=e, team_name=t)
@@ -136,24 +60,16 @@ def profile(port=None, profiling_file='profiler.log'):
                 processes=1000)
 
 
-def add_score_type(name, is_lower_the_better, minimum, maximum):
-    from databoard.db_tools import add_score_type
-
-    add_score_type(
-        name, is_lower_the_better, float(minimum), float(maximum))
-
-
-def add_problem(name, force='False', with_download='False'):
+def add_problem(name, force='False'):
     """Add new problem.
 
     If force=True, deletes problem (with all events) if exists.
     """
     force = strtobool(force)
-    with_download = strtobool(with_download)
 
     from databoard.db_tools import add_problem
 
-    add_problem(name, force, with_download)
+    add_problem(name, force)
 
 
 def add_event(problem_name, event_name, event_title, is_public='True',
@@ -212,20 +128,6 @@ def score_submission(e, t, s, is_save_y_pred='False'):
     compute_contributivity(e, is_save_y_pred=is_save_y_pred)
 
 
-def train_test_on_server(e, t, s, force='False'):
-    """Train and test a single names submission, without scoring it.
-
-    Typically used on a remote server so scoring does not take server time.
-    """
-    force = strtobool(force)
-
-    from databoard.db_tools import train_test_submission, get_submissions
-
-    submission = get_submissions(
-        event_name=e, team_name=t, submission_name=s)[0]
-    train_test_submission(submission, force_retrain_test=force)
-
-
 def set_n_submissions(e=None):
     from databoard.db_tools import set_n_submissions
     set_n_submissions(e)
@@ -239,16 +141,6 @@ def compute_contributivity(e, is_save_y_pred='False'):
     compute_contributivity(e, is_save_y_pred=is_save_y_pred)
     compute_historical_contributivity(e)
     set_n_submissions(e)
-
-
-def print_submissions(e=None, t=None, s=None):
-    from databoard.db_tools import print_submissions
-    print_submissions(event_name=e, team_name=t, submission_name=s)
-
-
-def print_submission_similaritys():
-    from databoard.db_tools import print_submission_similaritys
-    print_submission_similaritys()
 
 
 def delete_submission(e, t, s):
@@ -265,12 +157,12 @@ def create_user(name, password, lastname, firstname, email,
 
 
 def generate_single_password():
-    from databoard.db_tools import generate_single_password
+    from databoard.utils import generate_single_password
     print(generate_single_password())
 
 
 def generate_passwords(users_to_add_f_name, password_f_name):
-    from databoard.db_tools import generate_passwords
+    from databoard.utils import generate_passwords
     print(generate_passwords(users_to_add_f_name, password_f_name))
 
 
@@ -281,7 +173,7 @@ def add_users_from_file(users_to_add_f_name, password_f_name):
     """
     import pandas as pd
     from databoard.model import NameClashError
-    from databoard.db_tools import remove_non_ascii
+    from databoard.utils import remove_non_ascii
 
     users_to_add = pd.read_csv(users_to_add_f_name)
     passwords = pd.read_csv(password_f_name)
@@ -334,7 +226,7 @@ def send_password_mails(password_f_name):
 def sign_up_event_users_from_file(users_to_add_f_name, event):
     import pandas as pd
     from databoard.model import DuplicateSubmissionError
-    from databoard.db_tools import remove_non_ascii
+    from databoard.utils import remove_non_ascii
 
     users_to_sign_up = pd.read_csv(users_to_add_f_name)
     for _, u in users_to_sign_up.iterrows():
@@ -346,12 +238,6 @@ def sign_up_event_users_from_file(users_to_add_f_name, event):
             print(colored(
                 'user {}:{} already signed up'.format(username, u.email),
                 'red'))
-
-
-def dump_user_interactions():
-    from databoard.db_tools import get_user_interactions_df
-    user_interactions_df = get_user_interactions_df()
-    user_interactions_df.to_csv('user_interactions_dump.csv')
 
 
 def update_leaderboards(e=None):
@@ -379,12 +265,6 @@ def update_all_user_leaderboards(e=None):
             update_all_user_leaderboards(e.name)
     else:
         update_all_user_leaderboards(e)
-
-
-def prepare_data(problem_name):
-    from databoard.model import Problem
-    problem = Problem.query.filter_by(name=problem_name).one_or_none()
-    problem.module.prepare_data()
 
 
 def backend_train_test_loop(e=None, timeout=30,
@@ -420,10 +300,3 @@ def set_state(e, t, s, state):
 def exclude_from_ensemble(e, t, s):
     from databoard.db_tools import exclude_from_ensemble
     exclude_from_ensemble(e, t, s)
-
-# The following function was implemented to handle user interaction dump
-# but it turned out that the db insertion was not the CPU sink. Keep it
-# for a while if the site is still slow.
-# def update_user_interactions():
-#     from databoard.db_tools import update_user_interactions
-#     update_user_interactions()

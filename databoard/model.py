@@ -1,17 +1,19 @@
-import os
-import imp
-import zlib
-import hashlib
-import logging
 import datetime
+import hashlib
+import imp
+import logging
+import os
+import uuid
+import zlib
+from importlib import import_module
+
 import numpy as np
 from flask import request
-from importlib import import_module
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from databoard import db
 
-from . import ramp_config, ramp_data_path, ramp_kits_path, deployment_path
+from . import deployment_path, ramp_config, ramp_data_path, ramp_kits_path
 
 logger = logging.getLogger('databoard')
 
@@ -359,7 +361,7 @@ class Event(db.Model):
     new_leaderboard_html = db.Column(db.String, default=None)
     public_competition_leaderboard_html = db.Column(db.String, default=None)
     private_competition_leaderboard_html = db.Column(db.String, default=None)
-    
+
     def __init__(self, problem_name, name, event_title):
         self.name = name
         # to check if the module and all required fields are there
@@ -447,10 +449,6 @@ class Event(db.Model):
     @property
     def n_participants(self):
         return len(self.event_teams)
-
-
-# XXX
-import uuid
 
 
 # many-to-many
@@ -1775,7 +1773,7 @@ class UserInteraction(db.Model):
     #         self.submission_file_diff = diff
     #         self.submission_file_similarity = similarity
     #     else:
-    #         # off-line construction using dump from 
+    #         # off-line construction using dump from
     #         # config.user_interactions_f_name
     #         tokens = line.split(';')
     #         self.timestamp = eval(tokens[0])
@@ -1825,7 +1823,7 @@ class UserInteraction(db.Model):
         return os.path.join(
             deployment_path,
             ramp_config['submissions_dir'],
-            'diff_bef24208a45043059', 
+            'diff_bef24208a45043059',
             str(self.id))
 
     @property
