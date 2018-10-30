@@ -56,7 +56,9 @@ logging.getLogger('PIL.PngImagePlugin').disabled = True
 ####################################################################
 
 
-from databoard import views, model  # noqa
+from . import views  # noqa
+from . import model  # noqa
+from . import db_tools  # noqa
 
 ramp_config = app.config.get_namespace('RAMP_')
 
