@@ -9,7 +9,9 @@ from flask import request
 from importlib import import_module
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from . import db, config
+from databoard import db
+
+from . import ramp_config, ramp_data_path, ramp_kits_path, deployment_path
 
 logger = logging.getLogger('databoard')
 
@@ -226,7 +228,7 @@ class Problem(db.Model):
     @property
     def module(self):
         return imp.load_source(
-            '', os.path.join(config.ramp_kits_path, self.name, 'problem.py'))
+            '', os.path.join(ramp_kits_path, self.name, 'problem.py'))
 
     @property
     def title(self):
@@ -237,11 +239,11 @@ class Problem(db.Model):
         return self.module.Predictions
 
     def get_train_data(self):
-        path = os.path.join(config.ramp_data_path, self.name)
+        path = os.path.join(ramp_data_path, self.name)
         return self.module.get_train_data(path=path)
 
     def get_test_data(self):
-        path = os.path.join(config.ramp_data_path, self.name)
+        path = os.path.join(ramp_data_path, self.name)
         return self.module.get_test_data(path=path)
 
     def ground_truths_train(self):
@@ -286,7 +288,7 @@ class ScoreType(db.Model):
 
     @property
     def module(self):
-        return import_module('.' + self.name, config.score_types_module)
+        return import_module('.' + self.name, ramp_config['scoretypes_module'])
 
     @property
     def score_function(self):
@@ -357,7 +359,7 @@ class Event(db.Model):
     new_leaderboard_html = db.Column(db.String, default=None)
     public_competition_leaderboard_html = db.Column(db.String, default=None)
     private_competition_leaderboard_html = db.Column(db.String, default=None)
-    
+
     def __init__(self, problem_name, name, event_title):
         self.name = name
         # to check if the module and all required fields are there
@@ -1136,7 +1138,7 @@ class Submission(db.Model):
 
     @hybrid_property
     def is_not_sandbox(self):
-        return self.name != config.sandbox_d_name
+        return self.name != ramp_config['sandbox_dir']
 
     @hybrid_property
     def is_error(self):
@@ -1156,7 +1158,9 @@ class Submission(db.Model):
     @property
     def path(self):
         return os.path.join(
-            config.submissions_path, 'submission_' + '{0:09d}'.format(self.id))
+            deployment_path,
+            ramp_config['submissions_dir'],
+            'submission_' + '{0:09d}'.format(self.id))
 
     @property
     def module(self):
@@ -1771,7 +1775,7 @@ class UserInteraction(db.Model):
     #         self.submission_file_diff = diff
     #         self.submission_file_similarity = similarity
     #     else:
-    #         # off-line construction using dump from 
+    #         # off-line construction using dump from
     #         # config.user_interactions_f_name
     #         tokens = line.split(';')
     #         self.timestamp = eval(tokens[0])
@@ -1819,7 +1823,10 @@ class UserInteraction(db.Model):
         if self.submission_file_diff is None:
             return None
         return os.path.join(
-            config.submissions_path, 'diff_bef24208a45043059', str(self.id))
+            deployment_path,
+            ramp_config['submissions_dir'],
+            'diff_bef24208a45043059',
+            str(self.id))
 
     @property
     def event(self):

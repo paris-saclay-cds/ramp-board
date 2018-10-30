@@ -1,8 +1,11 @@
+from __future__ import print_function, absolute_import
+
 import os
-from databoard.deploy import deploy
+
 import databoard.db_tools as db_tools
+from databoard import ramp_data_path, ramp_kits_path
+from databoard.deploy import deploy
 from databoard.model import NameClashError
-import databoard.config as config
 
 
 def test_deploy():
@@ -38,8 +41,8 @@ def test_setup_workflows():
 
 
 def _add_problem_and_event(problem_name, test_user_name, with_download='True'):
-    problem_kits_path = os.path.join(config.ramp_kits_path, problem_name)
-    problem_data_path = os.path.join(config.ramp_data_path, problem_name)
+    problem_kits_path = os.path.join(ramp_kits_path, problem_name)
+    problem_data_path = os.path.join(ramp_data_path, problem_name)
     os.system('git clone https://github.com/ramp-data/{}.git {}'.format(
         problem_name, problem_data_path))
     os.system('git clone https://github.com/ramp-kits/{}.git {}'.format(

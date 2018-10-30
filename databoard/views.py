@@ -1,40 +1,38 @@
-from __future__ import print_function, division, absolute_import
+from __future__ import absolute_import, division, print_function
 
-import os
-import time
 import codecs
-import shutil
-import difflib
-import logging
-import tempfile
 import datetime
+import difflib
 import io
+import logging
+import os
+import shutil
+import tempfile
+import time
 import zipfile
-from flask import (
-    request, redirect, url_for, render_template, abort, send_from_directory,
-    session, g, send_file, flash)
+
+import flask_login as fl
+import flask_sqlalchemy as fs
+from flask import (abort, flash, g, redirect, render_template, request,
+                   send_file, send_from_directory, session, url_for)
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug import secure_filename
 from wtforms import StringField
 from wtforms.widgets import TextArea
 
-import flask_login as fl
-import flask_sqlalchemy as fs
-from sqlalchemy.exc import IntegrityError
-
-from . import db, app, login_manager, db_tools, vizu, config, utils
-from .model import (
-    User, Submission, WorkflowElement, Event, Problem, Keyword, Team,
-    SubmissionFile, UserInteraction, SubmissionSimilarity, EventTeam,
-    DuplicateSubmissionError, TooEarlySubmissionError, MissingExtensionError,
-    NameClashError)
-from .forms import (
-    LoginForm, CodeForm, SubmitForm, ImportForm, UploadForm,
-    UserCreateProfileForm, UserUpdateProfileForm,
-    CreditForm, EmailForm, PasswordForm, EventUpdateProfileForm,
-    AskForEventForm)
+from . import (app, db, db_tools, login_manager, ramp_config, ramp_kits_path,
+               vizu, utils)
+from .forms import (AskForEventForm, CodeForm, CreditForm, EmailForm,
+                    EventUpdateProfileForm, ImportForm, LoginForm,
+                    PasswordForm, SubmitForm, UploadForm,
+                    UserCreateProfileForm, UserUpdateProfileForm)
+from .model import (DuplicateSubmissionError, Event, EventTeam, Keyword,
+                    MissingExtensionError, NameClashError, Problem, Submission,
+                    SubmissionFile, SubmissionSimilarity, Team,
+                    TooEarlySubmissionError, User, UserInteraction,
+                    WorkflowElement)
 from .security import ts
-
 
 app.secret_key = os.urandom(24)
 
@@ -241,7 +239,7 @@ def problem(problem_name):
             db_tools.add_user_interaction(
                 interaction='looking at problem', problem=problem)
         description_f_name = os.path.join(
-            config.ramp_kits_path, problem.name, '{}_starting_kit.html'.format(
+            ramp_kits_path, problem.name, '{}_starting_kit.html'.format(
                 problem_name))
         with codecs.open(description_f_name, 'r', 'utf-8') as description_file:
             description = description_file.read()
@@ -417,7 +415,7 @@ def user_event(event_name):
             db_tools.add_user_interaction(
                 interaction='looking at event', event=event)
         description_f_name = os.path.join(
-            config.ramp_kits_path, event.problem.name,
+            ramp_kits_path, event.problem.name,
             '{}_starting_kit.html'.format(event.problem.name))
         with codecs.open(description_f_name, 'r', 'utf-8') as description_file:
             description = description_file.read()
@@ -1302,7 +1300,7 @@ def submission_file_diff(id):
 @app.after_request
 def after_request(response):
     for query in fs.get_debug_queries():
-        if query.duration >= config.DATABASE_QUERY_TIMEOUT:
+        if query.duration >= app.config.get('DATABASE_QUERY_TIMEOUT'):
             app.logger.warning("SLOW QUERY: %s\nParameters: %s\n"
                                "Duration: %fs\nContext: %s\n"
                                % (query.statement, query.parameters,
@@ -1328,7 +1326,7 @@ def dashboard_submissions(event_name):
         else:
             submissions = []
         submissions = [submission for submission in submissions
-                       if submission.name != config.sandbox_d_name]
+                       if submission.name != ramp_config['sandbox_dir']]
         timestamp_submissions = [submission.submission_timestamp.
                                  strftime('%Y-%m-%d %H:%M:%S')
                                  for submission in submissions]
@@ -1376,7 +1374,7 @@ def reset_password():
                 _external=True)
 
             header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
-                user.email, config.MAIL_USERNAME, subject)
+                user.email, app.config.get('MAIL_USERNAME'), subject)
             body = ('Hi %s, \n\nclick on the link to reset your password:\n' %
                     user.firstname.encode('utf-8'))
             body += recover_url
@@ -1389,7 +1387,7 @@ def reset_password():
         else:
             error = ('Sorry, but this user was not approved or the email was '
                      'wrong. If you need some help, send an email to %s' %
-                     config.MAIL_USERNAME)
+                     app.config.get('MAIL_USERNAME'))
     return render_template('reset_password.html', form=form, error=error)
 
 
