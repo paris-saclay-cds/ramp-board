@@ -794,7 +794,7 @@ def sandbox(event_name):
             return _redirect_to_sandbox(event, u'Error: {}'.format(e))
         return _redirect_to_sandbox(
             event, u'{} saved submission files for {}.'.format(
-                fl.current_user.name, event_team, event),
+                fl.current_user.name, event),
             is_error=False, category='File saved')
 
     if upload_form.validate_on_submit() and upload_form.file.data:
