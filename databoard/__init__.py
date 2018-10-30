@@ -55,13 +55,12 @@ logging.getLogger('PIL.PngImagePlugin').disabled = True
 
 ####################################################################
 
-
-from . import views  # noqa
-from . import model  # noqa
-from . import db_tools  # noqa
-
 ramp_config = app.config.get_namespace('RAMP_')
 
 deployment_path = app.config.get('DEPLOYMENT_PATH')
 ramp_kits_path = os.path.join(deployment_path, ramp_config['kits_dir'])
 ramp_data_path = os.path.join(deployment_path, ramp_config['data_dir'])
+
+from . import views  # noqa
+from . import model  # noqa
+from . import db_tools  # noqa
