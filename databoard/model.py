@@ -1,17 +1,19 @@
-import os
-import imp
-import zlib
-import hashlib
-import logging
 import datetime
+import hashlib
+import imp
+import logging
+import os
+import uuid
+import zlib
+from importlib import import_module
+
 import numpy as np
 from flask import request
-from importlib import import_module
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from databoard import db
 
-from . import ramp_config, ramp_data_path, ramp_kits_path, deployment_path
+from . import deployment_path, ramp_config, ramp_data_path, ramp_kits_path
 
 logger = logging.getLogger('databoard')
 
@@ -447,10 +449,6 @@ class Event(db.Model):
     @property
     def n_participants(self):
         return len(self.event_teams)
-
-
-# XXX
-import uuid
 
 
 # many-to-many

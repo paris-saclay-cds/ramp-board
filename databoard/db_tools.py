@@ -5,20 +5,17 @@ import os
 import shutil
 import time
 import timeit
-from subprocess import call
-
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import NoResultFound
 
 import numpy as np
 import pandas as pd
-from flaskext.mail import Message
 # temporary fix for importing torch before sklearn
 # import torch  # noqa
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.utils.validation import assert_all_finite
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import NoResultFound
 
-from . import app, db, mail, utils, ramp_config, ramp_data_path, ramp_kits_path
+from . import app, db, ramp_config, ramp_data_path, ramp_kits_path
 from .model import (CVFold, DetachedSubmissionOnCVFold,
                     DuplicateSubmissionError, Event, EventAdmin,
                     EventScoreType, EventTeam, Extension, Keyword,
@@ -31,6 +28,8 @@ from .model import (CVFold, DetachedSubmissionOnCVFold,
                     WorkflowElementType, combine_predictions_list,
                     get_active_user_event_team, get_next_best_single_fold,
                     get_team_members, get_user_event_teams)
+from .utils import (date_time_format, get_hashed_password, remove_non_ascii,
+                    send_mail, table_format)
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
@@ -45,7 +44,7 @@ def send_password_mail(user_name, password):
     password : new password
     """
     user = User.query.filter_by(name=user_name).one()
-    user.hashed_password = utils.get_hashed_password(password)
+    user.hashed_password = get_hashed_password(password)
     db.session.commit()
 
     subject = 'RAMP login information'
@@ -55,7 +54,7 @@ def send_password_mail(user_name, password):
     body += 'Please reset your password as soon as possible '
     body += 'through this link:\n'
     body += 'http://www.ramp.studio/reset_password'
-    utils.send_mail(user.email, subject, body)
+    send_mail(user.email, subject, body)
 
 
 def send_password_mails(password_f_name):
@@ -69,7 +68,7 @@ def send_password_mails(password_f_name):
     passwords = pd.read_csv(password_f_name)
 
     for _, u in passwords.iterrows():
-        send_password_mail(utils.remove_non_ascii(u['name']), u['password'])
+        send_password_mail(remove_non_ascii(u['name']), u['password'])
 
 
 def setup_workflows():
@@ -360,7 +359,7 @@ def create_user(name, password, lastname, firstname, email,
                 access_level='user', hidden_notes='', linkedin_url='',
                 twitter_url='', facebook_url='', google_url='', github_url='',
                 website_url='', bio='', is_want_news=True):
-    hashed_password = utils.get_hashed_password(password)
+    hashed_password = get_hashed_password(password)
     user = User(name=name, hashed_password=hashed_password,
                 lastname=lastname, firstname=firstname, email=email,
                 access_level=access_level, hidden_notes=hidden_notes,
@@ -490,7 +489,7 @@ def sign_up_team(event_name, team_name):
     make_submission_and_copy_files(
         event_name, team_name, ramp_config['sandbox_dir'], from_submission_path)
     for user in get_team_members(team):
-        utils.send_mail(
+        send_mail(
             to=user.email,
             subject='signed up for {} as team {}'.format(
                 event_name, team_name),
@@ -523,7 +522,7 @@ def approve_user(user_name):
         user.access_level = 'user'
     user.is_authenticated = True
     db.session.commit()
-    utils.send_mail(user.email, 'RAMP sign-up approved', '')
+    send_mail(user.email, 'RAMP sign-up approved', '')
 
 
 def make_event_admin(event_name, admin_name):
@@ -735,7 +734,7 @@ def send_trained_mails(submission):
         users = get_team_members(submission.event_team.team)
         subject = '{} in RAMP {} was trained at {}'.format(
             submission.name, event.name,
-            utils.date_time_format(submission.training_timestamp))
+            date_time_format(submission.training_timestamp))
         body = ''
         if submission.is_error:
             error_msg = submission.error_msg.replace(
@@ -747,7 +746,7 @@ def send_trained_mails(submission):
                     score.score_name,
                     round(score.valid_score_cv_bag, score.precision))
         for user in users:
-            utils.send_mail(user.email, subject, body)
+            send_mail(user.email, subject, body)
 
 
 def send_submission_mails(user, submission, event_team):
@@ -765,7 +764,7 @@ def send_submission_mails(user, submission, event_team):
         event.name,
         submission.path)
     for recipient in recipient_list:
-        utils.send_mail(recipient, subject, body)
+        send_mail(recipient, subject, body)
 
 
 def send_ask_for_event_mails(user, event, n_students):
@@ -788,7 +787,7 @@ def send_ask_for_event_mails(user, event, n_students):
     logger.info(subject)
     logger.info(body)
     for recipient in recipient_list:
-        utils.send_mail(recipient, subject, body)
+        send_mail(recipient, subject, body)
 
 
 def _user_mail_body(user):
@@ -824,7 +823,7 @@ def send_sign_up_request_mail(event, user):
         format(url_approve)
 
     for recipient in recipient_list:
-        utils.send_mail(recipient, subject, body)
+        send_mail(recipient, subject, body)
 
 
 def send_register_request_mail(user):
@@ -837,7 +836,7 @@ def send_register_request_mail(user):
     body += 'of this user: {}\n'.format(url_approve)
 
     for recipient in recipient_list:
-        utils.send_mail(recipient, subject, body)
+        send_mail(recipient, subject, body)
 
 
 def get_earliest_new_submission(event_name=None):
@@ -1566,7 +1565,7 @@ def get_leaderboards(event_name, user_name=None):
         int(round(submission.valid_time_cv_mean))
         for submission in submissions]
     leaderboard_df['submitted at (UTC)'] = [
-        utils.date_time_format(submission.submission_timestamp)
+        date_time_format(submission.submission_timestamp)
         for submission in submissions]
     sort_column = event.official_score_name
     leaderboard_df = leaderboard_df.sort_values(
@@ -1588,8 +1587,8 @@ def get_leaderboards(event_name, user_name=None):
     leaderboard_html_no_links = leaderboard_df.to_html(**html_params)
 
     return (
-        utils.table_format(leaderboard_html_with_links),
-        utils.table_format(leaderboard_html_no_links)
+        table_format(leaderboard_html_with_links),
+        table_format(leaderboard_html_no_links)
     )
 
 
@@ -1661,7 +1660,7 @@ def get_private_leaderboards(event_name, user_name=None):
         else 0
         for submission in submissions]
     leaderboard_df['submitted at (UTC)'] = [
-        utils.date_time_format(submission.submission_timestamp)
+        date_time_format(submission.submission_timestamp)
         for submission in submissions]
     sort_column = event.official_score_name + ' pr bag'
     leaderboard_df = leaderboard_df.sort_values(
@@ -1679,7 +1678,7 @@ def get_private_leaderboards(event_name, user_name=None):
     # logger.info(u'private leaderboard construction takes {}ms'.format(
     #     int(1000 * (time.time() - start))))
 
-    return utils.table_format(leaderboard_html)
+    return table_format(leaderboard_html)
 
 
 def get_competition_leaderboards(event_name):
@@ -1720,7 +1719,7 @@ def get_competition_leaderboards(event_name):
         int(round(submission.valid_time_cv_mean))
         for submission in submissions]
     leaderboard_df['submitted at (UTC)'] = [
-        utils.date_time_format(submission.submission_timestamp)
+        date_time_format(submission.submission_timestamp)
         for submission in submissions]
 
     # select best submission for each team
@@ -1799,8 +1798,8 @@ def get_competition_leaderboards(event_name):
     private_leaderboard_html = private_leaderboard_df.to_html(**html_params)
 
     return (
-        utils.table_format(public_leaderboard_html),
-        utils.table_format(private_leaderboard_html)
+        table_format(public_leaderboard_html),
+        table_format(private_leaderboard_html)
     )
 
 
@@ -1873,7 +1872,7 @@ def get_failed_leaderboard(event_name, team_name=None, user_name=None):
         {column: value for column, value in zip(
             columns, [submission.event_team.team.name,
                       submission.name_with_link,
-                      utils.date_time_format(submission.submission_timestamp),
+                      date_time_format(submission.submission_timestamp),
                       submission.state_with_link])}
         for submission in submissions
     ]
@@ -1891,7 +1890,7 @@ def get_failed_leaderboard(event_name, team_name=None, user_name=None):
     # logger.info(u'failed leaderboard construction takes {}ms'.format(
     #     int(1000 * (time.time() - start))))
 
-    return utils.table_format(leaderboard_html)
+    return table_format(leaderboard_html)
 
 
 def get_new_leaderboard(event_name, team_name=None, user_name=None):
@@ -1915,7 +1914,7 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
         {column: value for column, value in zip(
             columns, [submission.event_team.team.name,
                       submission.name_with_link,
-                      utils.date_time_format(
+                      date_time_format(
                           submission.submission_timestamp)])}
         for submission in submissions
     ]
@@ -1933,7 +1932,7 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
     #     int(1000 * (time.time() - start))))
 
     leaderboard_html = leaderboard_df.to_html(**html_params)
-    return utils.table_format(leaderboard_html)
+    return table_format(leaderboard_html)
 
 
 def get_submissions(event_name=None, team_name=None, user_name=None,
@@ -1999,45 +1998,45 @@ def set_error(team_name, submission_name, error, error_msg):
     db.session.commit()
 
 
-def get_top_score_of_user(user, closing_timestamp):
-    """Find the best test score of user before closing timestamp.
+# def get_top_score_of_user(user, closing_timestamp):
+#     """Find the best test score of user before closing timestamp.
 
-    Returns
-    -------
-    best_test_score : The bagged test score of the submission with the best
-    bagged valid score, from among all the submissions of the user, before
-    closing_timestamp.
-    """
-    # team = get_active_user_team(user)
-    # XXX this will not work if we allow team mergers
-    team = Team.query.filter_by(name=user.name).one()
-    submissions = Submission.query.filter_by(team=team).filter(
-        Submission.is_private_leaderboard).all()
-    best_valid_score = config.config_object.specific.score.worst
-    best_test_score = config.config_object.specific.score.worst
-    for submission in submissions:
-        if submission.valid_score_cv_bag > best_valid_score:
-            best_valid_score = submission.valid_score_cv_bag
-            best_test_score = submission.test_score_cv_bag
-    return best_test_score
+#     Returns
+#     -------
+#     best_test_score : The bagged test score of the submission with the best
+#     bagged valid score, from among all the submissions of the user, before
+#     closing_timestamp.
+#     """
+#     # team = get_active_user_team(user)
+#     # XXX this will not work if we allow team mergers
+#     team = Team.query.filter_by(name=user.name).one()
+#     submissions = Submission.query.filter_by(team=team).filter(
+#         Submission.is_private_leaderboard).all()
+#     best_valid_score = config.config_object.specific.score.worst
+#     best_test_score = config.config_object.specific.score.worst
+#     for submission in submissions:
+#         if submission.valid_score_cv_bag > best_valid_score:
+#             best_valid_score = submission.valid_score_cv_bag
+#             best_test_score = submission.test_score_cv_bag
+#     return best_test_score
 
 
-def get_top_score_per_user(closing_timestamp=None):
-    if closing_timestamp is None:
-        closing_timestamp = datetime.datetime.utcnow()
-    users = db.session.query(User).all()
-    columns = ['name',
-               'score']
-    top_score_per_user_dict = [
-        {column: value for column, value in zip(
-            columns, [
-                user.name, get_top_score_of_user(user, closing_timestamp)])}
-        for user in users
-    ]
-    top_score_per_user_dict_df = pd.DataFrame(
-        top_score_per_user_dict, columns=columns)
-    top_score_per_user_dict_df = top_score_per_user_dict_df.sort_values('name')
-    return top_score_per_user_dict_df
+# def get_top_score_per_user(closing_timestamp=None):
+#     if closing_timestamp is None:
+#         closing_timestamp = datetime.datetime.utcnow()
+#     users = db.session.query(User).all()
+#     columns = ['name',
+#                'score']
+#     top_score_per_user_dict = [
+#         {column: value for column, value in zip(
+#             columns, [
+#                 user.name, get_top_score_of_user(user, closing_timestamp)])}
+#         for user in users
+#     ]
+#     top_score_per_user_dict_df = pd.DataFrame(
+#         top_score_per_user_dict, columns=columns)
+#     top_score_per_user_dict_df = top_score_per_user_dict_df.sort_values('name')
+#     return top_score_per_user_dict_df
 
 
 def add_user_interaction(**kwargs):
@@ -2125,7 +2124,7 @@ def get_user_interactions_df():
 
     user_interactions_dict_list = [
         {column: value for column, value in zip(
-            columns, [utils.date_time_format(user_interaction.timestamp),
+            columns, [date_time_format(user_interaction.timestamp),
                       user_interaction.ip,
                       user_interaction.interaction,
                       user_name(user_interaction),
@@ -2163,7 +2162,7 @@ def get_user_interactions():
         # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
     user_interactions_html = user_interactions_df.to_html(**html_params)
-    return utils.table_format(user_interactions_html)
+    return table_format(user_interactions_html)
 
 
 def get_source_submissions(submission):

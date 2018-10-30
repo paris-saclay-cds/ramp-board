@@ -1,10 +1,11 @@
 import logging
 
-import bcrypt
-import smtplib
 import pandas as pd
 
-import databoard.config as config
+import bcrypt
+from flask_mail import Message
+
+from . import mail
 
 logger = logging.getLogger('databoard')
 
@@ -67,16 +68,27 @@ def generate_passwords(users_to_add_f_name, password_f_name):
 
 def send_mail(to, subject, body):
     try:
-        logger.info('Sending "{}" mail to {}'.format(subject, to))
-        sender_user = config.MAIL_USERNAME
-        sender_pwd = config.MAIL_PASSWORD
-        smtpserver = smtplib.SMTP(config.MAIL_SERVER, config.MAIL_PORT)
-        smtpserver.ehlo()
-        smtpserver.starttls()
-        smtpserver.ehlo
-        smtpserver.login(sender_user, sender_pwd)
-        header = 'To: {}\nFrom: RAMP admin <{}>\nSubject: {}\n\n'.format(
-            to, sender_user, subject.encode('utf-8'))
-        smtpserver.sendmail(sender_user, to, header + body)
+        # Create message
+        msg = Message(subject)
+        msg.body = body
+        msg.add_recipient(to)
+        # Send email
+        mail.send(msg)
     except Exception as e:
         logger.error('Mailing error: {}'.format(e))
+
+# def send_mail(to, subject, body):
+#     try:
+#         logger.info('Sending "{}" mail to {}'.format(subject, to))
+#         sender_user = config.MAIL_USERNAME
+#         sender_pwd = config.MAIL_PASSWORD
+#         smtpserver = smtplib.SMTP(config.MAIL_SERVER, config.MAIL_PORT)
+#         smtpserver.ehlo()
+#         smtpserver.starttls()
+#         smtpserver.ehlo
+#         smtpserver.login(sender_user, sender_pwd)
+#         header = 'To: {}\nFrom: RAMP admin <{}>\nSubject: {}\n\n'.format(
+#             to, sender_user, subject.encode('utf-8'))
+#         smtpserver.sendmail(sender_user, to, header + body)
+#     except Exception as e:
+#         logger.error('Mailing error: {}'.format(e))
