@@ -22,12 +22,7 @@ import flask_login as fl
 import flask_sqlalchemy as fs
 from sqlalchemy.exc import IntegrityError
 
-from databoard import db
-from databoard import app, login_manager
-
-from . import db_tools
-from . import vizu
-from . import config
+from . import db, app, login_manager, db_tools, vizu, config, utils
 from .model import (
     User, Submission, WorkflowElement, Event, Problem, Keyword, Team,
     SubmissionFile, UserInteraction, SubmissionSimilarity, EventTeam,
@@ -93,7 +88,7 @@ def login():
         except NoResultFound:
             flash(u'{} does not exist.'.format(form.user_name.data))
             return redirect(url_for('login'))
-        if not db_tools.check_password(
+        if not utils.check_password(
                 form.password.data, user.hashed_password):
             flash('Wrong password')
             return redirect(url_for('login'))
@@ -1386,7 +1381,7 @@ def reset_password():
                     user.firstname.encode('utf-8'))
             body += recover_url
             body += '\n\nSee you on the RAMP website!'
-            db_tools.send_mail(user.email, subject, header + body)
+            utils.send_mail(user.email, subject, header + body)
             logger.info(
                 'Password reset requested for user {}'.format(user.name))
             logger.info(recover_url)
@@ -1410,7 +1405,7 @@ def reset_with_token(token):
     if form.validate_on_submit():
         user = User.query.filter_by(email=email).first_or_404()
 
-        user.hashed_password = db_tools.get_hashed_password(form.password.data)
+        user.hashed_password = utils.get_hashed_password(form.password.data)
 
         db.session.add(user)
         db.session.commit()

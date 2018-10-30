@@ -1,6 +1,5 @@
 import os
-from databoard import db, test_config
-import databoard.config as config
+from . import db, test_config, config
 
 
 def recreate_db():

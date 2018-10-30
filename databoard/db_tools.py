@@ -6,15 +6,13 @@ import shutil
 import logging
 import datetime
 
-import bcrypt
-import smtplib
 import numpy as np
 import pandas as pd
 
 # temporary fix for importing torch before sklearn
 # import torch  # noqa
 from sklearn.externals.joblib import Parallel, delayed
-from databoard import db
+from . import db, utils, config
 from sklearn.utils.validation import assert_all_finite
 
 from databoard.model import User, Team, Submission, SubmissionFile,\
@@ -32,83 +30,8 @@ from databoard.model import User, Team, Submission, SubmissionFile,\
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
-import databoard.config as config
-
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
-
-
-def remove_non_ascii(text):
-    from unidecode import unidecode
-    return unicode(unidecode(unicode(text, encoding='utf-8')), 'utf-8')
-
-
-def date_time_format(date_time):
-    return date_time.strftime('%Y-%m-%d %H:%M:%S %a')
-
-
-def table_format(table_html):
-    """Remove <table></table> keywords from html table.
-
-    (converted from pandas dataframe), to insert in datatable.
-    """
-    # return '<thead> %s </tbody><tfoot><tr></tr></tfoot>' %\
-    return '<thead> %s </tbody>' %\
-        table_html.split('<thead>')[1].split('</tbody>')[0]
-
-
-def get_hashed_password(plain_text_password):
-    """Hash a password for the first time.
-
-    (Using bcrypt, the salt is saved into the hash itself)
-    """
-    return bcrypt.hashpw(plain_text_password.encode('utf8'), bcrypt.gensalt())
-
-
-def check_password(plain_text_password, hashed_password):
-    """Check hased password.
-
-    Using bcrypt, the salt is saved into the hash itself.
-    """
-    return bcrypt.checkpw(
-        plain_text_password.encode('utf8'), hashed_password.encode('utf8'))
-
-
-def generate_single_password(mywords=None):
-    import xkcdpass.xkcd_password as xp
-    if mywords is None:
-        words = xp.locate_wordfile()
-        mywords = xp.generate_wordlist(
-            wordfile=words, min_length=4, max_length=6)
-    return xp.generate_xkcdpassword(mywords, numwords=4)
-
-
-def generate_passwords(users_to_add_f_name, password_f_name):
-    import xkcdpass.xkcd_password as xp
-    users_to_add = pd.read_csv(users_to_add_f_name)
-    words = xp.locate_wordfile()
-    mywords = xp.generate_wordlist(wordfile=words, min_length=4, max_length=6)
-    users_to_add['password'] = [
-        generate_single_password(mywords) for name in users_to_add['name']]
-    # temporarily while we don't implement pwd recovery
-    users_to_add[['name', 'password']].to_csv(password_f_name, index=False)
-
-
-def send_mail(to, subject, body):
-    try:
-        logger.info('Sending "{}" mail to {}'.format(subject, to))
-        sender_user = config.MAIL_USERNAME
-        sender_pwd = config.MAIL_PASSWORD
-        smtpserver = smtplib.SMTP(config.MAIL_SERVER, config.MAIL_PORT)
-        smtpserver.ehlo()
-        smtpserver.starttls()
-        smtpserver.ehlo
-        smtpserver.login(sender_user, sender_pwd)
-        header = 'To: {}\nFrom: RAMP admin <{}>\nSubject: {}\n\n'.format(
-            to, sender_user, subject.encode('utf-8'))
-        smtpserver.sendmail(sender_user, to, header + body)
-    except Exception as e:
-        logger.error('Mailing error: {}'.format(e))
 
 
 def send_password_mail(user_name, password):
@@ -120,7 +43,7 @@ def send_password_mail(user_name, password):
     password : new password
     """
     user = User.query.filter_by(name=user_name).one()
-    user.hashed_password = get_hashed_password(password)
+    user.hashed_password = utils.get_hashed_password(password)
     db.session.commit()
 
     subject = 'RAMP login information'
@@ -130,7 +53,7 @@ def send_password_mail(user_name, password):
     body += 'Please reset your password as soon as possible '
     body += 'through this link:\n'
     body += 'http://www.ramp.studio/reset_password'
-    send_mail(user.email, subject, body)
+    utils.send_mail(user.email, subject, body)
 
 
 def send_password_mails(password_f_name):
@@ -144,7 +67,7 @@ def send_password_mails(password_f_name):
     passwords = pd.read_csv(password_f_name)
 
     for _, u in passwords.iterrows():
-        send_password_mail(remove_non_ascii(u['name']), u['password'])
+        send_password_mail(utils.remove_non_ascii(u['name']), u['password'])
 
 
 def setup_workflows():
@@ -434,7 +357,7 @@ def create_user(name, password, lastname, firstname, email,
                 access_level='user', hidden_notes='', linkedin_url='',
                 twitter_url='', facebook_url='', google_url='', github_url='',
                 website_url='', bio='', is_want_news=True):
-    hashed_password = get_hashed_password(password)
+    hashed_password = utils.get_hashed_password(password)
     user = User(name=name, hashed_password=hashed_password,
                 lastname=lastname, firstname=firstname, email=email,
                 access_level=access_level, hidden_notes=hidden_notes,
@@ -564,7 +487,7 @@ def sign_up_team(event_name, team_name):
     make_submission_and_copy_files(
         event_name, team_name, config.sandbox_d_name, from_submission_path)
     for user in get_team_members(team):
-        send_mail(
+        utils.send_mail(
             to=user.email,
             subject='signed up for {} as team {}'.format(
                 event_name, team_name),
@@ -597,7 +520,7 @@ def approve_user(user_name):
         user.access_level = 'user'
     user.is_authenticated = True
     db.session.commit()
-    send_mail(user.email, 'RAMP sign-up approved', '')
+    utils.send_mail(user.email, 'RAMP sign-up approved', '')
 
 
 def make_event_admin(event_name, admin_name):
@@ -809,7 +732,7 @@ def send_trained_mails(submission):
         users = get_team_members(submission.event_team.team)
         subject = '{} in RAMP {} was trained at {}'.format(
             submission.name, event.name,
-            date_time_format(submission.training_timestamp))
+            utils.date_time_format(submission.training_timestamp))
         body = ''
         if submission.is_error:
             error_msg = submission.error_msg.replace(
@@ -821,7 +744,7 @@ def send_trained_mails(submission):
                     score.score_name,
                     round(score.valid_score_cv_bag, score.precision))
         for user in users:
-            send_mail(user.email, subject, body)
+            utils.send_mail(user.email, subject, body)
 
 
 def send_submission_mails(user, submission, event_team):
@@ -839,7 +762,7 @@ def send_submission_mails(user, submission, event_team):
         event.name,
         submission.path)
     for recipient in recipient_list:
-        send_mail(recipient, subject, body)
+        utils.send_mail(recipient, subject, body)
 
 
 def send_ask_for_event_mails(user, event, n_students):
@@ -862,7 +785,7 @@ def send_ask_for_event_mails(user, event, n_students):
     logger.info(subject)
     logger.info(body)
     for recipient in recipient_list:
-        send_mail(recipient, subject, body)
+        utils.send_mail(recipient, subject, body)
 
 
 def _user_mail_body(user):
@@ -898,7 +821,7 @@ def send_sign_up_request_mail(event, user):
         format(url_approve)
 
     for recipient in recipient_list:
-        send_mail(recipient, subject, body)
+        utils.send_mail(recipient, subject, body)
 
 
 def send_register_request_mail(user):
@@ -911,7 +834,7 @@ def send_register_request_mail(user):
     body += 'of this user: {}\n'.format(url_approve)
 
     for recipient in recipient_list:
-        send_mail(recipient, subject, body)
+        utils.send_mail(recipient, subject, body)
 
 
 def get_earliest_new_submission(event_name=None):
@@ -1640,7 +1563,7 @@ def get_leaderboards(event_name, user_name=None):
         int(round(submission.valid_time_cv_mean))
         for submission in submissions]
     leaderboard_df['submitted at (UTC)'] = [
-        date_time_format(submission.submission_timestamp)
+        utils.date_time_format(submission.submission_timestamp)
         for submission in submissions]
     sort_column = event.official_score_name
     leaderboard_df = leaderboard_df.sort_values(
@@ -1662,8 +1585,8 @@ def get_leaderboards(event_name, user_name=None):
     leaderboard_html_no_links = leaderboard_df.to_html(**html_params)
 
     return (
-        table_format(leaderboard_html_with_links),
-        table_format(leaderboard_html_no_links)
+        utils.table_format(leaderboard_html_with_links),
+        utils.table_format(leaderboard_html_no_links)
     )
 
 
@@ -1735,7 +1658,7 @@ def get_private_leaderboards(event_name, user_name=None):
         else 0
         for submission in submissions]
     leaderboard_df['submitted at (UTC)'] = [
-        date_time_format(submission.submission_timestamp)
+        utils.date_time_format(submission.submission_timestamp)
         for submission in submissions]
     sort_column = event.official_score_name + ' pr bag'
     leaderboard_df = leaderboard_df.sort_values(
@@ -1753,7 +1676,7 @@ def get_private_leaderboards(event_name, user_name=None):
     # logger.info(u'private leaderboard construction takes {}ms'.format(
     #     int(1000 * (time.time() - start))))
 
-    return table_format(leaderboard_html)
+    return utils.table_format(leaderboard_html)
 
 
 def get_competition_leaderboards(event_name):
@@ -1794,7 +1717,7 @@ def get_competition_leaderboards(event_name):
         int(round(submission.valid_time_cv_mean))
         for submission in submissions]
     leaderboard_df['submitted at (UTC)'] = [
-        date_time_format(submission.submission_timestamp)
+        utils.date_time_format(submission.submission_timestamp)
         for submission in submissions]
 
     # select best submission for each team
@@ -1873,8 +1796,8 @@ def get_competition_leaderboards(event_name):
     private_leaderboard_html = private_leaderboard_df.to_html(**html_params)
 
     return (
-        table_format(public_leaderboard_html),
-        table_format(private_leaderboard_html)
+        utils.table_format(public_leaderboard_html),
+        utils.table_format(private_leaderboard_html)
     )
 
 
@@ -1947,7 +1870,7 @@ def get_failed_leaderboard(event_name, team_name=None, user_name=None):
         {column: value for column, value in zip(
             columns, [submission.event_team.team.name,
                       submission.name_with_link,
-                      date_time_format(submission.submission_timestamp),
+                      utils.date_time_format(submission.submission_timestamp),
                       submission.state_with_link])}
         for submission in submissions
     ]
@@ -1965,7 +1888,7 @@ def get_failed_leaderboard(event_name, team_name=None, user_name=None):
     # logger.info(u'failed leaderboard construction takes {}ms'.format(
     #     int(1000 * (time.time() - start))))
 
-    return table_format(leaderboard_html)
+    return utils.table_format(leaderboard_html)
 
 
 def get_new_leaderboard(event_name, team_name=None, user_name=None):
@@ -1989,7 +1912,8 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
         {column: value for column, value in zip(
             columns, [submission.event_team.team.name,
                       submission.name_with_link,
-                      date_time_format(submission.submission_timestamp)])}
+                      utils.date_time_format(
+                          submission.submission_timestamp)])}
         for submission in submissions
     ]
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
@@ -2006,7 +1930,7 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
     #     int(1000 * (time.time() - start))))
 
     leaderboard_html = leaderboard_df.to_html(**html_params)
-    return table_format(leaderboard_html)
+    return utils.table_format(leaderboard_html)
 
 
 def get_submissions(event_name=None, team_name=None, user_name=None,
@@ -2198,7 +2122,7 @@ def get_user_interactions_df():
 
     user_interactions_dict_list = [
         {column: value for column, value in zip(
-            columns, [date_time_format(user_interaction.timestamp),
+            columns, [utils.date_time_format(user_interaction.timestamp),
                       user_interaction.ip,
                       user_interaction.interaction,
                       user_name(user_interaction),
@@ -2236,7 +2160,7 @@ def get_user_interactions():
         # classes=['ui', 'blue', 'celled', 'table', 'sortable']
     )
     user_interactions_html = user_interactions_df.to_html(**html_params)
-    return table_format(user_interactions_html)
+    return utils.table_format(user_interactions_html)
 
 
 def get_source_submissions(submission):

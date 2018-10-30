@@ -156,12 +156,12 @@ def create_user(name, password, lastname, firstname, email,
 
 
 def generate_single_password():
-    from databoard.db_tools import generate_single_password
+    from databoard.utils import generate_single_password
     print(generate_single_password())
 
 
 def generate_passwords(users_to_add_f_name, password_f_name):
-    from databoard.db_tools import generate_passwords
+    from databoard.utils import generate_passwords
     print(generate_passwords(users_to_add_f_name, password_f_name))
 
 
@@ -172,7 +172,7 @@ def add_users_from_file(users_to_add_f_name, password_f_name):
     """
     import pandas as pd
     from databoard.model import NameClashError
-    from databoard.db_tools import remove_non_ascii
+    from databoard.utils import remove_non_ascii
 
     users_to_add = pd.read_csv(users_to_add_f_name)
     passwords = pd.read_csv(password_f_name)
@@ -225,7 +225,7 @@ def send_password_mails(password_f_name):
 def sign_up_event_users_from_file(users_to_add_f_name, event):
     import pandas as pd
     from databoard.model import DuplicateSubmissionError
-    from databoard.db_tools import remove_non_ascii
+    from databoard.utils import remove_non_ascii
 
     users_to_sign_up = pd.read_csv(users_to_add_f_name)
     for _, u in users_to_sign_up.iterrows():

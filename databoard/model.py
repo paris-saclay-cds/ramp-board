@@ -9,8 +9,7 @@ from flask import request
 from importlib import import_module
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from databoard import db
-import databoard.config as config
+from . import db, config
 
 logger = logging.getLogger('databoard')
 
