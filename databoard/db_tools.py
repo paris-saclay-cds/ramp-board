@@ -25,9 +25,10 @@ from .model import (CVFold, DetachedSubmissionOnCVFold,
                     SubmissionFileTypeExtension, SubmissionOnCVFold,
                     SubmissionSimilarity, Team, TooEarlySubmissionError, User,
                     UserInteraction, Workflow, WorkflowElement,
-                    WorkflowElementType, combine_predictions_list,
-                    get_active_user_event_team, get_next_best_single_fold,
-                    get_team_members, get_user_event_teams)
+                    WorkflowElementType, _get_score_cv_bags,
+                    combine_predictions_list, get_active_user_event_team,
+                    get_next_best_single_fold, get_team_members,
+                    get_user_event_teams)
 from .utils import (date_time_format, get_hashed_password, remove_non_ascii,
                     send_mail, table_format)
 
@@ -1252,7 +1253,6 @@ def compute_contributivity_no_commit(
         test_is_list.append(cv_fold.test_is)
     for submission in submissions:
         submission.set_contributivity(is_commit=False)
-    from model import _get_score_cv_bags
     # if there are no predictions to combine, it crashed
     combined_predictions_list = [c for c in combined_predictions_list
                                  if c is not None]
@@ -1948,7 +1948,7 @@ def get_submissions(event_name=None, team_name=None, user_name=None,
                     Event.id == EventTeam.event_id).filter(
                     EventTeam.id == Submission.event_team_id).all()
                 if submissions_:
-                    submissions = list(zip(*submissions_)[0])
+                    submissions = [s for (s, e, et) in submissions_]
                 else:
                     submissions = []
             else:
@@ -1980,7 +1980,7 @@ def get_submissions(event_name=None, team_name=None, user_name=None,
                     Team.id == EventTeam.team_id).filter(
                     EventTeam.id == Submission.event_team_id).all()
             if submissions_:
-                submissions = list(zip(*submissions_)[0])
+                submissions = [s for (s, e, t, et) in submissions_]
             else:
                 submissions = []
     return submissions
