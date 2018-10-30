@@ -1,10 +1,12 @@
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
-import sys
-import os
 import logging
+import os
+import sys
 from distutils.util import strtobool
+
 from sqlalchemy.exc import IntegrityError
+
 from termcolor import colored
 
 logger = logging.getLogger('databoard')
@@ -101,8 +103,7 @@ def approve_user(u):
 
 
 def serve(port=None):
-    from databoard import app
-    import databoard.views  # noqa
+    from databoard import app, views
 
     if port is None:
         port = app.config.get('RAMP_SERVER_PORT')

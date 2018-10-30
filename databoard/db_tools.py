@@ -1,44 +1,37 @@
-import os
+import datetime
 import imp
+import logging
+import os
+import shutil
 import time
 import timeit
-import shutil
-import logging
-import datetime
-
-import bcrypt
-import smtplib
-import numpy as np
-import pandas as pd
-
-# temporary fix for importing torch before sklearn
-# import torch  # noqa
-from sklearn.externals.joblib import Parallel, delayed
-from databoard import db
-from sklearn.utils.validation import assert_all_finite
 from subprocess import call
 
-from databoard.model import User, Team, Submission, SubmissionFile,\
-    SubmissionFileType, SubmissionFileTypeExtension, WorkflowElementType,\
-    WorkflowElement, Workflow, Extension, Problem, Event, EventTeam,\
-    EventScoreType, SubmissionSimilarity,\
-    CVFold, SubmissionOnCVFold, DetachedSubmissionOnCVFold,\
-    UserInteraction, EventAdmin,\
-    NameClashError, TooEarlySubmissionError,\
-    DuplicateSubmissionError, MissingSubmissionFileError,\
-    MissingExtensionError, Keyword, ProblemKeyword,\
-    combine_predictions_list, get_next_best_single_fold,\
-    get_active_user_event_team,\
-    get_team_members, get_user_event_teams
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
-from . import mail
+import bcrypt
+import numpy as np
+import pandas as pd
 from flaskext.mail import Message
+# temporary fix for importing torch before sklearn
+# import torch  # noqa
+from sklearn.externals.joblib import Parallel, delayed
+from sklearn.utils.validation import assert_all_finite
 
-from . import app
-from . import ramp_config, ramp_data_path, ramp_kits_path
-
+from . import app, db, mail, ramp_config, ramp_data_path, ramp_kits_path
+from .model import (CVFold, DetachedSubmissionOnCVFold,
+                    DuplicateSubmissionError, Event, EventAdmin,
+                    EventScoreType, EventTeam, Extension, Keyword,
+                    MissingExtensionError, MissingSubmissionFileError,
+                    NameClashError, Problem, ProblemKeyword, Submission,
+                    SubmissionFile, SubmissionFileType,
+                    SubmissionFileTypeExtension, SubmissionOnCVFold,
+                    SubmissionSimilarity, Team, TooEarlySubmissionError, User,
+                    UserInteraction, Workflow, WorkflowElement,
+                    WorkflowElementType, combine_predictions_list,
+                    get_active_user_event_team, get_next_best_single_fold,
+                    get_team_members, get_user_event_teams)
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output

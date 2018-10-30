@@ -1,46 +1,38 @@
-from __future__ import print_function, division, absolute_import
+from __future__ import absolute_import, division, print_function
 
-import os
-import time
 import codecs
-import shutil
-import difflib
-import logging
-import tempfile
 import datetime
+import difflib
 import io
+import logging
+import os
+import shutil
+import tempfile
+import time
 import zipfile
-from flask import (
-    request, redirect, url_for, render_template, abort, send_from_directory,
-    session, g, send_file, flash)
+
+import flask_login as fl
+import flask_sqlalchemy as fs
+from flask import (abort, flash, g, redirect, render_template, request,
+                   send_file, send_from_directory, session, url_for)
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug import secure_filename
 from wtforms import StringField
 from wtforms.widgets import TextArea
 
-import flask_login as fl
-import flask_sqlalchemy as fs
-from sqlalchemy.exc import IntegrityError
-
-from databoard import db
-from databoard import app, ramp_kits_path
-from databoard import login_manager
-
-from . import db_tools
-from . import vizu
-from . import config
-from .model import (
-    User, Submission, WorkflowElement, Event, Problem, Keyword, Team,
-    SubmissionFile, UserInteraction, SubmissionSimilarity, EventTeam,
-    DuplicateSubmissionError, TooEarlySubmissionError, MissingExtensionError,
-    NameClashError)
-from .forms import (
-    LoginForm, CodeForm, SubmitForm, ImportForm, UploadForm,
-    UserCreateProfileForm, UserUpdateProfileForm,
-    CreditForm, EmailForm, PasswordForm, EventUpdateProfileForm,
-    AskForEventForm)
+from . import (app, db, db_tools, login_manager, ramp_config, ramp_kits_path,
+               vizu)
+from .forms import (AskForEventForm, CodeForm, CreditForm, EmailForm,
+                    EventUpdateProfileForm, ImportForm, LoginForm,
+                    PasswordForm, SubmitForm, UploadForm,
+                    UserCreateProfileForm, UserUpdateProfileForm)
+from .model import (DuplicateSubmissionError, Event, EventTeam, Keyword,
+                    MissingExtensionError, NameClashError, Problem, Submission,
+                    SubmissionFile, SubmissionSimilarity, Team,
+                    TooEarlySubmissionError, User, UserInteraction,
+                    WorkflowElement)
 from .security import ts
-
 
 app.secret_key = os.urandom(24)
 

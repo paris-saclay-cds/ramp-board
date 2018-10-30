@@ -1,7 +1,7 @@
 import os
-from databoard import db
-from databoard import (deployment_path, ramp_config, 
-                       ramp_kits_path, ramp_data_path)
+
+from databoard import (db, deployment_path, ramp_config, ramp_data_path,
+                       ramp_kits_path)
 
 
 def recreate_db():
