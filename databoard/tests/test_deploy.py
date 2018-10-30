@@ -40,7 +40,7 @@ def test_setup_workflows():
     db_tools.setup_workflows()
 
 
-def _add_problem_and_event(problem_name, test_user_name, with_download='True'):
+def _add_problem_and_event(problem_name, test_user_name):
     problem_kits_path = os.path.join(ramp_kits_path, problem_name)
     problem_data_path = os.path.join(ramp_data_path, problem_name)
     os.system('git clone https://github.com/ramp-data/{}.git {}'.format(
@@ -55,11 +55,11 @@ def _add_problem_and_event(problem_name, test_user_name, with_download='True'):
         problem_name))
 
     db_tools.add_problem(
-        problem_name, with_download=with_download, force='True')
+        problem_name, force=True)
     event_name = '{}_test'.format(problem_name)
     event_title = 'test event'
     db_tools.add_event(
-        problem_name, event_name, event_title, is_public='True', force='True')
+        problem_name, event_name, event_title, is_public=True, force=True)
     db_tools.sign_up_team(event_name, test_user_name)
     db_tools.submit_starting_kit(event_name, test_user_name)
     submissions = db_tools.get_submissions(event_name, test_user_name)
