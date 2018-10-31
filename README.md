@@ -1,11 +1,42 @@
 # Databoard
 
-## Fresh local test
+## Installation
 
-### Add environment variables
+#### with `conda`
 
+```bash
+conda env create -f environment.yml
+source activate ramp-server
 ```
+
+#### with `pip`
+
+```bash
+pip install -r requirements.txt
+```
+
+
+## Configuration
+
+`ramp-server` comes with a default configuration that can be overwritten via environment variables or a JSON configuration file.
+
+**Note:** If you use both (e.g. general JSON config file AND environment variables for sensitive parameters like passwords), know that the user configuration file is **loaded last** so it will take precedence over the environment variables. You should therefore remove these entries from the JSON file.
+
+### JSON configuration file
+
+
+The `DATABOARD_USER_CONFIG` environment variable must be set to the absolute path of the config file in order to be used by the `ramp-server`.
+
+```bash
+export DATABOARD_USER_CONFIG=/path/to/userconfig.json
+```
+
+### Environment variables
+
+```bash
 export DATABOARD_TEST=True
+export DATABOARD_SECRET_KEY=<fill this with a random string>
+
 export DATABOARD_DB_NAME='databoard'
 export DATABOARD_DB_USER='mrramp'
 export DATABOARD_DB_PASSWORD=<fill this>
@@ -15,44 +46,30 @@ export DATABOARD_DB_URL_TEST=postgresql://$DATABOARD_DB_USER:$DATABOARD_DB_PASSW
 export DATABOARD_MAIL_USERNAME=<fill this>
 export DATABOARD_MAIL_PASSWORD=<fill this>
 export DATABOARD_MAIL_SENDER=<fill this>
-export DATABOARD_ADMIN_MAILS=[<fill this>]
-export DATABOARD_SECRET_KEY=<fill this with a random string>
 ```
 
-Alternatively, you can hard-code these variables into `config.py` after copying `config_local.py` to `config.py`.
+## Initial set up of the database
 
-### Set up db
-
-You only have to do this once after each time you restart your computer.
-
-```
-conda install postgresql
-mkdir postgres_dbs
-initdb postgres_dbs
+```bash
+# initialise the PostgreSQL database 
+mkdir postgres_dbs && initdb postgres_dbs
 pg_ctl -D postgres_dbs -l postgres_dbs/logfile start
-createuser --pwprompt mrramp
-```
-`mrramp` should be the user specified in $DATABOARD_DB_USER. It will prompt you for password which should be the same specified in $DATABOARD_DB_PASSWORD.
-Create db by
-```
-createdb --owner=mrramp databoard_test
+# create a user and set a password
+createuser --pwprompt <username>
+# create the database
+createdb --owner=<username> databoard_test
 ```
 
-### Test
+`<username>` should be the user specified in `$DATABOARD_DB_USER`. 
+It will prompt you for password which should be the same specified in `$DATABOARD_DB_PASSWORD`.
+
+## Running tests
 
 ```
-git clone https://github.com/paris-saclay-cds/ramp-workflow.git
-cd ramp-workflow
-pip install -r requirements.txt
-git checkout titanic
-python setup.py develop
-cd ..
 git clone https://github.com/paris-saclay-cds/ramp-board.git
 cd ramp-board
-git checkout migrate
-cp databoard/config_local.py databoard/config.py
-python setup.py develop
-make test
+pip install .
+make tests
 ```
 or
 ```
@@ -75,20 +92,8 @@ cd <frontend>/ramp-kits
 git clone https://github.com/ramp-kits/<problem>
 cd <problem>
 jupyter nbconvert --to html <problem>_starting_kit.ipynb
+```
 
-
-## Dependencies
-
-
-Install dependencies with `pip install -Ur requirements.txt`
-(You might want to create a virtualenv beforehand)
-
-pip install --upgrade https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-1.0.0-py2-none-any.whl
-
-## Configuration
-
-**Copy `databoard/config_local.py` to `databoard/config.py`**. If you need special settings, you can modify `databoard/config.py`.
-**Do not commit `databoard/config.py`**, since it might contain passwords...
 
 ## Set up the database
 
@@ -99,44 +104,6 @@ To run the test you will need to set environment variable DATABOARD_TEST to True
 otherwise set it to False:
 
     export DATABOARD_TEST=False
-
-You can use different database system:
-
-**local sqlite**
-
-For a local install (on a unix system) you can do:
-
-    export DATABOARD_DB_URL_TEST=sqlite:////tmp/databoard_test.db
-    export DATABOARD_DB_URL=sqlite:////tmp/databoard_test.db
-
-**Postgres databases**: one for test and one for dev.
-
-1. Install postgres and create two databases (`createdb <db_name>`)
-
-For example you do in the postgres terminal: `createdb databoard`
-
-with conda:
-
-conda install postgresql
-conda install -c anaconda psycopg2=2.6.2
-
-un ubuntu:
-
-sudo apt-get install postgresql postgresql-contrib
-
-
-make a dir postgres_dbs containing all the dbs (test and prod eventually) and cd there
-then go up and execute
-initdb postgres_dbs
-start the server by
-pg_ctl -D postgres_dbs -l postgres_dbs/logfile start
-Create user by
-createuser --pwprompt mrramp
-mrramp should be the user specified in DATABOARD_DB_USER
-it will prompt you for password
-pwd should be the same specified in DATABOARD_DB_PASSWORD
-Create db by
-createdb --owner=mrramp databoard_test
 
 2. Set up environment variables:
 
@@ -160,7 +127,7 @@ Example:
 
 Then you can setup or upgrade the database with:
 
-    `python manage.py db upgrade`
+    python manage.py db upgrade
 
 ### Migrations
 
@@ -267,11 +234,6 @@ fab serve
 fab publish_software:target=production
 fab publish_software:target=test
 
-### If code is redeployed
-
-pip install -Ur requirements.txt
-python setup.py develop
-
 ### Server
 
  - old:
@@ -284,19 +246,6 @@ tail -n1000 -f /var/log/apache2/error.log
 
 sed -i "s#os.environ.get('DATABOARD_DB_URL')#'$DATABOARD_DB_URL'#g" /home/datacamp/code/databoard/config.py
 
-### Mac bug
-
-Postgres and anaconda are somehow clashing. Add this to ~/.bash_profile:
-export DYLD_FALLBACK_LIBRARY_PATH=$HOME/anaconda/lib/:$DYLD_FALLBACK_LIBRARY_PATH
-
-On MacOS 10.12, maybe you need this:
-
-export DYLD_FALLBACK_LIBRARY_PATH=$HOME/anaconda/lib/:/usr/local/Cellar/openssl/1.0.2k/lib/:/usr/lib/:$DYLD_FALLBACK_LIBRARY_PATH
-
-It seems now that the above stuff doesn't work. Instead, postgres should be installed through conda:
-
-conda install postgresql
-conda install -c anaconda psycopg2=2.6.2
 
 ### Example sequence of adding ramps
 
