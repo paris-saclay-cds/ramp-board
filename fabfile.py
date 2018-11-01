@@ -27,7 +27,7 @@ def approve_user(u):
 
 
 def serve(port=None):
-    from databoard import app, views
+    from databoard import app
 
     if port is None:
         port = app.config.get('RAMP_SERVER_PORT')
@@ -37,7 +37,8 @@ def serve(port=None):
         port=server_port,
         use_reloader=False,
         host='0.0.0.0',
-        processes=1000)
+        processes=1000,
+        threaded=False)
 
 
 def profile(port=None, profiling_file='profiler.log'):
