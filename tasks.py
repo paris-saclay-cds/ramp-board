@@ -27,7 +27,7 @@ def approve_user(c, user):
 
 @task
 def serve(c, port=None):
-    from databoard import app, views
+    from databoard import app
 
     if port is None:
         port = app.config.get('RAMP_SERVER_PORT')
@@ -37,7 +37,8 @@ def serve(c, port=None):
         port=server_port,
         use_reloader=False,
         host='0.0.0.0',
-        processes=1000)
+        processes=1000,
+        threaded=False)
 
 
 @task
