@@ -57,14 +57,17 @@ def check_password(plain_text_password, hashed_password):
     Using bcrypt, the salt is saved into the hash itself.
     """
     if PYTHON3:
-        if isinstance(plain_text_password, str):
-            password = bytes(plain_text_password, 'utf-8')
-        else:
-            password = plain_text_password
+        password = plain_text_password
+        hashed_p = hashed_password
+        if isinstance(password, str):
+            password = bytes(password, 'utf-8')
+        if isinstance(hashed_p, str):
+            password = bytes(hashed_p, 'utf-8')
     else:
         password = plain_text_password.encode('utf8')
+        hashed_p = hashed_password.encode('utf8')
 
-    return bcrypt.checkpw(password, hashed_password)
+    return bcrypt.checkpw(password, hashed_p)
 
 
 def generate_single_password(mywords=None):
