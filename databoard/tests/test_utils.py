@@ -1,4 +1,5 @@
 # coding=utf-8
+import os
 import pandas as pd
 from databoard import utils
 
@@ -18,3 +19,14 @@ def test_remove_non_ascii():
 def test_date_time_format():
     assert utils.date_time_format(pd.to_datetime('2018-01-01')) ==\
         '2018-01-01 00:00:00 Mon'
+
+
+def test_generate_passwords():
+    utils.generate_single_password(mywords=None)
+    users_to_add_f_name = '/tmp/users.csv'
+    password_f_name = '/tmp/users.csv.w_pwd'
+    users = pd.DataFrame({'name': ['n1', 'n2']})
+    users.to_csv(users_to_add_f_name)
+    utils.generate_passwords(users_to_add_f_name, password_f_name)
+    os.remove(users_to_add_f_name)
+    os.remove(password_f_name)
