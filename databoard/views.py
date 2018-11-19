@@ -24,15 +24,6 @@ from wtforms.widgets import TextArea
 
 from . import app, db, login_manager, ramp_config, ramp_kits_path
 from . import db_tools
-# from .db_tools import (add_event, add_user_interaction, ask_sign_up_team,
-#                        create_user, get_active_user_event_team, get_sandbox,
-#                        get_source_submissions, get_user_interactions, is_admin,
-#                        is_open_code, is_open_leaderboard, is_public_event,
-#                        is_user_asked_sign_up, is_user_signed_up,
-#                        make_submission_and_copy_files,
-#                        send_ask_for_event_mails, send_register_request_mail,
-#                        send_sign_up_request_mail, send_submission_mails,
-#                        sign_up_team, update_leaderboards, update_user)
 from .forms import (AskForEventForm, CodeForm, CreditForm, EmailForm,
                     EventUpdateProfileForm, ImportForm, LoginForm,
                     PasswordForm, SubmitForm, UploadForm,
