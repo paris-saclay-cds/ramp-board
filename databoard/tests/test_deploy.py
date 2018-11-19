@@ -131,6 +131,11 @@ def test_update_profile():
     user = User.query.filter_by(name='test_user').one()
     form = UserUpdateProfileForm()
     db_tools.update_user(user, form)
+    form.email = Field('iris.admin@gmail.com')
+    try:
+        db_tools.update_user(user, form)
+    except NameClashError as e:
+        assert e.value == 'email is already in use'
 
 
 def test_leaderboard():
