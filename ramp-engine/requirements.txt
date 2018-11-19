@@ -1,0 +1,4 @@
+numpy
+pyyaml
+sqlalchemy
+psycopg2-binary
