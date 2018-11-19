@@ -5,7 +5,7 @@ import os
 import databoard.db_tools as db_tools
 from databoard import ramp_data_path, ramp_kits_path
 from databoard.deploy import deploy
-from databoard.model import NameClashError
+from databoard.model import NameClashError, User
 
 
 def test_deploy():
@@ -90,7 +90,6 @@ def test_make_event_admin():
 
 
 def test_add_keywords():
-    import databoard.db_tools as db_tools
     db_tools.add_keyword('botany', 'data_domain', 'scientific data', 'Botany')
     db_tools.add_keyword('botany', 'data_domain', 'scientific data', 'Botany.')
     db_tools.add_keyword(
@@ -107,6 +106,31 @@ def test_add_keywords():
     db_tools.add_problem_keyword('iris', 'botany')
     db_tools.add_problem_keyword('boston_housing', 'regression')
     db_tools.add_problem_keyword('boston_housing', 'real estate')
+
+
+def test_update_profile():
+    class Field():
+        def __init__(self, data):
+            self.data = data
+
+    class UserUpdateProfileForm():
+        def __init__(self):
+            self.user_name = Field('test_user')
+            self.lastname = Field('test')
+            self.firstname = Field('test')
+            self.email = Field('test.user@gmail.com')
+            self.linkedin_url = Field('test')
+            self.twitter_url = Field('test')
+            self.facebook_url = Field('test')
+            self.google_url = Field('test')
+            self.github_url = Field('test')
+            self.website_url = Field('test')
+            self.bio = Field('test')
+            self.is_want_news = Field(False)
+
+    user = User.query.filter_by(name='test_user').one()
+    form = UserUpdateProfileForm()
+    db_tools.update_user(user, form)
 
 
 def test_leaderboard():
