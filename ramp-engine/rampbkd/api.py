@@ -14,16 +14,24 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import URL
 
 from .model import Base
-from .query import select_submissions_by_state, select_submissions_by_id
+from .query import select_submissions_by_state
+from .query import select_submissions_by_id
+from .query import select_submission_by_name
+from .query import select_event_by_name
 from .config import STATES, UnknownStateError
 
 
 __all__ = [
     'get_submissions',
     'get_submission_by_id',
+    'get_submission_by_name',
     'set_submission_state',
     'get_submission_state',
-    'set_predictions'
+    'set_submission_max_ram',
+    'set_submission_error_msg',
+    'set_predictions',
+    'score_submission',
+    'get_event_nb_folds',
 ]
 
 
@@ -119,6 +127,55 @@ def get_submission_by_id(config, submission_id):
         submission.event.name
         submission.team.name
     return submission
+
+
+def get_submission_by_name(config, event_name, team_name, name):
+    """
+    Get a submission by name
+    
+    Parameters
+    ----------
+
+    config : dict
+        configuration
+    session :
+        database connexion session
+    event_name : str
+        name of the RAMP event
+    team_name : str
+        name of the RAMP team
+    name : str
+        name of the submission
+
+    Returns
+    -------
+    `Submission` instance
+
+    """
+    # Create database url
+    db_url = URL(**config['sqlalchemy'])
+    db = create_engine(db_url)
+
+    # Create a configured "Session" class
+    Session = sessionmaker(db)
+
+    # Link the relational model to the database
+    Base.metadata.create_all(db)
+
+    # Connect to the dabase and perform action
+    with db.connect() as conn:
+        session = Session(bind=conn)
+        submission = select_submission_by_name(
+            session, 
+            event_name,
+            team_name,
+            name)
+        # force event name and team name to be cached
+        submission.event.name
+        submission.team.name
+    return submission
+
+
 
 
 def set_submission_state(config, submission_id, state):
@@ -244,8 +301,9 @@ def set_predictions(config, submission_id, prediction_path, ext='npy'):
                 prediction_path, fold_id, 'train', ext)
             cv_fold.test_y_pred = _load_submission(
                 prediction_path, fold_id, 'test', ext)
-            cv_fold.valid_time = 0.0
-            cv_fold.test_time = 0.0
+            cv_fold.train_time = _get_time(prediction_path, fold_id, 'train')
+            cv_fold.valid_time = _get_time(prediction_path, fold_id, 'valid')
+            cv_fold.test_time = _get_time(prediction_path, fold_id, 'test')
             cv_fold.state = 'tested'
             session.commit()
 
@@ -290,3 +348,184 @@ def _load_submission(path, fold_id, typ, ext):
     else:
         return NotImplementedError("No reader implemented for extension {ext}"
                                    .format(ext))
+
+
+def _get_time(path, fold_id, typ):
+    """
+    get time duration in seconds of train or valid
+    or test for a given fold.
+    
+    Parameters
+    ----------
+    path : str
+        local path where predictions are saved
+    fold_id : int
+        id of the current CV fold
+    typ : {'train', 'valid, 'test'}
+    
+    Raises
+    ------
+    ValueError :
+        when typ is neither is not 'train' or 'valid' or test'
+    """
+    if typ not in ['train', 'valid', 'test']:
+        raise ValueError("Only 'train' or 'valid' or 'test' are expected for arg 'typ'")
+    time_file = os.path.join(path, 'fold_{}'.format(fold_id), typ + '_time')
+    return float(open(time_file).read())
+
+
+def score_submission(config, submission_id):
+    """
+    Score a submission and change its state to 'scored'
+
+    Parameters
+    ----------
+    config : dict
+        configuration
+    submission_id : int
+        submission id
+
+    Raises
+    ------
+    ValueError :
+        when the state of the submission is not 'tested'
+        (only a submission with state 'tested' can be scored)
+    """
+
+    # Create database url
+    db_url = URL(**config['sqlalchemy'])
+    db = create_engine(db_url)
+
+    # Create a configured "Session" class
+    Session = sessionmaker(db)
+
+    # Link the relational model to the database
+    Base.metadata.create_all(db)
+
+    # Connect to the dabase and perform action
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submissions_by_id(session, submission_id)
+        if submission.state != 'tested':
+            raise ValueError('Submission state must be "tested"'
+                             ' to score, not "{}"'.format(submission.state))
+
+        # We are conservative:
+        # only score if all stages (train, test, validation)
+        # were completed. submission_on_cv_fold compute scores can be called
+        # manually if needed for submission in various error states.
+        for submission_on_cv_fold in submission.on_cv_folds:
+            submission_on_cv_fold.session = session
+            submission_on_cv_fold.compute_train_scores(session)
+            submission_on_cv_fold.compute_valid_scores(session)
+            submission_on_cv_fold.compute_test_scores(session)
+            submission_on_cv_fold.state = 'scored'
+        session.commit()
+        submission.compute_test_score_cv_bag(session)
+        submission.compute_valid_score_cv_bag(session)
+        # Means and stds were constructed on demand by fetching fold times.
+        # It was slow because submission_on_folds contain also possibly large
+        # predictions. If postgres solves this issue (which can be tested on
+        # the mean and std scores on the private leaderbord), the
+        # corresponding columns (which are now redundant) can be deleted in
+        # Submission and this computation can also be deleted.
+        submission.train_time_cv_mean = np.mean(
+            [ts.train_time for ts in submission.on_cv_folds])
+        submission.valid_time_cv_mean = np.mean(
+            [ts.valid_time for ts in submission.on_cv_folds])
+        submission.test_time_cv_mean = np.mean(
+            [ts.test_time for ts in submission.on_cv_folds])
+        submission.train_time_cv_std = np.std(
+            [ts.train_time for ts in submission.on_cv_folds])
+        submission.valid_time_cv_std = np.std(
+            [ts.valid_time for ts in submission.on_cv_folds])
+        submission.test_time_cv_std = np.std(
+            [ts.test_time for ts in submission.on_cv_folds])
+        submission.state = 'scored'
+        session.commit()
+
+
+def set_submission_max_ram(config, submission_id, max_ram_mb):
+    """
+    Modify the max RAM mb usage of a submission
+
+    Parameters
+    ----------
+    config : dict
+        configuration
+    submission_id : int
+        id of the requested submission
+    max_ram_mb : float
+        max ram usage in MB
+    """
+    # Create database url
+    db_url = URL(**config['sqlalchemy'])
+    db = create_engine(db_url)
+
+    # Create a configured "Session" class
+    Session = sessionmaker(db)
+
+    # Link the relational model to the database
+    Base.metadata.create_all(db)
+
+    # Connect to the dabase and perform action
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submissions_by_id(session, submission_id)
+        submission.max_ram = max_ram_mb
+        session.commit()
+
+
+def set_submission_error_msg(config, submission_id, error_msg):
+    """
+    Set submission message error
+
+    Parameters
+    ----------
+    config : dict
+        configuration
+    submission_id : int
+        id of the requested submission
+    error_msg : str
+        message error
+    """
+ 
+    # Create database url
+    db_url = URL(**config['sqlalchemy'])
+    db = create_engine(db_url)
+
+    # Create a configured "Session" class
+    Session = sessionmaker(db)
+
+    # Link the relational model to the database
+    Base.metadata.create_all(db)
+
+    # Connect to the dabase and perform action
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submissions_by_id(session, submission_id)
+        submission.error_msg = error_msg
+        session.commit()
+
+
+def get_event_nb_folds(config, event_name):
+    # Create database url
+    db_url = URL(**config['sqlalchemy'])
+    db = create_engine(db_url)
+
+    # Create a configured "Session" class
+    Session = sessionmaker(db)
+
+    # Link the relational model to the database
+    Base.metadata.create_all(db)
+
+    # Connect to the dabase and perform action
+    with db.connect() as conn:
+        session = Session(bind=conn)
+        event = select_event_by_name(session, event_name)
+        return len(event.cv_folds)
+
+
