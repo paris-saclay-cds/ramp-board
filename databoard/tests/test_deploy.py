@@ -5,7 +5,8 @@ import os
 import databoard.db_tools as db_tools
 from databoard import ramp_data_path, ramp_kits_path
 from databoard.deploy import deploy
-from databoard.model import NameClashError, User
+from databoard.model import NameClashError, User, Event
+from databoard.config import sandbox_d_name
 
 
 def test_deploy():
@@ -136,6 +137,13 @@ def test_update_profile():
         db_tools.update_user(user, form)
     except NameClashError as e:
         assert e.value == 'email is already in use'
+
+
+def test_get_sandbox():
+    event = Event.query.filter_by(name='boston_housing_test').one()
+    user = User.query.filter_by(email='test.user@gmail.com').one()
+    sandbox = db_tools.get_sandbox(event, user)
+    assert sandbox.name == sandbox_d_name
 
 
 def test_leaderboard():
