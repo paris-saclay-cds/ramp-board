@@ -1,0 +1,2 @@
+include versioneer.py
+include rampbkd/_version.py
