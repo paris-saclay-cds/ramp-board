@@ -91,7 +91,10 @@ def test_make_event_admin():
 
 def test_add_keywords():
     import databoard.db_tools as db_tools
+    db_tools.add_keyword('botany', 'data_domain', 'scientific data', 'Botany')
     db_tools.add_keyword('botany', 'data_domain', 'scientific data', 'Botany.')
+    db_tools.add_keyword(
+        'botany', 'data_domain', 'scientific data', 'Botany.', force=True)
     db_tools.add_keyword(
         'real estate', 'data_domain', 'industrial data', 'Real estate.')
     db_tools.add_keyword(
@@ -99,6 +102,8 @@ def test_add_keywords():
     db_tools.add_keyword(
         'classification', 'data_science_theme', None, 'Classification.')
     db_tools.add_problem_keyword('iris', 'classification')
+    db_tools.add_problem_keyword('iris', 'classification')
+    db_tools.add_problem_keyword('iris', 'classification', force=True)
     db_tools.add_problem_keyword('iris', 'botany')
     db_tools.add_problem_keyword('boston_housing', 'regression')
     db_tools.add_problem_keyword('boston_housing', 'real estate')
