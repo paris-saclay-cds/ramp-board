@@ -15,7 +15,7 @@ from sklearn.utils.validation import assert_all_finite
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
-from . import app, db, ramp_config, ramp_data_path, ramp_kits_path
+from . import app, db, ramp_config, ramp_kits_path
 from .model import (CVFold, DetachedSubmissionOnCVFold,
                     DuplicateSubmissionError, Event, EventAdmin,
                     EventScoreType, EventTeam, Extension, Keyword,
@@ -208,7 +208,6 @@ def add_workflow(workflow_object):
 def add_problem(problem_name, force=False, with_download=False):
     """Adding a new RAMP problem."""
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
-    problem_data_path = os.path.join(ramp_data_path, problem_name)
     problem_kits_path = os.path.join(ramp_kits_path, problem_name)
     if problem is not None:
         if force:
@@ -264,20 +263,6 @@ def delete_submission_similarity(submissions):
     db.session.commit()
 
 
-# XXX probably deprecated
-def _set_table_attribute(table, attr):
-    """Setting attributes from config file.
-
-    Assumes that table has a module field that imports the config file.
-    If attr is not specified in the file, revert to default.
-    """
-    try:
-        value = getattr(table.module, attr)
-    except AttributeError:
-        return
-    setattr(table, attr, value)
-
-
 def add_event(problem_name, event_name, event_title, is_public=False,
               force=False):
     """Adding a new RAMP event.
@@ -290,7 +275,12 @@ def add_event(problem_name, event_name, event_title, is_public=False,
     event = Event.query.filter_by(name=event_name).one_or_none()
     if event is not None:
         if force:
-            delete_event(event)
+            delete_event(event_name)
+        else:
+            logger.info(
+                'Attempting to delete event, ' +
+                'use "force=True" if you know what you are doing.')
+            return
     event = Event(
         name=event_name, problem_name=problem_name, event_title=event_title)
     event.is_public = is_public
@@ -488,7 +478,8 @@ def sign_up_team(event_name, team_name):
         ramp_kits_path, event.problem.name, ramp_config['submissions_dir'],
         ramp_config['sandbox_dir'])
     make_submission_and_copy_files(
-        event_name, team_name, ramp_config['sandbox_dir'], from_submission_path)
+        event_name, team_name, ramp_config['sandbox_dir'],
+        from_submission_path)
     for user in get_team_members(team):
         send_mail(
             to=user.email,

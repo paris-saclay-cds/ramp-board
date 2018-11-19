@@ -56,8 +56,16 @@ def _add_problem_and_event(problem_name, test_user_name):
 
     db_tools.add_problem(
         problem_name, force=True)
+    db_tools.add_problem(
+        problem_name)
+    db_tools.add_problem(
+        problem_name, force=True)
     event_name = '{}_test'.format(problem_name)
     event_title = 'test event'
+    db_tools.add_event(
+        problem_name, event_name, event_title, is_public=True, force=True)
+    db_tools.add_event(
+        problem_name, event_name, event_title, is_public=True)
     db_tools.add_event(
         problem_name, event_name, event_title, is_public=True, force=True)
     db_tools.sign_up_team(event_name, test_user_name)
