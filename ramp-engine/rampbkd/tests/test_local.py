@@ -15,7 +15,13 @@ def test_local_engine():
                          ramp_data_dir=ramp_data_dir,
                          ramp_kit_dir=ramp_kit_dir)
     try:
-        engine.run_submission()
+        engine.setup()
+        engine.launch_submission()
+        # engine.launch_submission()
+        while engine.collect_submission() is None:
+            pass
+        print(engine.collect_submission())
+        engine.teardown()
     finally:
         output_training = os.path.join(ramp_kit_dir, 'submissions',
                                        'starting_kit', 'training_output')
@@ -32,4 +38,4 @@ def test_local_engine_unknown_env():
                          ramp_kit_dir=ramp_kit_dir)
     msg_err = "The specified conda environment xxx does not exist."
     with pytest.raises(ValueError, match=msg_err):
-        engine.run_submission()
+        engine.setup()

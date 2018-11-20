@@ -46,11 +46,19 @@ class BaseEngine(metaclass=ABCMeta):
     def setup(self):
         self._find_conda_environment()
 
-    def run_submission(self):
-        self.setup()
-        cmd_ramp = os.path.join(self._python_bin_path, 'ramp_test_submission')
-        subprocess.call([cmd_ramp,
-                         '--submission', self.submission,
-                         '--ramp_kit_dir', self.ramp_kit_dir,
-                         '--ramp_data_dir', self.ramp_data_dir,
-                         '--save-y-preds'])
+    @abstractmethod
+    def teardown(self):
+        pass
+
+    @property
+    @abstractmethod
+    def status(self):
+        pass
+
+    @abstractmethod
+    def launch_submission(self):
+        pass
+
+    @abstractmethod
+    def collect_submission(self):
+        pass
