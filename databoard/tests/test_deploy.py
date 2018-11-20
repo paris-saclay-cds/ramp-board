@@ -98,6 +98,8 @@ def test_add_problem_and_event():
     db_tools.compute_contributivity('iris_test')
     db_tools.update_leaderboards('iris_test')
     db_tools.update_user_leaderboards('iris_test', 'test_user')
+    db_tools.set_n_submissions()
+    db_tools.set_n_submissions('boston_housing_test')
 
 
 def test_make_event_admin():
