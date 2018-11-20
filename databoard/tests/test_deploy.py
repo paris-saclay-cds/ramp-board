@@ -93,7 +93,11 @@ def test_add_problem_and_event():
         'boston_housing_test', 'test_user', 'random_forest_100')
     db_tools.compute_contributivity('boston_housing_test')
     db_tools.update_leaderboards('boston_housing_test')
-    db_tools.update_leaderboards('boston_housing_test')
+    db_tools.update_user_leaderboards('boston_housing_test', 'test_user')
+    db_tools.delete_submission('iris_test', 'test_user', 'starting_kit_test')
+    db_tools.compute_contributivity('iris_test')
+    db_tools.update_leaderboards('iris_test')
+    db_tools.update_user_leaderboards('iris_test', 'test_user')
 
 
 def test_make_event_admin():
