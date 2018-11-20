@@ -15,18 +15,14 @@ class LocalEngine(BaseEngine):
                                 ramp_data_dir=ramp_data_dir)
 
     def setup(self):
+        self.status = 'setup'
         return super().setup()
 
     def teardown(self):
         return super().teardown()
 
-    @property
-    def status(self):
-        if not hasattr(self, "_process_submission"):
-            return 'no process'
-        if self._process_submission.poll() is None:
-            return 'running'
-        return 'finished'
+    def _is_training_finished(self):
+        return False if self._process_submission.poll() is None else True
 
     def launch_submission(self):
         cmd_ramp = os.path.join(self._python_bin_path,
@@ -43,12 +39,13 @@ class LocalEngine(BaseEngine):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
         )
+        self.status = 'running'
 
     def collect_submission(self):
-        if self.status == 'no process':
-            raise ValueError('Launch a submission!!!')
         if self.status == 'finished':
             if self._process_submission.pid not in self._log:
                 log, _ = self._process_submission.communicate()
                 self._log[self._process_submission.pid] = log
+                self.logger.error('The training of the submission "{}" failed.'
+                                  .format(self.submission))
             return self._log[self._process_submission.pid]

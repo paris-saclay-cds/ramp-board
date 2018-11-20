@@ -1,18 +1,35 @@
 import json
+import logging
 import os
 import subprocess
+import sys
 from abc import ABCMeta, abstractmethod
 
 from rampwf.utils.testing import assert_submission
 
 
+def _create_default_stdout_logger():
+    logger = logging.getLogger('ramp_aws_engine')
+    logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
+
+
 class BaseEngine(metaclass=ABCMeta):
     def __init__(self, conda_env='base', submission='starting_kit',
-                 ramp_kit_dir='.', ramp_data_dir='.'):
+                 ramp_kit_dir='.', ramp_data_dir='.', logger=None):
         self.conda_env = conda_env
         self.submission = submission
         self.ramp_kit_dir = ramp_data_dir
         self.ramp_data_dir = ramp_data_dir
+        self.logger = (_create_default_stdout_logger()
+                       if logger is None else logger)
+        self._status = 'initialized'
 
     def _find_conda_environment(self):
         command_line_process = subprocess.Popen(
@@ -50,10 +67,21 @@ class BaseEngine(metaclass=ABCMeta):
     def teardown(self):
         pass
 
-    @property
     @abstractmethod
-    def status(self):
+    def _is_training_finished(self):
         pass
+
+    @property
+    def status(self):
+        status = self._status
+        if status == 'running':
+            if self._is_training_finished():
+                self._status = 'finished'
+        return status
+
+    @status.setter
+    def status(self, status):
+        self._status = status
 
     @abstractmethod
     def launch_submission(self):
