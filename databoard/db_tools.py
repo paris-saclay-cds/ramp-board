@@ -439,12 +439,6 @@ def update_user(user, form):
             raise e
 
 
-def validate_user(user):
-    # from 'asked' to 'user'
-    user.access_level = 'user'
-    user.is_authenticated = True
-
-
 def get_sandbox(event, user):
     event_team = get_active_user_event_team(event, user)
 

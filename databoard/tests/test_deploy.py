@@ -17,7 +17,8 @@ def test_add_users():
     db_tools.create_user(
         name='test_user', password='test',
         lastname='Test', firstname='User',
-        email='test.user@gmail.com', access_level='user')
+        email='test.user@gmail.com', access_level='asked')
+    db_tools.approve_user('test_user')
     db_tools.create_user(
         name='test_iris_admin', password='test',
         lastname='Admin', firstname='Iris',
@@ -74,6 +75,10 @@ def _add_problem_and_event(problem_name, test_user_name):
     submissions = db_tools.get_submissions(event_name, test_user_name)
     db_tools.train_test_submissions(
         submissions, force_retrain_test=True, is_parallelize=False)
+    db_tools.set_state(event_name, test_user_name, 'starting_kit_test', 'new')
+    db_tools.train_test_submissions(
+        submissions, force_retrain_test=True, is_parallelize=False)
+
     db_tools.compute_contributivity(event_name)
     db_tools.update_leaderboards(event_name)
     db_tools.update_user_leaderboards(event_name, test_user_name)
