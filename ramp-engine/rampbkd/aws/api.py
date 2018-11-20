@@ -49,7 +49,7 @@ for name, l in logging.Logger.manager.loggerDict.items():
 logging.basicConfig(
     #format='%(asctime)s ## %(message)s',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO,
+    level=logging.DEBUG,
     datefmt='%m/%d/%Y,%I:%M:%S')
 logger = logging.getLogger('ramp_aws')
 
@@ -348,6 +348,9 @@ def _wait_until_train_finished(config, instance_id, submission_id):
     secs = int(conf[CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD])
     while not _training_finished(config, instance_id, submission_id):
         time.sleep(secs)
+    logger.info('Training of submission "{}" is '
+                'finished on instance "{}".'.format(submission_id,
+                                                    instance_id))
 
 
 def launch_ec2_instances(config, nb=1):
@@ -512,7 +515,8 @@ def upload_submission(config, instance_id, submission_id):
     conf = config[AWS_CONFIG_SECTION]
     ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
     dest_folder = os.path.join(ramp_kit_folder, SUBMISSIONS_FOLDER)
-    submission_path = _get_submission_path(config, submission_id)
+    # submission_path = _get_submission_path(config, submission_id)
+    submission_path = submission_id
     return _upload(config, instance_id, submission_path, dest_folder)
 
 
@@ -738,7 +742,7 @@ def launch_train(config, instance_id, submission_id):
     conf = config[AWS_CONFIG_SECTION]
     ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
     submission_folder_name = _get_submission_folder_name(submission_id)
-    submission = get_submission_by_id(config, submission_id)
+    # submission = get_submission_by_id(config, submission_id)
     values = {
         'ramp_kit_folder': ramp_kit_folder,
         'submission': submission_folder_name,
@@ -765,8 +769,8 @@ def launch_train(config, instance_id, submission_id):
     )
     cmd = cmd.format(**values)
     # tag the ec2 instance with info about submission
-    _tag_instance_by_submission(config, instance_id, submission)
-    label = _get_submission_label(submission)
+    _tag_instance_by_submission(config, instance_id, submission_folder_name)
+    label = submission_folder_name  #_get_submission_label(submission)
     logger.info('Launch training of {}..'.format(label))
     return _run(config, instance_id, cmd)
 
@@ -791,7 +795,8 @@ def abort_training(config, instance_id, submission_id):
 
 
 def _get_submission_folder_name(submission_id):
-    return 'submission_{:09d}'.format(submission_id)
+    return os.path.split(submission_id)[1]
+    #return 'submission_{:09d}'.format(submission_id)
 
 
 def _get_submission_path(config, submission_id):
@@ -1011,9 +1016,9 @@ def _training_successful(config, instance_id, submission_id):
 
     cmd = "find {}|egrep 'fold.*/y_pred_test.npz'|wc -l".format(folder)
     nb_test_files = int(_run(config, instance_id, cmd, return_output=True))
-    submission = get_submission_by_id(config, submission_id)
-    actual_nb_folds = get_event_nb_folds(config, submission.event.name)
-    return nb_folds == nb_train_files == nb_test_files == actual_nb_folds
+    # submission = get_submission_by_id(config, submission_id)
+    # actual_nb_folds = get_event_nb_folds(config, submission.event.name)
+    return nb_folds == nb_train_files == nb_test_files  # == actual_nb_folds
 
 
 def _folder_exists(config, instance_id, folder):
@@ -1041,11 +1046,12 @@ def _tag_instance_by_submission(config, instance_id, submission):
     Add tags to an instance with infos from the submission to know which
     submission is being trained on the instance.
     """
-    _add_or_update_tag(config, instance_id, 'submission_id', str(submission.id))
-    _add_or_update_tag(config, instance_id, 'submission_name', submission.name)
-    _add_or_update_tag(config, instance_id, 'event_name', submission.event.name)
-    _add_or_update_tag(config, instance_id, 'team_name', submission.team.name)
-    name = _get_submission_label(submission)
+    # _add_or_update_tag(config, instance_id, 'submission_id', str(submission.id))
+    # _add_or_update_tag(config, instance_id, 'submission_name', submission.name)
+    # _add_or_update_tag(config, instance_id, 'event_name', submission.event.name)
+    # _add_or_update_tag(config, instance_id, 'team_name', submission.team.name)
+    # name = _get_submission_label(submission)
+    name = submission
     _add_or_update_tag(config, instance_id, 'Name', name)
 
 
