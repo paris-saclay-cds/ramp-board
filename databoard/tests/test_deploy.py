@@ -89,6 +89,11 @@ def test_add_problem_and_event():
     _add_problem_and_event('iris', 'test_user')
     _add_problem_and_event('iris', 'test_user')
     _add_problem_and_event('boston_housing', 'test_user')
+    db_tools.exclude_from_ensemble(
+        'boston_housing', 'test_user', 'random_forest_100')
+    db_tools.compute_contributivity('boston_housing')
+    db_tools.update_leaderboards('boston_housing')
+    db_tools.update_leaderboards('boston_housing')
 
 
 def test_make_event_admin():
