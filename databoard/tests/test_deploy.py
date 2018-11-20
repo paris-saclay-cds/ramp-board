@@ -5,7 +5,8 @@ import os
 import databoard.db_tools as db_tools
 from databoard import ramp_data_path, ramp_kits_path
 from databoard.deploy import deploy
-from databoard.model import NameClashError, User, Event, Submission
+from databoard.model import (
+    NameClashError, User, Event, Submission, DuplicateSubmissionError)
 from databoard.config import sandbox_d_name
 
 
@@ -72,9 +73,15 @@ def _add_problem_and_event(problem_name, test_user_name):
         problem_name, event_name, event_title, is_public=True, force=True)
     db_tools.sign_up_team(event_name, test_user_name)
     db_tools.submit_starting_kit(event_name, test_user_name)
+    db_tools.submit_starting_kit(event_name, test_user_name)
     submissions = db_tools.get_submissions(event_name, test_user_name)
     db_tools.train_test_submissions(
         submissions, force_retrain_test=True, is_parallelize=False)
+    try:
+        db_tools.submit_starting_kit(event_name, test_user_name)
+    except DuplicateSubmissionError as e:
+        assert e.value == 'of team "{}" at event "{}" exists already'.format(
+            test_user_name, '{}_test'.format(problem_name))
     db_tools.set_state(event_name, test_user_name, 'starting_kit_test', 'new')
     db_tools.train_test_submissions(
         submissions, force_retrain_test=True, is_parallelize=False)
