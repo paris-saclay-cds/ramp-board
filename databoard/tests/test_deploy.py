@@ -5,7 +5,7 @@ import os
 import databoard.db_tools as db_tools
 from databoard import ramp_data_path, ramp_kits_path
 from databoard.deploy import deploy
-from databoard.model import NameClashError, User, Event
+from databoard.model import NameClashError, User, Event, Submission
 from databoard.config import sandbox_d_name
 
 
@@ -94,12 +94,27 @@ def test_add_problem_and_event():
     db_tools.compute_contributivity('boston_housing_test')
     db_tools.update_leaderboards('boston_housing_test')
     db_tools.update_user_leaderboards('boston_housing_test', 'test_user')
+    db_tools.update_all_user_leaderboards('boston_housing_test')
+    db_tools.update_all_user_leaderboards('iris_test')
     db_tools.delete_submission('iris_test', 'test_user', 'starting_kit_test')
     db_tools.compute_contributivity('iris_test')
     db_tools.update_leaderboards('iris_test')
     db_tools.update_user_leaderboards('iris_test', 'test_user')
     db_tools.set_n_submissions()
     db_tools.set_n_submissions('boston_housing_test')
+
+
+def test_is_dot_dot_dot():
+    event = Event.query.filter_by(name='boston_housing_test').one()
+    user = User.query.filter_by(name='test_user').one()
+    submission = Submission.query.filter_by(name='starting_kit_test').one()
+    assert db_tools.is_user_signed_up('boston_housing_test', 'test_user')
+    assert not db_tools.is_user_asked_sign_up(
+        'boston_housing_test', 'test_user')
+    assert not db_tools.is_admin(event, user)
+    assert db_tools.is_public_event(event, user)
+    assert db_tools.is_open_leaderboard(event, user)
+    assert db_tools.is_open_code(event, user, submission)
 
 
 def test_make_event_admin():
