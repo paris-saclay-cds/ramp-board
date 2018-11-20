@@ -1,115 +1,39 @@
-import os
+import datetime
 import imp
+import logging
+import os
+import shutil
 import time
 import timeit
-import shutil
-import logging
-import datetime
 
-import bcrypt
-import smtplib
 import numpy as np
 import pandas as pd
-
 # temporary fix for importing torch before sklearn
 # import torch  # noqa
 from sklearn.externals.joblib import Parallel, delayed
-from databoard import db
 from sklearn.utils.validation import assert_all_finite
-from subprocess import call
-
-from databoard.model import User, Team, Submission, SubmissionFile,\
-    SubmissionFileType, SubmissionFileTypeExtension, WorkflowElementType,\
-    WorkflowElement, Workflow, Extension, Problem, Event, EventTeam,\
-    EventScoreType, SubmissionSimilarity,\
-    CVFold, SubmissionOnCVFold, DetachedSubmissionOnCVFold,\
-    UserInteraction, EventAdmin,\
-    NameClashError, TooEarlySubmissionError,\
-    DuplicateSubmissionError, MissingSubmissionFileError,\
-    MissingExtensionError, Keyword, ProblemKeyword,\
-    combine_predictions_list, get_next_best_single_fold,\
-    get_active_user_event_team,\
-    get_team_members, get_user_event_teams
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
-import databoard.config as config
+from . import app, db, ramp_config, ramp_data_path, ramp_kits_path
+from .model import (CVFold, DetachedSubmissionOnCVFold,
+                    DuplicateSubmissionError, Event, EventAdmin,
+                    EventScoreType, EventTeam, Extension, Keyword,
+                    MissingExtensionError, MissingSubmissionFileError,
+                    NameClashError, Problem, ProblemKeyword, Submission,
+                    SubmissionFile, SubmissionFileType,
+                    SubmissionFileTypeExtension, SubmissionOnCVFold,
+                    SubmissionSimilarity, Team, TooEarlySubmissionError, User,
+                    UserInteraction, Workflow, WorkflowElement,
+                    WorkflowElementType, _get_score_cv_bags,
+                    combine_predictions_list, get_active_user_event_team,
+                    get_next_best_single_fold, get_team_members,
+                    get_user_event_teams)
+from .utils import (date_time_format, get_hashed_password, remove_non_ascii,
+                    send_mail, table_format)
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
-
-
-def remove_non_ascii(text):
-    from unidecode import unidecode
-    return unicode(unidecode(unicode(text, encoding='utf-8')), 'utf-8')
-
-
-def date_time_format(date_time):
-    return date_time.strftime('%Y-%m-%d %H:%M:%S %a')
-
-
-def table_format(table_html):
-    """Remove <table></table> keywords from html table.
-
-    (converted from pandas dataframe), to insert in datatable.
-    """
-    # return '<thead> %s </tbody><tfoot><tr></tr></tfoot>' %\
-    return '<thead> %s </tbody>' %\
-        table_html.split('<thead>')[1].split('</tbody>')[0]
-
-
-def get_hashed_password(plain_text_password):
-    """Hash a password for the first time.
-
-    (Using bcrypt, the salt is saved into the hash itself)
-    """
-    return bcrypt.hashpw(plain_text_password.encode('utf8'), bcrypt.gensalt())
-
-
-def check_password(plain_text_password, hashed_password):
-    """Check hased password.
-
-    Using bcrypt, the salt is saved into the hash itself.
-    """
-    return bcrypt.checkpw(
-        plain_text_password.encode('utf8'), hashed_password.encode('utf8'))
-
-
-def generate_single_password(mywords=None):
-    import xkcdpass.xkcd_password as xp
-    if mywords is None:
-        words = xp.locate_wordfile()
-        mywords = xp.generate_wordlist(
-            wordfile=words, min_length=4, max_length=6)
-    return xp.generate_xkcdpassword(mywords, numwords=4)
-
-
-def generate_passwords(users_to_add_f_name, password_f_name):
-    import xkcdpass.xkcd_password as xp
-    users_to_add = pd.read_csv(users_to_add_f_name)
-    words = xp.locate_wordfile()
-    mywords = xp.generate_wordlist(wordfile=words, min_length=4, max_length=6)
-    users_to_add['password'] = [
-        generate_single_password(mywords) for name in users_to_add['name']]
-    # temporarily while we don't implement pwd recovery
-    users_to_add[['name', 'password']].to_csv(password_f_name, index=False)
-
-
-def send_mail(to, subject, body):
-    try:
-        logger.info('Sending "{}" mail to {}'.format(subject, to))
-        sender_user = config.MAIL_USERNAME
-        sender_pwd = config.MAIL_PASSWORD
-        smtpserver = smtplib.SMTP(config.MAIL_SERVER, config.MAIL_PORT)
-        smtpserver.ehlo()
-        smtpserver.starttls()
-        smtpserver.ehlo
-        smtpserver.login(sender_user, sender_pwd)
-        header = 'To: {}\nFrom: RAMP admin <{}>\nSubject: {}\n\n'.format(
-            to, sender_user, subject.encode('utf-8'))
-        smtpserver.sendmail(sender_user, to, header + body)
-    except Exception as e:
-        logger.error('Mailing error: {}'.format(e))
 
 
 def send_password_mail(user_name, password):
@@ -282,41 +206,18 @@ def add_workflow(workflow_object):
 
 
 def add_problem(problem_name, force=False, with_download=False):
-    """Adding a new RAMP problem.
-
-    Problem file should be set up in
-    databoard/specific/problems/<problem_name>. Should be preceded by adding
-    a workflow, then workflow_name specified in the event file (workflow_name
-    is acting as a pointer for the join). Also prepares the data.
-    """
+    """Adding a new RAMP problem."""
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
-    problem_data_path = os.path.join(config.ramp_data_path, problem_name)
-    problem_kits_path = os.path.join(config.ramp_kits_path, problem_name)
+    problem_data_path = os.path.join(ramp_data_path, problem_name)
+    problem_kits_path = os.path.join(ramp_kits_path, problem_name)
     if problem is not None:
         if force:
-            delete_problem(problem)
-            if with_download:
-                os.system('rm -rf {}'.format(problem_data_path))
-                os.system('rm -rf {}'.format(problem_kits_path))
+            delete_problem(problem_name)
         else:
             logger.info(
                 'Attempting to delete problem and all linked events, ' +
                 'use "force=True" if you know what you are doing.')
             return
-    if with_download:
-        os.system('git clone https://github.com/ramp-data/{}.git {}'.format(
-            problem_name, problem_data_path))
-        os.system('git clone https://github.com/ramp-kits/{}.git {}'.format(
-            problem_name, problem_kits_path))
-        os.chdir(problem_data_path)
-        logger.info('Preparing {} data...'.format(problem_name))
-        os.system('python prepare_data.py')
-        os.chdir(problem_kits_path)
-        os.system('jupyter nbconvert --to html {}_starting_kit.ipynb'.format(
-            problem_name))
-        # optional data download
-        if os.path.isfile('download_data.py'):
-            call("python download_data.py", shell=True)
 
     # XXX it's a bit ugly that we need to load the module here
     # perhaps if we can get rid of the workflow db table completely
@@ -331,17 +232,19 @@ def add_problem(problem_name, force=False, with_download=False):
 
 # these could go into a delete callback in problem and event, I just don't know
 # how to do that.
-def delete_problem(problem):
+def delete_problem(problem_name):
+    problem = Problem.query.filter_by(name=problem_name).one()
     for event in problem.events:
-        delete_event(problem)
+        delete_event(event.name)
     db.session.delete(problem)
     db.session.commit()
 
 
 # the main reason having this is that I couldn't make a cascade delete in
 # SubmissionSimilarity since it has two submission parents
-def delete_event(event):
-    submissions = get_submissions(event_name=event.name)
+def delete_event(event_name):
+    event = Event.query.filter_by(name=event_name).one()
+    submissions = get_submissions(event_name=event_name)
     delete_submission_similarity(submissions)
     db.session.delete(event)
     db.session.commit()
@@ -582,10 +485,10 @@ def sign_up_team(event_name, team_name):
             event=event, team=team).one_or_none()
     # submitting the starting kit for team
     from_submission_path = os.path.join(
-        config.ramp_kits_path, event.problem.name, config.submissions_d_name,
-        config.sandbox_d_name)
+        ramp_kits_path, event.problem.name, ramp_config['submissions_dir'],
+        ramp_config['sandbox_dir'])
     make_submission_and_copy_files(
-        event_name, team_name, config.sandbox_d_name, from_submission_path)
+        event_name, team_name, ramp_config['sandbox_dir'], from_submission_path)
     for user in get_team_members(team):
         send_mail(
             to=user.email,
@@ -600,14 +503,18 @@ def submit_starting_kit(event_name, team_name):
     """Submit all starting kits in ramp_kits_path/ramp_name/submissions."""
     event = Event.query.filter_by(name=event_name).one()
     submission_path = os.path.join(
-        config.ramp_kits_path, event.problem.name, config.submissions_d_name)
+        ramp_kits_path, event.problem.name, ramp_config['submissions_dir'])
     submission_names = os.listdir(submission_path)
+    min_duration_between_submissions = event.min_duration_between_submissions
+    event.min_duration_between_submissions = 0
     for submission_name in submission_names:
         from_submission_path = os.path.join(submission_path, submission_name)
-        if submission_name == config.sandbox_d_name:
-            submission_name = config.sandbox_d_name + '_test'
+        if submission_name == ramp_config['sandbox_dir']:
+            submission_name = ramp_config['sandbox_dir'] + '_test'
         make_submission_and_copy_files(
             event_name, team_name, submission_name, from_submission_path)
+    event.min_duration_between_submissions = min_duration_between_submissions
+    db.session.commit()
 
 
 def approve_user(user_name):
@@ -847,7 +754,7 @@ def send_submission_mails(user, submission, event_team):
     #  later can be joined to the ramp admins
     event = event_team.event
     team = event_team.team
-    recipient_list = config.ADMIN_MAILS[:]
+    recipient_list = app.config.get('RAMP_ADMIN_MAILS')
     event_admins = EventAdmin.query.filter_by(event=event)
     recipient_list += [event_admin.admin.email for event_admin in event_admins]
 
@@ -863,7 +770,7 @@ def send_submission_mails(user, submission, event_team):
 
 def send_ask_for_event_mails(user, event, n_students):
     #  later can be joined to the ramp admins
-    recipient_list = config.ADMIN_MAILS[:]
+    recipient_list = app.config.get('RAMP_ADMIN_MAILS')
 
     subject = '{} is asking for an event on {}'.format(
         user.name.encode('utf-8'), event.problem.name)
@@ -904,7 +811,7 @@ def _user_mail_body(user):
 
 def send_sign_up_request_mail(event, user):
     team = Team.query.filter_by(name=user.name).one()
-    recipient_list = config.ADMIN_MAILS[:]
+    recipient_list = app.config.get('RAMP_ADMIN_MAILS')
     event_admins = EventAdmin.query.filter_by(event=event)
     recipient_list += [event_admin.admin.email for event_admin in event_admins]
 
@@ -921,7 +828,7 @@ def send_sign_up_request_mail(event, user):
 
 
 def send_register_request_mail(user):
-    recipient_list = config.ADMIN_MAILS[:]
+    recipient_list = app.config.get('RAMP_ADMIN_MAILS')
     subject = 'fab approve_user:u="{}"'.format(user.name)
     body = _user_mail_body(user)
     url_approve = 'http://www.ramp.studio/sign_up/{}'.format(
@@ -993,7 +900,7 @@ def backend_train_test_loop(event_name=None, timeout=20,
                             is_compute_contributivity=True,
                             is_parallelize=None):
     if is_parallelize is not None:
-        config.is_parallelize = is_parallelize
+        app.config.update({'RAMP_PARALLELIZE': is_parallelize})
     event_names = set()
     while(True):
         earliest_new_submission = get_earliest_new_submission(event_name)
@@ -1023,7 +930,7 @@ def train_test_submissions(submissions=None, force_retrain_test=False,
     If submissions is None, trains and tests all submissions.
     """
     if is_parallelize is not None:
-        config.is_parallelize = is_parallelize
+        app.config.update({'RAMP_PARALLELIZE': is_parallelize})
     if submissions is None:
         submissions = Submission.query.filter(
             Submission.is_not_sandbox).order_by(Submission.id).all()
@@ -1052,7 +959,7 @@ def train_test_submission(submission, force_retrain_test=False):
     db.session.commit()
 
     # Parallel, dict
-    if config.is_parallelize:
+    if app.config.get('RAMP_PARALLELIZE'):
         # We are using 'threading' so train_test_submission_on_cv_fold
         # updates the detached submission_on_cv_fold objects. If it doesn't
         # work, we can go back to multiprocessing and
@@ -1346,7 +1253,6 @@ def compute_contributivity_no_commit(
         test_is_list.append(cv_fold.test_is)
     for submission in submissions:
         submission.set_contributivity(is_commit=False)
-    from model import _get_score_cv_bags
     # if there are no predictions to combine, it crashed
     combined_predictions_list = [c for c in combined_predictions_list
                                  if c is not None]
@@ -1997,7 +1903,7 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
     submissions = get_submissions(
         event_name=event_name, team_name=team_name, user_name=user_name)
     submissions = [submission for submission in submissions
-                   if submission.state in 
+                   if submission.state in
                    ['new', 'training', 'sent_to_training'] and
                    submission.is_not_sandbox]
 
@@ -2008,7 +1914,8 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
         {column: value for column, value in zip(
             columns, [submission.event_team.team.name,
                       submission.name_with_link,
-                      date_time_format(submission.submission_timestamp)])}
+                      date_time_format(
+                          submission.submission_timestamp)])}
         for submission in submissions
     ]
     leaderboard_df = pd.DataFrame(leaderboard_dict_list, columns=columns)
@@ -2041,7 +1948,7 @@ def get_submissions(event_name=None, team_name=None, user_name=None,
                     Event.id == EventTeam.event_id).filter(
                     EventTeam.id == Submission.event_team_id).all()
                 if submissions_:
-                    submissions = list(zip(*submissions_)[0])
+                    submissions = [s for (s, e, et) in submissions_]
                 else:
                     submissions = []
             else:
@@ -2073,7 +1980,7 @@ def get_submissions(event_name=None, team_name=None, user_name=None,
                     Team.id == EventTeam.team_id).filter(
                     EventTeam.id == Submission.event_team_id).all()
             if submissions_:
-                submissions = list(zip(*submissions_)[0])
+                submissions = [s for (s, e, t, et) in submissions_]
             else:
                 submissions = []
     return submissions
@@ -2091,45 +1998,45 @@ def set_error(team_name, submission_name, error, error_msg):
     db.session.commit()
 
 
-def get_top_score_of_user(user, closing_timestamp):
-    """Find the best test score of user before closing timestamp.
+# def get_top_score_of_user(user, closing_timestamp):
+#     """Find the best test score of user before closing timestamp.
 
-    Returns
-    -------
-    best_test_score : The bagged test score of the submission with the best
-    bagged valid score, from among all the submissions of the user, before
-    closing_timestamp.
-    """
-    # team = get_active_user_team(user)
-    # XXX this will not work if we allow team mergers
-    team = Team.query.filter_by(name=user.name).one()
-    submissions = Submission.query.filter_by(team=team).filter(
-        Submission.is_private_leaderboard).all()
-    best_valid_score = config.config_object.specific.score.worst
-    best_test_score = config.config_object.specific.score.worst
-    for submission in submissions:
-        if submission.valid_score_cv_bag > best_valid_score:
-            best_valid_score = submission.valid_score_cv_bag
-            best_test_score = submission.test_score_cv_bag
-    return best_test_score
+#     Returns
+#     -------
+#     best_test_score : The bagged test score of the submission with the best
+#     bagged valid score, from among all the submissions of the user, before
+#     closing_timestamp.
+#     """
+#     # team = get_active_user_team(user)
+#     # XXX this will not work if we allow team mergers
+#     team = Team.query.filter_by(name=user.name).one()
+#     submissions = Submission.query.filter_by(team=team).filter(
+#         Submission.is_private_leaderboard).all()
+#     best_valid_score = config.config_object.specific.score.worst
+#     best_test_score = config.config_object.specific.score.worst
+#     for submission in submissions:
+#         if submission.valid_score_cv_bag > best_valid_score:
+#             best_valid_score = submission.valid_score_cv_bag
+#             best_test_score = submission.test_score_cv_bag
+#     return best_test_score
 
 
-def get_top_score_per_user(closing_timestamp=None):
-    if closing_timestamp is None:
-        closing_timestamp = datetime.datetime.utcnow()
-    users = db.session.query(User).all()
-    columns = ['name',
-               'score']
-    top_score_per_user_dict = [
-        {column: value for column, value in zip(
-            columns, [
-                user.name, get_top_score_of_user(user, closing_timestamp)])}
-        for user in users
-    ]
-    top_score_per_user_dict_df = pd.DataFrame(
-        top_score_per_user_dict, columns=columns)
-    top_score_per_user_dict_df = top_score_per_user_dict_df.sort_values('name')
-    return top_score_per_user_dict_df
+# def get_top_score_per_user(closing_timestamp=None):
+#     if closing_timestamp is None:
+#         closing_timestamp = datetime.datetime.utcnow()
+#     users = db.session.query(User).all()
+#     columns = ['name',
+#                'score']
+#     top_score_per_user_dict = [
+#         {column: value for column, value in zip(
+#             columns, [
+#                 user.name, get_top_score_of_user(user, closing_timestamp)])}
+#         for user in users
+#     ]
+#     top_score_per_user_dict_df = pd.DataFrame(
+#         top_score_per_user_dict, columns=columns)
+#     top_score_per_user_dict_df = top_score_per_user_dict_df.sort_values('name')
+#     return top_score_per_user_dict_df
 
 
 def add_user_interaction(**kwargs):
