@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 
+from ..base import BaseWorker
 from . import api as aws
 
 
@@ -9,18 +10,16 @@ logger = logging.getLogger('ramp_aws_engine')
 logger.setLevel(logging.DEBUG)
 
 
-class AWSEngine:
+class AWSWorker(BaseWorker):
+    """
+    Run RAMP submissions on Amazon.
 
-    def __init__(self, config, conda_env='base', submission='starting_kit',
-                 ramp_kit_dir='.', ramp_data_dir='.'):
-        self.config = config
-        self.conda_env = conda_env
-        self.submission = submission
-        self.ramp_kit_dir = ramp_kit_dir
-        self.ramp_data_dir = ramp_data_dir
+    """
+
+    def __init__(self, config, submission, ramp_kit_dir):
+        super(AWSWorker, self).__init__(config, submission)
         self.submission_path = os.path.join(
-            self.ramp_kit_dir, 'submissions', self.submission)
-        self.status = 'initialized'
+            ramp_kit_dir, 'submissions', self.submission)
 
     def setup(self):
         self.instance, = aws.launch_ec2_instances(self.config)
@@ -48,21 +47,11 @@ class AWSEngine:
             self.status = 'running'
         return exit_status
 
-    @property
-    def status(self):
-        status = self._status
-        if status == 'running':
-            if aws._training_finished(
-                    self.config, self.instance.id, self.submission_path):
-                status = 'finished'
-                self._status = status
-        return status
+    def _is_submission_finished(self):
+        return aws._training_finished(
+            self.config, self.instance.id, self.submission_path)
 
-    @status.setter
-    def status(self, status):
-        self._status = status
-
-    def collect_submission(self):
+    def collect_results(self):
         aws._wait_until_train_finished(
             self.config, self.instance.id, self.submission_path)
         self.status = 'finished'
@@ -71,8 +60,9 @@ class AWSEngine:
 
         if aws._training_successful(
                 self.config, self.instance.id, self.submission_path):
-            predictions_folder_path = aws.download_predictions(
+            _ = aws.download_predictions(
                 self.config, self.instance.id, self.submission_path)
+            self.status = 'collected'
         else:
             print("problem!")
 
