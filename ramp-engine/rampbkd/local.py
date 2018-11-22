@@ -69,12 +69,10 @@ class CondaEnvWorker(BaseWorker):
         )
         stdout, _ = proc.communicate()
         conda_info = json.loads(stdout)
-        print(conda_info)
 
         if env_name == 'base':
             self._python_bin_path = os.path.join(conda_info['envs'][0], 'bin')
         else:
-            print(conda_info['envs'])
             envs_path = conda_info['envs'][1:]
             if not envs_path:
                 raise ValueError('Only the conda base environment exist. You '
@@ -149,8 +147,8 @@ class CondaEnvWorker(BaseWorker):
                                    self.submission)
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
-            with open(os.path.join(log_dir, 'log'), 'w+') as f:
-                f.write(self._proc_log.decode("utf-8"))
+            with open(os.path.join(log_dir, 'log'), 'wb+') as f:
+                f.write(self._proc_log)
             # copy the predictions into the disk
             # no need to create the directory, it will be handle by copytree
             pred_dir = os.path.join(self.config['local_predictions_folder'],
@@ -160,6 +158,7 @@ class CondaEnvWorker(BaseWorker):
                                                'training_output')
             shutil.copytree(output_training_dir, pred_dir)
             self.status = 'collected'
-            return self._proc_log.decode("utf-8")
+            print(self._proc_log)
+            return self._proc_log
         elif self.status == 'collected':
-            return self._proc_log.decode("utf-8")
+            return self._proc_log

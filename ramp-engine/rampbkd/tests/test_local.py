@@ -33,7 +33,7 @@ def _remove_directory(worker):
     pred_dir = os.path.join(worker.config['local_predictions_folder'],
                             worker.submission)
     for directory in (output_training_dir,
-                      worker.config['local_log_folder'],
+                      # worker.config['local_log_folder'],
                       worker.config['local_predictions_folder']):
         if os.path.exists(directory):
             shutil.rmtree(directory)
