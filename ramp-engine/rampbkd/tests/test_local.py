@@ -43,9 +43,13 @@ def _remove_directory(worker):
 def test_conda_worker(submission, get_conda_worker):
     worker = get_conda_worker(submission)
     try:
+        assert worker.status == 'initialized'
         worker.setup()
+        assert worker.status == 'setup'
         worker.launch_submission()
+        assert worker.status == 'running'
         print(worker.collect_results())
+        assert worker.status == 'collected'
         worker.teardown()
         # check that teardown removed the predictions
         output_training_dir = os.path.join(worker.config['ramp_kit_dir'],
@@ -107,3 +111,14 @@ def test_conda_worker_error_soon_teardown(get_conda_worker):
     err_msg = 'Collect the results before to kill the worker.'
     with pytest.raises(ValueError, match=err_msg):
         worker.teardown()
+
+
+def test_conda_worker_error_soon_collection(get_conda_worker):
+    worker = get_conda_worker('starting_kit')
+    err_msg = r"Call the method setup\(\) and launch_submission\(\) before"
+    with pytest.raises(ValueError, match=err_msg):
+        worker.collect_results()
+    worker.setup()
+    err_msg = r"Call the method launch_submission\(\)"
+    with pytest.raises(ValueError, match=err_msg):
+        worker.collect_results()

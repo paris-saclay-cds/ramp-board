@@ -88,6 +88,7 @@ class CondaEnvWorker(BaseWorker):
                 raise ValueError('The specified conda environment {} does not '
                                  'exist. You need to create it.'
                                  .format(env_name))
+            super(CondaEnvWorker, self).setup()
 
     def teardown(self):
         """Remove the predictions stores within the submission."""
