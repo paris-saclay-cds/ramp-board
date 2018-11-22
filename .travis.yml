@@ -1,11 +1,10 @@
 language: python
 dist: trusty
 cache: pip
-branches:
-  only:
-  - master
 env:
   - PYTHON_VERSION=2.7
+  - PYTHON_VERSION=3.6
+  - PYTHON_VERSION=3.7
 services:
   - postgres
 before_install:
@@ -15,19 +14,19 @@ before_install:
     - export PATH=/home/travis/miniconda/bin:$PATH
     - conda update --yes --quiet conda
 install:
-    - conda create -n testenv --yes pip python=$PYTHON_VERSION ipykernel
-    - source activate testenv
+    - conda create -n ramp --yes pip python=$PYTHON_VERSION ipykernel
+    - source activate ramp
+    - pip install numpy  # temporary thing
     - pip install -r testing-requirements.txt
     - pip install git+https://github.com/paris-saclay-cds/ramp-workflow
-    - python setup.py develop
+    - pip install -e .
+    # install ramp-engine
+    - cd ramp-engine
+    - pip install -e .
+    - cd ..
 script:
-    - psql -U postgres -c "CREATE USER mrramp WITH PASSWORD 'mrramp';ALTER USER mrramp WITH SUPERUSER;"
-    - createdb --owner=mrramp databoard_test
-    - export DATABOARD_TEST=True
-    - export DATABOARD_DB_URL=postgresql://mrramp:mrramp@localhost/databoard_test
-    - export DATABOARD_DB_URL_TEST=postgresql://mrramp:mrramp@localhost/databoard_test
-    - cp databoard/config_local.py databoard/config.py
-    - make test
+    - bash ci_tools/travis/test_ramp_board.sh
+    - bash ci_tools/travis/test_ramp_engine.sh
 after_success:
     - make code-analysis
 notifications:
