@@ -69,10 +69,12 @@ class CondaEnvWorker(BaseWorker):
         )
         stdout, _ = proc.communicate()
         conda_info = json.loads(stdout)
+        print(conda_info)
 
         if env_name == 'base':
             self._python_bin_path = os.path.join(conda_info['envs'][0], 'bin')
         else:
+            print(conda_info['envs'])
             envs_path = conda_info['envs'][1:]
             if not envs_path:
                 raise ValueError('Only the conda base environment exist. You '
