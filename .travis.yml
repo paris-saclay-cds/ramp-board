@@ -15,13 +15,14 @@ before_install:
 install:
     - conda create -n ramp --yes pip python=$PYTHON_VERSION ipykernel
     - source activate ramp
-    - pip install numpy  # temporary thing
-    - pip install -r testing-requirements.txt
+    - conda install --yes numpy pyyaml sqlalchemy psycopg2-binary
+    - conda install --yes pandas scikit-learn flask six unidecode termcolor
+    - conda install --yes pytest pytest-cov jupyter gitpython psycopg2
+    - conda install --yes scikit-image bokeh matplotlib pycrypto
     - pip install git+https://github.com/paris-saclay-cds/ramp-workflow
     - pip install -e .
     # install ramp-engine
     - cd ramp-engine
-    - pip install -r requirements.txt
     - pip install -e .
     - cd ..
 script:
