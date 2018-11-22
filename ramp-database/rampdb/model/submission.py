@@ -789,7 +789,6 @@ class SubmissionOnCVFold(Model):
     UniqueConstraint(submission_id, cv_fold_id, name='sc_constraint')
 
     def __init__(self, submission, cv_fold):
-        self.session = session
         self.submission = submission
         self.cv_fold = cv_fold
         self.session = inspect(submission).session
