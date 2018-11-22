@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import URL
 
-import botocore # amazon api
+import botocore  # amazon api
 import boto3  # amazon api
 
 from rampbkd.model import Base

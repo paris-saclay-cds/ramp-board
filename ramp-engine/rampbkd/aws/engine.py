@@ -52,9 +52,13 @@ class AWSWorker(BaseWorker):
             self.config, self.instance.id, self.submission_path)
 
     def collect_results(self):
-        aws._wait_until_train_finished(
-            self.config, self.instance.id, self.submission_path)
-        self.status = 'finished'
+        if self.status == 'running':
+            aws._wait_until_train_finished(
+                self.config, self.instance.id, self.submission_path)
+            self.status = 'finished'
+        if self.status != 'finished':
+            raise ValueError("Cannot collect results if worker is not"
+                             "'running' or 'finished'")
 
         aws.download_log(self.config, self.instance.id, self.submission_path)
 
@@ -64,6 +68,7 @@ class AWSWorker(BaseWorker):
                 self.config, self.instance.id, self.submission_path)
             self.status = 'collected'
         else:
+            # TODO deal with failed training
             print("problem!")
 
     def teardown(self):
