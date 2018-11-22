@@ -44,7 +44,7 @@ class CondaEnvWorker(BaseWorker):
     @staticmethod
     def _check_config_name(config, param):
         if param not in config.keys():
-            raise ValueError("The worker required the parameter {} in the "
+            raise ValueError("The worker required the parameter '{}' in the "
                              "configuration given at instantiation. Only {}"
                              "parameters were given."
                              .format(param, config.keys()))
@@ -88,6 +88,16 @@ class CondaEnvWorker(BaseWorker):
                 raise ValueError('The specified conda environment {} does not '
                                  'exist. You need to create it.'
                                  .format(env_name))
+
+    def teardown(self):
+        """Remove the predictions stores within the submission."""
+        if self.status != 'collected':
+            raise ValueError("Collect the results before to kill the worker.")
+        output_training_dir = os.path.join(self.config['ramp_kit_dir'],
+                                           'submissions', self.submission,
+                                           'training_output')
+        if os.path.exists(output_training_dir):
+            shutil.rmtree(output_training_dir)
 
     def _is_submission_finished(self):
         """Status of the submission.
