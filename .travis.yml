@@ -16,6 +16,7 @@ before_install:
 install:
     - conda create -n ramp --yes pip python=$PYTHON_VERSION ipykernel
     - source activate ramp
+    - pip install numpy  # temporary thing
     - pip install -r testing-requirements.txt
     - pip install git+https://github.com/paris-saclay-cds/ramp-workflow
     - pip install -e .
