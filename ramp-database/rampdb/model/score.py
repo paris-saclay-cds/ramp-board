@@ -1,15 +1,10 @@
 from importlib import import_module
 
-from sqlalchemy import Enum
 from sqlalchemy import Float
 from sqlalchemy import Column
 from sqlalchemy import String
 from sqlalchemy import Integer
 from sqlalchemy import Boolean
-from sqlalchemy import DateTime
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import backref
-from sqlalchemy.orm import relationship
 
 from .base import Model
 

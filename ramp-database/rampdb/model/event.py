@@ -1,7 +1,6 @@
 import uuid
 import datetime
 
-from sqlalchemy import Enum
 from sqlalchemy import Float
 from sqlalchemy import Column
 from sqlalchemy import String
@@ -18,11 +17,11 @@ from .problem import Problem
 from .score import ScoreType
 
 __all__ = [
-    'Event', 
-    'EventTeam', 
-    'EventAdmin', 
+    'Event',
+    'EventTeam',
+    'EventAdmin',
     'EventScoreType',
-    ]
+]
 
 
 class Event(Model):

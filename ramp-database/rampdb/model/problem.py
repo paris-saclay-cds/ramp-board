@@ -1,13 +1,10 @@
 import os
 import imp
-import datetime
 
-from sqlalchemy import Enum
 from sqlalchemy import Float
 from sqlalchemy import Column
 from sqlalchemy import String
 from sqlalchemy import Integer
-from sqlalchemy import Boolean
 from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import backref
@@ -20,11 +17,11 @@ from .workflow import Workflow
 DEPLOYMENT_PATH = get_deployment_path()
 
 __all__ = [
-    'Problem', 
+    'Problem',
     'HistoricalContributivity',
     'Keyword',
     'ProblemKeyword',
-    ]
+]
 
 
 class Problem(Model):

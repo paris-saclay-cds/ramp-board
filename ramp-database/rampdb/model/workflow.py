@@ -11,7 +11,7 @@ __all__ = [
     'Workflow',
     'WorkflowElement',
     'WorkflowElementType',
-    ]
+]
 
 
 class WorkflowElementType(Model):
