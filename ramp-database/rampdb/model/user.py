@@ -13,12 +13,18 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
 from .base import Model
-from ..tools import get_active_user_event_team
+from .event import EventTeam
 
 __all__ = [
     'User',
     'UserInteraction',
 ]
+
+
+def get_active_user_event_team(event, user):
+    event_team = EventTeam.query.filter_by(
+        event=event, team=user.admined_teams[0]).one_or_none()
+    return event_team
 
 
 class User(Model):
