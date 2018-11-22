@@ -2,7 +2,6 @@ from .base import *
 from .user import *
 from .fold import *
 from .team import *
-from .tools import *
 from .score import *
 from .event import *
 from .error import *

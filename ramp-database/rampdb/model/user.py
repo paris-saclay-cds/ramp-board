@@ -12,14 +12,13 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
-from . import config
 from .base import Model
-from .tools import get_active_user_event_team
+from ..tools import get_active_user_event_team
 
 __all__ = [
     'User',
     'UserInteraction',
-    ]
+]
 
 
 class User(Model):
@@ -246,12 +245,12 @@ class UserInteraction(Model):
             repr += ';' + self.submission_file.id.__repr__()
         return repr
 
-    @property
-    def submission_file_diff_link(self):
-        if self.submission_file_diff is None:
-            return None
-        return os.path.join(
-            config.submissions_path, 'diff_bef24208a45043059', str(self.id))
+    # @property
+    # def submission_file_diff_link(self):
+    #     if self.submission_file_diff is None:
+    #         return None
+    #     return os.path.join(
+    #         config.submissions_path, 'diff_bef24208a45043059', str(self.id))
 
     @property
     def event(self):
