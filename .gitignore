@@ -21,3 +21,4 @@ old_stuff
 .coverage
 problems/*/old_submissions
 test_submissions/submission*
+.pytest_cache
