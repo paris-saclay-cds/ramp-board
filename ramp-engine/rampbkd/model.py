@@ -20,7 +20,7 @@ from sqlalchemy.orm import backref, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
 
-from . import config
+from .base import get_deployment_path
 
 __all__ = ['Base', 'NumpyType', 'User', 'Team', 'Problem', 'Submission',
            'Event', 'EventTeam']
@@ -243,7 +243,7 @@ class Problem(Base):
     @property
     def module(self):
         return imp.load_source(
-            '', os.path.join(config.get_deployment_path(),
+            '', os.path.join(get_deployment_path(),
                              'ramp-kits',
                              self.name,
                              'problem.py'))
@@ -257,13 +257,13 @@ class Problem(Base):
         return self.module.Predictions
 
     def get_train_data(self):
-        path = os.path.join(config.get_deployment_path(),
+        path = os.path.join(get_deployment_path(),
                             'ramp-data',
                             self.name)
         return self.module.get_train_data(path=path)
 
     def get_test_data(self):
-        path = os.path.join(config.get_deployment_path(),
+        path = os.path.join(get_deployment_path(),
                             'ramp-data',
                             self.name)
         return self.module.get_test_data(path=path)
@@ -1169,7 +1169,7 @@ class Submission(Base):
     @property
     def path(self):
         return os.path.join(
-            config.get_deployment_path(),
+            get_deployment_path(),
             'submissions',
             'submission_' + '{0:09d}'.format(self.id))
 

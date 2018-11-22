@@ -10,8 +10,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
-from .base import Model
-from .config import get_deployment_path
+from .base import Model, get_deployment_path
 from .workflow import Workflow
 
 DEPLOYMENT_PATH = get_deployment_path()

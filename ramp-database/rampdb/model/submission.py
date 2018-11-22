@@ -16,8 +16,7 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from . import config
-from .base import Model
+from .base import Model, get_deployment_path
 from .event import EventScoreType
 from .datatype import NumpyType
 
@@ -155,7 +154,7 @@ class Submission(Model):
 
     @hybrid_property
     def is_not_sandbox(self):
-        return self.name != config.SANDBOX_NAME
+        return self.name != os.getenv('RAMP_SANDBOX_DIR', 'starting_kit')
 
     @hybrid_property
     def is_error(self):
@@ -175,7 +174,7 @@ class Submission(Model):
     @property
     def path(self):
         return os.path.join(
-            config.get_deployment_path(),
+            get_deployment_path(),
             'submissions',
             'submission_' + '{0:09d}'.format(self.id))
 

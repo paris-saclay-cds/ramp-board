@@ -1,3 +1,4 @@
+import os
 from math import ceil
 
 from sqlalchemy import orm
@@ -130,3 +131,11 @@ def set_query_property(model_class, session):
     model_class.query = QueryProperty(session)
 
 
+def get_deployment_path():
+    server_type = os.getenv('RAMP_SERVER_TYPE', 'UNKNOWN')
+    if server_type.upper() in ['PROD', 'PRODUCTION']:
+        return os.getenv('DATABOARD_DEPLOYMENT_PATH', '.')
+    elif server_type.upper() in ['TEST', 'TESTING', 'DEV', 'DEVELOPMENT']:
+        return os.getenv('DATABOARD_DEPLOYMENT_PATH_TEST', '.')
+    else:
+        return '.'
