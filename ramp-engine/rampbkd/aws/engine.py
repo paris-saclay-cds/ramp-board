@@ -5,22 +5,14 @@ import sys
 from . import api as aws
 
 
-def _create_default_stdout_logger():
-    logger = logging.getLogger('ramp_aws_engine')
-    logger.setLevel(logging.DEBUG)
-
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    return logger
+logger = logging.getLogger('ramp_aws_engine')
+logger.setLevel(logging.DEBUG)
 
 
 class AWSEngine:
 
     def __init__(self, config, conda_env='base', submission='starting_kit',
-                 ramp_kit_dir='.', ramp_data_dir='.', logger=None):
+                 ramp_kit_dir='.', ramp_data_dir='.'):
         self.config = config
         self.conda_env = conda_env
         self.submission = submission
@@ -28,9 +20,6 @@ class AWSEngine:
         self.ramp_data_dir = ramp_data_dir
         self.submission_path = os.path.join(
             self.ramp_kit_dir, 'submissions', self.submission)
-        self.logger = logger
-        if self.logger is None:
-            self.logger = _create_default_stdout_logger()
         self.status = 'initialized'
 
     def setup(self):
@@ -38,11 +27,11 @@ class AWSEngine:
         exit_status = aws.upload_submission(
             self.config, self.instance.id, self.submission_path)
         if exit_status != 0:
-            self.logger.error(
+            logger.error(
                 'Cannot upload submission "{}"'
                 ', an error occured'.format(self.submission))
         else:
-            self.logger.info("Uploaded submission '{}'".format(self.submission))
+            logger.info("Uploaded submission '{}'".format(self.submission))
             self.status = 'setup'
 
     def launch_submission(self):
@@ -52,7 +41,7 @@ class AWSEngine:
         exit_status = aws.launch_train(
             self.config, self.instance.id, self.submission_path)
         if exit_status != 0:
-            self.logger.error(
+            logger.error(
                 'Cannot start training of submission "{}"'
                 ', an error occured.'.format(self.submission))
         else:

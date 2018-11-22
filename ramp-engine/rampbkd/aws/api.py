@@ -44,15 +44,15 @@ __all__ = [
 
 # we disable all the other loggers partly because loggers
 # from boto3 are too verbose
-for name, l in logging.Logger.manager.loggerDict.items():
-    l.disabled = True
-logging.basicConfig(
-    #format='%(asctime)s ## %(message)s',
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.DEBUG,
-    datefmt='%m/%d/%Y,%I:%M:%S')
+# for name, l in logging.Logger.manager.loggerDict.items():
+#     l.disabled = True
+# logging.basicConfig(
+#     #format='%(asctime)s ## %(message)s',
+#     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+#     level=logging.DEBUG,
+#     datefmt='%m/%d/%Y,%I:%M:%S')
 logger = logging.getLogger('ramp_aws')
-
+logger.setLevel(logging.DEBUG)
 
 # configuration fields
 AWS_CONFIG_SECTION = 'aws'
