@@ -17,8 +17,9 @@ install:
     - source activate ramp
     - conda install --yes numpy pyyaml sqlalchemy psycopg2-binary
     - conda install --yes pandas scikit-learn flask six unidecode termcolor
-    - conda install --yes pytest pytest-cov jupyter gitpython psycopg2
+    - conda install --yes pytest pytest-cov jupyter gitpython
     - conda install --yes scikit-image bokeh matplotlib pycrypto
+    - pip install psycopg2-binary
     - pip install git+https://github.com/paris-saclay-cds/ramp-workflow
     - pip install -e .
     # install ramp-engine
