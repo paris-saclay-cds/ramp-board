@@ -14,6 +14,11 @@ from .base import Model, get_deployment_path
 from .workflow import Workflow
 
 DEPLOYMENT_PATH = get_deployment_path()
+ramp_kits_path = os.path.join(
+    DEPLOYMENT_PATH, os.getenv('RAMP_KITS_DIR', 'ramp-kits'))
+ramp_data_path = os.path.join(
+    DEPLOYMENT_PATH, os.getenv('RAMP_DATA_DIR', 'ramp-data'))
+
 
 __all__ = [
     'Problem',
@@ -53,10 +58,7 @@ class Problem(Model):
     @property
     def module(self):
         return imp.load_source(
-            '', os.path.join(DEPLOYMENT_PATH,
-                             'ramp-kits',
-                             self.name,
-                             'problem.py'))
+            '', os.path.join(ramp_kits_path, self.name, 'problem.py'))
 
     @property
     def title(self):
@@ -67,15 +69,11 @@ class Problem(Model):
         return self.module.Predictions
 
     def get_train_data(self):
-        path = os.path.join(DEPLOYMENT_PATH,
-                            'ramp-data',
-                            self.name)
+        path = os.path.join(ramp_data_path, self.name)
         return self.module.get_train_data(path=path)
 
     def get_test_data(self):
-        path = os.path.join(DEPLOYMENT_PATH,
-                            'ramp-data',
-                            self.name)
+        path = os.path.join(ramp_data_path, self.name)
         return self.module.get_test_data(path=path)
 
     def ground_truths_train(self):
