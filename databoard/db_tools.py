@@ -15,20 +15,22 @@ from sklearn.utils.validation import assert_all_finite
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
+from rampdb.model import (CVFold, DetachedSubmissionOnCVFold,
+                          DuplicateSubmissionError, Event, EventAdmin,
+                          EventScoreType, EventTeam, Extension, Keyword,
+                          MissingExtensionError, MissingSubmissionFileError,
+                          NameClashError, Problem, ProblemKeyword, Submission,
+                          SubmissionFile, SubmissionFileType,
+                          SubmissionFileTypeExtension, SubmissionOnCVFold,
+                          SubmissionSimilarity, Team, TooEarlySubmissionError,
+                          User, UserInteraction, Workflow, WorkflowElement,
+                          WorkflowElementType, _get_score_cv_bags,
+                          combine_predictions_list)
+from rampdb.tools import (get_active_user_event_team,
+                          get_next_best_single_fold, get_team_members,
+                          get_user_event_teams)
+
 from . import app, db, ramp_config, ramp_data_path, ramp_kits_path
-from .model import (CVFold, DetachedSubmissionOnCVFold,
-                    DuplicateSubmissionError, Event, EventAdmin,
-                    EventScoreType, EventTeam, Extension, Keyword,
-                    MissingExtensionError, MissingSubmissionFileError,
-                    NameClashError, Problem, ProblemKeyword, Submission,
-                    SubmissionFile, SubmissionFileType,
-                    SubmissionFileTypeExtension, SubmissionOnCVFold,
-                    SubmissionSimilarity, Team, TooEarlySubmissionError, User,
-                    UserInteraction, Workflow, WorkflowElement,
-                    WorkflowElementType, _get_score_cv_bags,
-                    combine_predictions_list, get_active_user_event_team,
-                    get_next_best_single_fold, get_team_members,
-                    get_user_event_teams)
 from .utils import (date_time_format, get_hashed_password, remove_non_ascii,
                     send_mail, table_format)
 

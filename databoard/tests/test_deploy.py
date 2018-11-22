@@ -2,10 +2,11 @@ from __future__ import print_function, absolute_import
 
 import os
 
-import databoard.db_tools as db_tools
+from rampdb.model import NameClashError
+
 from databoard import ramp_data_path, ramp_kits_path
+import databoard.db_tools as db_tools
 from databoard.deploy import deploy
-from databoard.model import NameClashError
 
 
 def test_deploy():
