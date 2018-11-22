@@ -4,7 +4,10 @@ import logging
 from flask import Flask
 from flask_mail import Mail
 from flask_login import LoginManager
-from flask_sqlalchemy import SQLAlchemy
+
+from rampdb.model.base import Model
+
+from .database import SQLAlchemy
 
 __version__ = '0.1.dev'
 
@@ -38,7 +41,7 @@ user_config = os.getenv('DATABOARD_CONFIG')
 if user_config is not None:
     app.config.from_json(user_config)
 
-db = SQLAlchemy(app)
+db = SQLAlchemy(app, Model=Model)
 mail = Mail(app)
 
 login_manager = LoginManager()
