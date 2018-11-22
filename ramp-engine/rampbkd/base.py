@@ -27,7 +27,7 @@ class BaseWorker(metaclass=ABCMeta):
     def __init__(self, config, submission):
         self.config = config
         self.submission = submission
-        self._status = 'initialized'
+        self.status = 'initialized'
 
     def setup(self):
         """Setup the worker with some given setting required before launching
@@ -39,15 +39,15 @@ class BaseWorker(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _is_training_finished(self):
-        """Indicate the status of the submission being trained."""
+    def _is_submission_finished(self):
+        """Indicate the status of submission"""
         pass
 
     @property
     def status(self):
         status = self._status
         if status == 'running':
-            if self._is_training_finished():
+            if self._is_submission_finished():
                 self._status = 'finished'
         return status
 
