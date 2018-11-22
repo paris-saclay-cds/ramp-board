@@ -158,7 +158,3 @@ class CondaEnvWorker(BaseWorker):
                                                'training_output')
             shutil.copytree(output_training_dir, pred_dir)
             self.status = 'collected'
-            print(self._proc_log)
-            return self._proc_log
-        elif self.status == 'collected':
-            return self._proc_log
