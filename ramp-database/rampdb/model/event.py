@@ -9,6 +9,7 @@ from sqlalchemy import Boolean
 from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
 from sqlalchemy import UniqueConstraint
+from sqlalchemy import inspect
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
@@ -71,8 +72,7 @@ class Event(Model):
     failed_leaderboard_html = Column(String, default=None)
     new_leaderboard_html = Column(String, default=None)
 
-    def __init__(self, problem_name, name, event_title, session):
-        self.session = session
+    def __init__(self, problem_name, name, event_title):
         self.name = name
         # to check if the module and all required fields are there
         # db fields are later initialized by tools._set_table_attribute
@@ -89,7 +89,8 @@ class Event(Model):
         for event_team in self.event_teams:
             # substract one for starting kit
             self.n_submissions += len(event_team.submissions) - 1
-        self.session.commit()
+        session = inspect(event_team).session
+        session.commit()
 
     @property
     def Predictions(self):

@@ -12,6 +12,7 @@ from sqlalchemy import Boolean
 from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
 from sqlalchemy import UniqueConstraint
+from sqlalchemy import inspect
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -92,10 +93,10 @@ class Submission(Model):
     # later also ramp_id
     UniqueConstraint(event_team_id, name, name='ts_constraint')
 
-    def __init__(self, name, event_team, session):
-        self.session = session
+    def __init__(self, name, event_team):
         self.name = name
         self.event_team = event_team
+        self.session = inspect(event_team).session
         sha_hasher = hashlib.sha1()
         sha_hasher.update(self.event.name.encode('utf-8'))
         sha_hasher.update(self.team.name.encode('utf-8'))
@@ -110,6 +111,7 @@ class Submission(Model):
             submission_score = SubmissionScore(
                 submission=self, event_score_type=event_score_type)
             self.session.add(submission_score)
+            self.session.commit()
         self.reset()
 
     def __str__(self):
@@ -786,14 +788,16 @@ class SubmissionOnCVFold(Model):
 
     UniqueConstraint(submission_id, cv_fold_id, name='sc_constraint')
 
-    def __init__(self, submission, cv_fold, session):
+    def __init__(self, submission, cv_fold):
         self.session = session
         self.submission = submission
         self.cv_fold = cv_fold
+        self.session = inspect(submission).session
         for score in submission.scores:
             submission_score_on_cv_fold = SubmissionScoreOnCVFold(
                 submission_on_cv_fold=self, submission_score=score)
             self.session.add(submission_score_on_cv_fold)
+            self.session.commit()
         self.reset()
 
     def __repr__(self):
