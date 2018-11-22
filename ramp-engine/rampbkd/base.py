@@ -1,9 +1,10 @@
 import os
 import sys
 from abc import ABCMeta, abstractmethod
+import six
 
 
-class BaseWorker(metaclass=ABCMeta):
+class BaseWorker(six.with_metaclass(ABCMeta)):
     """Metaclass used to build a RAMP worker. Do not use this class directly.
 
     Parameters
