@@ -1,45 +1,49 @@
-from __future__ import print_function, division, absolute_import
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
-import os
-import time
 import codecs
-import shutil
-import difflib
-import logging
-import tempfile
 import datetime
+import difflib
 import io
+import logging
+import os
+import shutil
+import tempfile
+import time
 import zipfile
-from flask import (
-    request, redirect, url_for, render_template, abort, send_from_directory,
-    session, g, send_file, flash)
+
+import flask_login as fl
+import flask_sqlalchemy as fs
+from flask import (abort, flash, g, redirect, render_template, request,
+                   send_file, send_from_directory, session, url_for)
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug import secure_filename
 from wtforms import StringField
 from wtforms.widgets import TextArea
 
-import flask_login as fl
-import flask_sqlalchemy as fs
-from sqlalchemy.exc import IntegrityError
-
-from databoard import db
-from databoard import app, login_manager
-
-from . import db_tools
-from . import vizu
-from . import config
-from .model import (
-    User, Submission, WorkflowElement, Event, Problem, Keyword, Team,
-    SubmissionFile, UserInteraction, SubmissionSimilarity, EventTeam,
-    DuplicateSubmissionError, TooEarlySubmissionError, MissingExtensionError,
-    NameClashError)
-from .forms import (
-    LoginForm, CodeForm, SubmitForm, ImportForm, UploadForm,
-    UserCreateProfileForm, UserUpdateProfileForm,
-    CreditForm, EmailForm, PasswordForm, EventUpdateProfileForm,
-    AskForEventForm)
+from . import app, db, login_manager, ramp_config, ramp_kits_path
+from .db_tools import (add_event, add_user_interaction, ask_sign_up_team,
+                       create_user, get_active_user_event_team, get_sandbox,
+                       get_source_submissions, get_user_interactions, is_admin,
+                       is_open_code, is_open_leaderboard, is_public_event,
+                       is_user_asked_sign_up, is_user_signed_up,
+                       make_submission_and_copy_files,
+                       send_ask_for_event_mails, send_register_request_mail,
+                       send_sign_up_request_mail, send_submission_mails,
+                       sign_up_team, update_leaderboards, update_user)
+from .forms import (AskForEventForm, CodeForm, CreditForm, EmailForm,
+                    EventUpdateProfileForm, ImportForm, LoginForm,
+                    PasswordForm, SubmitForm, UploadForm,
+                    UserCreateProfileForm, UserUpdateProfileForm)
+from .model import (DuplicateSubmissionError, Event, EventTeam, Keyword,
+                    MissingExtensionError, NameClashError, Problem, Submission,
+                    SubmissionFile, SubmissionSimilarity, Team,
+                    TooEarlySubmissionError, User, UserInteraction,
+                    WorkflowElement)
 from .security import ts
-
+from .utils import check_password, get_hashed_password, send_mail
+from .vizu import score_plot
 
 app.secret_key = os.urandom(24)
 
@@ -67,7 +71,7 @@ def before_request():
 def check_admin(current_user, event):
     try:
         return (current_user.access_level == 'admin' or
-                db_tools.is_admin(event, current_user))
+                is_admin(event, current_user))
     except AttributeError:
         return False
 
@@ -79,7 +83,7 @@ def page_not_found(e):
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
-    db_tools.add_user_interaction(interaction='landing')
+    add_user_interaction(interaction='landing')
 
     # If there is already a user logged in, don't let another log in
     if fl.current_user.is_authenticated:
@@ -93,7 +97,7 @@ def login():
         except NoResultFound:
             flash(u'{} does not exist.'.format(form.user_name.data))
             return redirect(url_for('login'))
-        if not db_tools.check_password(
+        if not check_password(
                 form.password.data, user.hashed_password):
             flash('Wrong password')
             return redirect(url_for('login'))
@@ -102,7 +106,7 @@ def login():
         user.is_authenticated = True
         db.session.commit()
         logger.info(u'{} is logged in'.format(fl.current_user.name))
-        db_tools.add_user_interaction(
+        add_user_interaction(
             interaction='login', user=fl.current_user)
         next = request.args.get('next')
         if next is None:
@@ -125,7 +129,7 @@ def sign_up():
     if form.validate_on_submit():
         if form.linkedin_url.data != 'http://doxycycline-cheapbuy.site/':
             try:
-                user = db_tools.create_user(
+                user = create_user(
                     name=form.user_name.data,
                     password=form.password.data,
                     lastname=form.lastname.data,
@@ -143,7 +147,7 @@ def sign_up():
             except Exception as e:
                 flash(u'{}'.format(e), category='Sign-up error')
                 return redirect(url_for('sign_up'))
-            db_tools.send_register_request_mail(user)
+            send_register_request_mail(user)
         return redirect(url_for('login'))
     return render_template(
         'sign_up.html',
@@ -158,11 +162,11 @@ def update_profile():
     form.user_name.data = fl.current_user.name
     if form.validate_on_submit():
         try:
-            db_tools.update_user(fl.current_user, form)
+            update_user(fl.current_user, form)
         except Exception as e:
             flash(u'{}'.format(e), category='Update profile error')
             return redirect(url_for('update_profile'))
-        # db_tools.send_register_request_mail(user)
+        # send_register_request_mail(user)
         return redirect(url_for('problems'))
     form.lastname.data = fl.current_user.lastname
     form.firstname.data = fl.current_user.firstname
@@ -223,10 +227,10 @@ def keywords(keyword_name):
 @app.route("/problems")
 def problems():
     if fl.current_user.is_authenticated:
-        db_tools.add_user_interaction(
+        add_user_interaction(
             interaction='looking at problems', user=fl.current_user)
     else:
-        db_tools.add_user_interaction(
+        add_user_interaction(
             interaction='looking at problems')
 
     problems = Problem.query.order_by(Problem.id.desc())
@@ -239,14 +243,14 @@ def problem(problem_name):
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
     if problem:
         if fl.current_user.is_authenticated:
-            db_tools.add_user_interaction(
+            add_user_interaction(
                 interaction='looking at problem', user=fl.current_user,
                 problem=problem)
         else:
-            db_tools.add_user_interaction(
+            add_user_interaction(
                 interaction='looking at problem', problem=problem)
         description_f_name = os.path.join(
-            config.ramp_kits_path, problem.name, '{}_starting_kit.html'.format(
+            ramp_kits_path, problem.name, '{}_starting_kit.html'.format(
                 problem_name))
         with codecs.open(description_f_name, 'r', 'utf-8') as description_file:
             description = description_file.read()
@@ -263,11 +267,11 @@ def problem(problem_name):
 def event_plots(event_name):
     from bokeh.embed import components
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if not db_tools.is_public_event(event, fl.current_user):
+    if not is_public_event(event, fl.current_user):
         return _redirect_to_user(u'{}: no event named "{}"'.format(
             fl.current_user.firstname, event_name))
     if event:
-        p = vizu.score_plot(event)
+        p = score_plot(event)
         script, div = components(p)
         return render_template('event_plots.html',
                                script=script,
@@ -310,20 +314,20 @@ def _redirect_to_credit(submission_hash, message_str, is_error=True,
 @fl.login_required
 def sign_up_for_event(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if not db_tools.is_public_event(event, fl.current_user):
+    if not is_public_event(event, fl.current_user):
         return _redirect_to_user(u'{}: no event named "{}"'.format(
             fl.current_user.firstname, event_name))
-    db_tools.add_user_interaction(
+    add_user_interaction(
         interaction='signing up at event', user=fl.current_user, event=event)
 
-    db_tools.ask_sign_up_team(event.name, fl.current_user.name)
+    ask_sign_up_team(event.name, fl.current_user.name)
     if event.is_controled_signup:
-        db_tools.send_sign_up_request_mail(event, fl.current_user)
+        send_sign_up_request_mail(event, fl.current_user)
         return _redirect_to_user(
             "Sign-up request is sent to event admins.", is_error=False,
             category='Request sent')
     else:
-        db_tools.sign_up_team(event.name, fl.current_user.name)
+        sign_up_team(event.name, fl.current_user.name)
         return _redirect_to_sandbox(
             event, u'{} is signed up for {}.'.format(
                 fl.current_user.firstname, event),
@@ -335,14 +339,14 @@ def sign_up_for_event(event_name):
 def approve_sign_up_for_event(event_name, user_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
     user = User.query.filter_by(name=user_name).one_or_none()
-    if not db_tools.is_admin(event, fl.current_user):
+    if not is_admin(event, fl.current_user):
         return _redirect_to_user(
             u'Sorry {}, you do not have admin rights'.format(
                 fl.current_user.firstname), is_error=True)
     if not event or not user:
         return _redirect_to_user(u'Oups, no event {} or no user {}.'.
                                  format(event_name, user_name), is_error=True)
-    db_tools.sign_up_team(event.name, user.name)
+    sign_up_team(event.name, user.name)
     return _redirect_to_user(
         u'{} is signed up for {}.'.format(user, event),
         is_error=False, category='Successful sign-up')
@@ -366,20 +370,20 @@ def approve_users():
             'approve_event_teams')
         message = "Approved users:\n"
         for asked_user in users_to_be_approved:
-            db_tools.approve_user(asked_user)
+            approve_user(asked_user)
             message += "%s\n" % asked_user
         message += "Approved event_team:\n"
         for asked_id in event_teams_to_be_approved:
             asked_event_team = EventTeam.query.get(int(asked_id))
-            db_tools.sign_up_team(asked_event_team.event.name,
-                                  asked_event_team.team.name)
+            sign_up_team(asked_event_team.event.name,
+                         asked_event_team.team.name)
             message += "%s\n" % asked_event_team
         return _redirect_to_user(message, is_error=False,
                                  category="Approved users")
     # if not user:
     #     return _redirect_to_user(u'Oups, no user {}.'.format(user_name),
     #                              is_error=True)
-    # db_tools.approve_user(user.name)
+    # approve_user(user.name)
     # return _redirect_to_user(
     #     u'{} is signed up.'.format(user),
     #     is_error=False, category='Successful sign-up')
@@ -396,7 +400,7 @@ def approve_user(user_name):
     if not user:
         return _redirect_to_user(
             u'Oups, no user {}.'.format(user_name), is_error=True)
-    db_tools.approve_user(user.name)
+    approve_user(user.name)
     return _redirect_to_user(
         u'{} is signed up.'.format(user),
         is_error=False, category='Successful sign-up')
@@ -406,7 +410,7 @@ def approve_user(user_name):
 @fl.login_required
 def user_event(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if not db_tools.is_public_event(event, fl.current_user):
+    if not is_public_event(event, fl.current_user):
         if fl.current_user.is_authenticated:
             return _redirect_to_user(u'{}: no event named "{}"'.format(
                 fl.current_user.firstname, event_name))
@@ -415,14 +419,14 @@ def user_event(event_name):
                 event_name))
     if event:
         if fl.current_user.is_authenticated:
-            db_tools.add_user_interaction(
+            add_user_interaction(
                 interaction='looking at event', user=fl.current_user,
                 event=event)
         else:
-            db_tools.add_user_interaction(
+            add_user_interaction(
                 interaction='looking at event', event=event)
         description_f_name = os.path.join(
-            config.ramp_kits_path, event.problem.name,
+            ramp_kits_path, event.problem.name,
             '{}_starting_kit.html'.format(event.problem.name))
         with codecs.open(description_f_name, 'r', 'utf-8') as description_file:
             description = description_file.read()
@@ -431,9 +435,9 @@ def user_event(event_name):
             approved = False
             asked = False
         else:
-            approved = db_tools.is_user_signed_up(
+            approved = is_user_signed_up(
                 event_name, fl.current_user.name)
-            asked = db_tools.is_user_asked_sign_up(
+            asked = is_user_asked_sign_up(
                 event.name, fl.current_user.name)
         return render_template('event.html',
                                description=description,
@@ -450,13 +454,13 @@ def user_event(event_name):
 @fl.login_required
 def my_submissions(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if not db_tools.is_public_event(event, fl.current_user):
+    if not is_public_event(event, fl.current_user):
         return _redirect_to_user(u'{}: no event named "{}"'.format(
             fl.current_user.firstname, event_name))
-    db_tools.add_user_interaction(
+    add_user_interaction(
         interaction='looking at my_submissions',
         user=fl.current_user, event=event)
-    if not db_tools.is_open_code(event, fl.current_user):
+    if not is_open_code(event, fl.current_user):
         error_str = u'No access to my submissions for event {}. '\
             u'If you have already signed up, please wait for approval.'.\
             format(event.name)
@@ -489,14 +493,14 @@ def my_submissions(event_name):
 @fl.login_required
 def leaderboard(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if not db_tools.is_public_event(event, fl.current_user):
+    if not is_public_event(event, fl.current_user):
         return _redirect_to_user(u'{}: no event named "{}"'.format(
             fl.current_user.firstname, event_name))
-    db_tools.add_user_interaction(
+    add_user_interaction(
         interaction='looking at leaderboard',
         user=fl.current_user, event=event)
 
-    if db_tools.is_open_leaderboard(event, fl.current_user):
+    if is_open_leaderboard(event, fl.current_user):
         leaderboard_html = event.public_leaderboard_html_with_links
     else:
         leaderboard_html = event.public_leaderboard_html_no_links
@@ -514,7 +518,7 @@ def leaderboard(event_name):
     )
 
     if fl.current_user.access_level == 'admin' or\
-            db_tools.is_admin(event, fl.current_user):
+            is_admin(event, fl.current_user):
         failed_leaderboard_html = event.failed_leaderboard_html
         new_leaderboard_html = event.new_leaderboard_html
         template = render_template(
@@ -535,10 +539,10 @@ def leaderboard(event_name):
 @fl.login_required
 def competition_leaderboard(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if not db_tools.is_public_event(event, fl.current_user):
+    if not is_public_event(event, fl.current_user):
         return _redirect_to_user(u'{}: no event named "{}"'.format(
             fl.current_user.firstname, event_name))
-    db_tools.add_user_interaction(
+    add_user_interaction(
         interaction='looking at leaderboard',
         user=fl.current_user, event=event)
     admin = check_admin(fl.current_user, event)
@@ -587,7 +591,7 @@ def view_model(submission_hash, f_name):
     submission = Submission.query.filter_by(
         hash_=submission_hash).one_or_none()
     if submission is None or\
-            not db_tools.is_open_code(
+            not is_open_code(
                 submission.event_team.event, fl.current_user, submission):
         error_str = u'Missing submission: {}'.format(submission_hash)
         return _redirect_to_user(error_str)
@@ -618,7 +622,7 @@ def view_model(submission_hash, f_name):
             f_name)
         return _redirect_to_user(error_str)
 
-    db_tools.add_user_interaction(
+    add_user_interaction(
         interaction='looking at submission', user=fl.current_user, event=event,
         submission=submission, submission_file=submission_file)
 
@@ -631,7 +635,7 @@ def view_model(submission_hash, f_name):
         # with changedir(submission_abspath):
         #    with ZipFile(archive_filename, 'w') as archive:
         #        archive.write(f_name)
-        db_tools.add_user_interaction(
+        add_user_interaction(
             interaction='download', user=fl.current_user, event=event,
             submission=submission, submission_file=submission_file)
 
@@ -645,7 +649,7 @@ def view_model(submission_hash, f_name):
     import_form = ImportForm()
     import_form.selected_f_names.choices = choices
     if import_form.validate_on_submit():
-        sandbox_submission = db_tools.get_sandbox(event, fl.current_user)
+        sandbox_submission = get_sandbox(event, fl.current_user)
         for f_name in import_form.selected_f_names.data:
             logger.info(u'{} is importing {}/{}/{}/{}'.format(
                 fl.current_user.name, event, team, submission, f_name))
@@ -661,7 +665,7 @@ def view_model(submission_hash, f_name):
             submission_file = SubmissionFile.query.filter_by(
                 submission=submission,
                 workflow_element=workflow_element).one()
-            db_tools.add_user_interaction(
+            add_user_interaction(
                 interaction='copy', user=fl.current_user, event=event,
                 submission=submission, submission_file=submission_file)
 
@@ -686,7 +690,7 @@ def download_submission(submission_hash):
     submission = Submission.query.filter_by(
         hash_=submission_hash).one_or_none()
     if submission is None or\
-            not db_tools.is_open_code(
+            not is_open_code(
                 submission.event_team.event, fl.current_user, submission):
         error_str = u'Missing submission: {}'.format(submission_hash)
         return _redirect_to_user(error_str)
@@ -716,7 +720,7 @@ def toggle_competition(submission_hash):
         return _redirect_to_user(error_str)
     submission.is_in_competition = not submission.is_in_competition
     db.session.commit()
-    db_tools.update_leaderboards(submission.event_team.event.name)
+    update_leaderboards(submission.event_team.event.name)
     return redirect(
         u'/{}/{}'.format(submission_hash, submission.files[0].f_name))
 
@@ -725,18 +729,18 @@ def toggle_competition(submission_hash):
 @fl.login_required
 def sandbox(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if not db_tools.is_public_event(event, fl.current_user):
+    if not is_public_event(event, fl.current_user):
         return _redirect_to_user(
             u'{}: no access or no event named "{}"'.format(
                 fl.current_user.firstname, event_name))
-    if not db_tools.is_open_code(event, fl.current_user):
+    if not is_open_code(event, fl.current_user):
         error_str = u'No access to sandbox for event {}. '\
             u'If you have already signed up, please wait for approval.'.\
             format(event.name)
         return _redirect_to_user(error_str)
 
-    sandbox_submission = db_tools.get_sandbox(event, fl.current_user)
-    event_team = db_tools.get_active_user_event_team(event, fl.current_user)
+    sandbox_submission = get_sandbox(event, fl.current_user)
+    event_team = get_active_user_event_team(event, fl.current_user)
 
     # The amount of python magic we have to do for rendering a variable number
     # of textareas, named and populated at run time, is mind boggling.
@@ -782,7 +786,7 @@ def sandbox(event_name):
                         old_code.splitlines(), new_code.splitlines()))
                     similarity = difflib.SequenceMatcher(
                         a=old_code, b=new_code).ratio()
-                    db_tools.add_user_interaction(
+                    add_user_interaction(
                         interaction='save', user=fl.current_user, event=event,
                         submission_file=submission_file,
                         diff=diff, similarity=similarity)
@@ -790,7 +794,7 @@ def sandbox(event_name):
             return _redirect_to_sandbox(event, u'Error: {}'.format(e))
         return _redirect_to_sandbox(
             event, u'{} saved submission files for {}.'.format(
-                fl.current_user.name, event_team, event),
+                fl.current_user.name, event),
             is_error=False, category='File saved')
 
     if upload_form.validate_on_submit() and upload_form.file.data:
@@ -836,12 +840,12 @@ def sandbox(event_name):
                 old_code.splitlines(), new_code.splitlines()))
             similarity = difflib.SequenceMatcher(
                 a=old_code, b=new_code).ratio()
-            db_tools.add_user_interaction(
+            add_user_interaction(
                 interaction='upload', user=fl.current_user, event=event,
                 submission_file=submission_file,
                 diff=diff, similarity=similarity)
         else:
-            db_tools.add_user_interaction(
+            add_user_interaction(
                 interaction='upload', user=fl.current_user, event=event,
                 submission_file=submission_file)
 
@@ -862,7 +866,7 @@ def sandbox(event_name):
             return _redirect_to_sandbox(event, u'Error: {}'.format(e))
 
         try:
-            new_submission = db_tools.make_submission_and_copy_files(
+            new_submission = make_submission_and_copy_files(
                 event.name, event_team.team.name, new_submission_name,
                 sandbox_submission.path)
         except DuplicateSubmissionError:
@@ -879,7 +883,7 @@ def sandbox(event_name):
             fl.current_user.name, new_submission.name, event_team))
         if event.is_send_submitted_mails:
             try:
-                db_tools.send_submission_mails(
+                send_submission_mails(
                     fl.current_user, new_submission, event_team)
             except Exception as e:
                 error_str = u'mail was not sent {} '.format(
@@ -891,7 +895,7 @@ def sandbox(event_name):
             fl.current_user.firstname, new_submission.name, event_team),
             category='Submission')
 
-        db_tools.add_user_interaction(
+        add_user_interaction(
             interaction='submit', user=fl.current_user, event=event,
             submission=new_submission)
 
@@ -912,13 +916,13 @@ def credit(submission_hash):
     submission = Submission.query.filter_by(
         hash_=submission_hash).one_or_none()
     if submission is None or\
-            not db_tools.is_open_code(
+            not is_open_code(
                 submission.event_team.event, fl.current_user, submission):
         error_str = u'Missing submission: {}'.format(submission_hash)
         return _redirect_to_user(error_str)
     event_team = submission.event_team
     event = event_team.event
-    source_submissions = db_tools.get_source_submissions(submission)
+    source_submissions = get_source_submissions(submission)
 
     def get_s_field(source_submission):
         return u'{}/{}/{}'.format(
@@ -987,7 +991,7 @@ def credit(submission_hash):
                 db.session.add(submission_similarity)
         db.session.commit()
 
-        db_tools.add_user_interaction(
+        add_user_interaction(
             interaction='giving credit', user=fl.current_user, event=event,
             submission=submission)
 
@@ -1006,7 +1010,7 @@ def credit(submission_hash):
 @fl.login_required
 def logout():
     user = fl.current_user
-    db_tools.add_user_interaction(interaction='logout', user=user)
+    add_user_interaction(interaction='logout', user=user)
     session['logged_in'] = False
     user.is_authenticated = False
     db.session.commit()
@@ -1024,15 +1028,15 @@ def private_leaderboard(event_name):
     if not fl.current_user.is_authenticated:
         return redirect(url_for('login'))
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if not db_tools.is_public_event(event, fl.current_user):
+    if not is_public_event(event, fl.current_user):
         return _redirect_to_user(u'{}: no event named "{}"'.format(
             fl.current_user.firstname, event_name))
-    if (not db_tools.is_admin(event, fl.current_user) and
+    if (not is_admin(event, fl.current_user) and
         (event.closing_timestamp is None or
             event.closing_timestamp > datetime.datetime.utcnow())):
         return redirect(url_for('problems'))
 
-    db_tools.add_user_interaction(
+    add_user_interaction(
         interaction='looking at private leaderboard',
         user=fl.current_user, event=event)
     leaderboard_html = event.private_leaderboard_html
@@ -1065,15 +1069,15 @@ def private_competition_leaderboard(event_name):
     if not fl.current_user.is_authenticated:
         return redirect(url_for('login'))
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if not db_tools.is_public_event(event, fl.current_user):
+    if not is_public_event(event, fl.current_user):
         return _redirect_to_user(u'{}: no event named "{}"'.format(
             fl.current_user.firstname, event_name))
-    if (not db_tools.is_admin(event, fl.current_user) and
+    if (not is_admin(event, fl.current_user) and
         (event.closing_timestamp is None or
             event.closing_timestamp > datetime.datetime.utcnow())):
         return redirect(url_for('problems'))
 
-    db_tools.add_user_interaction(
+    add_user_interaction(
         interaction='looking at private leaderboard',
         user=fl.current_user, event=event)
 
@@ -1098,10 +1102,10 @@ def update_event(event_name):
     if not fl.current_user.is_authenticated:
         return redirect(url_for('login'))
     event = Event.query.filter_by(name=event_name).one_or_none()
-    if not db_tools.is_public_event(event, fl.current_user):
+    if not is_public_event(event, fl.current_user):
         return _redirect_to_user(u'{}: no event named "{}"'.format(
             fl.current_user.firstname, event_name))
-    if not db_tools.is_admin(event, fl.current_user):
+    if not is_admin(event, fl.current_user):
         return redirect(url_for('problems'))
     logger.info(u'{} is updating event {}'.format(
         fl.current_user.name, event.name))
@@ -1197,7 +1201,7 @@ def ask_for_event(problem_name):
         try:
             event_name = problem.name + '_' + form.suffix.data
             event_title = form.title.data
-            event = db_tools.add_event(problem_name, event_name, event_title)
+            event = add_event(problem_name, event_name, event_title)
             event.min_duration_between_submissions = (
                 form.min_duration_between_submissions_hour.data * 3600 +
                 form.min_duration_between_submissions_minute.data * 60 +
@@ -1207,7 +1211,7 @@ def ask_for_event(problem_name):
             flash(
                 'Thank you. Your request has been sent to RAMP ' +
                 'administrators.', category='Event request')
-            db_tools.send_ask_for_event_mails(
+            send_ask_for_event_mails(
                 fl.current_user, event, form.n_students.data)
         except IntegrityError as e:
             db.session.rollback()
@@ -1265,7 +1269,7 @@ def view_submission_error(submission_hash):
     team = submission.event_team.team
     # TODO: check if event == submission.event_team.event
 
-    db_tools.add_user_interaction(
+    add_user_interaction(
         interaction='looking at error', user=fl.current_user, event=event,
         submission=submission)
 
@@ -1283,7 +1287,7 @@ def user_interactions():
     if not fl.current_user.is_authenticated\
             or fl.current_user.access_level != 'admin':
         return redirect(url_for('login'))
-    user_interactions_html = db_tools.get_user_interactions()
+    user_interactions_html = get_user_interactions()
     return render_template(
         'user_interactions.html',
         user_interactions_title='User interactions',
@@ -1307,7 +1311,7 @@ def submission_file_diff(id):
 @app.after_request
 def after_request(response):
     for query in fs.get_debug_queries():
-        if query.duration >= config.DATABASE_QUERY_TIMEOUT:
+        if query.duration >= app.config.get('DATABASE_QUERY_TIMEOUT'):
             app.logger.warning("SLOW QUERY: %s\nParameters: %s\n"
                                "Duration: %fs\nContext: %s\n"
                                % (query.statement, query.parameters,
@@ -1321,7 +1325,7 @@ def dashboard_submissions(event_name):
     event = Event.query.filter_by(name=event_name).one_or_none()
 
     if fl.current_user.access_level == 'admin' or\
-            db_tools.is_admin(event, fl.current_user):
+            is_admin(event, fl.current_user):
         # Get dates and number of submissions
         submissions_ = db.session.query(Submission, Event, EventTeam).\
             filter(Event.name == event.name).\
@@ -1333,7 +1337,7 @@ def dashboard_submissions(event_name):
         else:
             submissions = []
         submissions = [submission for submission in submissions
-                       if submission.name != config.sandbox_d_name]
+                       if submission.name != ramp_config['sandbox_dir']]
         timestamp_submissions = [submission.submission_timestamp.
                                  strftime('%Y-%m-%d %H:%M:%S')
                                  for submission in submissions]
@@ -1381,12 +1385,12 @@ def reset_password():
                 _external=True)
 
             header = 'To: {}\nFrom: {}\nSubject: {}\n'.format(
-                user.email, config.MAIL_USERNAME, subject)
+                user.email, app.config.get('MAIL_USERNAME'), subject)
             body = ('Hi %s, \n\nclick on the link to reset your password:\n' %
                     user.firstname.encode('utf-8'))
             body += recover_url
             body += '\n\nSee you on the RAMP website!'
-            db_tools.send_mail(user.email, subject, header + body)
+            send_mail(user.email, subject, header + body)
             logger.info(
                 'Password reset requested for user {}'.format(user.name))
             logger.info(recover_url)
@@ -1394,7 +1398,7 @@ def reset_password():
         else:
             error = ('Sorry, but this user was not approved or the email was '
                      'wrong. If you need some help, send an email to %s' %
-                     config.MAIL_USERNAME)
+                     app.config.get('MAIL_USERNAME'))
     return render_template('reset_password.html', form=form, error=error)
 
 
@@ -1410,7 +1414,7 @@ def reset_with_token(token):
     if form.validate_on_submit():
         user = User.query.filter_by(email=email).first_or_404()
 
-        user.hashed_password = db_tools.get_hashed_password(form.password.data)
+        user.hashed_password = get_hashed_password(form.password.data)
 
         db.session.add(user)
         db.session.commit()
