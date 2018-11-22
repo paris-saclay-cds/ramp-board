@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 
 from .base import BaseWorker
@@ -18,6 +19,10 @@ class CondaEnvWorker(BaseWorker):
           specified, the base environment will be used.
         * 'ramp_kit_dir': path to the directory of the RAMP kit;
         * 'ramp_data_dir': path to the directory of the data.
+        * `local_log_folder`: path to the directory where the log of the
+          submission will be stored.
+        * `local_predictions_folder`: path to the directory where the
+          predictions of the submission will be stored.
     submission : str
         Name of the RAMP submission to be handle by the worker.
 
@@ -36,12 +41,24 @@ class CondaEnvWorker(BaseWorker):
         super(CondaEnvWorker, self).__init__(config=config,
                                              submission=submission)
 
+    @staticmethod
+    def _check_config_name(config, param):
+        if param not in config.keys():
+            raise ValueError("The worker required the parameter {} in the "
+                             "configuration given at instantiation. Only {}"
+                             "parameters were given."
+                             .format(param, config.keys()))
+
     def setup(self):
         """Set up the worker.
 
         The worker will find the path to the conda environment to use using
         the configuration passed when instantiating the worker.
         """
+        # sanity check for the configuration variable
+        for required_param in ('ramp_kit_dir', 'ramp_data_dir',
+                               'local_log_folder', 'local_predictions_folder'):
+            self._check_config_name(self.config, required_param)
         # find the path to the conda environment
         env_name = (self.config['conda_env']
                     if 'conda_env' in self.config.keys() else 'base')
@@ -110,10 +127,26 @@ class CondaEnvWorker(BaseWorker):
         to be processed. Use ``worker.status`` to know the status of the worker
         beforehand.
         """
+        super(CondaEnvWorker, self).collect_results()
         if self.status == 'finished' or self.status == 'running':
-            # communicate() will wait for the process to be completed.
+            # communicate() will wait for the process to be completed
             self._proc_log, _ = self._proc.communicate()
+            # write the log into the disk
+            log_dir = os.path.join(self.config['local_log_folder'],
+                                   self.submission)
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir)
+            with open(os.path.join(log_dir, 'log'), 'w+') as f:
+                f.write(self._proc_log.decode("utf-8"))
+            # copy the predictions into the disk
+            # no need to create the directory, it will be handle by copytree
+            pred_dir = os.path.join(self.config['local_predictions_folder'],
+                                    self.submission)
+            output_training_dir = os.path.join(self.config['ramp_kit_dir'],
+                                               'submissions', self.submission,
+                                               'training_output')
+            shutil.copytree(output_training_dir, pred_dir)
             self.status = 'collected'
-            return self._proc_log
+            return self._proc_log.decode("utf-8")
         elif self.status == 'collected':
-            return self._proc_log
+            return self._proc_log.decode("utf-8")
