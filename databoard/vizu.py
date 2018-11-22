@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+
 from databoard import db_tools
 
 
@@ -151,7 +152,9 @@ def score_plot(event):
     pareto_df = score_plot_df[
         score_plot_df[score_name + ' pareto'] == 1].copy()
     pareto_df = pareto_df.append(pareto_df.iloc[-1])
-    pareto_df.iloc[-1, pareto_df.columns.get_loc('x')] = max(score_plot_df['x'])
+    pareto_df.iloc[-1, pareto_df.columns.get_loc('x')] = (
+        max(score_plot_df['x'])
+    )
     pareto_df = make_step_df(
         pareto_df, event.official_score_type.is_lower_the_better)
     source_pareto = ColumnDataSource(pareto_df)
