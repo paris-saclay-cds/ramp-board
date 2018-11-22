@@ -30,13 +30,17 @@ class BaseWorker(metaclass=ABCMeta):
         self._status = 'initialized'
 
     def setup(self):
+        """Setup the worker with some given setting required before launching
+        a submission."""
         self.status = 'setup'
 
     def teardown(self):
+        """Clean up (i.e., removing path, etc.) before killing the worker."""
         pass
 
     @abstractmethod
     def _is_training_finished(self):
+        """Indicate the status of the submission being trained."""
         pass
 
     @property
@@ -53,8 +57,10 @@ class BaseWorker(metaclass=ABCMeta):
 
     @abstractmethod
     def launch_submission(self):
+        """Launch a submission to be trained."""
         pass
 
     @abstractmethod
-    def collect_submission(self):
+    def collect_results(self):
+        """Collect the results after submission training."""
         pass
