@@ -47,7 +47,7 @@ class BaseWorker(metaclass=ABCMeta):
     def status(self):
         status = self._status
         if status == 'running':
-            if self._is_training_finished():
+            if self._is_submission_finished():
                 self._status = 'finished'
         return status
 
@@ -63,4 +63,12 @@ class BaseWorker(metaclass=ABCMeta):
     @abstractmethod
     def collect_results(self):
         """Collect the results after submission training."""
-        pass
+        if self.status == 'initialized':
+            raise ValueError('The worker has not been setup and no submission '
+                             'was launched. Call the method setup() and '
+                             'launch_submission() before to collect the '
+                             'results.')
+        elif self.status == 'setup':
+            raise ValueError('No submission was launched. Call the method '
+                             'launch_submission() and then try again to '
+                             'collect the results.')
