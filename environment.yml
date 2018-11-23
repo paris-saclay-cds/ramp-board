@@ -1,4 +1,5 @@
-name: ramp
+# This is the testing environment.
+name: testenv
 dependencies:
   - numpy
   - pyyaml
@@ -18,6 +19,7 @@ dependencies:
   - bokeh
   - matplotlib
   - pycrypto
+  - ipykernel
   - pip:
     - psycopg2-binary
     - git+https://github.com/paris-saclay-cds/ramp-workflow

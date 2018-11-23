@@ -9,7 +9,7 @@ from rampbkd.local import CondaEnvWorker
 
 @pytest.fixture
 def get_conda_worker():
-    def _create_worker(submission_name, conda_env='ramp'):
+    def _create_worker(submission_name, conda_env='ramp-iris'):
         module_path = os.path.dirname(__file__)
         ramp_kit_dir = os.path.join(module_path, 'kits', 'iris')
         ramp_data_dir = ramp_kit_dir
