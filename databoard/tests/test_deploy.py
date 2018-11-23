@@ -6,7 +6,7 @@ import databoard.db_tools as db_tools
 from databoard import ramp_data_path, ramp_kits_path
 from databoard.deploy import deploy
 from databoard.model import (
-    NameClashError, User, Event, Submission, DuplicateSubmissionError)
+    NameClashError, User, Problem, Event, Submission, DuplicateSubmissionError)
 from databoard.config import sandbox_d_name
 
 
@@ -216,6 +216,9 @@ def test_model():
     u.is_anonymous
     u.get_id()
     u.__repr__()
-
-
-
+    p = Problem.query.filter_by(name='iris').one()
+    p.title
+    for e in p.events:
+        for est in e.score_types:
+            st = est.score_type
+            st.__repr__()

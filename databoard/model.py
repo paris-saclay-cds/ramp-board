@@ -5,7 +5,6 @@ import logging
 import os
 import uuid
 import zlib
-from importlib import import_module
 
 import numpy as np
 from flask import request
@@ -211,6 +210,8 @@ class Problem(db.Model):
         return self.module.workflow
 
 
+# Deprecated: scort types are now defined in problem.py.
+# EventScoreType.score_type should be deleted then DB migrated.
 class ScoreType(db.Model):
     __tablename__ = 'score_types'
 
@@ -225,34 +226,6 @@ class ScoreType(db.Model):
         self.is_lower_the_better = is_lower_the_better
         self.minimum = minimum
         self.maximum = maximum
-        # to check if the module and all required fields are there
-        # self.module
-        # self.score_function
-        # self.precision
-
-    def __repr__(self):
-        repr = 'ScoreType(name={})'.format(self.name)
-        return repr
-
-    @property
-    def module(self):
-        return import_module('.' + self.name, ramp_config['scoretypes_module'])
-
-    @property
-    def score_function(self):
-        return self.module.score_function
-
-    @property
-    def worst(self):
-        if self.is_lower_the_better:
-            return self.maximum
-        else:
-            return self.minimum
-
-    # default display precision in n_digits
-    @property
-    def precision(self):
-        return self.module.precision
 
 
 # a given RAMP event, like iris_test or M2_data_science_2015_variable_stars
