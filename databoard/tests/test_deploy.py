@@ -253,3 +253,21 @@ def test_model():
             e.__repr__()
         for et in e.event_teams:
             et.__repr__()
+
+    w = p.workflow
+    w.__repr__()
+    for we in w.elements:
+        we.__repr__()
+        we.type
+        we.file_type
+        we.is_editable
+        we.max_size
+        wet = we.workflow_element_type
+        wet.__repr__()
+        wet.file_type
+        wet.is_editable
+        wet.max_size
+        sft = wet.type
+        for e in sft.extensions:
+            e.file_type
+            e.extension_name

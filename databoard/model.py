@@ -581,9 +581,10 @@ class WorkflowElementType(db.Model):
         'SubmissionFileType', backref=db.backref('workflow_element_types'))
 
     def __repr__(self):
-        repr = 'WorkflowElementType(name={}, type={}, is_editable={}, max_size={})'.format(
-            self.name, self.type.name, self.type.is_editable,
-            self.type.max_size)
+        repr = 'WorkflowElementType(name={}, type={}'.format(
+            self.name, self.type.name)
+        repr += 'is_editable={}, max_size={})'.format(
+            self.type.is_editable, self.type.max_size)
         return repr
 
     @property
