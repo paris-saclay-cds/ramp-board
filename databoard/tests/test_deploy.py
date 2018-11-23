@@ -213,11 +213,21 @@ def test_leaderboard():
 
 def test_model():
     u = User.query.filter_by(name='test_user').one()
+    u.is_active
     u.is_anonymous
     u.get_id()
     u.__repr__()
     p = Problem.query.filter_by(name='iris').one()
+    p.__repr__()
     p.title
+    p.module
+    p.Predictions
+    p.get_train_data()
+    p.get_test_data()
+    predictions = p.ground_truths_train()
+    p.ground_truths_test()
+    p.ground_truths_valid(range(len(predictions.y_pred)))
+    p.workflow_object
     for e in p.events:
         e.workflow
         e.combined_combined_valid_score_str
@@ -229,3 +239,11 @@ def test_model():
         e.is_closed
         e.n_jobs
         e.n_participants
+        for st in e.score_types:
+            st.__repr__()
+            st.score_type_object
+            st.score_function
+            st.is_lower_the_better
+            st.minimum
+            st.maximum
+            st.worst
