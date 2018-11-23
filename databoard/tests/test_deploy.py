@@ -184,6 +184,12 @@ def test_get_sandbox():
     assert sandbox.name == sandbox_d_name
 
 
+def test_get_earliest_new_submission():
+    db_tools.get_earliest_new_submission()
+    db_tools.get_earliest_new_submission('iris_test')
+    db_tools.get_earliest_new_submission('not_iris_test')
+
+
 def test_leaderboard():
     print('***************** Leaderboard ****************')
     print(db_tools.get_leaderboards(
