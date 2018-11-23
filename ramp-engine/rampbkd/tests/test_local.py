@@ -48,7 +48,7 @@ def test_conda_worker(submission, get_conda_worker):
         assert worker.status == 'setup'
         worker.launch_submission()
         assert worker.status == 'running'
-        print(worker.collect_results())
+        worker.collect_results()
         assert worker.status == 'collected'
         worker.teardown()
         # check that teardown removed the predictions
@@ -67,6 +67,8 @@ def test_conda_worker_without_conda_env_specified(get_conda_worker):
     worker = get_conda_worker('starting_kit')
     # remove the conva_env parameter from the configuration
     del worker.config['conda_env']
+    # if the conda environment is not given in the configuration, we should
+    # fall back on the base environment of conda
     # the conda environment is set during setup; thus no need to launch
     # submission
     worker.setup()
