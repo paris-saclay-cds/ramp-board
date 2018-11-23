@@ -93,11 +93,7 @@ class User(db.Model):
             return str(self.id)  # python 3
 
     def __str__(self):
-        str_ = 'User({})'.format(self.name)
-#        str_ = 'User({}, admined=['.format(self.name)
-#        str_ += string.join([team.name for team in self.admined_teams], ', ')
-#        str_ += '])'
-        return str_
+        return 'User({})'.format(self.name)
 
     def __repr__(self):
         repr = '''User(name={}, lastname={}, firstname={}, email={},

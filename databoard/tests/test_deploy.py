@@ -209,3 +209,13 @@ def test_leaderboard():
     print(db_tools.get_failed_leaderboard('iris_test', user_name='test_user'))
     print('*********** New leaderboard of test_user ***********')
     print(db_tools.get_new_leaderboard('iris_test', user_name='test_user'))
+
+
+def test_model():
+    u = User.query.filter_by(name='test_user').one()
+    u.is_anonymous
+    u.get_id()
+    u.__repr__()
+
+
+
