@@ -19,6 +19,7 @@ dependencies:
   - bokeh
   - matplotlib
   - pycrypto
+  - ipykernel
   - pip:
     - psycopg2-binary
     - git+https://github.com/paris-saclay-cds/ramp-workflow
