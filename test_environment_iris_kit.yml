@@ -1,0 +1,9 @@
+# This environment installed only the required packages for testing the
+# iris ramp-kit
+name: ramp-iris
+dependencies:
+  - numpy
+  - scikit-learn
+  - pandas
+  - pip:
+    - git+https://github.com/paris-saclay-cds/ramp-workflow
