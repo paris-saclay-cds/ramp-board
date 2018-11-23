@@ -1,0 +1,23 @@
+name: ramp
+dependencies:
+  - numpy
+  - pyyaml
+  - sqlalchemy
+  - psycopg2
+  - pandas
+  - scikit-learn
+  - flask
+  - six
+  - unidecode
+  - termcolor
+  - pytest
+  - pytest-cov
+  - jupyter
+  - gitpython
+  - scikit-image
+  - bokeh
+  - matplotlib
+  - pycrypto
+  - pip:
+    - psycopg2-binary
+    - git+https://github.com/paris-saclay-cds/ramp-workflow
