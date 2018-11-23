@@ -14,7 +14,7 @@ before_install:
     - conda update --yes --quiet conda
 install:
     - conda create -n ramp --yes pip python=$PYTHON_VERSION ipykernel
-    - conda activate ramp
+    - source activate ramp
     - conda env update --file environment.yml
     - pip install -e .
     # install ramp-engine
