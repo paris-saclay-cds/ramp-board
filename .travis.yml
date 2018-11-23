@@ -4,7 +4,6 @@ env:
   - PYTHON_VERSION=2.7
   - PYTHON_VERSION=3.6
   - PYTHON_VERSION=3.7
-  - CONDA_ENV=ramp
 services:
   - postgres
 before_install:
@@ -14,8 +13,8 @@ before_install:
     - export PATH=/home/travis/miniconda/bin:$PATH
     - conda update --yes --quiet conda
 install:
-    - conda create -n $CONDA_ENV --yes pip python=$PYTHON_VERSION ipykernel
-    - conda activate $CONDA_ENV
+    - conda create -n ramp --yes pip python=$PYTHON_VERSION ipykernel
+    - conda activate ramp
     - conda env update --file environment.yml
     - pip install -e .
     # install ramp-engine
