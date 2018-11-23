@@ -219,6 +219,13 @@ def test_model():
     p = Problem.query.filter_by(name='iris').one()
     p.title
     for e in p.events:
-        for est in e.score_types:
-            st = est.score_type
-            st.__repr__()
+        e.workflow
+        e.combined_combined_valid_score_str
+        e.combined_combined_test_score_str
+        e.combined_foldwise_valid_score_str
+        e.combined_foldwise_test_score_str
+        e.is_open
+        e.is_public_open
+        e.is_closed
+        e.n_jobs
+        e.n_participants
