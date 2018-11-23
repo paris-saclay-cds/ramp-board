@@ -70,6 +70,7 @@ def test_conda_worker_without_conda_env_specified(get_conda_worker):
     # the conda environment is set during setup; thus no need to launch
     # submission
     worker.setup()
+    assert 'envs' not in worker._python_bin_path
 
 
 def test_conda_worker_error_missing_config_param(get_conda_worker):
