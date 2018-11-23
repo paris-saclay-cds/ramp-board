@@ -622,10 +622,6 @@ class Workflow(db.Model):
             repr += '\n\t' + str(workflow_element)
         return repr
 
-    @property
-    def object(self):
-        return self.problem.module.workflow
-
 
 # In lists we will order files according to their ids
 # many-to-many link
