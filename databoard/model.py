@@ -521,21 +521,6 @@ class EventTeam(db.Model):
         return repr
 
 
-def get_active_user_event_team(event, user):
-    # There should always be an active user team, if not, throw an exception
-    # The current code works only if each user admins a single team.
-    event_team = EventTeam.query.filter_by(
-        event=event, team=user.admined_teams[0]).one_or_none()
-    return event_team
-
-    # This below works for the general case with teams with more than
-    # on members but it is slow, eg in constructing user interactions
-    # event_teams = EventTeam.query.filter_by(event=event).all()
-    # for event_team in event_teams:
-    #     if user in get_team_members(event_team.team) and event_team.is_active:
-    #         return event_team
-
-
 class SubmissionFileType(db.Model):
     __tablename__ = 'submission_file_types'
 
