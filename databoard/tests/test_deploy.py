@@ -256,6 +256,7 @@ def test_model():
 
     w = p.workflow
     w.__repr__()
+    w.object
     for we in w.elements:
         we.__repr__()
         we.type
