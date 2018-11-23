@@ -27,13 +27,58 @@ from .model import (CVFold, DetachedSubmissionOnCVFold,
                     UserInteraction, Workflow, WorkflowElement,
                     WorkflowElementType, _get_score_cv_bags,
                     combine_predictions_list, get_active_user_event_team,
-                    get_next_best_single_fold, get_team_members,
-                    get_user_event_teams)
+                    get_next_best_single_fold)
 from .utils import (date_time_format, get_hashed_password, remove_non_ascii,
                     send_mail, table_format)
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
+
+
+def get_team_members(team):
+    # This works only if no team mergers. The commented code below
+    # is general but slow.
+    yield team.admin
+    # if team.initiator is not None:
+    #     # "yield from" in Python 3.3
+    #     for member in get_team_members(team.initiator):
+    #         yield member
+    #     for member in get_team_members(team.acceptor):
+    #         yield member
+    # else:
+    #     yield team.admin
+
+
+# def get_user_teams(user):
+#     # This works only if no team mergers. The commented code below
+#     # is general but slow.
+#     team = Team.query.filter_by(name=user.name).one()
+#     yield team
+#     # teams = Team.query.all()
+#     # for team in teams:
+#     #     if user in get_team_members(team):
+#     #         yield team
+
+
+def get_user_event_teams(event_name, user_name):
+    # This works only if no team mergers. The commented code below
+    # is general but slow.
+    event = Event.query.filter_by(name=event_name).one()
+    team = Team.query.filter_by(name=user_name).one()
+    event_team = EventTeam.query.filter_by(
+        event=event, team=team).one_or_none()
+    if event_team is not None:
+        yield event_team
+    # event = Event.query.filter_by(name=event_name).one()
+    # user = User.query.filter_by(name=user_name).one()
+    # event_teams = EventTeam.query.filter_by(event=event).all()
+    # for event_team in event_teams:
+    #     if user in get_team_members(event_team.team):
+    #         yield event_team
+
+
+# def get_n_user_teams(user):
+#     return len(get_user_teams(user))
 
 
 def send_password_mail(user_name, password):
@@ -2020,7 +2065,8 @@ def set_error(team_name, submission_name, error, error_msg):
 #     ]
 #     top_score_per_user_dict_df = pd.DataFrame(
 #         top_score_per_user_dict, columns=columns)
-#     top_score_per_user_dict_df = top_score_per_user_dict_df.sort_values('name')
+#     top_score_per_user_dict_df = top_score_per_user_dict_df.sort_values(
+#         'name')
 #     return top_score_per_user_dict_df
 
 

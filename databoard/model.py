@@ -145,56 +145,6 @@ class Team(db.Model):
         return repr
 
 
-def get_team_members(team):
-    # This works only if no team mergers. The commented code below
-    # is general but slow.
-    yield team.admin
-    # if team.initiator is not None:
-    #     # "yield from" in Python 3.3
-    #     for member in get_team_members(team.initiator):
-    #         yield member
-    #     for member in get_team_members(team.acceptor):
-    #         yield member
-    # else:
-    #     yield team.admin
-
-
-def get_n_team_members(team):
-    return len(list(get_team_members(team)))
-
-
-def get_user_teams(user):
-    # This works only if no team mergers. The commented code below
-    # is general but slow.
-    team = Team.query.filter_by(name=user.name).one()
-    yield team
-    # teams = Team.query.all()
-    # for team in teams:
-    #     if user in get_team_members(team):
-    #         yield team
-
-
-def get_user_event_teams(event_name, user_name):
-    # This works only if no team mergers. The commented code below
-    # is general but slow.
-    event = Event.query.filter_by(name=event_name).one()
-    team = Team.query.filter_by(name=user_name).one()
-    event_team = EventTeam.query.filter_by(
-        event=event, team=team).one_or_none()
-    if event_team is not None:
-        yield event_team
-    # event = Event.query.filter_by(name=event_name).one()
-    # user = User.query.filter_by(name=user_name).one()
-    # event_teams = EventTeam.query.filter_by(event=event).all()
-    # for event_team in event_teams:
-    #     if user in get_team_members(event_team.team):
-    #         yield event_team
-
-
-def get_n_user_teams(user):
-    return len(get_user_teams(user))
-
-
 # a given RAMP problem, like iris or variable_stars
 class Problem(db.Model):
     __tablename__ = 'problems'
