@@ -217,6 +217,7 @@ def test_model():
     u.is_anonymous
     u.get_id()
     u.__repr__()
+
     p = Problem.query.filter_by(name='iris').one()
     p.__repr__()
     p.title
@@ -228,6 +229,7 @@ def test_model():
     p.ground_truths_test()
     p.ground_truths_valid(range(len(predictions.y_pred)))
     p.workflow_object
+
     for e in p.events:
         e.workflow
         e.combined_combined_valid_score_str
@@ -247,3 +249,7 @@ def test_model():
             st.minimum
             st.maximum
             st.worst
+        for cv in e.cv_folds:
+            e.__repr__()
+        for et in e.event_teams:
+            et.__repr__()
