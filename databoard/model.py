@@ -1576,7 +1576,7 @@ class SubmissionSimilarity(db.Model):
     target_submission_id = db.Column(
         db.Integer, db.ForeignKey('submissions.id'))
     target_submission = db.relationship(
-        'Submisssion', primaryjoin=(
+        'Submission', primaryjoin=(
             'SubmissionSimilarity.target_submission_id == Submission.id'),
         backref=db.backref('targets', cascade='all, delete-orphan'))
 

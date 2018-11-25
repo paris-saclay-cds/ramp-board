@@ -283,3 +283,43 @@ def test_model():
             code = sf.get_code()
             sf.set_code(code)
             sf.__repr__()
+
+    ss = Submission.query.all()
+    for s in ss:
+        s.__str__()
+        s.__repr__()
+        s.team
+        s.event
+        s.official_score_function
+        s.official_score_name
+        s.official_score
+        s.score_types
+        s.Predictions
+        s.is_not_sandbox
+        s.is_error
+        s.is_public_leaderboard
+        s.is_private_leaderboard
+        s.path
+        s.module
+        s.f_names
+        s.link
+        s.full_name_with_link
+        s.name_with_link
+        s.state_with_link
+        s.ordered_scores
+        s.set_state(s.state)
+        s.set_error('training_error', 'error message')
+        s.set_contributivity()
+        for score in s.scores:
+            score.score_name
+            score.score_function
+            score.precision
+            score.train_score_cv_mean
+            score.valid_score_cv_mean
+            score.test_score_cv_mean
+            score.train_score_cv_std
+            score.valid_score_cv_std
+            score.test_score_cv_std
+            score.score_name
+            score.score_name
+        s.reset()
