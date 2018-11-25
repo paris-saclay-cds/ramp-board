@@ -1438,7 +1438,11 @@ class UserInteraction(db.Model):
         self.user = user
         self.problem = problem
         if event is not None and user is not None:
-            self.event_team = get_active_user_event_team(event, user)
+            # There should always be an active user team, if not, throw an
+            # exception
+            # The current code works only if each user admins a single team.
+            self.event_team = EventTeam.query.filter_by(
+                event=event, team=user.admined_teams[0]).one_or_none()
         if ip is None:
             self.ip = request.environ['REMOTE_ADDR']
         else:
@@ -1572,7 +1576,7 @@ class SubmissionSimilarity(db.Model):
     target_submission_id = db.Column(
         db.Integer, db.ForeignKey('submissions.id'))
     target_submission = db.relationship(
-        'Submission', primaryjoin=(
+        'Submisssion', primaryjoin=(
             'SubmissionSimilarity.target_submission_id == Submission.id'),
         backref=db.backref('targets', cascade='all, delete-orphan'))
 
