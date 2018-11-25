@@ -298,7 +298,6 @@ class Event(db.Model):
         for event_team in self.event_teams:
             # substract one for starting kit
             self.n_submissions += len(event_team.submissions) - 1
-        db.session.commit()
 
     @property
     def Predictions(self):
@@ -1074,7 +1073,7 @@ class Submission(db.Model):
             submission_on_cv_fold.set_error(error, error_msg)
 
     # contributivity could be a property but then we could not query on it
-    def set_contributivity(self, is_commit=True):
+    def set_contributivity(self):
         self.contributivity = 0.0
         if self.is_public_leaderboard:
             # we share a unit of 1. among folds
@@ -1082,8 +1081,6 @@ class Submission(db.Model):
             for submission_on_cv_fold in self.on_cv_folds:
                 self.contributivity +=\
                     unit_contributivity * submission_on_cv_fold.contributivity
-        if is_commit:
-            db.session.commit()
 
     def set_state_after_training(self):
         self.training_timestamp = datetime.datetime.utcnow()
@@ -1290,7 +1287,6 @@ class SubmissionOnCVFold(db.Model):
         else:
             for score in self.scores:
                 score.train_score = score.event_score_type.worst
-        db.session.commit()
 
     def compute_valid_scores(self):
         if self.is_validated:
@@ -1303,7 +1299,6 @@ class SubmissionOnCVFold(db.Model):
         else:
             for score in self.scores:
                 score.valid_score = score.event_score_type.worst
-        db.session.commit()
 
     def compute_test_scores(self):
         if self.is_tested:
@@ -1315,7 +1310,6 @@ class SubmissionOnCVFold(db.Model):
         else:
             for score in self.scores:
                 score.test_score = score.event_score_type.worst
-        db.session.commit()
 
     def update(self, detached_submission_on_cv_fold):
         """From trained DetachedSubmissionOnCVFold."""
@@ -1336,7 +1330,6 @@ class SubmissionOnCVFold(db.Model):
                 logger.info('Saving test_y_pred for fold {}'.format(
                     self.cv_fold_id))
                 self.test_y_pred = detached_submission_on_cv_fold.test_y_pred
-        db.session.commit()
 
 
 class DetachedSubmissionOnCVFold(object):

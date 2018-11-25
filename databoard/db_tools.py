@@ -1154,6 +1154,12 @@ def set_n_submissions(event_name=None):
     db.session.commit()
 
 
+def set_contributivity(submission, is_commit=True):
+    submission.set_contributivity()
+    if is_commit:
+        db.session.commit()
+
+
 def backend_train_test_loop(event_name=None, timeout=20,
                             is_compute_contributivity=True,
                             is_parallelize=None):
@@ -1241,6 +1247,7 @@ def train_test_submission(submission, force_retrain_test=False):
                     'Training {} failed with exception: \n{}'.format(
                         detached_submission_on_cv_fold, log_msg))
                 submission_on_cv_fold.update(detached_submission_on_cv_fold)
+            db.session.commit()
     else:
         # detached_submission_on_cv_folds = []
         for detached_submission_on_cv_fold, submission_on_cv_fold in\
@@ -1250,6 +1257,7 @@ def train_test_submission(submission, force_retrain_test=False):
                 X_train, y_train, X_test, y_test,
                 force_retrain_test)
             submission_on_cv_fold.update(detached_submission_on_cv_fold)
+            db.session.commit()
     submission.training_timestamp = datetime.datetime.utcnow()
     submission.set_state_after_training()
     db.session.commit()
@@ -1510,7 +1518,7 @@ def compute_contributivity_no_commit(
         best_test_predictions_list.append(best_test_predictions)
         test_is_list.append(cv_fold.test_is)
     for submission in submissions:
-        submission.set_contributivity(is_commit=False)
+        set_contributivity(submission, is_commit=False)
     # if there are no predictions to combine, it crashed
     combined_predictions_list = [c for c in combined_predictions_list
                                  if c is not None]
