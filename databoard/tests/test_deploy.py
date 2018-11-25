@@ -2,11 +2,13 @@ from __future__ import print_function, absolute_import
 
 import os
 
+import datetime
 import databoard.db_tools as db_tools
 from databoard import ramp_data_path, ramp_kits_path
 from databoard.deploy import deploy
 from databoard.model import (
-    NameClashError, User, Problem, Event, Submission, DuplicateSubmissionError)
+    NameClashError, User, Problem, Event, Submission, DuplicateSubmissionError,
+    SubmissionSimilarity, EventTeam, Team, UserInteraction)
 from databoard.config import sandbox_d_name
 
 
@@ -96,25 +98,29 @@ def test_add_problem_and_event():
     _add_problem_and_event('iris', 'test_user')
     _add_problem_and_event('iris', 'test_user')
     _add_problem_and_event('boston_housing', 'test_user')
-    db_tools.exclude_from_ensemble(
-        'boston_housing_test', 'test_user', 'random_forest_100')
-    db_tools.compute_contributivity('boston_housing_test')
-    db_tools.update_leaderboards('boston_housing_test')
-    db_tools.update_user_leaderboards('boston_housing_test', 'test_user')
-    db_tools.update_all_user_leaderboards('boston_housing_test')
-    db_tools.update_all_user_leaderboards('iris_test')
-    db_tools.delete_submission('iris_test', 'test_user', 'starting_kit_test')
-    db_tools.compute_contributivity('iris_test')
-    db_tools.update_leaderboards('iris_test')
-    db_tools.update_user_leaderboards('iris_test', 'test_user')
-    db_tools.set_n_submissions()
-    db_tools.set_n_submissions('boston_housing_test')
+
+
+def test_add_submission_similarity():
+    u = User.query.filter_by(name='test_user').one()
+    t = Team.query.filter_by(name='test_user').one()
+    e = Event.query.filter_by(name='boston_housing_test').one()
+    et = EventTeam.query.filter_by(event=e, team=t).one()
+    submissions = Submission.query.filter_by(event_team=et).all()
+    source_submission = submissions[0]
+    target_submission = submissions[1]
+    db_tools.add_submission_similarity(
+        type='target_credit', user=u, source_submission=source_submission,
+        target_submission=target_submission, similarity=0.8,
+        timestamp=datetime.datetime.utcnow())
+    db_tools.add_user_interaction(
+        interaction='giving credit', user=u, event=e, ip='0.0.0.0',
+        submission=target_submission)
 
 
 def test_is_dot_dot_dot():
     event = Event.query.filter_by(name='boston_housing_test').one()
     user = User.query.filter_by(name='test_user').one()
-    submission = Submission.query.filter_by(name='starting_kit_test').one()
+    submission = Submission.query.filter_by(name='starting_kit_test').all()[0]
     assert db_tools.is_user_signed_up('boston_housing_test', 'test_user')
     assert not db_tools.is_user_asked_sign_up(
         'boston_housing_test', 'test_user')
@@ -345,3 +351,30 @@ def test_model():
         s.set_error('training_error', 'error message')
         s.set_contributivity()
         s.reset()
+
+    sss = SubmissionSimilarity.query.all()
+    for ss in sss:
+        ss.__repr__()
+
+    uis = UserInteraction.query.all()
+    for ui in uis:
+        ui.__repr__()
+        ui.submission_file_diff_link
+        ui.event
+        ui.team
+
+
+def test_delete_submissions():
+    db_tools.exclude_from_ensemble(
+        'boston_housing_test', 'test_user', 'random_forest_100')
+    db_tools.compute_contributivity('boston_housing_test')
+    db_tools.update_leaderboards('boston_housing_test')
+    db_tools.update_user_leaderboards('boston_housing_test', 'test_user')
+    db_tools.update_all_user_leaderboards('boston_housing_test')
+    db_tools.update_all_user_leaderboards('iris_test')
+    db_tools.delete_submission('iris_test', 'test_user', 'starting_kit_test')
+    db_tools.compute_contributivity('iris_test')
+    db_tools.update_leaderboards('iris_test')
+    db_tools.update_user_leaderboards('iris_test', 'test_user')
+    db_tools.set_n_submissions()
+    db_tools.set_n_submissions('boston_housing_test')

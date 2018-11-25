@@ -974,14 +974,12 @@ def credit(submission_hash):
             # if submission_similarity is not empty, we need to
             # add zero to cancel previous credits explicitly
             if similarity > 0 or submission_similarity:
-                submission_similarity = SubmissionSimilarity(
+                db_tools.add_submission_similarity(
                     type='target_credit', user=fl.current_user,
                     source_submission=source_submission,
                     target_submission=submission,
                     similarity=similarity,
                     timestamp=datetime.datetime.utcnow())
-                db.session.add(submission_similarity)
-        db.session.commit()
 
         db_tools.add_user_interaction(
             interaction='giving credit', user=fl.current_user, event=event,

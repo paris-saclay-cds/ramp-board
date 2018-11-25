@@ -1581,9 +1581,11 @@ class SubmissionSimilarity(db.Model):
         backref=db.backref('targets', cascade='all, delete-orphan'))
 
     def __repr__(self):
-        repr = 'type={}, user={}, source={}, target={}, similarity={}, timestamp={}'.format(
+        repr = 'type={}, user={}, source={}, target={} '.format(
             self.type, self.user, self.source_submission,
-            self.target_submission, self.similarity, self.timestamp)
+            self.target_submission)
+        repr += 'similarity={}, timestamp={}'.format(
+            self.similarity, self.timestamp)
         return repr
 
 

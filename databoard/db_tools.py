@@ -608,6 +608,16 @@ def add_problem_keyword(
     db.session.commit()
 
 
+def add_submission_similarity(type, user, source_submission,
+                              target_submission, similarity, timestamp):
+    submission_similarity = SubmissionSimilarity(
+        type=type, user=user, source_submission=source_submission,
+        target_submission=target_submission, similarity=similarity,
+        timestamp=timestamp)
+    db.session.add(submission_similarity)
+    db.session.commit()
+
+
 def create_user(name, password, lastname, firstname, email,
                 access_level='user', hidden_notes='', linkedin_url='',
                 twitter_url='', facebook_url='', google_url='', github_url='',
@@ -1141,6 +1151,7 @@ def set_n_submissions(event_name=None):
     else:
         event = Event.query.filter_by(name=event_name).one()
         event.set_n_submissions()
+    db.session.commit()
 
 
 def backend_train_test_loop(event_name=None, timeout=20,
