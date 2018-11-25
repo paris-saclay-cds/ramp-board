@@ -271,3 +271,15 @@ def test_model():
         for e in sft.extensions:
             e.file_type
             e.extension_name
+        for sf in we.submission_files:
+            sf.is_editable
+            sf.extension
+            sf.type
+            sf.name
+            sf.f_name
+            sf.link
+            sf.path
+            sf.name_with_link
+            code = sf.get_code()
+            sf.set_code(code)
+            sf.__repr__()
