@@ -285,7 +285,41 @@ def test_model():
             sf.__repr__()
 
     ss = Submission.query.all()
+    ss = [s for s in ss if s.is_not_sandbox and not s.is_error]
     for s in ss:
+        print(s.event, s.name)
+        for score in s.scores:
+            score.score_name
+            score.score_function
+            score.precision
+            score.train_score_cv_mean
+            score.valid_score_cv_mean
+            score.test_score_cv_mean
+            score.train_score_cv_std
+            score.valid_score_cv_std
+            score.test_score_cv_std
+            score.score_name
+            score.score_name
+            for cv_score in score.on_cv_folds:
+                cv_score.name
+                cv_score.event_score_type
+                cv_score.score_function
+        for cv in s.on_cv_folds:
+            cv.__repr__()
+            cv.is_public_leaderboard
+            cv.is_trained
+            cv.is_validated
+            cv.is_tested
+            cv.is_error
+            cv.full_train_predictions
+            cv.train_predictions
+            cv.valid_predictions
+            cv.test_predictions
+            cv.official_score
+            cv.reset()
+            cv.compute_train_scores()
+            cv.compute_valid_scores()
+            cv.compute_test_scores()
         s.__str__()
         s.__repr__()
         s.team
@@ -310,16 +344,4 @@ def test_model():
         s.set_state(s.state)
         s.set_error('training_error', 'error message')
         s.set_contributivity()
-        for score in s.scores:
-            score.score_name
-            score.score_function
-            score.precision
-            score.train_score_cv_mean
-            score.valid_score_cv_mean
-            score.test_score_cv_mean
-            score.train_score_cv_std
-            score.valid_score_cv_std
-            score.test_score_cv_std
-            score.score_name
-            score.score_name
         s.reset()
