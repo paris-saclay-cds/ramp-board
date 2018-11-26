@@ -2,8 +2,7 @@ from __future__ import print_function, absolute_import, unicode_literals
 import os
 import time
 import logging
-from subprocess import call
-from subprocess import check_output
+import subprocess
 import re
 import codecs
 
@@ -23,6 +22,7 @@ __all__ = [
     'launch_train',
     'abort_training',
 ]
+
 
 # we disable the boto3 loggers because they are too verbose
 for k in (logging.Logger.manager.loggerDict.keys()):
@@ -634,7 +634,7 @@ def _rsync(config, instance_id, source, dest):
     }
     cmd = "rsync -e \"{cmd}\" -avzP {source} {dest}".format(**values)
     logger.debug(cmd)
-    return call(cmd, shell=True)
+    return subprocess.call(cmd, shell=True)
 
 
 def _run(config, instance_id, cmd, return_output=False):
@@ -682,9 +682,9 @@ def _run(config, instance_id, cmd, return_output=False):
     cmd = "{ssh} {user}@{ip} \"{cmd}\"".format(**values)
     logger.debug(cmd)
     if return_output:
-        return check_output(cmd, shell=True)
+        return subprocess.check_output(cmd, shell=True)
     else:
-        return call(cmd, shell=True)
+        return subprocess.call(cmd, shell=True)
 
 
 def _is_ready(config, instance_id):
