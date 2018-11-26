@@ -1,1 +1,1 @@
-from .engine import AWSWorker
+from .worker import AWSWorker
