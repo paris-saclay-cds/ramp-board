@@ -5,11 +5,13 @@ import logging
 import argparse
 from argparse import RawTextHelpFormatter
 
-from rampbkd.aws.api import launch_ec2_instance_and_train
-from rampbkd.aws.api import train_on_existing_ec2_instance
 from rampbkd.aws.api import validate_config
 from rampbkd.config import read_backend_config
 from rampbkd.api import get_submission_by_name
+
+from .aws_train import (
+    launch_ec2_instance_and_train, train_on_existing_ec2_instance)
+
 
 desc = """
 Train a submission on AWS.
@@ -34,6 +36,7 @@ To find the instance id, you have to check the AWS EC2 console
 or use the cli `aws` provided by amazon.
 
 """
+
 
 def init_parser():
     """Defines command-line interface"""

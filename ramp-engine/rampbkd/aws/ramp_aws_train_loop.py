@@ -4,9 +4,13 @@ import sys
 import logging
 import argparse
 
-from rampbkd.aws.api import train_loop
+from .aws_train import train_loop
+
 from rampbkd.aws.api import validate_config
 from rampbkd.config import read_backend_config
+
+
+logger = logging.getLogger('ramp_aws')
 
 
 def init_parser():
@@ -25,7 +29,6 @@ def init_parser():
 def main():
     parser = init_parser()
     args = parser.parse_args()
-    logger = logging.getLogger('ramp_aws')
     logger.setLevel(args.log_level)
     config = read_backend_config(args.config)
     validate_config(config)
