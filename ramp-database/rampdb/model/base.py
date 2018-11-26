@@ -67,9 +67,6 @@ class BaseQuery(orm.Query):
     standard SQLAlchemy sqlalchemy.orm.query.Query class and
     has all the methods of a standard query as well.
     """
-    def __init__(self):
-        super().__init__()
-
     def paginate(self, page, per_page=20, error_out=True):
         """Return `Pagination` instance using already defined query
         parameters.
