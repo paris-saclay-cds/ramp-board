@@ -42,15 +42,11 @@ __all__ = [
     'abort_training',
 ]
 
-# we disable all the other loggers partly because loggers
-# from boto3 are too verbose
-# for name, l in logging.Logger.manager.loggerDict.items():
-#     l.disabled = True
-# logging.basicConfig(
-#     #format='%(asctime)s ## %(message)s',
-#     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-#     level=logging.DEBUG,
-#     datefmt='%m/%d/%Y,%I:%M:%S')
+# we disable the boto3 loggers because they are too verbose
+for k in (logging.Logger.manager.loggerDict.keys()):
+    if 'boto' in k:
+        logging.getLogger(k).disabled = True
+
 logger = logging.getLogger('ramp_aws')
 logger.setLevel(logging.DEBUG)
 
