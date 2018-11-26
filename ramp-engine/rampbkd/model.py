@@ -20,7 +20,7 @@ from sqlalchemy.orm import backref, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
 
-from .base import get_deployment_path
+from .config import get_deployment_path
 
 __all__ = ['Base', 'NumpyType', 'User', 'Team', 'Problem', 'Submission',
            'Event', 'EventTeam']
@@ -1045,6 +1045,7 @@ submission_states = Enum(
 
 submission_types = Enum('live', 'test', name='submission_types')
 SANDBOX_NAME = 'starting_kit'
+
 
 class Submission(Base):
     """An abstract (untrained) submission."""
