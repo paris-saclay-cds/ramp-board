@@ -5,13 +5,14 @@ import logging
 import os
 import uuid
 import zlib
-from importlib import import_module
+import pickle
 
 import numpy as np
 from flask import request
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from databoard import db
+from databoard.utils import encode_string
 
 from . import deployment_path, ramp_config, ramp_data_path, ramp_kits_path
 
@@ -28,7 +29,7 @@ class NumpyType(db.TypeDecorator):
         return zlib.compress(np.array(value).dumps())
 
     def process_result_value(self, value, dialect):
-        return np.loads(zlib.decompress(value))
+        return pickle.loads(zlib.decompress(value))
 
 
 class User(db.Model):
@@ -93,17 +94,15 @@ class User(db.Model):
             return str(self.id)  # python 3
 
     def __str__(self):
-        str_ = 'User({})'.format(self.name)
-#        str_ = 'User({}, admined=['.format(self.name)
-#        str_ += string.join([team.name for team in self.admined_teams], ', ')
-#        str_ += '])'
-        return str_
+        return 'User({})'.format(self.name)
 
     def __repr__(self):
         repr = '''User(name={}, lastname={}, firstname={}, email={},
                   admined_teams={})'''.format(
-            self.name.encode('utf-8'), self.lastname.encode('utf-8'),
-            self.firstname.encode('utf-8'), self.email.encode('utf-8'),
+            encode_string(self.name),
+            encode_string(self.lastname),
+            encode_string(self.firstname),
+            encode_string(self.email),
             self.admined_teams)
         return repr
 
@@ -138,65 +137,17 @@ class Team(db.Model):
         self.creation_timestamp = datetime.datetime.utcnow()
 
     def __str__(self):
-        str_ = 'Team({})'.format(self.name.encode('utf-8'))
+        str_ = 'Team({})'.format(encode_string(self.name))
         return str_
 
     def __repr__(self):
         repr = '''Team(name={}, admin_name={},
                   initiator={}, acceptor={})'''.format(
-            self.name.encode('utf-8'), self.admin.name.encode('utf-8'),
-            self.initiator, self.acceptor)
+            encode_string(self.name),
+            encode_string(self.admin.name),
+            self.initiator,
+            self.acceptor)
         return repr
-
-
-def get_team_members(team):
-    # This works only if no team mergers. The commented code below
-    # is general but slow.
-    yield team.admin
-    # if team.initiator is not None:
-    #     # "yield from" in Python 3.3
-    #     for member in get_team_members(team.initiator):
-    #         yield member
-    #     for member in get_team_members(team.acceptor):
-    #         yield member
-    # else:
-    #     yield team.admin
-
-
-def get_n_team_members(team):
-    return len(list(get_team_members(team)))
-
-
-def get_user_teams(user):
-    # This works only if no team mergers. The commented code below
-    # is general but slow.
-    team = Team.query.filter_by(name=user.name).one()
-    yield team
-    # teams = Team.query.all()
-    # for team in teams:
-    #     if user in get_team_members(team):
-    #         yield team
-
-
-def get_user_event_teams(event_name, user_name):
-    # This works only if no team mergers. The commented code below
-    # is general but slow.
-    event = Event.query.filter_by(name=event_name).one()
-    team = Team.query.filter_by(name=user_name).one()
-    event_team = EventTeam.query.filter_by(
-        event=event, team=team).one_or_none()
-    if event_team is not None:
-        yield event_team
-    # event = Event.query.filter_by(name=event_name).one()
-    # user = User.query.filter_by(name=user_name).one()
-    # event_teams = EventTeam.query.filter_by(event=event).all()
-    # for event_team in event_teams:
-    #     if user in get_team_members(event_team.team):
-    #         yield event_team
-
-
-def get_n_user_teams(user):
-    return len(get_user_teams(user))
 
 
 # a given RAMP problem, like iris or variable_stars
@@ -265,6 +216,8 @@ class Problem(db.Model):
         return self.module.workflow
 
 
+# Deprecated: scort types are now defined in problem.py.
+# EventScoreType.score_type should be deleted then DB migrated.
 class ScoreType(db.Model):
     __tablename__ = 'score_types'
 
@@ -279,34 +232,6 @@ class ScoreType(db.Model):
         self.is_lower_the_better = is_lower_the_better
         self.minimum = minimum
         self.maximum = maximum
-        # to check if the module and all required fields are there
-        # self.module
-        # self.score_function
-        # self.precision
-
-    def __repr__(self):
-        repr = 'ScoreType(name={})'.format(self.name)
-        return repr
-
-    @property
-    def module(self):
-        return import_module('.' + self.name, ramp_config['scoretypes_module'])
-
-    @property
-    def score_function(self):
-        return self.module.score_function
-
-    @property
-    def worst(self):
-        if self.is_lower_the_better:
-            return self.maximum
-        else:
-            return self.minimum
-
-    # default display precision in n_digits
-    @property
-    def precision(self):
-        return self.module.precision
 
 
 # a given RAMP event, like iris_test or M2_data_science_2015_variable_stars
@@ -379,7 +304,6 @@ class Event(db.Model):
         for event_team in self.event_teams:
             # substract one for starting kit
             self.n_submissions += len(event_team.submissions) - 1
-        db.session.commit()
 
     @property
     def Predictions(self):
@@ -479,7 +403,7 @@ class EventScoreType(db.Model):
     def __init__(self, event, score_type_object):
         self.event = event
         # XXX
-        self.score_type = ScoreType(uuid.uuid4(), True, 0, 1)
+        self.score_type = ScoreType(str(uuid.uuid4()), True, 0, 1)
         # XXX after migration we should store the index of the
         # score_type so self.score_type_object (should be renamed
         # score_type) wouldn't have to do a search each time.
@@ -602,21 +526,6 @@ class EventTeam(db.Model):
         return repr
 
 
-def get_active_user_event_team(event, user):
-    # There should always be an active user team, if not, throw an exception
-    # The current code works only if each user admins a single team.
-    event_team = EventTeam.query.filter_by(
-        event=event, team=user.admined_teams[0]).one_or_none()
-    return event_team
-
-    # This below works for the general case with teams with more than
-    # on members but it is slow, eg in constructing user interactions
-    # event_teams = EventTeam.query.filter_by(event=event).all()
-    # for event_team in event_teams:
-    #     if user in get_team_members(event_team.team) and event_team.is_active:
-    #         return event_team
-
-
 class SubmissionFileType(db.Model):
     __tablename__ = 'submission_file_types'
 
@@ -677,9 +586,10 @@ class WorkflowElementType(db.Model):
         'SubmissionFileType', backref=db.backref('workflow_element_types'))
 
     def __repr__(self):
-        repr = 'WorkflowElementType(name={}, type={}, is_editable={}, max_size={})'.format(
-            self.name, self.type.name, self.type.is_editable,
-            self.type.max_size)
+        repr = 'WorkflowElementType(name={}, type={}'.format(
+            self.name, self.type.name)
+        repr += 'is_editable={}, max_size={})'.format(
+            self.type.is_editable, self.type.max_size)
         return repr
 
     @property
@@ -716,10 +626,6 @@ class Workflow(db.Model):
         for workflow_element in self.elements:
             repr += '\n\t' + str(workflow_element)
         return repr
-
-    @property
-    def object(self):
-        return self.problem.module.workflow
 
 
 # In lists we will order files according to their ids
@@ -864,90 +770,6 @@ class SubmissionFile(db.Model):
             format(self.name, self.type, self.extension, self.path)
 
 
-def combine_predictions_list(predictions_list, index_list=None):
-    """Combine predictions in predictions_list[index_list].
-
-    By taking the mean of their get_combineable_predictions views.
-
-    E.g. for regression it is the actual
-    predictions, and for classification it is the probability array (which
-    should be calibrated if we want the best performance). Called both for
-    combining one submission on cv folds (a single model that is trained on
-    different folds) and several models on a single fold.
-    Called by
-    _get_bagging_score : which combines bags of the same model, trained on
-        different folds, on the heldout test set
-    _get_cv_bagging_score : which combines cv-bags of the same model, trained
-        on different folds, on the training set
-    get_next_best_single_fold : which does one step of the greedy forward
-        selection (of different models) on a single fold
-    _get_combined_predictions_single_fold : which does the full loop of greedy
-        forward selection (of different models), until improvement, on a single
-        fold
-    _get_combined_test_predictions_single_fold : which computes the combination
-        (constructed on the cv valid set) on the holdout test set, on a single
-        fold
-    _get_combined_test_predictions : which combines the foldwise combined
-        and foldwise best test predictions into a single megacombination
-
-    Parameters
-    ----------
-    predictions_list : list of instances of Predictions
-        Each element of the list is an instance of Predictions of a given model
-        on the same data points.
-    index_list : None | list of integers
-        The subset of predictions to be combined. If None, the full set is
-        combined.
-
-    Returns
-    -------
-    combined_predictions : instance of Predictions
-        A predictions instance containing the combined (averaged) predictions.
-    """
-    Predictions = type(predictions_list[0])
-    combined_predictions = Predictions.combine(predictions_list, index_list)
-    return combined_predictions
-
-
-def _get_score_cv_bags(event, score_type, predictions_list, ground_truths,
-                       test_is_list=None):
-    """
-    Computes the bagged score of the predictions in predictions_list.
-
-    Called by Submission.compute_valid_score_cv_bag and
-    db_tools.compute_contributivity.
-
-    Parameters
-    ----------
-    event : instance of Event
-        Needed for the type of y_comb and
-    predictions_list : list of instances of Predictions
-    ground_truths : instance of Predictions
-    test_is_list : list of integers
-        Indices of points that should be bagged in each prediction. If None,
-        the full prediction vectors will be bagged.
-    Returns
-    -------
-    score_cv_bags : instance of Score ()
-    """
-    if test_is_list is None:  # we combine the full list
-        test_is_list = [range(len(predictions.y_pred))
-                        for predictions in predictions_list]
-
-    y_comb = np.array(
-        [event.Predictions(n_samples=len(ground_truths.y_pred))
-         for _ in predictions_list])
-    score_cv_bags = []
-    for i, test_is in enumerate(test_is_list):
-        y_comb[i].set_valid_in_train(predictions_list[i], test_is)
-        combined_predictions = combine_predictions_list(y_comb[:i + 1])
-        valid_indexes = combined_predictions.valid_indexes
-        score_cv_bags.append(score_type.score_function(
-            ground_truths, combined_predictions, valid_indexes))
-        # XXX maybe use masked arrays rather than passing valid_indexes
-    return combined_predictions, score_cv_bags
-
-
 class SubmissionScore(db.Model):
     __tablename__ = 'submission_scores'
 
@@ -1079,9 +901,9 @@ class Submission(db.Model):
         self.name = name
         self.event_team = event_team
         sha_hasher = hashlib.sha1()
-        sha_hasher.update(self.event.name.encode('utf-8'))
-        sha_hasher.update(self.team.name.encode('utf-8'))
-        sha_hasher.update(self.name.encode('utf-8'))
+        sha_hasher.update(encode_string(self.event.name))
+        sha_hasher.update(encode_string(self.team.name))
+        sha_hasher.update(encode_string(self.name))
         # We considered using the id, but then it will be given away in the
         # url which is maybe not a good idea.
         self.hash_ = '{}'.format(sha_hasher.hexdigest())
@@ -1101,8 +923,12 @@ class Submission(db.Model):
     def __repr__(self):
         repr = '''Submission(event_name={}, team_name={}, name={}, files={},
                   state={}, train_time={})'''.format(
-            self.event.name, self.team.name, self.name, self.files,
-            self.state, self.train_time_cv_mean)
+            encode_string(self.event.name),
+            encode_string(self.team.name),
+            encode_string(self.name),
+            self.files,
+            self.state,
+            self.train_time_cv_mean)
         return repr
 
     @hybrid_property
@@ -1256,64 +1082,8 @@ class Submission(db.Model):
         for submission_on_cv_fold in self.on_cv_folds:
             submission_on_cv_fold.set_error(error, error_msg)
 
-    def compute_valid_score_cv_bag(self):
-        """Cv-bag cv_fold.valid_predictions using combine_predictions_list.
-
-        The predictions in predictions_list[i] belong to those indicated
-        by self.on_cv_folds[i].test_is.
-        """
-        ground_truths_train = self.event.problem.ground_truths_train()
-        if self.state == 'tested':
-            predictions_list = [submission_on_cv_fold.valid_predictions for
-                                submission_on_cv_fold in self.on_cv_folds]
-            test_is_list = [submission_on_cv_fold.cv_fold.test_is for
-                            submission_on_cv_fold in self.on_cv_folds]
-            for score in self.scores:
-                _, score.valid_score_cv_bags = _get_score_cv_bags(
-                    self.event, score.event_score_type, predictions_list,
-                    ground_truths_train, test_is_list)
-                score.valid_score_cv_bag = float(score.valid_score_cv_bags[-1])
-        else:
-            for score in self.scores:
-                score.valid_score_cv_bag = float(score.event_score_type.worst)
-                score.valid_score_cv_bags = None
-        db.session.commit()
-
-    def compute_test_score_cv_bag(self):
-        """Bag cv_fold.test_predictions using combine_predictions_list.
-
-        And stores the score of the bagged predictor in test_score_cv_bag. The
-        scores of partial combinations are stored in test_score_cv_bags.
-        This is for assessing the bagging learning curve, which is useful for
-        setting the number of cv folds to its optimal value (in case the RAMP
-        is competitive, say, to win a Kaggle challenge; although it's kinda
-        stupid since in those RAMPs we don't have a test file, so the learning
-        curves should be assessed in compute_valid_score_cv_bag on the
-        (cross-)validation sets).
-        """
-        if self.state == 'tested':
-            # When we have submission id in Predictions, we should get the
-            # team and submission from the db
-            ground_truths = self.event.problem.ground_truths_test()
-            predictions_list = [submission_on_cv_fold.test_predictions for
-                                submission_on_cv_fold in self.on_cv_folds]
-            combined_predictions_list = [
-                combine_predictions_list(predictions_list[:i + 1]) for
-                i in range(len(predictions_list))]
-            for score in self.scores:
-                score.test_score_cv_bags = [
-                    score.score_function(
-                        ground_truths, combined_predictions) for
-                    combined_predictions in combined_predictions_list]
-                score.test_score_cv_bag = float(score.test_score_cv_bags[-1])
-        else:
-            for score in self.scores:
-                score.test_score_cv_bag = float(score.event_score_type.worst)
-                score.test_score_cv_bags = None
-        db.session.commit()
-
     # contributivity could be a property but then we could not query on it
-    def set_contributivity(self, is_commit=True):
+    def set_contributivity(self):
         self.contributivity = 0.0
         if self.is_public_leaderboard:
             # we share a unit of 1. among folds
@@ -1321,8 +1091,6 @@ class Submission(db.Model):
             for submission_on_cv_fold in self.on_cv_folds:
                 self.contributivity +=\
                     unit_contributivity * submission_on_cv_fold.contributivity
-        if is_commit:
-            db.session.commit()
 
     def set_state_after_training(self):
         self.training_timestamp = datetime.datetime.utcnow()
@@ -1349,67 +1117,6 @@ class Submission(db.Model):
             self.error_msg = self.on_cv_folds[i].error_msg
         if 'error' not in self.state:
             self.error_msg = ''
-
-
-def get_next_best_single_fold(event, predictions_list, ground_truths,
-                              best_index_list, min_improvement=0.0):
-    """.
-
-    Find the model that minimizes the score if added to
-    predictions_list[best_index_list] using event.official_score_function.
-    If there is no model improving the input
-    combination, the input best_index_list is returned. Otherwise the best
-    model is added to the list. We could also return the combined prediction
-    (for efficiency, so the combination would not have to be done each time;
-    right now the algo is quadratic), but I don't think any meaningful
-    rule will be associative, in which case we should redo the combination from
-    scratch each time the set changes. Since now combination = mean, we could
-    maintain the sum and the number of models, but it would be a bit bulky.
-    We'll see how this evolves.
-
-    Parameters
-    ----------
-    predictions_list : list of instances of Predictions
-        Each element of the list is an instance of Predictions of a model
-        on the same (cross-validation valid) data points.
-    ground_truths : instance of Predictions
-        The ground truth.
-    best_index_list : list of integers
-        Indices of the current best model.
-
-    Returns
-    -------
-    best_index_list : list of integers
-        Indices of the models in the new combination. If the same as input,
-        no models wer found improving the score.
-    """
-    best_predictions = combine_predictions_list(
-        predictions_list, index_list=best_index_list)
-    best_score = event.official_score_function(
-        ground_truths, best_predictions)
-    best_index = -1
-    # Combination with replacement, what Caruana suggests. Basically, if a
-    # model is added several times, it's upweighted, leading to
-    # integer-weighted ensembles
-    r = np.arange(len(predictions_list))
-    # Randomization doesn't matter, only in case of exact equality.
-    # np.random.shuffle(r)
-    # print r
-    for i in r:
-        combined_predictions = combine_predictions_list(
-            predictions_list, index_list=np.append(best_index_list, i))
-        new_score = event.official_score_function(
-            ground_truths, combined_predictions)
-        is_lower_the_better = event.official_score_type.is_lower_the_better
-        if (is_lower_the_better and new_score < best_score) or\
-                (not is_lower_the_better and new_score > best_score):
-            best_predictions = combined_predictions
-            best_index = i
-            best_score = new_score
-    if best_index > -1:
-        return np.append(best_index_list, best_index), best_score
-    else:
-        return best_index_list, best_score
 
 
 class SubmissionScoreOnCVFold(db.Model):
@@ -1590,7 +1297,6 @@ class SubmissionOnCVFold(db.Model):
         else:
             for score in self.scores:
                 score.train_score = score.event_score_type.worst
-        db.session.commit()
 
     def compute_valid_scores(self):
         if self.is_validated:
@@ -1603,7 +1309,6 @@ class SubmissionOnCVFold(db.Model):
         else:
             for score in self.scores:
                 score.valid_score = score.event_score_type.worst
-        db.session.commit()
 
     def compute_test_scores(self):
         if self.is_tested:
@@ -1615,7 +1320,6 @@ class SubmissionOnCVFold(db.Model):
         else:
             for score in self.scores:
                 score.test_score = score.event_score_type.worst
-        db.session.commit()
 
     def update(self, detached_submission_on_cv_fold):
         """From trained DetachedSubmissionOnCVFold."""
@@ -1636,7 +1340,6 @@ class SubmissionOnCVFold(db.Model):
                 logger.info('Saving test_y_pred for fold {}'.format(
                     self.cv_fold_id))
                 self.test_y_pred = detached_submission_on_cv_fold.test_y_pred
-        db.session.commit()
 
 
 class DetachedSubmissionOnCVFold(object):
@@ -1738,7 +1441,11 @@ class UserInteraction(db.Model):
         self.user = user
         self.problem = problem
         if event is not None and user is not None:
-            self.event_team = get_active_user_event_team(event, user)
+            # There should always be an active user team, if not, throw an
+            # exception
+            # The current code works only if each user admins a single team.
+            self.event_team = EventTeam.query.filter_by(
+                event=event, team=user.admined_teams[0]).one_or_none()
         if ip is None:
             self.ip = request.environ['REMOTE_ADDR']
         else:
@@ -1877,9 +1584,11 @@ class SubmissionSimilarity(db.Model):
         backref=db.backref('targets', cascade='all, delete-orphan'))
 
     def __repr__(self):
-        repr = 'type={}, user={}, source={}, target={}, similarity={}, timestamp={}'.format(
+        repr = 'type={}, user={}, source={}, target={} '.format(
             self.type, self.user, self.source_submission,
-            self.target_submission, self.similarity, self.timestamp)
+            self.target_submission)
+        repr += 'similarity={}, timestamp={}'.format(
+            self.similarity, self.timestamp)
         return repr
 
 

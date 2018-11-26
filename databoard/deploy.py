@@ -15,7 +15,7 @@ def recreate_db():
 
 def deploy():
     if os.getenv('DATABOARD_STAGE') in ['TEST', 'TESTING']:
-        rmtree(deployment_path)
+        rmtree(deployment_path, ignore_errors=True)
         os.makedirs(deployment_path)
         os.system('rsync -rultv fabfile.py {}'.format(deployment_path))
         os.makedirs(ramp_kits_path)

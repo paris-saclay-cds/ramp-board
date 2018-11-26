@@ -1,0 +1,33 @@
+# This is the testing environment.
+name: testenv
+dependencies:
+  - numpy
+  - pyyaml
+  - sqlalchemy
+  - psycopg2
+  - pandas
+  - scikit-learn
+  - Flask
+  - Flask-Login
+  - Flask-SQLAlchemy
+  - Flask-Wtf
+  - unidecode
+  - termcolor
+  - pytest
+  - pytest-cov
+  - jupyter
+  - gitpython
+  - scikit-image
+  - bokeh
+  - matplotlib
+  - pycrypto
+  - ipykernel
+  - bcrypt
+  - pip:
+    - psycopg2-binary
+    - git+https://github.com/paris-saclay-cds/ramp-workflow
+    - Flask-Shelve
+    - Flask-Openid
+    - Flask-Mail
+    - pytest-env
+    - xkcdpass

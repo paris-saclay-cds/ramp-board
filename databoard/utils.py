@@ -14,6 +14,18 @@ logger = logging.getLogger('databoard')
 PYTHON3 = sys.version_info[0] == 3
 
 
+def encode_string(text):
+    if PYTHON3:
+        if isinstance(text, str):
+            encoded_text = bytes(text, 'utf-8')
+        else:
+            encoded_text = text
+    else:
+        encoded_text = text.encode('utf8')
+
+    return encoded_text
+
+
 def remove_non_ascii(text):
     if PYTHON3:
         return unidecode(text)
@@ -40,13 +52,7 @@ def get_hashed_password(plain_text_password):
 
     (Using bcrypt, the salt is saved into the hash itself)
     """
-    if PYTHON3:
-        if isinstance(plain_text_password, str):
-            password = bytes(plain_text_password, 'utf-8')
-        else:
-            password = plain_text_password
-    else:
-        password = plain_text_password.encode('utf8')
+    password = encode_string(plain_text_password)
 
     return bcrypt.hashpw(password, bcrypt.gensalt())
 
@@ -56,16 +62,8 @@ def check_password(plain_text_password, hashed_password):
 
     Using bcrypt, the salt is saved into the hash itself.
     """
-    if PYTHON3:
-        password = plain_text_password
-        hashed_p = hashed_password
-        if isinstance(password, str):
-            password = bytes(password, 'utf-8')
-        if isinstance(hashed_p, str):
-            password = bytes(hashed_p, 'utf-8')
-    else:
-        password = plain_text_password.encode('utf8')
-        hashed_p = hashed_password.encode('utf8')
+    password = encode_string(plain_text_password)
+    hashed_p = encode_string(hashed_password)
 
     return bcrypt.checkpw(password, hashed_p)
 
