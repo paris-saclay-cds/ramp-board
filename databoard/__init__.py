@@ -7,7 +7,8 @@ from flask_login import LoginManager
 
 from rampdb.model.base import Model
 
-from .database import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
+# from .database import SQLAlchemy
 
 __version__ = '0.1.dev'
 
@@ -41,7 +42,7 @@ user_config = os.getenv('DATABOARD_CONFIG')
 if user_config is not None:
     app.config.from_json(user_config)
 
-db = SQLAlchemy(app, Model=Model)
+db = SQLAlchemy(app, model_class=Model)
 mail = Mail(app)
 
 login_manager = LoginManager()
@@ -65,5 +66,4 @@ ramp_kits_path = os.path.join(deployment_path, ramp_config['kits_dir'])
 ramp_data_path = os.path.join(deployment_path, ramp_config['data_dir'])
 
 from . import views  # noqa
-from . import model  # noqa
 from . import db_tools  # noqa
