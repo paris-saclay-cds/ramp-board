@@ -15,7 +15,6 @@ dependencies:
   - termcolor
   - pytest
   - pytest-cov
-  - pytest-env
   - jupyter
   - gitpython
   - scikit-image
@@ -30,3 +29,4 @@ dependencies:
     - Flask-Shelve
     - Flask-Openid
     - Flask-Mail
+    - pytest-env
