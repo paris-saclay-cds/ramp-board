@@ -129,7 +129,7 @@ def set_query_property(model_class, session):
 
 
 def get_deployment_path():
-    server_type = os.getenv('RAMP_SERVER_TYPE', 'UNKNOWN')
+    server_type = os.getenv('DATABOARD_STAGE', 'UNKNOWN')
     if server_type.upper() in ['PROD', 'PRODUCTION']:
         return os.getenv('DATABOARD_DEPLOYMENT_PATH', '/tmp/databoard')
     elif server_type.upper() in ['TEST', 'TESTING', 'DEV', 'DEVELOPMENT']:
