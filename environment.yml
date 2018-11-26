@@ -7,8 +7,10 @@ dependencies:
   - psycopg2
   - pandas
   - scikit-learn
-  - flask
-  - six
+  - Flask
+  - Flask-Login
+  - Flask-SQLAlchemy
+  - Flask-Wtf
   - unidecode
   - termcolor
   - pytest
@@ -20,6 +22,12 @@ dependencies:
   - matplotlib
   - pycrypto
   - ipykernel
+  - bcrypt
   - pip:
     - psycopg2-binary
     - git+https://github.com/paris-saclay-cds/ramp-workflow
+    - Flask-Shelve
+    - Flask-Openid
+    - Flask-Mail
+    - pytest-env
+    - xkcdpass

@@ -15,7 +15,7 @@ from sklearn.utils.validation import assert_all_finite
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
-from . import app, db, ramp_config, ramp_data_path, ramp_kits_path
+from . import app, db, ramp_config, ramp_kits_path
 from .model import (CVFold, DetachedSubmissionOnCVFold,
                     DuplicateSubmissionError, Event, EventAdmin,
                     EventScoreType, EventTeam, Extension, Keyword,
@@ -25,15 +25,277 @@ from .model import (CVFold, DetachedSubmissionOnCVFold,
                     SubmissionFileTypeExtension, SubmissionOnCVFold,
                     SubmissionSimilarity, Team, TooEarlySubmissionError, User,
                     UserInteraction, Workflow, WorkflowElement,
-                    WorkflowElementType, _get_score_cv_bags,
-                    combine_predictions_list, get_active_user_event_team,
-                    get_next_best_single_fold, get_team_members,
-                    get_user_event_teams)
+                    WorkflowElementType)
 from .utils import (date_time_format, get_hashed_password, remove_non_ascii,
-                    send_mail, table_format)
+                    send_mail, table_format, encode_string)
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
+
+
+def get_team_members(team):
+    # This works only if no team mergers. The commented code below
+    # is general but slow.
+    yield team.admin
+    # if team.initiator is not None:
+    #     # "yield from" in Python 3.3
+    #     for member in get_team_members(team.initiator):
+    #         yield member
+    #     for member in get_team_members(team.acceptor):
+    #         yield member
+    # else:
+    #     yield team.admin
+
+
+# def get_user_teams(user):
+#     # This works only if no team mergers. The commented code below
+#     # is general but slow.
+#     team = Team.query.filter_by(name=user.name).one()
+#     yield team
+#     # teams = Team.query.all()
+#     # for team in teams:
+#     #     if user in get_team_members(team):
+#     #         yield team
+
+
+def get_user_event_teams(event_name, user_name):
+    # This works only if no team mergers. The commented code below
+    # is general but slow.
+    event = Event.query.filter_by(name=event_name).one()
+    team = Team.query.filter_by(name=user_name).one()
+    event_team = EventTeam.query.filter_by(
+        event=event, team=team).one_or_none()
+    if event_team is not None:
+        yield event_team
+    # event = Event.query.filter_by(name=event_name).one()
+    # user = User.query.filter_by(name=user_name).one()
+    # event_teams = EventTeam.query.filter_by(event=event).all()
+    # for event_team in event_teams:
+    #     if user in get_team_members(event_team.team):
+    #         yield event_team
+
+
+# def get_n_user_teams(user):
+#     return len(get_user_teams(user))
+
+
+def get_active_user_event_team(event, user):
+    # There should always be an active user team, if not, throw an exception
+    # The current code works only if each user admins a single team.
+    event_team = EventTeam.query.filter_by(
+        event=event, team=user.admined_teams[0]).one_or_none()
+    return event_team
+
+    # This below works for the general case with teams with more than
+    # on members but it is slow, eg in constructing user interactions
+    # event_teams = EventTeam.query.filter_by(event=event).all()
+    # for event_team in event_teams:
+    #     if user in get_team_members(event_team.team) and
+    #             event_team.is_active:
+    #         return event_team
+
+
+def combine_predictions_list(predictions_list, index_list=None):
+    """Combine predictions in predictions_list[index_list].
+
+    By taking the mean of their get_combineable_predictions views.
+
+    E.g. for regression it is the actual
+    predictions, and for classification it is the probability array (which
+    should be calibrated if we want the best performance). Called both for
+    combining one submission on cv folds (a single model that is trained on
+    different folds) and several models on a single fold.
+    Called by
+    _get_bagging_score : which combines bags of the same model, trained on
+        different folds, on the heldout test set
+    _get_cv_bagging_score : which combines cv-bags of the same model, trained
+        on different folds, on the training set
+    get_next_best_single_fold : which does one step of the greedy forward
+        selection (of different models) on a single fold
+    _get_combined_predictions_single_fold : which does the full loop of greedy
+        forward selection (of different models), until improvement, on a single
+        fold
+    _get_combined_test_predictions_single_fold : which computes the combination
+        (constructed on the cv valid set) on the holdout test set, on a single
+        fold
+    _get_combined_test_predictions : which combines the foldwise combined
+        and foldwise best test predictions into a single megacombination
+
+    Parameters
+    ----------
+    predictions_list : list of instances of Predictions
+        Each element of the list is an instance of Predictions of a given model
+        on the same data points.
+    index_list : None | list of integers
+        The subset of predictions to be combined. If None, the full set is
+        combined.
+
+    Returns
+    -------
+    combined_predictions : instance of Predictions
+        A predictions instance containing the combined (averaged) predictions.
+    """
+    Predictions = type(predictions_list[0])
+    combined_predictions = Predictions.combine(predictions_list, index_list)
+    return combined_predictions
+
+
+def _get_score_cv_bags(event, score_type, predictions_list, ground_truths,
+                       test_is_list=None):
+    """
+    Compute the bagged score of the predictions in predictions_list.
+
+    Called by Submission.compute_valid_score_cv_bag and
+    db_tools.compute_contributivity.
+
+    Parameters
+    ----------
+    event : instance of Event
+        Needed for the type of y_comb and
+    predictions_list : list of instances of Predictions
+    ground_truths : instance of Predictions
+    test_is_list : list of integers
+        Indices of points that should be bagged in each prediction. If None,
+        the full prediction vectors will be bagged.
+    Returns
+    -------
+    score_cv_bags : instance of Score ()
+    """
+    if test_is_list is None:  # we combine the full list
+        test_is_list = [range(len(predictions.y_pred))
+                        for predictions in predictions_list]
+
+    y_comb = np.array(
+        [event.Predictions(n_samples=len(ground_truths.y_pred))
+         for _ in predictions_list])
+    score_cv_bags = []
+    for i, test_is in enumerate(test_is_list):
+        y_comb[i].set_valid_in_train(predictions_list[i], test_is)
+        combined_predictions = combine_predictions_list(y_comb[:i + 1])
+        valid_indexes = combined_predictions.valid_indexes
+        score_cv_bags.append(score_type.score_function(
+            ground_truths, combined_predictions, valid_indexes))
+        # XXX maybe use masked arrays rather than passing valid_indexes
+    return combined_predictions, score_cv_bags
+
+
+def get_next_best_single_fold(event, predictions_list, ground_truths,
+                              best_index_list, min_improvement=0.0):
+    """.
+
+    Find the model that minimizes the score if added to
+    predictions_list[best_index_list] using event.official_score_function.
+    If there is no model improving the input
+    combination, the input best_index_list is returned. Otherwise the best
+    model is added to the list. We could also return the combined prediction
+    (for efficiency, so the combination would not have to be done each time;
+    right now the algo is quadratic), but I don't think any meaningful
+    rule will be associative, in which case we should redo the combination from
+    scratch each time the set changes. Since now combination = mean, we could
+    maintain the sum and the number of models, but it would be a bit bulky.
+    We'll see how this evolves.
+
+    Parameters
+    ----------
+    predictions_list : list of instances of Predictions
+        Each element of the list is an instance of Predictions of a model
+        on the same (cross-validation valid) data points.
+    ground_truths : instance of Predictions
+        The ground truth.
+    best_index_list : list of integers
+        Indices of the current best model.
+
+    Returns
+    -------
+    best_index_list : list of integers
+        Indices of the models in the new combination. If the same as input,
+        no models wer found improving the score.
+    """
+    best_predictions = combine_predictions_list(
+        predictions_list, index_list=best_index_list)
+    best_score = event.official_score_function(
+        ground_truths, best_predictions)
+    best_index = -1
+    # Combination with replacement, what Caruana suggests. Basically, if a
+    # model is added several times, it's upweighted, leading to
+    # integer-weighted ensembles
+    r = np.arange(len(predictions_list))
+    # Randomization doesn't matter, only in case of exact equality.
+    # np.random.shuffle(r)
+    # print r
+    for i in r:
+        combined_predictions = combine_predictions_list(
+            predictions_list, index_list=np.append(best_index_list, i))
+        new_score = event.official_score_function(
+            ground_truths, combined_predictions)
+        is_lower_the_better = event.official_score_type.is_lower_the_better
+        if (is_lower_the_better and new_score < best_score) or\
+                (not is_lower_the_better and new_score > best_score):
+            best_predictions = combined_predictions
+            best_index = i
+            best_score = new_score
+    if best_index > -1:
+        return np.append(best_index_list, best_index), best_score
+    else:
+        return best_index_list, best_score
+
+
+def compute_valid_score_cv_bag(submission):
+    """Cv-bag cv_fold.valid_predictions using combine_predictions_list.
+
+    The predictions in predictions_list[i] belong to those indicated
+    by self.on_cv_folds[i].test_is.
+    """
+    ground_truths_train = submission.event.problem.ground_truths_train()
+    if submission.state == 'tested':
+        predictions_list = [submission_on_cv_fold.valid_predictions for
+                            submission_on_cv_fold in submission.on_cv_folds]
+        test_is_list = [submission_on_cv_fold.cv_fold.test_is for
+                        submission_on_cv_fold in submission.on_cv_folds]
+        for score in submission.scores:
+            _, score.valid_score_cv_bags = _get_score_cv_bags(
+                submission.event, score.event_score_type, predictions_list,
+                ground_truths_train, test_is_list)
+            score.valid_score_cv_bag = float(score.valid_score_cv_bags[-1])
+    else:
+        for score in submission.scores:
+            score.valid_score_cv_bag = float(score.event_score_type.worst)
+            score.valid_score_cv_bags = None
+    db.session.commit()
+
+
+def compute_test_score_cv_bag(submission):
+    """Bag cv_fold.test_predictions using combine_predictions_list.
+
+    And stores the score of the bagged predictor in test_score_cv_bag. The
+    scores of partial combinations are stored in test_score_cv_bags.
+    This is for assessing the bagging learning curve, which is useful for
+    setting the number of cv folds to its optimal value (in case the RAMP
+    is competitive, say, to win a Kaggle challenge; although it's kinda
+    stupid since in those RAMPs we don't have a test file, so the learning
+    curves should be assessed in compute_valid_score_cv_bag on the
+    (cross-)validation sets).
+    """
+    if submission.state == 'tested':
+        # When we have submission id in Predictions, we should get the
+        # team and submission from the db
+        ground_truths = submission.event.problem.ground_truths_test()
+        predictions_list = [submission_on_cv_fold.test_predictions for
+                            submission_on_cv_fold in submission.on_cv_folds]
+        combined_predictions_list = [
+            combine_predictions_list(predictions_list[:i + 1]) for
+            i in range(len(predictions_list))]
+        for score in submission.scores:
+            score.test_score_cv_bags = [
+                score.score_function(
+                    ground_truths, combined_predictions) for
+                combined_predictions in combined_predictions_list]
+            score.test_score_cv_bag = float(score.test_score_cv_bags[-1])
+    else:
+        for score in submission.scores:
+            score.test_score_cv_bag = float(score.event_score_type.worst)
+            score.test_score_cv_bags = None
+    db.session.commit()
 
 
 def send_password_mail(user_name, password):
@@ -50,7 +312,7 @@ def send_password_mail(user_name, password):
 
     subject = 'RAMP login information'
     body = 'Here is your login information for the RAMP site:\n\n'
-    body += 'username: {}\n'.format(user.name.encode('utf-8'))
+    body += 'username: {}\n'.format(encode_string(user.name))
     body += 'password: {}\n'.format(password)
     body += 'Please reset your password as soon as possible '
     body += 'through this link:\n'
@@ -208,7 +470,6 @@ def add_workflow(workflow_object):
 def add_problem(problem_name, force=False, with_download=False):
     """Adding a new RAMP problem."""
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
-    problem_data_path = os.path.join(ramp_data_path, problem_name)
     problem_kits_path = os.path.join(ramp_kits_path, problem_name)
     if problem is not None:
         if force:
@@ -264,20 +525,6 @@ def delete_submission_similarity(submissions):
     db.session.commit()
 
 
-# XXX probably deprecated
-def _set_table_attribute(table, attr):
-    """Setting attributes from config file.
-
-    Assumes that table has a module field that imports the config file.
-    If attr is not specified in the file, revert to default.
-    """
-    try:
-        value = getattr(table.module, attr)
-    except AttributeError:
-        return
-    setattr(table, attr, value)
-
-
 def add_event(problem_name, event_name, event_title, is_public=False,
               force=False):
     """Adding a new RAMP event.
@@ -290,7 +537,12 @@ def add_event(problem_name, event_name, event_title, is_public=False,
     event = Event.query.filter_by(name=event_name).one_or_none()
     if event is not None:
         if force:
-            delete_event(event)
+            delete_event(event_name)
+        else:
+            logger.info(
+                'Attempting to delete event, ' +
+                'use "force=True" if you know what you are doing.')
+            return
     event = Event(
         name=event_name, problem_name=problem_name, event_title=event_title)
     event.is_public = is_public
@@ -356,6 +608,16 @@ def add_problem_keyword(
     db.session.commit()
 
 
+def add_submission_similarity(type, user, source_submission,
+                              target_submission, similarity, timestamp):
+    submission_similarity = SubmissionSimilarity(
+        type=type, user=user, source_submission=source_submission,
+        target_submission=target_submission, similarity=similarity,
+        timestamp=timestamp)
+    db.session.add(submission_similarity)
+    db.session.commit()
+
+
 def create_user(name, password, lastname, firstname, email,
                 access_level='user', hidden_notes='', linkedin_url='',
                 twitter_url='', facebook_url='', google_url='', github_url='',
@@ -407,29 +669,29 @@ def create_user(name, password, lastname, firstname, email,
 
 def update_user(user, form):
     logger.info('Updating {}'.format(user))
-    if user.lastname.encode('utf-8') != form.lastname.data.encode('utf-8'):
+    if encode_string(user.lastname) != encode_string(form.lastname.data):
         logger.info('Updating lastname from {} to {}'.format(
-            user.lastname.encode('utf-8'), form.lastname.data.encode('utf-8')))
-    if user.firstname.encode('utf-8') != form.firstname.data.encode('utf-8'):
+            encode_string(user.lastname), encode_string(form.lastname.data)))
+    if encode_string(user.firstname) != encode_string(form.firstname.data):
         logger.info('Updating firstname from {} to {}'.format(
-            user.firstname.encode('utf-8'),
-            form.firstname.data.encode('utf-8')))
+            encode_string(user.firstname),
+            encode_string(form.firstname.data)))
     if user.email != form.email.data:
         logger.info('Updating email from {} to {}'.format(
             user.email, form.email.data))
     if user.is_want_news != form.is_want_news.data:
         logger.info('Updating is_want_news from {} to {}'.format(
             user.is_want_news, form.is_want_news.data))
-    user.lastname = form.lastname.data.encode('utf-8')
-    user.firstname = form.firstname.data.encode('utf-8')
+    user.lastname = encode_string(form.lastname.data)
+    user.firstname = encode_string(form.firstname.data)
     user.email = form.email.data
-    user.linkedin_url = form.linkedin_url.data.encode('utf-8')
-    user.twitter_url = form.twitter_url.data.encode('utf-8')
-    user.facebook_url = form.facebook_url.data.encode('utf-8')
-    user.google_url = form.google_url.data.encode('utf-8')
-    user.github_url = form.github_url.data.encode('utf-8')
-    user.website_url = form.website_url.data.encode('utf-8')
-    user.bio = form.bio.data.encode('utf-8')
+    user.linkedin_url = encode_string(form.linkedin_url.data)
+    user.twitter_url = encode_string(form.twitter_url.data)
+    user.facebook_url = encode_string(form.facebook_url.data)
+    user.google_url = encode_string(form.google_url.data)
+    user.github_url = encode_string(form.github_url.data)
+    user.website_url = encode_string(form.website_url.data)
+    user.bio = encode_string(form.bio.data)
     user.is_want_news = form.is_want_news.data
     try:
         db.session.commit()
@@ -447,12 +709,6 @@ def update_user(user, form):
         else:
             logger.error(repr(e))
             raise e
-
-
-def validate_user(user):
-    # from 'asked' to 'user'
-    user.access_level = 'user'
-    user.is_authenticated = True
 
 
 def get_sandbox(event, user):
@@ -488,7 +744,8 @@ def sign_up_team(event_name, team_name):
         ramp_kits_path, event.problem.name, ramp_config['submissions_dir'],
         ramp_config['sandbox_dir'])
     make_submission_and_copy_files(
-        event_name, team_name, ramp_config['sandbox_dir'], from_submission_path)
+        event_name, team_name, ramp_config['sandbox_dir'],
+        from_submission_path)
     for user in get_team_members(team):
         send_mail(
             to=user.email,
@@ -740,7 +997,7 @@ def send_trained_mails(submission):
         if submission.is_error:
             error_msg = submission.error_msg.replace(
                 '{}'.format(submission.path), '')
-            body += 'error: {}\n'.format(error_msg.encode('utf-8'))
+            body += 'error: {}\n'.format(encode_string(error_msg))
         else:
             for score in submission.scores:
                 body += '{} = {}\n'.format(
@@ -759,7 +1016,9 @@ def send_submission_mails(user, submission, event_team):
     recipient_list += [event_admin.admin.email for event_admin in event_admins]
 
     subject = 'fab train_test:e="{}",t="{}",s="{}"'.format(
-        event.name, team.name.encode('utf-8'), submission.name.encode('utf-8'))
+        event.name,
+        encode_string(team.name),
+        encode_string(submission.name))
     body = 'user = {}\nevent = {}\nsubmission dir = {}\n'.format(
         user,
         event.name,
@@ -773,12 +1032,12 @@ def send_ask_for_event_mails(user, event, n_students):
     recipient_list = app.config.get('RAMP_ADMIN_MAILS')
 
     subject = '{} is asking for an event on {}'.format(
-        user.name.encode('utf-8'), event.problem.name)
+        encode_string(user.name), encode_string(event.problem.name))
     body = 'user name = {} {}\n'.format(
-        user.firstname.encode('utf-8'), user.lastname.encode('utf-8'))
+        encode_string(user.firstname), encode_string(user.lastname))
     body += 'user email = {}\n'.format(user.email)
     body += 'event name = {}\n'.format(event.name)
-    body += 'event title = {}\n'.format(event.title.encode('utf-8'))
+    body += 'event title = {}\n'.format(encode_string(event.title))
     body += 'event start = {}\n'.format(event.opening_timestamp)
     body += 'event end = {}\n'.format(event.closing_timestamp)
     body += 'approximate number of students = {}\n'.format(n_students)
@@ -793,18 +1052,19 @@ def send_ask_for_event_mails(user, event, n_students):
 
 def _user_mail_body(user):
     body = ''
-    body += 'user = {}\n'.format(user.name.encode('utf-8'))
+    body += 'user = {}\n'.format(encode_string(user.name))
     body += 'name = {} {}\n'.format(
-        user.firstname.encode('utf-8'), user.lastname.encode('utf-8'))
+        encode_string(user.firstname),
+        encode_string(user.lastname))
     body += 'email = {}\n'.format(user.email)
     body += 'linkedin = {}\n'.format(user.linkedin_url)
     body += 'twitter = {}\n'.format(user.twitter_url)
     body += 'facebook = {}\n'.format(user.facebook_url)
     body += 'github = {}\n'.format(user.github_url)
     if user.hidden_notes is not None:
-        body += 'notes = {}\n'.format(user.hidden_notes.encode('utf-8'))
+        body += 'notes = {}\n'.format(encode_string(user.hidden_notes))
     if user.bio is not None:
-        body += 'bio = {}\n\n'.format(user.bio.encode('utf-8'))
+        body += 'bio = {}\n\n'.format(encode_string(user.bio))
     body += '\n'
     return body
 
@@ -819,7 +1079,7 @@ def send_sign_up_request_mail(event, user):
     body = 'event = {}\n'.format(event.name)
     body += _user_mail_body(user)
     url_approve = 'https://www.ramp.studio/events/{}/sign_up/{}'.format(
-        event.name, user.name.encode('utf-8'))
+        event.name, encode_string(user.name))
     body += 'Click on this link to approve this user for this event: {}\n'.\
         format(url_approve)
 
@@ -832,7 +1092,7 @@ def send_register_request_mail(user):
     subject = 'fab approve_user:u="{}"'.format(user.name)
     body = _user_mail_body(user)
     url_approve = 'http://www.ramp.studio/sign_up/{}'.format(
-        user.name.encode('utf-8'))
+        encode_string(user.name))
     body += 'Click on the link to approve the registration '
     body += 'of this user: {}\n'.format(url_approve)
 
@@ -894,6 +1154,13 @@ def set_n_submissions(event_name=None):
     else:
         event = Event.query.filter_by(name=event_name).one()
         event.set_n_submissions()
+    db.session.commit()
+
+
+def set_contributivity(submission, is_commit=True):
+    submission.set_contributivity()
+    if is_commit:
+        db.session.commit()
 
 
 def backend_train_test_loop(event_name=None, timeout=20,
@@ -983,6 +1250,7 @@ def train_test_submission(submission, force_retrain_test=False):
                     'Training {} failed with exception: \n{}'.format(
                         detached_submission_on_cv_fold, log_msg))
                 submission_on_cv_fold.update(detached_submission_on_cv_fold)
+            db.session.commit()
     else:
         # detached_submission_on_cv_folds = []
         for detached_submission_on_cv_fold, submission_on_cv_fold in\
@@ -992,6 +1260,7 @@ def train_test_submission(submission, force_retrain_test=False):
                 X_train, y_train, X_test, y_test,
                 force_retrain_test)
             submission_on_cv_fold.update(detached_submission_on_cv_fold)
+            db.session.commit()
     submission.training_timestamp = datetime.datetime.utcnow()
     submission.set_state_after_training()
     db.session.commit()
@@ -1009,8 +1278,8 @@ def score_submission(submission):
             submission_on_cv_fold.compute_test_scores()
             submission_on_cv_fold.state = 'scored'
         db.session.commit()
-        submission.compute_test_score_cv_bag()
-        submission.compute_valid_score_cv_bag()
+        compute_test_score_cv_bag(submission)
+        compute_valid_score_cv_bag(submission)
         # Means and stds were constructed on demand by fetching fold times.
         # It was slow because submission_on_folds contain also possibly large
         # predictions. If postgres solves this issue (which can be tested on
@@ -1252,7 +1521,7 @@ def compute_contributivity_no_commit(
         best_test_predictions_list.append(best_test_predictions)
         test_is_list.append(cv_fold.test_is)
     for submission in submissions:
-        submission.set_contributivity(is_commit=False)
+        set_contributivity(submission, is_commit=False)
     # if there are no predictions to combine, it crashed
     combined_predictions_list = [c for c in combined_predictions_list
                                  if c is not None]
@@ -2035,7 +2304,8 @@ def set_error(team_name, submission_name, error, error_msg):
 #     ]
 #     top_score_per_user_dict_df = pd.DataFrame(
 #         top_score_per_user_dict, columns=columns)
-#     top_score_per_user_dict_df = top_score_per_user_dict_df.sort_values('name')
+#     top_score_per_user_dict_df = top_score_per_user_dict_df.sort_values(
+#         'name')
 #     return top_score_per_user_dict_df
 
 

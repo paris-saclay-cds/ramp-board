@@ -47,8 +47,6 @@ class RampConfig(object):
     RAMP_DATA_DIR = 'ramp-data'
     RAMP_SUBMISSIONS_DIR = 'submissions'
     RAMP_SANDBOX_DIR = 'starting_kit'
-    
-    RAMP_SCORETYPES_MODULE = 'databoard.specific.score_types'
 
     RAMP_SERVER_PORT = 8080
     # make it False if parallel training is not working
