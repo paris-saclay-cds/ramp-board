@@ -4,12 +4,11 @@ import os
 
 import datetime
 import databoard.db_tools as db_tools
-from databoard import ramp_data_path, ramp_kits_path
+from databoard import ramp_data_path, ramp_kits_path, ramp_config
 from databoard.deploy import deploy
 from databoard.model import (
     NameClashError, User, Problem, Event, Submission, DuplicateSubmissionError,
     SubmissionSimilarity, EventTeam, Team, UserInteraction)
-from databoard.config import sandbox_d_name
 
 
 def test_deploy():
@@ -187,7 +186,7 @@ def test_get_sandbox():
     event = Event.query.filter_by(name='boston_housing_test').one()
     user = User.query.filter_by(email='test.user@gmail.com').one()
     sandbox = db_tools.get_sandbox(event, user)
-    assert sandbox.name == sandbox_d_name
+    assert sandbox.name == ramp_config['sandbox_dir']
 
 
 def test_get_earliest_new_submission():
