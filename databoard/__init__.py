@@ -58,8 +58,14 @@ logging.getLogger('PIL.PngImagePlugin').disabled = True
 ramp_config = app.config.get_namespace('RAMP_')
 
 deployment_path = app.config.get('DEPLOYMENT_PATH')
+
 ramp_kits_path = os.path.join(deployment_path, ramp_config['kits_dir'])
+ramp_config['ramp_kits_path'] = ramp_kits_path
 ramp_data_path = os.path.join(deployment_path, ramp_config['data_dir'])
+ramp_config['ramp_data_path'] = ramp_data_path
+ramp_submissions_path = os.path.join(deployment_path,
+                                     ramp_config['submissions_dir'])
+ramp_config['ramp_submissions_path'] = ramp_submissions_path
 
 from . import views  # noqa
 from . import model  # noqa

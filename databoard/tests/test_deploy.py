@@ -1,18 +1,31 @@
-from __future__ import print_function, absolute_import
+from __future__ import absolute_import
 
 import os
+import shutil
 
 import datetime
+import pytest
+
+from databoard import db
+from databoard import deployment_path
+from databoard import ramp_config
+
 import databoard.db_tools as db_tools
-from databoard import ramp_data_path, ramp_kits_path, ramp_config
-from databoard.deploy import deploy
+from databoard.deploy import deploy_test_database
 from databoard.model import (
     NameClashError, User, Problem, Event, Submission, DuplicateSubmissionError,
     SubmissionSimilarity, EventTeam, Team, UserInteraction)
 
 
-def test_deploy():
-    deploy()
+def setup_module(module):
+    """Create the database."""
+    deploy_test_database()
+
+
+def teardown_module(module):
+    """Clean-up the database."""
+    shutil.rmtree(deployment_path)
+    db.session.close()
 
 
 def test_add_users():
@@ -45,8 +58,10 @@ def test_setup_workflows():
 
 
 def _add_problem_and_event(problem_name, test_user_name):
-    problem_kits_path = os.path.join(ramp_kits_path, problem_name)
-    problem_data_path = os.path.join(ramp_data_path, problem_name)
+    problem_kits_path = os.path.join(ramp_config['ramp_kits_path'],
+                                     problem_name)
+    problem_data_path = os.path.join(ramp_config['ramp_data_path'],
+                                     problem_name)
     os.system('git clone https://github.com/ramp-data/{}.git {}'.format(
         problem_name, problem_data_path))
     os.system('git clone https://github.com/ramp-kits/{}.git {}'.format(
