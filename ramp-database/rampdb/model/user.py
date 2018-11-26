@@ -1,4 +1,5 @@
 import os
+import sys
 import datetime
 
 from sqlalchemy import Enum
@@ -19,6 +20,20 @@ __all__ = [
     'User',
     'UserInteraction',
 ]
+
+PYTHON3 = sys.version_info[0] == 3
+
+
+def encode_string(text):
+    if PYTHON3:
+        if isinstance(text, str):
+            encoded_text = bytes(text, 'utf-8')
+        else:
+            encoded_text = text
+    else:
+        encoded_text = text.encode('utf8')
+
+    return encoded_text
 
 
 def get_active_user_event_team(event, user):
@@ -98,11 +113,12 @@ class User(Model):
     def __repr__(self):
         text = ("User(name={}, lastname={}, firstname={}, email={}, "
                 "admined_teams={})"
-                .format(self.name.encode('utf-8'),
-                        self.lastname.encode('utf-8'),
-                        self.firstname.encode('utf-8'),
-                        self.email.encode('utf-8'),
-                        self.admined_teams))
+                .format(
+                    encode_string(self.name),
+                    encode_string(self.lastname),
+                    encode_string(self.firstname),
+                    encode_string(self.email),
+                    self.admined_teams))
         return text
 
 
