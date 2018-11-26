@@ -15,6 +15,7 @@ dependencies:
   - termcolor
   - pytest
   - pytest-cov
+  - pytest-env
   - jupyter
   - gitpython
   - scikit-image
