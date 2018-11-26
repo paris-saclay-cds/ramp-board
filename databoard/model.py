@@ -12,6 +12,7 @@ from flask import request
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from databoard import db
+from databoard.utils import encode_string
 
 from . import deployment_path, ramp_config, ramp_data_path, ramp_kits_path
 
@@ -98,8 +99,10 @@ class User(db.Model):
     def __repr__(self):
         repr = '''User(name={}, lastname={}, firstname={}, email={},
                   admined_teams={})'''.format(
-            self.name.encode('utf-8'), self.lastname.encode('utf-8'),
-            self.firstname.encode('utf-8'), self.email.encode('utf-8'),
+            encode_string(self.name),
+            encode_string(self.lastname),
+            encode_string(self.firstname),
+            encode_string(self.email),
             self.admined_teams)
         return repr
 
@@ -134,14 +137,16 @@ class Team(db.Model):
         self.creation_timestamp = datetime.datetime.utcnow()
 
     def __str__(self):
-        str_ = 'Team({})'.format(self.name.encode('utf-8'))
+        str_ = 'Team({})'.format(encode_string(self.name))
         return str_
 
     def __repr__(self):
         repr = '''Team(name={}, admin_name={},
                   initiator={}, acceptor={})'''.format(
-            self.name.encode('utf-8'), self.admin.name.encode('utf-8'),
-            self.initiator, self.acceptor)
+            encode_string(self.name),
+            encode_string(self.admin.name),
+            self.initiator,
+            self.acceptor)
         return repr
 
 
@@ -896,9 +901,9 @@ class Submission(db.Model):
         self.name = name
         self.event_team = event_team
         sha_hasher = hashlib.sha1()
-        sha_hasher.update(self.event.name.encode('utf-8'))
-        sha_hasher.update(self.team.name.encode('utf-8'))
-        sha_hasher.update(self.name.encode('utf-8'))
+        sha_hasher.update(encode_string(self.event.name))
+        sha_hasher.update(encode_string(self.team.name))
+        sha_hasher.update(encode_string(self.name))
         # We considered using the id, but then it will be given away in the
         # url which is maybe not a good idea.
         self.hash_ = '{}'.format(sha_hasher.hexdigest())
@@ -918,8 +923,12 @@ class Submission(db.Model):
     def __repr__(self):
         repr = '''Submission(event_name={}, team_name={}, name={}, files={},
                   state={}, train_time={})'''.format(
-            self.event.name, self.team.name, self.name, self.files,
-            self.state, self.train_time_cv_mean)
+            encode_string(self.event.name),
+            encode_string(self.team.name),
+            encode_string(self.name),
+            self.files,
+            self.state,
+            self.train_time_cv_mean)
         return repr
 
     @hybrid_property

@@ -27,7 +27,7 @@ from .model import (CVFold, DetachedSubmissionOnCVFold,
                     UserInteraction, Workflow, WorkflowElement,
                     WorkflowElementType)
 from .utils import (date_time_format, get_hashed_password, remove_non_ascii,
-                    send_mail, table_format)
+                    send_mail, table_format, encode_string)
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
@@ -312,7 +312,7 @@ def send_password_mail(user_name, password):
 
     subject = 'RAMP login information'
     body = 'Here is your login information for the RAMP site:\n\n'
-    body += 'username: {}\n'.format(user.name.encode('utf-8'))
+    body += 'username: {}\n'.format(encode_string(user.name))
     body += 'password: {}\n'.format(password)
     body += 'Please reset your password as soon as possible '
     body += 'through this link:\n'
@@ -669,29 +669,29 @@ def create_user(name, password, lastname, firstname, email,
 
 def update_user(user, form):
     logger.info('Updating {}'.format(user))
-    if user.lastname.encode('utf-8') != form.lastname.data.encode('utf-8'):
+    if encode_string(user.lastname) != encode_string(form.lastname.data):
         logger.info('Updating lastname from {} to {}'.format(
-            user.lastname.encode('utf-8'), form.lastname.data.encode('utf-8')))
-    if user.firstname.encode('utf-8') != form.firstname.data.encode('utf-8'):
+            encode_string(user.lastname), encode_string(form.lastname.data)))
+    if encode_string(user.firstname) != encode_string(form.firstname.data):
         logger.info('Updating firstname from {} to {}'.format(
-            user.firstname.encode('utf-8'),
-            form.firstname.data.encode('utf-8')))
+            encode_string(user.firstname),
+            encode_string(form.firstname.data)))
     if user.email != form.email.data:
         logger.info('Updating email from {} to {}'.format(
             user.email, form.email.data))
     if user.is_want_news != form.is_want_news.data:
         logger.info('Updating is_want_news from {} to {}'.format(
             user.is_want_news, form.is_want_news.data))
-    user.lastname = form.lastname.data.encode('utf-8')
-    user.firstname = form.firstname.data.encode('utf-8')
+    user.lastname = encode_string(form.lastname.data)
+    user.firstname = encode_string(form.firstname.data)
     user.email = form.email.data
-    user.linkedin_url = form.linkedin_url.data.encode('utf-8')
-    user.twitter_url = form.twitter_url.data.encode('utf-8')
-    user.facebook_url = form.facebook_url.data.encode('utf-8')
-    user.google_url = form.google_url.data.encode('utf-8')
-    user.github_url = form.github_url.data.encode('utf-8')
-    user.website_url = form.website_url.data.encode('utf-8')
-    user.bio = form.bio.data.encode('utf-8')
+    user.linkedin_url = encode_string(form.linkedin_url.data)
+    user.twitter_url = encode_string(form.twitter_url.data)
+    user.facebook_url = encode_string(form.facebook_url.data)
+    user.google_url = encode_string(form.google_url.data)
+    user.github_url = encode_string(form.github_url.data)
+    user.website_url = encode_string(form.website_url.data)
+    user.bio = encode_string(form.bio.data)
     user.is_want_news = form.is_want_news.data
     try:
         db.session.commit()
@@ -997,7 +997,7 @@ def send_trained_mails(submission):
         if submission.is_error:
             error_msg = submission.error_msg.replace(
                 '{}'.format(submission.path), '')
-            body += 'error: {}\n'.format(error_msg.encode('utf-8'))
+            body += 'error: {}\n'.format(encode_string(error_msg))
         else:
             for score in submission.scores:
                 body += '{} = {}\n'.format(
@@ -1016,7 +1016,9 @@ def send_submission_mails(user, submission, event_team):
     recipient_list += [event_admin.admin.email for event_admin in event_admins]
 
     subject = 'fab train_test:e="{}",t="{}",s="{}"'.format(
-        event.name, team.name.encode('utf-8'), submission.name.encode('utf-8'))
+        event.name,
+        encode_string(team.name),
+        encode_string(submission.name))
     body = 'user = {}\nevent = {}\nsubmission dir = {}\n'.format(
         user,
         event.name,
@@ -1030,12 +1032,12 @@ def send_ask_for_event_mails(user, event, n_students):
     recipient_list = app.config.get('RAMP_ADMIN_MAILS')
 
     subject = '{} is asking for an event on {}'.format(
-        user.name.encode('utf-8'), event.problem.name)
+        encode_string(user.name), encode_string(event.problem.name))
     body = 'user name = {} {}\n'.format(
-        user.firstname.encode('utf-8'), user.lastname.encode('utf-8'))
+        encode_string(user.firstname), encode_string(user.lastname))
     body += 'user email = {}\n'.format(user.email)
     body += 'event name = {}\n'.format(event.name)
-    body += 'event title = {}\n'.format(event.title.encode('utf-8'))
+    body += 'event title = {}\n'.format(encode_string(event.title))
     body += 'event start = {}\n'.format(event.opening_timestamp)
     body += 'event end = {}\n'.format(event.closing_timestamp)
     body += 'approximate number of students = {}\n'.format(n_students)
@@ -1050,18 +1052,19 @@ def send_ask_for_event_mails(user, event, n_students):
 
 def _user_mail_body(user):
     body = ''
-    body += 'user = {}\n'.format(user.name.encode('utf-8'))
+    body += 'user = {}\n'.format(encode_string(user.name))
     body += 'name = {} {}\n'.format(
-        user.firstname.encode('utf-8'), user.lastname.encode('utf-8'))
+        encode_string(user.firstname),
+        encode_string(user.lastname))
     body += 'email = {}\n'.format(user.email)
     body += 'linkedin = {}\n'.format(user.linkedin_url)
     body += 'twitter = {}\n'.format(user.twitter_url)
     body += 'facebook = {}\n'.format(user.facebook_url)
     body += 'github = {}\n'.format(user.github_url)
     if user.hidden_notes is not None:
-        body += 'notes = {}\n'.format(user.hidden_notes.encode('utf-8'))
+        body += 'notes = {}\n'.format(encode_string(user.hidden_notes))
     if user.bio is not None:
-        body += 'bio = {}\n\n'.format(user.bio.encode('utf-8'))
+        body += 'bio = {}\n\n'.format(encode_string(user.bio))
     body += '\n'
     return body
 
@@ -1076,7 +1079,7 @@ def send_sign_up_request_mail(event, user):
     body = 'event = {}\n'.format(event.name)
     body += _user_mail_body(user)
     url_approve = 'https://www.ramp.studio/events/{}/sign_up/{}'.format(
-        event.name, user.name.encode('utf-8'))
+        event.name, encode_string(user.name))
     body += 'Click on this link to approve this user for this event: {}\n'.\
         format(url_approve)
 
@@ -1089,7 +1092,7 @@ def send_register_request_mail(user):
     subject = 'fab approve_user:u="{}"'.format(user.name)
     body = _user_mail_body(user)
     url_approve = 'http://www.ramp.studio/sign_up/{}'.format(
-        user.name.encode('utf-8'))
+        encode_string(user.name))
     body += 'Click on the link to approve the registration '
     body += 'of this user: {}\n'.format(url_approve)
 
