@@ -85,6 +85,10 @@ class Submission(Model):
     # We can forget bad models.
     # If false, don't combine and set contributivity to zero
     is_to_ensemble = Column(Boolean, default=True)
+    # in competitive events participants can select the submission
+    # with which they want to participate in the competition
+    is_in_competition = Column(Boolean, default=True)
+
     notes = Column(String, default='')  # eg, why is it disqualified
 
     train_time_cv_mean = Column(Float, default=0.0)
@@ -93,6 +97,8 @@ class Submission(Model):
     train_time_cv_std = Column(Float, default=0.0)
     valid_time_cv_std = Column(Float, default=0.0)
     test_time_cv_std = Column(Float, default=0.0)
+    # the maximum memory size used when training/testing, in MB
+    max_ram = Column(Float, default=0.0)
     # later also ramp_id
     UniqueConstraint(event_team_id, name, name='ts_constraint')
 
@@ -336,7 +342,7 @@ class Submission(Model):
         self.session.commit()
 
     # contributivity could be a property but then we could not query on it
-    def set_contributivity(self, is_commit=True):
+    def set_contributivity(self):
         self.contributivity = 0.0
         if self.is_public_leaderboard:
             # we share a unit of 1. among folds
@@ -344,8 +350,6 @@ class Submission(Model):
             for submission_on_cv_fold in self.on_cv_folds:
                 self.contributivity +=\
                     unit_contributivity * submission_on_cv_fold.contributivity
-        if is_commit:
-            self.session.commit()
 
     def set_state_after_training(self):
         self.training_timestamp = datetime.datetime.utcnow()
@@ -829,7 +833,6 @@ class SubmissionOnCVFold(Model):
         else:
             for score in self.scores:
                 score.train_score = score.event_score_type.worst
-        self.session.commit()
 
     def compute_valid_scores(self):
         if self.is_validated:
@@ -842,7 +845,6 @@ class SubmissionOnCVFold(Model):
         else:
             for score in self.scores:
                 score.valid_score = score.event_score_type.worst
-        self.session.commit()
 
     def compute_test_scores(self):
         if self.is_tested:
@@ -854,7 +856,6 @@ class SubmissionOnCVFold(Model):
         else:
             for score in self.scores:
                 score.test_score = score.event_score_type.worst
-        self.session.commit()
 
     def update(self, detached_submission_on_cv_fold):
         """From trained DetachedSubmissionOnCVFold."""
@@ -871,7 +872,6 @@ class SubmissionOnCVFold(Model):
             if self.is_tested:
                 self.test_time = detached_submission_on_cv_fold.test_time
                 self.test_y_pred = detached_submission_on_cv_fold.test_y_pred
-        self.session.commit()
 
 
 class DetachedSubmissionOnCVFold(object):
