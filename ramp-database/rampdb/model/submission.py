@@ -31,6 +31,7 @@ __all__ = [
     'SubmissionScoreOnCVFold',
     'SubmissionOnCVFold',
     'DetachedSubmissionOnCVFold',
+    'SubmissionSimilarity',
     'combine_predictions_list',
     '_get_score_cv_bags',
 ]
