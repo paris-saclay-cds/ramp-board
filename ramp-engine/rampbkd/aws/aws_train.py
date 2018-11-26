@@ -128,10 +128,13 @@ def train_loop(config, event_name):
                     logger.info(
                         'Training of "{}" finished, checking '
                         'if successful or not...'.format(label))
+                    submission = get_submission_by_id(config, submission_id)
+                    actual_nb_folds = get_event_nb_folds(config, submission.event.name)
                     if _training_successful(
                             config,
                             instance_id,
-                            submission_id):
+                            submission_id,
+                            actual_nb_folds):
                         logger.info('Training of "{}" was successful'.format(label))
                         if conf.get(MEMORY_PROFILING_FIELD):
                             logger.info('Download max ram usage info of "{}"'.format(label))
@@ -228,8 +231,10 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
     download_log(config, instance_id, submission_id)
     
     label = _get_submission_label_by_id(config, submission_id)
-    if _training_successful(config, instance_id, submission_id):
-
+    submission = get_submission_by_id(config, submission_id)
+    actual_nb_folds = get_event_nb_folds(config, submission.event.name)
+    if _training_successful(config, instance_id, submission_id,
+                            actual_nb_folds):
         logger.info('Training of "{}" was successful'.format(
             label, instance_id))
         if conf[MEMORY_PROFILING_FIELD]:

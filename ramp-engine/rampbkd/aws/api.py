@@ -11,9 +11,6 @@ import codecs
 import botocore  # noqa
 import boto3
 
-from rampbkd.api import get_submission_by_id
-from rampbkd.api import get_event_nb_folds
-
 
 __all__ = [
     'launch_ec2_instances',
@@ -280,7 +277,6 @@ def upload_submission(config, instance_id, submission_id):
     conf = config[AWS_CONFIG_SECTION]
     ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
     dest_folder = os.path.join(ramp_kit_folder, SUBMISSIONS_FOLDER)
-    # submission_path = _get_submission_path(config, submission_id)
     submission_path = submission_id
     return _upload(config, instance_id, submission_path, dest_folder)
 
@@ -511,7 +507,6 @@ def launch_train(config, instance_id, submission_id):
     conf = config[AWS_CONFIG_SECTION]
     ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
     submission_folder_name = _get_submission_folder_name(submission_id)
-    # submission = get_submission_by_id(config, submission_id)
     values = {
         'ramp_kit_folder': ramp_kit_folder,
         'submission': submission_folder_name,
@@ -569,12 +564,6 @@ def abort_training(config, instance_id, submission_id):
 def _get_submission_folder_name(submission_id):
     return os.path.split(submission_id)[1]
     # return 'submission_{:09d}'.format(submission_id)
-
-
-def _get_submission_path(config, submission_id):
-    # Get local submission path
-    submission = get_submission_by_id(config, submission_id)
-    return submission.path
 
 
 def _upload(config, instance_id, source, dest):
@@ -730,7 +719,8 @@ def _training_finished(config, instance_id, submission_id):
     return not _has_screen(config, instance_id, submission_folder_name)
 
 
-def _training_successful(config, instance_id, submission_id):
+def _training_successful(config, instance_id, submission_id,
+                         actual_nb_folds=None):
     """
     Return True if a finished submission have been trained successfully.
     If the folder training_output exists and each fold directory contains
@@ -747,9 +737,10 @@ def _training_successful(config, instance_id, submission_id):
 
     cmd = "find {}|egrep 'fold.*/y_pred_test.npz'|wc -l".format(folder)
     nb_test_files = int(_run(config, instance_id, cmd, return_output=True))
-    # submission = get_submission_by_id(config, submission_id)
-    # actual_nb_folds = get_event_nb_folds(config, submission.event.name)
-    return nb_folds == nb_train_files == nb_test_files  # == actual_nb_folds
+    if actual_nb_folds is not None:
+        return nb_folds == nb_train_files == nb_test_files == actual_nb_folds
+    else:
+        return nb_folds == nb_train_files == nb_test_files
 
 
 def _folder_exists(config, instance_id, folder):
