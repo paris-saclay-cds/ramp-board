@@ -7,8 +7,13 @@ dependencies:
   - psycopg2
   - pandas
   - scikit-learn
-  - flask
-  - six
+  - Flask
+  - Flask-Shelve
+  - Flask-Login
+  - Flask-Openid
+  - Flask-Mail
+  - Flask-SQLAlchemy
+  - Flask-Wtf
   - unidecode
   - termcolor
   - pytest
