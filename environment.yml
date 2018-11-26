@@ -30,3 +30,4 @@ dependencies:
     - Flask-Openid
     - Flask-Mail
     - pytest-env
+    - xkcdpass
