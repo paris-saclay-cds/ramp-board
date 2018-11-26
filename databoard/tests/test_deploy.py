@@ -359,7 +359,7 @@ def test_model():
     uis = UserInteraction.query.all()
     for ui in uis:
         ui.__repr__()
-        ui.submission_file_diff_link
+        # ui.submission_file_diff_link
         ui.event
         ui.team
 
