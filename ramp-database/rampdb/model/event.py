@@ -189,7 +189,7 @@ class EventScoreType(Model):
     def __init__(self, event, score_type_object):
         self.event = event
         # XXX
-        self.score_type = ScoreType(uuid.uuid4(), True, 0, 1)
+        self.score_type = ScoreType(str(uuid.uuid4()), True, 0, 1)
         # XXX after migration we should store the index of the
         # score_type so self.score_type_object (should be renamed
         # score_type) wouldn't have to do a search each time.
