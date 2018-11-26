@@ -1,0 +1,11 @@
+sqlalchemy:
+    drivername: postgresql
+    username: username
+    password: password
+    host: ramp.studio
+    port: 20000
+    database: databoard
+
+ramp:
+    event_name: mars_craters
+    team_name: ramp
