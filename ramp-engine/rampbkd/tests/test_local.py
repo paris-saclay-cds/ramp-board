@@ -9,7 +9,7 @@ from rampbkd.local import CondaEnvWorker
 
 @pytest.fixture
 def get_conda_worker():
-    def _create_worker(submission_name, conda_env='ramp'):
+    def _create_worker(submission_name, conda_env='ramp-iris'):
         module_path = os.path.dirname(__file__)
         ramp_kit_dir = os.path.join(module_path, 'kits', 'iris')
         ramp_data_dir = ramp_kit_dir
@@ -48,7 +48,7 @@ def test_conda_worker(submission, get_conda_worker):
         assert worker.status == 'setup'
         worker.launch_submission()
         assert worker.status == 'running'
-        print(worker.collect_results())
+        worker.collect_results()
         assert worker.status == 'collected'
         worker.teardown()
         # check that teardown removed the predictions
@@ -67,9 +67,12 @@ def test_conda_worker_without_conda_env_specified(get_conda_worker):
     worker = get_conda_worker('starting_kit')
     # remove the conva_env parameter from the configuration
     del worker.config['conda_env']
+    # if the conda environment is not given in the configuration, we should
+    # fall back on the base environment of conda
     # the conda environment is set during setup; thus no need to launch
     # submission
     worker.setup()
+    assert 'envs' not in worker._python_bin_path
 
 
 def test_conda_worker_error_missing_config_param(get_conda_worker):
