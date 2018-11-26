@@ -4,11 +4,9 @@ import logging
 from flask import Flask
 from flask_mail import Mail
 from flask_login import LoginManager
+from flask_sqlalchemy import SQLAlchemy
 
 from rampdb.model.base import Model
-
-from flask_sqlalchemy import SQLAlchemy
-# from .database import SQLAlchemy
 
 __version__ = '0.1.dev'
 
