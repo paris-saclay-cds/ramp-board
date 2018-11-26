@@ -24,6 +24,8 @@ install:
     # install ramp-engine
     - cd ramp-engine
     - pip install -e .
+    - cd ../ramp-database
+    - pip install -e .
     - cd ..
 script:
     - bash ci_tools/travis/test_ramp_board.sh
