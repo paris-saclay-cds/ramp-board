@@ -1,5 +1,6 @@
 import zlib
 import numpy as np
+import pickle
 
 from sqlalchemy import LargeBinary
 from sqlalchemy import TypeDecorator
@@ -16,4 +17,4 @@ class NumpyType(TypeDecorator):
         return zlib.compress(np.array(value).dumps())
 
     def process_result_value(self, value, dialect):
-        return np.loads(zlib.decompress(value))
+        return pickle.loads(zlib.decompress(value))
