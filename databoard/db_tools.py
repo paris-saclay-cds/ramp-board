@@ -334,11 +334,11 @@ def send_password_mails(password_f_name):
         send_password_mail(remove_non_ascii(u['name']), u['password'])
 
 
-def setup_workflows():
-    """Setting up database.
+def setup_files_extension_type():
+    """Setup the files' extensions and types.
 
-    Should be called once although there is no harm recalling it: if the
-    elements are in the db, it skips adding them.
+    This function registers the file extensions and types. This function
+    should be called after creating the database.
     """
     extension_names = ['py', 'R', 'txt', 'csv']
     for name in extension_names:
