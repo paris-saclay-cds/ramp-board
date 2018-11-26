@@ -50,8 +50,8 @@ def train_loop(config, event_name):
     event_name : str
         event name
     """
-    conf = config[AWS_CONFIG_SECTION]
-    secs = conf[TRAIN_LOOP_INTERVAL_SECS_FIELD]
+    conf_aws = config[AWS_CONFIG_SECTION]
+    secs = conf_aws[TRAIN_LOOP_INTERVAL_SECS_FIELD]
     while True:
         # Launch new instances for new submissions
         submissions = get_submissions(config, event_name, 'new')
@@ -60,20 +60,20 @@ def train_loop(config, event_name):
             if submission.is_sandbox:
                 continue
             try:
-                instance, = launch_ec2_instances(config, nb=1)
+                instance, = launch_ec2_instances(conf_aws, nb=1)
             except botocore.exceptions.ClientError as ex:
                 logger.info('Exception when launching a new instance : "{}"'.format(ex))
                 logger.info('Skipping...')
                 continue
             nb_trials = 0
-            while nb_trials < conf.get('new_instance_nb_trials', 20):
+            while nb_trials < conf_aws.get('new_instance_nb_trials', 20):
                 if instance.state.get('name') == 'running':
                     break
                 nb_trials += 1
-                time.sleep(conf.get('new_instance_check_interval', 6))
-            
-            _tag_instance_by_submission(config, instance.id, submission)
-            _add_or_update_tag(config, instance.id, 'train_loop', '1')
+                time.sleep(conf_aws.get('new_instance_check_interval', 6))
+
+            _tag_instance_by_submission(conf_aws, instance.id, submission)
+            _add_or_update_tag(conf_aws, instance.id, 'train_loop', '1')
             logger.info('Launched instance "{}" for submission "{}"'.format(
                 instance.id, submission))
             set_submission_state(config, submission.id, 'sent_to_training')
@@ -85,11 +85,11 @@ def train_loop(config, event_name):
             score_submission(config, submission_id)
             _run_hook(config, HOOK_SUCCESSFUL_TRAINING, submission_id)
         # Get running instances and process events
-        instance_ids = list_ec2_instance_ids(config)
+        instance_ids = list_ec2_instance_ids(conf_aws)
         for instance_id in instance_ids:
-            if not _is_ready(config, instance_id):
+            if not _is_ready(conf_aws, instance_id):
                 continue
-            tags = _get_tags(config, instance_id)
+            tags = _get_tags(conf_aws, instance_id)
             # Filter instances that were not launched
             # by the training loop API
             if 'submission_id' not in tags:
@@ -104,14 +104,14 @@ def train_loop(config, event_name):
             state = get_submission_state(config, submission_id)
             if state == 'sent_to_training':
                 exit_status = upload_submission(
-                    config, instance_id, submission_id)
+                    conf_aws, instance_id, submission_id)
                 if exit_status != 0:
                     logger.error(
                         'Cannot upload submission "{}"'
                         ', an error occured'.format(label))
                     continue
                 # start training HERE
-                exit_status = launch_train(config, instance_id, submission_id)
+                exit_status = launch_train(conf_aws, instance_id, submission_id)
                 if exit_status != 0:
                     logger.error(
                         'Cannot start training of submission "{}"'
@@ -119,33 +119,33 @@ def train_loop(config, event_name):
                     continue
                 set_submission_state(config, submission_id, 'training')
                 _run_hook(config, HOOK_START_TRAINING, submission_id)
- 
+
             elif state == 'training':
                 # in any case (successful training or not)
-                # download the log 
-                download_log(config, instance_id, submission_id)
-                if _training_finished(config, instance_id, submission_id):                   
+                # download the log
+                download_log(conf_aws, instance_id, submission_id)
+                if _training_finished(conf_aws, instance_id, submission_id):
                     logger.info(
                         'Training of "{}" finished, checking '
                         'if successful or not...'.format(label))
                     submission = get_submission_by_id(config, submission_id)
                     actual_nb_folds = get_event_nb_folds(config, submission.event.name)
                     if _training_successful(
-                            config,
+                            conf_aws,
                             instance_id,
                             submission_id,
                             actual_nb_folds):
                         logger.info('Training of "{}" was successful'.format(label))
-                        if conf.get(MEMORY_PROFILING_FIELD):
+                        if conf_aws.get(MEMORY_PROFILING_FIELD):
                             logger.info('Download max ram usage info of "{}"'.format(label))
-                            download_mprof_data(config, instance_id, submission_id)
-                            max_ram = _get_submission_max_ram(config, submission_id)
+                            download_mprof_data(conf_aws, instance_id, submission_id)
+                            max_ram = _get_submission_max_ram(conf_aws, submission_id)
                             logger.info('Max ram usage of "{}": {}MB'.format(label, max_ram))
                             set_submission_max_ram(config, submission_id, max_ram)
-                            
+
                         logger.info('Downloading the predictions of "{}"'.format(label))
                         path = download_predictions(
-                            config, instance_id, submission_id)
+                            conf_aws, instance_id, submission_id)
                         set_predictions(config, submission_id, path, ext='npz')
                         set_submission_state(config, submission_id, 'tested')
                     else:
@@ -153,13 +153,13 @@ def train_loop(config, event_name):
                         set_submission_state(
                             config, submission_id, 'training_error')
                         error_msg = _get_traceback(
-                            _get_log_content(config, submission_id)
+                            _get_log_content(conf_aws, submission_id)
                         )
                         set_submission_error_msg(
                             config, submission_id, error_msg)
                         _run_hook(config, HOOK_FAILED_TRAINING, submission_id)
                     # training finished, so terminate the instance
-                    terminate_ec2_instance(config, instance_id)
+                    terminate_ec2_instance(conf_aws, instance_id)
         time.sleep(secs)
 
 
@@ -183,11 +183,12 @@ def launch_ec2_instance_and_train(config, submission_id):
         submission id
 
     """
-    instance, = launch_ec2_instances(config, nb=1)
+    conf_aws = config[AWS_CONFIG_SECTION]
+    instance, = launch_ec2_instances(conf_aws, nb=1)
     set_submission_state(config, submission_id, 'sent_to_training')
     _wait_until_ready(config, instance.id)
     train_on_existing_ec2_instance(config, instance.id, submission_id)
-    terminate_ec2_instance(config, instance.id)
+    terminate_ec2_instance(conf_aws, instance.id)
 
 
 def _wait_until_ready(config, instance_id):
@@ -204,9 +205,9 @@ def _wait_until_ready(config, instance_id):
 
     """
     logger.info('Waiting until instance "{}" is ready...'.format(instance_id))
-    conf = config[AWS_CONFIG_SECTION]
-    secs = int(conf[CHECK_STATUS_INTERVAL_SECS_FIELD])
-    while not _is_ready(config, instance_id):
+    conf_aws = config[AWS_CONFIG_SECTION]
+    secs = int(conf_aws[CHECK_STATUS_INTERVAL_SECS_FIELD])
+    while not _is_ready(conf_aws, instance_id):
         time.sleep(secs)
 
 
@@ -222,31 +223,31 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
         6) set the predictions in the database
         7) score the submission
     """
-    conf = config[AWS_CONFIG_SECTION]
-    upload_submission(config, instance_id, submission_id)
-    launch_train(config, instance_id, submission_id)
+    conf_aws = config[AWS_CONFIG_SECTION]
+    upload_submission(conf_aws, instance_id, submission_id)
+    launch_train(conf_aws, instance_id, submission_id)
     set_submission_state(config, submission_id, 'training')
     _run_hook(config, HOOK_START_TRAINING, submission_id)
-    _wait_until_train_finished(config, instance_id, submission_id)
-    download_log(config, instance_id, submission_id)
-    
+    _wait_until_train_finished(conf_aws, instance_id, submission_id)
+    download_log(conf_aws, instance_id, submission_id)
+
     label = _get_submission_label_by_id(config, submission_id)
     submission = get_submission_by_id(config, submission_id)
     actual_nb_folds = get_event_nb_folds(config, submission.event.name)
-    if _training_successful(config, instance_id, submission_id,
+    if _training_successful(conf_aws, instance_id, submission_id,
                             actual_nb_folds):
         logger.info('Training of "{}" was successful'.format(
             label, instance_id))
-        if conf[MEMORY_PROFILING_FIELD]:
+        if conf_aws[MEMORY_PROFILING_FIELD]:
             logger.info('Download max ram usage info of "{}"'.format(label))
-            download_mprof_data(config, instance_id, submission_id)
-            max_ram = _get_submission_max_ram(config, submission_id)
+            download_mprof_data(conf_aws, instance_id, submission_id)
+            max_ram = _get_submission_max_ram(conf_aws, submission_id)
             logger.info('Max ram usage of "{}": {}MB'.format(label, max_ram))
             set_submission_max_ram(config, submission_id, max_ram)
-            
+
         logger.info('Downloading predictions of : "{}"'.format(label))
         predictions_folder_path = download_predictions(
-            config, instance_id, submission_id)
+            conf_aws, instance_id, submission_id)
         set_predictions(config, submission_id,
                         predictions_folder_path, ext='npz')
         set_submission_state(config, submission_id, 'tested')
@@ -258,7 +259,7 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
             label, instance_id))
         set_submission_state(config, submission_id, 'training_error')
         error_msg = _get_traceback(
-            _get_log_content(config, submission_id))
+            _get_log_content(conf_aws, submission_id))
         set_submission_error_msg(config, submission_id, error_msg)
         _run_hook(config, HOOK_FAILED_TRAINING, submission_id)
 
@@ -267,15 +268,15 @@ def _run_hook(config, hook_name, submission_id):
     """
     run hooks corresponding to hook_name
     """
-    conf = config[AWS_CONFIG_SECTION]
-    hooks = conf.get(HOOKS_SECTION)
+    conf_aws = config[AWS_CONFIG_SECTION]
+    hooks = conf_aws.get(HOOKS_SECTION)
     if not hooks:
         return
     if hook_name in hooks:
         submission = get_submission_by_id(config, submission_id)
         submission_folder_name = _get_submission_folder_name(submission_id)
         submission_folder = os.path.join(
-            conf[LOCAL_LOG_FOLDER_FIELD], 
+            conf_aws[LOCAL_LOG_FOLDER_FIELD],
             submission_folder_name)
         env = {
             'RAMP_AWS_SUBMISSION_ID': str(submission_id),

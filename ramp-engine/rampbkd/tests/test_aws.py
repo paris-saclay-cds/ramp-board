@@ -27,7 +27,7 @@ logging.basicConfig(
 
 
 def test_aws_worker():
-    if os.path.isfile(os.path.join(HERE, 'config.yml')):
+    if not os.path.isfile(os.path.join(HERE, 'config.yml')):
         pytest.skip("Only for local tests for now")
 
     ramp_kit_dir = os.path.join(HERE, 'kits', 'air_passengers')
@@ -40,7 +40,7 @@ def test_aws_worker():
             shutil.rmtree(subdir)
 
     conf = read_backend_config(os.path.join(HERE, 'config.yml'))
-    worker = AWSWorker(conf, submission='local_starting_kit',
+    worker = AWSWorker(conf['aws'], submission='local_starting_kit',
                        ramp_kit_dir=ramp_kit_dir)
     worker.setup()
     worker.status == 'setup'

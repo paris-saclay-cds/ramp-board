@@ -102,8 +102,7 @@ def _wait_until_train_finished(config, instance_id, submission_id):
     logger.info('Wait until training of submission "{}" is '
                 'finished on instance "{}"...'.format(submission_id,
                                                       instance_id))
-    conf = config[AWS_CONFIG_SECTION]
-    secs = int(conf[CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD])
+    secs = int(config[CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD])
     while not _training_finished(config, instance_id, submission_id):
         time.sleep(secs)
     logger.info('Training of submission "{}" is '
@@ -115,9 +114,8 @@ def launch_ec2_instances(config, nb=1):
     """
     Launch new ec2 instance(s)
     """
-    conf = config[AWS_CONFIG_SECTION]
-    ami_image_id = conf.get(AMI_IMAGE_ID_FIELD)
-    ami_name = conf.get(AMI_IMAGE_NAME_FIELD)
+    ami_image_id = config.get(AMI_IMAGE_ID_FIELD)
+    ami_name = config.get(AMI_IMAGE_NAME_FIELD)
     if ami_image_id and ami_name:
         raise ValueError(
             'The fields ami_image_id and ami_image_name cannot be both'
@@ -126,9 +124,9 @@ def launch_ec2_instances(config, nb=1):
     if ami_name:
         ami_image_id = _get_image_id(config, ami_name)
 
-    instance_type = conf[INSTANCE_TYPE_FIELD]
-    key_name = conf[KEY_NAME_FIELD]
-    security_group = conf[SECURITY_GROUP_FIELD]
+    instance_type = config[INSTANCE_TYPE_FIELD]
+    key_name = config[KEY_NAME_FIELD]
+    security_group = config[SECURITY_GROUP_FIELD]
 
     logger.info('Launching {} new ec2 instance(s)...'.format(nb))
 
@@ -274,8 +272,7 @@ def upload_submission(config, instance_id, submission_id):
     submission_id : int
         submission id
     """
-    conf = config[AWS_CONFIG_SECTION]
-    ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
+    ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
     dest_folder = os.path.join(ramp_kit_folder, SUBMISSIONS_FOLDER)
     submission_path = submission_id
     return _upload(config, instance_id, submission_path, dest_folder)
@@ -303,14 +300,13 @@ def download_log(config, instance_id, submission_id, folder=None):
     folder : str or None
         folder where to download the log
     """
-    conf = config[AWS_CONFIG_SECTION]
-    ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
+    ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
     submission_folder_name = _get_submission_folder_name(submission_id)
     source_path = os.path.join(
         ramp_kit_folder, SUBMISSIONS_FOLDER, submission_folder_name, 'log')
     if folder is None:
         dest_path = os.path.join(
-            conf[LOCAL_LOG_FOLDER_FIELD], submission_folder_name, 'log')
+            config[LOCAL_LOG_FOLDER_FIELD], submission_folder_name, 'log')
     else:
         dest_path = folder
     try:
@@ -331,11 +327,10 @@ def _get_log_content(config, submission_id):
 
     a str with the content of the log file
     """
-    conf = config[AWS_CONFIG_SECTION]
-    ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
+    ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
     submission_folder_name = _get_submission_folder_name(submission_id)
     path = os.path.join(
-        conf[LOCAL_LOG_FOLDER_FIELD],
+        config[LOCAL_LOG_FOLDER_FIELD],
         submission_folder_name,
         'log')
     try:
@@ -404,8 +399,7 @@ def download_mprof_data(config, instance_id, submission_id, folder=None):
     folder : str or None
         folder where to download the log
     """
-    conf = config[AWS_CONFIG_SECTION]
-    ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
+    ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
     submission_folder_name = _get_submission_folder_name(submission_id)
     source_path = os.path.join(
         ramp_kit_folder,
@@ -414,18 +408,17 @@ def download_mprof_data(config, instance_id, submission_id, folder=None):
         'mprof.dat')
     if folder is None:
         dest_path = os.path.join(
-            conf[LOCAL_LOG_FOLDER_FIELD], submission_folder_name) + os.sep
+            config[LOCAL_LOG_FOLDER_FIELD], submission_folder_name) + os.sep
     else:
         dest_path = folder
     return _download(config, instance_id, source_path, dest_path)
 
 
 def _get_submission_max_ram(config, submission_id):
-    conf = config[AWS_CONFIG_SECTION]
-    ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
+    ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
     submission_folder_name = _get_submission_folder_name(submission_id)
     dest_path = os.path.join(
-        conf[LOCAL_LOG_FOLDER_FIELD], submission_folder_name)
+        config[LOCAL_LOG_FOLDER_FIELD], submission_folder_name)
     filename = os.path.join(dest_path, 'mprof.dat')
     max_mem = 0.
     for line in codecs.open(filename, encoding='utf-8').readlines()[1:]:
@@ -461,13 +454,12 @@ def download_predictions(config, instance_id, submission_id, folder=None):
 
     path of the folder of `training_output` containing the predictions
     """
-    conf = config[AWS_CONFIG_SECTION]
     submission_folder_name = _get_submission_folder_name(submission_id)
     source_path = _get_remote_training_output_folder(
         config, instance_id, submission_id) + '/'
     if folder is None:
         dest_path = os.path.join(
-            conf[LOCAL_PREDICTIONS_FOLDER_FIELD], submission_folder_name)
+            config[LOCAL_PREDICTIONS_FOLDER_FIELD], submission_folder_name)
     else:
         dest_path = folder
     _download(config, instance_id, source_path, dest_path)
@@ -480,8 +472,7 @@ def _get_remote_training_output_folder(config, instance_id, submission_id):
     For instance, it returns something like :
     ~/ramp-kits/iris/submissions/submission_000001/training_output.
     """
-    conf = config[AWS_CONFIG_SECTION]
-    ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
+    ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
     submission_folder_name = _get_submission_folder_name(submission_id)
     path = os.path.join(ramp_kit_folder, SUBMISSIONS_FOLDER,
                         submission_folder_name, 'training_output')
@@ -504,8 +495,7 @@ def launch_train(config, instance_id, submission_id):
     submission_id : int
         submission id
     """
-    conf = config[AWS_CONFIG_SECTION]
-    ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
+    ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
     submission_folder_name = _get_submission_folder_name(submission_id)
     values = {
         'ramp_kit_folder': ramp_kit_folder,
@@ -522,7 +512,7 @@ def launch_train(config, instance_id, submission_id):
     # before being run remotely and leads to an empty string
     run_cmd = (r"python -u \$(which ramp_test_submission) "
                r"--submission {submission} --save-y-preds ")
-    if conf.get(MEMORY_PROFILING_FIELD):
+    if config.get(MEMORY_PROFILING_FIELD):
         run_cmd = (
             "mprof run --output={submission_folder}/mprof.dat "
             "--include-children " + run_cmd)
@@ -627,9 +617,8 @@ def _rsync(config, instance_id, source, dest):
         dest file or folder
 
     """
-    conf = config[AWS_CONFIG_SECTION]
-    key_path = conf[KEY_PATH_FIELD]
-    ami_username = conf[AMI_USER_NAME_FIELD]
+    key_path = config[KEY_PATH_FIELD]
+    ami_username = config[AMI_USER_NAME_FIELD]
 
     sess = _get_boto_session(config)
     resource = sess.resource('ec2')
@@ -677,9 +666,8 @@ def _run(config, instance_id, cmd, return_output=False):
     If `return_output` is False, then an int containing
     the exit status of the command.
     """
-    conf = config[AWS_CONFIG_SECTION]
-    key_path = conf[KEY_PATH_FIELD]
-    ami_username = conf[AMI_USER_NAME_FIELD]
+    key_path = config[KEY_PATH_FIELD]
+    ami_username = config[AMI_USER_NAME_FIELD]
 
     sess = _get_boto_session(config)
     resource = sess.resource('ec2')
@@ -810,18 +798,17 @@ def _delete_tag(config, instance_id, key):
 
 
 def _get_boto_session(config):
-    conf = config[AWS_CONFIG_SECTION]
-    if PROFILE_NAME_FIELD in conf:
+    if PROFILE_NAME_FIELD in config:
         sess = boto3.session.Session(
-            profile_name=conf[PROFILE_NAME_FIELD],
-            region_name=conf[REGION_NAME_FIELD],
+            profile_name=config[PROFILE_NAME_FIELD],
+            region_name=config[REGION_NAME_FIELD],
         )
         return sess
-    elif ACCESS_KEY_ID_FIELD in conf and SECRET_ACCESS_KEY_FIELD in conf:
+    elif ACCESS_KEY_ID_FIELD in config and SECRET_ACCESS_KEY_FIELD in config:
         sess = boto3.session.Session(
-            aws_access_key_id=conf[ACCESS_KEY_ID_FIELD],
-            aws_secret_access_key=conf[SECRET_ACCESS_KEY_FIELD],
-            region_name=conf[REGION_NAME_FIELD],
+            aws_access_key_id=config[ACCESS_KEY_ID_FIELD],
+            aws_secret_access_key=config[SECRET_ACCESS_KEY_FIELD],
+            region_name=config[REGION_NAME_FIELD],
         )
         return sess
     else:
