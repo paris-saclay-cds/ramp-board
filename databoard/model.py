@@ -5,6 +5,7 @@ import logging
 import os
 import uuid
 import zlib
+import pickle
 
 import numpy as np
 from flask import request
@@ -27,7 +28,7 @@ class NumpyType(db.TypeDecorator):
         return zlib.compress(np.array(value).dumps())
 
     def process_result_value(self, value, dialect):
-        return np.loads(zlib.decompress(value))
+        return pickle.loads(zlib.decompress(value))
 
 
 class User(db.Model):
