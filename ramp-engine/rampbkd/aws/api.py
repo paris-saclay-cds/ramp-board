@@ -122,9 +122,10 @@ def launch_ec2_instances(config, nb=1):
     ami_image_id = conf.get(AMI_IMAGE_ID_FIELD)
     ami_name = conf.get(AMI_IMAGE_NAME_FIELD)
     if ami_image_id and ami_name:
-        raise ValueError('The fields ami_image_id and ami_image_name cannot be both'
-                         'specified at the same time. Please specify either ami_image_id'
-                         'or ami_image_name')
+        raise ValueError(
+            'The fields ami_image_id and ami_image_name cannot be both'
+            'specified at the same time. Please specify either ami_image_id'
+            'or ami_image_name')
     if ami_name:
         ami_image_id = _get_image_id(config, ami_name)
 
@@ -169,9 +170,12 @@ def _get_image_id(config, image_name):
     ])
     images = result['Images']
     if len(images) == 0:
-        raise ValueError('No image corresponding to the name "{}"'.format(image_name))
+        raise ValueError(
+            'No image corresponding to the name "{}"'.format(image_name))
     elif len(images) > 1:
-        raise ValueError('Multiple images corresponding to the name "{}". Please fix that'.format(image_name))
+        raise ValueError(
+            'Multiple images corresponding to the name "{}".'
+            ' Please fix that'.format(image_name))
     else:
         image = images[0]
         image_id = image['ImageId']
@@ -328,29 +332,30 @@ def _get_log_content(config, submission_id):
 
     Returns
     -------
-    
+
     a str with the content of the log file
     """
     conf = config[AWS_CONFIG_SECTION]
     ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
     submission_folder_name = _get_submission_folder_name(submission_id)
     path = os.path.join(
-        conf[LOCAL_LOG_FOLDER_FIELD], 
-        submission_folder_name, 
+        conf[LOCAL_LOG_FOLDER_FIELD],
+        submission_folder_name,
         'log')
-    try: 
+    try:
         content = codecs.open(path, encoding='utf-8').read()
         content = _filter_colors(content)
         return content
     except IOError:
-        logger.error('Could not open log file of "{}" when trying to get log content'.format(submission_id))
+        logger.error('Could not open log file of "{}" when trying to get '
+                     'log content'.format(submission_id))
         return ''
 
 
 def _get_traceback(content):
     """
     get the traceback part from the content where content
-    is a str containing the standard error/output of 
+    is a str containing the standard error/output of
     a python process. It is used to get the traceback
     of `ramp_test_submission` when there is an error.
 
@@ -361,7 +366,7 @@ def _get_traceback(content):
     """
     if not content:
         return ''
-    #cut_exception_text = content.rfind('--->') 
+    # cut_exception_text = content.rfind('--->')
     # was like commented line above in ramp-board
     # but there is no ---> in logs when we use
     # ramp_test_submission, so we just search for the
@@ -370,7 +375,7 @@ def _get_traceback(content):
     if cut_exception_text > 0:
         content = content[cut_exception_text:]
     return content
- 
+
 
 def _filter_colors(content):
     # filter linux colors from a string
@@ -380,12 +385,14 @@ def _filter_colors(content):
 
 def download_mprof_data(config, instance_id, submission_id, folder=None):
     """
-    Download the dat file for memory profiling from an ec2 instance to a local folder `folder`.
+    Download the dat file for memory profiling from an ec2 instance to a
+    local folder `folder`.
     If `folder` is not given, then the dat file is downloaded on
     the value in config corresponding to `LOCAL_LOG_FOLDER_FIELD`.
     If `folder` is given, then the dat file is put in `folder`.
-    IMPORTANT: memory_profiler >= 0.52.0 should be installed in the remote instances.
-    
+    IMPORTANT: memory_profiler >= 0.52.0 should be installed in the
+    remote instances.
+
     Parameters
     ----------
 
@@ -421,7 +428,8 @@ def _get_submission_max_ram(config, submission_id):
     conf = config[AWS_CONFIG_SECTION]
     ramp_kit_folder = conf[REMOTE_RAMP_KIT_FOLDER_FIELD]
     submission_folder_name = _get_submission_folder_name(submission_id)
-    dest_path = os.path.join(conf[LOCAL_LOG_FOLDER_FIELD], submission_folder_name)
+    dest_path = os.path.join(
+        conf[LOCAL_LOG_FOLDER_FIELD], submission_folder_name)
     filename = os.path.join(dest_path, 'mprof.dat')
     max_mem = 0.
     for line in codecs.open(filename, encoding='utf-8').readlines()[1:]:
@@ -517,21 +525,24 @@ def launch_train(config, instance_id, submission_id):
     # without waiting for the process to finish.
     # We use an espace character around "$" because it is interpreted
     # before being run remotely and leads to an empty string
-    run_cmd = r"python -u \$(which ramp_test_submission) --submission {submission} --save-y-preds "
+    run_cmd = (r"python -u \$(which ramp_test_submission) "
+               r"--submission {submission} --save-y-preds ")
     if conf.get(MEMORY_PROFILING_FIELD):
-        run_cmd = "mprof run --output={submission_folder}/mprof.dat --include-children " + run_cmd
+        run_cmd = (
+            "mprof run --output={submission_folder}/mprof.dat "
+            "--include-children " + run_cmd)
     cmd = (
-        "screen -dm -S {submission} sh -c '. ~/.profile;"+
-        "cd {ramp_kit_folder};"+
-        "rm -fr {submission_folder}/training_output;"+
-        "rm -f {submission_folder}/log;"+
-        "rm -f {submission_folder}/mprof.dat;"+
-        run_cmd+">{log} 2>&1'"
+        "screen -dm -S {submission} sh -c '. ~/.profile;"
+        "cd {ramp_kit_folder};"
+        "rm -fr {submission_folder}/training_output;"
+        "rm -f {submission_folder}/log;"
+        "rm -f {submission_folder}/mprof.dat;"
+        + run_cmd + ">{log} 2>&1'"
     )
     cmd = cmd.format(**values)
     # tag the ec2 instance with info about submission
     _tag_instance_by_submission(config, instance_id, submission_folder_name)
-    label = submission_folder_name  #_get_submission_label(submission)
+    label = submission_folder_name  # _get_submission_label(submission)
     logger.info('Launch training of {}..'.format(label))
     return _run(config, instance_id, cmd)
 
@@ -557,7 +568,7 @@ def abort_training(config, instance_id, submission_id):
 
 def _get_submission_folder_name(submission_id):
     return os.path.split(submission_id)[1]
-    #return 'submission_{:09d}'.format(submission_id)
+    # return 'submission_{:09d}'.format(submission_id)
 
 
 def _get_submission_path(config, submission_id):
@@ -727,7 +738,7 @@ def _training_successful(config, instance_id, submission_id):
     """
     folder = _get_remote_training_output_folder(
         config, instance_id, submission_id)
-    
+
     cmd = "ls -l {}|grep fold_|wc -l".format(folder)
     nb_folds = int(_run(config, instance_id, cmd, return_output=True))
 
@@ -766,10 +777,14 @@ def _tag_instance_by_submission(config, instance_id, submission):
     Add tags to an instance with infos from the submission to know which
     submission is being trained on the instance.
     """
-    # _add_or_update_tag(config, instance_id, 'submission_id', str(submission.id))
-    # _add_or_update_tag(config, instance_id, 'submission_name', submission.name)
-    # _add_or_update_tag(config, instance_id, 'event_name', submission.event.name)
-    # _add_or_update_tag(config, instance_id, 'team_name', submission.team.name)
+    # _add_or_update_tag(
+    #     config, instance_id, 'submission_id', str(submission.id))
+    # _add_or_update_tag(
+    #     config, instance_id, 'submission_name', submission.name)
+    # _add_or_update_tag(
+    #     config, instance_id, 'event_name', submission.event.name)
+    # _add_or_update_tag(
+    #     config, instance_id, 'team_name', submission.team.name)
     # name = _get_submission_label(submission)
     name = submission
     _add_or_update_tag(config, instance_id, 'Name', name)
@@ -819,9 +834,10 @@ def _get_boto_session(config):
         )
         return sess
     else:
-        raise ValueError('Please specify either "{}" or both of "{}" and "{}"'.format(
-            PROFILE_NAME_FIELD, ACCESS_KEY_ID_FIELD, SECRET_ACCESS_KEY_FIELD,
-        ))
+        raise ValueError(
+            'Please specify either "{}" or both of "{}" and "{}"'.format(
+                PROFILE_NAME_FIELD, ACCESS_KEY_ID_FIELD,
+                SECRET_ACCESS_KEY_FIELD))
 
 
 def validate_config(config):
@@ -830,34 +846,42 @@ def validate_config(config):
     raises ValueError if it is not correct.
     """
     if AWS_CONFIG_SECTION not in config:
-        raise ValueError('Expects "{}" section in config'.format(AWS_CONFIG_SECTION))
+        raise ValueError(
+            'Expects "{}" section in config'.format(AWS_CONFIG_SECTION))
     conf = config[AWS_CONFIG_SECTION]
     for k in conf.keys():
         if k not in ALL_FIELDS:
             raise ValueError('Invalid field : "{}"'.format(k))
     required_fields_ = REQUIRED_FIELDS - set([
-        AMI_IMAGE_NAME_FIELD, 
+        AMI_IMAGE_NAME_FIELD,
         AMI_IMAGE_ID_FIELD,
-        PROFILE_NAME_FIELD, 
-        ACCESS_KEY_ID_FIELD, 
+        PROFILE_NAME_FIELD,
+        ACCESS_KEY_ID_FIELD,
         SECRET_ACCESS_KEY_FIELD,
     ])
     for k in required_fields_:
         if k not in conf:
-            raise ValueError('Required field "{}" missing from config'.format(k))
+            raise ValueError(
+                'Required field "{}" missing from config'.format(k))
     if AMI_IMAGE_NAME_FIELD in conf and AMI_IMAGE_ID_FIELD in conf:
-        raise ValueError('The fields "{}" and "{}" cannot be both '
-                         'specified at the same time. Please specify only '
-                         'one of them'.format(AMI_IMAGE_NAME_FIELD, AMI_IMAGE_ID_FIELD))
+        raise ValueError(
+            'The fields "{}" and "{}" cannot be both '
+            'specified at the same time. Please specify only '
+            'one of them'.format(AMI_IMAGE_NAME_FIELD, AMI_IMAGE_ID_FIELD))
     if AMI_IMAGE_NAME_FIELD not in conf and AMI_IMAGE_ID_FIELD not in conf:
         raise ValueError(
             'Please specify either  "{}" or "{}" in config.'.format(
                 AMI_IMAGE_NAME_FIELD, AMI_IMAGE_ID_FIELD))
-    if PROFILE_NAME_FIELD in conf and (ACCESS_KEY_ID_FIELD in conf or SECRET_ACCESS_KEY_FIELD in conf):
-        raise ValueError('Please specify either "{}" or both of "{}" and "{}"'.format(
-            PROFILE_NAME_FIELD, ACCESS_KEY_ID_FIELD, SECRET_ACCESS_KEY_FIELD,
-        ))
-    if PROFILE_NAME_FIELD not in conf and not(ACCESS_KEY_ID_FIELD in conf and SECRET_ACCESS_KEY_FIELD in conf):
+    if (PROFILE_NAME_FIELD in conf
+            and (ACCESS_KEY_ID_FIELD in conf
+                 or SECRET_ACCESS_KEY_FIELD in conf)):
+        raise ValueError(
+            'Please specify either "{}" or both of "{}" and "{}"'.format(
+                PROFILE_NAME_FIELD, ACCESS_KEY_ID_FIELD,
+                SECRET_ACCESS_KEY_FIELD))
+    if (PROFILE_NAME_FIELD not in conf
+            and not (ACCESS_KEY_ID_FIELD in conf
+                     and SECRET_ACCESS_KEY_FIELD in conf)):
         raise ValueError('Please specify both "{}" and "{}"'.format(
             ACCESS_KEY_ID_FIELD, SECRET_ACCESS_KEY_FIELD,
         ))
@@ -866,5 +890,6 @@ def validate_config(config):
         for hook_name in hooks.keys():
             if hook_name not in HOOKS:
                 hook_names = ','.join(HOOKS)
-                raise ValueError('Invalid hook name : {}, hooks should be one of these : {}'.format(
-                    hook_name, hook_names))
+                raise ValueError(
+                    'Invalid hook name : {}, hooks should be one of '
+                    'these : {}'.format(hook_name, hook_names))
