@@ -5,6 +5,7 @@ import shutil
 
 import datetime
 import pytest
+from git.exc import GitCommandError
 
 from databoard import db
 from databoard import deployment_path
@@ -12,11 +13,12 @@ from databoard import ramp_config
 
 import databoard.db_tools as db_tools
 
+from databoard.model import Problem
 from databoard.model import User
 
 from databoard.testing import create_test_db
 from databoard.testing import add_users
-from databoard.testing import add_problem_and_event
+from databoard.testing import add_problems
 
 
 from databoard.model import (
@@ -48,8 +50,15 @@ def test_add_users():
         add_users()
 
 
-def test_add_problem_and_event():
-    add_problem_and_event()
+def test_add_problems():
+    add_problems()
+    problems = db.session.query(Problem).all()
+    for problem in problems:
+        assert problem.name in ('iris', 'boston_housing')
+    # trying to add twice the same problem will raise a git error since the
+    #  repositories already exist.
+    with pytest.raises(GitCommandError):
+        add_problems()
 
 
 # def test_setup_workflows():

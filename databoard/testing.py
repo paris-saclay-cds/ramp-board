@@ -80,16 +80,17 @@ def _setup_ramp_kits_ramp_data(problem_name):
     os.chdir(current_directory)
 
 
-def add_problem_and_event():
-    _add_problem_and_event('iris', 'test_user')
+def add_problems():
+    problems = ['iris', 'boston_housing']
+    for problem_name in problems:
+        _setup_ramp_kits_ramp_data(problem_name)
+        add_problem(problem_name)
 
 
 def _add_problem_and_event(problem_name, test_user_name):
     _setup_ramp_kits_ramp_data(problem_name)
-
-    add_problem(problem_name, force=True)
     add_problem(problem_name)
-    add_problem(problem_name, force=True)
+
 #     event_name = '{}_test'.format(problem_name)
 #     event_title = 'test event'
 #     db_tools.add_event(
