@@ -66,7 +66,7 @@ def get_submissions(config, event_name, state='new'):
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
 
     # Create database url
-    db_url = URL(**config['sqlalchemy'])
+    db_url = URL(**config)
     db = create_engine(db_url)
 
     # Create a configured "Session" class
@@ -110,7 +110,7 @@ def get_submission_by_id(config, submission_id):
     `Submission` instance
     """
     # Create database url
-    db_url = URL(**config['sqlalchemy'])
+    db_url = URL(**config)
     db = create_engine(db_url)
 
     # Create a configured "Session" class
@@ -153,7 +153,7 @@ def get_submission_by_name(config, event_name, team_name, name):
 
     """
     # Create database url
-    db_url = URL(**config['sqlalchemy'])
+    db_url = URL(**config)
     db = create_engine(db_url)
 
     # Create a configured "Session" class
@@ -203,7 +203,7 @@ def set_submission_state(config, submission_id, state):
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
 
     # Create database url
-    db_url = URL(**config['sqlalchemy'])
+    db_url = URL(**config)
     db = create_engine(db_url)
 
     # Create a configured "Session" class
@@ -242,7 +242,7 @@ def get_submission_state(config, submission_id):
 
     """
     # Create database url
-    db_url = URL(**config['sqlalchemy'])
+    db_url = URL(**config)
     db = create_engine(db_url)
 
     # Create a configured "Session" class
@@ -281,7 +281,7 @@ def set_predictions(config, submission_id, prediction_path, ext='npy'):
 
     """
     # Create database url
-    db_url = URL(**config['sqlalchemy'])
+    db_url = URL(**config)
     db = create_engine(db_url)
 
     # Create a configured "Session" class
@@ -393,7 +393,7 @@ def score_submission(config, submission_id):
     """
 
     # Create database url
-    db_url = URL(**config['sqlalchemy'])
+    db_url = URL(**config)
     db = create_engine(db_url)
 
     # Create a configured "Session" class
@@ -460,7 +460,7 @@ def set_submission_max_ram(config, submission_id, max_ram_mb):
         max ram usage in MB
     """
     # Create database url
-    db_url = URL(**config['sqlalchemy'])
+    db_url = URL(**config)
     db = create_engine(db_url)
 
     # Create a configured "Session" class
@@ -493,7 +493,7 @@ def set_submission_error_msg(config, submission_id, error_msg):
     """
  
     # Create database url
-    db_url = URL(**config['sqlalchemy'])
+    db_url = URL(**config)
     db = create_engine(db_url)
 
     # Create a configured "Session" class
@@ -513,7 +513,7 @@ def set_submission_error_msg(config, submission_id, error_msg):
 
 def get_event_nb_folds(config, event_name):
     # Create database url
-    db_url = URL(**config['sqlalchemy'])
+    db_url = URL(**config)
     db = create_engine(db_url)
 
     # Create a configured "Session" class

@@ -1,7 +1,7 @@
 import yaml
 
-MANDATORY_SECTION = 'sqlalchemy'
-MANDATORY_KEYS = [
+DB_SECTION = 'sqlalchemy'
+DB_MANDATORY_KEYS = [
     'drivername',
     'username',
     'password',
@@ -52,15 +52,15 @@ def read_database_config(config_file):
     with open(config_file, 'r') as f:
         config = yaml.safe_load(f)
 
-    if MANDATORY_SECTION not in config:
+    if DB_SECTION not in config:
         raise ValueError(
-            "Missing '{}' section in config".format(MANDATORY_SECTION))
+            "Missing '{}' section in config".format(DB_SECTION))
 
-    section_config = config[MANDATORY_SECTION]
+    section_config = config[DB_SECTION]
 
     missing_keys = [
-        '.'.join(MANDATORY_SECTION, key)
-        for key in MANDATORY_KEYS
+        '.'.join(DB_SECTION, key)
+        for key in DB_MANDATORY_KEYS
         if key not in section_config
     ]
 
