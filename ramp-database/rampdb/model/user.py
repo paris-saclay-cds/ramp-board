@@ -1,5 +1,4 @@
 import os
-import sys
 import datetime
 
 from sqlalchemy import Enum
@@ -14,32 +13,13 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
 from .base import Model
+from .base import encode_string
 from .event import EventTeam
 
 __all__ = [
     'User',
     'UserInteraction',
 ]
-
-PYTHON3 = sys.version_info[0] == 3
-
-
-def encode_string(text):
-    if PYTHON3:
-        if isinstance(text, str):
-            encoded_text = bytes(text, 'utf-8')
-        else:
-            encoded_text = text
-    else:
-        encoded_text = text.encode('utf8')
-
-    return encoded_text
-
-
-def get_active_user_event_team(event, user):
-    event_team = EventTeam.query.filter_by(
-        event=event, team=user.admined_teams[0]).one_or_none()
-    return event_team
 
 
 class User(Model):
@@ -60,8 +40,8 @@ class User(Model):
     hidden_notes = Column(String, default=None)
     bio = Column(String(1024), default=None)
     is_want_news = Column(Boolean, default=True)
-    access_level = Column(
-        Enum('admin', 'user', 'asked', name='access_level'), default='asked')
+    access_level = Column(Enum(
+        'admin', 'user', 'asked', name='access_level'), default='asked')
     # 'asked' needs approval
     signup_timestamp = Column(DateTime, nullable=False)
 
@@ -104,11 +84,7 @@ class User(Model):
             return str(self.id)  # python 3
 
     def __str__(self):
-        str_ = "User({})".format(self.name)
-#        str_ = 'User({}, admined=['.format(self.name)
-#        str_ += string.join([team.name for team in self.admined_teams], ', ')
-#        str_ += '])'
-        return str_
+        return 'User({})'.format(encode_string(self.name))
 
     def __repr__(self):
         text = ("User(name={}, lastname={}, firstname={}, email={}, "
@@ -189,7 +165,11 @@ class UserInteraction(Model):
         self.user = user
         self.problem = problem
         if event is not None and user is not None:
-            self.event_team = get_active_user_event_team(event, user)
+            # There should always be an active user team, if not, throw an
+            # exception
+            # The current code works only if each user admins a single team.
+            self.event_team = EventTeam.query.filter_by(
+                event=event, team=user.admined_teams[0]).one_or_none()
         if ip is None:
             self.ip = os.getenv('REMOTE_ADDR')
         else:
@@ -272,7 +252,10 @@ class UserInteraction(Model):
     #     if self.submission_file_diff is None:
     #         return None
     #     return os.path.join(
-    #         config.submissions_path, 'diff_bef24208a45043059', str(self.id))
+    #         deployment_path,
+    #         ramp_config['submissions_dir'],
+    #         'diff_bef24208a45043059',
+    #         str(self.id))
 
     @property
     def event(self):

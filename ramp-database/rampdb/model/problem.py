@@ -10,13 +10,15 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
-from .base import Model, get_deployment_path
+from .base import Model
+from .base import encode_string
+from .base import get_deployment_path
 from .workflow import Workflow
 
 DEPLOYMENT_PATH = get_deployment_path()
-ramp_kits_path = os.path.join(
+RAMP_KITS_PATH = os.path.join(
     DEPLOYMENT_PATH, os.getenv('RAMP_KITS_DIR', 'ramp-kits'))
-ramp_data_path = os.path.join(
+RAMP_DATA_PATH = os.path.join(
     DEPLOYMENT_PATH, os.getenv('RAMP_DATA_DIR', 'ramp-data'))
 
 
@@ -48,8 +50,8 @@ class Problem(Model):
         self.workflow_object
 
     def __repr__(self):
-        repr = 'Problem({})\n{}'.format(self.name, self.workflow)
-        return repr
+        return 'Problem({})\n{}'.format(
+            encode_string(self.name), self.workflow)
 
     def reset(self):
         self.workflow = Workflow.query.filter_by(
@@ -58,7 +60,7 @@ class Problem(Model):
     @property
     def module(self):
         return imp.load_source(
-            '', os.path.join(ramp_kits_path, self.name, 'problem.py'))
+            '', os.path.join(RAMP_KITS_PATH, self.name, 'problem.py'))
 
     @property
     def title(self):
@@ -69,11 +71,11 @@ class Problem(Model):
         return self.module.Predictions
 
     def get_train_data(self):
-        path = os.path.join(ramp_data_path, self.name)
+        path = os.path.join(RAMP_DATA_PATH, self.name)
         return self.module.get_train_data(path=path)
 
     def get_test_data(self):
-        path = os.path.join(ramp_data_path, self.name)
+        path = os.path.join(RAMP_DATA_PATH, self.name)
         return self.module.get_test_data(path=path)
 
     def ground_truths_train(self):

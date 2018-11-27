@@ -9,6 +9,7 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
 from .base import Model
+from .base import encode_string
 
 __all__ = ['Team']
 
@@ -43,13 +44,13 @@ class Team(Model):
         self.creation_timestamp = datetime.datetime.utcnow()
 
     def __str__(self):
-        str_ = 'Team({})'.format(self.name.encode('utf-8'))
-        return str_
+        return 'Team({})'.format(encode_string(self.name))
 
     def __repr__(self):
-        repr = ("Team(name={}, admin_name={}, initiator={}, acceptor={})"
-                .format(self.name.encode('utf-8'),
-                        self.admin.name.encode('utf-8'),
-                        self.initiator,
-                        self.acceptor))
-        return repr
+        text = '''Team(name={}, admin_name={},
+                  initiator={}, acceptor={})'''.format(
+            encode_string(self.name),
+            encode_string(self.admin.name),
+            self.initiator,
+            self.acceptor)
+        return text

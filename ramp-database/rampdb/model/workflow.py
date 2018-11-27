@@ -29,13 +29,11 @@ class WorkflowElementType(Model):
         'SubmissionFileType', backref=backref('workflow_element_types'))
 
     def __repr__(self):
-        repr = ("WorkflowElementType(name={}, type={}, is_editable={}, "
-                "max_size={})"
-                .format(self.name,
-                        self.type.name,
-                        self.type.is_editable,
-                        self.type.max_size))
-        return repr
+        text = 'WorkflowElementType(name={}, type={}'.format(
+            self.name, self.type.name)
+        text += 'is_editable={}, max_size={})'.format(
+            self.type.is_editable, self.type.max_size)
+        return text
 
     @property
     def file_type(self):
@@ -49,14 +47,13 @@ class WorkflowElementType(Model):
     def max_size(self):
         return self.type.max_size
 
+
 # training and test code now belongs to the workflow, not the workflow
 # element. This latter would requre to carefully define workflow element
 # interfaces. Eg, a dilemma: classifier + calibrator needs to handled at the
 # workflow level (since calibrator needs held out data). Eventually we should
 # have both workflow-level and workflow-element-level code to avoid code
 # repetiotion.
-
-
 class Workflow(Model):
     __tablename__ = 'workflows'
 
@@ -68,14 +65,10 @@ class Workflow(Model):
         # to check if the module and all required fields are there
 
     def __repr__(self):
-        repr = 'Workflow({})'.format(self.name)
+        text = 'Workflow({})'.format(self.name)
         for workflow_element in self.elements:
-            repr += '\n\t' + str(workflow_element)
-        return repr
-
-    @property
-    def object(self):
-        return self.problem.module.workflow
+            text += '\n\t' + str(workflow_element)
+        return text
 
 
 # In lists we will order files according to their ids

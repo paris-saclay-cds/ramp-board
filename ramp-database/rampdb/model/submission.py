@@ -17,7 +17,9 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from .base import Model, get_deployment_path
+from .base import Model
+from .base import encode_string
+from .base import get_deployment_path
 from .event import EventScoreType
 from .datatype import NumpyType
 
@@ -107,9 +109,9 @@ class Submission(Model):
         self.event_team = event_team
         self.session = inspect(event_team).session
         sha_hasher = hashlib.sha1()
-        sha_hasher.update(self.event.name.encode('utf-8'))
-        sha_hasher.update(self.team.name.encode('utf-8'))
-        sha_hasher.update(self.name.encode('utf-8'))
+        sha_hasher.update(encode_string(self.event.name))
+        sha_hasher.update(encode_string(self.team.name))
+        sha_hasher.update(encode_string(self.name))
         # We considered using the id, but then it will be given away in the
         # url which is maybe not a good idea.
         self.hash_ = '{}'.format(sha_hasher.hexdigest())
@@ -120,7 +122,6 @@ class Submission(Model):
             submission_score = SubmissionScore(
                 submission=self, event_score_type=event_score_type)
             self.session.add(submission_score)
-            self.session.commit()
         self.reset()
 
     def __str__(self):
@@ -130,8 +131,12 @@ class Submission(Model):
     def __repr__(self):
         repr = '''Submission(event_name={}, team_name={}, name={}, files={},
                   state={}, train_time={})'''.format(
-            self.event.name, self.team.name, self.name, self.files,
-            self.state, self.train_time_cv_mean)
+            encode_string(self.event.name),
+            encode_string(self.team.name),
+            encode_string(self.name),
+            self.files,
+            self.state,
+            self.train_time_cv_mean)
         return repr
 
     @hybrid_property
@@ -284,62 +289,6 @@ class Submission(Model):
         self.error_msg = error_msg
         for submission_on_cv_fold in self.on_cv_folds:
             submission_on_cv_fold.set_error(error, error_msg)
-
-    def compute_valid_score_cv_bag(self):
-        """Cv-bag cv_fold.valid_predictions using combine_predictions_list.
-
-        The predictions in predictions_list[i] belong to those indicated
-        by self.on_cv_folds[i].test_is.
-        """
-        ground_truths_train = self.event.problem.ground_truths_train()
-        if self.state == 'tested':
-            predictions_list = [submission_on_cv_fold.valid_predictions for
-                                submission_on_cv_fold in self.on_cv_folds]
-            test_is_list = [submission_on_cv_fold.cv_fold.test_is for
-                            submission_on_cv_fold in self.on_cv_folds]
-            for score in self.scores:
-                _, score.valid_score_cv_bags = _get_score_cv_bags(
-                    self.event, score.event_score_type, predictions_list,
-                    ground_truths_train, test_is_list)
-                score.valid_score_cv_bag = float(score.valid_score_cv_bags[-1])
-        else:
-            for score in self.scores:
-                score.valid_score_cv_bag = float(score.event_score_type.worst)
-                score.valid_score_cv_bags = None
-        self.session.commit()
-
-    def compute_test_score_cv_bag(self):
-        """Bag cv_fold.test_predictions using combine_predictions_list.
-
-        And stores the score of the bagged predictor in test_score_cv_bag. The
-        scores of partial combinations are stored in test_score_cv_bags.
-        This is for assessing the bagging learning curve, which is useful for
-        setting the number of cv folds to its optimal value (in case the RAMP
-        is competitive, say, to win a Kaggle challenge; although it's kinda
-        stupid since in those RAMPs we don't have a test file, so the learning
-        curves should be assessed in compute_valid_score_cv_bag on the
-        (cross-)validation sets).
-        """
-        if self.state == 'tested':
-            # When we have submission id in Predictions, we should get the
-            # team and submission from the db
-            ground_truths = self.event.problem.ground_truths_test()
-            predictions_list = [submission_on_cv_fold.test_predictions for
-                                submission_on_cv_fold in self.on_cv_folds]
-            combined_predictions_list = [
-                combine_predictions_list(predictions_list[:i + 1]) for
-                i in range(len(predictions_list))]
-            for score in self.scores:
-                score.test_score_cv_bags = [
-                    score.score_function(
-                        ground_truths, combined_predictions) for
-                    combined_predictions in combined_predictions_list]
-                score.test_score_cv_bag = float(score.test_score_cv_bags[-1])
-        else:
-            for score in self.scores:
-                score.test_score_cv_bag = float(score.event_score_type.worst)
-                score.test_score_cv_bags = None
-        self.session.commit()
 
     # contributivity could be a property but then we could not query on it
     def set_contributivity(self):
@@ -742,7 +691,6 @@ class SubmissionOnCVFold(Model):
             submission_score_on_cv_fold = SubmissionScoreOnCVFold(
                 submission_on_cv_fold=self, submission_score=score)
             self.session.add(submission_score_on_cv_fold)
-            self.session.commit()
         self.reset()
 
     def __repr__(self):
@@ -901,9 +849,9 @@ class DetachedSubmissionOnCVFold(object):
             submission_on_cv_fold.submission.event.problem.workflow_object
 
     def __repr__(self):
-        repr = 'Submission({}) on fold {}'.format(
+        text = 'Submission({}) on fold {}'.format(
             self.name, str(self.train_is)[:10])
-        return repr
+        return text
 
 
 submission_similarity_type = Enum(
@@ -942,10 +890,9 @@ class SubmissionSimilarity(Model):
         backref=backref('targets', cascade='all, delete-orphan'))
 
     def __repr__(self):
-        repr = (
-            'type={}, user={}, source={}, target={}, similarity={}, '
-            'timestamp={}').format(
-                self.type, self.user, self.source_submission,
-                self.target_submission, self.similarity, self.timestamp)
-
-        return repr
+        text = 'type={}, user={}, source={}, target={} '.format(
+            self.type, self.user, self.source_submission,
+            self.target_submission)
+        text += 'similarity={}, timestamp={}'.format(
+            self.similarity, self.timestamp)
+        return text

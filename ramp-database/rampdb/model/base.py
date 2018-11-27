@@ -1,4 +1,5 @@
 import os
+import sys
 from math import ceil
 
 from sqlalchemy import orm
@@ -11,7 +12,10 @@ __all__ = [
     'QueryProperty',
     'Pagination',
     'set_query_property',
+    'encode_string'
 ]
+
+PYTHON3 = sys.version_info[0] == 3
 
 
 class Pagination(object):
@@ -137,3 +141,15 @@ def get_deployment_path():
             'DATABOARD_DEPLOYMENT_PATH_TEST', '/tmp/databoard_test')
     else:
         return '.'
+
+
+def encode_string(text):
+    if PYTHON3:
+        if isinstance(text, str):
+            encoded_text = bytes(text, 'utf-8')
+        else:
+            encoded_text = text
+    else:
+        encoded_text = text.encode('utf8')
+
+    return encoded_text
