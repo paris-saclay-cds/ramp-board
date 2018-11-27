@@ -34,8 +34,6 @@ __all__ = [
     'SubmissionOnCVFold',
     'DetachedSubmissionOnCVFold',
     'SubmissionSimilarity',
-    'combine_predictions_list',
-    '_get_score_cv_bags',
 ]
 
 # evaluate right after train/test, so no need for 'scored' states
@@ -386,90 +384,6 @@ class SubmissionScore(Model):
     @property
     def test_score_cv_std(self):
         return np.std([ts.test_score for ts in self.on_cv_folds])
-
-
-def combine_predictions_list(predictions_list, index_list=None):
-    """Combine predictions in predictions_list[index_list].
-
-    By taking the mean of their get_combineable_predictions views.
-
-    E.g. for regression it is the actual
-    predictions, and for classification it is the probability array (which
-    should be calibrated if we want the best performance). Called both for
-    combining one submission on cv folds (a single model that is trained on
-    different folds) and several models on a single fold.
-    Called by
-    _get_bagging_score : which combines bags of the same model, trained on
-        different folds, on the heldout test set
-    _get_cv_bagging_score : which combines cv-bags of the same model, trained
-        on different folds, on the training set
-    get_next_best_single_fold : which does one step of the greedy forward
-        selection (of different models) on a single fold
-    _get_combined_predictions_single_fold : which does the full loop of greedy
-        forward selection (of different models), until improvement, on a single
-        fold
-    _get_combined_test_predictions_single_fold : which computes the combination
-        (constructed on the cv valid set) on the holdout test set, on a single
-        fold
-    _get_combined_test_predictions : which combines the foldwise combined
-        and foldwise best test predictions into a single megacombination
-
-    Parameters
-    ----------
-    predictions_list : list of instances of Predictions
-        Each element of the list is an instance of Predictions of a given model
-        on the same data points.
-    index_list : None | list of integers
-        The subset of predictions to be combined. If None, the full set is
-        combined.
-
-    Returns
-    -------
-    combined_predictions : instance of Predictions
-        A predictions instance containing the combined (averaged) predictions.
-    """
-    Predictions = type(predictions_list[0])
-    combined_predictions = Predictions.combine(predictions_list, index_list)
-    return combined_predictions
-
-
-def _get_score_cv_bags(event, score_type, predictions_list, ground_truths,
-                       test_is_list=None):
-    """
-    Computes the bagged score of the predictions in predictions_list.
-
-    Called by Submission.compute_valid_score_cv_bag and
-    db_tools.compute_contributivity.
-
-    Parameters
-    ----------
-    event : instance of Event
-        Needed for the type of y_comb and
-    predictions_list : list of instances of Predictions
-    ground_truths : instance of Predictions
-    test_is_list : list of integers
-        Indices of points that should be bagged in each prediction. If None,
-        the full prediction vectors will be bagged.
-    Returns
-    -------
-    score_cv_bags : instance of Score ()
-    """
-    if test_is_list is None:  # we combine the full list
-        test_is_list = [range(len(predictions.y_pred))
-                        for predictions in predictions_list]
-
-    y_comb = np.array(
-        [event.Predictions(n_samples=len(ground_truths.y_pred))
-         for _ in predictions_list])
-    score_cv_bags = []
-    for i, test_is in enumerate(test_is_list):
-        y_comb[i].set_valid_in_train(predictions_list[i], test_is)
-        combined_predictions = combine_predictions_list(y_comb[:i + 1])
-        valid_indexes = combined_predictions.valid_indexes
-        score_cv_bags.append(score_type.score_function(
-            ground_truths, combined_predictions, valid_indexes))
-        # XXX maybe use masked arrays rather than passing valid_indexes
-    return combined_predictions, score_cv_bags
 
 
 # TODO: we should have a SubmissionWorkflowElementType table, describing the
