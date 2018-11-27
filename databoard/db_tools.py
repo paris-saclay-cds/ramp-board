@@ -491,8 +491,9 @@ def add_problem(problem_name, force=False):
                                      problem_name)
     if problem is not None:
         if not force:
-            raise ValueError('Attempting to delete problem and all linked '
-                             'events. Use"force=True" if you wish to proceed.')
+            raise ValueError('Attempting to overwrite a problem and delete '
+                             'all linked events. Use"force=True" if you want '
+                             'to overwrite the problem and delete the events.')
         delete_problem(problem_name)
 
     # load the module to get the type of workflow used for the problem
@@ -551,9 +552,9 @@ def add_event(problem_name, event_name, event_title, is_public=False,
     """Add a RAMP event in the database.
 
     Event file should be set up in ``databoard/specific/events/<event_name>``.
-    Should be preceded by adding a problem, then ``problem_name`` imported in
-    the event file (``problem_name`` is acting as a pointer for the join). Also
-    adds CV folds.
+    Should be preceded by adding a problem (cf., :func:`add_problem`), then
+    ``problem_name`` imported in the event file (``problem_name`` is acting as
+    a pointer for the join). Also adds CV folds.
 
     Parameters
     ----------
@@ -592,14 +593,16 @@ def add_event(problem_name, event_name, event_title, is_public=False,
 
     X_train, y_train = event.problem.get_train_data()
     cv = event.problem.module.get_cv(X_train, y_train)
-    for train_is, test_is in cv:
-        cv_fold = CVFold(event=event, train_is=train_is, test_is=test_is)
+    for train_indices, test_indices in cv:
+        cv_fold = CVFold(event=event,
+                         train_is=train_indices,
+                         test_is=test_indices)
         db.session.add(cv_fold)
 
     score_types = event.problem.module.score_types
     for score_type in score_types:
-        event_score_type = EventScoreType(
-            event=event, score_type_object=score_type)
+        event_score_type = EventScoreType(event=event,
+                                          score_type_object=score_type)
         db.session.add(event_score_type)
     event.official_score_name = score_types[0].name
     db.session.commit()

@@ -24,6 +24,7 @@ from databoard.db_tools import approve_user
 from databoard.db_tools import add_workflow
 from databoard.db_tools import add_problem
 from databoard.db_tools import delete_problem
+from databoard.db_tools import add_event
 
 
 @pytest.fixture
@@ -131,27 +132,49 @@ def _check_problem():
 
 
 def test_add_problem(setup_db):
+    problem_name = 'iris'
     # setup the ramp-kit and ramp-data for the iris challenge
-    _setup_ramp_kits_ramp_data('iris')
+    _setup_ramp_kits_ramp_data(problem_name)
 
-    add_problem('iris')
+    add_problem(problem_name)
     _check_problem()
 
     # Without forcing, we cannot write the same problem twice
-    err_msg = 'Attempting to delete problem and all linked events.'
+    err_msg = 'Attempting to overwrite a problem and delete all linked events'
     with pytest.raises(ValueError, match=err_msg):
-        add_problem('iris')
+        add_problem(problem_name)
 
     # Force add the problem
-    add_problem('iris', force=True)
+    add_problem(problem_name, force=True)
     _check_problem()
 
 
 def test_delete_problem(setup_db):
+    problem_name = 'iris'
     # setup the ramp-kit and ramp-data for the iris challenge
-    _setup_ramp_kits_ramp_data('iris')
-    add_problem('iris')
+    _setup_ramp_kits_ramp_data(problem_name)
+    add_problem(problem_name)
     _check_problem
-    delete_problem('iris')
+    delete_problem(problem_name)
     problems = db.session.query(Problem).all()
     assert len(problems) == 0
+
+
+@pytest.mark.parametrize("is_public", [True, False])
+def test_add_event(is_public, setup_db):
+    problem_name = 'iris'
+    _setup_ramp_kits_ramp_data(problem_name)
+    # adding an event required to add a problem in the database
+    add_problem(problem_name)
+
+    event_name = '{}_test'.format(problem_name)
+    event_title = 'test event'
+    add_event(problem_name, event_name, event_title, is_public=is_public)
+
+    err_msg = 'Attempting to overwrite existing event.'
+    with pytest.raises(ValueError, match=err_msg):
+        add_event(problem_name, event_name, event_title, is_public=is_public,
+                  force=False)
+
+    add_event(problem_name, event_name, event_title, is_public=is_public,
+              force=True)
