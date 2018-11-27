@@ -499,6 +499,13 @@ def add_problem(problem_name, force=False):
 # these could go into a delete callback in problem and event, I just don't know
 # how to do that.
 def delete_problem(problem_name):
+    """Delete a problem form a database.
+
+    Parameters
+    ----------
+    problem_name : str
+        The problem name to be removed.
+    """
     problem = Problem.query.filter_by(name=problem_name).one()
     for event in problem.events:
         delete_event(event.name)
@@ -532,22 +539,39 @@ def delete_submission_similarity(submissions):
 
 def add_event(problem_name, event_name, event_title, is_public=False,
               force=False):
-    """Adding a new RAMP event.
+    """Add a RAMP event in the database.
 
-    Event file should be set up in
-    databoard/specific/events/<event_name>. Should be preceded by adding
-    a problem, then problem_name imported in the event file (problem_name
-    is acting as a pointer for the join). Also adds CV folds.
+    Event file should be set up in ``databoard/specific/events/<event_name>``.
+    Should be preceded by adding a problem, then ``problem_name`` imported in
+    the event file (``problem_name`` is acting as a pointer for the join). Also
+    adds CV folds.
+
+    Parameters
+    ----------
+    problem_name : str
+        The problem name associated with the event.
+    event_name : str
+        The event name.
+    event_title : str
+        The even title.
+    is_public : bool, default is False
+        Whether the event is made public or not.
+    force : bool, default is False
+        Whether to overwrite an existing event. If ``false=False``, an error
+        will be raised.
+
+    Returns
+    -------
+    event : Event
+        The event which has been registered in the database.
     """
     event = Event.query.filter_by(name=event_name).one_or_none()
     if event is not None:
-        if force:
-            delete_event(event_name)
-        else:
-            logger.info(
-                'Attempting to delete event, ' +
-                'use "force=True" if you know what you are doing.')
-            return
+        if not force:
+            raise ValueError("Attempting to overwrite existing event. "
+                             "Use force=True to overwrite.")
+        delete_event(event_name)
+
     event = Event(
         name=event_name, problem_name=problem_name, event_title=event_title)
     event.is_public = is_public
