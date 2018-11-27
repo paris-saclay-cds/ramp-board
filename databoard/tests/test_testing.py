@@ -33,6 +33,8 @@ def teardown_module(module):
     """Clean-up the database."""
     shutil.rmtree(deployment_path)
     db.session.close()
+    db.session.remove()
+    db.drop_all()
 
 
 def test_add_users():

@@ -28,6 +28,9 @@ def setup_db():
         yield
     finally:
         shutil.rmtree(deployment_path, ignore_errors=True)
+        db.session.close()
+        db.session.remove()
+        db.drop_all()
 
 
 def test_create_user(setup_db):
@@ -86,3 +89,28 @@ def test_add_workflow(setup_db):
         registered_elt_type = registered_elt.workflow_element_type
         assert registered_elt_type.type.name == 'code'
         assert registered_elt_type.is_editable
+
+
+class WorkflowFaultyElements:
+    """Workflow with faulty elements."""
+    def __init__(self, case=None):
+        self.case = case
+
+    @property
+    def element_names(self):
+        if self.case == 'multiple-dot':
+            return ['too.much.dot.workflow']
+        elif self.case == 'unknown-extension':
+            return ['function.cpp']
+
+
+@pytest.mark.parametrize(
+    "case, err_msg",
+    [('multiple-dot', 'should contain at most one "."'),
+     ('unknown-extension', 'Unknown extension')]
+)
+def test_add_workflow_error(case, err_msg, setup_db):
+    workflow = WorkflowFaultyElements(case=case)
+    with pytest.raises(ValueError, match=err_msg):
+        add_workflow(workflow)
+    # TODO: there is no easy way to test a non valid type extension.
