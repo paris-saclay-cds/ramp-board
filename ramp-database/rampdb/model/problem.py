@@ -12,8 +12,9 @@ from sqlalchemy.orm import relationship
 from .base import Model
 from .base import encode_string
 from .base import get_deployment_path
-from .utils import import_module_from_source
 from .workflow import Workflow
+
+from ..utils import import_module_from_source
 
 DEPLOYMENT_PATH = get_deployment_path()
 RAMP_KITS_PATH = os.path.join(
