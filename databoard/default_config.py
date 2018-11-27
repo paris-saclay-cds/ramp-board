@@ -66,11 +66,11 @@ class DevelopmentConfig(Config):
     DEBUG = True
     MAIL_DEBUG = True
     DEPLOYMENT_PATH = os.getenv(
-        'DATABOARD_DEPLOYMENT_PATH_TEST', '/tmp/databoard-test')
+        'DATABOARD_DEPLOYMENT_PATH_TEST', '/tmp/databoard_test')
 
 
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABOARD_DB_URL_TEST')
     DEPLOYMENT_PATH = os.getenv(
-        'DATABOARD_DEPLOYMENT_PATH_TEST', '/tmp/databoard-test')
+        'DATABOARD_DEPLOYMENT_PATH_TEST', '/tmp/databoard_test')
