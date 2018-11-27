@@ -3,7 +3,8 @@ RAMP database helper queries
 """
 from __future__ import print_function, absolute_import
 
-from .model import Submission, Event, EventTeam, Team
+from ..model import Submission, Event, EventTeam, Team
+
 
 def select_submissions_by_id(session, submission_id):
     """

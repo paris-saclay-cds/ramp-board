@@ -13,12 +13,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import URL
 
-from .model import Base
+from ..model import Model
 from .query import select_submissions_by_state
 from .query import select_submissions_by_id
 from .query import select_submission_by_name
 from .query import select_event_by_name
-from .config import STATES, UnknownStateError
+from ..config import STATES, UnknownStateError
 
 
 __all__ = [
