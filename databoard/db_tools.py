@@ -26,10 +26,17 @@ from rampdb.model import (CVFold, DetachedSubmissionOnCVFold,
                           User, UserInteraction, Workflow, WorkflowElement,
                           WorkflowElementType)
 
-from . import app, db, ramp_config, ramp_kits_path
-from .utils import (date_time_format, encode_string, get_hashed_password,
-                    remove_non_ascii, send_mail, table_format)
+from . import app
+from . import db
+from . import ramp_config
+
+from .utils import date_time_format
+from .utils import encode_string
+from .utils import get_hashed_password
 from .utils import import_module_from_source
+from .utils import remove_non_ascii
+from .utils import send_mail
+from .utils import table_format
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
@@ -480,7 +487,8 @@ def add_problem(problem_name, force=False):
         raised if the problem was already in the database.
     """
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
-    problem_kits_path = os.path.join(ramp_kits_path, problem_name)
+    problem_kits_path = os.path.join(ramp_config['ramp_kits_path'],
+                                     problem_name)
     if problem is not None:
         if not force:
             raise ValueError('Attempting to delete problem and all linked '
@@ -771,7 +779,9 @@ def sign_up_team(event_name, team_name):
             event=event, team=team).one_or_none()
     # submitting the starting kit for team
     from_submission_path = os.path.join(
-        ramp_kits_path, event.problem.name, ramp_config['submissions_dir'],
+        ramp_config['ramp_kits_path'],
+        event.problem.name,
+        ramp_config['submissions_dir'],
         ramp_config['sandbox_dir'])
     make_submission_and_copy_files(
         event_name, team_name, ramp_config['sandbox_dir'],
@@ -790,7 +800,9 @@ def submit_starting_kit(event_name, team_name):
     """Submit all starting kits in ramp_kits_path/ramp_name/submissions."""
     event = Event.query.filter_by(name=event_name).one()
     submission_path = os.path.join(
-        ramp_kits_path, event.problem.name, ramp_config['submissions_dir'])
+        ramp_config['ramp_kits_path'],
+        event.problem.name,
+        ramp_config['submissions_dir'])
     submission_names = os.listdir(submission_path)
     min_duration_between_submissions = event.min_duration_between_submissions
     event.min_duration_between_submissions = 0
