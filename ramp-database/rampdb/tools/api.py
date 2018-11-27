@@ -73,7 +73,7 @@ def get_submissions(config, event_name, state='new'):
     Session = sessionmaker(db)
 
     # Link the relational model to the database
-    Base.metadata.create_all(db)
+    Model.metadata.create_all(db)
 
     # Connect to the dabase and perform action
     with db.connect() as conn:
@@ -117,7 +117,7 @@ def get_submission_by_id(config, submission_id):
     Session = sessionmaker(db)
 
     # Link the relational model to the database
-    Base.metadata.create_all(db)
+    Model.metadata.create_all(db)
 
     # Connect to the dabase and perform action
     with db.connect() as conn:
@@ -160,7 +160,7 @@ def get_submission_by_name(config, event_name, team_name, name):
     Session = sessionmaker(db)
 
     # Link the relational model to the database
-    Base.metadata.create_all(db)
+    Model.metadata.create_all(db)
 
     # Connect to the dabase and perform action
     with db.connect() as conn:
@@ -210,7 +210,7 @@ def set_submission_state(config, submission_id, state):
     Session = sessionmaker(db)
 
     # Link the relational model to the database
-    Base.metadata.create_all(db)
+    Model.metadata.create_all(db)
 
     # Connect to the dabase and perform action
     with db.connect() as conn:
@@ -249,7 +249,7 @@ def get_submission_state(config, submission_id):
     Session = sessionmaker(db)
 
     # Link the relational model to the database
-    Base.metadata.create_all(db)
+    Model.metadata.create_all(db)
 
     # Connect to the dabase and perform action
     with db.connect() as conn:
@@ -288,7 +288,7 @@ def set_predictions(config, submission_id, prediction_path, ext='npy'):
     Session = sessionmaker(db)
 
     # Link the relational model to the database
-    Base.metadata.create_all(db)
+    Model.metadata.create_all(db)
 
     # Connect to the dabase and perform action
     with db.connect() as conn:
@@ -400,7 +400,7 @@ def score_submission(config, submission_id):
     Session = sessionmaker(db)
 
     # Link the relational model to the database
-    Base.metadata.create_all(db)
+    Model.metadata.create_all(db)
 
     # Connect to the dabase and perform action
     with db.connect() as conn:
@@ -467,7 +467,7 @@ def set_submission_max_ram(config, submission_id, max_ram_mb):
     Session = sessionmaker(db)
 
     # Link the relational model to the database
-    Base.metadata.create_all(db)
+    Model.metadata.create_all(db)
 
     # Connect to the dabase and perform action
     with db.connect() as conn:
@@ -500,7 +500,7 @@ def set_submission_error_msg(config, submission_id, error_msg):
     Session = sessionmaker(db)
 
     # Link the relational model to the database
-    Base.metadata.create_all(db)
+    Model.metadata.create_all(db)
 
     # Connect to the dabase and perform action
     with db.connect() as conn:
@@ -520,7 +520,7 @@ def get_event_nb_folds(config, event_name):
     Session = sessionmaker(db)
 
     # Link the relational model to the database
-    Base.metadata.create_all(db)
+    Model.metadata.create_all(db)
 
     # Connect to the dabase and perform action
     with db.connect() as conn:
