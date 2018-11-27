@@ -455,10 +455,9 @@ def add_workflow(workflow_object):
             logger.info('Adding {}'.format(workflow_element_type))
             db.session.add(workflow_element_type)
             db.session.commit()
-        workflow_element =\
-            WorkflowElement.query.filter_by(
-                workflow=workflow,
-                workflow_element_type=workflow_element_type).one_or_none()
+        workflow_element = WorkflowElement.query.filter_by(
+            workflow=workflow,
+            workflow_element_type=workflow_element_type).one_or_none()
         if workflow_element is None:
             workflow_element = WorkflowElement(
                 workflow=workflow,
@@ -469,7 +468,16 @@ def add_workflow(workflow_object):
 
 
 def add_problem(problem_name, force=False):
-    """Adding a new RAMP problem."""
+    """Add a RAMP problem to the database.
+
+    Parameters
+    ----------
+    problem_name : str
+        The name of the problem to register in the database.
+    force : bool, default is False
+        Whether to force add the problem. If ``force=False``, an error is
+        raised if the problem was already in the database.
+    """
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
     problem_kits_path = os.path.join(ramp_kits_path, problem_name)
     if problem is not None:

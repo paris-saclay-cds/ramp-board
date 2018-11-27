@@ -8,6 +8,7 @@ from rampwf.workflows import FeatureExtractorClassifier
 from databoard import db
 from databoard import deployment_path
 
+from databoard.model import Problem
 from databoard.model import User
 from databoard.model import Workflow
 from databoard.model import WorkflowElement
@@ -124,6 +125,10 @@ def test_add_problem(setup_db):
     # setup the ramp-kit and ramp-data for the iris challenge
     _setup_ramp_kits_ramp_data('iris')
     add_problem('iris')
+    problems = db.session.query(Problem).all()
+    assert len(problems) == 1
+    problem = problems[0]
+    assert problem.workflow.name == 'Classifier'
 
 
 def test_delete_problem(setup_db):

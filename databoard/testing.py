@@ -29,6 +29,8 @@ def create_test_db():
     if os.getenv('DATABOARD_STAGE') in ['TEST', 'TESTING']:
         shutil.rmtree(deployment_path, ignore_errors=True)
         os.makedirs(deployment_path)
+        # TODO: not sure it is necessary to have the fabfile copied for local
+        # test
         shutil.copyfile(os.path.abspath('fabfile.py'),
                         os.path.join(deployment_path, 'fabfile.py'))
         os.makedirs(ramp_config['ramp_kits_path'])
