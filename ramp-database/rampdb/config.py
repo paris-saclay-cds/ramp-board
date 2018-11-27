@@ -1,7 +1,7 @@
 import yaml
 
-MANDATORY_SECTION = 'sqlalchemy'
-MANDATORY_KEYS = [
+DB_SECTION = 'sqlalchemy'
+DB_MANDATORY_KEYS = [
     'drivername',
     'username',
     'password',
@@ -9,6 +9,25 @@ MANDATORY_KEYS = [
     'port',
     'database',
 ]
+STATES = [
+    'new',               # submitted by user to frontend server
+    'checked',           # not used, checking is part of the workflow now
+    'checking_error',    # not used, checking is part of the workflow now
+    'trained',           # training finished normally on the backend server
+    'training_error',    # training finished abnormally on the backend server
+    'validated',         # validation finished normally on the backend server
+    'validating_error',  # validation finished abnormally on the backend server
+    'tested',            # testing finished normally on the backend server
+    'testing_error',     # testing finished abnormally on the backend server
+    'training',          # training is running normally on the backend server
+    'sent_to_training',  # frontend server sent submission to backend server
+    'scored',            # submission scored on the frontend server.Final state
+]
+"""list of int: enumeration of available submission states"""
+
+
+class UnknownStateError(Exception):
+    pass
 
 
 def read_database_config(config_file):
@@ -32,15 +51,15 @@ def read_database_config(config_file):
     with open(config_file, 'r') as f:
         config = yaml.safe_load(f)
 
-    if MANDATORY_SECTION not in config:
+    if DB_SECTION not in config:
         raise ValueError(
-            "Missing '{}' section in config".format(MANDATORY_SECTION))
+            "Missing '{}' section in config".format(DB_SECTION))
 
-    section_config = config[MANDATORY_SECTION]
+    section_config = config[DB_SECTION]
 
     missing_keys = [
-        '.'.join(MANDATORY_SECTION, key)
-        for key in MANDATORY_KEYS
+        '.'.join(DB_SECTION, key)
+        for key in DB_MANDATORY_KEYS
         if key not in section_config
     ]
 

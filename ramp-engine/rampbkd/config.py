@@ -13,25 +13,6 @@ SANDBOX_NAME = 'starting_kit'
 MANDATORY_KEYS = ['sqlalchemy']
 MANDATORY_URL_KEYS = ['drivername', 'username', 'password',
                       'host', 'port', 'database']
-STATES = [
-    'new',               # submitted by user to frontend server
-    'checked',           # not used, checking is part of the workflow now
-    'checking_error',    # not used, checking is part of the workflow now
-    'trained',           # training finished normally on the backend server
-    'training_error',    # training finished abnormally on the backend server
-    'validated',         # validation finished normally on the backend server
-    'validating_error',  # validation finished abnormally on the backend server
-    'tested',            # testing finished normally on the backend server
-    'testing_error',     # testing finished abnormally on the backend server
-    'training',          # training is running normally on the backend server
-    'sent_to_training',  # frontend server sent submission to backend server
-    'scored',            # submission scored on the frontend server.Final state
-]
-"""list of int: enumeration of available submission states"""
-
-
-class UnknownStateError(Exception):
-    pass
 
 
 def read_backend_config(config_file):

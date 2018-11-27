@@ -1,8 +1,8 @@
 import numpy as np
 
-from .model import Team
-from .model import Event
-from .model import EventTeam
+from ..model import Team
+from ..model import Event
+from ..model import EventTeam
 
 __all__ = [
     'get_active_user_event_team',
