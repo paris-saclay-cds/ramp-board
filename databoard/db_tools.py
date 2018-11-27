@@ -486,8 +486,7 @@ def add_problem(problem_name, force=False):
                              'events. Use"force=True" if you wish to proceed.')
         delete_problem(problem_name)
 
-    # XXX it's a bit ugly that we need to load the module here
-    # perhaps if we can get rid of the workflow db table completely
+    # load the module to get the type of workflow used for the problem
     problem_module = import_module_from_source(
         os.path.join(problem_kits_path, 'problem.py'), 'problem')
     add_workflow(problem_module.workflow)

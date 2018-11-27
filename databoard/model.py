@@ -1,6 +1,5 @@
 import datetime
 import hashlib
-import imp
 import logging
 import os
 import uuid
@@ -14,7 +13,9 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from databoard import db
 from databoard.utils import encode_string
 
-from . import deployment_path, ramp_config, ramp_data_path, ramp_kits_path
+from . import deployment_path
+from . import ramp_config
+from .utils import import_module_from_source
 
 logger = logging.getLogger('databoard')
 
@@ -180,8 +181,12 @@ class Problem(db.Model):
 
     @property
     def module(self):
-        return imp.load_source(
-            '', os.path.join(ramp_kits_path, self.name, 'problem.py'))
+        return import_module_from_source(
+            os.path.join(ramp_config['ramp_kits_path'],
+                         self.name,
+                         'problem.py'),
+            'problem'
+        )
 
     @property
     def title(self):
@@ -192,11 +197,11 @@ class Problem(db.Model):
         return self.module.Predictions
 
     def get_train_data(self):
-        path = os.path.join(ramp_data_path, self.name)
+        path = os.path.join(ramp_config['ramp_data_path'], self.name)
         return self.module.get_train_data(path=path)
 
     def get_test_data(self):
-        path = os.path.join(ramp_data_path, self.name)
+        path = os.path.join(ramp_config['ramp_data_path'], self.name)
         return self.module.get_test_data(path=path)
 
     def ground_truths_train(self):
