@@ -46,7 +46,7 @@ if __name__ == "__main__":
             'numpy',
             'pyyaml',
             'sqlalchemy',
-            'psycopg2-binary',
+            'psycopg2',
         ],
         platforms='any',
         packages=find_packages(),
