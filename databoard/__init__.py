@@ -15,6 +15,7 @@ app = Flask('databoard')
 
 # Load default main config
 app_stage = os.getenv('DATABOARD_STAGE', 'DEVELOPMENT').upper()
+
 if app_stage in ['PROD', 'PRODUCTION']:
     app.config.from_object('databoard.default_config.ProductionConfig')
 elif app_stage in ['TEST', 'TESTING']:
@@ -28,9 +29,6 @@ else:
         "available stages : 'TESTING', 'DEVELOPMENT' or 'PRODUCTION'"
     )
     raise AttributeError(msg.format(app_stage))
-
-# Load default database config
-app.config.from_object('databoard.default_config.DBConfig')
 
 # Load default internal config
 app.config.from_object('databoard.default_config.RampConfig')
