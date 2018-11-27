@@ -132,7 +132,7 @@ def get_submission_by_id(config, submission_id):
 def get_submission_by_name(config, event_name, team_name, name):
     """
     Get a submission by name
-    
+
     Parameters
     ----------
 
@@ -166,7 +166,7 @@ def get_submission_by_name(config, event_name, team_name, name):
     with db.connect() as conn:
         session = Session(bind=conn)
         submission = select_submission_by_name(
-            session, 
+            session,
             event_name,
             team_name,
             name)
@@ -174,8 +174,6 @@ def get_submission_by_name(config, event_name, team_name, name):
         submission.event.name
         submission.team.name
     return submission
-
-
 
 
 def set_submission_state(config, submission_id, state):
@@ -354,7 +352,7 @@ def _get_time(path, fold_id, typ):
     """
     get time duration in seconds of train or valid
     or test for a given fold.
-    
+
     Parameters
     ----------
     path : str
@@ -362,14 +360,15 @@ def _get_time(path, fold_id, typ):
     fold_id : int
         id of the current CV fold
     typ : {'train', 'valid, 'test'}
-    
+
     Raises
     ------
     ValueError :
         when typ is neither is not 'train' or 'valid' or test'
     """
     if typ not in ['train', 'valid', 'test']:
-        raise ValueError("Only 'train' or 'valid' or 'test' are expected for arg 'typ'")
+        raise ValueError(
+            "Only 'train' or 'valid' or 'test' are expected for arg 'typ'")
     time_file = os.path.join(path, 'fold_{}'.format(fold_id), typ + '_time')
     return float(open(time_file).read())
 
@@ -491,7 +490,7 @@ def set_submission_error_msg(config, submission_id, error_msg):
     error_msg : str
         message error
     """
- 
+
     # Create database url
     db_url = URL(**config)
     db = create_engine(db_url)
@@ -527,5 +526,3 @@ def get_event_nb_folds(config, event_name):
         session = Session(bind=conn)
         event = select_event_by_name(session, event_name)
         return len(event.cv_folds)
-
-

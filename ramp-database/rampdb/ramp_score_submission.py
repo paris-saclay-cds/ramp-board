@@ -3,7 +3,6 @@ from __future__ import print_function, absolute_import, unicode_literals
 import argparse
 
 from .tools import score_submission
-from .config import STATES
 from .config import read_backend_config
 
 

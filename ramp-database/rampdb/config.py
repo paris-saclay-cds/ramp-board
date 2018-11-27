@@ -30,7 +30,6 @@ class UnknownStateError(Exception):
     pass
 
 
-
 def read_database_config(config_file):
     """Parse YAML configuration file
 
