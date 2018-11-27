@@ -414,8 +414,8 @@ def add_workflow(workflow_object):
     extension. This is important because e.g. the max size and the editability
     will depend on the type.
 
-    ``add_workflow`` is called by add_problem, taking the workflow to add from
-    the ``problem.py`` file of the starting kit.
+    ``add_workflow`` is called by :func:`add_problem`, taking the workflow to
+    add from the ``problem.py`` file of the starting kit.
 
     Parameters
     ----------
