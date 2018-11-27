@@ -129,6 +129,8 @@ def test_add_problem(setup_db):
     assert len(problems) == 1
     problem = problems[0]
     assert problem.workflow.name == 'Classifier'
+    assert problem.name == 'iris'
+    print(problem.workflow_object)
 
 
 def test_delete_problem(setup_db):
