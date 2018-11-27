@@ -28,6 +28,7 @@ from .model import (CVFold, DetachedSubmissionOnCVFold,
                     WorkflowElementType)
 from .utils import (date_time_format, get_hashed_password, remove_non_ascii,
                     send_mail, table_format, encode_string)
+from .utils import import_module_from_source
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
@@ -467,23 +468,20 @@ def add_workflow(workflow_object):
     db.session.commit()
 
 
-def add_problem(problem_name, force=False, with_download=False):
+def add_problem(problem_name, force=False):
     """Adding a new RAMP problem."""
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
     problem_kits_path = os.path.join(ramp_kits_path, problem_name)
     if problem is not None:
-        if force:
-            delete_problem(problem_name)
-        else:
-            logger.info(
-                'Attempting to delete problem and all linked events, ' +
-                'use "force=True" if you know what you are doing.')
-            return
+        if not force:
+            raise ValueError('Attempting to delete problem and all linked '
+                             'events. Use"force=True" if you wish to proceed.')
+        delete_problem(problem_name)
 
     # XXX it's a bit ugly that we need to load the module here
     # perhaps if we can get rid of the workflow db table completely
-    problem_module = imp.load_source(
-        '', os.path.join(problem_kits_path, 'problem.py'))
+    problem_module = import_module_from_source(
+        os.path.join(problem_kits_path, 'problem.py'), 'problem')
     add_workflow(problem_module.workflow)
     problem = Problem(name=problem_name)
     logger.info('Adding {}'.format(problem))

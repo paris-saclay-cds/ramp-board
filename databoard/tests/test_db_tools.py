@@ -1,4 +1,5 @@
 import shutil
+import subprocess
 
 import pytest
 
@@ -14,11 +15,14 @@ from databoard.model import WorkflowElementType
 from databoard.model import NameClashError
 
 from databoard.testing import create_test_db
+from databoard.testing import _setup_ramp_kits_ramp_data
 from databoard.utils import check_password
 
 from databoard.db_tools import create_user
 from databoard.db_tools import approve_user
 from databoard.db_tools import add_workflow
+from databoard.db_tools import add_problem
+from databoard.db_tools import delete_problem
 
 
 @pytest.fixture
@@ -114,3 +118,16 @@ def test_add_workflow_error(case, err_msg, setup_db):
     with pytest.raises(ValueError, match=err_msg):
         add_workflow(workflow)
     # TODO: there is no easy way to test a non valid type extension.
+
+
+def test_add_problem(setup_db):
+    # setup the ramp-kit and ramp-data for the iris challenge
+    _setup_ramp_kits_ramp_data('iris')
+    add_problem('iris')
+
+
+def test_delete_problem(setup_db):
+    # setup the ramp-kit and ramp-data for the iris challenge
+    _setup_ramp_kits_ramp_data('iris')
+    add_problem('iris')
+    delete_problem('iris')

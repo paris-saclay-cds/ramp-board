@@ -1,6 +1,6 @@
 import os
 import subprocess
-from shutil import rmtree
+import shutil
 
 from git import Repo
 
@@ -27,9 +27,10 @@ def create_test_db():
     * DATABOARD_DB_URL_TEST: database URL.
     """
     if os.getenv('DATABOARD_STAGE') in ['TEST', 'TESTING']:
-        rmtree(deployment_path, ignore_errors=True)
+        shutil.rmtree(deployment_path, ignore_errors=True)
         os.makedirs(deployment_path)
-        subprocess.run(["rsync", "-rultv", 'fabfile.py', deployment_path])
+        shutil.copyfile(os.path.abspath('fabfile.py'),
+                        os.path.join(deployment_path, 'fabfile.py'))
         os.makedirs(ramp_config['ramp_kits_path'])
         os.makedirs(ramp_config['ramp_data_path'])
         os.makedirs(ramp_config['ramp_submissions_path'])
@@ -55,12 +56,9 @@ def add_users():
         email='iris.admin@gmail.com', access_level='user')
 
 
-def add_problem_and_event():
-    _add_problem_and_event('iris', 'test_user')
-
-
-def _add_problem_and_event(problem_name, test_user_name):
-
+def _setup_ramp_kits_ramp_data(problem_name):
+    # TODO: This function does not have a unit test but only used in
+    # integration testing.
     problem_kits_path = os.path.join(ramp_config['ramp_kits_path'],
                                      problem_name)
     ramp_kits_url = 'https://github.com/ramp-kits/{}.git'.format(problem_name)
@@ -71,11 +69,21 @@ def _add_problem_and_event(problem_name, test_user_name):
     ramp_data_url = 'https://github.com/ramp-data/{}.git'.format(problem_name)
     ramp_data_repo = Repo.clone_from(ramp_data_url, problem_data_path)
 
+    current_directory = os.getcwd()
     os.chdir(problem_data_path)
     subprocess.check_output(["python", "prepare_data.py"])
     os.chdir(problem_kits_path)
-#     os.system('jupyter nbconvert --to html {}_starting_kit.ipynb'.format(
-#         problem_name))
+    subprocess.check_output(["jupyter", "nbconvert", "--to", "html",
+                             "{}_starting_kit.ipynb".format(problem_name)])
+    os.chdir(current_directory)
+
+
+def add_problem_and_event():
+    _add_problem_and_event('iris', 'test_user')
+
+
+def _add_problem_and_event(problem_name, test_user_name):
+    _setup_ramp_kits_ramp_data(problem_name)
 
     add_problem(problem_name, force=True)
     add_problem(problem_name)
