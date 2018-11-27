@@ -1,14 +1,15 @@
 from __future__ import print_function, absolute_import
 
 import os
-
 import datetime
+
+from rampdb.model import (
+    NameClashError, User, Problem, Event, Submission, DuplicateSubmissionError,
+    SubmissionSimilarity, EventTeam, Team, UserInteraction)
+
 import databoard.db_tools as db_tools
 from databoard import ramp_data_path, ramp_kits_path, ramp_config
 from databoard.deploy import deploy
-from databoard.model import (
-    NameClashError, User, Problem, Event, Submission, DuplicateSubmissionError,
-    SubmissionSimilarity, EventTeam, Team, UserInteraction)
 
 
 def test_deploy():
@@ -358,7 +359,11 @@ def test_model():
     uis = UserInteraction.query.all()
     for ui in uis:
         ui.__repr__()
-        ui.submission_file_diff_link
+        # The following line was commented out because it calls a function
+        # using information that should come from a config file as well as
+        # hardcoded diff number.
+        #
+        # ui.submission_file_diff_link
         ui.event
         ui.team
 

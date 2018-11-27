@@ -1,9 +1,6 @@
 language: python
 dist: trusty
 env:
-  global:
-    - DATABOARD_USER=mrramp
-    - DATABOARD_PASSWORD=mrramp
   matrix:
     - PYTHON_VERSION=2.7
     - PYTHON_VERSION=3.6
@@ -20,14 +17,19 @@ install:
     - conda env create python=$PYTHON_VERSION -f environment.yml
     - conda env create python=$PYTHON_VERSION -f environment_iris_kit.yml
     - source activate testenv
-    - pip install -e .
+    - pip install .
     # install ramp-engine
     - cd ramp-engine
-    - pip install -e .
+    - pip install .
+    - cd ..
+    # install ramp-database
+    - cd ramp-database
+    - pip install .
     - cd ..
 script:
     - bash ci_tools/travis/test_ramp_board.sh
     - bash ci_tools/travis/test_ramp_engine.sh
+    - bash ci_tools/travis/test_ramp_database.sh
 after_success:
     - make code-analysis
 notifications:

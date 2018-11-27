@@ -15,10 +15,11 @@ submissions/*
 # tools/*
 tools/env.sh
 tools/celery_info
-databoard.egg-info
 user_batches
 old_stuff
 .coverage
 problems/*/old_submissions
 test_submissions/submission*
 .pytest_cache
+*.egg-info
+databoard.db

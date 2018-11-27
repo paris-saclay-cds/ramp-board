@@ -15,19 +15,20 @@ from sklearn.utils.validation import assert_all_finite
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
+from rampdb.model import (CVFold, DetachedSubmissionOnCVFold,
+                          DuplicateSubmissionError, Event, EventAdmin,
+                          EventScoreType, EventTeam, Extension, Keyword,
+                          MissingExtensionError, MissingSubmissionFileError,
+                          NameClashError, Problem, ProblemKeyword, Submission,
+                          SubmissionFile, SubmissionFileType,
+                          SubmissionFileTypeExtension, SubmissionOnCVFold,
+                          SubmissionSimilarity, Team, TooEarlySubmissionError,
+                          User, UserInteraction, Workflow, WorkflowElement,
+                          WorkflowElementType)
+
 from . import app, db, ramp_config, ramp_kits_path
-from .model import (CVFold, DetachedSubmissionOnCVFold,
-                    DuplicateSubmissionError, Event, EventAdmin,
-                    EventScoreType, EventTeam, Extension, Keyword,
-                    MissingExtensionError, MissingSubmissionFileError,
-                    NameClashError, Problem, ProblemKeyword, Submission,
-                    SubmissionFile, SubmissionFileType,
-                    SubmissionFileTypeExtension, SubmissionOnCVFold,
-                    SubmissionSimilarity, Team, TooEarlySubmissionError, User,
-                    UserInteraction, Workflow, WorkflowElement,
-                    WorkflowElementType)
-from .utils import (date_time_format, get_hashed_password, remove_non_ascii,
-                    send_mail, table_format, encode_string)
+from .utils import (date_time_format, encode_string, get_hashed_password,
+                    remove_non_ascii, send_mail, table_format)
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
