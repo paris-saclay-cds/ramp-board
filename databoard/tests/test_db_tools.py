@@ -2,15 +2,23 @@ import shutil
 
 import pytest
 
+from rampwf.workflows import FeatureExtractorClassifier
+
 from databoard import db
 from databoard import deployment_path
+
 from databoard.model import User
+from databoard.model import Workflow
+from databoard.model import WorkflowElement
+from databoard.model import WorkflowElementType
 from databoard.model import NameClashError
+
 from databoard.testing import create_test_db
 from databoard.utils import check_password
 
 from databoard.db_tools import create_user
 from databoard.db_tools import approve_user
+from databoard.db_tools import add_workflow
 
 
 @pytest.fixture
@@ -63,3 +71,18 @@ def test_approve_user(setup_db):
     assert user.access_level == 'asked'
     approve_user(user.name)
     assert user.access_level == 'user'
+
+
+def test_add_workflow(setup_db):
+    ramp_workflow = FeatureExtractorClassifier()
+    add_workflow(ramp_workflow)
+    workflows = db.session.query(Workflow).all()
+    assert len(workflows) == 1
+    workflow = workflows[0]
+    assert workflow.name == ramp_workflow.__class__.__name__
+    for registered_elt, expected_elt in zip(workflow.elements,
+                                            ramp_workflow.element_names):
+        assert registered_elt.name == expected_elt
+        registered_elt_type = registered_elt.workflow_element_type
+        assert registered_elt_type.type.name == 'code'
+        assert registered_elt_type.is_editable

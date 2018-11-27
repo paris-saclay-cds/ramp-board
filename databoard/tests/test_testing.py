@@ -12,6 +12,8 @@ from databoard import ramp_config
 
 import databoard.db_tools as db_tools
 
+from databoard.model import User
+
 from databoard.testing import create_test_db
 from databoard.testing import add_users
 from databoard.testing import add_problem_and_event
@@ -36,7 +38,7 @@ def teardown_module(module):
 def test_add_users():
     # add users to the database that we just created
     add_users()
-    users = db_tools.get_users()
+    users = db.session.query(User).all()
     for user in users:
         assert user.name in ('test_user', 'test_iris_admin')
     err_msg = 'username is already in use'

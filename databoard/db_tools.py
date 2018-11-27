@@ -408,49 +408,49 @@ def add_submission_file_type_extension(type_name, extension_name):
 def add_workflow(workflow_object):
     """Add a new workflow.
 
-    Workflow class should exist in rampwf.workflows. The name of the
-    workflow will be the classname (e.g. Classifier). Element names
-    are taken from workflow.element_names. Element types are inferred
-    from the extension. This is important because e.g. the max size
-    and the editability will depend on the type.
+    Workflow class should exist in ``rampwf.workflows``. The name of the
+    workflow will be the classname (e.g. Classifier). Element names are taken
+    from ``workflow.element_names``. Element types are inferred from the
+    extension. This is important because e.g. the max size and the editability
+    will depend on the type.
 
-    add_workflow is called by add_problem, taking the workflow to add
-    from the problem.py file of the starting kit.
+    ``add_workflow`` is called by add_problem, taking the workflow to add from
+    the ``problem.py`` file of the starting kit.
+
+    Parameters
+    ----------
+    workflow_object : ramp.workflows
+        A ramp workflow instance.
     """
-    # name is the name of the workflow *Class*, not the module
-    workflow_name = type(workflow_object).__name__
-    workflow_element_names = workflow_object.element_names
+    workflow_name = workflow_object.__class__.__name__
     workflow = Workflow.query.filter_by(name=workflow_name).one_or_none()
     if workflow is None:
         db.session.add(Workflow(name=workflow_name))
         workflow = Workflow.query.filter_by(name=workflow_name).one()
-    for element_name in workflow_element_names:
+    for element_name in workflow_object.element_names:
         tokens = element_name.split('.')
-        element_file_name = tokens[0]
+        element_filename = tokens[0]
         # inferring that file is code if there is no extension
-        element_file_extension_name = 'py'
-        if len(tokens) > 1:
-            element_file_extension_name = tokens[1]
         if len(tokens) > 2:
-            raise ValueError(
-                'File name {} should contain at most one "."'.format(
-                    element_name))
+            raise ValueError('File name {} should contain at most one "."'
+                             .format(element_name))
+        element_file_extension_name = tokens[1] if len(tokens) == 2 else 'py'
         extension = Extension.query.filter_by(
             name=element_file_extension_name).one_or_none()
         if extension is None:
-            raise ValueError(
-                'Unknown extension {}'.format(element_file_extension_name))
+            raise ValueError('Unknown extension {}.'
+                             .format(element_file_extension_name))
         type_extension = SubmissionFileTypeExtension.query.filter_by(
             extension=extension).one_or_none()
         if type_extension is None:
-            raise ValueError(
-                'Unknown file type {}'.format(element_file_extension_name))
+            raise ValueError('Unknown file type {}.'
+                             .format(element_file_extension_name))
 
         workflow_element_type = WorkflowElementType.query.filter_by(
-            name=element_file_name).one_or_none()
+            name=element_filename).one_or_none()
         if workflow_element_type is None:
             workflow_element_type = WorkflowElementType(
-                name=element_file_name, type=type_extension.type)
+                name=element_filename, type=type_extension.type)
             logger.info('Adding {}'.format(workflow_element_type))
             db.session.add(workflow_element_type)
             db.session.commit()
