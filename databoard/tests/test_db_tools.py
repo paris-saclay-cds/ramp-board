@@ -121,20 +121,37 @@ def test_add_workflow_error(case, err_msg, setup_db):
     # TODO: there is no easy way to test a non valid type extension.
 
 
-def test_add_problem(setup_db):
-    # setup the ramp-kit and ramp-data for the iris challenge
-    _setup_ramp_kits_ramp_data('iris')
-    add_problem('iris')
+def _check_problem():
+    """Check the problem in the database. We will check several time."""
     problems = db.session.query(Problem).all()
     assert len(problems) == 1
     problem = problems[0]
     assert problem.workflow.name == 'Classifier'
     assert problem.name == 'iris'
-    print(problem.workflow_object)
+
+
+def test_add_problem(setup_db):
+    # setup the ramp-kit and ramp-data for the iris challenge
+    _setup_ramp_kits_ramp_data('iris')
+
+    add_problem('iris')
+    _check_problem()
+
+    # Without forcing, we cannot write the same problem twice
+    err_msg = 'Attempting to delete problem and all linked events.'
+    with pytest.raises(ValueError, match=err_msg):
+        add_problem('iris')
+
+    # Force add the problem
+    add_problem('iris', force=True)
+    _check_problem()
 
 
 def test_delete_problem(setup_db):
     # setup the ramp-kit and ramp-data for the iris challenge
     _setup_ramp_kits_ramp_data('iris')
     add_problem('iris')
+    _check_problem
     delete_problem('iris')
+    problems = db.session.query(Problem).all()
+    assert len(problems) == 0
