@@ -8,6 +8,8 @@
 Toolkit for interacting with the RAMP database
 
 """
+from . import config
+
 from ._version import get_versions
 
 __version__ = get_versions()['version']
