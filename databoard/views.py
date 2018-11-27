@@ -37,7 +37,8 @@ from .db_tools import (add_event, add_user_interaction, ask_sign_up_team,
                        make_submission_and_copy_files,
                        send_ask_for_event_mails, send_register_request_mail,
                        send_sign_up_request_mail, send_submission_mails,
-                       sign_up_team, update_leaderboards, update_user)
+                       sign_up_team, update_leaderboards, update_user,
+                       add_submission_similarity)
 from .forms import (AskForEventForm, CodeForm, CreditForm, EmailForm,
                     EventUpdateProfileForm, ImportForm, LoginForm,
                     PasswordForm, SubmitForm, UploadForm,
@@ -983,7 +984,7 @@ def credit(submission_hash):
             # if submission_similarity is not empty, we need to
             # add zero to cancel previous credits explicitly
             if similarity > 0 or submission_similarity:
-                db_tools.add_submission_similarity(
+                add_submission_similarity(
                     type='target_credit', user=fl.current_user,
                     source_submission=source_submission,
                     target_submission=submission,
