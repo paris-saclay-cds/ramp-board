@@ -15,7 +15,7 @@ logger = logging.getLogger('databoard')
 def sign_up_team(e, t):
     from databoard.db_tools import sign_up_team, get_submissions
     sign_up_team(event_name=e, team_name=t)
-    if not os.environ.get('DATABOARD_TEST'):
+    if os.environ.get('DATABOARD_STAGE') not in ['TEST', 'TESTING']:
         submission = get_submissions(event_name=e, team_name=t,
                                      submission_name="starting_kit")[0]
         os.system('sudo chown -R www-data:www-data %s' % submission.path)
