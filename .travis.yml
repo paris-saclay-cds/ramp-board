@@ -32,6 +32,7 @@ install:
 script:
     - bash ci_tools/travis/test_ramp_board.sh
     - bash ci_tools/travis/test_ramp_engine.sh
+    - bash ci_tools/travis/test_ramp_database.sh
 after_success:
     - make code-analysis
 notifications:
