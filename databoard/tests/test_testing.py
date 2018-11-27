@@ -7,23 +7,19 @@ import datetime
 import pytest
 from git.exc import GitCommandError
 
+from rampdb.model import Problem
+from rampdb.model import User
+from rampdb.model import NameClashError
+
 from databoard import db
 from databoard import deployment_path
 from databoard import ramp_config
 
 import databoard.db_tools as db_tools
 
-from databoard.model import Problem
-from databoard.model import User
-
 from databoard.testing import create_test_db
 from databoard.testing import add_users
 from databoard.testing import add_problems
-
-
-from databoard.model import (
-    NameClashError, User, Problem, Event, Submission, DuplicateSubmissionError,
-    SubmissionSimilarity, EventTeam, Team, UserInteraction)
 
 
 def setup_module(module):

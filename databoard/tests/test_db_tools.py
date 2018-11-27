@@ -5,15 +5,15 @@ import pytest
 
 from rampwf.workflows import FeatureExtractorClassifier
 
+from rampdb.model import Problem
+from rampdb.model import User
+from rampdb.model import Workflow
+from rampdb.model import WorkflowElement
+from rampdb.model import WorkflowElementType
+from rampdb.model import NameClashError
+
 from databoard import db
 from databoard import deployment_path
-
-from databoard.model import Problem
-from databoard.model import User
-from databoard.model import Workflow
-from databoard.model import WorkflowElement
-from databoard.model import WorkflowElementType
-from databoard.model import NameClashError
 
 from databoard.testing import create_test_db
 from databoard.testing import _setup_ramp_kits_ramp_data
