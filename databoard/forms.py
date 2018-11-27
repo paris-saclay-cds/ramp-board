@@ -29,16 +29,17 @@ class MultiCheckboxField(SelectMultipleField):
 
 
 class LoginForm(FlaskForm):
-    user_name = StringField('user_name', [validators.Required()])
-    password = PasswordField('password', [validators.Required()])
+    user_name = StringField('user_name', [validators.DataRequired()])
+    password = PasswordField('password', [validators.DataRequired()])
 
 
 class UserUpdateProfileForm(FlaskForm):
     user_name = StringField('user_name', [
-        validators.Required(), validators.Length(min=1, max=20), space_check])
-    firstname = StringField('firstname', [validators.Required()])
-    lastname = StringField('lastname', [validators.Required()])
-    email = StringField('email', [validators.Required()])
+        validators.DataRequired(), validators.Length(min=1, max=20),
+        space_check])
+    firstname = StringField('firstname', [validators.DataRequired()])
+    lastname = StringField('lastname', [validators.DataRequired()])
+    email = StringField('email', [validators.DataRequired()])
     linkedin_url = StringField('linkedin_url')
     twitter_url = StringField('twitter_url')
     facebook_url = StringField('facebook_url')
@@ -50,14 +51,14 @@ class UserUpdateProfileForm(FlaskForm):
 
 
 class UserCreateProfileForm(UserUpdateProfileForm):
-    password = PasswordField('password', [validators.Required()])
+    password = PasswordField('password', [validators.DataRequired()])
 
 
 class EventUpdateProfileForm(FlaskForm):
     suffix = StringField('event_suffix', [
         validators.Length(max=20), ascii_check, space_check])
     title = StringField('event_title', [
-        validators.Required(), validators.Length(max=80)])
+        validators.DataRequired(), validators.Length(max=80)])
     is_send_trained_mails = BooleanField()
     is_send_submitted_mails = BooleanField()
     is_public = BooleanField()
@@ -79,12 +80,12 @@ class EventUpdateProfileForm(FlaskForm):
 
 class AskForEventForm(FlaskForm):
     suffix = StringField('event_suffix', [
-        validators.Required(), validators.Length(max=20), ascii_check,
+        validators.DataRequired(), validators.Length(max=20), ascii_check,
         space_check])
     title = StringField('event_title', [
-        validators.Required(), validators.Length(max=80)])
+        validators.DataRequired(), validators.Length(max=80)])
     n_students = IntegerField('n_students', [
-        validators.Required(), validators.NumberRange(min=0)])
+        validators.DataRequired(), validators.NumberRange(min=0)])
     min_duration_between_submissions_hour = IntegerField('min_h', [
         validators.NumberRange(min=0)])
     min_duration_between_submissions_minute = IntegerField('min_m', [
@@ -92,9 +93,9 @@ class AskForEventForm(FlaskForm):
     min_duration_between_submissions_second = IntegerField('min_s', [
         validators.NumberRange(min=0, max=59)])
     opening_date = DateField('opening_date', [
-        validators.Required()], format='%Y-%m-%d')
+        validators.DataRequired()], format='%Y-%m-%d')
     closing_date = DateField('closing_date', [
-        validators.Required()], format='%Y-%m-%d')
+        validators.DataRequired()], format='%Y-%m-%d')
 
 
 class CodeForm(FlaskForm):
@@ -103,7 +104,7 @@ class CodeForm(FlaskForm):
 
 class SubmitForm(FlaskForm):
     submission_name = StringField('submission_name', [
-        validators.Required(), space_check])
+        validators.DataRequired(), space_check])
 
 
 class CreditForm(FlaskForm):
