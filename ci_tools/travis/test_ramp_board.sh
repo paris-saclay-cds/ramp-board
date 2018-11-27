@@ -1,4 +1,4 @@
-psql -U postgres -c "CREATE USER ${DATABOARD_USER} WITH PASSWORD '${DATABOARD_PASSWORD}';ALTER USER ${DATABOARD_USER} WITH SUPERUSER;"
-createdb --owner=${DATABOARD_USER} databoard_test
+psql -U postgres -c "CREATE USER mrramp WITH PASSWORD 'mrramp';ALTER USER mrramp WITH SUPERUSER;"
+createdb --owner=mrramp databoard_test
 
 pytest -vsl databoard

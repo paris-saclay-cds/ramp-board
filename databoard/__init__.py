@@ -6,6 +6,8 @@ from flask_mail import Mail
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 
+from rampdb.model.base import Model
+
 __version__ = '0.1.dev'
 
 
@@ -13,6 +15,7 @@ app = Flask('databoard')
 
 # Load default main config
 app_stage = os.getenv('DATABOARD_STAGE', 'DEVELOPMENT').upper()
+
 if app_stage in ['PROD', 'PRODUCTION']:
     app.config.from_object('databoard.default_config.ProductionConfig')
 elif app_stage in ['TEST', 'TESTING']:
@@ -27,9 +30,6 @@ else:
     )
     raise AttributeError(msg.format(app_stage))
 
-# Load default database config
-app.config.from_object('databoard.default_config.DBConfig')
-
 # Load default internal config
 app.config.from_object('databoard.default_config.RampConfig')
 
@@ -38,7 +38,7 @@ user_config = os.getenv('DATABOARD_CONFIG')
 if user_config is not None:
     app.config.from_json(user_config)
 
-db = SQLAlchemy(app)
+db = SQLAlchemy(app, model_class=Model)
 mail = Mail(app)
 
 login_manager = LoginManager()
@@ -68,5 +68,4 @@ ramp_submissions_path = os.path.join(deployment_path,
 ramp_config['ramp_submissions_path'] = ramp_submissions_path
 
 from . import views  # noqa
-from . import model  # noqa
 from . import db_tools  # noqa

@@ -20,7 +20,7 @@ inplace:
 test-local:  # test using a local sqlite database
 	export DATABOARD_DB_URL_TEST=sqlite:////tmp/databoard_test.db; \
 	export DATABOARD_DB_URL=sqlite:////tmp/databoard_test.db; \
-	export DATABOARD_TEST=True; \
+	export DATABOARD_STAGE=TESTING; \
 	make test
 
 test:

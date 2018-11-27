@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import, unicode_literals
 
 import argparse
 
-from .api import get_submissions
+from .tools import get_submissions
 from .config import read_backend_config
 
 
