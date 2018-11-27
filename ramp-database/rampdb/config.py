@@ -2,7 +2,13 @@ import yaml
 
 MANDATORY_SECTION = 'sqlalchemy'
 MANDATORY_KEYS = [
-    'drivername', 'username', 'password', 'host', 'port', 'database']
+    'drivername',
+    'username',
+    'password',
+    'host',
+    'port',
+    'database',
+]
 
 
 def read_database_config(config_file):
@@ -29,16 +35,18 @@ def read_database_config(config_file):
     if MANDATORY_SECTION not in config:
         raise ValueError(
             "Missing '{}' section in config".format(MANDATORY_SECTION))
-    else:
-        missing_keys = [
-            '.'.join(MANDATORY_SECTION, key)
-            for key in MANDATORY_KEYS
-            if key not in config[MANDATORY_SECTION]
-        ]
 
-        if missing_keys:
-            missing_keys_str = ', '.join(missing_keys)
-            raise ValueError(
-                "Missing '{}' key(s) in config".format(missing_keys_str))
+    section_config = config[MANDATORY_SECTION]
 
-    return config
+    missing_keys = [
+        '.'.join(MANDATORY_SECTION, key)
+        for key in MANDATORY_KEYS
+        if key not in section_config
+    ]
+
+    if missing_keys:
+        missing_keys_str = ', '.join(missing_keys)
+        raise ValueError(
+            "Missing '{}' key(s) in config".format(missing_keys_str))
+
+    return section_config
