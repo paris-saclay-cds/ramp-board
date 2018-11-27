@@ -25,7 +25,6 @@ dependencies:
   - ipykernel
   - bcrypt
   - pip:
-    - psycopg2-binary
     - git+https://github.com/paris-saclay-cds/ramp-workflow
     - Flask-Shelve
     - Flask-Openid
