@@ -61,10 +61,6 @@ def test_add_problems():
         add_problems()
 
 
-# def test_setup_workflows():
-#     db_tools.setup_workflows()
-
-
 # def _add_problem_and_event(problem_name, test_user_name):
 #     problem_kits_path = os.path.join(ramp_config['ramp_kits_path'],
 #                                      problem_name)

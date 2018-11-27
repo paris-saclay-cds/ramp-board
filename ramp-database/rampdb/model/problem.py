@@ -1,5 +1,4 @@
 import os
-import imp
 
 from sqlalchemy import Float
 from sqlalchemy import Column
@@ -13,6 +12,7 @@ from sqlalchemy.orm import relationship
 from .base import Model
 from .base import encode_string
 from .base import get_deployment_path
+from .utils import import_module_from_source
 from .workflow import Workflow
 
 DEPLOYMENT_PATH = get_deployment_path()
@@ -59,8 +59,10 @@ class Problem(Model):
 
     @property
     def module(self):
-        return imp.load_source(
-            '', os.path.join(RAMP_KITS_PATH, self.name, 'problem.py'))
+        return import_module_from_source(
+            os.path.join(RAMP_KITS_PATH, self.name, 'problem.py'),
+            'problem'
+        )
 
     @property
     def title(self):
