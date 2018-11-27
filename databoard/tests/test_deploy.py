@@ -359,6 +359,10 @@ def test_model():
     uis = UserInteraction.query.all()
     for ui in uis:
         ui.__repr__()
+        # The following line was commented out because it calls a function
+        # using information that should come from a config file as well as
+        # hardcoded diff number.
+        #
         # ui.submission_file_diff_link
         ui.event
         ui.team
