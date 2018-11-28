@@ -15,16 +15,16 @@ clean: clean-ctags
 test-all:
     pytest -vsl
 
-test: test-all
+test: test-db test-frontend test-engine
 
 test-db:
-    pytest -vsl ramp-database/
+	pytest ramp-database/rampdb
 
 test-engine:
-    pytest -vsl ramp-engine/
+	pytest ramp-engine/rampbkd
 
 test-frontend:
-    pytest -vsl databoard/
+	pytest databoard/databoard
 
 trailing-spaces:
 	find . -type f -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
