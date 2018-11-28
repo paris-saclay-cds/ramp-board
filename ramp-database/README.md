@@ -4,7 +4,7 @@ RAMP database model
 This package contains the ORM model for the RAMP database.
 
 
-## Initial set up of a PostgreSQL database
+## Set up of a PostgreSQL database
 
 ```bash
 # initialise the PostgreSQL database 

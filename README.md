@@ -13,7 +13,9 @@ This repository contains the following RAMP modules:
 
 The modules can be installed independantly but have been added to the same repository so they can be kept in sync.
 
-## Installation
+
+Installation
+------------
 
 1. Retrieve the main repository
 
@@ -54,7 +56,9 @@ The modules can be installed independantly but have been added to the same repos
     pip install .
     ```
 
-## Configuration
+
+Configuration
+-------------
 
 `databoard` comes with a default configuration that can be overwritten via environment variables or a JSON configuration file.
 
@@ -75,35 +79,18 @@ export DATABOARD_USER_CONFIG=/path/to/userconfig.json
 export DATABOARD_STAGE=TESTING (or PRODUCTION)
 ```
 
-## Initial set up of the database
+
+Testing
+-------
+
+All modules can be tested with [`pytest`][pytest]
 
 ```bash
-# initialise the PostgreSQL database 
-mkdir postgres_dbs && initdb postgres_dbs
-pg_ctl -D postgres_dbs -l postgres_dbs/logfile start
-# create a user and set a password
-createuser --pwprompt <username>
-# create the database
-createdb --owner=<username> databoard_test
+pytest <module>
 ```
 
-`<username>` should be the user specified in `$DATABOARD_DB_USER`. 
-It will prompt you for password which should be the same specified in `$DATABOARD_DB_PASSWORD`.
+Note that testing requires a database to be [setup and running][dbsetup].
 
-## Running tests
 
-```
-git clone https://github.com/paris-saclay-cds/ramp-board.git
-cd ramp-board
-pip install .
-make tests
-```
-or
-```
-make test-all
-```
-The deployment directory is `/tmp/databoard`. You can change it in `config.py`
-```
-cd /tmp/databoard
-fab serve
-```
+[pytest]: https://docs.pytest.org/en/latest/
+[dbsetup]: ramp-database/README.md#set-up-of-a-postgresql-database
