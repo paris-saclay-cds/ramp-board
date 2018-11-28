@@ -15,7 +15,7 @@ before_install:
     - conda update --yes --quiet conda
 install:
     - conda env create python=$PYTHON_VERSION -f environment.yml
-    - conda env create python=$PYTHON_VERSION -f environment_iris_kit.yml
+    - conda env create python=$PYTHON_VERSION -f ci_tools/environment_iris_kit.yml
     - source activate testenv
     - pip install .
     # install ramp-engine
