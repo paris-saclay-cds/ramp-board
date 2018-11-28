@@ -1,18 +1,8 @@
 # RAMP bundle
 
 [![Build Status](https://travis-ci.com/paris-saclay-cds/ramp-board.svg?branch=master)](https://travis-ci.com/paris-saclay-cds/ramp-board)
-
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-
-- [Introduction](#introduction)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Testing](#testing)
-
-
-Introduction
-------------
 
 This repository contains the following RAMP modules:
 
@@ -21,6 +11,10 @@ This repository contains the following RAMP modules:
 - [`databoard`](https://github.com/paris-saclay-cds/ramp-board/tree/master/databoard) - RAMP frontend server
 
 The modules can be installed independantly but have been added to the same repository so they can be kept in sync.
+
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Testing](#testing)
 
 
 Installation
