@@ -22,17 +22,11 @@ def create_test_db():
 
     * DATABOARD_STAGE: stage of the database. Need to be `'TESTING'` to use
       this function;
-    * DATABOARD_USER: database login;
-    * DATABOARD_PASSWORD: database password;
     * DATABOARD_DB_URL_TEST: database URL.
     """
     if os.getenv('DATABOARD_STAGE') in ['TEST', 'TESTING']:
         shutil.rmtree(deployment_path, ignore_errors=True)
         os.makedirs(deployment_path)
-        # TODO: not sure it is necessary to have the fabfile copied for local
-        # test
-        shutil.copyfile(os.path.abspath('fabfile.py'),
-                        os.path.join(deployment_path, 'fabfile.py'))
         os.makedirs(ramp_config['ramp_kits_path'])
         os.makedirs(ramp_config['ramp_data_path'])
         os.makedirs(ramp_config['ramp_submissions_path'])
