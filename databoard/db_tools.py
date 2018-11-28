@@ -623,7 +623,8 @@ def create_user(name, password, lastname, firstname, email,
                 access_level='user', hidden_notes='', linkedin_url='',
                 twitter_url='', facebook_url='', google_url='', github_url='',
                 website_url='', bio='', is_want_news=True):
-    hashed_password = get_hashed_password(password)
+    # decode the hashed password (=bytes) because database columns is String 
+    hashed_password = get_hashed_password(password).decode()
     user = User(name=name, hashed_password=hashed_password,
                 lastname=lastname, firstname=firstname, email=email,
                 access_level=access_level, hidden_notes=hidden_notes,
