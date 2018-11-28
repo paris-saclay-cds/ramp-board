@@ -17,17 +17,7 @@ install:
     - conda env create python=$PYTHON_VERSION -f environment.yml
     - conda env create python=$PYTHON_VERSION -f ci_tools/environment_iris_kit.yml
     - source activate testenv
-    - cd databoard
-    - pip install .
-    - cd ..
-    # install ramp-engine
-    - cd ramp-engine
-    - pip install .
-    - cd ..
-    # install ramp-database
-    - cd ramp-database
-    - pip install .
-    - cd ..
+    - make install
 script:
     - bash ci_tools/travis/test_ramp_board.sh
     - bash ci_tools/travis/test_ramp_engine.sh

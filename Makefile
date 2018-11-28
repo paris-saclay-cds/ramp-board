@@ -12,8 +12,10 @@ clean: clean-ctags
 	find . -type f -name '*.pyc' | xargs rm -f
 	find . -type d -name '__pycache__' | xargs rm -rf
 
-test-all:
-    pytest -vsl
+install:
+	cd databoard && pip install . && cd ..
+	cd ramp-database && pip install . && cd ..
+	cd ramp-engine && pip install . && cd ..
 
 test: test-db test-frontend test-engine
 
