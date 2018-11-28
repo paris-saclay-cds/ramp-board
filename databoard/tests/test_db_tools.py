@@ -5,6 +5,7 @@ import pytest
 
 from rampwf.workflows import FeatureExtractorClassifier
 
+from rampdb.model import Event
 from rampdb.model import Problem
 from rampdb.model import User
 from rampdb.model import Workflow
@@ -122,13 +123,21 @@ def test_add_workflow_error(case, err_msg, setup_db):
     # TODO: there is no easy way to test a non valid type extension.
 
 
-def _check_problem():
-    """Check the problem in the database. We will check several time."""
+def _check_problem(name, workflow_name):
+    """Check the problem in the database.
+
+    Parameters
+    ----------
+    name : str
+        Expected name of the problem.
+    workflow_name : str
+        The workflow name used in the problem.
+    """
     problems = db.session.query(Problem).all()
     assert len(problems) == 1
     problem = problems[0]
-    assert problem.workflow.name == 'Classifier'
-    assert problem.name == 'iris'
+    assert problem.name == name
+    assert problem.workflow.name == workflow_name
 
 
 def test_add_problem(setup_db):
@@ -137,7 +146,7 @@ def test_add_problem(setup_db):
     _setup_ramp_kits_ramp_data(problem_name)
 
     add_problem(problem_name)
-    _check_problem()
+    _check_problem(problem_name, 'Classifier')
 
     # Without forcing, we cannot write the same problem twice
     err_msg = 'Attempting to overwrite a problem and delete all linked events'
@@ -146,7 +155,7 @@ def test_add_problem(setup_db):
 
     # Force add the problem
     add_problem(problem_name, force=True)
-    _check_problem()
+    _check_problem(problem_name, 'Classifier')
 
 
 def test_delete_problem(setup_db):
@@ -154,10 +163,19 @@ def test_delete_problem(setup_db):
     # setup the ramp-kit and ramp-data for the iris challenge
     _setup_ramp_kits_ramp_data(problem_name)
     add_problem(problem_name)
-    _check_problem
+    _check_problem(problem_name, 'Classifier')
     delete_problem(problem_name)
     problems = db.session.query(Problem).all()
     assert len(problems) == 0
+
+
+def _check_event(name, title, is_public):
+    events = db.session.query(Event).all()
+    assert len(events) == 1
+    event = events[0]
+    assert event.name == name
+    assert event.title == title
+    assert event.is_public == is_public
 
 
 @pytest.mark.parametrize("is_public", [True, False])
@@ -170,6 +188,7 @@ def test_add_event(is_public, setup_db):
     event_name = '{}_test'.format(problem_name)
     event_title = 'test event'
     add_event(problem_name, event_name, event_title, is_public=is_public)
+    _check_event(event_name, event_title, is_public)
 
     err_msg = 'Attempting to overwrite existing event.'
     with pytest.raises(ValueError, match=err_msg):
@@ -178,3 +197,4 @@ def test_add_event(is_public, setup_db):
 
     add_event(problem_name, event_name, event_title, is_public=is_public,
               force=True)
+    _check_event(event_name, event_title, is_public)
