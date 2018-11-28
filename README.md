@@ -100,7 +100,7 @@ Testing
 All modules can be tested with [`pytest`][pytest]
 
 ```bash
-pytest <module>
+make test
 ```
 
 Note that testing requires a database to be [setup and running][dbsetup].
