@@ -60,5 +60,4 @@ if __name__ == "__main__":
           packages=[
               'databoard',
               'databoard.tests',
-          ],
-          scripts=['fabfile.py'])
+          ])

@@ -30,3 +30,12 @@ def test_generate_passwords():
     utils.generate_passwords(users_to_add_f_name, password_f_name)
     os.remove(users_to_add_f_name)
     os.remove(password_f_name)
+
+
+def test_import_module_from_source():
+        module_path = os.path.dirname(__file__)
+        # import the local_module.py which consist of a single function.
+        mod = utils.import_module_from_source(
+                os.path.join(module_path, 'local_module.py'), 'mod'
+        )
+        assert hasattr(mod, 'func_local_module')

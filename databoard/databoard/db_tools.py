@@ -26,9 +26,17 @@ from rampdb.model import (CVFold, DetachedSubmissionOnCVFold,
                           User, UserInteraction, Workflow, WorkflowElement,
                           WorkflowElementType)
 
-from . import app, db, ramp_config, ramp_kits_path
-from .utils import (date_time_format, encode_string, get_hashed_password,
-                    remove_non_ascii, send_mail, table_format)
+from . import app
+from . import db
+from . import ramp_config
+
+from .utils import date_time_format
+from .utils import encode_string
+from .utils import get_hashed_password
+from .utils import import_module_from_source
+from .utils import remove_non_ascii
+from .utils import send_mail
+from .utils import table_format
 
 logger = logging.getLogger('databoard')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
@@ -335,11 +343,11 @@ def send_password_mails(password_f_name):
         send_password_mail(remove_non_ascii(u['name']), u['password'])
 
 
-def setup_workflows():
-    """Setting up database.
+def setup_files_extension_type():
+    """Setup the files' extensions and types.
 
-    Should be called once although there is no harm recalling it: if the
-    elements are in the db, it skips adding them.
+    This function registers the file extensions and types. This function
+    should be called after creating the database.
     """
     extension_names = ['py', 'R', 'txt', 'csv']
     for name in extension_names:
@@ -409,56 +417,55 @@ def add_submission_file_type_extension(type_name, extension_name):
 def add_workflow(workflow_object):
     """Add a new workflow.
 
-    Workflow class should exist in rampwf.workflows. The name of the
-    workflow will be the classname (e.g. Classifier). Element names
-    are taken from workflow.element_names. Element types are inferred
-    from the extension. This is important because e.g. the max size
-    and the editability will depend on the type.
+    Workflow class should exist in ``rampwf.workflows``. The name of the
+    workflow will be the classname (e.g. Classifier). Element names are taken
+    from ``workflow.element_names``. Element types are inferred from the
+    extension. This is important because e.g. the max size and the editability
+    will depend on the type.
 
-    add_workflow is called by add_problem, taking the workflow to add
-    from the problem.py file of the starting kit.
+    ``add_workflow`` is called by :func:`add_problem`, taking the workflow to
+    add from the ``problem.py`` file of the starting kit.
+
+    Parameters
+    ----------
+    workflow_object : ramp.workflows
+        A ramp workflow instance.
     """
-    # name is the name of the workflow *Class*, not the module
-    workflow_name = type(workflow_object).__name__
-    workflow_element_names = workflow_object.element_names
+    workflow_name = workflow_object.__class__.__name__
     workflow = Workflow.query.filter_by(name=workflow_name).one_or_none()
     if workflow is None:
         db.session.add(Workflow(name=workflow_name))
         workflow = Workflow.query.filter_by(name=workflow_name).one()
-    for element_name in workflow_element_names:
+    for element_name in workflow_object.element_names:
         tokens = element_name.split('.')
-        element_file_name = tokens[0]
+        element_filename = tokens[0]
         # inferring that file is code if there is no extension
-        element_file_extension_name = 'py'
-        if len(tokens) > 1:
-            element_file_extension_name = tokens[1]
         if len(tokens) > 2:
-            raise ValueError(
-                'File name {} should contain at most one "."'.format(
-                    element_name))
+            raise ValueError('File name {} should contain at most one "."'
+                             .format(element_name))
+        element_file_extension_name = tokens[1] if len(tokens) == 2 else 'py'
         extension = Extension.query.filter_by(
             name=element_file_extension_name).one_or_none()
         if extension is None:
-            raise ValueError(
-                'Unknown extension {}'.format(element_file_extension_name))
+            raise ValueError('Unknown extension {}.'
+                             .format(element_file_extension_name))
         type_extension = SubmissionFileTypeExtension.query.filter_by(
             extension=extension).one_or_none()
         if type_extension is None:
-            raise ValueError(
-                'Unknown file type {}'.format(element_file_extension_name))
+            raise ValueError('Unknown file type {}.'
+                             .format(element_file_extension_name))
 
         workflow_element_type = WorkflowElementType.query.filter_by(
-            name=element_file_name).one_or_none()
+            name=element_filename).one_or_none()
         if workflow_element_type is None:
             workflow_element_type = WorkflowElementType(
-                name=element_file_name, type=type_extension.type)
+                name=element_filename, type=type_extension.type)
             logger.info('Adding {}'.format(workflow_element_type))
             db.session.add(workflow_element_type)
             db.session.commit()
-        workflow_element =\
-            WorkflowElement.query.filter_by(
-                workflow=workflow,
-                workflow_element_type=workflow_element_type).one_or_none()
+        workflow_element = WorkflowElement.query.filter_by(
+            workflow=workflow,
+            workflow_element_type=workflow_element_type).one_or_none()
         if workflow_element is None:
             workflow_element = WorkflowElement(
                 workflow=workflow,
@@ -468,23 +475,30 @@ def add_workflow(workflow_object):
     db.session.commit()
 
 
-def add_problem(problem_name, force=False, with_download=False):
-    """Adding a new RAMP problem."""
-    problem = Problem.query.filter_by(name=problem_name).one_or_none()
-    problem_kits_path = os.path.join(ramp_kits_path, problem_name)
-    if problem is not None:
-        if force:
-            delete_problem(problem_name)
-        else:
-            logger.info(
-                'Attempting to delete problem and all linked events, ' +
-                'use "force=True" if you know what you are doing.')
-            return
+def add_problem(problem_name, force=False):
+    """Add a RAMP problem to the database.
 
-    # XXX it's a bit ugly that we need to load the module here
-    # perhaps if we can get rid of the workflow db table completely
-    problem_module = imp.load_source(
-        '', os.path.join(problem_kits_path, 'problem.py'))
+    Parameters
+    ----------
+    problem_name : str
+        The name of the problem to register in the database.
+    force : bool, default is False
+        Whether to force add the problem. If ``force=False``, an error is
+        raised if the problem was already in the database.
+    """
+    problem = Problem.query.filter_by(name=problem_name).one_or_none()
+    problem_kits_path = os.path.join(ramp_config['ramp_kits_path'],
+                                     problem_name)
+    if problem is not None:
+        if not force:
+            raise ValueError('Attempting to overwrite a problem and delete '
+                             'all linked events. Use"force=True" if you want '
+                             'to overwrite the problem and delete the events.')
+        delete_problem(problem_name)
+
+    # load the module to get the type of workflow used for the problem
+    problem_module = import_module_from_source(
+        os.path.join(problem_kits_path, 'problem.py'), 'problem')
     add_workflow(problem_module.workflow)
     problem = Problem(name=problem_name)
     logger.info('Adding {}'.format(problem))
@@ -495,6 +509,13 @@ def add_problem(problem_name, force=False, with_download=False):
 # these could go into a delete callback in problem and event, I just don't know
 # how to do that.
 def delete_problem(problem_name):
+    """Delete a problem form a database.
+
+    Parameters
+    ----------
+    problem_name : str
+        The problem name to be removed.
+    """
     problem = Problem.query.filter_by(name=problem_name).one()
     for event in problem.events:
         delete_event(event.name)
@@ -528,22 +549,39 @@ def delete_submission_similarity(submissions):
 
 def add_event(problem_name, event_name, event_title, is_public=False,
               force=False):
-    """Adding a new RAMP event.
+    """Add a RAMP event in the database.
 
-    Event file should be set up in
-    databoard/specific/events/<event_name>. Should be preceded by adding
-    a problem, then problem_name imported in the event file (problem_name
-    is acting as a pointer for the join). Also adds CV folds.
+    Event file should be set up in ``databoard/specific/events/<event_name>``.
+    Should be preceded by adding a problem (cf., :func:`add_problem`), then
+    ``problem_name`` imported in the event file (``problem_name`` is acting as
+    a pointer for the join). Also adds CV folds.
+
+    Parameters
+    ----------
+    problem_name : str
+        The problem name associated with the event.
+    event_name : str
+        The event name.
+    event_title : str
+        The even title.
+    is_public : bool, default is False
+        Whether the event is made public or not.
+    force : bool, default is False
+        Whether to overwrite an existing event. If ``false=False``, an error
+        will be raised.
+
+    Returns
+    -------
+    event : Event
+        The event which has been registered in the database.
     """
     event = Event.query.filter_by(name=event_name).one_or_none()
     if event is not None:
-        if force:
-            delete_event(event_name)
-        else:
-            logger.info(
-                'Attempting to delete event, ' +
-                'use "force=True" if you know what you are doing.')
-            return
+        if not force:
+            raise ValueError("Attempting to overwrite existing event. "
+                             "Use force=True to overwrite.")
+        delete_event(event_name)
+
     event = Event(
         name=event_name, problem_name=problem_name, event_title=event_title)
     event.is_public = is_public
@@ -555,14 +593,16 @@ def add_event(problem_name, event_name, event_title, is_public=False,
 
     X_train, y_train = event.problem.get_train_data()
     cv = event.problem.module.get_cv(X_train, y_train)
-    for train_is, test_is in cv:
-        cv_fold = CVFold(event=event, train_is=train_is, test_is=test_is)
+    for train_indices, test_indices in cv:
+        cv_fold = CVFold(event=event,
+                         train_is=train_indices,
+                         test_is=test_indices)
         db.session.add(cv_fold)
 
     score_types = event.problem.module.score_types
     for score_type in score_types:
-        event_score_type = EventScoreType(
-            event=event, score_type_object=score_type)
+        event_score_type = EventScoreType(event=event,
+                                          score_type_object=score_type)
         db.session.add(event_score_type)
     event.official_score_name = score_types[0].name
     db.session.commit()
@@ -623,7 +663,8 @@ def create_user(name, password, lastname, firstname, email,
                 access_level='user', hidden_notes='', linkedin_url='',
                 twitter_url='', facebook_url='', google_url='', github_url='',
                 website_url='', bio='', is_want_news=True):
-    hashed_password = get_hashed_password(password)
+    # decode the hashed password (=bytes) because database columns is String
+    hashed_password = get_hashed_password(password).decode()
     user = User(name=name, hashed_password=hashed_password,
                 lastname=lastname, firstname=firstname, email=email,
                 access_level=access_level, hidden_notes=hidden_notes,
@@ -742,7 +783,9 @@ def sign_up_team(event_name, team_name):
             event=event, team=team).one_or_none()
     # submitting the starting kit for team
     from_submission_path = os.path.join(
-        ramp_kits_path, event.problem.name, ramp_config['submissions_dir'],
+        ramp_config['ramp_kits_path'],
+        event.problem.name,
+        ramp_config['submissions_dir'],
         ramp_config['sandbox_dir'])
     make_submission_and_copy_files(
         event_name, team_name, ramp_config['sandbox_dir'],
@@ -761,7 +804,9 @@ def submit_starting_kit(event_name, team_name):
     """Submit all starting kits in ramp_kits_path/ramp_name/submissions."""
     event = Event.query.filter_by(name=event_name).one()
     submission_path = os.path.join(
-        ramp_kits_path, event.problem.name, ramp_config['submissions_dir'])
+        ramp_config['ramp_kits_path'],
+        event.problem.name,
+        ramp_config['submissions_dir'])
     submission_names = os.listdir(submission_path)
     min_duration_between_submissions = event.min_duration_between_submissions
     event.min_duration_between_submissions = 0
