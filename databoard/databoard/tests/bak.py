@@ -3,7 +3,7 @@ from distutils.dir_util import mkpath
 
 import databoard.config as config
 from databoard import db
-from databoard.model import NameClashError, MergeTeamError, User, Event
+from rampdb.model import NameClashError, MergeTeamError, User, Event
 import databoard.db_tools as db_tools
 from databoard.remove_test_db import recreate_test_db
 
