@@ -3,9 +3,12 @@ import subprocess
 
 import pytest
 
+from numpy.testing import assert_array_equal
 from rampwf.workflows import FeatureExtractorClassifier
 
+from rampdb.model import CVFold
 from rampdb.model import Event
+from rampdb.model import EventScoreType
 from rampdb.model import Problem
 from rampdb.model import User
 from rampdb.model import Workflow
@@ -169,13 +172,29 @@ def test_delete_problem(setup_db):
     assert len(problems) == 0
 
 
-def _check_event(name, title, is_public):
+def _check_event(event_name, event_title, event_is_public, scores_name):
     events = db.session.query(Event).all()
     assert len(events) == 1
     event = events[0]
-    assert event.name == name
-    assert event.title == title
-    assert event.is_public == is_public
+    assert event.name == event_name
+    assert event.title == event_title
+    assert event.is_public == event_is_public
+
+    score_type = db.session.query(EventScoreType, Event).filter(
+        Event.name == event_name).all()
+    for score, _ in score_type:
+        assert score.name in scores_name
+
+    # rebuild the fold indices to check if we stored the right one in the
+    # database
+    cv_folds = db.session.query(CVFold, Event).filter(
+        Event.name == event_name).all()
+    X_train, y_train = event.problem.get_train_data()
+    cv = event.problem.module.get_cv(X_train, y_train)
+    for ((train_indices, test_indices), stored_fold) in zip(cv, cv_folds):
+        fold = stored_fold[0]
+        assert_array_equal(fold.train_is, train_indices)
+        assert_array_equal(fold.test_is, test_indices)
 
 
 @pytest.mark.parametrize("is_public", [True, False])
@@ -187,8 +206,9 @@ def test_add_event(is_public, setup_db):
 
     event_name = '{}_test'.format(problem_name)
     event_title = 'test event'
+    scores_iris = ('acc', 'error', 'nll', 'f1_70')
     add_event(problem_name, event_name, event_title, is_public=is_public)
-    _check_event(event_name, event_title, is_public)
+    _check_event(event_name, event_title, is_public, scores_iris)
 
     err_msg = 'Attempting to overwrite existing event.'
     with pytest.raises(ValueError, match=err_msg):
@@ -197,4 +217,4 @@ def test_add_event(is_public, setup_db):
 
     add_event(problem_name, event_name, event_title, is_public=is_public,
               force=True)
-    _check_event(event_name, event_title, is_public)
+    _check_event(event_name, event_title, is_public, scores_iris)
