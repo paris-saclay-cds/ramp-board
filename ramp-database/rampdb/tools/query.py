@@ -3,7 +3,8 @@ RAMP database helper queries
 """
 from __future__ import print_function, absolute_import
 
-from .model import Submission, Event, EventTeam, Team
+from ..model import Submission, Event, EventTeam, Team
+
 
 def select_submissions_by_id(session, submission_id):
     """
@@ -62,6 +63,7 @@ def select_submissions_by_state(session, event_name, state):
 
     return submissions
 
+
 def select_submission_by_name(session, event_name, team_name, name):
     """
     Get a submission by name
@@ -83,15 +85,15 @@ def select_submission_by_name(session, event_name, team_name, name):
 
     """
     submission = (session
-                   .query(Submission)
-                   .filter(Event.name == event_name)
-                   .filter(Event.id == EventTeam.event_id)
-                   .filter(Team.name == team_name)
-                   .filter(Team.id == EventTeam.team_id)
-                   .filter(EventTeam.id == Submission.event_team_id)
-                   .filter(Submission.name == name)
-                   .order_by(Submission.submission_timestamp)
-                   .one())
+                  .query(Submission)
+                  .filter(Event.name == event_name)
+                  .filter(Event.id == EventTeam.event_id)
+                  .filter(Team.name == team_name)
+                  .filter(Team.id == EventTeam.team_id)
+                  .filter(EventTeam.id == Submission.event_team_id)
+                  .filter(Submission.name == name)
+                  .order_by(Submission.submission_timestamp)
+                  .one())
     return submission
 
 
@@ -105,7 +107,7 @@ def select_event_by_name(session, event_name):
         database connexion session
     event_name : str
         name of the RAMP event
-    
+
     Returns
     -------
     `Event` instance
@@ -113,4 +115,3 @@ def select_event_by_name(session, event_name):
     """
     event = session.query(Event).filter(Event.name == event_name).one()
     return event
- 

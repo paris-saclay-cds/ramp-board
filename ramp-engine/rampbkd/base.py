@@ -1,9 +1,10 @@
 import os
 import sys
 from abc import ABCMeta, abstractmethod
+import six
 
 
-class BaseWorker(metaclass=ABCMeta):
+class BaseWorker(six.with_metaclass(ABCMeta)):
     """Metaclass used to build a RAMP worker. Do not use this class directly.
 
     Parameters
@@ -63,4 +64,12 @@ class BaseWorker(metaclass=ABCMeta):
     @abstractmethod
     def collect_results(self):
         """Collect the results after submission training."""
-        pass
+        if self.status == 'initialized':
+            raise ValueError('The worker has not been setup and no submission '
+                             'was launched. Call the method setup() and '
+                             'launch_submission() before to collect the '
+                             'results.')
+        elif self.status == 'setup':
+            raise ValueError('No submission was launched. Call the method '
+                             'launch_submission() and then try again to '
+                             'collect the results.')

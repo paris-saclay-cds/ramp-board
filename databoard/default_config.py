@@ -25,16 +25,9 @@ class Config(object):
     MAIL_USE_SSL = True
     MAIL_DEBUG = False
 
-
-class DBConfig(object):
-    DATABASE_URI = 'sqlite:///:memory:'
-    DATABASE_QUERY_TIMEOUT = 0.5  # slow database query threshold (in seconds)
-
     SQLALCHEMY_TRACK_MODIFICATIONS = True
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        'DATABOARD_DB_URL', 'sqlite:///databoard.db')
-    SQLALCHEMY_MIGRATE_REPO = os.getenv(
-        'DATABOARD_DB_MIGRATE_REPO', 'sqlite:///databoard.db/db_repository')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABOARD_DB_URL')
+    SQLALCHEMY_MIGRATE_REPO = os.getenv('DATABOARD_DB_MIGRATE_REPO')
     SQLALCHEMY_RECORD_QUERIES = (
         True if os.getenv('DATABOARD_DB_PERF', 0) else False
     )
@@ -47,8 +40,6 @@ class RampConfig(object):
     RAMP_DATA_DIR = 'ramp-data'
     RAMP_SUBMISSIONS_DIR = 'submissions'
     RAMP_SANDBOX_DIR = 'starting_kit'
-    
-    RAMP_SCORETYPES_MODULE = 'databoard.specific.score_types'
 
     RAMP_SERVER_PORT = 8080
     # make it False if parallel training is not working
@@ -59,7 +50,6 @@ class RampConfig(object):
 
 
 class ProductionConfig(Config):
-    DATABASE_URI = 'mysql://user@localhost/foo'
     DEPLOYMENT_PATH = os.getenv(
         'DATABOARD_DEPLOYMENT_PATH', '/tmp/databoard')
 
@@ -67,12 +57,21 @@ class ProductionConfig(Config):
 class DevelopmentConfig(Config):
     DEBUG = True
     MAIL_DEBUG = True
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        'DATABOARD_DB_URL_TEST',
+        'postgresql://mrramp:mrramp@localhost/databoard_test'
+    )
     DEPLOYMENT_PATH = os.getenv(
-        'DATABOARD_DEPLOYMENT_PATH_TEST', '/tmp/databoard-test')
+        'DATABOARD_DEPLOYMENT_PATH_TEST', '/tmp/databoard_test')
 
 
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABOARD_DB_URL_TEST')
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        'DATABOARD_DB_URL_TEST',
+        'postgresql://mrramp:mrramp@localhost/databoard_test'
+    )
     DEPLOYMENT_PATH = os.getenv(
-        'DATABOARD_DEPLOYMENT_PATH_TEST', '/tmp/databoard-test')
+        'DATABOARD_DEPLOYMENT_PATH_TEST',
+        '/tmp/databoard_test',
+    )

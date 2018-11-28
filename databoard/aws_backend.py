@@ -7,10 +7,9 @@ import logging
 from subprocess import call
 from subprocess import check_output
 
-from databoard.model import Submission
-from databoard.model import db
+from databoard import db
+from databoard.db_tools import Submission
 from databoard.db_tools import get_earliest_new_submission
-from databoard.db_tools import train_test_submission
 from databoard.db_tools import update_leaderboards
 from databoard.db_tools import update_all_user_leaderboards
 from databoard.db_tools import compute_contributivity
@@ -26,19 +25,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def train_loop(event_name='pollenating_insects_3_JNI_2017', 
-               ami_image_id='ami-e5d72a9d', 
+def train_loop(event_name='pollenating_insects_3_JNI_2017',
+               ami_image_id='ami-e5d72a9d',
                ami_username='ubuntu',
-               instance_type='g3.4xlarge', 
-               key_name='ramp.studio', 
+               instance_type='g3.4xlarge',
+               key_name='ramp.studio',
                ssh_key='/root/.ssh/amazon/rampstudio.pem',
                security_group='launch-wizard-74',
-               sleep_time_secs=60, 
+               sleep_time_secs=60,
                timeout_secs=60*5,
                db_host='134.158.74.188',
                db_url=None,
                pgversion='9.3'):
-        
+
     """
     Training loop for launching submissions to amazon ec2 through amazon API.
 
@@ -95,9 +94,9 @@ def train_loop(event_name='pollenating_insects_3_JNI_2017',
                 ]
             )
             nb_instances = len(instances['Reservations'])
-            instance_ids = [inst['Instances'][0]['InstanceId'] 
+            instance_ids = [inst['Instances'][0]['InstanceId']
                             for inst in instances['Reservations']]
-            nb_running =  sum([ec2_resource.Instance(instance_id).state['Name'] == 'running' 
+            nb_running =  sum([ec2_resource.Instance(instance_id).state['Name'] == 'running'
                                for instance_id in instance_ids])
             if nb_running > 1:
                 logging.info(
@@ -106,7 +105,7 @@ def train_loop(event_name='pollenating_insects_3_JNI_2017',
                 logging.info(instance_ids)
             elif nb_running == 1:
                 logging.info(
-                    'There is already an instance for the submission "{}"' 
+                    'There is already an instance for the submission "{}"'
                     'so I will not launch a new amazon instance.'.format(new_submission))
             else:
                 # nb_running is 0
@@ -122,14 +121,14 @@ def train_loop(event_name='pollenating_insects_3_JNI_2017',
                     }
                 ]
                 instance, = ec2_resource.create_instances(
-                    ImageId=ami_image_id, 
-                    MinCount=1, MaxCount=1, 
-                    InstanceType=instance_type, 
+                    ImageId=ami_image_id,
+                    MinCount=1, MaxCount=1,
+                    InstanceType=instance_type,
                     KeyName=key_name,
                     TagSpecifications=tags,
                     SecurityGroups=[security_group],
                 )
-                new_submission.state = 'sent_to_training' 
+                new_submission.state = 'sent_to_training'
                 db.session.commit()
 
                 logging.info(
@@ -173,11 +172,11 @@ def train_loop(event_name='pollenating_insects_3_JNI_2017',
                         cmd = "ssh -i {ssh_key} {user}@{ip} screen -S train -X quit".format(user=ami_username, ip=inst.public_ip_address, ssh_key=ssh_key)
                         call(cmd, shell=True)
                 else:
-                    # no training screen is running, so rsync submission code (only needed the first time) 
+                    # no training screen is running, so rsync submission code (only needed the first time)
                     # and then launch a training screen
                     exit_status = _rsync_submission(
-                        user=ami_username, 
-                        ip=inst.public_ip_address, 
+                        user=ami_username,
+                        ip=inst.public_ip_address,
                         ssh_key=ssh_key,
                         submission_path=submission.path,
                     )
@@ -244,7 +243,7 @@ def train_loop(event_name='pollenating_insects_3_JNI_2017',
 def _add_postgresql_rule(ip, pgversion=9.3):
     rule = 'host all mrramp {ip}/32 md5 # amazon'.format(ip=ip)
     pghba = "/etc/postgresql/{pgversion}/main/pg_hba.conf".format(pgversion=pgversion)
-    
+
     # if the rule already exists, dont do anything
     if rule + '\n' in open(pghba).readlines():
         return
@@ -320,24 +319,24 @@ if __name__ == '__main__':
     	      event_name='pollenating_insects_3_JNI_2017',
               ami_image_id='ami-25d32f5d',
               ami_username='ubuntu',
-              instance_type='g3.4xlarge', 
-              key_name='ramp.studio', 
+              instance_type='g3.4xlarge',
+              key_name='ramp.studio',
               ssh_key='/root/.ssh/amazon/rampstudio.pem',
               security_group='launch-wizard-74',
-              sleep_time_secs=60, 
+              sleep_time_secs=60,
               timeout_secs=60*15,
               db_host='ramp.studio',
               pgversion='9.3',
         ),
         'test':dict(
               event_name='pollenating_insects_3',
-              ami_image_id='ami-25d32f5d', 
+              ami_image_id='ami-25d32f5d',
               ami_username='ubuntu',
-              instance_type='g3.4xlarge', 
-              key_name='test_server', 
+              instance_type='g3.4xlarge',
+              key_name='test_server',
               ssh_key='/home/ubuntu/.ssh/amazon/test_server.pem',
               security_group='launch-wizard-74',
-              sleep_time_secs=60, 
+              sleep_time_secs=60,
               timeout_secs=60*15,
               db_host='134.158.74.188',
               pgversion='9.5',
