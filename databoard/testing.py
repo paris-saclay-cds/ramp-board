@@ -87,9 +87,9 @@ def add_problems():
         add_problem(problem_name)
 
 
-def _add_problem_and_event(problem_name, test_user_name):
-    _setup_ramp_kits_ramp_data(problem_name)
-    add_problem(problem_name)
+# def _add_problem_and_event(problem_name, test_user_name):
+#     _setup_ramp_kits_ramp_data(problem_name)
+#     add_problem(problem_name)
 
 #     event_name = '{}_test'.format(problem_name)
 #     event_title = 'test event'
