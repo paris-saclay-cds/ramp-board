@@ -10,7 +10,7 @@ clean-ctags:
 clean: clean-ctags
 	rm -rf .pytest_cache
 	find . -type f -name '*.pyc' | xargs rm -f
-    find . -type d -name '__pycache__' | xargs rm -f
+	find . -type d -name '__pycache__' | xargs rm -rf
 
 test-all:
     pytest -vsl
@@ -27,7 +27,7 @@ test-frontend:
     pytest -vsl databoard/
 
 trailing-spaces:
-	find databoard -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
+	find . -type f -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
 
 ctags:
 	# make tags for symbol based navigation in emacs and vim
