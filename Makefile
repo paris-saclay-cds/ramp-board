@@ -12,6 +12,12 @@ clean: clean-ctags
 	rm -rf dist
 	find . -name "*.pyc" | xargs rm -f
 
+
+install:
+    pip install .
+    cd ramp-database && pip install . && cd ..
+    cd ramp-engine && pip install . && cd ..
+
 in: inplace # just a shortcut
 inplace:
 	# to avoid errors in 0.15 upgrade
