@@ -77,6 +77,14 @@ export DATABOARD_USER_CONFIG=/path/to/userconfig.json
 
 ```bash
 export DATABOARD_STAGE=TESTING (or PRODUCTION)
+
+# used when DATABOARD_STAGE=TESTING
+export DATABOARD_DB_URL_TEST=postgresql://<db_user>:<db_password>@localhost/<db_name_test>
+export DATABOARD_DEPLOYMENT_PATH_TEST=/path/to/<db_name_test>
+
+# used when DATABOARD_STAGE=PRODUCTION
+export DATABOARD_DB_URL=postgresql://<db_user>:<db_password>@localhost/<db_name_prod>
+export DATABOARD_DEPLOYMENT_PATH=/path/to/<db_name_prod>
 ```
 
 
