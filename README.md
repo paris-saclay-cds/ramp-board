@@ -10,7 +10,7 @@ This repository contains the following RAMP modules:
 - [`ramp-engine`](https://github.com/paris-saclay-cds/ramp-board/tree/master/ramp-engine) - RAMP runner service
 - [`databoard`](https://github.com/paris-saclay-cds/ramp-board/tree/master/databoard) - RAMP frontend server
 
-The modules can be installed independantly but have been added to the same repository so they can be kept in sync.
+The modules can be installed independently but have been added to the same repository so they can be kept in sync.
 
 
 ### Contents
