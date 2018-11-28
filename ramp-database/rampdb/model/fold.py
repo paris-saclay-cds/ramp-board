@@ -35,5 +35,15 @@ class CVFold(Model):
     event = relationship('Event', backref=backref(
         'cv_folds', cascade='all, delete-orphan'))
 
+    @staticmethod
+    def _pretty_printing(array):
+        if array.size > 10:
+            return 'fold {} ... {}'.format(str(array[:5])[:-1],
+                                           str(array[-5:])[1:])
+        else:
+            return 'fold {}'.format(array)
+
     def __repr__(self):
-        return 'fold {}'.format(self.train_is)[:15]
+        train_repr = self._pretty_printing(self.train_is)
+        test_repr = self._pretty_printing(self.test_is)
+        return 'train ' + train_repr + '\n' + ' test ' + test_repr
