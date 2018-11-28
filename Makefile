@@ -13,7 +13,7 @@ clean: clean-ctags
     find . -type d -name '__pycache__' | xargs rm -f
 
 install:
-    pip install .
+    cd databoard && pip install . && cd ..
     cd ramp-database && pip install . && cd ..
     cd ramp-engine && pip install . && cd ..
 
