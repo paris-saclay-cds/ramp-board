@@ -2,9 +2,24 @@ Databoard
 =========
 
 
-## On the backend
+Installation
+------------
 
-export OMP_NUM_THREADS=1
+1. set up the RAMP database (see [here][setdb])
+
+2. set up the deployment path (see [config][envvar])
+
+3. create the following directories
+    ```bash
+    mkdir -p $DATABOARD_DEPLOYMENT_PATH_TEST
+    mkdir $DATABOARD_DEPLOYMENT_PATH_TEST/ramp-kits 
+    mkdir $DATABOARD_DEPLOYMENT_PATH_TEST/ramp-data
+    mkdir $DATABOARD_DEPLOYMENT_PATH_TEST/submissions
+    ```
+
+[setdb]: ../ramp-database/README.md#set-up-of-a-postgresql-database
+[envvar]: ../README.md#environment-variables
+
 
 ### Adding a new problems
 
@@ -15,79 +30,9 @@ cd <problem>
 jupyter nbconvert --to html <problem>_starting_kit.ipynb
 ```
 
-
-## Set up the database
-
-To run the test you will need to set environment variable DATABOARD_TEST to True:
-
-    export DATABOARD_TEST=True
-
-otherwise set it to False:
-
-    export DATABOARD_TEST=False
-
-2. Set up environment variables:
-
-    - `DATABOARD_DB_URL`: `SQLALCHEMY_DATABASE_URI` for the dev database, which should be something like `postgresql://<db_user>:<db_password>@localhost/<db_name>`
-    - `DATABOARD_DB_URL_TEST`: `SQLALCHEMY_DATABASE_URI` for the test database
-
-Example:
-
-    If you do in the postgres "psql" command line:
-
-    CREATE USER databoard WITH password 'password';
-    CREATE DATABASE databoard_test WITH OWNER databoard;
-
-    Then you need to do:
-
-    export DATABOARD_DB_URL=postgresql://databoard:password@localhost/databoard_test
-
-    The general strucure is:
-
-    export DATABOARD_DB_URL=postgresql://$USER:<db_password>@localhost/<db_name>
-
-Then you can setup or upgrade the database with:
-
-    python manage.py db upgrade
-
-### Migrations
-
-Run: `python manage.py db migrate`. It creates a migration file in `migrations/versions/`
-Add `import databoard` on top of the migration file
-Run: `python manage.py db upgrade` to apply the migration
-**Don't forget to add and commit migrations files**
-
-
 ### Get the prod database  
 
 A dump of the prod database is saved everyday on the scienceFS backup disk. You can use this dump to populate your test db. You need access to the scienceFS backup disk and the prod database  credentials.  
-
-Define the following environment variables:  
-
-    export DATABOARD_DB_NAME='databoard'
-    export DATABOARD_DB_USER='<prod_db_user>'     # Ask Balazs
-    export DATABOARD_DB_PASSWORD='<prod_db_pwd>'  # Ask Balazs
-    export SCIENCEFS_LOGIN='balazs.kegl'          # You need the private key or the password...
-    export SCIENCEFS_ID='<scienceFS_key>'         # Path and name of the scienceFS private key
-    export mount_path='mount_backup'              # Path where to mount the scienceFS disk to get backups
-    export DATABOARD_PATH='/tmp'                  # Root path to your databoard app. By default, on your local computer it is /tmp, so that the app is in /tmp/datacamp/databoard. For prod and test servers it is '/mnt/ramp_data'.                     
-    export prod_db_dump='<blabla.dump>'           # db dump to be used (just write the dump name without the path to it
-
-Run script: ``bash tools/prod_db_to_test.sh``
-
-## Set up datarun  
-
-If you want to use datarun (e.g. for local tests), you need to define the 3 environment variables (with your datarun credentials):  
-
-    export DATARUN_URL='uuuu'
-    export DATARUN_USERNAME='vvvv'
-    export DATARUN_PASSWORD='wwww'
-
-### How to use datarun to train test submissions?
-
-See datarun documentation (especially "notes for databoard users"):
-- [pdf here](https://github.com/camillemarini/datarun/blob/master/docs/datarun.pdf)
-- [html here](https://github.com/camillemarini/datarun/tree/master/docs/html)
 
 
 ## Deploy
@@ -281,3 +226,37 @@ fab add_users_from_file:users_to_add.csv,users_to_add.csv.w_pwd
 fab sign_up_event_users_from_file:users_to_add.csv,<event>
  - send them mails with their passwords:
 fab send_password_mails:users_to_add.csv.w_pwd
+
+
+## DATABASE MIGRATION
+
+Then you can setup or upgrade the database with:
+
+    python manage.py db upgrade
+
+Run: `python manage.py db migrate`. It creates a migration file in `migrations/versions/`
+Add `import databoard` on top of the migration file
+Run: `python manage.py db upgrade` to apply the migration
+**Don't forget to add and commit migrations files**
+
+
+## On the backend
+
+export OMP_NUM_THREADS=1
+
+
+## Backup of db
+
+Define the following environment variables:  
+
+    export DATABOARD_DB_NAME='databoard'
+    export DATABOARD_DB_USER='<prod_db_user>'     # Ask Balazs
+    export DATABOARD_DB_PASSWORD='<prod_db_pwd>'  # Ask Balazs
+    export SCIENCEFS_LOGIN='balazs.kegl'          # You need the private key or the password...
+    export SCIENCEFS_ID='<scienceFS_key>'         # Path and name of the scienceFS private key
+    export mount_path='mount_backup'              # Path where to mount the scienceFS disk to get backups
+    export DATABOARD_PATH='/tmp'                  # Root path to your databoard app. By default, on your local computer it is /tmp, so that the app is in /tmp/datacamp/databoard. For prod and test servers it is '/mnt/ramp_data'.                     
+    export prod_db_dump='<blabla.dump>'           # db dump to be used (just write the dump name without the path to it
+
+Run script: ``bash tools/prod_db_to_test.sh``
+
