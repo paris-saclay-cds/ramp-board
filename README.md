@@ -7,9 +7,9 @@
 
 This repository contains the following RAMP modules:
 
-- [`ramp-database`](ramp-database/README.md) - RAMP database module
-- [`ramp-engine`](ramp-engine/README.md) - RAMP runner service
-- [`databoard`](databoard/README.md) - RAMP frontend server
+- [`ramp-database`](https://github.com/paris-saclay-cds/ramp-board/tree/master/ramp-database) - RAMP database module
+- [`ramp-engine`](https://github.com/paris-saclay-cds/ramp-board/tree/master/ramp-engine) - RAMP runner service
+- [`databoard`](https://github.com/paris-saclay-cds/ramp-board/tree/master/databoard) - RAMP frontend server
 
 The modules can be installed independantly but have been added to the same repository so they can be kept in sync.
 
