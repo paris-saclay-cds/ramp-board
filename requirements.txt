@@ -24,6 +24,7 @@ pycrypto
 ipykernel
 bcrypt
 xkcdpass
+boto3
 git+https://github.com/paris-saclay-cds/ramp-workflow
 pytest
 pytest-cov

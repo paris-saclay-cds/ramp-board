@@ -24,6 +24,7 @@ dependencies:
   - pycrypto
   - ipykernel
   - bcrypt
+  - boto3
   - pip:
     - git+https://github.com/paris-saclay-cds/ramp-workflow
     - Flask-Shelve
