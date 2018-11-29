@@ -1,5 +1,7 @@
-include problems/*/data/*/*
-include problems/*/deposited_submissions/*/*/*  # for test
-include problems/*/sandbox/*
-include Makefile
 include README.md
+include LICENSE
+include Makefile
+include .gitignore
+include pytest.ini
+include environment.yml
+include requirements.txt

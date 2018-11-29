@@ -3,26 +3,24 @@
 from codecs import open
 from setuptools import setup, find_packages
 
-import versioneer
-
+version = '0.0.1'
 # Get the long description from the README file
 with open('README.md', encoding='utf-8') as f:
     long_description = f.read()
 
-DISTNAME = 'ramp-backend'
-DESCRIPTION = "Toolkit for interacting with the RAMP database."
+DISTNAME = 'ramp-database'
+DESCRIPTION = "RAMP database model"
 MAINTAINER = 'Alexandre Boucaud'
 MAINTAINER_EMAIL = 'boucaud.alexandre@gmail.com'
-URL = 'https://github.com/paris-saclay-cds/ramp-backend'
+URL = 'https://github.com/paris-saclay-cds/ramp-board'
 LICENSE = 'BSD (3-clause)'
-DOWNLOAD_URL = 'https://github.com/paris-saclay-cds/ramp-backend'
+DOWNLOAD_URL = 'https://github.com/paris-saclay-cds/ramp-board'
 
 
 if __name__ == "__main__":
     setup(
         name=DISTNAME,
-        version=versioneer.get_version(),
-        cmdclass=versioneer.get_cmdclass(),
+        version=version,
         maintainer=MAINTAINER,
         include_package_data=True,
         maintainer_email=MAINTAINER_EMAIL,
@@ -42,24 +40,14 @@ if __name__ == "__main__":
             'Operating System :: Microsoft :: Windows',
             'Operating System :: POSIX',
             'Operating System :: Unix',
-            'Operating System :: MacOS'],
+            'Operating System :: MacOS',
+        ],
         install_requires=[
             'numpy',
             'pyyaml',
             'sqlalchemy',
-            'psycopg2'],
+            'psycopg2',
+        ],
         platforms='any',
         packages=find_packages(),
-        entry_points={
-            'console_scripts': [
-                'ramp_set_state='
-                'rampbkd.ramp_set_state:main',
-                'ramp_new_submissions='
-                'rampbkd.ramp_new_submissions:main',
-                'ramp_aws_train='
-                'rampbkd.aws.ramp_aws_train:main',
-                'ramp_aws_train_loop='
-                'rampbkd.aws.ramp_aws_train_loop:main',
-                'ramp_score_submission='
-                'rampbkd.ramp_score_submission:main'
-            ]})
+        )

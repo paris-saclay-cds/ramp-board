@@ -13,7 +13,7 @@ logger = logging.getLogger('databoard')
 def sign_up_team(c, event, team):
     from databoard.db_tools import sign_up_team, get_submissions
     sign_up_team(event_name=event, team_name=team)
-    if not os.environ.get('DATABOARD_TEST'):
+    if os.environ.get('DATABOARD_STAGE') not in ['TEST', 'TESTING']:
         submissions = get_submissions(
             event_name=event, team_name=team, submission_name="starting_kit")
         c.run('sudo chown -R www-data:www-data %s' % submissions[0].path)
@@ -186,7 +186,7 @@ def add_users_from_file(c, filename, password_filename):
     """
     import pandas as pd
     from termcolor import colored
-    from databoard.model import NameClashError
+    from rampdb.model import NameClashError
     from databoard.utils import remove_non_ascii
     from databoard.db_tools import create_user
 
@@ -251,7 +251,7 @@ def send_password_mails(c, password_filename):
 def sign_up_event_users_from_file(c, filename, event):
     import pandas as pd
     from termcolor import colored
-    from databoard.model import DuplicateSubmissionError
+    from rampdb.model import DuplicateSubmissionError
     from databoard.utils import remove_non_ascii
 
     users_to_sign_up = pd.read_csv(filename)
@@ -268,7 +268,7 @@ def sign_up_event_users_from_file(c, filename, event):
 
 @task
 def update_leaderboards(c, event=None):
-    from databoard.model import Event
+    from rampdb.model import Event
     from databoard.db_tools import update_leaderboards
     if event is None:
         events = Event.query.all()
@@ -286,7 +286,7 @@ def update_user_leaderboards(c, event, user):
 
 @task
 def update_all_user_leaderboards(c, event=None):
-    from databoard.model import Event
+    from rampdb.model import Event
     from databoard.db_tools import update_all_user_leaderboards
     if event is None:
         events = Event.query.all()

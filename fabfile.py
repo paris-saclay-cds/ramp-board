@@ -15,7 +15,7 @@ logger = logging.getLogger('databoard')
 def sign_up_team(e, t):
     from databoard.db_tools import sign_up_team, get_submissions
     sign_up_team(event_name=e, team_name=t)
-    if not os.environ.get('DATABOARD_TEST'):
+    if os.environ.get('DATABOARD_STAGE') not in ['TEST', 'TESTING']:
         submission = get_submissions(event_name=e, team_name=t,
                                      submission_name="starting_kit")[0]
         os.system('sudo chown -R www-data:www-data %s' % submission.path)
@@ -173,7 +173,7 @@ def add_users_from_file(users_to_add_f_name, password_f_name):
     Users whould be the same in the same order in the two files.
     """
     import pandas as pd
-    from databoard.model import NameClashError
+    from rampdb.model import NameClashError
     from databoard.utils import remove_non_ascii
 
     users_to_add = pd.read_csv(users_to_add_f_name)
@@ -226,7 +226,7 @@ def send_password_mails(password_f_name):
 
 def sign_up_event_users_from_file(users_to_add_f_name, event):
     import pandas as pd
-    from databoard.model import DuplicateSubmissionError
+    from rampdb.model import DuplicateSubmissionError
     from databoard.utils import remove_non_ascii
 
     users_to_sign_up = pd.read_csv(users_to_add_f_name)
@@ -242,7 +242,7 @@ def sign_up_event_users_from_file(users_to_add_f_name, event):
 
 
 def update_leaderboards(e=None):
-    from databoard.model import Event
+    from rampdb.model import Event
     from databoard.db_tools import update_leaderboards
     if e is None:
         es = Event.query.all()
@@ -258,7 +258,7 @@ def update_user_leaderboards(e, u):
 
 
 def update_all_user_leaderboards(e=None):
-    from databoard.model import Event
+    from rampdb.model import Event
     from databoard.db_tools import update_all_user_leaderboards
     if e is None:
         es = Event.query.all()

@@ -7,7 +7,7 @@ from argparse import RawTextHelpFormatter
 
 from rampbkd.aws.api import validate_config
 from rampbkd.config import read_backend_config
-from rampbkd.api import get_submission_by_name
+from rampdb.tools import get_submission_by_name
 
 from .aws_train import (
     launch_ec2_instance_and_train, train_on_existing_ec2_instance)
