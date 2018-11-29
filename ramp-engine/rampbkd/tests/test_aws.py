@@ -43,11 +43,11 @@ def test_aws_worker():
     worker = AWSWorker(conf['aws'], submission='local_starting_kit',
                        ramp_kit_dir=ramp_kit_dir)
     worker.setup()
-    worker.status == 'setup'
+    assert worker.status == 'setup'
     worker.launch_submission()
-    worker.status == 'running'
+    assert worker.status == 'running'
     worker.collect_results()
-    worker.status == 'collected'
+    assert worker.status == 'collected'
 
     assert os.path.isdir(os.path.join(
         ramp_kit_dir, 'predictions', 'local_starting_kit', 'fold_0'))
