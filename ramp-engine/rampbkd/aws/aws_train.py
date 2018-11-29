@@ -6,17 +6,16 @@ import time
 import botocore  # amazon api
 import boto3  # amazon api
 
-from rampbkd.model import Base
-from rampbkd.query import select_submissions_by_id
-from rampbkd.api import set_predictions
-from rampbkd.api import set_submission_state
-from rampbkd.api import get_submissions
-from rampbkd.api import get_submission_state
-from rampbkd.api import get_submission_by_id
-from rampbkd.api import set_submission_max_ram
-from rampbkd.api import score_submission
-from rampbkd.api import set_submission_error_msg
-from rampbkd.api import get_event_nb_folds
+from rampdb.tools import select_submissions_by_id
+from rampdb.tools import set_predictions
+from rampdb.tools import set_submission_state
+from rampdb.tools import get_submissions
+from rampdb.tools import get_submission_state
+from rampdb.tools import get_submission_by_id
+from rampdb.tools import set_submission_max_ram
+from rampdb.tools import score_submission
+from rampdb.tools import set_submission_error_msg
+from rampdb.tools import get_event_nb_folds
 
 from rampbkd.aws.api import (
     AWS_CONFIG_SECTION,
@@ -31,7 +30,7 @@ from rampbkd.aws.api import (
     upload_submission, launch_train, download_log,
     _training_finished, _training_successful,
     _get_submission_max_ram, download_mprof_data, download_predictions,
-    _get_log_content, _get_traceback, _get_submission_folder_name,
+    _get_log_content, _get_traceback,
     _wait_until_train_finished)
 
 
@@ -57,6 +56,7 @@ def train_loop(config, event_name):
         submissions = get_submissions(config, event_name, 'new')
         for submission_id, _ in submissions:
             submission = get_submission_by_id(config, submission_id)
+            submission_name = _get_submission_folder_name(submission_id)
             if submission.is_sandbox:
                 continue
             try:
@@ -72,8 +72,9 @@ def train_loop(config, event_name):
                 nb_trials += 1
                 time.sleep(conf_aws.get('new_instance_check_interval', 6))
 
-            _tag_instance_by_submission(conf_aws, instance.id, submission)
+            _tag_instance_by_submission(conf_aws, instance.id, submission_name)
             _add_or_update_tag(conf_aws, instance.id, 'train_loop', '1')
+            _add_or_update_tag(conf_aws, instance.id, 'event_name', event_name)
             logger.info('Launched instance "{}" for submission "{}"'.format(
                 instance.id, submission))
             set_submission_state(config, submission.id, 'sent_to_training')
@@ -92,26 +93,31 @@ def train_loop(config, event_name):
             tags = _get_tags(conf_aws, instance_id)
             # Filter instances that were not launched
             # by the training loop API
-            if 'submission_id' not in tags:
-                continue
+            # if 'submission_id' not in tags:  # no longer added to tags
+            #     continue
             if tags.get('event_name') != event_name:
                 continue
             if 'train_loop' not in tags:
                 continue
             # Process each instance
-            label = tags['Name']
-            submission_id = int(tags['submission_id'])
+            submission_name = tags['Name']
+            assert submission_name.startswith('submission_')
+            submission_id = int(submission_name[11:])
+            submission = get_submission_by_id(config, submission_id)
+            label = '{}_{}'.format(submission_id, submission.name)
             state = get_submission_state(config, submission_id)
+            submissions_dir = os.path.split(submission.path)[0]
             if state == 'sent_to_training':
                 exit_status = upload_submission(
-                    conf_aws, instance_id, submission_id)
+                    conf_aws, instance_id, submission_name, submissions_dir)
                 if exit_status != 0:
                     logger.error(
                         'Cannot upload submission "{}"'
                         ', an error occured'.format(label))
                     continue
                 # start training HERE
-                exit_status = launch_train(conf_aws, instance_id, submission_id)
+                exit_status = launch_train(
+                    conf_aws, instance_id, submission_name)
                 if exit_status != 0:
                     logger.error(
                         'Cannot start training of submission "{}"'
@@ -123,8 +129,8 @@ def train_loop(config, event_name):
             elif state == 'training':
                 # in any case (successful training or not)
                 # download the log
-                download_log(conf_aws, instance_id, submission_id)
-                if _training_finished(conf_aws, instance_id, submission_id):
+                download_log(conf_aws, instance_id, submission_name)
+                if _training_finished(conf_aws, instance_id, submission_name):
                     logger.info(
                         'Training of "{}" finished, checking '
                         'if successful or not...'.format(label))
@@ -133,19 +139,19 @@ def train_loop(config, event_name):
                     if _training_successful(
                             conf_aws,
                             instance_id,
-                            submission_id,
+                            submission_name,
                             actual_nb_folds):
                         logger.info('Training of "{}" was successful'.format(label))
                         if conf_aws.get(MEMORY_PROFILING_FIELD):
                             logger.info('Download max ram usage info of "{}"'.format(label))
-                            download_mprof_data(conf_aws, instance_id, submission_id)
-                            max_ram = _get_submission_max_ram(conf_aws, submission_id)
+                            download_mprof_data(conf_aws, instance_id, submission_name)
+                            max_ram = _get_submission_max_ram(conf_aws, submission_name)
                             logger.info('Max ram usage of "{}": {}MB'.format(label, max_ram))
                             set_submission_max_ram(config, submission_id, max_ram)
 
                         logger.info('Downloading the predictions of "{}"'.format(label))
                         path = download_predictions(
-                            conf_aws, instance_id, submission_id)
+                            conf_aws, instance_id, submission_name)
                         set_predictions(config, submission_id, path, ext='npz')
                         set_submission_state(config, submission_id, 'tested')
                     else:
@@ -153,7 +159,7 @@ def train_loop(config, event_name):
                         set_submission_state(
                             config, submission_id, 'training_error')
                         error_msg = _get_traceback(
-                            _get_log_content(conf_aws, submission_id)
+                            _get_log_content(conf_aws, submission_name)
                         )
                         set_submission_error_msg(
                             config, submission_id, error_msg)
@@ -292,6 +298,10 @@ def _run_hook(config, hook_name, submission_id):
             cmd = ';'.join(cmd)
         logger.info('Running "{}" for hook {}'.format(cmd, hook_name))
         return call(cmd, shell=True, env=env)
+
+
+def _get_submission_folder_name(submission_id):
+    return 'submission_{:09d}'.format(submission_id)
 
 
 def _get_submission_label_by_id(config, submission_id):
