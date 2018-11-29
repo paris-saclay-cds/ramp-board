@@ -92,7 +92,7 @@ RAMP_AWS_BACKEND_TAG = 'ramp_aws_backend_instance'
 SUBMISSIONS_FOLDER = 'submissions'
 
 
-def _wait_until_train_finished(config, instance_id, submission_id):
+def _wait_until_train_finished(config, instance_id, submission_name):
     """
     Wait until the training of a submission is finished in an ec2 instance.
     To check whether the training is finished, we check whether
@@ -100,13 +100,13 @@ def _wait_until_train_finished(config, instance_id, submission_id):
     then we consider that the training has either finished or failed.
     """
     logger.info('Wait until training of submission "{}" is '
-                'finished on instance "{}"...'.format(submission_id,
+                'finished on instance "{}"...'.format(submission_name,
                                                       instance_id))
     secs = int(config[CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD])
-    while not _training_finished(config, instance_id, submission_id):
+    while not _training_finished(config, instance_id, submission_name):
         time.sleep(secs)
     logger.info('Training of submission "{}" is '
-                'finished on instance "{}".'.format(submission_id,
+                'finished on instance "{}".'.format(submission_name,
                                                     instance_id))
 
 
@@ -256,7 +256,8 @@ def status_of_ec2_instance(config, instance_id):
         return None
 
 
-def upload_submission(config, instance_id, submission_id):
+def upload_submission(config, instance_id, submission_name,
+                      submissions_dir):
     """
     Upload a submission on an ec2 instance
 
@@ -272,13 +273,13 @@ def upload_submission(config, instance_id, submission_id):
     submission_id : int
         submission id
     """
+    submission_path = os.path.join(submissions_dir, submission_name)
     ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
     dest_folder = os.path.join(ramp_kit_folder, SUBMISSIONS_FOLDER)
-    submission_path = submission_id
     return _upload(config, instance_id, submission_path, dest_folder)
 
 
-def download_log(config, instance_id, submission_id, folder=None):
+def download_log(config, instance_id, submission_name, folder=None):
     """
     Download the log file from an ec2 instance to a local folder `folder`.
     If `folder` is not given, then the log file is downloaded on
@@ -301,12 +302,11 @@ def download_log(config, instance_id, submission_id, folder=None):
         folder where to download the log
     """
     ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
-    submission_folder_name = _get_submission_folder_name(submission_id)
     source_path = os.path.join(
-        ramp_kit_folder, SUBMISSIONS_FOLDER, submission_folder_name, 'log')
+        ramp_kit_folder, SUBMISSIONS_FOLDER, submission_name, 'log')
     if folder is None:
         dest_path = os.path.join(
-            config[LOCAL_LOG_FOLDER_FIELD], submission_folder_name, 'log')
+            config[LOCAL_LOG_FOLDER_FIELD], submission_name, 'log')
     else:
         dest_path = folder
     try:
@@ -316,7 +316,7 @@ def download_log(config, instance_id, submission_id, folder=None):
     return _download(config, instance_id, source_path, dest_path)
 
 
-def _get_log_content(config, submission_id):
+def _get_log_content(config, submission_name):
     """
     Get the content of the log file.
     The log file must have been downloaded locally with `download_log`
@@ -328,10 +328,9 @@ def _get_log_content(config, submission_id):
     a str with the content of the log file
     """
     ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
-    submission_folder_name = _get_submission_folder_name(submission_id)
     path = os.path.join(
         config[LOCAL_LOG_FOLDER_FIELD],
-        submission_folder_name,
+        submission_name,
         'log')
     try:
         content = codecs.open(path, encoding='utf-8').read()
@@ -339,7 +338,7 @@ def _get_log_content(config, submission_id):
         return content
     except IOError:
         logger.error('Could not open log file of "{}" when trying to get '
-                     'log content'.format(submission_id))
+                     'log content'.format(submission_name))
         return ''
 
 
@@ -374,7 +373,7 @@ def _filter_colors(content):
     return re.sub(r'(\x1b\[)([\d]+;[\d]+;)?[\d]+m', '', content)
 
 
-def download_mprof_data(config, instance_id, submission_id, folder=None):
+def download_mprof_data(config, instance_id, submission_name, folder=None):
     """
     Download the dat file for memory profiling from an ec2 instance to a
     local folder `folder`.
@@ -400,25 +399,23 @@ def download_mprof_data(config, instance_id, submission_id, folder=None):
         folder where to download the log
     """
     ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
-    submission_folder_name = _get_submission_folder_name(submission_id)
     source_path = os.path.join(
         ramp_kit_folder,
         SUBMISSIONS_FOLDER,
-        submission_folder_name,
+        submission_name,
         'mprof.dat')
     if folder is None:
         dest_path = os.path.join(
-            config[LOCAL_LOG_FOLDER_FIELD], submission_folder_name) + os.sep
+            config[LOCAL_LOG_FOLDER_FIELD], submission_name) + os.sep
     else:
         dest_path = folder
     return _download(config, instance_id, source_path, dest_path)
 
 
-def _get_submission_max_ram(config, submission_id):
+def _get_submission_max_ram(config, submission_name):
     ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
-    submission_folder_name = _get_submission_folder_name(submission_id)
     dest_path = os.path.join(
-        config[LOCAL_LOG_FOLDER_FIELD], submission_folder_name)
+        config[LOCAL_LOG_FOLDER_FIELD], submission_name)
     filename = os.path.join(dest_path, 'mprof.dat')
     max_mem = 0.
     for line in codecs.open(filename, encoding='utf-8').readlines()[1:]:
@@ -427,7 +424,7 @@ def _get_submission_max_ram(config, submission_id):
     return max_mem
 
 
-def download_predictions(config, instance_id, submission_id, folder=None):
+def download_predictions(config, instance_id, submission_name, folder=None):
     """
     Download the predictions from an ec2 instance into a local folder `folder`.
     If `folder` is not given, then the predictions are downloaded on
@@ -454,32 +451,30 @@ def download_predictions(config, instance_id, submission_id, folder=None):
 
     path of the folder of `training_output` containing the predictions
     """
-    submission_folder_name = _get_submission_folder_name(submission_id)
     source_path = _get_remote_training_output_folder(
-        config, instance_id, submission_id) + '/'
+        config, instance_id, submission_name) + '/'
     if folder is None:
         dest_path = os.path.join(
-            config[LOCAL_PREDICTIONS_FOLDER_FIELD], submission_folder_name)
+            config[LOCAL_PREDICTIONS_FOLDER_FIELD], submission_name)
     else:
         dest_path = folder
     _download(config, instance_id, source_path, dest_path)
     return dest_path
 
 
-def _get_remote_training_output_folder(config, instance_id, submission_id):
+def _get_remote_training_output_folder(config, instance_id, submission_name):
     """
     Get remote training output folder for a submission in an instance.
     For instance, it returns something like :
     ~/ramp-kits/iris/submissions/submission_000001/training_output.
     """
     ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
-    submission_folder_name = _get_submission_folder_name(submission_id)
     path = os.path.join(ramp_kit_folder, SUBMISSIONS_FOLDER,
-                        submission_folder_name, 'training_output')
+                        submission_name, 'training_output')
     return path
 
 
-def launch_train(config, instance_id, submission_id):
+def launch_train(config, instance_id, submission_name):
     """
     Launch the training of a submission on an ec2 instance.
     A screen named `submission_folder_name` (see below)
@@ -496,14 +491,13 @@ def launch_train(config, instance_id, submission_id):
         submission id
     """
     ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
-    submission_folder_name = _get_submission_folder_name(submission_id)
     values = {
         'ramp_kit_folder': ramp_kit_folder,
-        'submission': submission_folder_name,
+        'submission': submission_name,
         'submission_folder': os.path.join(ramp_kit_folder, SUBMISSIONS_FOLDER,
-                                          submission_folder_name),
+                                          submission_name),
         'log': os.path.join(ramp_kit_folder, SUBMISSIONS_FOLDER,
-                            submission_folder_name, 'log')
+                            submission_name, 'log')
     }
     # we use python -u so that standard input/output are flushed
     # and thus we can retrieve the log file live during training
@@ -526,13 +520,12 @@ def launch_train(config, instance_id, submission_id):
     )
     cmd = cmd.format(**values)
     # tag the ec2 instance with info about submission
-    _tag_instance_by_submission(config, instance_id, submission_folder_name)
-    label = submission_folder_name  # _get_submission_label(submission)
-    logger.info('Launch training of {}..'.format(label))
+    _tag_instance_by_submission(config, instance_id, submission_name)
+    logger.info('Launch training of {}..'.format(submission_name))
     return _run(config, instance_id, cmd)
 
 
-def abort_training(config, instance_id, submission_id):
+def abort_training(config, instance_id, submission_name):
     """
     Stop training a submission.
     This is done by killing the screen where
@@ -547,13 +540,8 @@ def abort_training(config, instance_id, submission_id):
     submission_id : int
         submission id
     """
-    cmd = 'screen -S {} -X quit'.format(submission_id)
+    cmd = 'screen -S {} -X quit'.format(submission_name)
     return _run(config, instance_id, cmd)
-
-
-def _get_submission_folder_name(submission_id):
-    return os.path.split(submission_id)[1]
-    # return 'submission_{:09d}'.format(submission_id)
 
 
 def _upload(config, instance_id, source, dest):
@@ -699,15 +687,14 @@ def _is_ready(config, instance_id):
         return False
 
 
-def _training_finished(config, instance_id, submission_id):
+def _training_finished(config, instance_id, submission_name):
     """
     Return True if a submission has finished training
     """
-    submission_folder_name = _get_submission_folder_name(submission_id)
-    return not _has_screen(config, instance_id, submission_folder_name)
+    return not _has_screen(config, instance_id, submission_name)
 
 
-def _training_successful(config, instance_id, submission_id,
+def _training_successful(config, instance_id, submission_name,
                          actual_nb_folds=None):
     """
     Return True if a finished submission have been trained successfully.
@@ -715,7 +702,7 @@ def _training_successful(config, instance_id, submission_id,
     .npz prediction files we consider that the training was successful.
     """
     folder = _get_remote_training_output_folder(
-        config, instance_id, submission_id)
+        config, instance_id, submission_name)
 
     cmd = "ls -l {}|grep fold_|wc -l".format(folder)
     nb_folds = int(_run(config, instance_id, cmd, return_output=True))
@@ -751,7 +738,7 @@ def _has_screen(config, instance_id, screen_name):
     return nb > 0
 
 
-def _tag_instance_by_submission(config, instance_id, submission):
+def _tag_instance_by_submission(config, instance_id, submission_name):
     """
     Add tags to an instance with infos from the submission to know which
     submission is being trained on the instance.
@@ -765,8 +752,8 @@ def _tag_instance_by_submission(config, instance_id, submission):
     # _add_or_update_tag(
     #     config, instance_id, 'team_name', submission.team.name)
     # name = _get_submission_label(submission)
-    name = submission
-    _add_or_update_tag(config, instance_id, 'Name', name)
+    # _add_or_update_tag(config, instance_id, 'Name', name)
+    _add_or_update_tag(config, instance_id, 'Name', submission_name)
 
 
 def _add_or_update_tag(config, instance_id, key, value):
