@@ -17,25 +17,25 @@ from databoard import ramp_config
 
 import databoard.db_tools as db_tools
 
-from databoard.testing import create_test_db
-from databoard.testing import add_users
+from databoard.testing import add_events
 from databoard.testing import add_problems
+from databoard.testing import add_users
+from databoard.testing import create_test_db
 
 
-def setup_module(module):
-    """Create the database."""
-    create_test_db()
+@pytest.fixture
+def setup_db():
+    try:
+        create_test_db()
+        yield
+    finally:
+        shutil.rmtree(deployment_path, ignore_errors=True)
+        db.session.close()
+        db.session.remove()
+        db.drop_all()
 
 
-def teardown_module(module):
-    """Clean-up the database."""
-    shutil.rmtree(deployment_path)
-    db.session.close()
-    db.session.remove()
-    db.drop_all()
-
-
-def test_add_users():
+def test_add_users(setup_db):
     # add users to the database that we just created
     add_users()
     users = db.session.query(User).all()
@@ -46,7 +46,7 @@ def test_add_users():
         add_users()
 
 
-def test_add_problems():
+def test_add_problems(setup_db):
     add_problems()
     problems = db.session.query(Problem).all()
     for problem in problems:
@@ -56,6 +56,12 @@ def test_add_problems():
     with pytest.raises(GitCommandError):
         add_problems()
 
+
+def test_add_events(setup_db):
+    add_problems()
+    add_events()
+    with pytest.raises(ValueError):
+        add_events()
 
 # def _add_problem_and_event(problem_name, test_user_name):
 #     problem_kits_path = os.path.join(ramp_config['ramp_kits_path'],

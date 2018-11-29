@@ -8,9 +8,10 @@ from . import db
 from . import deployment_path
 from . import ramp_config
 
-from .db_tools import create_user
-from .db_tools import approve_user
+from .db_tools import add_event
 from .db_tools import add_problem
+from .db_tools import approve_user
+from .db_tools import create_user
 from .db_tools import setup_files_extension_type
 
 
@@ -41,6 +42,7 @@ def create_test_db():
 
 
 def add_users():
+    """Add dummy users in the database."""
     create_user(
         name='test_user', password='test',
         lastname='Test', firstname='User',
@@ -53,6 +55,7 @@ def add_users():
 
 
 def _setup_ramp_kits_ramp_data(problem_name):
+    """Clone ramp-kits and ramp-data repository and setup it up."""
     # TODO: This function does not have a unit test but only used in
     # integration testing.
     problem_kits_path = os.path.join(ramp_config['ramp_kits_path'],
@@ -75,10 +78,26 @@ def _setup_ramp_kits_ramp_data(problem_name):
 
 
 def add_problems():
+    """Add dummy problems into the database."""
     problems = ['iris', 'boston_housing']
     for problem_name in problems:
         _setup_ramp_kits_ramp_data(problem_name)
         add_problem(problem_name)
+
+
+def add_events():
+    """Add events in the database.
+
+    Notes
+    -----
+    Be aware that :func:`add_problems` needs to be called before.
+    """
+    problems = ['iris', 'boston_housing']
+    for problem_name in problems:
+        event_name = '{}_test'.format(problem_name)
+        event_title = 'test event'
+        add_event(problem_name=problem_name, event_name=event_name,
+                  event_title=event_title, is_public=True, force=False)
 
 
 # def _add_problem_and_event(problem_name, test_user_name):
