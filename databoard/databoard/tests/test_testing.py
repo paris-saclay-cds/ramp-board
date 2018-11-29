@@ -64,35 +64,6 @@ def test_add_events(setup_db):
         add_events()
 
 # def _add_problem_and_event(problem_name, test_user_name):
-#     problem_kits_path = os.path.join(ramp_config['ramp_kits_path'],
-#                                      problem_name)
-#     problem_data_path = os.path.join(ramp_config['ramp_data_path'],
-#                                      problem_name)
-#     os.system('git clone https://github.com/ramp-data/{}.git {}'.format(
-#         problem_name, problem_data_path))
-#     os.system('git clone https://github.com/ramp-kits/{}.git {}'.format(
-#         problem_name, problem_kits_path))
-#     os.chdir(problem_data_path)
-#     print('Preparing {} data...'.format(problem_name))
-#     os.system('python prepare_data.py')
-#     os.chdir(problem_kits_path)
-#     os.system('jupyter nbconvert --to html {}_starting_kit.ipynb'.format(
-#         problem_name))
-
-#     db_tools.add_problem(
-#         problem_name, force=True)
-#     db_tools.add_problem(
-#         problem_name)
-#     db_tools.add_problem(
-#         problem_name, force=True)
-#     event_name = '{}_test'.format(problem_name)
-#     event_title = 'test event'
-#     db_tools.add_event(
-#         problem_name, event_name, event_title, is_public=True, force=True)
-#     db_tools.add_event(
-#         problem_name, event_name, event_title, is_public=True)
-#     db_tools.add_event(
-#         problem_name, event_name, event_title, is_public=True, force=True)
 #     db_tools.sign_up_team(event_name, test_user_name)
 #     db_tools.submit_starting_kit(event_name, test_user_name)
 #     db_tools.submit_starting_kit(event_name, test_user_name)

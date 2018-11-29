@@ -101,17 +101,6 @@ def add_events():
 
 
 # def _add_problem_and_event(problem_name, test_user_name):
-#     _setup_ramp_kits_ramp_data(problem_name)
-#     add_problem(problem_name)
-
-#     event_name = '{}_test'.format(problem_name)
-#     event_title = 'test event'
-#     db_tools.add_event(
-#         problem_name, event_name, event_title, is_public=True, force=True)
-#     db_tools.add_event(
-#         problem_name, event_name, event_title, is_public=True)
-#     db_tools.add_event(
-#         problem_name, event_name, event_title, is_public=True, force=True)
 #     db_tools.sign_up_team(event_name, test_user_name)
 #     db_tools.submit_starting_kit(event_name, test_user_name)
 #     db_tools.submit_starting_kit(event_name, test_user_name)

@@ -762,6 +762,19 @@ def get_sandbox(event, user):
 
 
 def ask_sign_up_team(event_name, team_name):
+    """Register a team to a RAMP event without approving.
+
+    :class:`rampdb.model.EventTeam` as an attribute ``approved`` set to
+    ``False`` by default. Executing this function only create the relationship
+    in the database.
+
+    Parameters
+    ----------
+    event_name : str
+        The RAMP event name.
+    team_name : str
+        The name of the team.
+    """
     event = Event.query.filter_by(name=event_name).one()
     team = Team.query.filter_by(name=team_name).one()
     event_team = EventTeam.query.filter_by(
@@ -773,23 +786,31 @@ def ask_sign_up_team(event_name, team_name):
 
 
 def sign_up_team(event_name, team_name):
+    """Register a team to a RAMP event and submit the starting kit.
+
+    Parameters
+    ----------
+    event_name : str
+        The RAMP event name.
+    team_name : str
+        The name of the team.
+    """
     event = Event.query.filter_by(name=event_name).one()
     team = Team.query.filter_by(name=team_name).one()
     event_team = EventTeam.query.filter_by(
         event=event, team=team).one_or_none()
     if event_team is None:
-        ask_sign_up_team(event_name, team_name)
-        event_team = EventTeam.query.filter_by(
-            event=event, team=team).one_or_none()
+        even_team = EventTeam(event=event, team=team)
+        db.session.add(event_team)
     # submitting the starting kit for team
     from_submission_path = os.path.join(
-        ramp_config['ramp_kits_path'],
-        event.problem.name,
-        ramp_config['submissions_dir'],
-        ramp_config['sandbox_dir'])
+        ramp_config['ramp_kits_path'], event.problem.name,
+        ramp_config['submissions_dir'], ramp_config['sandbox_dir']
+    )
     make_submission_and_copy_files(
         event_name, team_name, ramp_config['sandbox_dir'],
-        from_submission_path)
+        from_submission_path
+    )
     for user in get_team_members(team):
         send_mail(
             to=user.email,
