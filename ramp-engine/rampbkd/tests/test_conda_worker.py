@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import shutil
@@ -5,6 +6,35 @@ import shutil
 import pytest
 
 from rampbkd.local import CondaEnvWorker
+
+
+def _is_conda_env_installed():
+    # we required a "ramp-iris" conda environment to run the test. Check if it
+    # is available. Otherwise skip all tests.
+    try:
+        proc = subprocess.Popen(
+            ["conda", "info", "--envs", "--json"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        stdout, _ = proc.communicate()
+        conda_info = json.loads(stdout)
+        envs_path = conda_info['envs'][1:]
+        if not envs_path or not all([env == 'ramp-iris' for env in envs_path]):
+            return True
+        return False
+    except:
+        # conda is not installed
+        return True
+
+
+pytestmark = pytest.mark.skipif(
+    _is_conda_env_installed(),
+    reason=('CondaEnvWorker required conda and an environment named '
+            '"ramp-iris". No such environment was found. Check the '
+            '"ci_tools/environment_iris_kit.yml" file to create such '
+            'environment.')
+)
 
 
 @pytest.fixture

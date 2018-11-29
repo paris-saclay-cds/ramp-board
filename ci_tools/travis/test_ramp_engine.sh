@@ -1,1 +1,1 @@
-pytest -vsl ramp-engine/rampbkd
+pytest -rvsl ramp-engine/rampbkd
