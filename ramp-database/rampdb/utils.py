@@ -1,4 +1,5 @@
 import importlib
+import sys
 
 
 def import_module_from_source(source, name):
@@ -15,7 +16,12 @@ def import_module_from_source(source, name):
     module : Python module
         Return the Python module which has been loaded.
     """
-    spec = importlib.util.spec_from_file_location(name, source)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    if sys.version_info[0] < 3:
+        import imp
+        module = imp.load_source(name, source)
+        return module
+    else:
+        spec = importlib.util.spec_from_file_location(name, source)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
