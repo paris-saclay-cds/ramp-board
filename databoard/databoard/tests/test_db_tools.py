@@ -1,3 +1,4 @@
+import datetime
 import shutil
 import subprocess
 
@@ -9,6 +10,7 @@ from rampwf.workflows import FeatureExtractorClassifier
 from rampdb.model import CVFold
 from rampdb.model import Event
 from rampdb.model import EventScoreType
+from rampdb.model import EventTeam
 from rampdb.model import Problem
 from rampdb.model import User
 from rampdb.model import Workflow
@@ -23,12 +25,14 @@ from databoard.testing import create_test_db
 from databoard.testing import _setup_ramp_kits_ramp_data
 from databoard.utils import check_password
 
-from databoard.db_tools import create_user
-from databoard.db_tools import approve_user
-from databoard.db_tools import add_workflow
-from databoard.db_tools import add_problem
-from databoard.db_tools import delete_problem
 from databoard.db_tools import add_event
+from databoard.db_tools import add_problem
+from databoard.db_tools import add_workflow
+from databoard.db_tools import approve_user
+from databoard.db_tools import ask_sign_up_team
+from databoard.db_tools import create_user
+from databoard.db_tools import delete_problem
+from databoard.db_tools import sign_up_team
 
 
 @pytest.fixture
@@ -218,3 +222,66 @@ def test_add_event(is_public, setup_db):
     add_event(problem_name, event_name, event_title, is_public=is_public,
               force=True)
     _check_event(event_name, event_title, is_public, scores_iris)
+
+
+def test_ask_sign_up_team(setup_db):
+    # asking to sign up required a user, a problem, and an event.
+    username = 'test_user'
+    create_user(
+        name=username, password='test',
+        lastname='Test', firstname='User',
+        email='test.user@gmail.com', access_level='asked')
+    approve_user(username)
+
+    problem_name = 'iris'
+    _setup_ramp_kits_ramp_data(problem_name)
+    add_problem(problem_name)
+
+    event_name = '{}_test'.format(problem_name)
+    event_title = 'test event'
+    scores_iris = ('acc', 'error', 'nll', 'f1_70')
+    add_event(problem_name, event_name, event_title, is_public=True)
+
+    ask_sign_up_team(event_name, username)
+    event_team = db.session.query(EventTeam).all()
+    assert len(event_team) == 1
+    event_team = event_team[0]
+    assert event_team.event.name == event_name
+    assert event_team.team.name == username
+    assert event_team.is_active is True
+    assert event_team.last_submission_name is None
+    current_datetime = datetime.datetime.now()
+    assert event_team.signup_timestamp.year == current_datetime.year
+    assert event_team.signup_timestamp.month == current_datetime.month
+    assert event_team.signup_timestamp.day == current_datetime.day
+    assert event_team.approved is False
+
+
+def test_sign_up_team(setup_db):
+    # asking to sign up required a user, a problem, and an event.
+    username = 'test_user'
+    create_user(
+        name=username, password='test',
+        lastname='Test', firstname='User',
+        email='test.user@gmail.com', access_level='asked')
+    approve_user(username)
+
+    problem_name = 'iris'
+    _setup_ramp_kits_ramp_data(problem_name)
+    add_problem(problem_name)
+
+    event_name = '{}_test'.format(problem_name)
+    event_title = 'test event'
+    scores_iris = ('acc', 'error', 'nll', 'f1_70')
+    add_event(problem_name, event_name, event_title, is_public=True)
+
+    sign_up_team(event_name, username)
+    ask_sign_up_team(event_name, username)
+    event_team = db.session.query(EventTeam).all()
+    assert len(event_team) == 1
+    event_team = event_team[0]
+
+    # when signing up a team, the team is approved and the sandbox is setup:
+    # the starting kit is submitted without training it.
+    assert event_team.last_submission_name == 'starting_kit'
+    assert event_team.approved is True

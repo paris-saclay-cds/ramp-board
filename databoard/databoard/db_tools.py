@@ -774,6 +774,15 @@ def ask_sign_up_team(event_name, team_name):
         The RAMP event name.
     team_name : str
         The name of the team.
+
+    Returns
+    -------
+    event : rampdb.model.Event
+        The queried Event.
+    team : rampdb.model.Team
+        The queried team.
+    event_team : rampdb.model.EventTeam
+        The relationship event-team table.
     """
     event = Event.query.filter_by(name=event_name).one()
     team = Team.query.filter_by(name=team_name).one()
@@ -783,6 +792,7 @@ def ask_sign_up_team(event_name, team_name):
         event_team = EventTeam(event=event, team=team)
         db.session.add(event_team)
         db.session.commit()
+    return event, team, event_team
 
 
 def sign_up_team(event_name, team_name):
@@ -795,27 +805,22 @@ def sign_up_team(event_name, team_name):
     team_name : str
         The name of the team.
     """
-    event = Event.query.filter_by(name=event_name).one()
-    team = Team.query.filter_by(name=team_name).one()
-    event_team = EventTeam.query.filter_by(
-        event=event, team=team).one_or_none()
-    if event_team is None:
-        even_team = EventTeam(event=event, team=team)
-        db.session.add(event_team)
-    # submitting the starting kit for team
-    from_submission_path = os.path.join(
+    event, team, event_team = ask_sign_up_team(event_name, team_name)
+    # create the path to the sandbox submission which is usually the
+    # starting-kit
+    path_sandbox_submission = os.path.join(
         ramp_config['ramp_kits_path'], event.problem.name,
         ramp_config['submissions_dir'], ramp_config['sandbox_dir']
     )
+    # setup the sandbox
     make_submission_and_copy_files(
         event_name, team_name, ramp_config['sandbox_dir'],
-        from_submission_path
+        path_sandbox_submission
     )
     for user in get_team_members(team):
-        send_mail(
-            to=user.email,
-            subject='signed up for {} as team {}'.format(
-                event_name, team_name),
+        send_mail(to=user.email,
+                  subject='signed up for {} as team {}'.format(
+                  event_name, team_name),
             body='')
     event_team.approved = True
     db.session.commit()
@@ -908,14 +913,25 @@ def delete_submission(event_name, team_name, submission_name):
     set_n_submissions(event_name)
 
 
-def make_submission_on_cv_folds(cv_folds, submission):
-    for cv_fold in cv_folds:
-        submission_on_cv_fold = SubmissionOnCVFold(
-            submission=submission, cv_fold=cv_fold)
-        db.session.add(submission_on_cv_fold)
-
-
 def make_submission(event_name, team_name, submission_name, submission_path):
+    """Create a submission in the database and returns an handle.
+
+    Parameters
+    ----------
+    event_name : str
+        The event associated to the submission.
+    team_name : str
+        The team associated to the submission.
+    submission_name : str
+        The name to give to the current submission.
+    submission_path : str
+        The path of the files associated to the current submission.
+
+    Returns
+    -------
+    submission : rampdb.model.Submission
+        The newly created submission.
+    """
     # TODO: to call unit tests on submitted files. Those that are found
     # in the table that describes the workflow. For the rest just check
     # maybe size
@@ -924,27 +940,36 @@ def make_submission(event_name, team_name, submission_name, submission_path):
     event_team = EventTeam.query.filter_by(event=event, team=team).one()
     submission = Submission.query.filter_by(
         name=submission_name, event_team=event_team).one_or_none()
+
+    # create a new submission
     if submission is None:
-        # Checking if submission is too early
-        all_submissions = Submission.query.filter_by(
-            event_team=event_team).order_by(
-                Submission.submission_timestamp).all()
-        if len(all_submissions) == 0:
-            last_submission = None
-        else:
-            last_submission = all_submissions[-1]
-        if last_submission is not None and last_submission.is_not_sandbox:
-            now = datetime.datetime.utcnow()
-            last = last_submission.submission_timestamp
-            min_diff = event.min_duration_between_submissions
-            diff = (now - last).total_seconds()
-            if team.admin.access_level != 'admin' and diff < min_diff:
+        all_submissions = (Submission.query.
+            filter_by(event_team=event_team).
+            order_by(Submission.submission_timestamp).
+            all())
+        last_submission = None if not all_submissions else all_submissions[-1]
+        # check for non-admin user if they wait enough to make a new submission
+        if (team.admin.access_level != 'admin' and last_submission is not None
+               and last_submission.is_not_sandbox):
+            time_to_last_submission = (datetime.datetime.utcnow() -
+                                       last_submission.submission_timestamp)
+            min_resubmit_time = datetime.timedelta(
+                seconds=event.min_duration_between_submissions)
+            awaiting_time = int((min_resubmit_time - time_to_last_submission)
+                                .total_seconds())
+            if awaiting_time > 0:
                 raise TooEarlySubmissionError(
                     'You need to wait {} more seconds until next submission'
-                    .format(int(min_diff - diff)))
+                    .format(awaiting_time))
+
         submission = Submission(name=submission_name, event_team=event_team)
-        make_submission_on_cv_folds(event.cv_folds, submission)
+        for cv_fold in event.cv_folds:
+            submission_on_cv_fold = SubmissionOnCVFold(submission=submission,
+                                                       cv_fold=cv_fold)
+            db.session.add(submission_on_cv_fold)
         db.session.add(submission)
+
+    # the submission already exist
     else:
         # We allow resubmit for new or failing submissions
         if submission.is_not_sandbox and\
@@ -1026,29 +1051,51 @@ def make_submission(event_name, team_name, submission_name, submission_path):
     return submission
 
 
-def make_submission_and_copy_files(event_name, team_name, new_submission_name,
-                                   from_submission_path):
-    """Make submission and copy files to submission.path.
+# TODO: This function should be renamed since it is only used to setup the
+# sandbox or submit the starting kit.
+# TODO: Since the function is only called twice, I would probably remove it
+# and just call make_submission with a duplication of the file copying code.
+def make_submission_and_copy_files(event_name, team_name, submission_name,
+                                   path_kit_submission):
+    """Create a submission and copy the file into the deployment path.
 
-    Called from sign_up_team(), merge_teams(), fetch.add_models(),
-    view.sandbox().
+    This function is usually used to setup the sandbox on the frontend.
+
+    Parameters
+    ----------
+    event_name : str
+        The name of the event associated to the submission.
+    team_name : str
+        The name of the team associated to the submission.
+    submission_name : str
+        The name of the submission.
+    path_kit_submission : str
+        The path of the submission within the kit.
+
+    Returns
+    -------
+    submission : rampdb.model.Submission
+        The newly created submission.
+
+    Notes
+    -----
+    Called by :func:`sign_up_team` and :func:`view.sandbox`.
     """
     submission = make_submission(
-        event_name, team_name, new_submission_name, from_submission_path)
-    # clean up the model directory in case it's a resubmission
+        event_name, team_name, submission_name, path_kit_submission)
     if os.path.exists(submission.path):
         shutil.rmtree(submission.path)
-    os.mkdir(submission.path)
-    open(os.path.join(submission.path, '__init__.py'), 'a').close()
+    os.makedirs(submission.path)
+    # TODO: We should not create an __init__.py file. This should be solve by
+    # using the import from source.
+    # open(os.path.join(submission.path, '__init__.py'), 'a').close()
 
-    # copy the submission files into the model directory, should all this
-    # probably go to Submission
-    for f_name in submission.f_names:
-        src = os.path.join(from_submission_path, f_name)
-        dst = os.path.join(submission.path, f_name)
-        shutil.copy2(src, dst)  # copying also metadata
-        logger.info('Copying {} to {}'.format(src, dst))
-
+    # copy the submission of a kit to the submission folder of the server
+    # (deployment path).
+    for filename in submission.f_names:
+        shutil.copy2(src=os.path.join(path_kit_submission, filename),
+                     dst=os.path.join(submission.path, filename))
+    logger.info('Copying the submission files into the deployment folder')
     logger.info('Adding {}'.format(submission))
     return submission
 
