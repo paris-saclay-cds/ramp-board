@@ -14,8 +14,9 @@ before_install:
     - export PATH=/home/travis/miniconda/bin:$PATH
     - conda update --yes --quiet conda
 install:
-    - conda env create python=$PYTHON_VERSION -f environment.yml
-    - conda env create python=$PYTHON_VERSION -f ci_tools/environment_iris_kit.yml
+    - conda create -n test-env python=$PYTHON_VERSION
+    - conda env update -n test-env -f environment.yml
+    - conda env create -f ci_tools/environment_iris_kit.yml
     - source activate testenv
     - cd databoard
     - pip install .
