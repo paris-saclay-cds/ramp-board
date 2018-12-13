@@ -1,4 +1,5 @@
 import datetime
+import os
 import shutil
 import subprocess
 
@@ -11,6 +12,8 @@ from rampdb.model import CVFold
 from rampdb.model import Event
 from rampdb.model import EventScoreType
 from rampdb.model import EventTeam
+from rampdb.model import Submission
+from rampdb.model import SubmissionOnCVFold
 from rampdb.model import Problem
 from rampdb.model import User
 from rampdb.model import Workflow
@@ -285,3 +288,20 @@ def test_sign_up_team(setup_db):
     # the starting kit is submitted without training it.
     assert event_team.last_submission_name == 'starting_kit'
     assert event_team.approved is True
+    # check the status of the sandbox submission
+    submission = db.session.query(Submission).all()
+    assert len(submission) == 1
+    submission = submission[0]
+    assert submission.name == 'starting_kit'
+    assert submission.event_team == event_team
+    submission_file = submission.files[0]
+    assert submission_file.name == 'classifier'
+    assert submission_file.extension == 'py'
+    assert (os.path.join('submission_000000001',
+                         'classifier.py') in submission_file.path)
+    # check the submission on cv fold
+    cv_folds = db.session.query(SubmissionOnCVFold).all()
+    for fold in cv_folds:
+        assert fold.state == 'new'
+        assert fold.best is False
+        assert fold.contributivity == pytest.approx(0)

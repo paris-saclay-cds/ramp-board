@@ -1042,6 +1042,7 @@ def make_submission(event_name, team_name, submission_name, submission_path):
     event_team.last_submission_name = submission_name
     db.session.commit()
 
+    # TODO: to be tested. Letting it for later
     update_leaderboards(event_name)
     update_user_leaderboards(event_name, team.name)
 
@@ -2185,6 +2186,8 @@ def get_competition_leaderboards(event_name):
 
 
 def update_leaderboards(event_name):
+    """Update the leaderboad.
+    """
     private_leaderboard_html = get_private_leaderboards(
         event_name)
     leaderboards = get_leaderboards(event_name)
