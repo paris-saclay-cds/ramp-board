@@ -19,10 +19,13 @@ from rampdb.model import User
 from rampdb.model import Workflow
 from rampdb.model import WorkflowElement
 from rampdb.model import WorkflowElementType
+
 from rampdb.model import NameClashError
+from rampdb.model import TooEarlySubmissionError
 
 from databoard import db
 from databoard import deployment_path
+from databoard import ramp_config
 
 from databoard.testing import create_test_db
 from databoard.testing import _setup_ramp_kits_ramp_data
@@ -35,6 +38,7 @@ from databoard.db_tools import approve_user
 from databoard.db_tools import ask_sign_up_team
 from databoard.db_tools import create_user
 from databoard.db_tools import delete_problem
+from databoard.db_tools import make_submission
 from databoard.db_tools import sign_up_team
 
 
@@ -150,6 +154,13 @@ def _check_problem(name, workflow_name):
     assert problem.workflow.name == workflow_name
 
 
+def _setup_problem(problem_name):
+    # a problem requires a name
+    # setup the ramp-kit and ramp-data for the iris challenge
+    _setup_ramp_kits_ramp_data(problem_name)
+    add_problem(problem_name)
+
+
 def test_add_problem(setup_db):
     problem_name = 'iris'
     # setup the ramp-kit and ramp-data for the iris challenge
@@ -204,12 +215,21 @@ def _check_event(event_name, event_title, event_is_public, scores_name):
         assert_array_equal(fold.test_is, test_indices)
 
 
+def _setup_event():
+    # an event requires a problem
+    problem_name = 'iris'
+    _setup_problem(problem_name)
+    event_name = '{}_test'.format(problem_name)
+    event_title = 'test event'
+    scores_iris = ('acc', 'error', 'nll', 'f1_70')
+    add_event(problem_name, event_name, event_title, is_public=True)
+    return event_name
+
+
 @pytest.mark.parametrize("is_public", [True, False])
 def test_add_event(is_public, setup_db):
     problem_name = 'iris'
-    _setup_ramp_kits_ramp_data(problem_name)
-    # adding an event required to add a problem in the database
-    add_problem(problem_name)
+    _setup_problem(problem_name)
 
     event_name = '{}_test'.format(problem_name)
     event_title = 'test event'
@@ -227,23 +247,20 @@ def test_add_event(is_public, setup_db):
     _check_event(event_name, event_title, is_public, scores_iris)
 
 
-def test_ask_sign_up_team(setup_db):
+def _setup_sign_up():
     # asking to sign up required a user, a problem, and an event.
+    event_name = _setup_event()  # setup the problem and event
     username = 'test_user'
     create_user(
         name=username, password='test',
         lastname='Test', firstname='User',
         email='test.user@gmail.com', access_level='asked')
     approve_user(username)
+    return event_name, username
 
-    problem_name = 'iris'
-    _setup_ramp_kits_ramp_data(problem_name)
-    add_problem(problem_name)
 
-    event_name = '{}_test'.format(problem_name)
-    event_title = 'test event'
-    scores_iris = ('acc', 'error', 'nll', 'f1_70')
-    add_event(problem_name, event_name, event_title, is_public=True)
+def test_ask_sign_up_team(setup_db):
+    event_name, username = _setup_sign_up()
 
     ask_sign_up_team(event_name, username)
     event_team = db.session.query(EventTeam).all()
@@ -262,24 +279,9 @@ def test_ask_sign_up_team(setup_db):
 
 def test_sign_up_team(setup_db):
     # asking to sign up required a user, a problem, and an event.
-    username = 'test_user'
-    create_user(
-        name=username, password='test',
-        lastname='Test', firstname='User',
-        email='test.user@gmail.com', access_level='asked')
-    approve_user(username)
-
-    problem_name = 'iris'
-    _setup_ramp_kits_ramp_data(problem_name)
-    add_problem(problem_name)
-
-    event_name = '{}_test'.format(problem_name)
-    event_title = 'test event'
-    scores_iris = ('acc', 'error', 'nll', 'f1_70')
-    add_event(problem_name, event_name, event_title, is_public=True)
+    event_name, username = _setup_sign_up()
 
     sign_up_team(event_name, username)
-    ask_sign_up_team(event_name, username)
     event_team = db.session.query(EventTeam).all()
     assert len(event_team) == 1
     event_team = event_team[0]
@@ -305,3 +307,58 @@ def test_sign_up_team(setup_db):
         assert fold.state == 'new'
         assert fold.best is False
         assert fold.contributivity == pytest.approx(0)
+
+
+def test_make_submission_create_new_submission(setup_db):
+    # check that we can make a new submission to the database
+    # it will require to have already a team and an event
+    event_name, username = _setup_sign_up()
+    sign_up_team(event_name, username)
+
+    submission_name = 'random_forest_10_10'
+    path_submission = os.path.join(
+        ramp_config['ramp_kits_path'], 'iris',
+        ramp_config['submissions_dir'], submission_name
+    )
+    make_submission(event_name, username, submission_name, path_submission)
+    all_submissions = db.session.query(Submission).all()
+
+    # `sign_up_team` make a submission (sandbox). This submission will be the
+    # second submission.
+    assert len(all_submissions) == 2
+    submission = db.session.query(Submission).filter(
+        Submission.name==submission_name).one_or_none()
+    assert submission.name == submission_name
+    submission_file = submission.files[0]
+    assert submission_file.name == 'classifier'
+    assert submission_file.extension == 'py'
+    assert (os.path.join('submission_000000002',
+                         'classifier.py') in submission_file.path)
+
+
+def test_make_submission_too_early_submission(setup_db):
+    # check that we raise an error when the elapsed time was not large enough
+    # between the new submission and the previous submission
+    event_name, username = _setup_sign_up()
+    sign_up_team(event_name, username)
+
+    # check that we have an awaiting time for the event
+    event = db.session.query(Event).filter(
+        Event.name=='iris_test').one_or_none()
+    assert event.min_duration_between_submissions == 900
+
+    # make 2 submissions which are too close from each other
+    for submission_idx, submission_name in enumerate(['random_forest_10_10',
+                                                      'too_early_submission']):
+        path_submission = os.path.join(
+            ramp_config['ramp_kits_path'], 'iris',
+            ramp_config['submissions_dir'], submission_name
+        )
+        if submission_idx == 1:
+            err_msg = 'You need to wait'
+            with pytest.raises(TooEarlySubmissionError, match=err_msg):
+                make_submission(event_name, username, submission_name,
+                                path_submission)
+        else:
+            make_submission(event_name, username, submission_name,
+                            path_submission)
