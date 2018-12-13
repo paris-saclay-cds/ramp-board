@@ -986,7 +986,8 @@ def make_submission(event_name, team_name, submission_name, submission_path):
     files_type_extension =  [os.path.splitext(filename)
                              for filename in os.listdir(submission_path)]
     # filter the files which contain an extension
-    files_type_extension = [(filename, extension)
+    # remove the dot of the extension.
+    files_type_extension = [(filename, extension[1:])
                             for filename, extension in files_type_extension
                             if extension != '']
     for workflow_element in event.problem.workflow.elements:
@@ -1022,7 +1023,7 @@ def make_submission(event_name, team_name, submission_name, submission_path):
                 event_name, team_name, submission_name, workflow_element.name,
                 ", ".join(deposited_extensions), submission_path))
 
-        # maybe it's a resubmit
+        # check if it is a resubmission
         submission_file = SubmissionFile.query.filter_by(
             workflow_element=workflow_element,
             submission=submission).one_or_none()
