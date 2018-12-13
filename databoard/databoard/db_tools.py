@@ -943,10 +943,9 @@ def make_submission(event_name, team_name, submission_name, submission_path):
 
     # create a new submission
     if submission is None:
-        all_submissions = (Submission.query.
-            filter_by(event_team=event_team).
-            order_by(Submission.submission_timestamp).
-            all())
+        all_submissions = (Submission.query
+            .filter_by(event_team=event_team)
+            .order_by(Submission.submission_timestamp).all())
         last_submission = None if not all_submissions else all_submissions[-1]
         # check for non-admin user if they wait enough to make a new submission
         if (team.admin.access_level != 'admin' and last_submission is not None
@@ -972,28 +971,24 @@ def make_submission(event_name, team_name, submission_name, submission_path):
     # the submission already exist
     else:
         # We allow resubmit for new or failing submissions
-        if submission.is_not_sandbox and\
-                (submission.state == 'new' or submission.is_error):
+        if (submission.is_not_sandbox and
+               (submission.state == 'new' or submission.is_error)):
             submission.set_state('new')
             submission.submission_timestamp = datetime.datetime.utcnow()
             for submission_on_cv_fold in submission.on_cv_folds:
                 submission_on_cv_fold.reset()
         else:
-            error_msg = 'Submission "{}" '.format(submission_name)
-            error_msg = 'of team "{}" '.format(team_name)
-            error_msg += 'at event "{}" exists already'.format(event_name)
+            error_msg = ('Submission "{}" of team "{}" at even "{}" exists '
+                         'already'
+                         .format(submission_name, team_name, event_name))
             raise DuplicateSubmissionError(error_msg)
 
-    # All file names with at least a . in them
-    deposited_f_name_list = os.listdir(submission_path)
-    deposited_f_name_list = [
-        f_name for f_name in deposited_f_name_list
-        if f_name.find('.') >= 0]
-    # TODO: more error checking
-    deposited_types = [f_name.split('.')[0]
-                       for f_name in deposited_f_name_list]
-    deposited_extensions = [f_name.split('.')[1]
-                            for f_name in deposited_f_name_list]
+    files_type_extension =  [os.path.splitext(filename)
+                             for filename in os.listdir(submission_path)]
+    # filter the files which contain an extension
+    files_type_extension = [(filename, extension)
+                            for filename, extension in files_type_extension
+                            if extension != '']
     for workflow_element in event.problem.workflow.elements:
         # We find all files with matching names to workflow_element.name.
         # If none found, raise error.
@@ -1001,29 +996,31 @@ def make_submission(event_name, team_name, submission_name, submission_path):
         # raise error. If there are several ones, for now we use the first
         # matching file.
 
-        i_names = [i for i in range(len(deposited_types))
-                   if deposited_types[i] == workflow_element.name]
-        if len(i_names) == 0:
+        desposited_types, deposited_extensions = zip(
+            *[(filename, extension)
+            for filename, extension in files_type_extension
+            if filename == workflow_element.name]
+        )
+
+        # no files found to match the workflow element
+        if not desposited_types:
             db.session.rollback()
             raise MissingSubmissionFileError('{}/{}/{}/{}: {}'.format(
                 event_name, team_name, submission_name, workflow_element.name,
                 submission_path))
 
-        for i_name in i_names:
-            extension_name = deposited_extensions[i_name]
+        # check that files have the correct extension ...
+        for extension_name in deposited_extensions:
             extension = Extension.query.filter_by(
                 name=extension_name).one_or_none()
             if extension is not None:
                 break
+        # ... otherwise we raise an error
         else:
             db.session.rollback()
-            extensions = [deposited_extensions[i_name] for i_name in i_names]
-            extensions = extensions.join(",")
-            for i_name in i_names:
-                extensions.append(deposited_extensions[i_name])
             raise MissingExtensionError('{}/{}/{}/{}/{}: {}'.format(
                 event_name, team_name, submission_name, workflow_element.name,
-                extensions, submission_path))
+                ", ".join(deposited_extensions), submission_path))
 
         # maybe it's a resubmit
         submission_file = SubmissionFile.query.filter_by(
