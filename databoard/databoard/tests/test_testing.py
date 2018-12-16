@@ -41,7 +41,7 @@ def test_add_users(setup_db):
     add_users()
     users = db.session.query(User).all()
     for user in users:
-        assert user.name in ('test_user', 'test_iris_admin')
+        assert user.name in ('test_user', 'test_user_2', 'test_iris_admin')
     err_msg = 'username is already in use'
     with pytest.raises(NameClashError, match=err_msg):
         add_users()
@@ -81,8 +81,6 @@ def test_submit_all_starting_kits(setup_db):
 
 
 # def _add_problem_and_event(problem_name, test_user_name):
-#     db_tools.submit_starting_kit(event_name, test_user_name)
-#     db_tools.submit_starting_kit(event_name, test_user_name)
 #     submissions = db_tools.get_submissions(event_name, test_user_name)
 #     db_tools.train_test_submissions(
 #         submissions, force_retrain_test=True, is_parallelize=False)

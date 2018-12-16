@@ -43,13 +43,19 @@ def create_test_db():
                              '`deploy` to work')
 
 
-# def create_toy_dataset():
-#     """Create a toy dataset with couple of users, problems, events."""
-#     create_test_db()
-#     add_users()
-#     add_problems()
-#     add_events()
-#     sign_up_team_to_events()
+def setup_toy_db():
+    """Only setup the database by adding some data."""
+    add_users()
+    add_problems()
+    add_events()
+    sign_up_teams_to_events()
+    submit_all_starting_kits()
+
+
+def create_toy_db():
+    """Create a toy dataset with couple of users, problems, events."""
+    create_test_db()
+    setup_toy_db()
 
 
 def add_users():
@@ -59,6 +65,11 @@ def add_users():
         lastname='Test', firstname='User',
         email='test.user@gmail.com', access_level='asked')
     approve_user('test_user')
+    create_user(
+        name='test_user_2', password='test',
+        lastname='Test_2', firstname='User_2',
+        email='test.user.2@gmail.com', access_level='asked')
+    approve_user('test_user_2')
     create_user(
         name='test_iris_admin', password='test',
         lastname='Admin', firstname='Iris',
@@ -113,7 +124,7 @@ def add_events():
                   event_title=event_title, is_public=True, force=False)
 
 
-def sign_up_team_to_events():
+def sign_up_teams_to_events():
     """Sign up user to the events in the database.
 
     Notes
@@ -123,11 +134,13 @@ def sign_up_team_to_events():
     """
     for event_name in ['iris_test', 'boston_housing_test']:
         sign_up_team(event_name, 'test_user')
+        sign_up_team(event_name, 'test_user_2')
 
 
 def submit_all_starting_kits():
     for event_name in ['iris_test', 'boston_housing_test']:
         submit_starting_kit(event_name, 'test_user')
+        submit_starting_kit(event_name, 'test_user_2')
 
 
 # def _add_problem_and_event(problem_name, test_user_name):

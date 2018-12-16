@@ -15,6 +15,7 @@ from rampdb.model import EventTeam
 from rampdb.model import Submission
 from rampdb.model import SubmissionOnCVFold
 from rampdb.model import Problem
+from rampdb.model import Team
 from rampdb.model import User
 from rampdb.model import Workflow
 from rampdb.model import WorkflowElement
@@ -31,6 +32,7 @@ from databoard import deployment_path
 from databoard import ramp_config
 
 from databoard.testing import create_test_db
+from databoard.testing import create_toy_db
 from databoard.testing import _setup_ramp_kits_ramp_data
 from databoard.utils import check_password
 
@@ -41,6 +43,7 @@ from databoard.db_tools import approve_user
 from databoard.db_tools import ask_sign_up_team
 from databoard.db_tools import create_user
 from databoard.db_tools import delete_problem
+from databoard.db_tools import get_submissions
 from databoard.db_tools import make_submission
 from databoard.db_tools import make_submission_and_copy_files
 from databoard.db_tools import sign_up_team
@@ -51,6 +54,18 @@ from databoard.db_tools import submit_starting_kit
 def setup_db():
     try:
         create_test_db()
+        yield
+    finally:
+        shutil.rmtree(deployment_path, ignore_errors=True)
+        db.session.close()
+        db.session.remove()
+        db.drop_all()
+
+
+@pytest.fixture(scope="module")
+def setup_toy_db():
+    try:
+        create_toy_db()
         yield
     finally:
         shutil.rmtree(deployment_path, ignore_errors=True)
@@ -487,3 +502,35 @@ def test_submit_starting_kit(setup_db):
                                 'random_forest_10_10', 'error'}
     submission_name = set(sub.name for sub in submissions)
     assert submission_name == expected_submission_name
+
+
+@pytest.mark.parametrize(
+    "event_name, team_name, user_name, submission_name, err_msg",
+    [(None, 'xxx', 'xxx', 'xxx', '"event_name" needs to be specified'),
+     ('iris_test', 'test_user', 'test_user', None, 'If "user_name" is given'),
+     ('iris_test', None, None, 'starting_kit_test', '"submission_name" is')]
+)
+def test_get_submissions_error(event_name, team_name, user_name,
+                               submission_name, err_msg, setup_toy_db):
+    with pytest.raises(ValueError, match=err_msg):
+        get_submissions(event_name=event_name, team_name=team_name,
+                        user_name=user_name, submission_name=submission_name)
+
+
+@pytest.mark.parametrize(
+    "event_name, team_name, user_name, submission_name, expected_n_sub",
+    [(None, None, None, None, 14),
+     ('iris_test', None, None, None, 8),
+     ('boston_housing_test', None, None, None, 6),
+     ('iris_test', 'test_user', None, None, 4),
+     ('boston_housing_test', 'test_user', None, None, 3),
+     ('iris_test', None, 'test_user', None, 4),
+     ('iris_test', 'test_user', None, 'starting_kit_test', 1)]
+)
+def test_get_submissions(event_name, team_name, user_name, submission_name,
+                         expected_n_sub, setup_toy_db):
+    submissions = get_submissions(event_name=event_name,
+                                  team_name=team_name,
+                                  user_name=user_name,
+                                  submission_name=submission_name)
+    assert len(submissions) == expected_n_sub

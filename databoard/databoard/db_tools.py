@@ -2333,18 +2333,62 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
     return table_format(leaderboard_html)
 
 
+# TODO: This function is too complex. We need to restrain it to the use case
+# that we have or make it generic for all possible filtering
 def get_submissions(event_name=None, team_name=None, user_name=None,
                     submission_name=None):
+    """Query submissions from the database.
+
+    By passing one of the argument, the query will be filtered.
+
+    Parameters
+    ----------
+    event_name : str or None
+        The name of the event. By default, all events will be considered.
+    team_name : str or None
+        The name of the team. By default, all teams will be considered.
+    user_name : str or None
+        The name of the user. By default, all users will be considered.
+    submission_name : str or None
+        The name of the submission. By default, all submission will be
+        considered.
+
+    Returns
+    -------
+    submissions : list of rampdb.model.Submission
+        The filtered submissions.
+    """
+    if (event_name is None and (team_name is not None or
+                                user_name is not None or
+                                submission_name is not None)):
+        raise ValueError(
+            '"event_name" needs to be specified if "team_name", "user_name", '
+            'or "submission_name" are given. Got "event_name"={}, "team_name"'
+            '={}, user_name={}, and "submission_name"={}.'
+            .format(event_name, team_name, user_name, submission_name)
+            )
+    elif user_name is not None and team_name is not None:
+        raise ValueError(
+            'If "user_name" is given then "team_name" needs to be None. '
+            'Got "team_name"={}.'.format(team_name)
+        )
+    elif submission_name is not None and team_name is None:
+        raise ValueError(
+            'When "submission_name" is specified, you need to provide a '
+            '"team_name".'
+        )
+
     if event_name is None:  # All submissions
         submissions = Submission.query.all()
     else:
         if team_name is None:
             if user_name is None:  # All submissions in a given event
-                submissions_ = db.session.query(
-                    Submission, Event, EventTeam).filter(
-                    Event.name == event_name).filter(
-                    Event.id == EventTeam.event_id).filter(
-                    EventTeam.id == Submission.event_team_id).all()
+                submissions_ = \
+                (db.session.query(Submission, Event, EventTeam)
+                           .filter(Event.name==event_name)
+                           .filter(Event.id==EventTeam.event_id)
+                           .filter(EventTeam.id==Submission.event_team_id)
+                           .all())
                 if submissions_:
                     submissions = [s for (s, e, et) in submissions_]
                 else:
@@ -2353,30 +2397,33 @@ def get_submissions(event_name=None, team_name=None, user_name=None,
                 # All submissions for a given event by all the teams of a user
                 submissions = []
                 for event_team in get_user_event_teams(event_name, user_name):
-                    submissions += db.session.query(
-                        Submission).filter(
-                        Event.name == event_name).filter(
-                        Event.id == event_team.event_id).filter(
-                        event_team.id == Submission.event_team_id).all()
+                    submissions += \
+                    (db.session.query(Submission)
+                               .filter(Event.name==event_name)
+                               .filter(Event.id==event_team.event_id)
+                               .filter(event_team.id==Submission.event_team_id)
+                               .all())
         else:
             if submission_name is None:
                 # All submissions in a given event and team
-                submissions_ = db.session.query(
-                    Submission, Event, Team, EventTeam).filter(
-                    Event.name == event_name).filter(
-                    Team.name == team_name).filter(
-                    Event.id == EventTeam.event_id).filter(
-                    Team.id == EventTeam.team_id).filter(
-                    EventTeam.id == Submission.event_team_id).all()
+                submissions_ = \
+                (db.session.query(Submission, Event, Team, EventTeam)
+                           .filter(Event.name==event_name)
+                           .filter(Team.name==team_name)
+                           .filter(Event.id==EventTeam.event_id)
+                           .filter(Team.id==EventTeam.team_id)
+                           .filter(EventTeam.id==Submission.event_team_id)
+                           .all())
             else:  # Given submission
-                submissions_ = db.session.query(
-                    Submission, Event, Team, EventTeam).filter(
-                    Submission.name == submission_name).filter(
-                    Event.name == event_name).filter(
-                    Team.name == team_name).filter(
-                    Event.id == EventTeam.event_id).filter(
-                    Team.id == EventTeam.team_id).filter(
-                    EventTeam.id == Submission.event_team_id).all()
+                submissions_ = \
+                (db.session.query(Submission, Event, Team, EventTeam)
+                           .filter(Submission.name==submission_name)
+                           .filter(Event.name==event_name)
+                           .filter(Team.name==team_name)
+                           .filter(Event.id==EventTeam.event_id)
+                           .filter(Team.id==EventTeam.team_id)
+                           .filter(EventTeam.id==Submission.event_team_id)
+                           .all())
             if submissions_:
                 submissions = [s for (s, e, t, et) in submissions_]
             else:
