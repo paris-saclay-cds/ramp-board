@@ -13,10 +13,11 @@ from .db_tools import add_problem
 from .db_tools import approve_user
 from .db_tools import create_user
 from .db_tools import setup_files_extension_type
+from .db_tools import sign_up_team
 
 
 def create_test_db():
-    """Create an empty test db and setup the files s.
+    """Create an empty test db and setup the files.
 
     The different settings should be set as environment variables. The
     environment variables to set are:
@@ -39,6 +40,15 @@ def create_test_db():
     else:
         raise AttributeError('DATABOARD_STAGE should be set to TESTING for '
                              '`deploy` to work')
+
+
+# def create_toy_dataset():
+#     """Create a toy dataset with couple of users, problems, events."""
+#     create_test_db()
+#     add_users()
+#     add_problems()
+#     add_events()
+#     sign_up_team_to_events()
 
 
 def add_users():
@@ -100,6 +110,18 @@ def add_events():
         event_title = 'test event'
         add_event(problem_name=problem_name, event_name=event_name,
                   event_title=event_title, is_public=True, force=False)
+
+
+def sign_up_team_to_events():
+    """Sign up user to the events in the database.
+
+    Notes
+    -----
+    Be aware that :func:`add_users()`, :func:`add_problems`,
+    and :func:`add_events` need to be called before.
+    """
+    for event_name in ['iris_test', 'boston_housing_test']:
+        sign_up_team(event_name, 'test_user')
 
 
 # def _add_problem_and_event(problem_name, test_user_name):

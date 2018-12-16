@@ -42,6 +42,7 @@ from databoard.db_tools import ask_sign_up_team
 from databoard.db_tools import create_user
 from databoard.db_tools import delete_problem
 from databoard.db_tools import make_submission
+from databoard.db_tools import make_submission_and_copy_files
 from databoard.db_tools import sign_up_team
 
 
@@ -451,3 +452,24 @@ def test_make_submission_wrong_submission_files(setup_db):
     with pytest.raises(MissingExtensionError, match=err_msg):
         make_submission(event_name, username, submission_name, path_submission)
 
+
+# TODO: this function should be renamed according if the function db_tools.py
+# is renamed
+def test_make_submission_and_copy_files(setup_db):
+    # check that we can make a submission and that the submission files are
+    # copied in the submission folder
+    event_name, username = _setup_sign_up()
+    sign_up_team(event_name, username)
+
+    submission_name = 'random_forest_10_10'
+    path_submission = os.path.join(
+        ramp_config['ramp_kits_path'], 'iris',
+        ramp_config['submissions_dir'], submission_name
+    )
+    make_submission_and_copy_files(event_name, username, submission_name,
+                                   path_submission)
+    submission = (db.session.query(Submission)
+                            .filter(Submission.name==submission_name)
+                            .one_or_none())
+    assert 'submission_000000002' in submission.path
+    assert os.path.exists(os.path.join(submission.path, 'classifier.py'))

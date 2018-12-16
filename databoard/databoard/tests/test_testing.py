@@ -21,6 +21,7 @@ from databoard.testing import add_events
 from databoard.testing import add_problems
 from databoard.testing import add_users
 from databoard.testing import create_test_db
+from databoard.testing import sign_up_team_to_events
 
 
 @pytest.fixture
@@ -36,7 +37,6 @@ def setup_db():
 
 
 def test_add_users(setup_db):
-    # add users to the database that we just created
     add_users()
     users = db.session.query(User).all()
     for user in users:
@@ -62,6 +62,14 @@ def test_add_events(setup_db):
     add_events()
     with pytest.raises(ValueError):
         add_events()
+
+
+def test_sign_up_team_to_events(setup_db):
+    add_users()
+    add_problems()
+    add_events()
+    sign_up_team_to_events()
+
 
 # def _add_problem_and_event(problem_name, test_user_name):
 #     db_tools.sign_up_team(event_name, test_user_name)
