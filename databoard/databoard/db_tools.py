@@ -978,7 +978,7 @@ def make_submission(event_name, team_name, submission_name, submission_path):
             for submission_on_cv_fold in submission.on_cv_folds:
                 submission_on_cv_fold.reset()
         else:
-            error_msg = ('Submission "{}" of team "{}" at even "{}" exists '
+            error_msg = ('Submission "{}" of team "{}" at event "{}" exists '
                          'already'
                          .format(submission_name, team_name, event_name))
             raise DuplicateSubmissionError(error_msg)
@@ -990,25 +990,23 @@ def make_submission(event_name, team_name, submission_name, submission_path):
     files_type_extension = [(filename, extension[1:])
                             for filename, extension in files_type_extension
                             if extension != '']
+
     for workflow_element in event.problem.workflow.elements:
-        # We find all files with matching names to workflow_element.name.
-        # If none found, raise error.
-        # Then look for one that has a legal extension. If none found,
-        # raise error. If there are several ones, for now we use the first
-        # matching file.
-
-        desposited_types, deposited_extensions = zip(
-            *[(filename, extension)
-            for filename, extension in files_type_extension
-            if filename == workflow_element.name]
-        )
-
-        # no files found to match the workflow element
-        if not desposited_types:
+        try:
+            desposited_types, deposited_extensions = zip(
+                *[(filename, extension)
+                for filename, extension in files_type_extension
+                if filename == workflow_element.name]
+            )
+        except ValueError as e:
             db.session.rollback()
-            raise MissingSubmissionFileError('{}/{}/{}/{}: {}'.format(
-                event_name, team_name, submission_name, workflow_element.name,
-                submission_path))
+            if 'not enough values to unpack' in str(e):
+                # no file matching the workflow element
+                raise MissingSubmissionFileError(
+                    'No file corresponding to the workflow element "{}"'
+                    .format(workflow_element)
+                    )
+            raise
 
         # check that files have the correct extension ...
         for extension_name in deposited_extensions:
@@ -1019,9 +1017,10 @@ def make_submission(event_name, team_name, submission_name, submission_path):
         # ... otherwise we raise an error
         else:
             db.session.rollback()
-            raise MissingExtensionError('{}/{}/{}/{}/{}: {}'.format(
-                event_name, team_name, submission_name, workflow_element.name,
-                ", ".join(deposited_extensions), submission_path))
+            raise MissingExtensionError(
+                'All extensions "{}" are unknown for the submission "{}".'
+                .format(", ".join(deposited_extensions), submission_name)
+            )
 
         # check if it is a resubmission
         submission_file = SubmissionFile.query.filter_by(
@@ -1042,11 +1041,9 @@ def make_submission(event_name, team_name, submission_name, submission_path):
     event_team.last_submission_name = submission_name
     db.session.commit()
 
-    # TODO: to be tested. Letting it for later
+    # TODO: test missing there for those update
     update_leaderboards(event_name)
     update_user_leaderboards(event_name, team.name)
-
-    # We should copy files here
     return submission
 
 

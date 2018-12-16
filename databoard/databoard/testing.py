@@ -72,6 +72,8 @@ def _setup_ramp_kits_ramp_data(problem_name):
     os.chdir(problem_data_path)
     subprocess.check_output(["python", "prepare_data.py"])
     os.chdir(problem_kits_path)
+    # TODO: I don't think that we need to convert the notebook here. It should
+    # not be used the related tests.
     subprocess.check_output(["jupyter", "nbconvert", "--to", "html",
                              "{}_starting_kit.ipynb".format(problem_name)])
     os.chdir(current_directory)

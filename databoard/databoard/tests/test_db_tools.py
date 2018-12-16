@@ -20,6 +20,9 @@ from rampdb.model import Workflow
 from rampdb.model import WorkflowElement
 from rampdb.model import WorkflowElementType
 
+from rampdb.model import DuplicateSubmissionError
+from rampdb.model import MissingExtensionError
+from rampdb.model import MissingSubmissionFileError
 from rampdb.model import NameClashError
 from rampdb.model import TooEarlySubmissionError
 
@@ -362,3 +365,89 @@ def test_make_submission_too_early_submission(setup_db):
         else:
             make_submission(event_name, username, submission_name,
                             path_submission)
+
+
+def test_make_submission_resubmission(setup_db):
+    # check that resubmitting the a submission with the same name will raise
+    # an error
+    event_name, username = _setup_sign_up()
+    sign_up_team(event_name, username)
+
+    # submitting the starting_kit which is used as the default submission for
+    # the sandbox should raise an error
+    submission_name = 'starting_kit'
+    path_submission = os.path.join(
+            ramp_config['ramp_kits_path'], 'iris',
+            ramp_config['submissions_dir'], submission_name
+        )
+
+    err_msg = ('Submission "starting_kit" of team "test_user" at event '
+               '"iris_test" exists already')
+    with pytest.raises(DuplicateSubmissionError, match=err_msg):
+        make_submission(event_name, username, submission_name, path_submission)
+
+    # submitting twice a normal submission should raise an error as well
+    submission_name = 'random_forest_10_10'
+    path_submission = os.path.join(
+            ramp_config['ramp_kits_path'], 'iris',
+            ramp_config['submissions_dir'], submission_name
+        )
+    # first submission
+    make_submission(event_name, username, submission_name, path_submission)
+    # mock that we scored the submission
+    submission = (db.session.query(Submission)
+                            .filter(Submission.name==submission_name)
+                            .one_or_none())
+    submission.set_state('scored')
+    # # second submission
+    err_msg = ('Submission "random_forest_10_10" of team "test_user" at event '
+               '"iris_test" exists already')
+    with pytest.raises(DuplicateSubmissionError, match=err_msg):
+        make_submission(event_name, username, submission_name, path_submission)
+
+    # a resubmission can take place if it is tagged as "new" or failed
+
+    # mock that the submission failed during the training
+    submission.set_state('training_error')
+    make_submission(event_name, username, submission_name, path_submission)
+    # mock that the submissions are new submissions
+    submissions = (db.session.query(Submission)
+                             .filter(Submission.name==submission_name)
+                             .all())
+    for submission in submissions:
+        submission.set_state('new')
+    make_submission(event_name, username, submission_name, path_submission)
+
+
+def test_make_submission_wrong_submission_files(setup_db):
+    # check that we raise an error if the file required by the workflow is not
+    # present in the submission or that it has the wrong extension
+    event_name, username = _setup_sign_up()
+    sign_up_team(event_name, username)
+
+    submission_name  = 'corrupted_submission'
+    path_submission = os.path.join(
+            ramp_config['ramp_kits_path'], 'iris',
+            ramp_config['submissions_dir'], submission_name
+        )
+    os.makedirs(path_submission)
+
+    # case that there is not files in the submission
+    err_msg = 'No file corresponding to the workflow element'
+    with pytest.raises(MissingSubmissionFileError, match=err_msg):
+        make_submission(event_name, username, submission_name, path_submission)
+
+    # case that there is not file corresponding to the workflow component
+    filename = os.path.join(path_submission, 'unknown_file.xxx')
+    open(filename, "w+").close()
+    err_msg = 'No file corresponding to the workflow element'
+    with pytest.raises(MissingSubmissionFileError, match=err_msg):
+        make_submission(event_name, username, submission_name, path_submission)
+
+    # case that we have the correct filename but not the right extension
+    filename = os.path.join(path_submission, 'classifier.xxx')
+    open(filename, "w+").close()
+    err_msg = 'All extensions "xxx" are unknown for the submission'
+    with pytest.raises(MissingExtensionError, match=err_msg):
+        make_submission(event_name, username, submission_name, path_submission)
+
