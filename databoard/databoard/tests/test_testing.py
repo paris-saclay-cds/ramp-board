@@ -72,7 +72,6 @@ def test_sign_up_team_to_events(setup_db):
 
 
 # def _add_problem_and_event(problem_name, test_user_name):
-#     db_tools.sign_up_team(event_name, test_user_name)
 #     db_tools.submit_starting_kit(event_name, test_user_name)
 #     db_tools.submit_starting_kit(event_name, test_user_name)
 #     submissions = db_tools.get_submissions(event_name, test_user_name)

@@ -1000,7 +1000,7 @@ def make_submission(event_name, team_name, submission_name, submission_path):
             )
         except ValueError as e:
             db.session.rollback()
-            if 'not enough values to unpack' in str(e):
+            if 'values to unpack' in str(e):
                 # no file matching the workflow element
                 raise MissingSubmissionFileError(
                     'No file corresponding to the workflow element "{}"'
