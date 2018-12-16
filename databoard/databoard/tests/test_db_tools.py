@@ -34,7 +34,11 @@ from databoard import ramp_config
 from databoard.testing import create_test_db
 from databoard.testing import create_toy_db
 from databoard.testing import _setup_ramp_kits_ramp_data
+
 from databoard.utils import check_password
+from databoard.utils import encode_string
+
+from databoard.forms import UserUpdateProfileForm
 
 from databoard.db_tools import add_event
 from databoard.db_tools import add_problem
@@ -42,12 +46,34 @@ from databoard.db_tools import add_workflow
 from databoard.db_tools import approve_user
 from databoard.db_tools import ask_sign_up_team
 from databoard.db_tools import create_user
+from databoard.db_tools import delete_event
 from databoard.db_tools import delete_problem
 from databoard.db_tools import get_submissions
 from databoard.db_tools import make_submission
 from databoard.db_tools import make_submission_and_copy_files
 from databoard.db_tools import sign_up_team
 from databoard.db_tools import submit_starting_kit
+from databoard.db_tools import update_user
+
+
+class Bunch(dict):
+    def __init__(self, **kwargs):
+        super(Bunch, self).__init__(kwargs)
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __dir__(self):
+        return self.keys()
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+    def __setstate__(self, state):
+        pass
 
 
 @pytest.fixture
@@ -92,6 +118,12 @@ def test_create_user(setup_db):
     assert user.firstname == firstname
     assert user.email == email
     assert user.access_level == access_level
+    # check that a team was automatically added with the new user
+    team = db.session.query(Team).all()
+    assert len(team) == 1
+    team = team[0]
+    assert team.name == name
+    assert team.admin_id == user.id
 
 
 def test_create_user_error_double(setup_db):
@@ -104,7 +136,42 @@ def test_create_user_error_double(setup_db):
         create_user(name='test_user', password='test', lastname='Test',
                     firstname='User', email='test.user@gmail.com',
                     access_level='asked')
-    # TODO: add a team with the name of a user to trigger an error
+    # TODO: Check how to trigger the integrity error.
+
+
+# TODO: We can only mock the FlaskForm for the moment
+def test_update_user(setup_db):
+    user = create_user(name='test_user', password='test', lastname='Test',
+                       firstname='User', email='test.user@gmail.com',
+                       access_level='asked')
+    print(user.lastname)
+    class Form:
+        def __init__(self, lastname, firstname, linkedin_url, twitter_url,
+                     facebook_url, google_url, github_url, website_url, bio,
+                     email, is_want_news):
+            self.lastname = Bunch(data=lastname)
+            self.firstname = Bunch(data=firstname)
+            self.linkedin_url = Bunch(data=linkedin_url)
+            self.twitter_url = Bunch(data=twitter_url)
+            self.facebook_url = Bunch(data=facebook_url)
+            self.google_url = Bunch(data=google_url)
+            self.github_url = Bunch(data=github_url)
+            self.website_url = Bunch(data=website_url)
+            self.bio = Bunch(data=bio)
+            self.email = Bunch(data=email)
+            self.is_want_news = Bunch(data=is_want_news)
+
+    form = Form(lastname='new_lastname', firstname='new_firstname',
+                linkedin_url='new_linkedin', twitter_url='new_twitter',
+                facebook_url='new_facebook', google_url='new_google',
+                github_url='new_github', website_url='new_website',
+                bio='new bio', email='new.email@example.com',
+                is_want_news=False)
+    update_user(user, form)
+    for attr in ['lastname', 'firstname', 'linkedin_url', 'twitter_url',
+                 'facebook_url', 'google_url', 'github_url', 'website_url',
+                 'bio', 'email', 'is_want_news']:
+        assert getattr(user, attr) == getattr(form, attr).data
 
 
 def test_approve_user(setup_db):
@@ -265,6 +332,13 @@ def test_add_event(is_public, setup_db):
     add_event(problem_name, event_name, event_title, is_public=is_public,
               force=True)
     _check_event(event_name, event_title, is_public, scores_iris)
+
+
+def test_delete_event(setup_db):
+    event_name = _setup_event()
+    delete_event(event_name)
+    event = db.session.query(Event.name==event_name).all()
+    assert len(event) == 0
 
 
 def _setup_sign_up():

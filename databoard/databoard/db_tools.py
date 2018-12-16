@@ -509,7 +509,7 @@ def add_problem(problem_name, force=False):
 # these could go into a delete callback in problem and event, I just don't know
 # how to do that.
 def delete_problem(problem_name):
-    """Delete a problem form a database.
+    """Delete a problem from the database.
 
     Parameters
     ----------
@@ -526,6 +526,13 @@ def delete_problem(problem_name):
 # the main reason having this is that I couldn't make a cascade delete in
 # SubmissionSimilarity since it has two submission parents
 def delete_event(event_name):
+    """Delete an event from the database.
+
+    Parameters
+    ----------
+    event_name : str
+        The name of the event to delete.
+    """
     event = Event.query.filter_by(name=event_name).one()
     submissions = get_submissions(event_name=event_name)
     delete_submission_similarity(submissions)
@@ -663,6 +670,46 @@ def create_user(name, password, lastname, firstname, email,
                 access_level='user', hidden_notes='', linkedin_url='',
                 twitter_url='', facebook_url='', google_url='', github_url='',
                 website_url='', bio='', is_want_news=True):
+    """Create a new user in the database.
+
+    Parameters
+    ----------
+    name : str
+        The username.
+    password : str
+        The password.
+    lastname : str
+        The user lastname.
+    firstname : str
+        The user firstname.
+    email : str
+        The user email address.
+    access_level : {'admin', 'user', 'asked'}, default='user'
+        The access level of the user.
+    hidden_notes : str, default=''
+        Some hidden notes.
+    linkedin_url : str, default=''
+        Linkedin URL.
+    twitter_url : str, default=''
+        Twitter URL.
+    facebook_url : str, default=''
+        Facebook URL.
+    google_url : str, default=''
+        Google URL.
+    github_url : str, default=''
+        GitHub URL.
+    website_url : str, default=''
+        Website URL.
+    bio : str, default = ''
+        User biography.
+    is_want_news : bool, default is True
+        User wish to receive some news.
+
+    Returns
+    -------
+    user : rampdb.model.User
+        The user entry in the database.
+    """
     # decode the hashed password (=bytes) because database columns is String
     hashed_password = get_hashed_password(password).decode()
     user = User(name=name, hashed_password=hashed_password,
@@ -709,32 +756,34 @@ def create_user(name, password, lastname, firstname, email,
     return user
 
 
+# TODO: This function should not rely on FlaskForm. It is difficult to
+# instantiate such class and make it impossible to test it properly. It should
+# be some pure python form --- e.g., dict --- and the Flask should be
+# interfaced and tested in a specific module.
+# TODO: I think that we had a bug by encoding the string before
 def update_user(user, form):
+    """Update a user profile in the database.
+
+    Parameters
+    ----------
+    user : rampdb.model.User
+        The user to update
+    form : FlaskForm
+        A flask form containing the information of a user. This form should be
+        a instance from :class:`databoard.forms.UserUpdateProfileForm`.
+    """
     logger.info('Updating {}'.format(user))
-    if encode_string(user.lastname) != encode_string(form.lastname.data):
-        logger.info('Updating lastname from {} to {}'.format(
-            encode_string(user.lastname), encode_string(form.lastname.data)))
-    if encode_string(user.firstname) != encode_string(form.firstname.data):
-        logger.info('Updating firstname from {} to {}'.format(
-            encode_string(user.firstname),
-            encode_string(form.firstname.data)))
-    if user.email != form.email.data:
-        logger.info('Updating email from {} to {}'.format(
-            user.email, form.email.data))
-    if user.is_want_news != form.is_want_news.data:
-        logger.info('Updating is_want_news from {} to {}'.format(
-            user.is_want_news, form.is_want_news.data))
-    user.lastname = encode_string(form.lastname.data)
-    user.firstname = encode_string(form.firstname.data)
-    user.email = form.email.data
-    user.linkedin_url = encode_string(form.linkedin_url.data)
-    user.twitter_url = encode_string(form.twitter_url.data)
-    user.facebook_url = encode_string(form.facebook_url.data)
-    user.google_url = encode_string(form.google_url.data)
-    user.github_url = encode_string(form.github_url.data)
-    user.website_url = encode_string(form.website_url.data)
-    user.bio = encode_string(form.bio.data)
-    user.is_want_news = form.is_want_news.data
+    def _update_and_log(user, form, field):
+        if getattr(user, field) != getattr(form, field).data:
+            logger.info(
+                'Update the "{}" field from {} to {}'
+                .format(field, getattr(user, field), getattr(form, field).data)
+                )
+            setattr(user, field, getattr(form, field).data)
+    for field in ('lastname', 'firstname', 'linkedin_url', 'twitter_url',
+                  'facebook_url', 'google_url', 'github_url', 'website_url',
+                  'bio', 'email', 'is_want_news'):
+        _update_and_log(user, form, field)
     try:
         db.session.commit()
     except IntegrityError as e:
