@@ -44,6 +44,7 @@ from databoard.db_tools import delete_problem
 from databoard.db_tools import make_submission
 from databoard.db_tools import make_submission_and_copy_files
 from databoard.db_tools import sign_up_team
+from databoard.db_tools import submit_starting_kit
 
 
 @pytest.fixture
@@ -473,3 +474,16 @@ def test_make_submission_and_copy_files(setup_db):
                             .one_or_none())
     assert 'submission_000000002' in submission.path
     assert os.path.exists(os.path.join(submission.path, 'classifier.py'))
+
+
+def test_submit_starting_kit(setup_db):
+    event_name, username = _setup_sign_up()
+    sign_up_team(event_name, username)
+    submit_starting_kit(event_name, username)
+
+    submissions = db.session.query(Submission).all()
+    assert len(submissions) == 4
+    expected_submission_name = {'starting_kit', 'starting_kit_test',
+                                'random_forest_10_10', 'error'}
+    submission_name = set(sub.name for sub in submissions)
+    assert submission_name == expected_submission_name

@@ -14,6 +14,7 @@ from .db_tools import approve_user
 from .db_tools import create_user
 from .db_tools import setup_files_extension_type
 from .db_tools import sign_up_team
+from .db_tools import submit_starting_kit
 
 
 def create_test_db():
@@ -122,6 +123,11 @@ def sign_up_team_to_events():
     """
     for event_name in ['iris_test', 'boston_housing_test']:
         sign_up_team(event_name, 'test_user')
+
+
+def submit_all_starting_kits():
+    for event_name in ['iris_test', 'boston_housing_test']:
+        submit_starting_kit(event_name, 'test_user')
 
 
 # def _add_problem_and_event(problem_name, test_user_name):

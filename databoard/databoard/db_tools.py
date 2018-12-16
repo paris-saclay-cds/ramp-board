@@ -826,22 +826,39 @@ def sign_up_team(event_name, team_name):
     db.session.commit()
 
 
+# TODO: this function should be renamed "submit_starting_kits" to show that we
+# submit all starting kits
 def submit_starting_kit(event_name, team_name):
-    """Submit all starting kits in ramp_kits_path/ramp_name/submissions."""
+    """Submit all starting kits for a given event.
+
+    Some kits contain several starting kits. This function allows to submit
+    all these kits at once for a specific user.
+
+    Parameters
+    ----------
+    event_name : str
+        The name of the event.
+    team_name : str
+        The name of the team.
+    """
     event = Event.query.filter_by(name=event_name).one()
-    submission_path = os.path.join(
-        ramp_config['ramp_kits_path'],
-        event.problem.name,
-        ramp_config['submissions_dir'])
+    submission_path = os.path.join(ramp_config['ramp_kits_path'],
+                                   event.problem.name,
+                                   ramp_config['submissions_dir'])
     submission_names = os.listdir(submission_path)
+    # we temporary bypass the limit time between two submissions
     min_duration_between_submissions = event.min_duration_between_submissions
     event.min_duration_between_submissions = 0
     for submission_name in submission_names:
         from_submission_path = os.path.join(submission_path, submission_name)
-        if submission_name == ramp_config['sandbox_dir']:
-            submission_name = ramp_config['sandbox_dir'] + '_test'
+        # one of the starting kit is usually used a sandbox and we need to
+        # change the name to not have any duplicate
+        submission_name = (submission_name
+                           if submission_name != ramp_config['sandbox_dir']
+                           else submission_name + '_test')
         make_submission_and_copy_files(
             event_name, team_name, submission_name, from_submission_path)
+    # revert the minimum duration between two submissions
     event.min_duration_between_submissions = min_duration_between_submissions
     db.session.commit()
 
@@ -1091,7 +1108,6 @@ def make_submission_and_copy_files(event_name, team_name, submission_name,
     for filename in submission.f_names:
         shutil.copy2(src=os.path.join(path_kit_submission, filename),
                      dst=os.path.join(submission.path, filename))
-        print(os.path.join(submission.path, filename))
     logger.info('Copying the submission files into the deployment folder')
     logger.info('Adding {}'.format(submission))
     return submission
