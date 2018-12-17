@@ -21,7 +21,7 @@ from databoard.testing import add_events
 from databoard.testing import add_problems
 from databoard.testing import add_users
 from databoard.testing import create_test_db
-from databoard.testing import sign_up_team_to_events
+from databoard.testing import sign_up_teams_to_events
 from databoard.testing import submit_all_starting_kits
 
 
@@ -69,14 +69,14 @@ def test_sign_up_team_to_events(setup_db):
     add_users()
     add_problems()
     add_events()
-    sign_up_team_to_events()
+    sign_up_teams_to_events()
 
 
 def test_submit_all_starting_kits(setup_db):
     add_users()
     add_problems()
     add_events()
-    sign_up_team_to_events()
+    sign_up_teams_to_events()
     submit_all_starting_kits()
 
 
