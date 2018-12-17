@@ -121,3 +121,4 @@ class Dispatcher:
             self.launch_workers()
             logger.info('Collect results')
             self.collect_result()
+        logger.info('Dispatcher killed by the poison pill')
