@@ -73,3 +73,13 @@ class BaseWorker(six.with_metaclass(ABCMeta)):
             raise ValueError('No submission was launched. Call the method '
                              'launch_submission() and then try again to '
                              'collect the results.')
+
+    def __str__(self):
+        msg = ('{worker_name}({submission_name}): status="{status}"'
+               .format(worker_name=self.__class__.__name__,
+                       submission_name=self.submission,
+                       status=self.status))
+        return msg
+
+    def __repr__(self):
+        return self.__str__()

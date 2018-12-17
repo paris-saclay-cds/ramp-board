@@ -1276,6 +1276,13 @@ def send_register_request_mail(user):
         send_mail(recipient, subject, body)
 
 
+def get_new_submissions(event_name):
+    # TODO do the proper DB call
+    submissions = get_submissions(event_name=event_name)
+    return [sub for sub in submissions if sub.state == 'new']
+
+
+# TODO: to remove in favor of get_new_submission
 def get_earliest_new_submission(event_name=None):
     if event_name is None:
         new_submissions = Submission.query.filter_by(
