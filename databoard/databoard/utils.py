@@ -16,22 +16,27 @@ PYTHON3 = sys.version_info[0] == 3
 
 
 def encode_string(text):
-    if PYTHON3:
-        if isinstance(text, str):
-            encoded_text = bytes(text, 'utf-8')
-        else:
-            encoded_text = text
-    else:
-        encoded_text = text.encode('utf8')
+    """Encode text into an array of bytes in both Python 2 and 3 with UTF-8.
 
-    return encoded_text
+    Parameters
+    ----------
+    text : str or bytes
+        The text to be encoded
+
+    Returns
+    -------
+    encoded_text : bytes
+        The encoded text.
+    """
+    if PYTHON3:
+        return bytes(text, 'utf-8') if isinstance(text, str) else text
+    return text.encode('utf8')
 
 
 def remove_non_ascii(text):
     if PYTHON3:
         return unidecode(text)
-    else:
-        return unicode(unidecode(unicode(text, encoding='utf-8')), 'utf-8')
+    return unicode(unidecode(unicode(text, encoding='utf-8')), 'utf-8')
 
 
 def date_time_format(date_time):

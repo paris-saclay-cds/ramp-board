@@ -17,36 +17,37 @@ from databoard import ramp_config
 
 import databoard.db_tools as db_tools
 
-from databoard.testing import create_test_db
-from databoard.testing import add_users
+from databoard.testing import add_events
 from databoard.testing import add_problems
+from databoard.testing import add_users
+from databoard.testing import create_test_db
+from databoard.testing import sign_up_teams_to_events
+from databoard.testing import submit_all_starting_kits
 
 
-def setup_module(module):
-    """Create the database."""
-    create_test_db()
+@pytest.fixture
+def setup_db():
+    try:
+        create_test_db()
+        yield
+    finally:
+        shutil.rmtree(deployment_path, ignore_errors=True)
+        db.session.close()
+        db.session.remove()
+        db.drop_all()
 
 
-def teardown_module(module):
-    """Clean-up the database."""
-    shutil.rmtree(deployment_path)
-    db.session.close()
-    db.session.remove()
-    db.drop_all()
-
-
-def test_add_users():
-    # add users to the database that we just created
+def test_add_users(setup_db):
     add_users()
     users = db.session.query(User).all()
     for user in users:
-        assert user.name in ('test_user', 'test_iris_admin')
+        assert user.name in ('test_user', 'test_user_2', 'test_iris_admin')
     err_msg = 'username is already in use'
     with pytest.raises(NameClashError, match=err_msg):
         add_users()
 
 
-def test_add_problems():
+def test_add_problems(setup_db):
     add_problems()
     problems = db.session.query(Problem).all()
     for problem in problems:
@@ -57,39 +58,29 @@ def test_add_problems():
         add_problems()
 
 
-# def _add_problem_and_event(problem_name, test_user_name):
-#     problem_kits_path = os.path.join(ramp_config['ramp_kits_path'],
-#                                      problem_name)
-#     problem_data_path = os.path.join(ramp_config['ramp_data_path'],
-#                                      problem_name)
-#     os.system('git clone https://github.com/ramp-data/{}.git {}'.format(
-#         problem_name, problem_data_path))
-#     os.system('git clone https://github.com/ramp-kits/{}.git {}'.format(
-#         problem_name, problem_kits_path))
-#     os.chdir(problem_data_path)
-#     print('Preparing {} data...'.format(problem_name))
-#     os.system('python prepare_data.py')
-#     os.chdir(problem_kits_path)
-#     os.system('jupyter nbconvert --to html {}_starting_kit.ipynb'.format(
-#         problem_name))
+def test_add_events(setup_db):
+    add_problems()
+    add_events()
+    with pytest.raises(ValueError):
+        add_events()
 
-#     db_tools.add_problem(
-#         problem_name, force=True)
-#     db_tools.add_problem(
-#         problem_name)
-#     db_tools.add_problem(
-#         problem_name, force=True)
-#     event_name = '{}_test'.format(problem_name)
-#     event_title = 'test event'
-#     db_tools.add_event(
-#         problem_name, event_name, event_title, is_public=True, force=True)
-#     db_tools.add_event(
-#         problem_name, event_name, event_title, is_public=True)
-#     db_tools.add_event(
-#         problem_name, event_name, event_title, is_public=True, force=True)
-#     db_tools.sign_up_team(event_name, test_user_name)
-#     db_tools.submit_starting_kit(event_name, test_user_name)
-#     db_tools.submit_starting_kit(event_name, test_user_name)
+
+def test_sign_up_team_to_events(setup_db):
+    add_users()
+    add_problems()
+    add_events()
+    sign_up_teams_to_events()
+
+
+def test_submit_all_starting_kits(setup_db):
+    add_users()
+    add_problems()
+    add_events()
+    sign_up_teams_to_events()
+    submit_all_starting_kits()
+
+
+# def _add_problem_and_event(problem_name, test_user_name):
 #     submissions = db_tools.get_submissions(event_name, test_user_name)
 #     db_tools.train_test_submissions(
 #         submissions, force_retrain_test=True, is_parallelize=False)

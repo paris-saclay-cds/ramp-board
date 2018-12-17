@@ -1,8 +1,14 @@
 # coding=utf-8
 import os
+import sys
 import pandas as pd
-from databoard import utils
 
+from databoard.forms import UserUpdateProfileForm
+
+from databoard import utils
+from databoard.utils import encode_string
+
+PYTHON3 = sys.version_info[0] == 3
 
 def test_password_hashing():
     plain_text_password = "hjst3789ep;ocikaqjw"
@@ -33,9 +39,20 @@ def test_generate_passwords():
 
 
 def test_import_module_from_source():
-        module_path = os.path.dirname(__file__)
-        # import the local_module.py which consist of a single function.
-        mod = utils.import_module_from_source(
-                os.path.join(module_path, 'local_module.py'), 'mod'
-        )
-        assert hasattr(mod, 'func_local_module')
+    module_path = os.path.dirname(__file__)
+    # import the local_module.py which consist of a single function.
+    mod = utils.import_module_from_source(
+        os.path.join(module_path, 'local_module.py'), 'mod'
+    )
+    assert hasattr(mod, 'func_local_module')
+
+
+def test_encode_string():
+    if PYTHON3:
+        string = encode_string('a string')
+        assert isinstance(string, bytes)
+        string = encode_string(b'a string')
+        assert isinstance(string, bytes)
+    else:
+        string = encode_string('a string')
+        assert isinstance(string, bytes)

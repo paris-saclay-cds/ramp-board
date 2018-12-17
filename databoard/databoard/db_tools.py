@@ -509,7 +509,7 @@ def add_problem(problem_name, force=False):
 # these could go into a delete callback in problem and event, I just don't know
 # how to do that.
 def delete_problem(problem_name):
-    """Delete a problem form a database.
+    """Delete a problem from the database.
 
     Parameters
     ----------
@@ -526,6 +526,13 @@ def delete_problem(problem_name):
 # the main reason having this is that I couldn't make a cascade delete in
 # SubmissionSimilarity since it has two submission parents
 def delete_event(event_name):
+    """Delete an event from the database.
+
+    Parameters
+    ----------
+    event_name : str
+        The name of the event to delete.
+    """
     event = Event.query.filter_by(name=event_name).one()
     submissions = get_submissions(event_name=event_name)
     delete_submission_similarity(submissions)
@@ -663,6 +670,46 @@ def create_user(name, password, lastname, firstname, email,
                 access_level='user', hidden_notes='', linkedin_url='',
                 twitter_url='', facebook_url='', google_url='', github_url='',
                 website_url='', bio='', is_want_news=True):
+    """Create a new user in the database.
+
+    Parameters
+    ----------
+    name : str
+        The username.
+    password : str
+        The password.
+    lastname : str
+        The user lastname.
+    firstname : str
+        The user firstname.
+    email : str
+        The user email address.
+    access_level : {'admin', 'user', 'asked'}, default='user'
+        The access level of the user.
+    hidden_notes : str, default=''
+        Some hidden notes.
+    linkedin_url : str, default=''
+        Linkedin URL.
+    twitter_url : str, default=''
+        Twitter URL.
+    facebook_url : str, default=''
+        Facebook URL.
+    google_url : str, default=''
+        Google URL.
+    github_url : str, default=''
+        GitHub URL.
+    website_url : str, default=''
+        Website URL.
+    bio : str, default = ''
+        User biography.
+    is_want_news : bool, default is True
+        User wish to receive some news.
+
+    Returns
+    -------
+    user : rampdb.model.User
+        The user entry in the database.
+    """
     # decode the hashed password (=bytes) because database columns is String
     hashed_password = get_hashed_password(password).decode()
     user = User(name=name, hashed_password=hashed_password,
@@ -709,32 +756,34 @@ def create_user(name, password, lastname, firstname, email,
     return user
 
 
+# TODO: This function should not rely on FlaskForm. It is difficult to
+# instantiate such class and make it impossible to test it properly. It should
+# be some pure python form --- e.g., dict --- and the Flask should be
+# interfaced and tested in a specific module.
+# TODO: I think that we had a bug by encoding the string before
 def update_user(user, form):
+    """Update a user profile in the database.
+
+    Parameters
+    ----------
+    user : rampdb.model.User
+        The user to update
+    form : FlaskForm
+        A flask form containing the information of a user. This form should be
+        a instance from :class:`databoard.forms.UserUpdateProfileForm`.
+    """
     logger.info('Updating {}'.format(user))
-    if encode_string(user.lastname) != encode_string(form.lastname.data):
-        logger.info('Updating lastname from {} to {}'.format(
-            encode_string(user.lastname), encode_string(form.lastname.data)))
-    if encode_string(user.firstname) != encode_string(form.firstname.data):
-        logger.info('Updating firstname from {} to {}'.format(
-            encode_string(user.firstname),
-            encode_string(form.firstname.data)))
-    if user.email != form.email.data:
-        logger.info('Updating email from {} to {}'.format(
-            user.email, form.email.data))
-    if user.is_want_news != form.is_want_news.data:
-        logger.info('Updating is_want_news from {} to {}'.format(
-            user.is_want_news, form.is_want_news.data))
-    user.lastname = encode_string(form.lastname.data)
-    user.firstname = encode_string(form.firstname.data)
-    user.email = form.email.data
-    user.linkedin_url = encode_string(form.linkedin_url.data)
-    user.twitter_url = encode_string(form.twitter_url.data)
-    user.facebook_url = encode_string(form.facebook_url.data)
-    user.google_url = encode_string(form.google_url.data)
-    user.github_url = encode_string(form.github_url.data)
-    user.website_url = encode_string(form.website_url.data)
-    user.bio = encode_string(form.bio.data)
-    user.is_want_news = form.is_want_news.data
+    def _update_and_log(user, form, field):
+        if getattr(user, field) != getattr(form, field).data:
+            logger.info(
+                'Update the "{}" field from {} to {}'
+                .format(field, getattr(user, field), getattr(form, field).data)
+                )
+            setattr(user, field, getattr(form, field).data)
+    for field in ('lastname', 'firstname', 'linkedin_url', 'twitter_url',
+                  'facebook_url', 'google_url', 'github_url', 'website_url',
+                  'bio', 'email', 'is_want_news'):
+        _update_and_log(user, form, field)
     try:
         db.session.commit()
     except IntegrityError as e:
@@ -762,6 +811,28 @@ def get_sandbox(event, user):
 
 
 def ask_sign_up_team(event_name, team_name):
+    """Register a team to a RAMP event without approving.
+
+    :class:`rampdb.model.EventTeam` as an attribute ``approved`` set to
+    ``False`` by default. Executing this function only create the relationship
+    in the database.
+
+    Parameters
+    ----------
+    event_name : str
+        The RAMP event name.
+    team_name : str
+        The name of the team.
+
+    Returns
+    -------
+    event : rampdb.model.Event
+        The queried Event.
+    team : rampdb.model.Team
+        The queried team.
+    event_team : rampdb.model.EventTeam
+        The relationship event-team table.
+    """
     event = Event.query.filter_by(name=event_name).one()
     team = Team.query.filter_by(name=team_name).one()
     event_team = EventTeam.query.filter_by(
@@ -770,52 +841,73 @@ def ask_sign_up_team(event_name, team_name):
         event_team = EventTeam(event=event, team=team)
         db.session.add(event_team)
         db.session.commit()
+    return event, team, event_team
 
 
 def sign_up_team(event_name, team_name):
-    event = Event.query.filter_by(name=event_name).one()
-    team = Team.query.filter_by(name=team_name).one()
-    event_team = EventTeam.query.filter_by(
-        event=event, team=team).one_or_none()
-    if event_team is None:
-        ask_sign_up_team(event_name, team_name)
-        event_team = EventTeam.query.filter_by(
-            event=event, team=team).one_or_none()
-    # submitting the starting kit for team
-    from_submission_path = os.path.join(
-        ramp_config['ramp_kits_path'],
-        event.problem.name,
-        ramp_config['submissions_dir'],
-        ramp_config['sandbox_dir'])
+    """Register a team to a RAMP event and submit the starting kit.
+
+    Parameters
+    ----------
+    event_name : str
+        The RAMP event name.
+    team_name : str
+        The name of the team.
+    """
+    event, team, event_team = ask_sign_up_team(event_name, team_name)
+    # create the path to the sandbox submission which is usually the
+    # starting-kit
+    path_sandbox_submission = os.path.join(
+        ramp_config['ramp_kits_path'], event.problem.name,
+        ramp_config['submissions_dir'], ramp_config['sandbox_dir']
+    )
+    # setup the sandbox
     make_submission_and_copy_files(
         event_name, team_name, ramp_config['sandbox_dir'],
-        from_submission_path)
+        path_sandbox_submission
+    )
     for user in get_team_members(team):
-        send_mail(
-            to=user.email,
-            subject='signed up for {} as team {}'.format(
-                event_name, team_name),
+        send_mail(to=user.email,
+                  subject='signed up for {} as team {}'.format(
+                  event_name, team_name),
             body='')
     event_team.approved = True
     db.session.commit()
 
 
+# TODO: this function should be renamed "submit_starting_kits" to show that we
+# submit all starting kits
 def submit_starting_kit(event_name, team_name):
-    """Submit all starting kits in ramp_kits_path/ramp_name/submissions."""
+    """Submit all starting kits for a given event.
+
+    Some kits contain several starting kits. This function allows to submit
+    all these kits at once for a specific user.
+
+    Parameters
+    ----------
+    event_name : str
+        The name of the event.
+    team_name : str
+        The name of the team.
+    """
     event = Event.query.filter_by(name=event_name).one()
-    submission_path = os.path.join(
-        ramp_config['ramp_kits_path'],
-        event.problem.name,
-        ramp_config['submissions_dir'])
+    submission_path = os.path.join(ramp_config['ramp_kits_path'],
+                                   event.problem.name,
+                                   ramp_config['submissions_dir'])
     submission_names = os.listdir(submission_path)
+    # we temporary bypass the limit time between two submissions
     min_duration_between_submissions = event.min_duration_between_submissions
     event.min_duration_between_submissions = 0
     for submission_name in submission_names:
         from_submission_path = os.path.join(submission_path, submission_name)
-        if submission_name == ramp_config['sandbox_dir']:
-            submission_name = ramp_config['sandbox_dir'] + '_test'
+        # one of the starting kit is usually used a sandbox and we need to
+        # change the name to not have any duplicate
+        submission_name = (submission_name
+                           if submission_name != ramp_config['sandbox_dir']
+                           else submission_name + '_test')
         make_submission_and_copy_files(
             event_name, team_name, submission_name, from_submission_path)
+    # revert the minimum duration between two submissions
     event.min_duration_between_submissions = min_duration_between_submissions
     db.session.commit()
 
@@ -887,14 +979,25 @@ def delete_submission(event_name, team_name, submission_name):
     set_n_submissions(event_name)
 
 
-def make_submission_on_cv_folds(cv_folds, submission):
-    for cv_fold in cv_folds:
-        submission_on_cv_fold = SubmissionOnCVFold(
-            submission=submission, cv_fold=cv_fold)
-        db.session.add(submission_on_cv_fold)
-
-
 def make_submission(event_name, team_name, submission_name, submission_path):
+    """Create a submission in the database and returns an handle.
+
+    Parameters
+    ----------
+    event_name : str
+        The event associated to the submission.
+    team_name : str
+        The team associated to the submission.
+    submission_name : str
+        The name to give to the current submission.
+    submission_path : str
+        The path of the files associated to the current submission.
+
+    Returns
+    -------
+    submission : rampdb.model.Submission
+        The newly created submission.
+    """
     # TODO: to call unit tests on submitted files. Those that are found
     # in the table that describes the workflow. For the rest just check
     # maybe size
@@ -903,83 +1006,89 @@ def make_submission(event_name, team_name, submission_name, submission_path):
     event_team = EventTeam.query.filter_by(event=event, team=team).one()
     submission = Submission.query.filter_by(
         name=submission_name, event_team=event_team).one_or_none()
+
+    # create a new submission
     if submission is None:
-        # Checking if submission is too early
-        all_submissions = Submission.query.filter_by(
-            event_team=event_team).order_by(
-                Submission.submission_timestamp).all()
-        if len(all_submissions) == 0:
-            last_submission = None
-        else:
-            last_submission = all_submissions[-1]
-        if last_submission is not None and last_submission.is_not_sandbox:
-            now = datetime.datetime.utcnow()
-            last = last_submission.submission_timestamp
-            min_diff = event.min_duration_between_submissions
-            diff = (now - last).total_seconds()
-            if team.admin.access_level != 'admin' and diff < min_diff:
+        all_submissions = (Submission.query
+            .filter_by(event_team=event_team)
+            .order_by(Submission.submission_timestamp).all())
+        last_submission = None if not all_submissions else all_submissions[-1]
+        # check for non-admin user if they wait enough to make a new submission
+        if (team.admin.access_level != 'admin' and last_submission is not None
+               and last_submission.is_not_sandbox):
+            time_to_last_submission = (datetime.datetime.utcnow() -
+                                       last_submission.submission_timestamp)
+            min_resubmit_time = datetime.timedelta(
+                seconds=event.min_duration_between_submissions)
+            awaiting_time = int((min_resubmit_time - time_to_last_submission)
+                                .total_seconds())
+            if awaiting_time > 0:
                 raise TooEarlySubmissionError(
                     'You need to wait {} more seconds until next submission'
-                    .format(int(min_diff - diff)))
+                    .format(awaiting_time))
+
         submission = Submission(name=submission_name, event_team=event_team)
-        make_submission_on_cv_folds(event.cv_folds, submission)
+        for cv_fold in event.cv_folds:
+            submission_on_cv_fold = SubmissionOnCVFold(submission=submission,
+                                                       cv_fold=cv_fold)
+            db.session.add(submission_on_cv_fold)
         db.session.add(submission)
+
+    # the submission already exist
     else:
         # We allow resubmit for new or failing submissions
-        if submission.is_not_sandbox and\
-                (submission.state == 'new' or submission.is_error):
+        if (submission.is_not_sandbox and
+               (submission.state == 'new' or submission.is_error)):
             submission.set_state('new')
             submission.submission_timestamp = datetime.datetime.utcnow()
             for submission_on_cv_fold in submission.on_cv_folds:
                 submission_on_cv_fold.reset()
         else:
-            error_msg = 'Submission "{}" '.format(submission_name)
-            error_msg = 'of team "{}" '.format(team_name)
-            error_msg += 'at event "{}" exists already'.format(event_name)
+            error_msg = ('Submission "{}" of team "{}" at event "{}" exists '
+                         'already'
+                         .format(submission_name, team_name, event_name))
             raise DuplicateSubmissionError(error_msg)
 
-    # All file names with at least a . in them
-    deposited_f_name_list = os.listdir(submission_path)
-    deposited_f_name_list = [
-        f_name for f_name in deposited_f_name_list
-        if f_name.find('.') >= 0]
-    # TODO: more error checking
-    deposited_types = [f_name.split('.')[0]
-                       for f_name in deposited_f_name_list]
-    deposited_extensions = [f_name.split('.')[1]
-                            for f_name in deposited_f_name_list]
+    files_type_extension =  [os.path.splitext(filename)
+                             for filename in os.listdir(submission_path)]
+    # filter the files which contain an extension
+    # remove the dot of the extension.
+    files_type_extension = [(filename, extension[1:])
+                            for filename, extension in files_type_extension
+                            if extension != '']
+
     for workflow_element in event.problem.workflow.elements:
-        # We find all files with matching names to workflow_element.name.
-        # If none found, raise error.
-        # Then look for one that has a legal extension. If none found,
-        # raise error. If there are several ones, for now we use the first
-        # matching file.
-
-        i_names = [i for i in range(len(deposited_types))
-                   if deposited_types[i] == workflow_element.name]
-        if len(i_names) == 0:
+        try:
+            desposited_types, deposited_extensions = zip(
+                *[(filename, extension)
+                for filename, extension in files_type_extension
+                if filename == workflow_element.name]
+            )
+        except ValueError as e:
             db.session.rollback()
-            raise MissingSubmissionFileError('{}/{}/{}/{}: {}'.format(
-                event_name, team_name, submission_name, workflow_element.name,
-                submission_path))
+            if 'values to unpack' in str(e):
+                # no file matching the workflow element
+                raise MissingSubmissionFileError(
+                    'No file corresponding to the workflow element "{}"'
+                    .format(workflow_element)
+                    )
+            raise
 
-        for i_name in i_names:
-            extension_name = deposited_extensions[i_name]
+        # check that files have the correct extension ...
+        for extension_name in deposited_extensions:
             extension = Extension.query.filter_by(
                 name=extension_name).one_or_none()
             if extension is not None:
                 break
+        # ... otherwise we raise an error
         else:
             db.session.rollback()
-            extensions = [deposited_extensions[i_name] for i_name in i_names]
-            extensions = extensions.join(",")
-            for i_name in i_names:
-                extensions.append(deposited_extensions[i_name])
-            raise MissingExtensionError('{}/{}/{}/{}/{}: {}'.format(
-                event_name, team_name, submission_name, workflow_element.name,
-                extensions, submission_path))
+            raise MissingExtensionError(
+                'All extensions "{}" are unknown for the submission "{}".'
+                .format(", ".join(deposited_extensions), submission_name)
+            )
 
-        # maybe it's a resubmit
+        # check if it is a resubmission
         submission_file = SubmissionFile.query.filter_by(
             workflow_element=workflow_element,
             submission=submission).one_or_none()
@@ -998,36 +1107,57 @@ def make_submission(event_name, team_name, submission_name, submission_path):
     event_team.last_submission_name = submission_name
     db.session.commit()
 
+    # TODO: test missing there for those update
     update_leaderboards(event_name)
     update_user_leaderboards(event_name, team.name)
-
-    # We should copy files here
     return submission
 
 
-def make_submission_and_copy_files(event_name, team_name, new_submission_name,
-                                   from_submission_path):
-    """Make submission and copy files to submission.path.
+# TODO: This function should be renamed since it is only used to setup the
+# sandbox or submit the starting kit.
+# TODO: Since the function is only called twice, I would probably remove it
+# and just call make_submission with a duplication of the file copying code.
+def make_submission_and_copy_files(event_name, team_name, submission_name,
+                                   path_kit_submission):
+    """Create a submission and copy the file into the deployment path.
 
-    Called from sign_up_team(), merge_teams(), fetch.add_models(),
-    view.sandbox().
+    This function is usually used to setup the sandbox on the frontend.
+
+    Parameters
+    ----------
+    event_name : str
+        The name of the event associated to the submission.
+    team_name : str
+        The name of the team associated to the submission.
+    submission_name : str
+        The name of the submission.
+    path_kit_submission : str
+        The path of the submission within the kit.
+
+    Returns
+    -------
+    submission : rampdb.model.Submission
+        The newly created submission.
+
+    Notes
+    -----
+    Called by :func:`sign_up_team` and :func:`view.sandbox`.
     """
     submission = make_submission(
-        event_name, team_name, new_submission_name, from_submission_path)
-    # clean up the model directory in case it's a resubmission
+        event_name, team_name, submission_name, path_kit_submission)
     if os.path.exists(submission.path):
         shutil.rmtree(submission.path)
-    os.mkdir(submission.path)
-    open(os.path.join(submission.path, '__init__.py'), 'a').close()
+    os.makedirs(submission.path)
+    # TODO: We should not create an __init__.py file. This should be solve by
+    # using the import from source.
+    # open(os.path.join(submission.path, '__init__.py'), 'a').close()
 
-    # copy the submission files into the model directory, should all this
-    # probably go to Submission
-    for f_name in submission.f_names:
-        src = os.path.join(from_submission_path, f_name)
-        dst = os.path.join(submission.path, f_name)
-        shutil.copy2(src, dst)  # copying also metadata
-        logger.info('Copying {} to {}'.format(src, dst))
-
+    # copy the submission of a kit to the submission folder of the server
+    # (deployment path).
+    for filename in submission.f_names:
+        shutil.copy2(src=os.path.join(path_kit_submission, filename),
+                     dst=os.path.join(submission.path, filename))
+    logger.info('Copying the submission files into the deployment folder')
     logger.info('Adding {}'.format(submission))
     return submission
 
@@ -2119,6 +2249,8 @@ def get_competition_leaderboards(event_name):
 
 
 def update_leaderboards(event_name):
+    """Update the leaderboad.
+    """
     private_leaderboard_html = get_private_leaderboards(
         event_name)
     leaderboards = get_leaderboards(event_name)
@@ -2250,18 +2382,62 @@ def get_new_leaderboard(event_name, team_name=None, user_name=None):
     return table_format(leaderboard_html)
 
 
+# TODO: This function is too complex. We need to restrain it to the use case
+# that we have or make it generic for all possible filtering
 def get_submissions(event_name=None, team_name=None, user_name=None,
                     submission_name=None):
+    """Query submissions from the database.
+
+    By passing one of the argument, the query will be filtered.
+
+    Parameters
+    ----------
+    event_name : str or None
+        The name of the event. By default, all events will be considered.
+    team_name : str or None
+        The name of the team. By default, all teams will be considered.
+    user_name : str or None
+        The name of the user. By default, all users will be considered.
+    submission_name : str or None
+        The name of the submission. By default, all submission will be
+        considered.
+
+    Returns
+    -------
+    submissions : list of rampdb.model.Submission
+        The filtered submissions.
+    """
+    if (event_name is None and (team_name is not None or
+                                user_name is not None or
+                                submission_name is not None)):
+        raise ValueError(
+            '"event_name" needs to be specified if "team_name", "user_name", '
+            'or "submission_name" are given. Got "event_name"={}, "team_name"'
+            '={}, user_name={}, and "submission_name"={}.'
+            .format(event_name, team_name, user_name, submission_name)
+            )
+    elif user_name is not None and team_name is not None:
+        raise ValueError(
+            'If "user_name" is given then "team_name" needs to be None. '
+            'Got "team_name"={}.'.format(team_name)
+        )
+    elif submission_name is not None and team_name is None:
+        raise ValueError(
+            'When "submission_name" is specified, you need to provide a '
+            '"team_name".'
+        )
+
     if event_name is None:  # All submissions
         submissions = Submission.query.all()
     else:
         if team_name is None:
             if user_name is None:  # All submissions in a given event
-                submissions_ = db.session.query(
-                    Submission, Event, EventTeam).filter(
-                    Event.name == event_name).filter(
-                    Event.id == EventTeam.event_id).filter(
-                    EventTeam.id == Submission.event_team_id).all()
+                submissions_ = \
+                (db.session.query(Submission, Event, EventTeam)
+                           .filter(Event.name==event_name)
+                           .filter(Event.id==EventTeam.event_id)
+                           .filter(EventTeam.id==Submission.event_team_id)
+                           .all())
                 if submissions_:
                     submissions = [s for (s, e, et) in submissions_]
                 else:
@@ -2270,30 +2446,33 @@ def get_submissions(event_name=None, team_name=None, user_name=None,
                 # All submissions for a given event by all the teams of a user
                 submissions = []
                 for event_team in get_user_event_teams(event_name, user_name):
-                    submissions += db.session.query(
-                        Submission).filter(
-                        Event.name == event_name).filter(
-                        Event.id == event_team.event_id).filter(
-                        event_team.id == Submission.event_team_id).all()
+                    submissions += \
+                    (db.session.query(Submission)
+                               .filter(Event.name==event_name)
+                               .filter(Event.id==event_team.event_id)
+                               .filter(event_team.id==Submission.event_team_id)
+                               .all())
         else:
             if submission_name is None:
                 # All submissions in a given event and team
-                submissions_ = db.session.query(
-                    Submission, Event, Team, EventTeam).filter(
-                    Event.name == event_name).filter(
-                    Team.name == team_name).filter(
-                    Event.id == EventTeam.event_id).filter(
-                    Team.id == EventTeam.team_id).filter(
-                    EventTeam.id == Submission.event_team_id).all()
+                submissions_ = \
+                (db.session.query(Submission, Event, Team, EventTeam)
+                           .filter(Event.name==event_name)
+                           .filter(Team.name==team_name)
+                           .filter(Event.id==EventTeam.event_id)
+                           .filter(Team.id==EventTeam.team_id)
+                           .filter(EventTeam.id==Submission.event_team_id)
+                           .all())
             else:  # Given submission
-                submissions_ = db.session.query(
-                    Submission, Event, Team, EventTeam).filter(
-                    Submission.name == submission_name).filter(
-                    Event.name == event_name).filter(
-                    Team.name == team_name).filter(
-                    Event.id == EventTeam.event_id).filter(
-                    Team.id == EventTeam.team_id).filter(
-                    EventTeam.id == Submission.event_team_id).all()
+                submissions_ = \
+                (db.session.query(Submission, Event, Team, EventTeam)
+                           .filter(Submission.name==submission_name)
+                           .filter(Event.name==event_name)
+                           .filter(Team.name==team_name)
+                           .filter(Event.id==EventTeam.event_id)
+                           .filter(Team.id==EventTeam.team_id)
+                           .filter(EventTeam.id==Submission.event_team_id)
+                           .all())
             if submissions_:
                 submissions = [s for (s, e, t, et) in submissions_]
             else:
