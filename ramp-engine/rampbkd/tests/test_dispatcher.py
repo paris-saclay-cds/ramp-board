@@ -1,5 +1,6 @@
 import os
 import shutil
+import tempfile
 
 import pytest
 
@@ -25,18 +26,14 @@ def setup_db():
 
 
 def test_dispatcher(setup_db):
-    dispatcher_config = {
-        'event_name': 'iris_test',
-        'conda_env': 'ramp-iris',
-        'local_log_folder': os.path.join('/tmp', 'log'),
-        'local_predictions_folder': os.path.join('/tmp', 'preds')
-    }
-    dispatcher = Dispatcher(config=dispatcher_config, worker=CondaEnvWorker,
-                            n_worker=-1, worker_policy='exit')
-    # dispatcher.launch()
-    try:
+    with tempfile.TemporaryDirectory() as local_tmp_dir:
+        dispatcher_config = {
+            'event_name': 'iris_test',
+            'conda_env': 'ramp-iris',
+            'local_log_folder': os.path.join(local_tmp_dir, 'log'),
+            'local_predictions_folder': os.path.join(local_tmp_dir, 'preds')
+        }
+        dispatcher = Dispatcher(config=dispatcher_config,
+                                worker=CondaEnvWorker, n_worker=-1,
+                                worker_policy='exit')
         dispatcher.launch()
-    finally:
-        for path in ['log', 'predictions']:
-            shutil.rmtree(dispatcher_config['local_{}_folder'.format(path)],
-                          ignore_errors=True)
