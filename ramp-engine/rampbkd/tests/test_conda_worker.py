@@ -17,10 +17,9 @@ def _is_conda_env_installed():
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
-        stdout, error = proc.communicate()
+        stdout, _ = proc.communicate()
         conda_info = json.loads(stdout)
         envs_path = conda_info['envs'][1:]
-        print(envs_path)
         if not envs_path or not any(['ramp-iris' in env for env in envs_path]):
             return True
         return False
