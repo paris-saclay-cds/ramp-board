@@ -49,7 +49,7 @@ class Dispatcher:
         self._poison_pill = False
         self._awaiting_worker_queue = Queue()
         self._processing_worker_queue = LifoQueue(maxsize=self.n_worker)
-        self.database_config = {
+        self._database_config = {
             'ramp_kit_dir': ramp_config['ramp_kits_path'],
             'ramp_data_dir': ramp_config['ramp_data_path'],
             'ramp_submission_dir': ramp_config['ramp_submissions_path']
@@ -64,7 +64,7 @@ class Dispatcher:
         for sub in submissions:
             # create the configuration for the worker
             worker_config = self.config.copy()
-            worker_config.update(self.database_config)
+            worker_config.update(self._database_config)
             worker_config['ramp_kit_dir'] = os.path.join(
                 worker_config['ramp_kit_dir'], sub.event.problem.name)
             worker_config['ramp_data_dir'] = os.path.join(
