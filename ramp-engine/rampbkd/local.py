@@ -130,7 +130,7 @@ class CondaEnvWorker(BaseWorker):
              '--ramp_submission_dir', self.config['ramp_submission_dir'],
              '--save-y-preds'],
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
+            stderr=subprocess.PIPE
         )
         self.status = 'running'
 
@@ -162,3 +162,4 @@ class CondaEnvWorker(BaseWorker):
                 'training_output')
             shutil.copytree(output_training_dir, pred_dir)
             self.status = 'collected'
+            return self._proc

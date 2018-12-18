@@ -1,3 +1,5 @@
+
+import datetime
 import logging
 import multiprocessing
 import os
@@ -13,6 +15,7 @@ else:
     from Queue import LifoQueue
 
 from databoard import ramp_config
+from databoard.db_tools import get_submissions
 from databoard.db_tools import get_new_submissions
 
 from .local import CondaEnvWorker
@@ -71,8 +74,8 @@ class Dispatcher:
                 worker_config['ramp_data_dir'], sub.event.problem.name)
             # create the worker
             worker = self.worker(worker_config, os.path.basename(sub.path))
-            self._awaiting_worker_queue.put_nowait(worker)
             sub.state = 'send_to_training'
+            self._awaiting_worker_queue.put_nowait((worker, sub))
             logger.info('Submission {} added to the queue of submission to be '
                         'processed'.format(os.path.basename(sub.path)))
 
@@ -80,11 +83,12 @@ class Dispatcher:
         """Launch the awaiting workers if possible."""
         while (not self._processing_worker_queue.full() and
                not self._awaiting_worker_queue.empty()):
-            worker = self._awaiting_worker_queue.get()
+            worker, submission = self._awaiting_worker_queue.get()
             logger.info('Starting worker: {}'.format(worker))
             worker.setup()
             worker.launch_submission()
-            self._processing_worker_queue.put_nowait(worker)
+            submission.state = 'training'
+            self._processing_worker_queue.put_nowait((worker, submission))
             logger.info('Store the worker {} into the processing queue'
                         .format(worker))
         else:
@@ -93,33 +97,46 @@ class Dispatcher:
 
     def collect_result(self):
         """Collect result from processed workers."""
-        workers = [self._processing_worker_queue.get()
-                   for _ in range(self._processing_worker_queue.qsize())]
-        if not workers:
+        try:
+            workers, submissions = zip(
+                *[self._processing_worker_queue.get()
+                for _ in range(self._processing_worker_queue.qsize())]
+            )
+        except ValueError:
             logger.info('No workers are currently waiting or processed.')
-            if self.worker_policy is None:
-                return
-            elif self.worker_policy == 'sleep':
+            if self.worker_policy == 'sleep':
                 time.sleep(5)
             elif self.worker_policy == 'exit':
                 self._poison_pill = True
-        for worker in workers:
+            return
+        for worker, submission in zip(workers, submissions):
             if worker.status == 'running':
-                self._processing_worker_queue.put_nowait(worker)
+                self._processing_worker_queue.put_nowait((worker, submission))
                 logger.info('Worker {} is still running'.format(worker))
                 time.sleep(0)
             else:
                 logger.info('Collecting results from worker {}'.format(worker))
-                worker.collect_results()
+                returncode = worker.collect_results()
+                submission.state = ('trained' if not returncode
+                                    else 'trained_error')
                 worker.teardown()
 
     def launch(self):
+        """Launch the dispactcher."""
         logger.info('Starting the RAMP dispatcher')
-        while not self._poison_pill:
-            logger.info('Fetch the new submission from the database')
-            self.fetch_from_db()
-            logger.info('Launch awaiting workers')
-            self.launch_workers()
-            logger.info('Collect results')
-            self.collect_result()
+        try:
+            while not self._poison_pill:
+                logger.info('Fetch the new submission from the database')
+                self.fetch_from_db()
+                logger.info('Launch awaiting workers')
+                self.launch_workers()
+                logger.info('Collect results')
+                self.collect_result()
+        finally:
+            # reset the submissions to 'new' in case of error or unfinished
+            # training
+            submissions = get_submissions(event_name=self.config['event_name'])
+            for sub in submissions:
+                if 'training' in sub.state:
+                    sub.state = 'new'
         logger.info('Dispatcher killed by the poison pill')
