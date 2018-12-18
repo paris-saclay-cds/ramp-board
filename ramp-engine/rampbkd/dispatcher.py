@@ -1,4 +1,5 @@
 import logging
+import multiprocessing
 import os
 import sys
 import time
@@ -42,8 +43,8 @@ class Dispatcher:
     def __init__(self, config, worker=None, n_worker=1, worker_policy=None):
         self.config = config
         self.worker = CondaEnvWorker if worker is None else worker
-        # TODO: make that we can count negatively has in joblib
-        self.n_worker = n_worker
+        self.n_worker = (max(multiprocessing.cpu_count() + 1 + n_worker, 1)
+                         if n_worker < 0 else n_worker)
         self.worker_policy = worker_policy
         self._poison_pill = False
         self._awaiting_worker_queue = Queue()

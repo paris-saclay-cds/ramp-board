@@ -32,7 +32,7 @@ def test_dispatcher(setup_db):
         'local_predictions_folder': os.path.join('/tmp', 'preds')
     }
     dispatcher = Dispatcher(config=dispatcher_config, worker=CondaEnvWorker,
-                            n_worker=4, worker_policy='exit')
+                            n_worker=-1, worker_policy='exit')
     # dispatcher.launch()
     try:
         dispatcher.launch()
