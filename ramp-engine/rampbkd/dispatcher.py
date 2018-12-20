@@ -95,8 +95,9 @@ class Dispatcher(object):
             self._processing_worker_queue.put_nowait((worker, submission))
             logger.info('Store the worker {} into the processing queue'
                         .format(worker))
-        logger.info('The processing queue is full. Waiting for a worker to'
-                    ' finish')
+        if self._processing_worker_queue.full():
+            logger.info('The processing queue is full. Waiting for a worker to'
+                        ' finish')
 
     def collect_result(self):
         """Collect result from processed workers."""
@@ -129,6 +130,11 @@ class Dispatcher(object):
         """Update the database with the results of ramp_test_submission."""
         while not self._processed_submission_queue.empty():
             submission = self._processed_submission_queue.get_nowait()
+            if 'error' in submission.state:
+                # do not make any update in case of failed submission
+                logger.info('Skip update for {} due to failure during the '
+                            'processing'.format(submission.basename))
+                continue
             logger.info('Update the results obtained on each fold for '
                         '{}'.format(submission.basename))
             submission_cv_folds = get_submission_on_cv_folds(submission.id)
@@ -158,13 +164,9 @@ class Dispatcher(object):
         logger.info('Starting the RAMP dispatcher')
         try:
             while not self._poison_pill:
-                logger.info('Fetch the new submission from the database')
                 self.fetch_from_db()
-                logger.info('Launch awaiting workers')
                 self.launch_workers()
-                logger.info('Collect results')
                 self.collect_result()
-                logger.info('Update the database with new results')
                 self.update_database_results()
         finally:
             # reset the submissions to 'new' in case of error or unfinished

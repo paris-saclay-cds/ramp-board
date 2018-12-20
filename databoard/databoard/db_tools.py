@@ -2757,10 +2757,6 @@ def update_submission_on_cv_fold(submission_on_cv_fold, values):
         * 'test_y_pred': the predictions on the testing set.
     """
     submission_on_cv_fold.state = values.pop('state')
-    # we don't update anything when the submission failed
-    if 'error' in submission_on_cv_fold.state:
-        db.session.commit()
-        return
     for key, value in values.items():
         setattr(submission_on_cv_fold, key, value)
     db.session.commit()
