@@ -1,9 +1,12 @@
 import json
+import logging
 import os
 import shutil
 import subprocess
 
 from .base import BaseWorker
+
+logger = logging.getLogger('WORKER')
 
 
 class CondaEnvWorker(BaseWorker):
@@ -60,7 +63,7 @@ class CondaEnvWorker(BaseWorker):
         # sanity check for the configuration variable
         for required_param in ('ramp_kit_dir', 'ramp_data_dir',
                                'ramp_submission_dir', 'local_log_folder',
-                                'local_predictions_folder'):
+                               'local_predictions_folder'):
             self._check_config_name(self.config, required_param)
         # find the path to the conda environment
         env_name = (self.config['conda_env']
@@ -102,6 +105,7 @@ class CondaEnvWorker(BaseWorker):
                                            'training_output')
         if os.path.exists(output_training_dir):
             shutil.rmtree(output_training_dir)
+        super(CondaEnvWorker, self).teardown()
 
     def _is_submission_finished(self):
         """Status of the submission.
@@ -132,7 +136,7 @@ class CondaEnvWorker(BaseWorker):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
-        self.status = 'running'
+        super(CondaEnvWorker, self).launch_submission()
 
     def collect_results(self):
         """Collect the results after that the submission is completed.
@@ -162,4 +166,5 @@ class CondaEnvWorker(BaseWorker):
                 'training_output')
             shutil.copytree(output_training_dir, pred_dir)
             self.status = 'collected'
-            return self._proc
+            logger.info(repr(self))
+            return self._proc.returncode

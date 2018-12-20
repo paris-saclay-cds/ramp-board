@@ -1,8 +1,10 @@
+import logging
 import os
 import sys
 from abc import ABCMeta, abstractmethod
 import six
 
+logger = logging.getLogger('WORKER')
 
 class BaseWorker(six.with_metaclass(ABCMeta)):
     """Metaclass used to build a RAMP worker. Do not use this class directly.
@@ -34,10 +36,12 @@ class BaseWorker(six.with_metaclass(ABCMeta)):
         """Setup the worker with some given setting required before launching
         a submission."""
         self.status = 'setup'
+        logger.info(repr(self))
 
     def teardown(self):
         """Clean up (i.e., removing path, etc.) before killing the worker."""
-        pass
+        self.status = 'killed'
+        logger.info(repr(self))
 
     @abstractmethod
     def _is_submission_finished(self):
@@ -59,7 +63,8 @@ class BaseWorker(six.with_metaclass(ABCMeta)):
     @abstractmethod
     def launch_submission(self):
         """Launch a submission to be trained."""
-        pass
+        self.status = 'running'
+        logger.info(repr(self))
 
     @abstractmethod
     def collect_results(self):

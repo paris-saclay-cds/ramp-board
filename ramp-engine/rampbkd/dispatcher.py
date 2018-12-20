@@ -19,7 +19,7 @@ from databoard.db_tools import get_new_submissions
 
 from .local import CondaEnvWorker
 
-logger = logging.getLogger('ramp_dispatcher')
+logger = logging.getLogger('DISPATCHER')
 
 
 class Dispatcher:
@@ -91,16 +91,15 @@ class Dispatcher:
             self._processing_worker_queue.put_nowait((worker, submission))
             logger.info('Store the worker {} into the processing queue'
                         .format(worker))
-        else:
-            logger.info('The processing queue is full. Waiting for a worker to'
-                        ' finish')
+        logger.info('The processing queue is full. Waiting for a worker to'
+                    ' finish')
 
     def collect_result(self):
         """Collect result from processed workers."""
         try:
             workers, submissions = zip(
                 *[self._processing_worker_queue.get()
-                for _ in range(self._processing_worker_queue.qsize())]
+                  for _ in range(self._processing_worker_queue.qsize())]
             )
         except ValueError:
             logger.info('No workers are currently waiting or processed.')
@@ -122,7 +121,7 @@ class Dispatcher:
                 worker.teardown()
 
     def launch(self):
-        """Launch the dispactcher."""
+        """Launch the dispatcher."""
         logger.info('Starting the RAMP dispatcher')
         try:
             while not self._poison_pill:
