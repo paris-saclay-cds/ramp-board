@@ -38,7 +38,7 @@ from .utils import remove_non_ascii
 from .utils import send_mail
 from .utils import table_format
 
-logger = logging.getLogger('databoard')
+logger = logging.getLogger('DATABASE')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 
@@ -1038,7 +1038,7 @@ def make_submission(event_name, team_name, submission_name, submission_path):
     else:
         # We allow resubmit for new or failing submissions
         if (submission.is_not_sandbox and
-               (submission.state == 'new' or submission.is_error)):
+                (submission.state == 'new' or submission.is_error)):
             submission.set_state('new')
             submission.submission_timestamp = datetime.datetime.utcnow()
             for submission_on_cv_fold in submission.on_cv_folds:
@@ -1049,8 +1049,8 @@ def make_submission(event_name, team_name, submission_name, submission_path):
                          .format(submission_name, team_name, event_name))
             raise DuplicateSubmissionError(error_msg)
 
-    files_type_extension =  [os.path.splitext(filename)
-                             for filename in os.listdir(submission_path)]
+    files_type_extension = [os.path.splitext(filename)
+                            for filename in os.listdir(submission_path)]
     # filter the files which contain an extension
     # remove the dot of the extension.
     files_type_extension = [(filename, extension[1:])
@@ -1277,9 +1277,15 @@ def send_register_request_mail(user):
 
 
 def get_new_submissions(event_name):
-    # TODO do the proper DB call
-    submissions = get_submissions(event_name=event_name)
-    return [sub for sub in submissions if sub.state == 'new']
+    submissions = (db.session.query(Submission, Event, EventTeam)
+                             .filter(Event.name==event_name)
+                             .filter(Event.id==EventTeam.event_id)
+                             .filter(EventTeam.id==Submission.event_team_id)
+                             .filter(Submission.state=='new')
+                             .all())
+    if submissions:
+        return [s for s, e, et in submissions]
+    return []
 
 
 # TODO: to remove in favor of get_new_submission

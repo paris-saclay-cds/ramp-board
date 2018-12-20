@@ -51,5 +51,5 @@ def test_dispatcher(setup_db, caplog):
         submissions = get_submissions(
             event_name=dispatcher_config['event_name'],
         )
-        is_sub_failed = [bool('error' in sub.state) for sub in submissions]
-        assert sum(is_sub_failed) == 2
+        is_submission_failed = ['error' in sub.state for sub in submissions]
+        assert sum(is_submission_failed) == 2

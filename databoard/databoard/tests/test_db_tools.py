@@ -48,6 +48,7 @@ from databoard.db_tools import ask_sign_up_team
 from databoard.db_tools import create_user
 from databoard.db_tools import delete_event
 from databoard.db_tools import delete_problem
+from databoard.db_tools import get_new_submissions
 from databoard.db_tools import get_submissions
 from databoard.db_tools import make_submission
 from databoard.db_tools import make_submission_and_copy_files
@@ -608,3 +609,18 @@ def test_get_submissions(event_name, team_name, user_name, submission_name,
                                   user_name=user_name,
                                   submission_name=submission_name)
     assert len(submissions) == expected_n_sub
+
+
+def test_get_new_submissions(setup_toy_db):
+    submissions = get_new_submissions('iris_test')
+    assert len(submissions) == 8
+    # mark half of the submissions as trained
+    for submission_idx in range(4):
+        submissions[submission_idx].state = 'trained'
+    submissions = get_new_submissions('iris_test')
+    assert len(submissions) == 4
+    # mark the remaining submissions as trained
+    for submission in submissions:
+        submission.state = 'trained'
+    submissions = get_new_submissions('iris_test')
+    assert len(submissions) == 0
