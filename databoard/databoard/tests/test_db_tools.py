@@ -3,6 +3,7 @@ import os
 import shutil
 
 import pytest
+import numpy as np
 
 from numpy.testing import assert_array_equal
 from rampwf.workflows import FeatureExtractorClassifier
@@ -45,10 +46,12 @@ from databoard.db_tools import delete_problem
 from databoard.db_tools import get_team_members
 from databoard.db_tools import get_new_submissions
 from databoard.db_tools import get_submissions
+from databoard.db_tools import get_submission_on_cv_folds
 from databoard.db_tools import make_submission
 from databoard.db_tools import make_submission_and_copy_files
 from databoard.db_tools import sign_up_team
 from databoard.db_tools import submit_starting_kit
+from databoard.db_tools import update_submission_on_cv_fold
 from databoard.db_tools import update_user
 
 
@@ -629,3 +632,36 @@ def test_get_new_submissions(setup_toy_db):
         submission.state = 'trained'
     submissions = get_new_submissions('iris_test')
     assert len(submissions) == 0
+
+
+def test_submissions_on_cv_fold(setup_toy_db):
+    submission = get_submissions(event_name='iris_test',
+                                 team_name='test_user',
+                                 submission_name='starting_kit_test')[0]
+    submissions_cv = get_submission_on_cv_folds(submission.id)
+    assert len(submissions_cv) == 2
+    for sub_cv in submissions_cv:
+        assert sub_cv.submission.name == submission.name
+        assert sub_cv.submission_id == submission.id
+    cv_fold_id = [sub_cv.cv_fold_id for sub_cv in submissions_cv]
+    assert all(cv_fold_id[i-1] < cv_fold_id[i]
+               for i in range(1, len(cv_fold_id)))
+
+
+def test_update_submission_on_cv_fold(setup_toy_db):
+    submission = get_submissions(event_name='iris_test',
+                                 team_name='test_user',
+                                 submission_name='starting_kit_test')[0]
+    submissions_cv = get_submission_on_cv_folds(submission.id)
+    for cv_fold in submissions_cv:
+        results = {
+            'state': 'trained',
+            'train_time': 1.0, 'valid_time': 1.0, 'test_time': 1.0,
+            'full_train_y_pred': np.ones((30, 3)),
+            'test_y_pred': np.ones((120, 3))
+        }
+        update_submission_on_cv_fold(cv_fold, results)
+    submissions_cv = get_submission_on_cv_folds(submission.id)
+    for cv_fold in submissions_cv:
+        assert cv_fold.state == 'trained'
+        assert cv_fold.train_time == pytest.approx(1.0)

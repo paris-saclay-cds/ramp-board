@@ -193,6 +193,10 @@ class Submission(Model):
             'submission_' + '{0:09d}'.format(self.id))
 
     @property
+    def basename(self):
+        return 'submission_' + '{0:09d}'.format(self.id)
+
+    @property
     def module(self):
         return self.path.lstrip('./').replace('/', '.')
 

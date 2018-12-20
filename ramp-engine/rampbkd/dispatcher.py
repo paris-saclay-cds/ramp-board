@@ -13,9 +13,13 @@ else:
     from Queue import Queue
     from Queue import LifoQueue
 
+import numpy as np
+
 from databoard import ramp_config
 from databoard.db_tools import get_submissions
 from databoard.db_tools import get_new_submissions
+from databoard.db_tools import get_submission_on_cv_folds
+from databoard.db_tools import update_submission_on_cv_fold
 
 from .local import CondaEnvWorker
 
@@ -51,6 +55,7 @@ class Dispatcher(object):
         self._poison_pill = False
         self._awaiting_worker_queue = Queue()
         self._processing_worker_queue = LifoQueue(maxsize=self.n_worker)
+        self._processed_submission_queue = Queue()
         self._database_config = {
             'ramp_kit_dir': ramp_config['ramp_kits_path'],
             'ramp_data_dir': ramp_config['ramp_data_path'],
@@ -72,12 +77,11 @@ class Dispatcher(object):
             worker_config['ramp_data_dir'] = os.path.join(
                 worker_config['ramp_data_dir'], submission.event.problem.name)
             # create the worker
-            worker = self.worker(worker_config,
-                                 os.path.basename(submission.path))
+            worker = self.worker(worker_config, submission.basename)
             submission.state = 'send_to_training'
             self._awaiting_worker_queue.put_nowait((worker, submission))
             logger.info('Submission {} added to the queue of submission to be '
-                        'processed'.format(os.path.basename(submission.path)))
+                        'processed'.format(submission.basename))
 
     def launch_workers(self):
         """Launch the awaiting workers if possible."""
@@ -118,7 +122,36 @@ class Dispatcher(object):
                 returncode = worker.collect_results()
                 submission.state = ('trained' if not returncode
                                     else 'trained_error')
+                self._processed_submission_queue.put_nowait(submission)
                 worker.teardown()
+
+    def update_database_results(self):
+        """Update the database with the results of ramp_test_submission."""
+        while not self._processed_submission_queue.empty():
+            submission = self._processed_submission_queue.get_nowait()
+            logger.info('Update the results obtained on each fold for '
+                        '{}'.format(submission.basename))
+            submission_cv_folds = get_submission_on_cv_folds(submission.id)
+            for fold_idx, sub_cv_fold in enumerate(submission_cv_folds):
+                path_results = os.path.join(
+                    self.config['local_predictions_folder'],
+                    submission.basename, 'fold_{}'.format(fold_idx)
+                )
+                results = {}
+                results['state'] = submission.state
+                # loading the timing information
+                for step in ('train', 'valid', 'test'):
+                    results[step + '_time'] = np.asscalar(
+                        np.loadtxt(os.path.join(path_results, step + '_time'))
+                    )
+                # loading the prediction
+                results['full_train_y_pred'] = np.load(
+                    os.path.join(path_results, 'y_pred_train.npz')
+                )['y_pred']
+                results['test_y_pred'] = np.load(
+                    os.path.join(path_results, 'y_pred_test.npz')
+                )['y_pred']
+                update_submission_on_cv_fold(sub_cv_fold, results)
 
     def launch(self):
         """Launch the dispatcher."""
@@ -131,6 +164,8 @@ class Dispatcher(object):
                 self.launch_workers()
                 logger.info('Collect results')
                 self.collect_result()
+                logger.info('Update the database with new results')
+                self.update_database_results()
         finally:
             # reset the submissions to 'new' in case of error or unfinished
             # training

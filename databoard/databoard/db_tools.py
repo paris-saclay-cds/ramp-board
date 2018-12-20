@@ -1394,6 +1394,7 @@ def backend_train_test_loop(event_name=None, timeout=20,
         time.sleep(timeout)
 
 
+# TODO: to be removed since it is done by ramp test submission
 def train_test_submissions(submissions=None, force_retrain_test=False,
                            is_parallelize=None):
     """Train and test submission.
@@ -1411,6 +1412,7 @@ def train_test_submissions(submissions=None, force_retrain_test=False,
 
 
 # For parallel call
+# TODO: to be removed since it is done by ramp test submission
 def train_test_submission(submission, force_retrain_test=False):
     """Train and test submission.
 
@@ -1533,6 +1535,7 @@ def _make_error_message(e):
     return log_msg, error_msg
 
 
+# TODO: to be removed since done by ramp test submission
 def train_test_submission_on_cv_fold(detached_submission_on_cv_fold,
                                      X_train, y_train,
                                      X_test, y_test, force_retrain_test=False):
@@ -1553,6 +1556,7 @@ def train_test_submission_on_cv_fold(detached_submission_on_cv_fold,
     return detached_submission_on_cv_fold
 
 
+# TODO: to be removed since done by ramp test submission
 def train_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
                                 force_retrain=False):
     if detached_submission_on_cv_fold.state not in ['new', 'checked']\
@@ -1620,6 +1624,7 @@ def train_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
     detached_submission_on_cv_fold.valid_time = end - start
 
 
+# TODO: to be removed since it is done by ramp test submission
 def test_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
                                force_retest=False):
     if detached_submission_on_cv_fold.state not in\
@@ -2703,3 +2708,59 @@ def get_source_submissions(submission):
                    s.submission_timestamp < submission.submission_timestamp]
     submissions.sort(key=lambda x: x.submission_timestamp, reverse=True)
     return submissions
+
+
+def get_submission_on_cv_folds(submission_id):
+    """Return the list of SubmissionsOnCVFold given a Submission.id.
+
+    The CV folds are returned in ascending order
+    (e.g., fold #0, fold #1, etc.).
+
+    Parameters
+    ----------
+    submission_id : int
+        The identification of the submission.
+
+    Returns
+    -------
+    submissions_on_cv_fold : list of rampdb.model.SubmissionOnCVFold
+        A list of the :class:`rampdb.model.SubmissionOnCVFold` associated with
+        the submission.
+    """
+    submissions = \
+        (db.session.query(SubmissionOnCVFold, Submission)
+                   .filter(Submission.id == submission_id)
+                   .filter(SubmissionOnCVFold.submission_id == submission_id)
+                   .order_by(SubmissionOnCVFold.cv_fold_id)
+                   .all())
+    if submissions:
+        return [sub_cv for sub_cv, sub in submissions]
+    return []
+
+
+def update_submission_on_cv_fold(submission_on_cv_fold, values):
+    """Update the CV fold of a submission.
+
+    Parameters
+    ----------
+    submission_on_cv_fold : rampdb.model.SubmissionOnCVFold
+        The CV fold to be updated.
+    values : dict
+        A dictionary containing the values which will be used to update the
+        CV fold. The keys should be:
+
+        * 'state': the state of the CV fold;
+        * 'train_time': training time;
+        * 'valid_time': validation time;
+        * 'test_time': test time;
+        * 'full_train_y_pred': the predictions on the validation set;
+        * 'test_y_pred': the predictions on the testing set.
+    """
+    submission_on_cv_fold.state = values.pop('state')
+    # we don't update anything when the submission failed
+    if 'error' in submission_on_cv_fold.state:
+        db.session.commit()
+        return
+    for key, value in values.items():
+        setattr(submission_on_cv_fold, key, value)
+    db.session.commit()
