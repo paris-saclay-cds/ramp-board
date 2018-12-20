@@ -42,7 +42,21 @@ logger = logging.getLogger('DATABASE')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 
+# TODO: This function return only the admin of a team and not the members, then
+# it should be renamed.
 def get_team_members(team):
+    """Return the admin of a team.
+
+    Parameter
+    ---------
+    team : rampdb.model.Team
+        The team from which we want to get the members.
+
+    Returns
+    -------
+    member : generator of rampdb.model.User
+        Yield a member of the team.
+    """
     # This works only if no team mergers. The commented code below
     # is general but slow.
     yield team.admin
@@ -56,6 +70,7 @@ def get_team_members(team):
     #     yield team.admin
 
 
+# TODO: remove this code
 # def get_user_teams(user):
 #     # This works only if no team mergers. The commented code below
 #     # is general but slow.
@@ -869,8 +884,8 @@ def sign_up_team(event_name, team_name):
     for user in get_team_members(team):
         send_mail(to=user.email,
                   subject='signed up for {} as team {}'.format(
-                  event_name, team_name),
-            body='')
+                      event_name, team_name),
+                  body='')
     event_team.approved = True
     db.session.commit()
 

@@ -1,7 +1,6 @@
 import datetime
 import os
 import shutil
-import subprocess
 
 import pytest
 
@@ -18,8 +17,6 @@ from rampdb.model import Problem
 from rampdb.model import Team
 from rampdb.model import User
 from rampdb.model import Workflow
-from rampdb.model import WorkflowElement
-from rampdb.model import WorkflowElementType
 
 from rampdb.model import DuplicateSubmissionError
 from rampdb.model import MissingExtensionError
@@ -36,9 +33,6 @@ from databoard.testing import create_toy_db
 from databoard.testing import _setup_ramp_kits_ramp_data
 
 from databoard.utils import check_password
-from databoard.utils import encode_string
-
-from databoard.forms import UserUpdateProfileForm
 
 from databoard.db_tools import add_event
 from databoard.db_tools import add_problem
@@ -48,6 +42,7 @@ from databoard.db_tools import ask_sign_up_team
 from databoard.db_tools import create_user
 from databoard.db_tools import delete_event
 from databoard.db_tools import delete_problem
+from databoard.db_tools import get_team_members
 from databoard.db_tools import get_new_submissions
 from databoard.db_tools import get_submissions
 from databoard.db_tools import make_submission
@@ -402,6 +397,16 @@ def test_sign_up_team(setup_db):
         assert fold.state == 'new'
         assert fold.best is False
         assert fold.contributivity == pytest.approx(0)
+
+
+def test_get_team_members(setup_db):
+    # check the members in a team
+    event_name, username = _setup_sign_up()
+    _, team, _ = ask_sign_up_team(event_name, username)
+
+    member = list(get_team_members(team))[0]
+    assert isinstance(member, User)
+    assert member.name == 'test_user'
 
 
 def test_make_submission_create_new_submission(setup_db):

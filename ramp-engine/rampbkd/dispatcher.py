@@ -22,7 +22,7 @@ from .local import CondaEnvWorker
 logger = logging.getLogger('DISPATCHER')
 
 
-class Dispatcher:
+class Dispatcher(object):
     """Dispatcher which schedule workers and communicate with the database.
 
     The dispatcher uses two queues: a queue containing containing the workers
