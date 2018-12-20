@@ -1,5 +1,4 @@
 
-import datetime
 import logging
 import multiprocessing
 import os
@@ -64,20 +63,21 @@ class Dispatcher:
         if not submissions:
             logger.info('No new submissions fetch from the database')
             return
-        for sub in submissions:
+        for submission in submissions:
             # create the configuration for the worker
             worker_config = self.config.copy()
             worker_config.update(self._database_config)
             worker_config['ramp_kit_dir'] = os.path.join(
-                worker_config['ramp_kit_dir'], sub.event.problem.name)
+                worker_config['ramp_kit_dir'], submission.event.problem.name)
             worker_config['ramp_data_dir'] = os.path.join(
-                worker_config['ramp_data_dir'], sub.event.problem.name)
+                worker_config['ramp_data_dir'], submission.event.problem.name)
             # create the worker
-            worker = self.worker(worker_config, os.path.basename(sub.path))
-            sub.state = 'send_to_training'
-            self._awaiting_worker_queue.put_nowait((worker, sub))
+            worker = self.worker(worker_config,
+                                 os.path.basename(submission.path))
+            submission.state = 'send_to_training'
+            self._awaiting_worker_queue.put_nowait((worker, submission))
             logger.info('Submission {} added to the queue of submission to be '
-                        'processed'.format(os.path.basename(sub.path)))
+                        'processed'.format(os.path.basename(submission.path)))
 
     def launch_workers(self):
         """Launch the awaiting workers if possible."""
@@ -136,7 +136,7 @@ class Dispatcher:
             # reset the submissions to 'new' in case of error or unfinished
             # training
             submissions = get_submissions(event_name=self.config['event_name'])
-            for sub in submissions:
-                if 'training' in sub.state:
-                    sub.state = 'new'
+            for submission in submissions:
+                if 'training' in submission.state:
+                    submission.state = 'new'
         logger.info('Dispatcher killed by the poison pill')
