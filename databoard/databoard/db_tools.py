@@ -15,6 +15,7 @@ from sklearn.utils.validation import assert_all_finite
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
+from ramputils import import_module_from_source
 from rampdb.model import (CVFold, DetachedSubmissionOnCVFold,
                           DuplicateSubmissionError, Event, EventAdmin,
                           EventScoreType, EventTeam, Extension, Keyword,
@@ -33,7 +34,6 @@ from . import ramp_config
 from .utils import date_time_format
 from .utils import encode_string
 from .utils import get_hashed_password
-from .utils import import_module_from_source
 from .utils import remove_non_ascii
 from .utils import send_mail
 from .utils import table_format

@@ -20,8 +20,7 @@ def import_module_from_source(source, name):
         import imp
         module = imp.load_source(name, source)
         return module
-    else:
-        spec = importlib.util.spec_from_file_location(name, source)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module
+    spec = importlib.util.spec_from_file_location(name, source)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
