@@ -35,6 +35,33 @@ __all__ = [
 ]
 
 
+def _setup_db(config):
+    """Get the necessary handler to manipulate the database.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+
+    Returns
+    -------
+    db : sqlalchemy.Engine
+        The engine to connect to the database.
+    Session : sqlalchemy.orm.Session
+        Configured Session class which can later be used to communicate with
+        the database.
+    """
+    # create the URL from the configuration
+    db_url = URL(**config)
+    db = create_engine(db_url)
+    Session = sessionmaker(db)
+    # Link the relational model to the database
+    Model.metadata.create_all(db)
+
+    return db, Session
+
 def get_submissions(config, event_name, state='new'):
     """
     Retrieve a list of submissions and their associated files
@@ -43,7 +70,9 @@ def get_submissions(config, event_name, state='new'):
     Parameters
     ----------
     config : dict
-        configuration
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     event_name : str
         name of the RAMP event
     state : str, optional
@@ -65,17 +94,7 @@ def get_submissions(config, event_name, state='new'):
     if state not in STATES:
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
 
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -97,9 +116,10 @@ def get_submission_by_id(config, submission_id):
 
     Parameters
     ----------
-
     config : dict
-        configuration
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
 
     submission_id : int
         submission id
@@ -109,17 +129,7 @@ def get_submission_by_id(config, submission_id):
 
     `Submission` instance
     """
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
         submission = select_submissions_by_id(session, submission_id)
@@ -135,9 +145,10 @@ def get_submission_by_name(config, event_name, team_name, name):
 
     Parameters
     ----------
-
     config : dict
-        configuration
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     session :
         database connexion session
     event_name : str
@@ -152,17 +163,7 @@ def get_submission_by_name(config, event_name, team_name, name):
     `Submission` instance
 
     """
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
         submission = select_submission_by_name(
@@ -183,7 +184,9 @@ def set_submission_state(config, submission_id, state):
     Parameters
     ----------
     config : dict
-        configuration
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     submission_id : int
         id of the requested submission
     state : str
@@ -200,17 +203,7 @@ def set_submission_state(config, submission_id, state):
     if state not in STATES:
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
 
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -227,7 +220,9 @@ def get_submission_state(config, submission_id):
     Parameters
     ----------
     config : dict
-        configuration
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     submission_id : int
         id of the requested submission
 
@@ -239,17 +234,7 @@ def get_submission_state(config, submission_id):
         when the requested state does not exist in the database
 
     """
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)    # Connect to the dabase and perform action
     with db.connect() as conn:
         session = Session(bind=conn)
         submission = select_submissions_by_id(session, submission_id)
@@ -263,7 +248,9 @@ def set_predictions(config, submission_id, prediction_path, ext='npy'):
     Parameters
     ----------
     config : dict
-        configuration
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     submission_id : int
         id of the related submission
     prediction_path : str
@@ -278,17 +265,7 @@ def set_predictions(config, submission_id, prediction_path, ext='npy'):
         when the extension cannot be read properly
 
     """
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -380,7 +357,9 @@ def score_submission(config, submission_id):
     Parameters
     ----------
     config : dict
-        configuration
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     submission_id : int
         submission id
 
@@ -391,17 +370,7 @@ def score_submission(config, submission_id):
         (only a submission with state 'tested' can be scored)
     """
 
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -452,23 +421,15 @@ def set_submission_max_ram(config, submission_id, max_ram_mb):
     Parameters
     ----------
     config : dict
-        configuration
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     submission_id : int
         id of the requested submission
     max_ram_mb : float
         max ram usage in MB
     """
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -484,24 +445,16 @@ def set_submission_error_msg(config, submission_id, error_msg):
     Parameters
     ----------
     config : dict
-        configuration
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     submission_id : int
         id of the requested submission
     error_msg : str
         message error
     """
 
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -511,17 +464,23 @@ def set_submission_error_msg(config, submission_id, error_msg):
 
 
 def get_event_nb_folds(config, event_name):
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
+    """Get the number of fold for a given event.
 
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    event_name : str
+        The event name.
 
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    Returns
+    -------
+    nb_folds : int
+        The number of folds for a specific event.
+    """
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
         event = select_event_by_name(session, event_name)
