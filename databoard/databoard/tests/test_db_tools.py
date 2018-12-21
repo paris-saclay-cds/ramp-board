@@ -4,6 +4,7 @@ import shutil
 
 import pytest
 import numpy as np
+import pandas as pd
 
 from numpy.testing import assert_array_equal
 from rampwf.workflows import FeatureExtractorClassifier
@@ -654,11 +655,19 @@ def test_update_submission_on_cv_fold(setup_toy_db):
                                  submission_name='starting_kit_test')[0]
     submissions_cv = get_submission_on_cv_folds(submission.id)
     for cv_fold in submissions_cv:
+        scores = {
+            'step': ['test', 'train', 'valid'],
+            'acc': [0.733333, 0.604167, 0.583333],
+            'error': [0.266667, 0.395833, 0.416667],
+            'f1_70': [0.666667, 0.333333, 0.333333],
+            'nll': [0.693464, 0.732763, 2.194549]
+        }
         results = {
             'state': 'trained',
             'train_time': 1.0, 'valid_time': 1.0, 'test_time': 1.0,
             'full_train_y_pred': np.ones((30, 3)),
-            'test_y_pred': np.ones((120, 3))
+            'test_y_pred': np.ones((120, 3)),
+            'scores': pd.DataFrame(scores).set_index('step')
         }
         update_submission_on_cv_fold(cv_fold, results)
     submissions_cv = get_submission_on_cv_folds(submission.id)

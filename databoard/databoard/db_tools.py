@@ -2738,14 +2738,14 @@ def get_submission_on_cv_folds(submission_id):
     return []
 
 
-def update_submission_on_cv_fold(submission_on_cv_fold, values):
+def update_submission_on_cv_fold(submission_on_cv_fold, results):
     """Update the CV fold of a submission.
 
     Parameters
     ----------
     submission_on_cv_fold : rampdb.model.SubmissionOnCVFold
         The CV fold to be updated.
-    values : dict
+    results : dict
         A dictionary containing the values which will be used to update the
         CV fold. The keys should be:
 
@@ -2753,10 +2753,16 @@ def update_submission_on_cv_fold(submission_on_cv_fold, values):
         * 'train_time': training time;
         * 'valid_time': validation time;
         * 'test_time': test time;
-        * 'full_train_y_pred': the predictions on the validation set;
-        * 'test_y_pred': the predictions on the testing set.
+        * 'full_train_y_pred': predictions on the validation set;
+        * 'test_y_pred': predictions on the testing set;
+        * 'scores': scores for the current fold.
     """
-    submission_on_cv_fold.state = values.pop('state')
-    for key, value in values.items():
+    submission_on_cv_fold.state = results.pop('state')
+    scores_update = results.pop('scores')
+    for key, value in results.items():
         setattr(submission_on_cv_fold, key, value)
+    for score in submission_on_cv_fold.scores:
+        for step in scores_update.index:
+            value = scores_update.loc[step, score.name]
+            setattr(score, step + '_score', value)
     db.session.commit()
