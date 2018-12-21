@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os
 from codecs import open
 from setuptools import setup, find_packages
 
@@ -15,6 +16,7 @@ MAINTAINER_EMAIL = 'g.lemaitre58@gmail.com'
 URL = 'https://github.com/paris-saclay-cds/ramp-board'
 LICENSE = 'BSD (3-clause)'
 DOWNLOAD_URL = 'https://github.com/paris-saclay-cds/ramp-board'
+PACKAGE_DATA = {'ramputils': [os.path.join('tests', 'data', 'config.yml')]}
 
 
 if __name__ == "__main__":
@@ -44,4 +46,5 @@ if __name__ == "__main__":
         ],
         platforms='any',
         packages=find_packages(),
+        package_data=PACKAGE_DATA,
         )
