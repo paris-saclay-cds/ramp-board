@@ -5,3 +5,5 @@ sqlalchemy:
     host: localhost
     port: 5432
     database: databoard_test
+ramp:
+    event_name: iris_test
