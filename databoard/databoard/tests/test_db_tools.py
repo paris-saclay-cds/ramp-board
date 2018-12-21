@@ -1,11 +1,13 @@
 import datetime
 import os
 import shutil
-import subprocess
 
 import pytest
+import numpy as np
+import pandas as pd
 
 from numpy.testing import assert_array_equal
+from numpy.testing import assert_allclose
 from rampwf.workflows import FeatureExtractorClassifier
 
 from rampdb.model import CVFold
@@ -18,8 +20,6 @@ from rampdb.model import Problem
 from rampdb.model import Team
 from rampdb.model import User
 from rampdb.model import Workflow
-from rampdb.model import WorkflowElement
-from rampdb.model import WorkflowElementType
 
 from rampdb.model import DuplicateSubmissionError
 from rampdb.model import MissingExtensionError
@@ -36,9 +36,6 @@ from databoard.testing import create_toy_db
 from databoard.testing import _setup_ramp_kits_ramp_data
 
 from databoard.utils import check_password
-from databoard.utils import encode_string
-
-from databoard.forms import UserUpdateProfileForm
 
 from databoard.db_tools import add_event
 from databoard.db_tools import add_problem
@@ -48,12 +45,18 @@ from databoard.db_tools import ask_sign_up_team
 from databoard.db_tools import create_user
 from databoard.db_tools import delete_event
 from databoard.db_tools import delete_problem
+from databoard.db_tools import get_team_members
+from databoard.db_tools import get_new_submissions
 from databoard.db_tools import get_submissions
+from databoard.db_tools import get_submission_on_cv_folds
 from databoard.db_tools import make_submission
 from databoard.db_tools import make_submission_and_copy_files
 from databoard.db_tools import sign_up_team
 from databoard.db_tools import submit_starting_kit
+from databoard.db_tools import update_submission_on_cv_fold
 from databoard.db_tools import update_user
+
+HERE = os.path.dirname(__file__)
 
 
 class Bunch(dict):
@@ -403,6 +406,16 @@ def test_sign_up_team(setup_db):
         assert fold.contributivity == pytest.approx(0)
 
 
+def test_get_team_members(setup_db):
+    # check the members in a team
+    event_name, username = _setup_sign_up()
+    _, team, _ = ask_sign_up_team(event_name, username)
+
+    member = list(get_team_members(team))[0]
+    assert isinstance(member, User)
+    assert member.name == 'test_user'
+
+
 def test_make_submission_create_new_submission(setup_db):
     # check that we can make a new submission to the database
     # it will require to have already a team and an event
@@ -608,3 +621,67 @@ def test_get_submissions(event_name, team_name, user_name, submission_name,
                                   user_name=user_name,
                                   submission_name=submission_name)
     assert len(submissions) == expected_n_sub
+
+
+def test_get_new_submissions(setup_toy_db):
+    submissions = get_new_submissions('iris_test')
+    assert len(submissions) == 8
+    # mark half of the submissions as trained
+    for submission_idx in range(4):
+        submissions[submission_idx].state = 'trained'
+    submissions = get_new_submissions('iris_test')
+    assert len(submissions) == 4
+    # mark the remaining submissions as trained
+    for submission in submissions:
+        submission.state = 'trained'
+    submissions = get_new_submissions('iris_test')
+    assert len(submissions) == 0
+
+
+def test_submissions_on_cv_fold(setup_toy_db):
+    submission = get_submissions(event_name='iris_test',
+                                 team_name='test_user',
+                                 submission_name='starting_kit_test')[0]
+    submissions_cv = get_submission_on_cv_folds(submission.id)
+    assert len(submissions_cv) == 2
+    for sub_cv in submissions_cv:
+        assert sub_cv.submission.name == submission.name
+        assert sub_cv.submission_id == submission.id
+    cv_fold_id = [sub_cv.cv_fold_id for sub_cv in submissions_cv]
+    assert all(cv_fold_id[i-1] < cv_fold_id[i]
+               for i in range(1, len(cv_fold_id)))
+
+
+def test_update_submission_on_cv_fold(setup_toy_db):
+    submission = get_submissions(event_name='iris_test',
+                                 team_name='test_user',
+                                 submission_name='starting_kit_test')[0]
+    submissions_cv = get_submission_on_cv_folds(submission.id)
+    for cv_fold_idx, cv_fold in enumerate(submissions_cv):
+        # define the path for this results
+        path_results = os.path.join(HERE, 'data', 'iris_predictions',
+                                    'fold_{}'.format(cv_fold_idx))
+        update_submission_on_cv_fold(cv_fold, path_results)
+    submissions_cv = get_submission_on_cv_folds(submission.id)
+    for cv_fold_idx, cv_fold in enumerate(submissions_cv):
+        path_results = os.path.join(HERE, 'data', 'iris_predictions',
+                                    'fold_{}'.format(cv_fold_idx))
+        # check only the training time
+        train_time = np.asscalar(
+            np.loadtxt(os.path.join(path_results, 'train_time'))
+        )
+        assert cv_fold.train_time == pytest.approx(train_time)
+        # check only the training predictions
+        y_pred_train = np.load(os.path.join(path_results, 'y_pred_train.npz'))
+        assert_allclose(cv_fold.full_train_y_pred, y_pred_train['y_pred'])
+        # check only the accuracy on the training
+        scores = pd.read_csv(os.path.join(path_results, 'scores.csv'),
+                             index_col=0)
+        for score in cv_fold.scores:
+            score_type = score.name
+            assert score.train_score == pytest.approx(scores.loc['train',
+                                                                 score_type])
+            assert score.valid_score == pytest.approx(scores.loc['valid',
+                                                                 score_type])
+            assert score.test_score == pytest.approx(scores.loc['test',
+                                                                score_type])

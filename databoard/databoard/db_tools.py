@@ -38,11 +38,25 @@ from .utils import remove_non_ascii
 from .utils import send_mail
 from .utils import table_format
 
-logger = logging.getLogger('databoard')
+logger = logging.getLogger('DATABASE')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 
+# TODO: This function return only the admin of a team and not the members, then
+# it should be renamed.
 def get_team_members(team):
+    """Return the admin of a team.
+
+    Parameter
+    ---------
+    team : rampdb.model.Team
+        The team from which we want to get the members.
+
+    Returns
+    -------
+    member : generator of rampdb.model.User
+        Yield a member of the team.
+    """
     # This works only if no team mergers. The commented code below
     # is general but slow.
     yield team.admin
@@ -56,6 +70,7 @@ def get_team_members(team):
     #     yield team.admin
 
 
+# TODO: remove this code
 # def get_user_teams(user):
 #     # This works only if no team mergers. The commented code below
 #     # is general but slow.
@@ -869,8 +884,8 @@ def sign_up_team(event_name, team_name):
     for user in get_team_members(team):
         send_mail(to=user.email,
                   subject='signed up for {} as team {}'.format(
-                  event_name, team_name),
-            body='')
+                      event_name, team_name),
+                  body='')
     event_team.approved = True
     db.session.commit()
 
@@ -1038,7 +1053,7 @@ def make_submission(event_name, team_name, submission_name, submission_path):
     else:
         # We allow resubmit for new or failing submissions
         if (submission.is_not_sandbox and
-               (submission.state == 'new' or submission.is_error)):
+                (submission.state == 'new' or submission.is_error)):
             submission.set_state('new')
             submission.submission_timestamp = datetime.datetime.utcnow()
             for submission_on_cv_fold in submission.on_cv_folds:
@@ -1049,8 +1064,8 @@ def make_submission(event_name, team_name, submission_name, submission_path):
                          .format(submission_name, team_name, event_name))
             raise DuplicateSubmissionError(error_msg)
 
-    files_type_extension =  [os.path.splitext(filename)
-                             for filename in os.listdir(submission_path)]
+    files_type_extension = [os.path.splitext(filename)
+                            for filename in os.listdir(submission_path)]
     # filter the files which contain an extension
     # remove the dot of the extension.
     files_type_extension = [(filename, extension[1:])
@@ -1276,6 +1291,19 @@ def send_register_request_mail(user):
         send_mail(recipient, subject, body)
 
 
+def get_new_submissions(event_name):
+    submissions = (db.session.query(Submission, Event, EventTeam)
+                             .filter(Event.name==event_name)
+                             .filter(Event.id==EventTeam.event_id)
+                             .filter(EventTeam.id==Submission.event_team_id)
+                             .filter(Submission.state=='new')
+                             .all())
+    if submissions:
+        return [s for s, e, et in submissions]
+    return []
+
+
+# TODO: to remove in favor of get_new_submission
 def get_earliest_new_submission(event_name=None):
     if event_name is None:
         new_submissions = Submission.query.filter_by(
@@ -1366,6 +1394,7 @@ def backend_train_test_loop(event_name=None, timeout=20,
         time.sleep(timeout)
 
 
+# TODO: to be removed since it is done by ramp test submission
 def train_test_submissions(submissions=None, force_retrain_test=False,
                            is_parallelize=None):
     """Train and test submission.
@@ -1383,6 +1412,7 @@ def train_test_submissions(submissions=None, force_retrain_test=False,
 
 
 # For parallel call
+# TODO: to be removed since it is done by ramp test submission
 def train_test_submission(submission, force_retrain_test=False):
     """Train and test submission.
 
@@ -1505,6 +1535,7 @@ def _make_error_message(e):
     return log_msg, error_msg
 
 
+# TODO: to be removed since done by ramp test submission
 def train_test_submission_on_cv_fold(detached_submission_on_cv_fold,
                                      X_train, y_train,
                                      X_test, y_test, force_retrain_test=False):
@@ -1525,6 +1556,7 @@ def train_test_submission_on_cv_fold(detached_submission_on_cv_fold,
     return detached_submission_on_cv_fold
 
 
+# TODO: to be removed since done by ramp test submission
 def train_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
                                 force_retrain=False):
     if detached_submission_on_cv_fold.state not in ['new', 'checked']\
@@ -1592,6 +1624,7 @@ def train_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
     detached_submission_on_cv_fold.valid_time = end - start
 
 
+# TODO: to be removed since it is done by ramp test submission
 def test_submission_on_cv_fold(detached_submission_on_cv_fold, X, y,
                                force_retest=False):
     if detached_submission_on_cv_fold.state not in\
@@ -2675,3 +2708,69 @@ def get_source_submissions(submission):
                    s.submission_timestamp < submission.submission_timestamp]
     submissions.sort(key=lambda x: x.submission_timestamp, reverse=True)
     return submissions
+
+
+def get_submission_on_cv_folds(submission_id):
+    """Return the list of SubmissionsOnCVFold given a Submission.id.
+
+    The CV folds are returned in ascending order
+    (e.g., fold #0, fold #1, etc.).
+
+    Parameters
+    ----------
+    submission_id : int
+        The identification of the submission.
+
+    Returns
+    -------
+    submissions_on_cv_fold : list of rampdb.model.SubmissionOnCVFold
+        A list of the :class:`rampdb.model.SubmissionOnCVFold` associated with
+        the submission.
+    """
+    submissions = \
+        (db.session.query(SubmissionOnCVFold, Submission)
+                   .filter(Submission.id == submission_id)
+                   .filter(SubmissionOnCVFold.submission_id == submission_id)
+                   .order_by(SubmissionOnCVFold.cv_fold_id)
+                   .all())
+    if submissions:
+        return [sub_cv for sub_cv, sub in submissions]
+    return []
+
+
+def update_submission_on_cv_fold(submission_on_cv_fold, path_results):
+    """Update the CV fold of a submission.
+
+    Parameters
+    ----------
+    submission_on_cv_fold : rampdb.model.SubmissionOnCVFold
+        The CV fold to be updated.
+    path_results : str
+        Directory where the results are stored for the given cv fold.
+    """
+    results = {}
+    # load timing information
+    for step in ('train', 'valid', 'test'):
+        results[step + '_time'] = np.asscalar(
+            np.loadtxt(os.path.join(path_results, step + '_time'))
+        )
+    # load predictions
+    results['full_train_y_pred'] = np.load(
+        os.path.join(path_results, 'y_pred_train.npz')
+    )['y_pred']
+    results['test_y_pred'] = np.load(
+        os.path.join(path_results, 'y_pred_test.npz')
+    )['y_pred']
+    # update predicitions and time
+    for key, value in results.items():
+        setattr(submission_on_cv_fold, key, value)
+    # load the scores
+    scores_update = pd.read_csv(
+        os.path.join(path_results, 'scores.csv'), index_col=0
+    )
+    # update the scores
+    for score in submission_on_cv_fold.scores:
+        for step in scores_update.index:
+            value = scores_update.loc[step, score.name]
+            setattr(score, step + '_score', value)
+    db.session.commit()

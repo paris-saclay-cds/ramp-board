@@ -20,7 +20,7 @@ def _is_conda_env_installed():
         stdout, _ = proc.communicate()
         conda_info = json.loads(stdout)
         envs_path = conda_info['envs'][1:]
-        if not envs_path or not all([env == 'ramp-iris' for env in envs_path]):
+        if not envs_path or not any(['ramp-iris' in env for env in envs_path]):
             return True
         return False
     except:
@@ -45,6 +45,8 @@ def get_conda_worker():
         ramp_data_dir = ramp_kit_dir
         config = {'ramp_kit_dir': os.path.join(module_path, 'kits', 'iris'),
                   'ramp_data_dir': os.path.join(module_path, 'kits', 'iris'),
+                  'ramp_submission_dir': os.path.join(module_path, 'kits',
+                                                      'iris', 'submissions'),
                   'local_log_folder': os.path.join(
                       module_path, 'kits', 'iris', 'log'),
                   'local_predictions_folder': os.path.join(

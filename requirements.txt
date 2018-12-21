@@ -29,3 +29,4 @@ pytest
 pytest-cov
 pytest-env
 flake8
+backports.tempfile  # to be removed when dropping Python 2

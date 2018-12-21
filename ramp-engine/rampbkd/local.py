@@ -1,9 +1,12 @@
 import json
+import logging
 import os
 import shutil
 import subprocess
 
 from .base import BaseWorker
+
+logger = logging.getLogger('WORKER')
 
 
 class CondaEnvWorker(BaseWorker):
@@ -18,9 +21,11 @@ class CondaEnvWorker(BaseWorker):
         * 'conda_env': the name of the conda environment to use. If not
           specified, the base environment will be used.
         * 'ramp_kit_dir': path to the directory of the RAMP kit;
-        * 'ramp_data_dir': path to the directory of the data.
+        * 'ramp_data_dir': path to the directory of the data;
+        * 'ramp_submission_dir': path to the directory containing the
+          submissions;
         * `local_log_folder`: path to the directory where the log of the
-          submission will be stored.
+          submission will be stored;
         * `local_predictions_folder`: path to the directory where the
           predictions of the submission will be stored.
     submission : str
@@ -57,7 +62,8 @@ class CondaEnvWorker(BaseWorker):
         """
         # sanity check for the configuration variable
         for required_param in ('ramp_kit_dir', 'ramp_data_dir',
-                               'local_log_folder', 'local_predictions_folder'):
+                               'ramp_submission_dir', 'local_log_folder',
+                               'local_predictions_folder'):
             self._check_config_name(self.config, required_param)
         # find the path to the conda environment
         env_name = (self.config['conda_env']
@@ -99,6 +105,7 @@ class CondaEnvWorker(BaseWorker):
                                            'training_output')
         if os.path.exists(output_training_dir):
             shutil.rmtree(output_training_dir)
+        super(CondaEnvWorker, self).teardown()
 
     def _is_submission_finished(self):
         """Status of the submission.
@@ -124,11 +131,12 @@ class CondaEnvWorker(BaseWorker):
              '--submission', self.submission,
              '--ramp_kit_dir', self.config['ramp_kit_dir'],
              '--ramp_data_dir', self.config['ramp_data_dir'],
+             '--ramp_submission_dir', self.config['ramp_submission_dir'],
              '--save-y-preds'],
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
+            stderr=subprocess.PIPE
         )
-        self.status = 'running'
+        super(CondaEnvWorker, self).launch_submission()
 
     def collect_results(self):
         """Collect the results after that the submission is completed.
@@ -153,8 +161,10 @@ class CondaEnvWorker(BaseWorker):
             # no need to create the directory, it will be handle by copytree
             pred_dir = os.path.join(self.config['local_predictions_folder'],
                                     self.submission)
-            output_training_dir = os.path.join(self.config['ramp_kit_dir'],
-                                               'submissions', self.submission,
-                                               'training_output')
+            output_training_dir = os.path.join(
+                self.config['ramp_submission_dir'], self.submission,
+                'training_output')
             shutil.copytree(output_training_dir, pred_dir)
             self.status = 'collected'
+            logger.info(repr(self))
+            return self._proc.returncode
