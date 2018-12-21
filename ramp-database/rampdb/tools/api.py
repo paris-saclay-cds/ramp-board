@@ -1,8 +1,3 @@
-"""
-RAMP backend API
-
-Methods for interacting with the database
-"""
 from __future__ import print_function, absolute_import
 
 import os
@@ -13,26 +8,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import URL
 
+from ..exceptions import UnknownStateError
 from ..model import Model
+from ..model.submission import submission_states
 from .query import select_submissions_by_state
-from .query import select_submissions_by_id
+from .query import select_submission_by_id
 from .query import select_submission_by_name
 from .query import select_event_by_name
-from ..config import STATES, UnknownStateError
 
-
-__all__ = [
-    'get_submissions',
-    'get_submission_by_id',
-    'get_submission_by_name',
-    'set_submission_state',
-    'get_submission_state',
-    'set_submission_max_ram',
-    'set_submission_error_msg',
-    'set_predictions',
-    'score_submission',
-    'get_event_nb_folds',
-]
+STATES = submission_states.enums
 
 
 def _setup_db(config):
@@ -74,22 +58,14 @@ def get_submissions(config, event_name, state='new'):
         dataset. If you are using the configuration provided by ramp, it
         corresponds to the the `sqlalchemy` key.
     event_name : str
-        name of the RAMP event
-    state : str, optional
-        state of the requested submissions (default is 'new')
+        The name of the RAMP event.
+    state : str, default='new'
+        The state of the requested submissions.
 
     Returns
     -------
     List of tuples (int, List[str]) :
         (submission_id, [path to submission files on the db])
-
-    Raises
-    ------
-    ValueError :
-        when mandatory connexion parameters are missing from config
-    UnknownStateError :
-        when the requested state does not exist in the database
-
     """
     if state not in STATES:
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
@@ -132,7 +108,7 @@ def get_submission_by_id(config, submission_id):
     db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
-        submission = select_submissions_by_id(session, submission_id)
+        submission = select_submission_by_id(session, submission_id)
         # force event name and team name to be cached
         submission.event.name
         submission.team.name
@@ -207,7 +183,7 @@ def set_submission_state(config, submission_id, state):
     with db.connect() as conn:
         session = Session(bind=conn)
 
-        submission = select_submissions_by_id(session, submission_id)
+        submission = select_submission_by_id(session, submission_id)
         submission.set_state(state)
 
         session.commit()
@@ -237,7 +213,7 @@ def get_submission_state(config, submission_id):
     db, Session = _setup_db(config)    # Connect to the dabase and perform action
     with db.connect() as conn:
         session = Session(bind=conn)
-        submission = select_submissions_by_id(session, submission_id)
+        submission = select_submission_by_id(session, submission_id)
     return submission.state
 
 
@@ -269,7 +245,7 @@ def set_predictions(config, submission_id, prediction_path, ext='npy'):
     with db.connect() as conn:
         session = Session(bind=conn)
 
-        submission = select_submissions_by_id(session, submission_id)
+        submission = select_submission_by_id(session, submission_id)
 
         for fold_id, cv_fold in enumerate(submission.on_cv_folds):
             cv_fold.full_train_y_pred = _load_submission(
@@ -319,6 +295,7 @@ def _load_submission(path, fold_id, typ, ext):
     if ext.lower() in ['npy', 'npz']:
         return np.load(pred_file)['y_pred']
     elif ext.lower() == 'csv':
+        # TODO: there is a bug here. This function does not exist.
         return np.loadfromtxt(pred_file)
     else:
         return NotImplementedError("No reader implemented for extension {ext}"
@@ -374,7 +351,7 @@ def score_submission(config, submission_id):
     with db.connect() as conn:
         session = Session(bind=conn)
 
-        submission = select_submissions_by_id(session, submission_id)
+        submission = select_submission_by_id(session, submission_id)
         if submission.state != 'tested':
             raise ValueError('Submission state must be "tested"'
                              ' to score, not "{}"'.format(submission.state))
@@ -433,7 +410,7 @@ def set_submission_max_ram(config, submission_id, max_ram_mb):
     with db.connect() as conn:
         session = Session(bind=conn)
 
-        submission = select_submissions_by_id(session, submission_id)
+        submission = select_submission_by_id(session, submission_id)
         submission.max_ram = max_ram_mb
         session.commit()
 
@@ -458,7 +435,7 @@ def set_submission_error_msg(config, submission_id, error_msg):
     with db.connect() as conn:
         session = Session(bind=conn)
 
-        submission = select_submissions_by_id(session, submission_id)
+        submission = select_submission_by_id(session, submission_id)
         submission.error_msg = error_msg
         session.commit()
 
