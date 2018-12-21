@@ -29,10 +29,15 @@ install:
     - cd ramp-database
     - pip install .
     - cd ..
+    # install ramp-utils
+    - cd ramp-utils
+    - pip install .
+    - cd ..
 script:
     - bash ci_tools/travis/test_ramp_board.sh
     - bash ci_tools/travis/test_ramp_engine.sh
     - bash ci_tools/travis/test_ramp_database.sh
+    - bash ci_tools/travis/test_ramp_utils.sh
 after_success:
     - make code-analysis
 notifications:

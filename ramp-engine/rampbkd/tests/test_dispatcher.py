@@ -21,7 +21,7 @@ from rampbkd.local import CondaEnvWorker
 from rampbkd.dispatcher import Dispatcher
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def setup_db():
     try:
         create_toy_db()
