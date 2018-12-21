@@ -3,5 +3,5 @@ sqlalchemy:
     username: mrramp
     password: mrramp
     host: localhost
-    port: 20000
+    port: 5432
     database: databoard_test
