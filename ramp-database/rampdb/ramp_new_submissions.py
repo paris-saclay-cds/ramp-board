@@ -2,8 +2,9 @@ from __future__ import print_function, absolute_import, unicode_literals
 
 import argparse
 
+from ramputils import read_config
+
 from .tools import get_submissions
-from .config import read_backend_config
 
 
 def init_parser():
@@ -26,7 +27,7 @@ def main():
     parser = init_parser()
     args = parser.parse_args()
 
-    config = read_backend_config(args.config)
+    config = read_config(args.config, filter_section='sqlalchemy')
     files = get_submissions(config, args.event_name, state='new')
 
     for f in files:

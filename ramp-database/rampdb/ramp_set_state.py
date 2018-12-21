@@ -2,10 +2,12 @@ from __future__ import print_function, absolute_import, unicode_literals
 
 import argparse
 
-from .tools import set_submission_state
-from .config import STATES
-from .config import read_backend_config
+from ramputils import read_config
 
+from .tools import set_submission_state
+from .model.submission import submission_states
+
+STATES = submission_states.enums
 
 def init_parser():
     """Defines command-line interface"""
@@ -31,7 +33,7 @@ def main():
     parser = init_parser()
     args = parser.parse_args()
 
-    config = read_backend_config(args.config)
+    config = read_config(args.config, filter_section='sqlalchemy')
     res = set_submission_state(config, args.submission_id, args.state)
 
     if args.verbose and res:

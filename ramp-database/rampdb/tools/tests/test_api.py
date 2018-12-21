@@ -22,13 +22,8 @@ from rampdb.tools import score_submission
 
 
 @pytest.fixture(scope='module')
-def config():
-    return read_config(path_config_example())
-
-
-@pytest.fixture(scope='module')
 def config_database(config):
-    return config['sqlalchemy']
+    return read_config(path_config_example(), filter_section='sqlalchmey')
 
 
 @pytest.fixture(scope='module')
