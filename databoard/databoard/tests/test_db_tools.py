@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from numpy.testing import assert_array_equal
+from numpy.testing import assert_allclose
 from rampwf.workflows import FeatureExtractorClassifier
 
 from rampdb.model import CVFold
@@ -54,6 +55,8 @@ from databoard.db_tools import sign_up_team
 from databoard.db_tools import submit_starting_kit
 from databoard.db_tools import update_submission_on_cv_fold
 from databoard.db_tools import update_user
+
+HERE = os.path.dirname(__file__)
 
 
 class Bunch(dict):
@@ -654,23 +657,31 @@ def test_update_submission_on_cv_fold(setup_toy_db):
                                  team_name='test_user',
                                  submission_name='starting_kit_test')[0]
     submissions_cv = get_submission_on_cv_folds(submission.id)
-    for cv_fold in submissions_cv:
-        scores = {
-            'step': ['test', 'train', 'valid'],
-            'acc': [0.733333, 0.604167, 0.583333],
-            'error': [0.266667, 0.395833, 0.416667],
-            'f1_70': [0.666667, 0.333333, 0.333333],
-            'nll': [0.693464, 0.732763, 2.194549]
-        }
-        results = {
-            'state': 'trained',
-            'train_time': 1.0, 'valid_time': 1.0, 'test_time': 1.0,
-            'full_train_y_pred': np.ones((30, 3)),
-            'test_y_pred': np.ones((120, 3)),
-            'scores': pd.DataFrame(scores).set_index('step')
-        }
-        update_submission_on_cv_fold(cv_fold, results)
+    for cv_fold_idx, cv_fold in enumerate(submissions_cv):
+        # define the path for this results
+        path_results = os.path.join(HERE, 'data', 'iris_predictions',
+                                    'fold_{}'.format(cv_fold_idx))
+        update_submission_on_cv_fold(cv_fold, path_results)
     submissions_cv = get_submission_on_cv_folds(submission.id)
-    for cv_fold in submissions_cv:
-        assert cv_fold.state == 'trained'
-        assert cv_fold.train_time == pytest.approx(1.0)
+    for cv_fold_idx, cv_fold in enumerate(submissions_cv):
+        path_results = os.path.join(HERE, 'data', 'iris_predictions',
+                                    'fold_{}'.format(cv_fold_idx))
+        # check only the training time
+        train_time = np.asscalar(
+            np.loadtxt(os.path.join(path_results, 'train_time'))
+        )
+        assert cv_fold.train_time == pytest.approx(train_time)
+        # check only the training predictions
+        y_pred_train = np.load(os.path.join(path_results, 'y_pred_train.npz'))
+        assert_allclose(cv_fold.full_train_y_pred, y_pred_train['y_pred'])
+        # check only the accuracy on the training
+        scores = pd.read_csv(os.path.join(path_results, 'scores.csv'),
+                             index_col=0)
+        for score in cv_fold.scores:
+            score_type = score.name
+            assert score.train_score == pytest.approx(scores.loc['train',
+                                                                 score_type])
+            assert score.valid_score == pytest.approx(scores.loc['valid',
+                                                                 score_type])
+            assert score.test_score == pytest.approx(scores.loc['test',
+                                                                score_type])

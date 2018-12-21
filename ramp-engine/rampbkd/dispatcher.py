@@ -13,9 +13,6 @@ else:
     from Queue import Queue
     from Queue import LifoQueue
 
-import numpy as np
-import pandas as pd
-
 from databoard import ramp_config
 from databoard.db_tools import get_submissions
 from databoard.db_tools import get_new_submissions
@@ -146,27 +143,7 @@ class Dispatcher(object):
                     self.config['local_predictions_folder'],
                     submission.basename, 'fold_{}'.format(fold_idx)
                 )
-                results = {}
-                results['state'] = submission.state
-                # loading the timing information
-                for step in ('train', 'valid', 'test'):
-                    results[step + '_time'] = np.asscalar(
-                        np.loadtxt(os.path.join(path_results, step + '_time'))
-                    )
-                # loading the prediction
-                results['full_train_y_pred'] = np.load(
-                    os.path.join(path_results, 'y_pred_train.npz')
-                )['y_pred']
-                results['test_y_pred'] = np.load(
-                    os.path.join(path_results, 'y_pred_test.npz')
-                )['y_pred']
-                # load the scores
-                results['scores'] = pd.read_csv(
-                    os.path.join(path_results, 'scores.csv'),
-                    index_col=0
-                )
-                # update the cv fold
-                update_submission_on_cv_fold(sub_cv_fold, results)
+                update_submission_on_cv_fold(sub_cv_fold, path_results)
                 # TODO: test those two last functions
                 update_leaderboards(submission.event.name)
                 update_all_user_leaderboards(submission.event.name)

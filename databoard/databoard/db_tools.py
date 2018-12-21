@@ -2738,29 +2738,37 @@ def get_submission_on_cv_folds(submission_id):
     return []
 
 
-def update_submission_on_cv_fold(submission_on_cv_fold, results):
+def update_submission_on_cv_fold(submission_on_cv_fold, path_results):
     """Update the CV fold of a submission.
 
     Parameters
     ----------
     submission_on_cv_fold : rampdb.model.SubmissionOnCVFold
         The CV fold to be updated.
-    results : dict
-        A dictionary containing the values which will be used to update the
-        CV fold. The keys should be:
-
-        * 'state': the state of the CV fold;
-        * 'train_time': training time;
-        * 'valid_time': validation time;
-        * 'test_time': test time;
-        * 'full_train_y_pred': predictions on the validation set;
-        * 'test_y_pred': predictions on the testing set;
-        * 'scores': scores for the current fold.
+    path_results : str
+        Directory where the results are stored for the given cv fold.
     """
-    submission_on_cv_fold.state = results.pop('state')
-    scores_update = results.pop('scores')
+    results = {}
+    # load timing information
+    for step in ('train', 'valid', 'test'):
+        results[step + '_time'] = np.asscalar(
+            np.loadtxt(os.path.join(path_results, step + '_time'))
+        )
+    # load predictions
+    results['full_train_y_pred'] = np.load(
+        os.path.join(path_results, 'y_pred_train.npz')
+    )['y_pred']
+    results['test_y_pred'] = np.load(
+        os.path.join(path_results, 'y_pred_test.npz')
+    )['y_pred']
+    # update predicitions and time
     for key, value in results.items():
         setattr(submission_on_cv_fold, key, value)
+    # load the scores
+    scores_update = pd.read_csv(
+        os.path.join(path_results, 'scores.csv'), index_col=0
+    )
+    # update the scores
     for score in submission_on_cv_fold.scores:
         for step in scores_update.index:
             value = scores_update.loc[step, score.name]
