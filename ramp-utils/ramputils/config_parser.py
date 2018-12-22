@@ -54,15 +54,16 @@ def read_config(config_file, filter_section=None, check_requirements=True):
 
     if check_requirements:
         for section_name, required_field in REQUIRED_KEYS.items():
-            missing_parameters = required_field.difference(
-                config[section_name])
-            if missing_parameters:
-                raise ValueError(
-                    'The section "{}" in the "{}" file is missing the '
-                    'required parameters {}.'
-                    .format(section_name, os.path.basename(config_file),
-                            missing_parameters)
-                )
+            if section_name in config:
+                missing_parameters = required_field.difference(
+                    config[section_name])
+                if missing_parameters:
+                    raise ValueError(
+                        'The section "{}" in the "{}" file is missing the '
+                        'required parameters {}.'
+                        .format(section_name, os.path.basename(config_file),
+                                missing_parameters)
+                    )
 
     if unpack:
         return config[filter_section[0]]
