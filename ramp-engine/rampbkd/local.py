@@ -20,13 +20,13 @@ class CondaEnvWorker(BaseWorker):
 
         * 'conda_env': the name of the conda environment to use. If not
           specified, the base environment will be used.
-        * 'ramp_kit_dir': path to the directory of the RAMP kit;
-        * 'ramp_data_dir': path to the directory of the data;
-        * 'ramp_submission_dir': path to the directory containing the
+        * 'kit_dir': path to the directory of the RAMP kit;
+        * 'data_dir': path to the directory of the data;
+        * 'submissions_dir': path to the directory containing the
           submissions;
-        * `local_log_folder`: path to the directory where the log of the
+        * `logs_dir`: path to the directory where the log of the
           submission will be stored;
-        * `local_predictions_folder`: path to the directory where the
+        * `predictions_dir`: path to the directory where the
           predictions of the submission will be stored.
     submission : str
         Name of the RAMP submission to be handle by the worker.
@@ -61,9 +61,8 @@ class CondaEnvWorker(BaseWorker):
         the configuration passed when instantiating the worker.
         """
         # sanity check for the configuration variable
-        for required_param in ('ramp_kit_dir', 'ramp_data_dir',
-                               'ramp_submission_dir', 'local_log_folder',
-                               'local_predictions_folder'):
+        for required_param in ('kit_dir', 'data_dir', 'submissions_dir',
+                               'logs_dir', 'predictions_dir'):
             self._check_config_name(self.config, required_param)
         # find the path to the conda environment
         env_name = (self.config['conda_env']
@@ -100,7 +99,7 @@ class CondaEnvWorker(BaseWorker):
         """Remove the predictions stores within the submission."""
         if self.status != 'collected':
             raise ValueError("Collect the results before to kill the worker.")
-        output_training_dir = os.path.join(self.config['ramp_kit_dir'],
+        output_training_dir = os.path.join(self.config['kit_dir'],
                                            'submissions', self.submission,
                                            'training_output')
         if os.path.exists(output_training_dir):
@@ -129,9 +128,9 @@ class CondaEnvWorker(BaseWorker):
         self._proc = subprocess.Popen(
             [cmd_ramp,
              '--submission', self.submission,
-             '--ramp_kit_dir', self.config['ramp_kit_dir'],
-             '--ramp_data_dir', self.config['ramp_data_dir'],
-             '--ramp_submission_dir', self.config['ramp_submission_dir'],
+             '--ramp_kit_dir', self.config['kit_dir'],
+             '--ramp_data_dir', self.config['data_dir'],
+             '--ramp_submission_dir', self.config['submissions_dir'],
              '--save-y-preds'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
@@ -151,7 +150,7 @@ class CondaEnvWorker(BaseWorker):
             # communicate() will wait for the process to be completed
             self._proc_log, _ = self._proc.communicate()
             # write the log into the disk
-            log_dir = os.path.join(self.config['local_log_folder'],
+            log_dir = os.path.join(self.config['logs_dir'],
                                    self.submission)
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
@@ -159,10 +158,10 @@ class CondaEnvWorker(BaseWorker):
                 f.write(self._proc_log)
             # copy the predictions into the disk
             # no need to create the directory, it will be handle by copytree
-            pred_dir = os.path.join(self.config['local_predictions_folder'],
+            pred_dir = os.path.join(self.config['predictions_dir'],
                                     self.submission)
             output_training_dir = os.path.join(
-                self.config['ramp_submission_dir'], self.submission,
+                self.config['submissions_dir'], self.submission,
                 'training_output')
             shutil.copytree(output_training_dir, pred_dir)
             self.status = 'collected'

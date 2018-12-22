@@ -41,15 +41,12 @@ pytestmark = pytest.mark.skipif(
 def get_conda_worker():
     def _create_worker(submission_name, conda_env='ramp-iris'):
         module_path = os.path.dirname(__file__)
-        ramp_kit_dir = os.path.join(module_path, 'kits', 'iris')
-        ramp_data_dir = ramp_kit_dir
-        config = {'ramp_kit_dir': os.path.join(module_path, 'kits', 'iris'),
-                  'ramp_data_dir': os.path.join(module_path, 'kits', 'iris'),
-                  'ramp_submission_dir': os.path.join(module_path, 'kits',
-                                                      'iris', 'submissions'),
-                  'local_log_folder': os.path.join(
-                      module_path, 'kits', 'iris', 'log'),
-                  'local_predictions_folder': os.path.join(
+        config = {'kit_dir': os.path.join(module_path, 'kits', 'iris'),
+                  'data_dir': os.path.join(module_path, 'kits', 'iris'),
+                  'submissions_dir': os.path.join(module_path, 'kits',
+                                                  'iris', 'submissions'),
+                  'logs_dir': os.path.join(module_path, 'kits', 'iris', 'log'),
+                  'predictions_dir': os.path.join(
                       module_path, 'kits', 'iris', 'predictions'),
                   'conda_env': conda_env}
         return CondaEnvWorker(config=config, submission='starting_kit')
@@ -57,16 +54,13 @@ def get_conda_worker():
 
 
 def _remove_directory(worker):
-    output_training_dir = os.path.join(worker.config['ramp_kit_dir'],
-                                       'submissions',
-                                       worker.submission,
-                                       'training_output')
-    log_dir = os.path.join(worker.config['local_log_folder'])
-    pred_dir = os.path.join(worker.config['local_predictions_folder'],
-                            worker.submission)
+    output_training_dir = os.path.join(
+        worker.config['kit_dir'], 'submissions', worker.submission,
+        'training_output'
+    )
     for directory in (output_training_dir,
-                      worker.config['local_log_folder'],
-                      worker.config['local_predictions_folder']):
+                      worker.config['logs_dir'],
+                      worker.config['predictions_dir']):
         if os.path.exists(directory):
             shutil.rmtree(directory)
 
@@ -84,7 +78,7 @@ def test_conda_worker(submission, get_conda_worker):
         assert worker.status == 'collected'
         worker.teardown()
         # check that teardown removed the predictions
-        output_training_dir = os.path.join(worker.config['ramp_kit_dir'],
+        output_training_dir = os.path.join(worker.config['kit_dir'],
                                            'submissions',
                                            worker.submission,
                                            'training_output')
@@ -110,9 +104,9 @@ def test_conda_worker_without_conda_env_specified(get_conda_worker):
 def test_conda_worker_error_missing_config_param(get_conda_worker):
     worker = get_conda_worker('starting_kit')
     # we remove one of the required parameter
-    del worker.config['ramp_kit_dir']
+    del worker.config['kit_dir']
 
-    err_msg = "The worker required the parameter 'ramp_kit_dir'"
+    err_msg = "The worker required the parameter 'kit_dir'"
     with pytest.raises(ValueError, match=err_msg):
         worker.setup()
 

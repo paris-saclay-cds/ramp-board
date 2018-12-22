@@ -14,12 +14,17 @@ else:
     from Queue import LifoQueue
 
 from databoard import ramp_config
-from databoard.db_tools import get_submissions
-from databoard.db_tools import get_new_submissions
+# from databoard.db_tools import get_submissions
 from databoard.db_tools import get_submission_on_cv_folds
 from databoard.db_tools import update_all_user_leaderboards
 from databoard.db_tools import update_leaderboards
 from databoard.db_tools import update_submission_on_cv_fold
+
+from rampdb.tools import get_submissions
+from rampdb.tools import get_submission_state
+from rampdb.tools import set_submission_state
+
+from ramputils import generate_worker_config
 
 from .local import CondaEnvWorker
 
@@ -37,7 +42,8 @@ class Dispatcher(object):
     Parameters
     ----------
     config : dict,
-        A dictionary with all necessary configuration.
+        A RAMP configuration YAML file with information regarding the worker
+        and the ramp event.
     worker : Worker, default=CondaEnvWorker
         The type of worker to launch. By default, we launch local worker which
         uses ``conda``.
@@ -56,43 +62,39 @@ class Dispatcher(object):
         self._awaiting_worker_queue = Queue()
         self._processing_worker_queue = LifoQueue(maxsize=self.n_worker)
         self._processed_submission_queue = Queue()
-        self._database_config = {
-            'ramp_kit_dir': ramp_config['ramp_kits_path'],
-            'ramp_data_dir': ramp_config['ramp_data_path'],
-            'ramp_submission_dir': ramp_config['ramp_submissions_path']
-        }
+        self._worker_config = generate_worker_config(self.config)
 
     def fetch_from_db(self):
         """Fetch the submission from the database and create the workers."""
-        submissions = get_new_submissions(event_name=self.config['event_name'])
+        submissions = get_submissions(self.config['sqlalchemy'],
+                                      self.config['ramp']['event_name'],
+                                      state='new')
         if not submissions:
             logger.info('No new submissions fetch from the database')
             return
-        for submission in submissions:
-            # create the configuration for the worker
-            worker_config = self.config.copy()
-            worker_config.update(self._database_config)
-            worker_config['ramp_kit_dir'] = os.path.join(
-                worker_config['ramp_kit_dir'], submission.event.problem.name)
-            worker_config['ramp_data_dir'] = os.path.join(
-                worker_config['ramp_data_dir'], submission.event.problem.name)
+        for submission_id, submission_name, _ in submissions:
             # create the worker
-            worker = self.worker(worker_config, submission.basename)
-            submission.state = 'send_to_training'
-            self._awaiting_worker_queue.put_nowait((worker, submission))
+            worker = self.worker(self._worker_config, submission_name)
+            set_submission_state(self.config['sqlalchemy'], submission_id,
+                                 'sent_to_training')
+            self._awaiting_worker_queue.put_nowait((worker, (submission_id,
+                                                             submission_name)))
             logger.info('Submission {} added to the queue of submission to be '
-                        'processed'.format(submission.basename))
+                        'processed'.format(submission_name))
 
     def launch_workers(self):
         """Launch the awaiting workers if possible."""
         while (not self._processing_worker_queue.full() and
                not self._awaiting_worker_queue.empty()):
-            worker, submission = self._awaiting_worker_queue.get()
+            worker, (submission_id, submission_name) = \
+                self._awaiting_worker_queue.get()
             logger.info('Starting worker: {}'.format(worker))
             worker.setup()
             worker.launch_submission()
-            submission.state = 'training'
-            self._processing_worker_queue.put_nowait((worker, submission))
+            set_submission_state(self.config['sqlalchemy'], submission_id,
+                                 'training')
+            self._processing_worker_queue.put_nowait(
+                (worker, (submission_id, submission_name)))
             logger.info('Store the worker {} into the processing queue'
                         .format(worker))
         if self._processing_worker_queue.full():
@@ -113,55 +115,62 @@ class Dispatcher(object):
             elif self.worker_policy == 'exit':
                 self._poison_pill = True
             return
-        for worker, submission in zip(workers, submissions):
+        for worker, (submission_id, submission_name) in zip(workers,
+                                                            submissions):
             if worker.status == 'running':
-                self._processing_worker_queue.put_nowait((worker, submission))
+                self._processing_worker_queue.put_nowait(
+                    (worker, (submission_id, submission_name)))
                 logger.info('Worker {} is still running'.format(worker))
                 time.sleep(0)
             else:
                 logger.info('Collecting results from worker {}'.format(worker))
                 returncode = worker.collect_results()
-                submission.state = ('trained' if not returncode
-                                    else 'trained_error')
-                self._processed_submission_queue.put_nowait(submission)
+                set_submission_state(
+                    self.config['sqlalchemy'], submission_id,
+                    'trained' if not returncode else 'training_error'
+                )
+                self._processed_submission_queue.put_nowait(
+                    (submission_id, submission_name))
                 worker.teardown()
 
     def update_database_results(self):
         """Update the database with the results of ramp_test_submission."""
         while not self._processed_submission_queue.empty():
-            submission = self._processed_submission_queue.get_nowait()
-            if 'error' in submission.state:
+            submission_id, submission_name = \
+                self._processed_submission_queue.get_nowait()
+            if 'error' in get_submission_state(self.config['sqlalchemy'],
+                                               submission_id):
                 # do not make any update in case of failed submission
                 logger.info('Skip update for {} due to failure during the '
-                            'processing'.format(submission.basename))
+                            'processing'.format(submission_name))
                 continue
             logger.info('Update the results obtained on each fold for '
-                        '{}'.format(submission.basename))
-            submission_cv_folds = get_submission_on_cv_folds(submission.id)
+                        '{}'.format(submission_name))
+            submission_cv_folds = get_submission_on_cv_folds(submission_id)
             for fold_idx, sub_cv_fold in enumerate(submission_cv_folds):
                 path_results = os.path.join(
-                    self.config['local_predictions_folder'],
-                    submission.basename, 'fold_{}'.format(fold_idx)
+                    self._worker_config['predictions_dir'],
+                    submission_name, 'fold_{}'.format(fold_idx)
                 )
                 update_submission_on_cv_fold(sub_cv_fold, path_results)
                 # TODO: test those two last functions
-                update_leaderboards(submission.event.name)
-                update_all_user_leaderboards(submission.event.name)
+                update_leaderboards(self.config['ramp']['event_name'])
+                update_all_user_leaderboards(self.config['ramp']['event_name'])
 
     def launch(self):
         """Launch the dispatcher."""
         logger.info('Starting the RAMP dispatcher')
-        try:
-            while not self._poison_pill:
-                self.fetch_from_db()
-                self.launch_workers()
-                self.collect_result()
-                self.update_database_results()
-        finally:
-            # reset the submissions to 'new' in case of error or unfinished
-            # training
-            submissions = get_submissions(event_name=self.config['event_name'])
-            for submission in submissions:
-                if 'training' in submission.state:
-                    submission.state = 'new'
+        # try:
+        while not self._poison_pill:
+            self.fetch_from_db()
+            self.launch_workers()
+            self.collect_result()
+            self.update_database_results()
+        # finally:
+        #     # reset the submissions to 'new' in case of error or unfinished
+        #     # training
+        #     submissions = get_submissions(event_name=self.config['event_name'])
+        #     for submission in submissions:
+        #         if 'training' in submission.state:
+        #             submission.state = 'new'
         logger.info('Dispatcher killed by the poison pill')
