@@ -10,6 +10,8 @@ from databoard.testing import create_toy_db
 from ramputils import read_config
 from ramputils.testing import path_config_example
 
+from rampdb.exceptions import UnknownStateError
+
 from rampdb.model import Submission
 
 from rampdb.tools.api import _setup_db
@@ -82,6 +84,7 @@ def _change_state_db(config):
     "state, expected_id",
     [('new', [2, 5, 6, 7, 8, 9, 10]),
      ('trained', [1]),
+     ('tested', []),
      (None, [1, 2, 5, 6, 7, 8, 9, 10])]
 )
 def test_get_submissions(config_database, db_module, state, expected_id):
@@ -94,3 +97,8 @@ def test_get_submissions(config_database, db_module, state, expected_id):
         path_file = os.path.join('submission_{0:09d}'.format(sub_id),
                                  'classifier.py')
         assert path_file in sub_path[0]
+
+
+def test_get_submission_unknown_state(config_database, db_module):
+    with pytest.raises(UnknownStateError, match='Unrecognized state'):
+        get_submissions(config_database, 'irist_test', state='whatever')

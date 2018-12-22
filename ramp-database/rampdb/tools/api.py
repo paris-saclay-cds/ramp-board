@@ -90,7 +90,6 @@ def get_submissions(config, event_name, state='new'):
         submission_files = [sub.files for sub in submissions]
         submission_basename = [sub.basename for sub in submissions]
         filenames = [[f.path for f in files] for files in submission_files]
-
     return list(zip(submission_id, submission_basename, filenames))
 
 
@@ -118,8 +117,8 @@ def get_submission_by_id(config, submission_id):
         session = Session(bind=conn)
         submission = select_submission_by_id(session, submission_id)
         # force event name and team name to be cached
-        submission.event.name
-        submission.team.name
+        # submission.event.name
+        # submission.team.name
     return submission
 
 

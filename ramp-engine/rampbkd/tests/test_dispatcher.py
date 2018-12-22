@@ -40,7 +40,7 @@ def test_dispatcher(setup_db, caplog):
     # with tempfile.TemporaryDirectory() as local_tmp_dir:
     dispatcher = Dispatcher(config=config,
                             worker=CondaEnvWorker, n_worker=-1,
-                            worker_policy='exit')
+                            hunger_policy='exit')
     dispatcher.launch()
 
     # the iris kit contain a submission which should fail for each user
