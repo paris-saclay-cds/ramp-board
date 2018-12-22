@@ -22,8 +22,8 @@ from rampdb.tools import score_submission
 
 
 @pytest.fixture(scope='module')
-def config_database(config):
-    return read_config(path_config_example(), filter_section='sqlalchmey')
+def config_database():
+    return read_config(path_config_example(), filter_section='sqlalchemy')
 
 
 @pytest.fixture(scope='module')
@@ -39,7 +39,7 @@ def setup_db():
 
 
 def test_hot_test(config_database, setup_db):
-    get_submissions(config_database, 'iris_test')
+    print(get_submissions(config_database, 'iris_test'))
     get_submission_by_id(config_database, 7)
     get_submission_by_name(config_database, 'iris_test', 'test_user',
                            'starting_kit_test')

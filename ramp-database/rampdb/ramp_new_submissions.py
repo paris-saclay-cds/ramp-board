@@ -28,6 +28,8 @@ def main():
     args = parser.parse_args()
 
     config = read_config(args.config, filter_section='sqlalchemy')
+    # TODO: this is not the files actually
+    # TODO: it is buggy
     files = get_submissions(config, args.event_name, state='new')
 
     for f in files:

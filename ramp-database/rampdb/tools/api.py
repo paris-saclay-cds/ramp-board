@@ -64,8 +64,13 @@ def get_submissions(config, event_name, state='new'):
 
     Returns
     -------
-    List of tuples (int, List[str]) :
-        (submission_id, [path to submission files on the db])
+    submissions_info : list of tuple(int, str, list of str)
+        List of submissions information. Each item is a tuple containing:
+
+        * an integer containing the id of the submission;
+        * a string with the name of the submission in the database;
+        * a list of string representing the file associated with the
+          submission.
     """
     if state not in STATES:
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
@@ -73,17 +78,17 @@ def get_submissions(config, event_name, state='new'):
     db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
-
         submissions = select_submissions_by_state(session, event_name, state)
 
         if not submissions:
             return []
 
-        subids = [submission.id for submission in submissions]
-        subfiles = [submission.files for submission in submissions]
-        filenames = [[f.path for f in files] for files in subfiles]
+        submission_id = [sub.id for sub in submissions]
+        submission_files = [sub.files for sub in submissions]
+        submission_basename = [sub.basename for sub in submissions]
+        filenames = [[f.path for f in files] for files in submission_files]
 
-    return list(zip(subids, filenames))
+    return list(zip(submission_id, submission_basename, filenames))
 
 
 def get_submission_by_id(config, submission_id):
