@@ -1,3 +1,4 @@
+import os
 import shutil
 import pytest
 
@@ -8,6 +9,10 @@ from databoard.testing import create_toy_db
 
 from ramputils import read_config
 from ramputils.testing import path_config_example
+
+from rampdb.model import Submission
+
+from rampdb.tools.api import _setup_db
 
 from rampdb.tools import get_event_nb_folds
 from rampdb.tools import get_submission_by_id
@@ -26,8 +31,8 @@ def config_database():
     return read_config(path_config_example(), filter_section='sqlalchemy')
 
 
-@pytest.fixture(scope='module')
-def setup_db():
+@pytest.fixture
+def db_function():
     try:
         create_toy_db()
         yield
@@ -38,7 +43,19 @@ def setup_db():
         db.drop_all()
 
 
-def test_hot_test(config_database, setup_db):
+@pytest.fixture(scope='module')
+def db_module():
+    try:
+        create_toy_db()
+        yield
+    finally:
+        shutil.rmtree(deployment_path, ignore_errors=True)
+        db.session.close()
+        db.session.remove()
+        db.drop_all()
+
+
+def test_hot_test(config_database, db_function):
     print(get_submissions(config_database, 'iris_test', state=None))
     get_submission_by_id(config_database, 7)
     get_submission_by_name(config_database, 'iris_test', 'test_user',
@@ -48,3 +65,32 @@ def test_hot_test(config_database, setup_db):
     set_submission_state(config_database, 7, 'trained')
     set_submission_max_ram(config_database, 7, 100)
     set_submission_error_msg(config_database, 7, 'xxxx')
+
+
+def _change_state_db(config):
+    # change the state of one of the submission in the iris event
+    db, Session = _setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+        sub_id = 1
+        sub = session.query(Submission).filter(Submission.id == sub_id).first()
+        sub.set_state('trained')
+        session.commit()
+
+
+@pytest.mark.parametrize(
+    "state, expected_id",
+    [('new', [2, 5, 6, 7, 8, 9, 10]),
+     ('trained', [1]),
+     (None, [1, 2, 5, 6, 7, 8, 9, 10])]
+)
+def test_get_submissions(config_database, db_module, state, expected_id):
+    _change_state_db(config_database)
+    submissions = get_submissions(config_database, 'iris_test', state=state)
+    assert len(submissions) == len(expected_id)
+    for sub_id, sub_name, sub_path in submissions:
+        assert sub_id in expected_id
+        assert 'submission_{0:09d}'.format(sub_id) == sub_name
+        path_file = os.path.join('submission_{0:09d}'.format(sub_id),
+                                 'classifier.py')
+        assert path_file in sub_path[0]

@@ -47,7 +47,8 @@ def _setup_db(config):
     return db, Session
 
 def get_submissions(config, event_name, state='new'):
-    """
+    """Submission lists
+
     Retrieve a list of submissions and their associated files
     depending on their current status
 
@@ -84,6 +85,8 @@ def get_submissions(config, event_name, state='new'):
 
         if not submissions:
             return []
+
+        print(submissions)
 
         submission_id = [sub.id for sub in submissions]
         submission_files = [sub.files for sub in submissions]
