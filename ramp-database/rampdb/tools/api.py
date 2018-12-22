@@ -47,10 +47,11 @@ def _setup_db(config):
     return db, Session
 
 def get_submissions(config, event_name, state='new'):
-    """Submission lists
+    """Get information about submissions from an event with a specific state
+    optionally.
 
-    Retrieve a list of submissions and their associated files
-    depending on their current status
+    The information for each dataset is the id, name of the submission, and
+    the files associated with the submission.
 
     Parameters
     ----------
@@ -74,6 +75,11 @@ def get_submissions(config, event_name, state='new'):
         * a string with the name of the submission in the database;
         * a list of string representing the file associated with the
           submission.
+
+    See also
+    --------
+    rampdb.tools.get_submission_by_id : Get a single submission using an id.
+    rampdb.tools.get_submission_by_name : Get a single submission using names.
     """
     if state is not None and state not in STATES:
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
@@ -94,8 +100,7 @@ def get_submissions(config, event_name, state='new'):
 
 
 def get_submission_by_id(config, submission_id):
-    """
-    Get a `Submission` instance given a submission id
+    """Get a submission given its id.
 
     Parameters
     ----------
@@ -103,28 +108,31 @@ def get_submission_by_id(config, submission_id):
         Configuration file containing the information to connect to the
         dataset. If you are using the configuration provided by ramp, it
         corresponds to the the `sqlalchemy` key.
-
     submission_id : int
-        submission id
+        The id of the submission to query
 
     Returns
     -------
+    submission : :class:`rampdb.model.Submission`
+        The queried submission.
 
-    `Submission` instance
+    See also
+    --------
+    rampdb.tools.get_submissions : Get submissions information.
+    rampdb.tools.get_submission_by_name : Get a single submission using names.
     """
     db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
         submission = select_submission_by_id(session, submission_id)
         # force event name and team name to be cached
-        # submission.event.name
-        # submission.team.name
+        submission.event.name
+        submission.team.name
     return submission
 
 
 def get_submission_by_name(config, event_name, team_name, name):
-    """
-    Get a submission by name
+    """Get a single submission filtering by event, team, and submission names.
 
     Parameters
     ----------
@@ -132,19 +140,22 @@ def get_submission_by_name(config, event_name, team_name, name):
         Configuration file containing the information to connect to the
         dataset. If you are using the configuration provided by ramp, it
         corresponds to the the `sqlalchemy` key.
-    session :
-        database connexion session
     event_name : str
-        name of the RAMP event
+        The RAMP event.
     team_name : str
-        name of the RAMP team
+        The name of the team.
     name : str
-        name of the submission
+        The name of the submission.
 
     Returns
     -------
-    `Submission` instance
+    submission : :class:`rampdb.model.Submission`
+        The queried submission.
 
+    See also
+    --------
+    rampdb.tools.get_submissions : Get submissions information.
+    rampdb.tools.get_submission_by_id : Get a single submission using an id.
     """
     db, Session = _setup_db(config)
     with db.connect() as conn:
@@ -161,8 +172,7 @@ def get_submission_by_name(config, event_name, team_name, name):
 
 
 def set_submission_state(config, submission_id, state):
-    """
-    Modify the state of a submission in the RAMP database
+    """Set the set of a submission.
 
     Parameters
     ----------
@@ -173,15 +183,19 @@ def set_submission_state(config, submission_id, state):
     submission_id : int
         id of the requested submission
     state : str
-        new state of the submission
+        The state of the submission. The possible states for a submission are:
 
-    Raises
-    ------
-    ValueError :
-        when mandatory connexion parameters are missing from config
-    UnknownStateError :
-        when the requested state does not exist in the database
-
+        * 'new': submitted by user to the web interface;
+        * 'sent_to_training': submission was send for training but not launch
+          yet.
+        * 'trained': training finished normally;
+        * 'training_error': training finished abnormally;
+        * 'validated': validation finished normally;
+        * 'validating_error': validation finished abnormally;
+        * 'tested': testing finished normally;
+        * 'testing_error': testing finished abnormally;
+        * 'training': training is running normally;
+        * 'scored': submission scored.
     """
     if state not in STATES:
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
@@ -197,8 +211,7 @@ def set_submission_state(config, submission_id, state):
 
 
 def get_submission_state(config, submission_id):
-    """
-    Modify the state of a submission in the RAMP database
+    """Get the state of a submission given its id.
 
     Parameters
     ----------
@@ -209,15 +222,28 @@ def get_submission_state(config, submission_id):
     submission_id : int
         id of the requested submission
 
-    Raises
-    ------
-    ValueError :
-        when mandatory connexion parameters are missing from config
-    UnknownStateError :
-        when the requested state does not exist in the database
+    Returns
+    -------
+    submission_state : str
+        The state associated with the submission.
 
+    Notes
+    -----
+    The possible states for a submission are:
+
+    * 'new': submitted by user to the web interface;
+    * 'sent_to_training': submission was send for training but not launch
+        yet.
+    * 'trained': training finished normally;
+    * 'training_error': training finished abnormally;
+    * 'validated': validation finished normally;
+    * 'validating_error': validation finished abnormally;
+    * 'tested': testing finished normally;
+    * 'testing_error': testing finished abnormally;
+    * 'training': training is running normally;
+    * 'scored': submission scored.
     """
-    db, Session = _setup_db(config)    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
         submission = select_submission_by_id(session, submission_id)

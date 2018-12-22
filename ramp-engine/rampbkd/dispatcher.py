@@ -138,7 +138,7 @@ class Dispatcher(object):
                 returncode = worker.collect_results()
                 set_submission_state(
                     self._database_config, submission_id,
-                    'trained' if not returncode else 'training_error'
+                    'validated' if not returncode else 'training_error'
                 )
                 self._processed_submission_queue.put_nowait(
                     (submission_id, submission_name))
@@ -167,6 +167,8 @@ class Dispatcher(object):
                 # TODO: test those two last functions
                 update_leaderboards(self._ramp_config['event_name'])
                 update_all_user_leaderboards(self._ramp_config['event_name'])
+            set_submission_state(self._database_config, submission_id,
+                                 'scored')
 
     def launch(self):
         """Launch the dispatcher."""

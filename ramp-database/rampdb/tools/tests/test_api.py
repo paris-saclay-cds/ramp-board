@@ -49,6 +49,8 @@ def db_function():
 def db_module():
     try:
         create_toy_db()
+        _change_state_db(read_config(path_config_example(),
+                                     filter_section='sqlalchemy'))
         yield
     finally:
         shutil.rmtree(deployment_path, ignore_errors=True)
@@ -88,7 +90,6 @@ def _change_state_db(config):
      (None, [1, 2, 5, 6, 7, 8, 9, 10])]
 )
 def test_get_submissions(config_database, db_module, state, expected_id):
-    _change_state_db(config_database)
     submissions = get_submissions(config_database, 'iris_test', state=state)
     assert len(submissions) == len(expected_id)
     for sub_id, sub_name, sub_path in submissions:
@@ -102,3 +103,25 @@ def test_get_submissions(config_database, db_module, state, expected_id):
 def test_get_submission_unknown_state(config_database, db_module):
     with pytest.raises(UnknownStateError, match='Unrecognized state'):
         get_submissions(config_database, 'irist_test', state='whatever')
+
+
+def test_get_submission_by_id(config_database, db_module):
+    submission = get_submission_by_id(config_database, 1)
+    assert isinstance(submission, Submission)
+    assert submission.basename == 'submission_000000001'
+    assert os.path.exists(os.path.join(submission.path, 'classifier.py'))
+    assert submission.state == 'trained'
+
+
+def test_get_submission_by_name(config_database, db_module):
+    submission = get_submission_by_name(config_database, 'iris_test',
+                                        'test_user', 'starting_kit')
+    assert isinstance(submission, Submission)
+    assert submission.basename == 'submission_000000001'
+    assert os.path.exists(os.path.join(submission.path, 'classifier.py'))
+    assert submission.state == 'trained'
+
+
+@pytest.mark.parametrize("submission_id, state", [(1, 'trained'), (2, 'new')])
+def test_submission_state(config_database, db_module, submission_id, state):
+    assert get_submission_state(config_database, submission_id) == state
