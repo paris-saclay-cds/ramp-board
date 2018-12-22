@@ -86,8 +86,6 @@ def get_submissions(config, event_name, state='new'):
         if not submissions:
             return []
 
-        print(submissions)
-
         submission_id = [sub.id for sub in submissions]
         submission_files = [sub.files for sub in submissions]
         submission_basename = [sub.basename for sub in submissions]
