@@ -23,16 +23,17 @@ def select_submissions_by_state(session, event_name, state):
 
     Returns
     -------
-    submissions : list of :class:`rampdb.model.Submission`]
+    submissions : list of :class:`rampdb.model.Submission`
         The queried list of submissions.
     """
-    return (session.query(Submission)
+    q = (session.query(Submission)
                    .filter(Event.name == event_name)
                    .filter(Event.id == EventTeam.event_id)
                    .filter(EventTeam.id == Submission.event_team_id)
-                   .filter(Submission.state == state)
-                   .order_by(Submission.submission_timestamp)
-                   .all())
+                   .order_by(Submission.submission_timestamp))
+    if state is None:
+        return q.all()
+    return q.filter(Submission.state == state).all()
 
 
 def select_submission_by_id(session, submission_id):

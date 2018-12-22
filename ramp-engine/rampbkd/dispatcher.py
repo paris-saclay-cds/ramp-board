@@ -160,17 +160,26 @@ class Dispatcher(object):
     def launch(self):
         """Launch the dispatcher."""
         logger.info('Starting the RAMP dispatcher')
-        # try:
-        while not self._poison_pill:
-            self.fetch_from_db()
-            self.launch_workers()
-            self.collect_result()
-            self.update_database_results()
-        # finally:
-        #     # reset the submissions to 'new' in case of error or unfinished
-        #     # training
-        #     submissions = get_submissions(event_name=self.config['event_name'])
-        #     for submission in submissions:
-        #         if 'training' in submission.state:
-        #             submission.state = 'new'
+        try:
+            while not self._poison_pill:
+                self.fetch_from_db()
+                self.launch_workers()
+                self.collect_result()
+                self.update_database_results()
+        finally:
+            # reset the submissions to 'new' in case of error or unfinished
+            # training
+            submissions = get_submissions(self.config['sqlalchemy'],
+                                          self.config['ramp']['event_name'],
+                                          state=None)
+            for submission_id, _, _ in submissions:
+                submission_state = get_submission_state(
+                    self.config['sqlalchemy'], submission_id
+                )
+                if submission_state == 'training':
+                    set_submission_state(
+                        self.config['sqlalchemy'],
+                        submission_id,
+                        'new'
+                    )
         logger.info('Dispatcher killed by the poison pill')

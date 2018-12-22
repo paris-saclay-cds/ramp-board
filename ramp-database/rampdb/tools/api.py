@@ -59,8 +59,10 @@ def get_submissions(config, event_name, state='new'):
         corresponds to the the `sqlalchemy` key.
     event_name : str
         The name of the RAMP event.
-    state : str, default='new'
-        The state of the requested submissions.
+    state : None or str, default='new'
+        The state of the requested submissions. If None, the state of the
+        submissions will be ignored and all submissions for an event will be
+        fetched.
 
     Returns
     -------
@@ -72,7 +74,7 @@ def get_submissions(config, event_name, state='new'):
         * a list of string representing the file associated with the
           submission.
     """
-    if state not in STATES:
+    if state is not None and state not in STATES:
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
 
     db, Session = _setup_db(config)

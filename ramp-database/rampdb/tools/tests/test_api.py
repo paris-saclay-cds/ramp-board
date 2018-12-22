@@ -39,7 +39,7 @@ def setup_db():
 
 
 def test_hot_test(config_database, setup_db):
-    print(get_submissions(config_database, 'iris_test'))
+    print(get_submissions(config_database, 'iris_test', state=None))
     get_submission_by_id(config_database, 7)
     get_submission_by_name(config_database, 'iris_test', 'test_user',
                            'starting_kit_test')
