@@ -22,6 +22,10 @@ from databoard.db_tools import update_submission_on_cv_fold
 
 from rampdb.tools import get_submissions
 from rampdb.tools import get_submission_state
+
+from rampdb.tools import set_predictions
+from rampdb.tools import set_time
+from rampdb.tools import set_scores
 from rampdb.tools import set_submission_state
 
 from ramputils import generate_worker_config
@@ -157,16 +161,16 @@ class Dispatcher(object):
                 continue
             logger.info('Update the results obtained on each fold for '
                         '{}'.format(submission_name))
-            submission_cv_folds = get_submission_on_cv_folds(submission_id)
-            for fold_idx, sub_cv_fold in enumerate(submission_cv_folds):
-                path_results = os.path.join(
-                    self._worker_config['predictions_dir'],
-                    submission_name, 'fold_{}'.format(fold_idx)
-                )
-                update_submission_on_cv_fold(sub_cv_fold, path_results)
-                # TODO: test those two last functions
-                update_leaderboards(self._ramp_config['event_name'])
-                update_all_user_leaderboards(self._ramp_config['event_name'])
+            path_predictions = os.path.join(
+                self._worker_config['predictions_dir'], submission_name
+            )
+            set_predictions(self._database_config, submission_id,
+                            path_predictions)
+            set_time(self._database_config, submission_id, path_predictions)
+            set_scores(self._database_config, submission_id, path_predictions)
+            # TODO: test those two last functions
+            update_leaderboards(self._ramp_config['event_name'])
+            update_all_user_leaderboards(self._ramp_config['event_name'])
             set_submission_state(self._database_config, submission_id,
                                  'scored')
 

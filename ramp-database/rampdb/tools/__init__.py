@@ -10,6 +10,8 @@ from .api import get_submission_state
 from .api import get_submissions
 
 from .api import set_predictions
+from .api import set_time
+from .api import set_scores
 from .api import set_submission_error_msg
 from .api import set_submission_max_ram
 from .api import set_submission_state
@@ -40,6 +42,8 @@ __all__ = [
     'get_user_event_teams',
     'get_user_teams',
     'set_predictions',
+    'set_time',
+    'set_scores',
     'set_submission_error_msg',
     'set_submission_max_ram',
     'set_submission_state',

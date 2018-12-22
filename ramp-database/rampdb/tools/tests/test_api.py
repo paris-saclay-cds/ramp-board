@@ -102,7 +102,7 @@ def test_get_submissions(config_database, db_module, state, expected_id):
 
 def test_get_submission_unknown_state(config_database, db_module):
     with pytest.raises(UnknownStateError, match='Unrecognized state'):
-        get_submissions(config_database, 'irist_test', state='whatever')
+        get_submissions(config_database, 'iris_test', state='whatever')
 
 
 def test_get_submission_by_id(config_database, db_module):
@@ -125,3 +125,18 @@ def test_get_submission_by_name(config_database, db_module):
 @pytest.mark.parametrize("submission_id, state", [(1, 'trained'), (2, 'new')])
 def test_submission_state(config_database, db_module, submission_id, state):
     assert get_submission_state(config_database, submission_id) == state
+
+
+def test_get_event_nb_folds(config_database, db_module):
+    assert get_event_nb_folds(config_database, 'iris_test') == 2
+
+
+def test_set_submission_state(config_database, db_module):
+    sub_id = 2
+    set_submission_state(config_database, sub_id, 'trained')
+    assert get_submission_state(config_database, sub_id) == 'trained'
+
+
+def test_set_submission_state_unknown_state(config_database, db_module):
+    with pytest.raises(UnknownStateError, match='Unrecognized state'):
+        set_submission_state(config_database, 2, 'unknown')

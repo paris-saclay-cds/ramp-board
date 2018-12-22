@@ -98,7 +98,7 @@ def select_event_by_name(session, event_name):
 
     Returns
     -------
-    event : :rampdb.model.Event`
+    event : :class:`rampdb.model.Event`
         The queried event.
     """
     return session.query(Event).filter(Event.name == event_name).one()

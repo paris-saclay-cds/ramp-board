@@ -1,8 +1,7 @@
-from __future__ import print_function, absolute_import
-
 import os
 
 import numpy as np
+import pandas as pd
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -250,9 +249,8 @@ def get_submission_state(config, submission_id):
     return submission.state
 
 
-def set_predictions(config, submission_id, prediction_path, ext='npy'):
-    """
-    Insert predictions in the database after training/testing
+def set_predictions(config, submission_id, path_predictions):
+    """Set the predictions in the database.
 
     Parameters
     ----------
@@ -261,78 +259,127 @@ def set_predictions(config, submission_id, prediction_path, ext='npy'):
         dataset. If you are using the configuration provided by ramp, it
         corresponds to the the `sqlalchemy` key.
     submission_id : int
-        id of the related submission
-    prediction_path : str
-        local path where predictions are saved.
-        Should end with 'training_output'.
-    ext : {'npy', 'npz', 'csv'}, optional
-        extension of the saved prediction extension file (default is 'npy')
-
-    Raises
-    ------
-    NotImplementedError :
-        when the extension cannot be read properly
-
+        The id of the submission.
+    path_predictions : str
+        The path where the results files are located.
     """
     db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
         submission = select_submission_by_id(session, submission_id)
-
         for fold_id, cv_fold in enumerate(submission.on_cv_folds):
-            cv_fold.full_train_y_pred = _load_submission(
-                prediction_path, fold_id, 'train', ext)
-            cv_fold.test_y_pred = _load_submission(
-                prediction_path, fold_id, 'test', ext)
-            cv_fold.train_time = _get_time(prediction_path, fold_id, 'train')
-            cv_fold.valid_time = _get_time(prediction_path, fold_id, 'valid')
-            cv_fold.test_time = _get_time(prediction_path, fold_id, 'test')
-            cv_fold.state = 'tested'
-            session.commit()
-
-        submission.state = 'tested'
+            path_results = os.path.join(path_predictions,
+                                        'fold_{}'.format(fold_id))
+            cv_fold.full_train_y_pred = np.load(
+                os.path.join(path_results, 'y_pred_train.npz'))['y_pred']
+            cv_fold.test_y_pred = np.load(
+                os.path.join(path_results, 'y_pred_test.npz'))['y_pred']
         session.commit()
 
 
-def _load_submission(path, fold_id, typ, ext):
-    """
-    Prediction loader method
+def set_time(config, submission_id, path_predictions):
+    """Set the timing information in the database.
 
     Parameters
     ----------
-    path : str
-        local path where predictions are saved
-    fold_id : int
-        id of the current CV fold
-    type : {'train', 'test'}
-        type of prediction
-    ext : {'npy', 'npz', 'csv'}
-        extension of the saved prediction extension file
-
-    Raises
-    ------
-    ValueError :
-        when typ is neither 'train' nor 'test'
-    NotImplementedError :
-        when the extension cannot be read properly
-
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    submission_id : int
+        The id of the submission.
+    path_predictions : str
+        The path where the results files are located.
     """
-    pred_file = os.path.join(path,
-                             'fold_{}'.format(fold_id),
-                             'y_pred_{}.{}'.format(typ, ext))
+    db, Session = _setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
 
-    if typ not in ['train', 'test']:
-        raise ValueError("Only 'train' or 'test' are expected for arg 'typ'")
+        submission = select_submission_by_id(session, submission_id)
+        for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+            path_results = os.path.join(path_predictions,
+                                        'fold_{}'.format(fold_id))
+            results = {}
+            for step in ('train', 'valid', 'test'):
+                results[step + '_time'] = np.asscalar(
+                    np.loadtxt(os.path.join(path_results, step + '_time'))
+                )
+            for key, value in results.items():
+                setattr(cv_fold, key, value)
+        session.commit()
 
-    if ext.lower() in ['npy', 'npz']:
-        return np.load(pred_file)['y_pred']
-    elif ext.lower() == 'csv':
-        # TODO: there is a bug here. This function does not exist.
-        return np.loadfromtxt(pred_file)
-    else:
-        return NotImplementedError("No reader implemented for extension {ext}"
-                                   .format(ext))
+
+def set_scores(config, submission_id, path_predictions):
+    """Set the scores in the database.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    submission_id : int
+        The id of the submission.
+    path_predictions : str
+        The path where the results files are located.
+    """
+    db, Session = _setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submission_by_id(session, submission_id)
+        for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+            path_results = os.path.join(path_predictions,
+                                        'fold_{}'.format(fold_id))
+            scores_update = pd.read_csv(
+                os.path.join(path_results, 'scores.csv'), index_col=0
+            )
+            # update the scores
+            for score in cv_fold.scores:
+                for step in scores_update.index:
+                    value = scores_update.loc[step, score.name]
+                    setattr(score, step + '_score', value)
+        session.commit()
+
+
+# def set_predictions(config, submission_id, prediction_path, ext='npy'):
+#     """
+#     Insert predictions in the database after training/testing
+
+#     Parameters
+#     ----------
+#     config : dict
+#         Configuration file containing the information to connect to the
+#         dataset. If you are using the configuration provided by ramp, it
+#         corresponds to the the `sqlalchemy` key.
+#     submission_id : int
+#         id of the related submission
+#     prediction_path : str
+#         local path where predictions are saved.
+#         Should end with 'training_output'.
+#     ext : {'npy', 'npz', 'csv'}, optional
+#         extension of the saved prediction extension file (default is 'npy')
+#     """
+#     db, Session = _setup_db(config)
+#     with db.connect() as conn:
+#         session = Session(bind=conn)
+
+#         submission = select_submission_by_id(session, submission_id)
+
+#         for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+#             cv_fold.full_train_y_pred = _load_submission(
+#                 prediction_path, fold_id, 'train', ext)
+#             cv_fold.test_y_pred = _load_submission(
+#                 prediction_path, fold_id, 'test', ext)
+#             cv_fold.train_time = _get_time(prediction_path, fold_id, 'train')
+#             cv_fold.valid_time = _get_time(prediction_path, fold_id, 'valid')
+#             cv_fold.test_time = _get_time(prediction_path, fold_id, 'test')
+#             cv_fold.state = 'tested'
+#             session.commit()
+
+#         submission.state = 'tested'
+#         session.commit()
 
 
 def _get_time(path, fold_id, typ):
