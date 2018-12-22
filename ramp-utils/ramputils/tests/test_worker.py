@@ -16,10 +16,10 @@ def test_generate_worker_config(config):
     expected_config = {
         'conda_env': 'ramp-iris',
         'sandbox_dir': 'starting_kit',
-        'kit_dir': os.path.join('/tmp/ramp', 'kits', 'iris'),
-        'data_dir': os.path.join('/tmp/ramp', 'data', 'iris'),
-        'submissions_dir': os.path.join('/tmp/ramp', 'submissions'),
-        'predictions_dir': os.path.join('/tmp/ramp', 'preds'),
-        'logs_dir': os.path.join('/tmp/ramp', 'log')
+        'kit_dir': os.path.join('/tmp/databoard_test', 'ramp-kits', 'iris'),
+        'data_dir': os.path.join('/tmp/databoard_test', 'ramp-data', 'iris'),
+        'submissions_dir': os.path.join('/tmp/databoard_test', 'submissions'),
+        'predictions_dir': os.path.join('/tmp/databoard_test', 'preds'),
+        'logs_dir': os.path.join('/tmp/databoard_test', 'log')
     }
     assert worker_config == expected_config
