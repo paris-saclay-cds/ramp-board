@@ -436,8 +436,7 @@ def get_scores(config, submission_id):
 
 
 def score_submission(config, submission_id):
-    """
-    Score a submission and change its state to 'scored'
+    """Score a submission and change its state to 'scored'
 
     Parameters
     ----------
@@ -500,8 +499,7 @@ def score_submission(config, submission_id):
 
 
 def set_submission_max_ram(config, submission_id, max_ram_mb):
-    """
-    Modify the max RAM mb usage of a submission
+    """Set the max amount RAM used by a submission during processing.
 
     Parameters
     ----------
@@ -510,9 +508,9 @@ def set_submission_max_ram(config, submission_id, max_ram_mb):
         dataset. If you are using the configuration provided by ramp, it
         corresponds to the the `sqlalchemy` key.
     submission_id : int
-        id of the requested submission
+        The id of the submission.
     max_ram_mb : float
-        max ram usage in MB
+        The max amount of RAM in MB.
     """
     db, Session = _setup_db(config)
     with db.connect() as conn:
@@ -523,9 +521,8 @@ def set_submission_max_ram(config, submission_id, max_ram_mb):
         session.commit()
 
 
-def set_submission_error_msg(config, submission_id, error_msg):
-    """
-    Set submission message error
+def get_submission_max_ram(config, submission_id):
+    """Get the max amount RAM used by a submission during processing.
 
     Parameters
     ----------
@@ -534,9 +531,34 @@ def set_submission_error_msg(config, submission_id, error_msg):
         dataset. If you are using the configuration provided by ramp, it
         corresponds to the the `sqlalchemy` key.
     submission_id : int
-        id of the requested submission
+        The id of the submission.
+
+    Returns
+    -------
+    max_ram_mb : float
+        The max amount of RAM in MB.
+    """
+    db, Session = _setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submission_by_id(session, submission_id)
+        return submission.max_ram
+
+
+def set_submission_error_msg(config, submission_id, error_msg):
+    """Set the error message after that a submission failed to be processed.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    submission_id : int
+        The id of the submission.
     error_msg : str
-        message error
+        The error message.
     """
 
     db, Session = _setup_db(config)
@@ -546,6 +568,32 @@ def set_submission_error_msg(config, submission_id, error_msg):
         submission = select_submission_by_id(session, submission_id)
         submission.error_msg = error_msg
         session.commit()
+
+
+def get_submission_error_msg(config, submission_id):
+    """Get the error message after that a submission failed to be processed.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    submission_id : int
+        The id of the submission.
+
+    Returns
+    -------
+    error_msg : str
+        The error message.
+    """
+
+    db, Session = _setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submission_by_id(session, submission_id)
+        return submission.error_msg
 
 
 def get_event_nb_folds(config, event_name):

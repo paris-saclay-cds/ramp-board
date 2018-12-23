@@ -8,6 +8,8 @@ from .api import get_predictions
 from .api import get_scores
 from .api import get_submission_by_id
 from .api import get_submission_by_name
+from .api import get_submission_error_msg
+from .api import get_submission_max_ram
 from .api import get_submission_state
 from .api import get_submissions
 from .api import get_time
@@ -41,6 +43,8 @@ __all__ = [
     'get_scores',
     'get_submission_by_id',
     'get_submission_by_name',
+    'get_submission_error_msg',
+    'get_submission_max_ram',
     'get_submission_state',
     'get_submissions',
     'get_team_members',

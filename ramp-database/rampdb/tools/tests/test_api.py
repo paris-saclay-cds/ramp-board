@@ -29,8 +29,11 @@ from rampdb.tools import get_scores
 from rampdb.tools import get_submission_by_id
 from rampdb.tools import get_submission_by_name
 from rampdb.tools import get_submission_state
+from rampdb.tools import get_submission_error_msg
+from rampdb.tools import get_submission_max_ram
 from rampdb.tools import get_submissions
 from rampdb.tools import get_time
+
 from rampdb.tools import set_predictions
 from rampdb.tools import set_scores
 from rampdb.tools import set_submission_error_msg
@@ -71,18 +74,6 @@ def db_module():
         db.session.close()
         db.session.remove()
         db.drop_all()
-
-
-def test_hot_test(config_database, db_function):
-    print(get_submissions(config_database, 'iris_test', state=None))
-    get_submission_by_id(config_database, 7)
-    get_submission_by_name(config_database, 'iris_test', 'test_user',
-                           'starting_kit_test')
-    get_submission_state(config_database, 7)
-    get_event_nb_folds(config_database, 'iris_test')
-    set_submission_state(config_database, 7, 'trained')
-    set_submission_max_ram(config_database, 7, 100)
-    set_submission_error_msg(config_database, 7, 'xxxx')
 
 
 def _change_state_db(config):
@@ -211,3 +202,21 @@ def test_check_predictions(config_database, db_module):
                         expected_y_pred_train)
         assert_allclose(predictions.loc[fold_idx, 'y_pred_test'],
                         expected_y_pred_test)
+
+
+def test_check_submission_max_ram(config_database, db_module):
+    # check both get_submission_max_ram and set_submission_max_ram
+    submission_id = 1
+    expected_ram = 100.0
+    set_submission_max_ram(config_database, submission_id, expected_ram)
+    amount_ram = get_submission_max_ram(config_database, submission_id)
+    assert amount_ram == pytest.approx(expected_ram)
+
+
+def test_check_submission_error_msg(config_database, db_module):
+    # check both get_submission_error_msg and set_submission_error_msg
+    submission_id = 1
+    expected_err_msg = 'tag submission as failed'
+    set_submission_error_msg(config_database, submission_id, expected_err_msg)
+    err_msg = get_submission_error_msg(config_database, submission_id)
+    assert err_msg == expected_err_msg
