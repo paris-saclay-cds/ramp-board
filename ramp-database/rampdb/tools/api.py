@@ -474,7 +474,7 @@ def score_submission(config, submission_id):
             submission_on_cv_fold.compute_test_scores()
             submission_on_cv_fold.state = 'scored'
         session.commit()
-        # TODO: those 2 functions are not defined
+        # TODO: We are not managing the bagged score.
         # submission.compute_test_score_cv_bag(session)
         # submission.compute_valid_score_cv_bag(session)
         # Means and stds were constructed on demand by fetching fold times.
