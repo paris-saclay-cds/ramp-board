@@ -4,47 +4,18 @@ import os
 import numpy as np
 import pandas as pd
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.engine.url import URL
-
 from ..exceptions import UnknownStateError
-from ..model import Model
 from ..model.submission import submission_states
+from ..utils import setup_db
+
 from .query import select_submissions_by_state
 from .query import select_submission_by_id
 from .query import select_submission_by_name
 from .query import select_event_by_name
 
+
 STATES = submission_states.enums
 
-
-def _setup_db(config):
-    """Get the necessary handler to manipulate the database.
-
-    Parameters
-    ----------
-    config : dict
-        Configuration file containing the information to connect to the
-        dataset. If you are using the configuration provided by ramp, it
-        corresponds to the the `sqlalchemy` key.
-
-    Returns
-    -------
-    db : sqlalchemy.Engine
-        The engine to connect to the database.
-    Session : sqlalchemy.orm.Session
-        Configured Session class which can later be used to communicate with
-        the database.
-    """
-    # create the URL from the configuration
-    db_url = URL(**config)
-    db = create_engine(db_url)
-    Session = sessionmaker(db)
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    return db, Session
 
 def get_submissions(config, event_name, state='new'):
     """Get information about submissions from an event with a specific state
@@ -84,7 +55,7 @@ def get_submissions(config, event_name, state='new'):
     if state is not None and state not in STATES:
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
 
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
         submissions = select_submissions_by_state(session, event_name, state)
@@ -121,7 +92,7 @@ def get_submission_by_id(config, submission_id):
     rampdb.tools.get_submissions : Get submissions information.
     rampdb.tools.get_submission_by_name : Get a single submission using names.
     """
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
         submission = select_submission_by_id(session, submission_id)
@@ -156,7 +127,7 @@ def get_submission_by_name(config, event_name, team_name, name):
     rampdb.tools.get_submissions : Get submissions information.
     rampdb.tools.get_submission_by_id : Get a single submission using an id.
     """
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
         submission = select_submission_by_name(
@@ -198,7 +169,7 @@ def set_submission_state(config, submission_id, state):
     if state not in STATES:
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
 
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -241,7 +212,7 @@ def get_submission_state(config, submission_id):
     * 'training': training is running normally;
     * 'scored': submission scored.
     """
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
         submission = select_submission_by_id(session, submission_id)
@@ -262,7 +233,7 @@ def set_predictions(config, submission_id, path_predictions):
     path_predictions : str
         The path where the results files are located.
     """
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -294,7 +265,7 @@ def get_predictions(config, submission_id):
     predictions : pd.DataFrame
         A pandas dataframe containing the predictions on each fold.
     """
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -321,7 +292,7 @@ def set_time(config, submission_id, path_predictions):
     path_predictions : str
         The path where the results files are located.
     """
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -356,7 +327,7 @@ def get_time(config, submission_id):
     computation_time : pd.DataFrame
         A pandas dataframe containing the computation time of each fold.
     """
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -383,7 +354,7 @@ def set_scores(config, submission_id, path_predictions):
     path_predictions : str
         The path where the results files are located.
     """
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -418,7 +389,7 @@ def get_scores(config, submission_id):
     scores : pd.DataFrame
         A pandas dataframe containing the scores of each fold.
     """
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -454,7 +425,7 @@ def score_submission(config, submission_id):
         (only a submission with state 'tested' can be scored)
     """
 
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -513,7 +484,7 @@ def set_submission_max_ram(config, submission_id, max_ram_mb):
     max_ram_mb : float
         The max amount of RAM in MB.
     """
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -539,7 +510,7 @@ def get_submission_max_ram(config, submission_id):
     max_ram_mb : float
         The max amount of RAM in MB.
     """
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -562,7 +533,7 @@ def set_submission_error_msg(config, submission_id, error_msg):
         The error message.
     """
 
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -589,7 +560,7 @@ def get_submission_error_msg(config, submission_id):
         The error message.
     """
 
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
@@ -614,7 +585,7 @@ def get_event_nb_folds(config, event_name):
     nb_folds : int
         The number of folds for a specific event.
     """
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
         event = select_event_by_name(session, event_name)

@@ -18,10 +18,8 @@ from ramputils import read_config
 from ramputils.testing import path_config_example
 
 from rampdb.exceptions import UnknownStateError
-
 from rampdb.model import Submission
-
-from rampdb.tools.api import _setup_db
+from rampdb.utils import setup_db
 
 from rampdb.tools import get_event_nb_folds
 from rampdb.tools import get_predictions
@@ -78,7 +76,7 @@ def db_module():
 
 def _change_state_db(config):
     # change the state of one of the submission in the iris event
-    db, Session = _setup_db(config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
         submission_id = 1
