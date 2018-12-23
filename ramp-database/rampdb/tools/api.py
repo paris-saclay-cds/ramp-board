@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 
 import numpy as np
@@ -124,7 +125,6 @@ def get_submission_by_id(config, submission_id):
     with db.connect() as conn:
         session = Session(bind=conn)
         submission = select_submission_by_id(session, submission_id)
-        # force event name and team name to be cached
         submission.event.name
         submission.team.name
     return submission
@@ -164,7 +164,6 @@ def get_submission_by_name(config, event_name, team_name, name):
             event_name,
             team_name,
             name)
-        # force event name and team name to be cached
         submission.event.name
         submission.team.name
     return submission
@@ -278,6 +277,36 @@ def set_predictions(config, submission_id, path_predictions):
         session.commit()
 
 
+def get_predictions(config, submission_id):
+    """Get the predictions from the database of a submission.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    submission_id : int
+        The id of the submission.
+
+    Returns
+    -------
+    predictions : pd.DataFrame
+        A pandas dataframe containing the predictions on each fold.
+    """
+    db, Session = _setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submission_by_id(session, submission_id)
+        results = defaultdict(list)
+        for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+            results['fold'].append(fold_id)
+            results['y_pred_train'].append(cv_fold.full_train_y_pred)
+            results['y_pred_test'].append(cv_fold.test_y_pred)
+        return pd.DataFrame(results).set_index('fold')
+
+
 def set_time(config, submission_id, path_predictions):
     """Set the timing information in the database.
 
@@ -310,6 +339,36 @@ def set_time(config, submission_id, path_predictions):
         session.commit()
 
 
+def get_time(config, submission_id):
+    """Get the computation time for each fold of a submission.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    submission_id : int
+        The id of the submission.
+
+    Returns
+    -------
+    computation_time : pd.DataFrame
+        A pandas dataframe containing the computation time of each fold.
+    """
+    db, Session = _setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submission_by_id(session, submission_id)
+        results = defaultdict(list)
+        for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+            results['fold'].append(fold_id)
+            for step in ('train', 'valid', 'test'):
+                results[step].append(getattr(cv_fold, '{}_time'.format(step)))
+        return pd.DataFrame(results).set_index('fold')
+
+
 def set_scores(config, submission_id, path_predictions):
     """Set the scores in the database.
 
@@ -335,7 +394,6 @@ def set_scores(config, submission_id, path_predictions):
             scores_update = pd.read_csv(
                 os.path.join(path_results, 'scores.csv'), index_col=0
             )
-            # update the scores
             for score in cv_fold.scores:
                 for step in scores_update.index:
                     value = scores_update.loc[step, score.name]
@@ -343,9 +401,8 @@ def set_scores(config, submission_id, path_predictions):
         session.commit()
 
 
-# def set_predictions(config, submission_id, prediction_path, ext='npy'):
-#     """
-#     Insert predictions in the database after training/testing
+# def get_scores(config, submission_id):
+#     """Get the scores for each fold of a submission.
 
 #     Parameters
 #     ----------
@@ -354,57 +411,28 @@ def set_scores(config, submission_id, path_predictions):
 #         dataset. If you are using the configuration provided by ramp, it
 #         corresponds to the the `sqlalchemy` key.
 #     submission_id : int
-#         id of the related submission
-#     prediction_path : str
-#         local path where predictions are saved.
-#         Should end with 'training_output'.
-#     ext : {'npy', 'npz', 'csv'}, optional
-#         extension of the saved prediction extension file (default is 'npy')
+#         The id of the submission.
+
+#     Returns
+#     -------
+#     scores : pd.DataFrame
+#         A pandas dataframe containing the scores of each fold.
 #     """
 #     db, Session = _setup_db(config)
 #     with db.connect() as conn:
 #         session = Session(bind=conn)
 
 #         submission = select_submission_by_id(session, submission_id)
-
+#         results = defaultdict(list)
 #         for fold_id, cv_fold in enumerate(submission.on_cv_folds):
-#             cv_fold.full_train_y_pred = _load_submission(
-#                 prediction_path, fold_id, 'train', ext)
-#             cv_fold.test_y_pred = _load_submission(
-#                 prediction_path, fold_id, 'test', ext)
-#             cv_fold.train_time = _get_time(prediction_path, fold_id, 'train')
-#             cv_fold.valid_time = _get_time(prediction_path, fold_id, 'valid')
-#             cv_fold.test_time = _get_time(prediction_path, fold_id, 'test')
-#             cv_fold.state = 'tested'
-#             session.commit()
-
-#         submission.state = 'tested'
-#         session.commit()
-
-
-def _get_time(path, fold_id, typ):
-    """
-    get time duration in seconds of train or valid
-    or test for a given fold.
-
-    Parameters
-    ----------
-    path : str
-        local path where predictions are saved
-    fold_id : int
-        id of the current CV fold
-    typ : {'train', 'valid, 'test'}
-
-    Raises
-    ------
-    ValueError :
-        when typ is neither is not 'train' or 'valid' or test'
-    """
-    if typ not in ['train', 'valid', 'test']:
-        raise ValueError(
-            "Only 'train' or 'valid' or 'test' are expected for arg 'typ'")
-    time_file = os.path.join(path, 'fold_{}'.format(fold_id), typ + '_time')
-    return float(open(time_file).read())
+#             results['fold'].append(fold_id)
+#             for score in cv_fold.scores:
+#                 for step in scores_update.index:
+#                     value = scores_update.loc[step, score.name]
+#                     results[score].append(getattr(score, step + '_score'))
+#             for step in ('train', 'valid', 'test'):
+#                 results[step].append(getattr(cv_fold, '{}_time'.format(step)))
+#         return pd.DataFrame(results).set_index('fold')
 
 
 def score_submission(config, submission_id):

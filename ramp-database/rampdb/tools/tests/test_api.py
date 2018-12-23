@@ -17,15 +17,21 @@ from rampdb.model import Submission
 from rampdb.tools.api import _setup_db
 
 from rampdb.tools import get_event_nb_folds
+from rampdb.tools import get_predictions
 from rampdb.tools import get_submission_by_id
 from rampdb.tools import get_submission_by_name
 from rampdb.tools import get_submission_state
 from rampdb.tools import get_submissions
+from rampdb.tools import get_time
 from rampdb.tools import set_predictions
+from rampdb.tools import set_scores
 from rampdb.tools import set_submission_error_msg
 from rampdb.tools import set_submission_max_ram
 from rampdb.tools import set_submission_state
+from rampdb.tools import set_time
 from rampdb.tools import score_submission
+
+HERE = os.path.dirname(__file__)
 
 
 @pytest.fixture(scope='module')
@@ -140,3 +146,29 @@ def test_set_submission_state(config_database, db_module):
 def test_set_submission_state_unknown_state(config_database, db_module):
     with pytest.raises(UnknownStateError, match='Unrecognized state'):
         set_submission_state(config_database, 2, 'unknown')
+
+
+def test_check_time(config_database, db_module):
+    # check both set_time and get_time function
+    sub_id = 1
+    path_results = os.path.join(HERE, 'data', 'iris_predictions')
+    set_time(config_database, sub_id, path_results)
+    print(get_time(config_database, sub_id))
+
+
+# def test_check_scores(config_database, db_module):
+    # check both set_scores and get_scores
+#     sub_id = 1
+#     path_results = os.path.join(HERE, 'data', 'iris_predictions')
+#     set_scores(config_database, sub_id, path_results)
+#     submission = get_submission_by_id(config_database, sub_id)
+#     cv_fold = submission.on_cv_folds[0]
+#     print(cv_fold.scores[0].train_score)
+
+
+def test_check_predictions(config_database, db_module):
+    # check both set_predictions and get_predictions
+    sub_id = 1
+    path_results = os.path.join(HERE, 'data', 'iris_predictions')
+    set_predictions(config_database, sub_id, path_results)
+    print(get_predictions(config_database, sub_id))

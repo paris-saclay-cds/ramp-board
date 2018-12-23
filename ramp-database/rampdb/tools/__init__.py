@@ -4,17 +4,19 @@ and in the database.
 """
 
 from .api import get_event_nb_folds
+from .api import get_predictions
 from .api import get_submission_by_id
 from .api import get_submission_by_name
 from .api import get_submission_state
 from .api import get_submissions
+from .api import get_time
 
 from .api import set_predictions
-from .api import set_time
 from .api import set_scores
 from .api import set_submission_error_msg
 from .api import set_submission_max_ram
 from .api import set_submission_state
+from .api import set_time
 
 from .api import score_submission
 
@@ -31,6 +33,7 @@ __all__ = [
     'combine_predictions_list',
     'get_active_user_event_team',
     'get_event_nb_folds',
+    'get_predictions',
     'get_n_team_members',
     'get_n_user_teams',
     'get_next_best_single_fold',
@@ -39,13 +42,14 @@ __all__ = [
     'get_submission_state',
     'get_submissions',
     'get_team_members',
+    'get_time',
     'get_user_event_teams',
     'get_user_teams',
     'set_predictions',
-    'set_time',
     'set_scores',
     'set_submission_error_msg',
     'set_submission_max_ram',
     'set_submission_state',
+    'set_time',
     'score_submission'
 ]
