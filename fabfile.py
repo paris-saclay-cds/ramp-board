@@ -173,7 +173,7 @@ def add_users_from_file(users_to_add_f_name, password_f_name):
     Users whould be the same in the same order in the two files.
     """
     import pandas as pd
-    from rampdb.model import NameClashError
+    from rampdb.exceptions import NameClashError
     from databoard.utils import remove_non_ascii
 
     users_to_add = pd.read_csv(users_to_add_f_name)
@@ -226,7 +226,7 @@ def send_password_mails(password_f_name):
 
 def sign_up_event_users_from_file(users_to_add_f_name, event):
     import pandas as pd
-    from rampdb.model import DuplicateSubmissionError
+    from rampdb.exceptions import DuplicateSubmissionError
     from databoard.utils import remove_non_ascii
 
     users_to_sign_up = pd.read_csv(users_to_add_f_name)

@@ -21,11 +21,11 @@ from rampdb.model import Team
 from rampdb.model import User
 from rampdb.model import Workflow
 
-from rampdb.model import DuplicateSubmissionError
-from rampdb.model import MissingExtensionError
-from rampdb.model import MissingSubmissionFileError
-from rampdb.model import NameClashError
-from rampdb.model import TooEarlySubmissionError
+from rampdb.exceptions import DuplicateSubmissionError
+from rampdb.exceptions import MissingExtensionError
+from rampdb.exceptions import MissingSubmissionFileError
+from rampdb.exceptions import NameClashError
+from rampdb.exceptions import TooEarlySubmissionError
 
 from databoard import db
 from databoard import deployment_path

@@ -186,7 +186,7 @@ def add_users_from_file(c, filename, password_filename):
     """
     import pandas as pd
     from termcolor import colored
-    from rampdb.model import NameClashError
+    from rampdb.exceptions import NameClashError
     from databoard.utils import remove_non_ascii
     from databoard.db_tools import create_user
 
@@ -251,7 +251,7 @@ def send_password_mails(c, password_filename):
 def sign_up_event_users_from_file(c, filename, event):
     import pandas as pd
     from termcolor import colored
-    from rampdb.model import DuplicateSubmissionError
+    from rampdb.exceptions import DuplicateSubmissionError
     from databoard.utils import remove_non_ascii
 
     users_to_sign_up = pd.read_csv(filename)
