@@ -1,6 +1,13 @@
 import os
 import shutil
+
 import pytest
+
+import numpy as np
+import pandas as pd
+
+from numpy.testing import assert_allclose
+from pandas.testing import assert_frame_equal
 
 # TODO: we temporary use the setup of databoard to create a dataset
 from databoard import db
@@ -18,6 +25,7 @@ from rampdb.tools.api import _setup_db
 
 from rampdb.tools import get_event_nb_folds
 from rampdb.tools import get_predictions
+from rampdb.tools import get_scores
 from rampdb.tools import get_submission_by_id
 from rampdb.tools import get_submission_by_name
 from rampdb.tools import get_submission_state
@@ -82,8 +90,10 @@ def _change_state_db(config):
     db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
-        sub_id = 1
-        sub = session.query(Submission).filter(Submission.id == sub_id).first()
+        submission_id = 1
+        sub = (session.query(Submission)
+                      .filter(Submission.id == submission_id)
+                      .first())
         sub.set_state('trained')
         session.commit()
 
@@ -98,10 +108,10 @@ def _change_state_db(config):
 def test_get_submissions(config_database, db_module, state, expected_id):
     submissions = get_submissions(config_database, 'iris_test', state=state)
     assert len(submissions) == len(expected_id)
-    for sub_id, sub_name, sub_path in submissions:
-        assert sub_id in expected_id
-        assert 'submission_{0:09d}'.format(sub_id) == sub_name
-        path_file = os.path.join('submission_{0:09d}'.format(sub_id),
+    for submission_id, sub_name, sub_path in submissions:
+        assert submission_id in expected_id
+        assert 'submission_{0:09d}'.format(submission_id) == sub_name
+        path_file = os.path.join('submission_{0:09d}'.format(submission_id),
                                  'classifier.py')
         assert path_file in sub_path[0]
 
@@ -128,19 +138,20 @@ def test_get_submission_by_name(config_database, db_module):
     assert submission.state == 'trained'
 
 
-@pytest.mark.parametrize("submission_id, state", [(1, 'trained'), (2, 'new')])
-def test_submission_state(config_database, db_module, submission_id, state):
-    assert get_submission_state(config_database, submission_id) == state
-
-
 def test_get_event_nb_folds(config_database, db_module):
     assert get_event_nb_folds(config_database, 'iris_test') == 2
 
 
+@pytest.mark.parametrize("submission_id, state", [(1, 'trained'), (2, 'new')])
+def test_get_submission_state(config_database, db_module, submission_id,
+                              state):
+    assert get_submission_state(config_database, submission_id) == state
+
+
 def test_set_submission_state(config_database, db_module):
-    sub_id = 2
-    set_submission_state(config_database, sub_id, 'trained')
-    assert get_submission_state(config_database, sub_id) == 'trained'
+    submission_id = 2
+    set_submission_state(config_database, submission_id, 'trained')
+    assert get_submission_state(config_database, submission_id) == 'trained'
 
 
 def test_set_submission_state_unknown_state(config_database, db_module):
@@ -150,25 +161,53 @@ def test_set_submission_state_unknown_state(config_database, db_module):
 
 def test_check_time(config_database, db_module):
     # check both set_time and get_time function
-    sub_id = 1
+    submission_id = 1
     path_results = os.path.join(HERE, 'data', 'iris_predictions')
-    set_time(config_database, sub_id, path_results)
-    print(get_time(config_database, sub_id))
+    set_time(config_database, submission_id, path_results)
+    submission_time = get_time(config_database, submission_id)
+    expected_df = pd.DataFrame(
+        {'fold': [0, 1],
+         'train' : [0.032130, 0.002414],
+         'valid': [0.000583648681640625, 0.000548362731933594],
+         'test': [0.000515460968017578, 0.000481128692626953]}
+    ).set_index('fold')
+    assert_frame_equal(submission_time, expected_df, check_less_precise=True)
 
 
-# def test_check_scores(config_database, db_module):
+def test_check_scores(config_database, db_module):
     # check both set_scores and get_scores
-#     sub_id = 1
-#     path_results = os.path.join(HERE, 'data', 'iris_predictions')
-#     set_scores(config_database, sub_id, path_results)
-#     submission = get_submission_by_id(config_database, sub_id)
-#     cv_fold = submission.on_cv_folds[0]
-#     print(cv_fold.scores[0].train_score)
+    submission_id = 1
+    path_results = os.path.join(HERE, 'data', 'iris_predictions')
+    set_scores(config_database, submission_id, path_results)
+    scores = get_scores(config_database, submission_id)
+    multi_index = pd.MultiIndex.from_product(
+        [[0, 1], ['train', 'valid', 'test']], names=['fold', 'step']
+    )
+    expected_df = pd.DataFrame(
+        {'acc': [0.604167, 0.583333, 0.733333, 0.604167, 0.583333, 0.733333],
+         'error': [0.395833, 0.416667, 0.266667, 0.395833, 0.416667, 0.266667],
+         'nll': [0.732763, 2.194549, 0.693464, 0.746132, 2.030762, 0.693992],
+         'f1_70': [0.333333, 0.33333, 0.666667, 0.33333, 0.33333, 0.666667]},
+        index=multi_index
+    )
+    assert_frame_equal(scores, expected_df, check_less_precise=True)
 
 
 def test_check_predictions(config_database, db_module):
     # check both set_predictions and get_predictions
-    sub_id = 1
+    submission_id = 1
     path_results = os.path.join(HERE, 'data', 'iris_predictions')
-    set_predictions(config_database, sub_id, path_results)
-    print(get_predictions(config_database, sub_id))
+    set_predictions(config_database, submission_id, path_results)
+    predictions = get_predictions(config_database, submission_id)
+    for fold_idx in range(2):
+        path_fold = os.path.join(path_results, 'fold_{}'.format(fold_idx))
+        expected_y_pred_train = np.load(
+            os.path.join(path_fold, 'y_pred_train.npz')
+        )['y_pred']
+        expected_y_pred_test = np.load(
+            os.path.join(path_fold, 'y_pred_test.npz')
+        )['y_pred']
+        assert_allclose(predictions.loc[fold_idx, 'y_pred_train'],
+                        expected_y_pred_train)
+        assert_allclose(predictions.loc[fold_idx, 'y_pred_test'],
+                        expected_y_pred_test)

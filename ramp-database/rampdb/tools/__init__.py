@@ -5,6 +5,7 @@ and in the database.
 
 from .api import get_event_nb_folds
 from .api import get_predictions
+from .api import get_scores
 from .api import get_submission_by_id
 from .api import get_submission_by_name
 from .api import get_submission_state
@@ -37,6 +38,7 @@ __all__ = [
     'get_n_team_members',
     'get_n_user_teams',
     'get_next_best_single_fold',
+    'get_scores',
     'get_submission_by_id',
     'get_submission_by_name',
     'get_submission_state',

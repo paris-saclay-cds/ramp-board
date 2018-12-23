@@ -401,38 +401,38 @@ def set_scores(config, submission_id, path_predictions):
         session.commit()
 
 
-# def get_scores(config, submission_id):
-#     """Get the scores for each fold of a submission.
+def get_scores(config, submission_id):
+    """Get the scores for each fold of a submission.
 
-#     Parameters
-#     ----------
-#     config : dict
-#         Configuration file containing the information to connect to the
-#         dataset. If you are using the configuration provided by ramp, it
-#         corresponds to the the `sqlalchemy` key.
-#     submission_id : int
-#         The id of the submission.
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    submission_id : int
+        The id of the submission.
 
-#     Returns
-#     -------
-#     scores : pd.DataFrame
-#         A pandas dataframe containing the scores of each fold.
-#     """
-#     db, Session = _setup_db(config)
-#     with db.connect() as conn:
-#         session = Session(bind=conn)
+    Returns
+    -------
+    scores : pd.DataFrame
+        A pandas dataframe containing the scores of each fold.
+    """
+    db, Session = _setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
 
-#         submission = select_submission_by_id(session, submission_id)
-#         results = defaultdict(list)
-#         for fold_id, cv_fold in enumerate(submission.on_cv_folds):
-#             results['fold'].append(fold_id)
-#             for score in cv_fold.scores:
-#                 for step in scores_update.index:
-#                     value = scores_update.loc[step, score.name]
-#                     results[score].append(getattr(score, step + '_score'))
-#             for step in ('train', 'valid', 'test'):
-#                 results[step].append(getattr(cv_fold, '{}_time'.format(step)))
-#         return pd.DataFrame(results).set_index('fold')
+        submission = select_submission_by_id(session, submission_id)
+        results = defaultdict(list)
+        index = []
+        for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+            for step in ('train', 'valid', 'test'):
+                index.append((fold_id, step))
+                for score in cv_fold.scores:
+                    results[score.name].append(getattr(score, step + '_score'))
+        multi_index = pd.MultiIndex.from_tuples(index, names=['fold', 'step'])
+        scores = pd.DataFrame(results, index=multi_index)
+        return scores
 
 
 def score_submission(config, submission_id):
