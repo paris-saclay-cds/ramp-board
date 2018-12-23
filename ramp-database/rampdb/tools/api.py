@@ -469,13 +469,14 @@ def score_submission(config, submission_id):
         # manually if needed for submission in various error states.
         for submission_on_cv_fold in submission.on_cv_folds:
             submission_on_cv_fold.session = session
-            submission_on_cv_fold.compute_train_scores(session)
-            submission_on_cv_fold.compute_valid_scores(session)
-            submission_on_cv_fold.compute_test_scores(session)
+            submission_on_cv_fold.compute_train_scores()
+            submission_on_cv_fold.compute_valid_scores()
+            submission_on_cv_fold.compute_test_scores()
             submission_on_cv_fold.state = 'scored'
         session.commit()
-        submission.compute_test_score_cv_bag(session)
-        submission.compute_valid_score_cv_bag(session)
+        # TODO: those 2 functions are not defined
+        # submission.compute_test_score_cv_bag(session)
+        # submission.compute_valid_score_cv_bag(session)
         # Means and stds were constructed on demand by fetching fold times.
         # It was slow because submission_on_folds contain also possibly large
         # predictions. If postgres solves this issue (which can be tested on

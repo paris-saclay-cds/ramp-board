@@ -142,7 +142,7 @@ class Dispatcher(object):
                 returncode = worker.collect_results()
                 set_submission_state(
                     self._database_config, submission_id,
-                    'validated' if not returncode else 'training_error'
+                    'tested' if not returncode else 'training_error'
                 )
                 self._processed_submission_queue.put_nowait(
                     (submission_id, submission_name))

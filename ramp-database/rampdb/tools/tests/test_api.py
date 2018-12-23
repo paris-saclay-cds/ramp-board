@@ -220,3 +220,26 @@ def test_check_submission_error_msg(config_database, db_module):
     set_submission_error_msg(config_database, submission_id, expected_err_msg)
     err_msg = get_submission_error_msg(config_database, submission_id)
     assert err_msg == expected_err_msg
+
+
+@pytest.mark.filterwarnings('ignore:F-score is ill-defined and being set')
+def test_score_submission(config_database, db_module):
+    submission_id = 9
+    multi_index = pd.MultiIndex.from_product(
+        [[0, 1], ['train', 'valid', 'test']], names=['fold', 'step']
+    )
+    expected_df = pd.DataFrame(
+        {'acc': [0.604167, 0.583333, 0.733333, 0.604167, 0.583333, 0.733333],
+         'error': [0.395833, 0.416667, 0.266667, 0.395833, 0.416667, 0.266667],
+         'nll': [0.732763, 2.194549, 0.693464, 0.746132, 2.030762, 0.693992],
+         'f1_70': [0.333333, 0.33333, 0.666667, 0.33333, 0.33333, 0.666667]},
+        index=multi_index
+    )
+    path_results = os.path.join(HERE, 'data', 'iris_predictions')
+    with pytest.raises(ValueError, match='Submission state must be "tested"'):
+        score_submission(config_database, submission_id)
+    set_submission_state(config_database, submission_id, 'tested')
+    set_predictions(config_database, submission_id, path_results)
+    score_submission(config_database, submission_id)
+    scores = get_scores(config_database, submission_id)
+    assert_frame_equal(scores, expected_df, check_less_precise=True)
