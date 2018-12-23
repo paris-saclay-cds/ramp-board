@@ -20,13 +20,14 @@ from rampdb.exceptions import DuplicateSubmissionError
 from rampdb.exceptions import MissingExtensionError
 from rampdb.exceptions import MissingSubmissionFileError
 from rampdb.exceptions import NameClashError
+from rampdb.exceptions import TooEarlySubmissionError
 from rampdb.model import (CVFold, DetachedSubmissionOnCVFold,
                           Event, EventAdmin,
                           EventScoreType, EventTeam, Extension, Keyword,
                           Problem, ProblemKeyword, Submission,
                           SubmissionFile, SubmissionFileType,
                           SubmissionFileTypeExtension, SubmissionOnCVFold,
-                          SubmissionSimilarity, Team, TooEarlySubmissionError,
+                          SubmissionSimilarity, Team,
                           User, UserInteraction, Workflow, WorkflowElement,
                           WorkflowElementType)
 
