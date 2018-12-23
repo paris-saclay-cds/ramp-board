@@ -20,13 +20,13 @@ from databoard.db_tools import update_all_user_leaderboards
 from databoard.db_tools import update_leaderboards
 from databoard.db_tools import update_submission_on_cv_fold
 
-from rampdb.tools import get_submissions
-from rampdb.tools import get_submission_state
+from rampdb.tools.submission import get_submissions
+from rampdb.tools.submission import get_submission_state
 
-from rampdb.tools import set_predictions
-from rampdb.tools import set_time
-from rampdb.tools import set_scores
-from rampdb.tools import set_submission_state
+from rampdb.tools.submission import set_predictions
+from rampdb.tools.submission import set_time
+from rampdb.tools.submission import set_scores
+from rampdb.tools.submission import set_submission_state
 
 from ramputils import generate_worker_config
 
