@@ -1,168 +1,162 @@
-"""
-RAMP backend API
-
-Methods for interacting with the database
-"""
-from __future__ import print_function, absolute_import
-
+from collections import defaultdict
 import os
 
 import numpy as np
+import pandas as pd
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import URL
 
+from ..exceptions import UnknownStateError
 from ..model import Model
+from ..model.submission import submission_states
 from .query import select_submissions_by_state
-from .query import select_submissions_by_id
+from .query import select_submission_by_id
 from .query import select_submission_by_name
 from .query import select_event_by_name
-from ..config import STATES, UnknownStateError
+
+STATES = submission_states.enums
 
 
-__all__ = [
-    'get_submissions',
-    'get_submission_by_id',
-    'get_submission_by_name',
-    'set_submission_state',
-    'get_submission_state',
-    'set_submission_max_ram',
-    'set_submission_error_msg',
-    'set_predictions',
-    'score_submission',
-    'get_event_nb_folds',
-]
-
-
-def get_submissions(config, event_name, state='new'):
-    """
-    Retrieve a list of submissions and their associated files
-    depending on their current status
+def _setup_db(config):
+    """Get the necessary handler to manipulate the database.
 
     Parameters
     ----------
     config : dict
-        configuration
-    event_name : str
-        name of the RAMP event
-    state : str, optional
-        state of the requested submissions (default is 'new')
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
 
     Returns
     -------
-    List of tuples (int, List[str]) :
-        (submission_id, [path to submission files on the db])
-
-    Raises
-    ------
-    ValueError :
-        when mandatory connexion parameters are missing from config
-    UnknownStateError :
-        when the requested state does not exist in the database
-
+    db : sqlalchemy.Engine
+        The engine to connect to the database.
+    Session : sqlalchemy.orm.Session
+        Configured Session class which can later be used to communicate with
+        the database.
     """
-    if state not in STATES:
-        raise UnknownStateError("Unrecognized state : '{}'".format(state))
-
-    # Create database url
+    # create the URL from the configuration
     db_url = URL(**config)
     db = create_engine(db_url)
-
-    # Create a configured "Session" class
     Session = sessionmaker(db)
-
     # Link the relational model to the database
     Model.metadata.create_all(db)
 
-    # Connect to the dabase and perform action
+    return db, Session
+
+def get_submissions(config, event_name, state='new'):
+    """Get information about submissions from an event with a specific state
+    optionally.
+
+    The information for each dataset is the id, name of the submission, and
+    the files associated with the submission.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    event_name : str
+        The name of the RAMP event.
+    state : None or str, default='new'
+        The state of the requested submissions. If None, the state of the
+        submissions will be ignored and all submissions for an event will be
+        fetched.
+
+    Returns
+    -------
+    submissions_info : list of tuple(int, str, list of str)
+        List of submissions information. Each item is a tuple containing:
+
+        * an integer containing the id of the submission;
+        * a string with the name of the submission in the database;
+        * a list of string representing the file associated with the
+          submission.
+
+    See also
+    --------
+    rampdb.tools.get_submission_by_id : Get a single submission using an id.
+    rampdb.tools.get_submission_by_name : Get a single submission using names.
+    """
+    if state is not None and state not in STATES:
+        raise UnknownStateError("Unrecognized state : '{}'".format(state))
+
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
-
         submissions = select_submissions_by_state(session, event_name, state)
 
         if not submissions:
             return []
 
-        subids = [submission.id for submission in submissions]
-        subfiles = [submission.files for submission in submissions]
-        filenames = [[f.path for f in files] for files in subfiles]
-
-    return list(zip(subids, filenames))
+        submission_id = [sub.id for sub in submissions]
+        submission_files = [sub.files for sub in submissions]
+        submission_basename = [sub.basename for sub in submissions]
+        filenames = [[f.path for f in files] for files in submission_files]
+    return list(zip(submission_id, submission_basename, filenames))
 
 
 def get_submission_by_id(config, submission_id):
-    """
-    Get a `Submission` instance given a submission id
+    """Get a submission given its id.
 
     Parameters
     ----------
-
     config : dict
-        configuration
-
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     submission_id : int
-        submission id
+        The id of the submission to query
 
     Returns
     -------
+    submission : :class:`rampdb.model.Submission`
+        The queried submission.
 
-    `Submission` instance
+    See also
+    --------
+    rampdb.tools.get_submissions : Get submissions information.
+    rampdb.tools.get_submission_by_name : Get a single submission using names.
     """
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
-        submission = select_submissions_by_id(session, submission_id)
-        # force event name and team name to be cached
+        submission = select_submission_by_id(session, submission_id)
         submission.event.name
         submission.team.name
     return submission
 
 
 def get_submission_by_name(config, event_name, team_name, name):
-    """
-    Get a submission by name
+    """Get a single submission filtering by event, team, and submission names.
 
     Parameters
     ----------
-
     config : dict
-        configuration
-    session :
-        database connexion session
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     event_name : str
-        name of the RAMP event
+        The RAMP event.
     team_name : str
-        name of the RAMP team
+        The name of the team.
     name : str
-        name of the submission
+        The name of the submission.
 
     Returns
     -------
-    `Submission` instance
+    submission : :class:`rampdb.model.Submission`
+        The queried submission.
 
+    See also
+    --------
+    rampdb.tools.get_submissions : Get submissions information.
+    rampdb.tools.get_submission_by_id : Get a single submission using an id.
     """
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
         submission = select_submission_by_name(
@@ -170,217 +164,286 @@ def get_submission_by_name(config, event_name, team_name, name):
             event_name,
             team_name,
             name)
-        # force event name and team name to be cached
         submission.event.name
         submission.team.name
     return submission
 
 
 def set_submission_state(config, submission_id, state):
-    """
-    Modify the state of a submission in the RAMP database
+    """Set the set of a submission.
 
     Parameters
     ----------
     config : dict
-        configuration
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     submission_id : int
         id of the requested submission
     state : str
-        new state of the submission
+        The state of the submission. The possible states for a submission are:
 
-    Raises
-    ------
-    ValueError :
-        when mandatory connexion parameters are missing from config
-    UnknownStateError :
-        when the requested state does not exist in the database
-
+        * 'new': submitted by user to the web interface;
+        * 'sent_to_training': submission was send for training but not launch
+          yet.
+        * 'trained': training finished normally;
+        * 'training_error': training finished abnormally;
+        * 'validated': validation finished normally;
+        * 'validating_error': validation finished abnormally;
+        * 'tested': testing finished normally;
+        * 'testing_error': testing finished abnormally;
+        * 'training': training is running normally;
+        * 'scored': submission scored.
     """
     if state not in STATES:
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
 
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
-        submission = select_submissions_by_id(session, submission_id)
+        submission = select_submission_by_id(session, submission_id)
         submission.set_state(state)
 
         session.commit()
 
 
 def get_submission_state(config, submission_id):
-    """
-    Modify the state of a submission in the RAMP database
+    """Get the state of a submission given its id.
 
     Parameters
     ----------
     config : dict
-        configuration
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     submission_id : int
         id of the requested submission
 
-    Raises
-    ------
-    ValueError :
-        when mandatory connexion parameters are missing from config
-    UnknownStateError :
-        when the requested state does not exist in the database
+    Returns
+    -------
+    submission_state : str
+        The state associated with the submission.
 
+    Notes
+    -----
+    The possible states for a submission are:
+
+    * 'new': submitted by user to the web interface;
+    * 'sent_to_training': submission was send for training but not launch
+        yet.
+    * 'trained': training finished normally;
+    * 'training_error': training finished abnormally;
+    * 'validated': validation finished normally;
+    * 'validating_error': validation finished abnormally;
+    * 'tested': testing finished normally;
+    * 'testing_error': testing finished abnormally;
+    * 'training': training is running normally;
+    * 'scored': submission scored.
     """
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
-        submission = select_submissions_by_id(session, submission_id)
+        submission = select_submission_by_id(session, submission_id)
     return submission.state
 
 
-def set_predictions(config, submission_id, prediction_path, ext='npy'):
-    """
-    Insert predictions in the database after training/testing
+def set_predictions(config, submission_id, path_predictions):
+    """Set the predictions in the database.
 
     Parameters
     ----------
     config : dict
-        configuration
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     submission_id : int
-        id of the related submission
-    prediction_path : str
-        local path where predictions are saved.
-        Should end with 'training_output'.
-    ext : {'npy', 'npz', 'csv'}, optional
-        extension of the saved prediction extension file (default is 'npy')
-
-    Raises
-    ------
-    NotImplementedError :
-        when the extension cannot be read properly
-
+        The id of the submission.
+    path_predictions : str
+        The path where the results files are located.
     """
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
-        submission = select_submissions_by_id(session, submission_id)
-
+        submission = select_submission_by_id(session, submission_id)
         for fold_id, cv_fold in enumerate(submission.on_cv_folds):
-            cv_fold.full_train_y_pred = _load_submission(
-                prediction_path, fold_id, 'train', ext)
-            cv_fold.test_y_pred = _load_submission(
-                prediction_path, fold_id, 'test', ext)
-            cv_fold.train_time = _get_time(prediction_path, fold_id, 'train')
-            cv_fold.valid_time = _get_time(prediction_path, fold_id, 'valid')
-            cv_fold.test_time = _get_time(prediction_path, fold_id, 'test')
-            cv_fold.state = 'tested'
-            session.commit()
-
-        submission.state = 'tested'
+            path_results = os.path.join(path_predictions,
+                                        'fold_{}'.format(fold_id))
+            cv_fold.full_train_y_pred = np.load(
+                os.path.join(path_results, 'y_pred_train.npz'))['y_pred']
+            cv_fold.test_y_pred = np.load(
+                os.path.join(path_results, 'y_pred_test.npz'))['y_pred']
         session.commit()
 
 
-def _load_submission(path, fold_id, typ, ext):
-    """
-    Prediction loader method
-
-    Parameters
-    ----------
-    path : str
-        local path where predictions are saved
-    fold_id : int
-        id of the current CV fold
-    type : {'train', 'test'}
-        type of prediction
-    ext : {'npy', 'npz', 'csv'}
-        extension of the saved prediction extension file
-
-    Raises
-    ------
-    ValueError :
-        when typ is neither 'train' nor 'test'
-    NotImplementedError :
-        when the extension cannot be read properly
-
-    """
-    pred_file = os.path.join(path,
-                             'fold_{}'.format(fold_id),
-                             'y_pred_{}.{}'.format(typ, ext))
-
-    if typ not in ['train', 'test']:
-        raise ValueError("Only 'train' or 'test' are expected for arg 'typ'")
-
-    if ext.lower() in ['npy', 'npz']:
-        return np.load(pred_file)['y_pred']
-    elif ext.lower() == 'csv':
-        return np.loadfromtxt(pred_file)
-    else:
-        return NotImplementedError("No reader implemented for extension {ext}"
-                                   .format(ext))
-
-
-def _get_time(path, fold_id, typ):
-    """
-    get time duration in seconds of train or valid
-    or test for a given fold.
-
-    Parameters
-    ----------
-    path : str
-        local path where predictions are saved
-    fold_id : int
-        id of the current CV fold
-    typ : {'train', 'valid, 'test'}
-
-    Raises
-    ------
-    ValueError :
-        when typ is neither is not 'train' or 'valid' or test'
-    """
-    if typ not in ['train', 'valid', 'test']:
-        raise ValueError(
-            "Only 'train' or 'valid' or 'test' are expected for arg 'typ'")
-    time_file = os.path.join(path, 'fold_{}'.format(fold_id), typ + '_time')
-    return float(open(time_file).read())
-
-
-def score_submission(config, submission_id):
-    """
-    Score a submission and change its state to 'scored'
+def get_predictions(config, submission_id):
+    """Get the predictions from the database of a submission.
 
     Parameters
     ----------
     config : dict
-        configuration
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    submission_id : int
+        The id of the submission.
+
+    Returns
+    -------
+    predictions : pd.DataFrame
+        A pandas dataframe containing the predictions on each fold.
+    """
+    db, Session = _setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submission_by_id(session, submission_id)
+        results = defaultdict(list)
+        for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+            results['fold'].append(fold_id)
+            results['y_pred_train'].append(cv_fold.full_train_y_pred)
+            results['y_pred_test'].append(cv_fold.test_y_pred)
+        return pd.DataFrame(results).set_index('fold')
+
+
+def set_time(config, submission_id, path_predictions):
+    """Set the timing information in the database.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    submission_id : int
+        The id of the submission.
+    path_predictions : str
+        The path where the results files are located.
+    """
+    db, Session = _setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submission_by_id(session, submission_id)
+        for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+            path_results = os.path.join(path_predictions,
+                                        'fold_{}'.format(fold_id))
+            results = {}
+            for step in ('train', 'valid', 'test'):
+                results[step + '_time'] = np.asscalar(
+                    np.loadtxt(os.path.join(path_results, step + '_time'))
+                )
+            for key, value in results.items():
+                setattr(cv_fold, key, value)
+        session.commit()
+
+
+def get_time(config, submission_id):
+    """Get the computation time for each fold of a submission.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    submission_id : int
+        The id of the submission.
+
+    Returns
+    -------
+    computation_time : pd.DataFrame
+        A pandas dataframe containing the computation time of each fold.
+    """
+    db, Session = _setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submission_by_id(session, submission_id)
+        results = defaultdict(list)
+        for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+            results['fold'].append(fold_id)
+            for step in ('train', 'valid', 'test'):
+                results[step].append(getattr(cv_fold, '{}_time'.format(step)))
+        return pd.DataFrame(results).set_index('fold')
+
+
+def set_scores(config, submission_id, path_predictions):
+    """Set the scores in the database.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    submission_id : int
+        The id of the submission.
+    path_predictions : str
+        The path where the results files are located.
+    """
+    db, Session = _setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submission_by_id(session, submission_id)
+        for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+            path_results = os.path.join(path_predictions,
+                                        'fold_{}'.format(fold_id))
+            scores_update = pd.read_csv(
+                os.path.join(path_results, 'scores.csv'), index_col=0
+            )
+            for score in cv_fold.scores:
+                for step in scores_update.index:
+                    value = scores_update.loc[step, score.name]
+                    setattr(score, step + '_score', value)
+        session.commit()
+
+
+def get_scores(config, submission_id):
+    """Get the scores for each fold of a submission.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    submission_id : int
+        The id of the submission.
+
+    Returns
+    -------
+    scores : pd.DataFrame
+        A pandas dataframe containing the scores of each fold.
+    """
+    db, Session = _setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submission_by_id(session, submission_id)
+        results = defaultdict(list)
+        index = []
+        for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+            for step in ('train', 'valid', 'test'):
+                index.append((fold_id, step))
+                for score in cv_fold.scores:
+                    results[score.name].append(getattr(score, step + '_score'))
+        multi_index = pd.MultiIndex.from_tuples(index, names=['fold', 'step'])
+        scores = pd.DataFrame(results, index=multi_index)
+        return scores
+
+
+def score_submission(config, submission_id):
+    """Score a submission and change its state to 'scored'
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     submission_id : int
         submission id
 
@@ -391,21 +454,11 @@ def score_submission(config, submission_id):
         (only a submission with state 'tested' can be scored)
     """
 
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
-        submission = select_submissions_by_id(session, submission_id)
+        submission = select_submission_by_id(session, submission_id)
         if submission.state != 'tested':
             raise ValueError('Submission state must be "tested"'
                              ' to score, not "{}"'.format(submission.state))
@@ -416,13 +469,14 @@ def score_submission(config, submission_id):
         # manually if needed for submission in various error states.
         for submission_on_cv_fold in submission.on_cv_folds:
             submission_on_cv_fold.session = session
-            submission_on_cv_fold.compute_train_scores(session)
-            submission_on_cv_fold.compute_valid_scores(session)
-            submission_on_cv_fold.compute_test_scores(session)
+            submission_on_cv_fold.compute_train_scores()
+            submission_on_cv_fold.compute_valid_scores()
+            submission_on_cv_fold.compute_test_scores()
             submission_on_cv_fold.state = 'scored'
         session.commit()
-        submission.compute_test_score_cv_bag(session)
-        submission.compute_valid_score_cv_bag(session)
+        # TODO: We are not managing the bagged score.
+        # submission.compute_test_score_cv_bag(session)
+        # submission.compute_valid_score_cv_bag(session)
         # Means and stds were constructed on demand by fetching fold times.
         # It was slow because submission_on_folds contain also possibly large
         # predictions. If postgres solves this issue (which can be tested on
@@ -446,82 +500,121 @@ def score_submission(config, submission_id):
 
 
 def set_submission_max_ram(config, submission_id, max_ram_mb):
-    """
-    Modify the max RAM mb usage of a submission
+    """Set the max amount RAM used by a submission during processing.
 
     Parameters
     ----------
     config : dict
-        configuration
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     submission_id : int
-        id of the requested submission
+        The id of the submission.
     max_ram_mb : float
-        max ram usage in MB
+        The max amount of RAM in MB.
     """
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
-        submission = select_submissions_by_id(session, submission_id)
+        submission = select_submission_by_id(session, submission_id)
         submission.max_ram = max_ram_mb
         session.commit()
 
 
-def set_submission_error_msg(config, submission_id, error_msg):
-    """
-    Set submission message error
+def get_submission_max_ram(config, submission_id):
+    """Get the max amount RAM used by a submission during processing.
 
     Parameters
     ----------
     config : dict
-        configuration
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     submission_id : int
-        id of the requested submission
-    error_msg : str
-        message error
+        The id of the submission.
+
+    Returns
+    -------
+    max_ram_mb : float
+        The max amount of RAM in MB.
     """
-
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
-
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
-
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
-        submission = select_submissions_by_id(session, submission_id)
+        submission = select_submission_by_id(session, submission_id)
+        return submission.max_ram
+
+
+def set_submission_error_msg(config, submission_id, error_msg):
+    """Set the error message after that a submission failed to be processed.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    submission_id : int
+        The id of the submission.
+    error_msg : str
+        The error message.
+    """
+
+    db, Session = _setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submission_by_id(session, submission_id)
         submission.error_msg = error_msg
         session.commit()
 
 
+def get_submission_error_msg(config, submission_id):
+    """Get the error message after that a submission failed to be processed.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    submission_id : int
+        The id of the submission.
+
+    Returns
+    -------
+    error_msg : str
+        The error message.
+    """
+
+    db, Session = _setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+
+        submission = select_submission_by_id(session, submission_id)
+        return submission.error_msg
+
+
 def get_event_nb_folds(config, event_name):
-    # Create database url
-    db_url = URL(**config)
-    db = create_engine(db_url)
+    """Get the number of fold for a given event.
 
-    # Create a configured "Session" class
-    Session = sessionmaker(db)
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    event_name : str
+        The event name.
 
-    # Link the relational model to the database
-    Model.metadata.create_all(db)
-
-    # Connect to the dabase and perform action
+    Returns
+    -------
+    nb_folds : int
+        The number of folds for a specific event.
+    """
+    db, Session = _setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
         event = select_event_by_name(session, event_name)

@@ -5,3 +5,17 @@ sqlalchemy:
     host: localhost
     port: 5432
     database: databoard_test
+ramp:
+    event: iris
+    event_name: iris_test
+    # TODO: change these three path once we finally manage to migrate the
+    # db_tools.
+    deployment_dir: /tmp/databoard_test
+    data_dir: ramp-data
+    kits_dir: ramp-kits
+    submissions_dir: submissions
+    predictions_dir: preds
+    logs_dir: log
+worker:
+    conda_env: ramp-iris
+    sandbox_dir: starting_kit

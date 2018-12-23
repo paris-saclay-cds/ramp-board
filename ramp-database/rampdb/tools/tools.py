@@ -4,17 +4,6 @@ from ..model import Team
 from ..model import Event
 from ..model import EventTeam
 
-__all__ = [
-    'get_active_user_event_team',
-    'get_n_team_members',
-    'get_n_user_teams',
-    'get_team_members',
-    'get_user_teams',
-    'get_user_event_teams',
-    'get_next_best_single_fold',
-    'combine_predictions_list',
-]
-
 
 def get_active_user_event_team(event, user):
     # There should always be an active user team, if not, throw an exception

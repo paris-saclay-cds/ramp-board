@@ -10,4 +10,3 @@ Toolkit to manage and interact with the RAMP database.
 """
 from . import model  # noqa
 from . import tools  # noqa
-from .config import read_database_config  # noqa
