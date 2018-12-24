@@ -23,7 +23,6 @@ def generate_ramp_config(config):
     else:
         if 'ramp' in config.keys():
             config = config['ramp']
-
     ramp_config = {}
     ramp_config['event'] = config['event']
     ramp_config['event_name'] = config['event_name']

@@ -5,10 +5,16 @@ file. Then, those queries are tested through the public API.
 """
 from ..model import Event
 from ..model import EventTeam
+from ..model import Extension
 from ..model import Problem
 from ..model import Submission
+from ..model import SubmissionFileTypeExtension
+from ..model import SubmissionSimilarity
 from ..model import Team
 from ..model import User
+from ..model import Workflow
+from ..model import WorkflowElement
+from ..model import WorkflowElementType
 
 
 def select_submissions_by_state(session, event_name, state):
@@ -168,7 +174,7 @@ def select_problem_by_name(session, problem_name):
     session : :class:`sqlalchemy.orm.Session`
         The session to query the database.
     problem_name : str
-        The team name to query.
+        The problem name to query.
 
     Returns
     -------
@@ -177,4 +183,153 @@ def select_problem_by_name(session, problem_name):
     """
     return (session.query(Problem)
                    .filter(Problem.name == problem_name)
+                   .one_or_none())
+
+
+def select_similarities_by_target(session, target_submission):
+    """Query submission similarities given its a target submission.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    target_submission : :class:`rampdb.model.Submission`
+        The target submission.
+
+    Returns
+    -------
+    submission_similarities : list of :class:`rampdb.model.SubmissionSimilarity`
+        The queried submission similarity.
+    """
+    return (session.query(SubmissionSimilarity)
+                   .filter(SubmissionSimilarity.target_submission ==
+                           target_submission)
+                   .all())
+
+
+def select_similarities_by_source(session, source_submission):
+    """Query submission similarities given its a source submission.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    source_submission : :class:`rampdb.model.Submission`
+        The source submission.
+
+    Returns
+    -------
+    submission_similarities : list of :class:`rampdb.model.SubmissionSimilarity`
+        The queried submission similarity.
+    """
+    return (session.query(SubmissionSimilarity)
+                   .filter(SubmissionSimilarity.source_submission ==
+                           source_submission)
+                   .all())
+
+
+def select_workflow_by_name(session, workflow_name):
+    """Query workflow given its name.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    workflow_name : str
+        The name of the workflow.
+
+    Returns
+    -------
+    submission_similarities : :class:`rampdb.model.Workflow`
+        The queried workflow.
+    """
+    return (session.query(Workflow)
+                   .filter(Workflow.name == workflow_name)
+                   .one_or_none())
+
+
+def select_extension_by_name(session, extension_name):
+    """Query an extension given its name.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    extension_name : str
+        The name of the extension.
+
+    Returns
+    -------
+    extension : :class:`rampdb.model.Extension`
+        The queried extension.
+    """
+    return (session.query(Extension)
+                   .filter(Extension.name == extension_name)
+                   .one_or_none())
+
+
+def select_submission_type_extension_by_extension(session, extension):
+    """Query the submission file type extension given its extension.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    extension : :class:`rampdb.model.Extension`
+        The extension.
+
+    Returns
+    -------
+    submission_file_type_extension : :class:`rampdb.model.SubmissionFileTypeExtension`
+        The queried submission file type extension.
+    """
+    return (session.query(SubmissionFileTypeExtension)
+                   .filter(SubmissionFileTypeExtension.extension == extension)
+                   .one_or_none())
+
+
+def select_workflow_element_type_by_name(session, workflow_element_type_name):
+    """Query the workflow element type given its name.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    workflow_element_type_name : str
+        The name of the workflow element type.
+
+    Returns
+    -------
+    workflow_element_type : :class:`rampdb.model.WorkflowElementType`
+        The queried workflow element type.
+    """
+    return (session.query(WorkflowElementType)
+                   .filter(WorkflowElementType.name ==
+                           workflow_element_type_name)
+                   .one_or_none())
+
+
+def select_workflow_element_by_workflow_and_type(session, workflow,
+                                                 workflow_element_type):
+    """Query the workflow element given the workflow and the workflow element
+    type.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    workflow : :class:`rampdb.model.Workflow`
+        The workflow used to filter.
+    workflow_element_type : :class`rampdb.model.WorkflowElement`
+        The workflow element type to filter.
+
+    Returns
+    -------
+    workflow_element : :class:`rampdb.model.WorkflowElement`
+        The queried workflow element.
+    """
+    return (session.query(WorkflowElement)
+                   .filter(WorkflowElement.workflow == workflow)
+                   .filter(WorkflowElement.workflow_element_type ==
+                           workflow_element_type)
                    .one_or_none())

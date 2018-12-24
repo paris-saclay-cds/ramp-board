@@ -1,113 +1,193 @@
 import logging
 import os
 
-from ramputils import generate_ramp_config
+from sqlalchemy.orm.exc import NoResultFound
+
 from ramputils.utils import import_module_from_source
 
 from ..utils import setup_db
 
+from ._query import select_event_by_name
+from ._query import select_extension_by_name
 from ._query import select_problem_by_name
+from ._query import select_submissions_by_state
+from ._query import select_similarities_by_source
+from ._query import select_similarities_by_target
+from ._query import select_submission_by_id
+from ._query import select_submission_type_extension_by_extension
+from ._query import select_workflow_by_name
+from ._query import select_workflow_element_by_workflow_and_type
+from ._query import select_workflow_element_type_by_name
+
 from ..model import Problem
+from ..model import Workflow
+from ..model import WorkflowElement
+from ..model import WorkflowElementType
 
 logger = logging.getLogger('DATABASE')
 
 
-# def add_workflow(workflow_object):
-#     """Add a new workflow.
+def add_workflow(session, workflow_object):
+    """Add a new workflow.
 
-#     Workflow class should exist in ``rampwf.workflows``. The name of the
-#     workflow will be the classname (e.g. Classifier). Element names are taken
-#     from ``workflow.element_names``. Element types are inferred from the
-#     extension. This is important because e.g. the max size and the editability
-#     will depend on the type.
+    Workflow class should exist in ``rampwf.workflows``. The name of the
+    workflow will be the classname (e.g. Classifier). Element names are taken
+    from ``workflow.element_names``. Element types are inferred from the
+    extension. This is important because e.g. the max size and the editability
+    will depend on the type.
 
-#     ``add_workflow`` is called by :func:`add_problem`, taking the workflow to
-#     add from the ``problem.py`` file of the starting kit.
+    ``add_workflow`` is called by :func:`add_problem`, taking the workflow to
+    add from the ``problem.py`` file of the starting kit.
 
-#     Parameters
-#     ----------
-#     workflow_object : ramp.workflows
-#         A ramp workflow instance.
-#     """
-#     workflow_name = workflow_object.__class__.__name__
-#     workflow = Workflow.query.filter_by(name=workflow_name).one_or_none()
-#     if workflow is None:
-#         db.session.add(Workflow(name=workflow_name))
-#         workflow = Workflow.query.filter_by(name=workflow_name).one()
-#     for element_name in workflow_object.element_names:
-#         tokens = element_name.split('.')
-#         element_filename = tokens[0]
-#         # inferring that file is code if there is no extension
-#         if len(tokens) > 2:
-#             raise ValueError('File name {} should contain at most one "."'
-#                              .format(element_name))
-#         element_file_extension_name = tokens[1] if len(tokens) == 2 else 'py'
-#         extension = Extension.query.filter_by(
-#             name=element_file_extension_name).one_or_none()
-#         if extension is None:
-#             raise ValueError('Unknown extension {}.'
-#                              .format(element_file_extension_name))
-#         type_extension = SubmissionFileTypeExtension.query.filter_by(
-#             extension=extension).one_or_none()
-#         if type_extension is None:
-#             raise ValueError('Unknown file type {}.'
-#                              .format(element_file_extension_name))
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    workflow_object : :mod:`rampwf.workflows`
+        A ramp workflow instance. Refer to :mod:`rampwf.workflows` for all
+        available workflows.
+    """
+    workflow_name = workflow_object.__class__.__name__
+    workflow = select_workflow_by_name(session, workflow_name)
+    if workflow is None:
+        session.add(Workflow(name=workflow_name))
+        workflow = select_workflow_by_name(session, workflow_name)
+    for element_name in workflow_object.element_names:
+        tokens = element_name.split('.')
+        element_filename = tokens[0]
+        # inferring that file is code if there is no extension
+        if len(tokens) > 2:
+            raise ValueError('File name {} should contain at most one "."'
+                             .format(element_name))
+        element_file_extension_name = tokens[1] if len(tokens) == 2 else 'py'
+        extension = select_extension_by_name(session,
+                                             element_file_extension_name)
+        if extension is None:
+            raise ValueError('Unknown extension {}.'
+                             .format(element_file_extension_name))
+        type_extension = select_submission_type_extension_by_extension(
+            session, extension
+        )
+        if type_extension is None:
+            raise ValueError('Unknown file type {}.'
+                             .format(element_file_extension_name))
 
-#         workflow_element_type = WorkflowElementType.query.filter_by(
-#             name=element_filename).one_or_none()
-#         if workflow_element_type is None:
-#             workflow_element_type = WorkflowElementType(
-#                 name=element_filename, type=type_extension.type)
-#             logger.info('Adding {}'.format(workflow_element_type))
-#             db.session.add(workflow_element_type)
-#             db.session.commit()
-#         workflow_element = WorkflowElement.query.filter_by(
-#             workflow=workflow,
-#             workflow_element_type=workflow_element_type).one_or_none()
-#         if workflow_element is None:
-#             workflow_element = WorkflowElement(
-#                 workflow=workflow,
-#                 workflow_element_type=workflow_element_type)
-#             logger.info('Adding {}'.format(workflow_element))
-#             db.session.add(workflow_element)
-#     db.session.commit()
+        workflow_element_type = select_workflow_element_type_by_name(
+            session, element_filename
+        )
+        if workflow_element_type is None:
+            workflow_element_type = WorkflowElementType(
+                name=element_filename, type=type_extension.type
+            )
+            logger.info('Adding {}'.format(workflow_element_type))
+            session.add(workflow_element_type)
+        workflow_element = select_workflow_element_by_workflow_and_type(
+            session, workflow=workflow,
+            workflow_element_type=workflow_element_type
+        )
+        if workflow_element is None:
+            workflow_element = WorkflowElement(
+                workflow=workflow,
+                workflow_element_type=workflow_element_type
+            )
+            logger.info('Adding {}'.format(workflow_element))
+            session.add(workflow_element)
+    session.commit()
 
 
-def add_problem(config, problem_name, force=False):
+def delete_problem(session, problem_name):
+    """Delete a problem from the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    problem_name : str
+        The name of the problem to remove.
+    """
+    problem = select_problem_by_name(session, problem_name)
+    if problem is None:
+        raise NoResultFound('No result found for "{}" in Problem table'
+                            .format(problem_name))
+    for event in problem.events:
+        delete_event(session, event.name)
+    session.delete(problem)
+    session.commit()
+
+
+def delete_event(session, event_name):
+    """Delete an event from the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The name of the event to delete.
+    """
+    event = select_event_by_name(session, event_name)
+    submissions = select_submissions_by_state(session, event_name, state=None)
+    for sub_id, _, _ in submissions:
+        delete_submission_similarity(session, sub_id)
+    session.delete(event)
+    session.commit()
+
+
+def delete_submission_similarity(session, submission_id):
+    """Delete the submission similarity associated with a submission.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submission_id: int
+        The id of the submission to use.
+    """
+    submission = select_submission_by_id(session, submission_id)
+    similarities = []
+    similarities += select_similarities_by_target(session, submission)
+    similarities += select_similarities_by_source(session, submission)
+    for similarity in similarities:
+        session.delete(similarity)
+    session.commit()
+
+
+def add_problem(config, problem_name, kits_dir, force=False):
     """Add a RAMP problem to the database.
 
     Parameters
     ----------
     config : dict
-        The overall configuration file.
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
     problem_name : str
         The name of the problem to register in the database.
+    kits_dir : str
+        The directory where the RAMP kits are located.
     force : bool, default is False
         Whether to force add the problem. If ``force=False``, an error is
         raised if the problem was already in the database.
     """
-    database_config = config['sqlalchemy']
-    ramp_config = generate_ramp_config(config)
-    db, Session = setup_db(database_config)
+    db, Session = setup_db(config)
     with db.connect() as conn:
         session = Session(bind=conn)
 
         problem = select_problem_by_name(session, problem_name)
-        problem_kits_path = os.path.join(ramp_config['ramp_kits_dir'],
-                                         problem_name)
+        problem_kits_path = os.path.join(kits_dir, problem_name)
         if problem is not None and not force:
             if not force:
                 raise ValueError('Attempting to overwrite a problem and '
-                                'delete all linked events. Use"force=True" '
-                                'if you want to overwrite the problem and '
-                                'delete the events.')
-            delete_problem(problem_name)
+                                 'delete all linked events. Use"force=True" '
+                                 'if you want to overwrite the problem and '
+                                 'delete the events.')
+            delete_problem(session, problem_name)
 
         # load the module to get the type of workflow used for the problem
         problem_module = import_module_from_source(
             os.path.join(problem_kits_path, 'problem.py'), 'problem')
-        add_workflow(problem_module.workflow)
-        problem = Problem(name=problem_name)
+        add_workflow(session, problem_module.workflow)
+        problem = Problem(session, name=problem_name)
         logger.info('Adding {}'.format(problem))
-        db.session.add(problem)
-        db.session.commit()
+        session.add(problem)
+        session.commit()

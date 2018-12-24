@@ -42,9 +42,9 @@ class Problem(Model):
     workflow = relationship(
         'Workflow', backref=backref('problems'))
 
-    def __init__(self, name):
+    def __init__(self, session, name):
         self.name = name
-        self.reset()
+        self.reset(session)
         # to check if the module and all required fields are there
         self.module
         self.Predictions
@@ -54,9 +54,15 @@ class Problem(Model):
         return 'Problem({})\n{}'.format(
             encode_string(self.name), self.workflow)
 
-    def reset(self):
-        self.workflow = Workflow.query.filter_by(
-            name=type(self.module.workflow).__name__).one()
+    def reset(self, session):
+        print(Workflow)
+        self.workflow = \
+            (session.query(Workflow)
+                    .filter(Workflow.name == type(self.module.workflow)
+                    .__name__).one())
+        # TODO: now that we close the connection we need to pass the session.
+        # self.workflow = Workflow.query.filter_by(
+        #     name=type(self.module.workflow).__name__).one()
 
     @property
     def module(self):

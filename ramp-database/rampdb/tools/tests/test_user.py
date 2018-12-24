@@ -17,7 +17,7 @@ from rampdb.tools.user import get_user_by_name
 
 
 @pytest.fixture(scope='module')
-def config_database():
+def database_config():
     return read_config(path_config_example(), filter_section='sqlalchemy')
 
 @pytest.fixture(scope='module')
@@ -39,17 +39,17 @@ def db_function(config):
         Model.metadata.drop_all(db)
 
 
-def test_create_user(config_database, db_function):
+def test_create_user(database_config, db_function):
     name = 'test_user'
     password = 'test'
     lastname = 'Test'
     firstname = 'User'
     email = 'test.user@gmail.com'
     access_level = 'asked'
-    create_user(config_database, name=name, password=password,
+    create_user(database_config, name=name, password=password,
                 lastname=lastname, firstname=firstname, email=email,
                 access_level=access_level)
-    user = get_user_by_name(config_database, name)
+    user = get_user_by_name(database_config, name)
     assert user.name == name
     assert check_password(password, user.hashed_password)
     assert user.lastname == lastname
@@ -57,6 +57,6 @@ def test_create_user(config_database, db_function):
     assert user.email == email
     assert user.access_level == access_level
     # check that a team was automatically added with the new user
-    team = get_team_by_name(config_database, name)
+    team = get_team_by_name(database_config, name)
     assert team.name == name
     assert team.admin_id == user.id

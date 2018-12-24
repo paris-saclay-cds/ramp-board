@@ -14,6 +14,9 @@ from ..model import Model
 from ..model import SubmissionFileType
 from ..model import SubmissionFileTypeExtension
 
+from .event import add_problem
+from .user import create_user
+
 logger = logging.getLogger('DATABASE')
 
 
@@ -37,6 +40,35 @@ def create_test_db(config):
     Model.metadata.drop_all(db)
     Model.metadata.create_all(db)
     setup_files_extension_type(database_config)
+
+
+def setup_toy_db(config):
+    """Only setup the database by adding some data.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing all ramp information.
+    """
+    database_config = config['sqlalchemy']
+    ramp_config = generate_ramp_config(config)
+    add_users(database_config)
+    add_problems(database_config, ramp_config['ramp_kits_dir'])
+    # add_events()
+    # sign_up_teams_to_events()
+    # submit_all_starting_kits()
+
+
+def create_toy_db(config):
+    """Create a toy dataset with couple of users, problems, events.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing all ramp information.
+    """
+    create_test_db(config)
+    setup_toy_db(config)
 
 
 def add_extension(config, name):
@@ -206,3 +238,44 @@ def _setup_ramp_kits_ramp_data(config, problem_name):
     subprocess.check_output(["jupyter", "nbconvert", "--to", "html",
                              "{}_starting_kit.ipynb".format(problem_name)])
     os.chdir(current_directory)
+
+
+def add_users(config):
+    """Add dummy users in the database.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing all ramp information.
+    """
+    database_config = config['sqlalchemy']
+    create_user(
+        database_config, name='test_user', password='test',
+        lastname='Test', firstname='User',
+        email='test.user@gmail.com', access_level='asked')
+    # approve_user('test_user')
+    # create_user(
+    #     name='test_user_2', password='test',
+    #     lastname='Test_2', firstname='User_2',
+    #     email='test.user.2@gmail.com', access_level='asked')
+    # approve_user('test_user_2')
+    # create_user(
+    #     name='test_iris_admin', password='test',
+    #     lastname='Admin', firstname='Iris',
+    #     email='iris.admin@gmail.com', access_level='user')
+
+
+def add_problems(config):
+    """Add dummy problems into the database.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing all ramp information.
+    """
+    database_config = config['sqlalchemy']
+    ramp_config = generate_ramp_config(config)
+    problems = ['iris', 'boston_housing']
+    for problem_name in problems:
+        _setup_ramp_kits_ramp_data(config, problem_name)
+        add_problem(database_config, problem_name, ramp_config['ramp_kits_dir'])
