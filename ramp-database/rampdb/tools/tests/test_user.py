@@ -8,7 +8,7 @@ from ramputils.testing import path_config_example
 
 from rampdb.utils import setup_db
 from rampdb.model import Model
-from rampdb.tools.testing import create_test_db
+from rampdb.tools.deploy import create_test_db
 
 from rampdb.tools.user import create_user
 
