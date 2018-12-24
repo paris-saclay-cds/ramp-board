@@ -10,6 +10,10 @@ from ..model import Team
 from ..model import User
 from ..utils import setup_db
 
+from ._query import select_team_by_name
+from ._query import select_user_by_email
+from ._query import select_user_by_name
+
 logger = logging.getLogger('DATABASE')
 
 
@@ -58,7 +62,7 @@ def create_user(config, name, password, lastname, firstname, email,
 
     Returns
     -------
-    user : rampdb.model.User
+    user : :class:`rampdb.model.User`
         The user entry in the database.
     """
     db, Session = setup_db(config)
@@ -86,17 +90,17 @@ def create_user(config, name, password, lastname, firstname, email,
             session.rollback()
             message = ''
             try:
-                session.query(User).filter(User.name == name).one()
+                select_user_by_name(session, name)
                 message += 'username is already in use'
             except NoResultFound:
                 # We only check for team names if username is not in db
                 try:
-                    session.query(Team).filter(Team.name == name).one()
+                    select_team_by_name(session, name)
                     message += 'username is already in use as a team name'
                 except NoResultFound:
                     pass
             try:
-                session.query(User).filter(User.email == email).one()
+                select_user_by_email(session, email)
                 if message:
                     message += ' and '
                 message += 'email is already in use'
@@ -109,3 +113,49 @@ def create_user(config, name, password, lastname, firstname, email,
         logger.info('Creating {}'.format(user))
         logger.info('Creating {}'.format(team))
         return user
+
+
+def get_user_by_name(config, name):
+    """Get a user by his/her name
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    name : str
+        The name of the user.
+
+    Returns
+    -------
+    user : :class:`rampdb.model.User`
+        The queried user.
+    """
+    db, Session = setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+        return select_user_by_name(session, name)
+
+
+def get_team_by_name(config, name):
+    """Get a team by its name
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    name : str
+        The name of the team.
+
+    Returns
+    -------
+    team : :class:`rampdb.model.Team`
+        The queried team.
+    """
+    db, Session = setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+        return select_team_by_name(session, name)

@@ -5,8 +5,10 @@ file. Then, those queries are tested through the public API.
 """
 from ..model import Event
 from ..model import EventTeam
-from ..model import Team
+from ..model import Problem
 from ..model import Submission
+from ..model import Team
+from ..model import User
 
 
 def select_submissions_by_state(session, event_name, state):
@@ -101,4 +103,78 @@ def select_event_by_name(session, event_name):
     event : :class:`rampdb.model.Event`
         The queried event.
     """
-    return session.query(Event).filter(Event.name == event_name).one()
+    return session.query(Event).filter(Event.name == event_name).one_or_none()
+
+
+def select_user_by_name(session, user_name):
+    """Query an user given its name.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    user_name : str
+        The username to query.
+
+    Returns
+    -------
+    user : :class:`rampdb.model.User`
+        The queried user.
+    """
+    return session.query(User).filter(User.name == user_name).one()
+
+
+def select_user_by_email(session, email):
+    """Query an user given its email.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    email : str
+        The email to query.
+
+    Returns
+    -------
+    user : :class:`rampdb.model.User`
+        The queried user.
+    """
+    return session.query(User).filter(User.email == email).one_or_none()
+
+
+def select_team_by_name(session, team_name):
+    """Query a team given its name.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    team_name : str
+        The team name to query.
+
+    Returns
+    -------
+    team : :class:`rampdb.model.Team`
+        The queried team.
+    """
+    return session.query(Team).filter(Team.name == team_name).one_or_none()
+
+
+def select_problem_by_name(session, problem_name):
+    """Query a problem given its name.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    problem_name : str
+        The team name to query.
+
+    Returns
+    -------
+    problem : :class:`rampdb.model.Problem`
+        The queried problem.
+    """
+    return (session.query(Problem)
+                   .filter(Problem.name == problem_name)
+                   .one_or_none())

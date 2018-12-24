@@ -25,6 +25,8 @@ def generate_ramp_config(config):
             config = config['ramp']
 
     ramp_config = {}
+    ramp_config['event'] = config['event']
+    ramp_config['event_name'] = config['event_name']
     ramp_config['deployment_dir'] = config['deployment_dir']
     ramp_config['ramp_kits_dir'] = os.path.join(
         config['deployment_dir'], config['kits_dir']
