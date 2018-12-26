@@ -10,9 +10,9 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
 from ramputils import import_module_from_source
+from ramputils import encode_string
 
 from .base import Model
-from .base import encode_string
 from .base import get_deployment_path
 from .workflow import Workflow
 
@@ -53,8 +53,8 @@ class Problem(Model):
         self.workflow_object
 
     def __repr__(self):
-        return 'Problem({})\n{}'.format(
-            encode_string(self.name), self.workflow)
+        return 'Problem({})\n{}'.format(encode_string(self.name),
+                                        self.workflow)
 
     def reset(self, session):
         if session is not None:

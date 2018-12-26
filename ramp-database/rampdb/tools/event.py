@@ -196,7 +196,7 @@ def get_problem(session, problem_name):
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
     problem_name : str or None
-        The name of the problem to remove. If None, all the problems will be
+        The name of the problem to query. If None, all the problems will be
         queried.
 
     Returns
@@ -205,3 +205,22 @@ def get_problem(session, problem_name):
         The queried problem.
     """
     return select_problem_by_name(session, problem_name)
+
+
+def get_workflow(session, workflow_name):
+    """Get workflow from the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    workflow_name : str or None
+        The name of the workflow to remove. If None, all the workflows will be
+        queried.
+
+    Returns
+    -------
+    problem : :class:`rampdb.model.Workflow` or list of :class:`rampdb.model.Workflow`
+        The queried problem.
+    """
+    return select_workflow_by_name(session, workflow_name)

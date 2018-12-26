@@ -249,6 +249,8 @@ def select_workflow_by_name(session, workflow_name):
     submission_similarities : :class:`rampdb.model.Workflow`
         The queried workflow.
     """
+    if workflow_name is None:
+        return session.query(Workflow).all()
     return (session.query(Workflow)
                    .filter(Workflow.name == workflow_name)
                    .one_or_none())
