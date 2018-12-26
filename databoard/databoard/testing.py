@@ -76,7 +76,7 @@ def add_users():
         email='iris.admin@gmail.com', access_level='user')
 
 
-def _setup_ramp_kits_ramp_data(problem_name):
+def setup_ramp_kits_ramp_data(problem_name):
     """Clone ramp-kits and ramp-data repository and setup it up."""
     # TODO: This function does not have a unit test but only used in
     # integration testing.
@@ -105,7 +105,7 @@ def add_problems():
     """Add dummy problems into the database."""
     problems = ['iris', 'boston_housing']
     for problem_name in problems:
-        _setup_ramp_kits_ramp_data(problem_name)
+        setup_ramp_kits_ramp_data(problem_name)
         add_problem(problem_name)
 
 

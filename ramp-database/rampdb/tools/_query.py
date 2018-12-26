@@ -8,6 +8,7 @@ from ..model import EventTeam
 from ..model import Extension
 from ..model import Problem
 from ..model import Submission
+from ..model import SubmissionFileType
 from ..model import SubmissionFileTypeExtension
 from ..model import SubmissionSimilarity
 from ..model import Team
@@ -271,9 +272,69 @@ def select_extension_by_name(session, extension_name):
     extension : :class:`rampdb.model.Extension`
         The queried extension.
     """
+    if extension_name is None:
+        return session.query(Extension).all()
     return (session.query(Extension)
                    .filter(Extension.name == extension_name)
                    .one_or_none())
+
+
+def select_submission_file_type_by_name(session, type_name):
+    """Query an submission file type given its type name.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    type_name : str or None
+        The name of the type.
+
+    Returns
+    -------
+    submission_file_type : :class:`rampdb.model.SubmissionFileType`
+or list of :class:`rampdb.model.SubmissionFileType`
+        The queried submission file type.
+    """
+    if type_name is None:
+        return session.query(SubmissionFileType).all()
+    return (session.query(SubmissionFileType)
+                   .filter(SubmissionFileType.name == type_name)
+                   .one_or_none())
+
+
+def select_submission_type_extension_by_name(session, type_name,
+                                             extension_name):
+    """Query the submission file type extension given its extension.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    type_name : str or None
+        The name of the type. If None, it will not be used to filter the
+        query.
+    extension_name : str or None
+        The name of the extension. If None, it will not be used to filter the
+        query.
+
+    Returns
+    -------
+    submission_file_type_extension :
+:class:`rampdb.model.SubmissionFileTypeExtension` or list of
+:class:`rampdb.model.SubmissionFileTypeExtension`
+        The queried submission file type extension.
+    """
+    if type_name is None and extension_name is None:
+        return session.query(SubmissionFileTypeExtension).all()
+    q = session.query(SubmissionFileTypeExtension)
+    if type_name is not None:
+        submission_file_type = select_submission_file_type_by_name(session,
+                                                                   type_name)
+        q = q.filter(SubmissionFileTypeExtension.type == submission_file_type)
+    if extension_name is not None:
+        extension = select_extension_by_name(session, extension_name)
+        q = q.filter(SubmissionFileTypeExtension.extension == extension)
+    return q.one_or_none()
 
 
 def select_submission_type_extension_by_extension(session, extension):
@@ -283,14 +344,19 @@ def select_submission_type_extension_by_extension(session, extension):
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to query the database.
-    extension : :class:`rampdb.model.Extension`
-        The extension.
+    extension : :class:`rampdb.model.Extension` or None
+        The extension. If None, all submission file type extension will be
+        returned.
 
     Returns
     -------
-    submission_file_type_extension : :class:`rampdb.model.SubmissionFileTypeExtension`
+    submission_file_type_extension :
+:class:`rampdb.model.SubmissionFileTypeExtension` or list of
+:class:`rampdb.model.SubmissionFileTypeExtension`
         The queried submission file type extension.
     """
+    if extension is None:
+        return session.query(SubmissionFileTypeExtension).all()
     return (session.query(SubmissionFileTypeExtension)
                    .filter(SubmissionFileTypeExtension.extension == extension)
                    .one_or_none())

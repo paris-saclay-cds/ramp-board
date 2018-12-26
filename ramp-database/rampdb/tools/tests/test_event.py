@@ -16,7 +16,7 @@ from rampdb.utils import setup_db
 from rampdb.utils import session_scope
 
 from rampdb.testing import create_test_db
-from rampdb.testing import _setup_ramp_kits_ramp_data
+from rampdb.testing import setup_ramp_kits_ramp_data
 
 from rampdb.tools.event import add_problem
 from rampdb.tools.event import add_workflow
@@ -57,7 +57,7 @@ def session_scope_function(config):
 def test_check_problem(session_scope_function, config):
     problem_names = ['iris', 'boston_housing']
     for problem_name in problem_names:
-        _setup_ramp_kits_ramp_data(config, problem_name)
+        setup_ramp_kits_ramp_data(config, problem_name)
         ramp_config = generate_ramp_config(config)
         add_problem(session_scope_function, problem_name,
                     ramp_config['ramp_kits_dir'])
