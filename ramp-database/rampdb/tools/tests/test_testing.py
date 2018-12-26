@@ -1,10 +1,10 @@
 import shutil
 
 import pytest
+from git.exc import GitCommandError
 
 from ramputils import read_config
 from ramputils.testing import path_config_example
-
 
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
@@ -14,6 +14,7 @@ from rampdb.model import Model
 from rampdb.exceptions import NameClashError
 
 from rampdb.tools.user import get_user_by_name
+from rampdb.tools.event import get_problem
 
 from rampdb.tools.testing import create_test_db
 from rampdb.tools.testing import add_users
@@ -56,10 +57,10 @@ def test_add_users(session_scope_function):
 
 def test_add_problems(session_scope_function, config):
     add_problems(session_scope_function, config)
-#     problems = db.session.query(Problem).all()
-#     for problem in problems:
-#         assert problem.name in ('iris', 'boston_housing')
-#     # trying to add twice the same problem will raise a git error since the
-#     #  repositories already exist.
-#     with pytest.raises(GitCommandError):
-#         add_problems()
+    problems = get_problem(session_scope_function, None)
+    for problem in problems:
+        assert problem.name in ('iris', 'boston_housing')
+    # trying to add twice the same problem will raise a git error since the
+    #  repositories already exist.
+    with pytest.raises(GitCommandError):
+        add_problems(session_scope_function, config)

@@ -17,7 +17,7 @@ STATES = submission_states.enums
 logger = logging.getLogger('DATABASE')
 
 
-# Getter functions
+# Getter functions: get information from the database
 def get_submissions(session, event_name, state='new'):
     """Get information about submissions from an event with a specific state
     optionally.
@@ -292,7 +292,7 @@ def get_event_nb_folds(session, event_name):
     return len(event.cv_folds)
 
 
-# Setter functions
+# Setter functions: set information in the database
 def set_submission_state(session, submission_id, state):
     """Set the set of a submission.
 
@@ -437,7 +437,8 @@ def set_submission_error_msg(session, submission_id, error_msg):
     session.commit()
 
 
-# Computing functions
+# Computing functions: old style functions when it was using some functionality
+#  from the database itself.
 def score_submission(session, submission_id):
     """Score a submission and change its state to 'scored'
 

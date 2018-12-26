@@ -25,6 +25,65 @@ from ..model import WorkflowElementType
 logger = logging.getLogger('DATABASE')
 
 
+# Delete functions: remove from the database some information
+def delete_problem(session, problem_name):
+    """Delete a problem from the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    problem_name : str
+        The name of the problem to remove.
+    """
+    problem = select_problem_by_name(session, problem_name)
+    if problem is None:
+        raise NoResultFound('No result found for "{}" in Problem table'
+                            .format(problem_name))
+    for event in problem.events:
+        delete_event(session, event.name)
+    session.delete(problem)
+    session.commit()
+
+
+def delete_event(session, event_name):
+    """Delete an event from the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The name of the event to delete.
+    """
+    event = select_event_by_name(session, event_name)
+    submissions = select_submissions_by_state(session, event_name, state=None)
+    for sub_id, _, _ in submissions:
+        delete_submission_similarity(session, sub_id)
+    session.delete(event)
+    session.commit()
+
+
+def delete_submission_similarity(session, submission_id):
+    """Delete the submission similarity associated with a submission.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submission_id: int
+        The id of the submission to use.
+    """
+    submission = select_submission_by_id(session, submission_id)
+    similarities = []
+    similarities += select_similarities_by_target(session, submission)
+    similarities += select_similarities_by_source(session, submission)
+    for similarity in similarities:
+        session.delete(similarity)
+    session.commit()
+
+
+# Add functions: add to the database some information
 def add_workflow(session, workflow_object):
     """Add a new workflow.
 
@@ -93,63 +152,6 @@ def add_workflow(session, workflow_object):
     session.commit()
 
 
-def delete_problem(session, problem_name):
-    """Delete a problem from the database.
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-    problem_name : str
-        The name of the problem to remove.
-    """
-    problem = select_problem_by_name(session, problem_name)
-    if problem is None:
-        raise NoResultFound('No result found for "{}" in Problem table'
-                            .format(problem_name))
-    for event in problem.events:
-        delete_event(session, event.name)
-    session.delete(problem)
-    session.commit()
-
-
-def delete_event(session, event_name):
-    """Delete an event from the database.
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-    event_name : str
-        The name of the event to delete.
-    """
-    event = select_event_by_name(session, event_name)
-    submissions = select_submissions_by_state(session, event_name, state=None)
-    for sub_id, _, _ in submissions:
-        delete_submission_similarity(session, sub_id)
-    session.delete(event)
-    session.commit()
-
-
-def delete_submission_similarity(session, submission_id):
-    """Delete the submission similarity associated with a submission.
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-    submission_id: int
-        The id of the submission to use.
-    """
-    submission = select_submission_by_id(session, submission_id)
-    similarities = []
-    similarities += select_similarities_by_target(session, submission)
-    similarities += select_similarities_by_source(session, submission)
-    for similarity in similarities:
-        session.delete(similarity)
-    session.commit()
-
-
 def add_problem(session, problem_name, kits_dir, force=False):
     """Add a RAMP problem to the database.
 
@@ -170,9 +172,9 @@ def add_problem(session, problem_name, kits_dir, force=False):
     if problem is not None and not force:
         if not force:
             raise ValueError('Attempting to overwrite a problem and '
-                                'delete all linked events. Use"force=True" '
-                                'if you want to overwrite the problem and '
-                                'delete the events.')
+                             'delete all linked events. Use"force=True" '
+                             'if you want to overwrite the problem and '
+                             'delete the events.')
         delete_problem(session, problem_name)
 
     # load the module to get the type of workflow used for the problem
@@ -183,3 +185,23 @@ def add_problem(session, problem_name, kits_dir, force=False):
     logger.info('Adding {}'.format(problem))
     session.add(problem)
     session.commit()
+
+
+# Getter functions: get information from the database
+def get_problem(session, problem_name):
+    """Get problem from the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    problem_name : str or None
+        The name of the problem to remove. If None, all the problems will be
+        queried.
+
+    Returns
+    -------
+    problem : :class:`rampdb.model.Problem` or list of :class:`rampdb.model.Problem`
+        The queried problem.
+    """
+    return select_problem_by_name(session, problem_name)

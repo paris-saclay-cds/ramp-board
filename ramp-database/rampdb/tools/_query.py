@@ -185,6 +185,8 @@ def select_problem_by_name(session, problem_name):
     problem : :class:`rampdb.model.Problem`
         The queried problem.
     """
+    if problem_name is None:
+        return session.query(Problem).all()
     return (session.query(Problem)
                    .filter(Problem.name == problem_name)
                    .one_or_none())
