@@ -16,6 +16,8 @@ from .base import encode_string
 from .base import get_deployment_path
 from .workflow import Workflow
 
+# TODO: This will be really wrong at some point.
+# TODO: We need to pass the configuration or the path to the data instead.
 DEPLOYMENT_PATH = get_deployment_path()
 RAMP_KITS_PATH = os.path.join(
     DEPLOYMENT_PATH, os.getenv('RAMP_KITS_DIR', 'ramp-kits'))
@@ -42,7 +44,7 @@ class Problem(Model):
     workflow = relationship(
         'Workflow', backref=backref('problems'))
 
-    def __init__(self, session, name):
+    def __init__(self, name, session=None):
         self.name = name
         self.reset(session)
         # to check if the module and all required fields are there
@@ -55,14 +57,16 @@ class Problem(Model):
             encode_string(self.name), self.workflow)
 
     def reset(self, session):
-        print(Workflow)
-        self.workflow = \
-            (session.query(Workflow)
-                    .filter(Workflow.name == type(self.module.workflow)
-                    .__name__).one())
-        # TODO: now that we close the connection we need to pass the session.
-        # self.workflow = Workflow.query.filter_by(
-        #     name=type(self.module.workflow).__name__).one()
+        if session is not None:
+            self.workflow = \
+                (session.query(Workflow)
+                        .filter(Workflow.name == type(self.module.workflow)
+                        .__name__).one())
+        else:
+            self.workflow = \
+                (Workflow.query
+                         .filter_by(name=type(self.module.workflow).__name__)
+                         .one())
 
     @property
     def module(self):

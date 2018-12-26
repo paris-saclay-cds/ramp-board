@@ -5,8 +5,6 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from ramputils.utils import import_module_from_source
 
-from ..utils import setup_db
-
 from ._query import select_event_by_name
 from ._query import select_extension_by_name
 from ._query import select_problem_by_name
@@ -152,15 +150,13 @@ def delete_submission_similarity(session, submission_id):
     session.commit()
 
 
-def add_problem(config, problem_name, kits_dir, force=False):
+def add_problem(session, problem_name, kits_dir, force=False):
     """Add a RAMP problem to the database.
 
     Parameters
     ----------
-    config : dict
-        Configuration file containing the information to connect to the
-        dataset. If you are using the configuration provided by ramp, it
-        corresponds to the the `sqlalchemy` key.
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
     problem_name : str
         The name of the problem to register in the database.
     kits_dir : str
@@ -169,25 +165,21 @@ def add_problem(config, problem_name, kits_dir, force=False):
         Whether to force add the problem. If ``force=False``, an error is
         raised if the problem was already in the database.
     """
-    db, Session = setup_db(config)
-    with db.connect() as conn:
-        session = Session(bind=conn)
+    problem = select_problem_by_name(session, problem_name)
+    problem_kits_path = os.path.join(kits_dir, problem_name)
+    if problem is not None and not force:
+        if not force:
+            raise ValueError('Attempting to overwrite a problem and '
+                                'delete all linked events. Use"force=True" '
+                                'if you want to overwrite the problem and '
+                                'delete the events.')
+        delete_problem(session, problem_name)
 
-        problem = select_problem_by_name(session, problem_name)
-        problem_kits_path = os.path.join(kits_dir, problem_name)
-        if problem is not None and not force:
-            if not force:
-                raise ValueError('Attempting to overwrite a problem and '
-                                 'delete all linked events. Use"force=True" '
-                                 'if you want to overwrite the problem and '
-                                 'delete the events.')
-            delete_problem(session, problem_name)
-
-        # load the module to get the type of workflow used for the problem
-        problem_module = import_module_from_source(
-            os.path.join(problem_kits_path, 'problem.py'), 'problem')
-        add_workflow(session, problem_module.workflow)
-        problem = Problem(session, name=problem_name)
-        logger.info('Adding {}'.format(problem))
-        session.add(problem)
-        session.commit()
+    # load the module to get the type of workflow used for the problem
+    problem_module = import_module_from_source(
+        os.path.join(problem_kits_path, 'problem.py'), 'problem')
+    add_workflow(session, problem_module.workflow)
+    problem = Problem(name=problem_name, session=session)
+    logger.info('Adding {}'.format(problem))
+    session.add(problem)
+    session.commit()

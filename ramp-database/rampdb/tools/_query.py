@@ -35,10 +35,10 @@ def select_submissions_by_state(session, event_name, state):
         The queried list of submissions.
     """
     q = (session.query(Submission)
-                   .filter(Event.name == event_name)
-                   .filter(Event.id == EventTeam.event_id)
-                   .filter(EventTeam.id == Submission.event_team_id)
-                   .order_by(Submission.submission_timestamp))
+                .filter(Event.name == event_name)
+                .filter(Event.id == EventTeam.event_id)
+                .filter(EventTeam.id == Submission.event_team_id)
+                .order_by(Submission.submission_timestamp))
     if state is None:
         return q.all()
     return q.filter(Submission.state == state).all()
@@ -127,6 +127,8 @@ def select_user_by_name(session, user_name):
     user : :class:`rampdb.model.User`
         The queried user.
     """
+    if user_name is None:
+        return session.query(User).all()
     return session.query(User).filter(User.name == user_name).one()
 
 
@@ -163,6 +165,8 @@ def select_team_by_name(session, team_name):
     team : :class:`rampdb.model.Team`
         The queried team.
     """
+    if team_name is None:
+        return session.query(Team).all()
     return session.query(Team).filter(Team.name == team_name).one_or_none()
 
 

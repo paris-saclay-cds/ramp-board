@@ -137,7 +137,8 @@ def get_deployment_path():
     else:
         return '.'
 
-
+# TODO: remove this code
+# DUPLICATE: with ramp-utils
 def encode_string(text):
     if PYTHON3:
         if isinstance(text, str):

@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import URL
@@ -31,3 +33,32 @@ def setup_db(config):
     Model.metadata.create_all(db)
 
     return db, Session
+
+
+@contextmanager
+def session_scope(config):
+    """Connect to a database and provide a session to make some operation.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+
+    Returns
+    -------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    """
+    db, Session = setup_db(config)
+    with db.connect() as conn:
+        session = Session(bind=conn)
+        try:
+            yield session
+            session.commit()
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
