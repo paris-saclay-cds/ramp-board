@@ -16,9 +16,9 @@ from rampdb.exceptions import NameClashError
 from rampdb.tools.user import get_user_by_name
 from rampdb.tools.event import get_problem
 
-from rampdb.tools.testing import create_test_db
-from rampdb.tools.testing import add_users
-from rampdb.tools.testing import add_problems
+from rampdb.testing import create_test_db
+from rampdb.testing import add_users
+from rampdb.testing import add_problems
 
 
 @pytest.fixture(scope='module')

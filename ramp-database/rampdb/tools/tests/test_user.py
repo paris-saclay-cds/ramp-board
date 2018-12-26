@@ -12,7 +12,7 @@ from rampdb.utils import session_scope
 from rampdb.model import Model
 from rampdb.model import User
 from rampdb.model import Team
-from rampdb.tools.testing import create_test_db
+from rampdb.testing import create_test_db
 
 from rampdb.tools.user import approve_user
 from rampdb.tools.user import create_user

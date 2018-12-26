@@ -7,17 +7,17 @@ from git import Repo
 
 from ramputils import generate_ramp_config
 
-from ..utils import setup_db
-from ..utils import session_scope
+from .utils import setup_db
+from .utils import session_scope
 
-from ..model import Extension
-from ..model import Model
-from ..model import SubmissionFileType
-from ..model import SubmissionFileTypeExtension
+from .model import Extension
+from .model import Model
+from .model import SubmissionFileType
+from .model import SubmissionFileTypeExtension
 
-from .event import add_problem
-from .user import approve_user
-from .user import create_user
+from .tools.event import add_problem
+from .tools.user import approve_user
+from .tools.user import create_user
 
 logger = logging.getLogger('DATABASE')
 
