@@ -33,6 +33,7 @@ HERE = os.path.dirname(__file__)
 def database_config():
     return read_config(path_config_example(), filter_section='sqlalchemy')
 
+
 @pytest.fixture(scope='module')
 def config():
     return read_config(path_config_example())

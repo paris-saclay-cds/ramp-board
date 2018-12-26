@@ -2,14 +2,12 @@ import shutil
 
 import pytest
 
-# TODO: we temporary use the setup of databoard to create a dataset
-from databoard import db
-from databoard import deployment_path
-from databoard.testing import create_test_db
-
 from ramputils import read_config
 from ramputils.testing import path_config_example
 
+from rampdb.testing import create_test_db
+
+from rampdb.model import Model
 from rampdb.model import SubmissionFileType
 
 from rampdb.utils import setup_db
@@ -21,16 +19,23 @@ def database_config():
     return read_config(path_config_example(), filter_section='sqlalchemy')
 
 
+@pytest.fixture(scope='module')
+def config():
+    return read_config(path_config_example())
+
+
 @pytest.fixture
-def database(scope='module'):
+def database(config):
     try:
-        create_test_db()
+        create_test_db(config)
         yield
     finally:
-        shutil.rmtree(deployment_path, ignore_errors=True)
-        db.session.close()
-        db.session.remove()
-        db.drop_all()
+        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
+        db, Session = setup_db(config['sqlalchemy'])
+        with db.connect() as conn:
+            session = Session(bind=conn)
+            session.close()
+        Model.metadata.drop_all(db)
 
 
 def test_setup_db(database_config, database):
