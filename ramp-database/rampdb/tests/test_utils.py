@@ -13,10 +13,16 @@ from ramputils.testing import path_config_example
 from rampdb.model import SubmissionFileType
 
 from rampdb.utils import setup_db
+from rampdb.utils import session_scope
+
+
+@pytest.fixture(scope='module')
+def database_config():
+        return read_config(path_config_example(), filter_section='sqlalchemy')
 
 
 @pytest.fixture
-def database():
+def database(scope='module'):
     try:
         create_test_db()
         yield
@@ -27,10 +33,15 @@ def database():
         db.drop_all()
 
 
-def test_setup_db(database):
-    config = read_config(path_config_example(), filter_section='sqlalchemy')
-    db, Session = setup_db(config)
+def test_setup_db(database_config, database):
+    db, Session = setup_db(database_config)
     with db.connect() as conn:
         session = Session(bind=conn)
+        file_type = session.query(SubmissionFileType).all()
+        assert len(file_type) > 0
+
+
+def test_session_scope(database_config, database):
+    with session_scope(database_config) as session:
         file_type = session.query(SubmissionFileType).all()
         assert len(file_type) > 0
