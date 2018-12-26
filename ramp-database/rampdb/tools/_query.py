@@ -110,6 +110,8 @@ def select_event_by_name(session, event_name):
     event : :class:`rampdb.model.Event`
         The queried event.
     """
+    if event_name is None:
+        return session.query(Event).all()
     return session.query(Event).filter(Event.name == event_name).one_or_none()
 
 
@@ -291,8 +293,7 @@ def select_submission_file_type_by_name(session, type_name):
 
     Returns
     -------
-    submission_file_type : :class:`rampdb.model.SubmissionFileType`
-or list of :class:`rampdb.model.SubmissionFileType`
+    submission_file_type : :class:`rampdb.model.SubmissionFileType` or list of :class:`rampdb.model.SubmissionFileType`
         The queried submission file type.
     """
     if type_name is None:
@@ -319,9 +320,7 @@ def select_submission_type_extension_by_name(session, type_name,
 
     Returns
     -------
-    submission_file_type_extension :
-:class:`rampdb.model.SubmissionFileTypeExtension` or list of
-:class:`rampdb.model.SubmissionFileTypeExtension`
+    submission_file_type_extension : :class:`rampdb.model.SubmissionFileTypeExtension` or list of :class:`rampdb.model.SubmissionFileTypeExtension`
         The queried submission file type extension.
     """
     if type_name is None and extension_name is None:
@@ -350,9 +349,7 @@ def select_submission_type_extension_by_extension(session, extension):
 
     Returns
     -------
-    submission_file_type_extension :
-:class:`rampdb.model.SubmissionFileTypeExtension` or list of
-:class:`rampdb.model.SubmissionFileTypeExtension`
+    submission_file_type_extension : :class:`rampdb.model.SubmissionFileTypeExtension` or list of :class:`rampdb.model.SubmissionFileTypeExtension`
         The queried submission file type extension.
     """
     if extension is None:

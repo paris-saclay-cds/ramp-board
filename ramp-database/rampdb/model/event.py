@@ -76,11 +76,17 @@ class Event(Model):
     public_competition_leaderboard_html = Column(String, default=None)
     private_competition_leaderboard_html = Column(String, default=None)
 
-    def __init__(self, problem_name, name, event_title):
+    def __init__(self, problem_name, name, event_title, session=None):
         self.name = name
         # to check if the module and all required fields are there
         # db fields are later initialized by tools._set_table_attribute
-        self.problem = Problem.query.filter_by(name=problem_name).one()
+        self._session = session
+        if self._session is None:
+            self.problem = Problem.query.filter_by(name=problem_name).one()
+        else:
+            self.problem = (self._session.query(Problem)
+                                         .filter(Problem.name == problem_name)
+                                         .one())
         self.title = event_title
         self.Predictions
 
@@ -105,7 +111,7 @@ class Event(Model):
     @property
     def official_score_type(self):
         return EventScoreType.query.filter_by(
-            event=self, name=self.official_score_name).one()
+                event=self, name=self.official_score_name).one()
 
     @property
     def official_score_function(self):

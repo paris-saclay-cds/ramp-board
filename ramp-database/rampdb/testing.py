@@ -15,6 +15,7 @@ from .model import Model
 from .tools.database import add_extension
 from .tools.database import add_submission_file_type
 from .tools.database import add_submission_file_type_extension
+from .tools.event import add_event
 from .tools.event import add_problem
 from .tools.user import approve_user
 from .tools.user import create_user
@@ -69,7 +70,7 @@ def setup_toy_db(session, config):
     """
     add_users(session)
     add_problems(session, config)
-    # add_events()
+    add_events()
     # sign_up_teams_to_events()
     # submit_all_starting_kits()
 
@@ -180,3 +181,23 @@ def add_problems(session, config):
         setup_ramp_kits_ramp_data(config, problem_name)
         add_problem(session, problem_name,
                     ramp_config['ramp_kits_dir'])
+
+
+def add_events(session):
+    """Add events in the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+
+    Notes
+    -----
+    Be aware that :func:`add_problems` needs to be called before.
+    """
+    problems = ['iris', 'boston_housing']
+    for problem_name in problems:
+        event_name = '{}_test'.format(problem_name)
+        event_title = 'test event'
+        add_event(session, problem_name=problem_name, event_name=event_name,
+                  event_title=event_title, is_public=True, force=False)

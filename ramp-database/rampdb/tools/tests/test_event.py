@@ -8,6 +8,7 @@ from ramputils import generate_ramp_config
 from ramputils.utils import import_module_from_source
 from ramputils.testing import path_config_example
 
+from rampdb.model import Event
 from rampdb.model import Model
 from rampdb.model import Problem
 from rampdb.model import Workflow
@@ -18,11 +19,14 @@ from rampdb.utils import session_scope
 from rampdb.testing import create_test_db
 from rampdb.testing import setup_ramp_kits_ramp_data
 
+from rampdb.tools.event import add_event
 from rampdb.tools.event import add_problem
 from rampdb.tools.event import add_workflow
 
+from rampdb.tools.event import delete_event
 from rampdb.tools.event import delete_problem
 
+from rampdb.tools.event import get_event
 from rampdb.tools.event import get_problem
 from rampdb.tools.event import get_workflow
 
@@ -88,3 +92,32 @@ def test_check_workflow(session_scope_function):
     workflow = get_workflow(session_scope_function, 'Classifier')
     assert workflow.name == 'Classifier'
     assert isinstance(workflow, Workflow)
+
+
+def test_check_event(session_scope_function, config):
+    # addition of event require some problem
+    problem_names = ['iris', 'boston_housing']
+    for problem_name in problem_names:
+        setup_ramp_kits_ramp_data(config, problem_name)
+        ramp_config = generate_ramp_config(config)
+        add_problem(session_scope_function, problem_name,
+                    ramp_config['ramp_kits_dir'])
+
+    for problem_name in problem_names:
+        event_name = '{}_test'.format(problem_name)
+        event_title = 'event title'
+        add_event(session_scope_function, problem_name, event_name,
+                  event_title, is_public=True, force=False)
+
+    event = get_event(session_scope_function, None)
+    assert len(event) == 2
+    assert isinstance(event, list)
+
+    event = get_event(session_scope_function, 'iris_test')
+    assert event.name == 'iris_test'
+    assert event.title == event_title
+    assert isinstance(event, Event)
+
+    delete_event(session_scope_function, 'iris_test')
+    event = get_event(session_scope_function, None)
+    assert len(event) == 1

@@ -17,6 +17,9 @@ from ._query import select_workflow_by_name
 from ._query import select_workflow_element_by_workflow_and_type
 from ._query import select_workflow_element_type_by_name
 
+from ..model import CVFold
+from ..model import Event
+from ..model import EventScoreType
 from ..model import Problem
 from ..model import Workflow
 from ..model import WorkflowElement
@@ -64,6 +67,7 @@ def delete_event(session, event_name):
     session.commit()
 
 
+# TODO: this function is only tested through delete_problem
 def delete_submission_similarity(session, submission_id):
     """Delete the submission similarity associated with a submission.
 
@@ -187,6 +191,70 @@ def add_problem(session, problem_name, kits_dir, force=False):
     session.commit()
 
 
+def add_event(session, problem_name, event_name, event_title, is_public=False,
+              force=False):
+    """Add a RAMP event in the database.
+
+    Event file should be set up in ``databoard/specific/events/<event_name>``.
+    Should be preceded by adding a problem (cf., :func:`add_problem`), then
+    ``problem_name`` imported in the event file (``problem_name`` is acting as
+    a pointer for the join). Also adds CV folds.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    problem_name : str
+        The problem name associated with the event.
+    event_name : str
+        The event name.
+    event_title : str
+        The even title.
+    is_public : bool, default is False
+        Whether the event is made public or not.
+    force : bool, default is False
+        Whether to overwrite an existing event. If ``false=False``, an error
+        will be raised.
+
+    Returns
+    -------
+    event : Event
+        The event which has been registered in the database.
+    """
+    event = select_event_by_name(session, event_name)
+    if event is not None:
+        if not force:
+            raise ValueError("Attempting to overwrite existing event. "
+                             "Use force=True to overwrite.")
+        delete_event(session, event_name)
+
+    event = Event(name=event_name, problem_name=problem_name,
+                  event_title=event_title, session=session)
+    event.is_public = is_public
+    event.is_send_submitted_mails = False
+    event.is_send_trained_mails = False
+    logger.info('Adding {}'.format(event))
+    session.add(event)
+    session.commit()
+
+    X_train, y_train = event.problem.get_train_data()
+    cv = event.problem.module.get_cv(X_train, y_train)
+    for train_indices, test_indices in cv:
+        cv_fold = CVFold(event=event,
+                         train_is=train_indices,
+                         test_is=test_indices)
+        session.add(cv_fold)
+
+    score_types = event.problem.module.score_types
+    for score_type in score_types:
+        event_score_type = EventScoreType(event=event,
+                                          score_type_object=score_type)
+        session.add(event_score_type)
+    event.official_score_name = score_types[0].name
+    session.commit()
+    return event
+
+
 # Getter functions: get information from the database
 def get_problem(session, problem_name):
     """Get problem from the database.
@@ -215,12 +283,31 @@ def get_workflow(session, workflow_name):
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
     workflow_name : str or None
-        The name of the workflow to remove. If None, all the workflows will be
+        The name of the workflow to query. If None, all the workflows will be
         queried.
 
     Returns
     -------
-    problem : :class:`rampdb.model.Workflow` or list of :class:`rampdb.model.Workflow`
-        The queried problem.
+    workflow : :class:`rampdb.model.Workflow` or list of :class:`rampdb.model.Workflow`
+        The queried workflow.
     """
     return select_workflow_by_name(session, workflow_name)
+
+
+def get_event(session, event_name):
+    """Get event from the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str or None
+        The name of the event to query. If None, all the events will be
+        queried.
+
+    Returns
+    -------
+    even : :class:`rampdb.model.Event` or list of :class:`rampdb.model.Event`
+        The queried problem.
+    """
+    return select_event_by_name(session, event_name)

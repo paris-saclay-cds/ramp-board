@@ -17,6 +17,7 @@ from rampdb.tools.user import get_user_by_name
 from rampdb.tools.event import get_problem
 
 from rampdb.testing import create_test_db
+from rampdb.testing import add_events
 from rampdb.testing import add_users
 from rampdb.testing import add_problems
 
@@ -64,3 +65,10 @@ def test_add_problems(session_scope_function, config):
     #  repositories already exist.
     with pytest.raises(GitCommandError):
         add_problems(session_scope_function, config)
+
+
+def test_add_events(session_scope_function, config):
+    add_problems(session_scope_function, config)
+    add_events(session_scope_function)
+    with pytest.raises(ValueError):
+        add_events(session_scope_function)
