@@ -18,7 +18,7 @@ from rampdb.utils import session_scope
 
 @pytest.fixture(scope='module')
 def database_config():
-        return read_config(path_config_example(), filter_section='sqlalchemy')
+    return read_config(path_config_example(), filter_section='sqlalchemy')
 
 
 @pytest.fixture
