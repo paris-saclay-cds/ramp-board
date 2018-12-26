@@ -17,6 +17,7 @@ STATES = submission_states.enums
 logger = logging.getLogger('DATABASE')
 
 
+# Getter functions
 def get_submissions(session, event_name, state='new'):
     """Get information about submissions from an event with a specific state
     optionally.
@@ -122,38 +123,6 @@ def get_submission_by_name(session, event_name, team_name, name):
     return submission
 
 
-def set_submission_state(session, submission_id, state):
-    """Set the set of a submission.
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-    submission_id : int
-        id of the requested submission
-    state : str
-        The state of the submission. The possible states for a submission are:
-
-        * 'new': submitted by user to the web interface;
-        * 'sent_to_training': submission was send for training but not launch
-          yet.
-        * 'trained': training finished normally;
-        * 'training_error': training finished abnormally;
-        * 'validated': validation finished normally;
-        * 'validating_error': validation finished abnormally;
-        * 'tested': testing finished normally;
-        * 'testing_error': testing finished abnormally;
-        * 'training': training is running normally;
-        * 'scored': submission scored.
-    """
-    if state not in STATES:
-        raise UnknownStateError("Unrecognized state : '{}'".format(state))
-
-    submission = select_submission_by_id(session, submission_id)
-    submission.set_state(state)
-    session.commit()
-
-
 def get_submission_state(session, submission_id):
     """Get the state of a submission given its id.
 
@@ -189,31 +158,6 @@ def get_submission_state(session, submission_id):
     return submission.state
 
 
-def set_predictions(session, submission_id, path_predictions):
-    """Set the predictions in the database.
-
-    Parameters
-    ----------
-    config : dict
-        Configuration file containing the information to connect to the
-        dataset. If you are using the configuration provided by ramp, it
-        corresponds to the the `sqlalchemy` key.
-    submission_id : int
-        The id of the submission.
-    path_predictions : str
-        The path where the results files are located.
-    """
-    submission = select_submission_by_id(session, submission_id)
-    for fold_id, cv_fold in enumerate(submission.on_cv_folds):
-        path_results = os.path.join(path_predictions,
-                                    'fold_{}'.format(fold_id))
-        cv_fold.full_train_y_pred = np.load(
-            os.path.join(path_results, 'y_pred_train.npz'))['y_pred']
-        cv_fold.test_y_pred = np.load(
-            os.path.join(path_results, 'y_pred_test.npz'))['y_pred']
-    session.commit()
-
-
 def get_predictions(session, submission_id):
     """Get the predictions from the database of a submission.
 
@@ -238,32 +182,6 @@ def get_predictions(session, submission_id):
     return pd.DataFrame(results).set_index('fold')
 
 
-def set_time(session, submission_id, path_predictions):
-    """Set the timing information in the database.
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-    submission_id : int
-        The id of the submission.
-    path_predictions : str
-        The path where the results files are located.
-    """
-    submission = select_submission_by_id(session, submission_id)
-    for fold_id, cv_fold in enumerate(submission.on_cv_folds):
-        path_results = os.path.join(path_predictions,
-                                    'fold_{}'.format(fold_id))
-        results = {}
-        for step in ('train', 'valid', 'test'):
-            results[step + '_time'] = np.asscalar(
-                np.loadtxt(os.path.join(path_results, step + '_time'))
-            )
-        for key, value in results.items():
-            setattr(cv_fold, key, value)
-    session.commit()
-
-
 def get_time(session, submission_id):
     """Get the computation time for each fold of a submission.
 
@@ -286,32 +204,6 @@ def get_time(session, submission_id):
         for step in ('train', 'valid', 'test'):
             results[step].append(getattr(cv_fold, '{}_time'.format(step)))
     return pd.DataFrame(results).set_index('fold')
-
-
-def set_scores(session, submission_id, path_predictions):
-    """Set the scores in the database.
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-    submission_id : int
-        The id of the submission.
-    path_predictions : str
-        The path where the results files are located.
-    """
-    submission = select_submission_by_id(session, submission_id)
-    for fold_id, cv_fold in enumerate(submission.on_cv_folds):
-        path_results = os.path.join(path_predictions,
-                                    'fold_{}'.format(fold_id))
-        scores_update = pd.read_csv(
-            os.path.join(path_results, 'scores.csv'), index_col=0
-        )
-        for score in cv_fold.scores:
-            for step in scores_update.index:
-                value = scores_update.loc[step, score.name]
-                setattr(score, step + '_score', value)
-    session.commit()
 
 
 def get_scores(session, submission_id):
@@ -342,6 +234,210 @@ def get_scores(session, submission_id):
     return scores
 
 
+def get_submission_max_ram(session, submission_id):
+    """Get the max amount RAM used by a submission during processing.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submission_id : int
+        The id of the submission.
+
+    Returns
+    -------
+    max_ram_mb : float
+        The max amount of RAM in MB.
+    """
+    submission = select_submission_by_id(session, submission_id)
+    return submission.max_ram
+
+
+def get_submission_error_msg(session, submission_id):
+    """Get the error message after that a submission failed to be processed.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submission_id : int
+        The id of the submission.
+
+    Returns
+    -------
+    error_msg : str
+        The error message.
+    """
+    submission = select_submission_by_id(session, submission_id)
+    return submission.error_msg
+
+
+# TODO: maybe we should move this function
+def get_event_nb_folds(session, event_name):
+    """Get the number of fold for a given event.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The event name.
+
+    Returns
+    -------
+    nb_folds : int
+        The number of folds for a specific event.
+    """
+    event = select_event_by_name(session, event_name)
+    return len(event.cv_folds)
+
+
+# Setter functions
+def set_submission_state(session, submission_id, state):
+    """Set the set of a submission.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submission_id : int
+        id of the requested submission
+    state : str
+        The state of the submission. The possible states for a submission are:
+
+        * 'new': submitted by user to the web interface;
+        * 'sent_to_training': submission was send for training but not launch
+          yet.
+        * 'trained': training finished normally;
+        * 'training_error': training finished abnormally;
+        * 'validated': validation finished normally;
+        * 'validating_error': validation finished abnormally;
+        * 'tested': testing finished normally;
+        * 'testing_error': testing finished abnormally;
+        * 'training': training is running normally;
+        * 'scored': submission scored.
+    """
+    if state not in STATES:
+        raise UnknownStateError("Unrecognized state : '{}'".format(state))
+
+    submission = select_submission_by_id(session, submission_id)
+    submission.set_state(state)
+    session.commit()
+
+
+def set_predictions(session, submission_id, path_predictions):
+    """Set the predictions in the database.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration file containing the information to connect to the
+        dataset. If you are using the configuration provided by ramp, it
+        corresponds to the the `sqlalchemy` key.
+    submission_id : int
+        The id of the submission.
+    path_predictions : str
+        The path where the results files are located.
+    """
+    submission = select_submission_by_id(session, submission_id)
+    for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+        path_results = os.path.join(path_predictions,
+                                    'fold_{}'.format(fold_id))
+        cv_fold.full_train_y_pred = np.load(
+            os.path.join(path_results, 'y_pred_train.npz'))['y_pred']
+        cv_fold.test_y_pred = np.load(
+            os.path.join(path_results, 'y_pred_test.npz'))['y_pred']
+    session.commit()
+
+
+def set_time(session, submission_id, path_predictions):
+    """Set the timing information in the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submission_id : int
+        The id of the submission.
+    path_predictions : str
+        The path where the results files are located.
+    """
+    submission = select_submission_by_id(session, submission_id)
+    for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+        path_results = os.path.join(path_predictions,
+                                    'fold_{}'.format(fold_id))
+        results = {}
+        for step in ('train', 'valid', 'test'):
+            results[step + '_time'] = np.asscalar(
+                np.loadtxt(os.path.join(path_results, step + '_time'))
+            )
+        for key, value in results.items():
+            setattr(cv_fold, key, value)
+    session.commit()
+
+
+def set_scores(session, submission_id, path_predictions):
+    """Set the scores in the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submission_id : int
+        The id of the submission.
+    path_predictions : str
+        The path where the results files are located.
+    """
+    submission = select_submission_by_id(session, submission_id)
+    for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+        path_results = os.path.join(path_predictions,
+                                    'fold_{}'.format(fold_id))
+        scores_update = pd.read_csv(
+            os.path.join(path_results, 'scores.csv'), index_col=0
+        )
+        for score in cv_fold.scores:
+            for step in scores_update.index:
+                value = scores_update.loc[step, score.name]
+                setattr(score, step + '_score', value)
+    session.commit()
+
+
+def set_submission_max_ram(session, submission_id, max_ram_mb):
+    """Set the max amount RAM used by a submission during processing.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submission_id : int
+        The id of the submission.
+    max_ram_mb : float
+        The max amount of RAM in MB.
+    """
+    submission = select_submission_by_id(session, submission_id)
+    submission.max_ram = max_ram_mb
+    session.commit()
+
+
+def set_submission_error_msg(session, submission_id, error_msg):
+    """Set the error message after that a submission failed to be processed.
+
+    Parameters
+    ----------
+    config : dict
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submission_id : int
+        The id of the submission.
+    error_msg : str
+        The error message.
+    """
+    submission = select_submission_by_id(session, submission_id)
+    submission.error_msg = error_msg
+    session.commit()
+
+
+# Computing functions
 def score_submission(session, submission_id):
     """Score a submission and change its state to 'scored'
 
@@ -397,96 +493,3 @@ def score_submission(session, submission_id):
         [ts.test_time for ts in submission.on_cv_folds])
     submission.state = 'scored'
     session.commit()
-
-
-def set_submission_max_ram(session, submission_id, max_ram_mb):
-    """Set the max amount RAM used by a submission during processing.
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-    submission_id : int
-        The id of the submission.
-    max_ram_mb : float
-        The max amount of RAM in MB.
-    """
-    submission = select_submission_by_id(session, submission_id)
-    submission.max_ram = max_ram_mb
-    session.commit()
-
-
-def get_submission_max_ram(session, submission_id):
-    """Get the max amount RAM used by a submission during processing.
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-    submission_id : int
-        The id of the submission.
-
-    Returns
-    -------
-    max_ram_mb : float
-        The max amount of RAM in MB.
-    """
-    submission = select_submission_by_id(session, submission_id)
-    return submission.max_ram
-
-
-def set_submission_error_msg(session, submission_id, error_msg):
-    """Set the error message after that a submission failed to be processed.
-
-    Parameters
-    ----------
-    config : dict
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-    submission_id : int
-        The id of the submission.
-    error_msg : str
-        The error message.
-    """
-    submission = select_submission_by_id(session, submission_id)
-    submission.error_msg = error_msg
-    session.commit()
-
-
-def get_submission_error_msg(session, submission_id):
-    """Get the error message after that a submission failed to be processed.
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-    submission_id : int
-        The id of the submission.
-
-    Returns
-    -------
-    error_msg : str
-        The error message.
-    """
-    submission = select_submission_by_id(session, submission_id)
-    return submission.error_msg
-
-
-# TODO: maybe we should move this function
-def get_event_nb_folds(session, event_name):
-    """Get the number of fold for a given event.
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-    event_name : str
-        The event name.
-
-    Returns
-    -------
-    nb_folds : int
-        The number of folds for a specific event.
-    """
-    event = select_event_by_name(session, event_name)
-    return len(event.cv_folds)
