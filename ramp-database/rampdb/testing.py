@@ -19,6 +19,8 @@ from .tools.event import add_event
 from .tools.event import add_problem
 from .tools.user import approve_user
 from .tools.user import create_user
+from .tools.team import sign_up_team
+from .tools.submission import submit_starting_kits
 
 logger = logging.getLogger('DATABASE')
 
@@ -55,7 +57,7 @@ def create_toy_db(config):
         The session to directly perform the operation on the database.
     """
     create_test_db(config)
-    with session_scope(config) as session:
+    with session_scope(config['sqlalchemy']) as session:
         setup_toy_db(session, config)
 
 
@@ -70,9 +72,9 @@ def setup_toy_db(session, config):
     """
     add_users(session)
     add_problems(session, config)
-    add_events()
-    # sign_up_teams_to_events()
-    # submit_all_starting_kits()
+    add_events(session)
+    sign_up_teams_to_events(session, config)
+    submit_all_starting_kits(session, config)
 
 
 def setup_ramp_kits_ramp_data(config, problem_name):
@@ -201,3 +203,42 @@ def add_events(session):
         event_title = 'test event'
         add_event(session, problem_name=problem_name, event_name=event_name,
                   event_title=event_title, is_public=True, force=False)
+
+
+def sign_up_teams_to_events(session, config):
+    """Sign up user to the events in the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    config : dict
+        Configuration dictionary containing the ramp information.
+
+    Notes
+    -----
+    Be aware that :func:`add_users`, :func:`add_problems`,
+    and :func:`add_events` need to be called before.
+    """
+    ramp_config = generate_ramp_config(config)
+    for event, event_name in zip(['iris', 'boston_housing'],
+                                 ['iris_test', 'boston_housing_test']):
+        path_sandbox = os.path.join(
+            ramp_config['ramp_kits_dir'], event,
+            'submissions', config['ramp']['sandbox_dir']
+        )
+        sign_up_team(session, event_name, 'test_user', path_sandbox)
+        sign_up_team(session, event_name, 'test_user_2', path_sandbox)
+
+
+def submit_all_starting_kits(session, config):
+    ramp_config = generate_ramp_config(config)
+    for event, event_name in zip(['iris', 'boston_housing'],
+                                 ['iris_test', 'boston_housing_test']):
+        path_submissions = os.path.join(
+            ramp_config['ramp_kits_dir'], event, 'submissions'
+        )
+        submit_starting_kits(session, event_name, 'test_user',
+                             path_submissions, config['ramp']['sandbox_dir'])
+        submit_starting_kits(session, event_name, 'test_user_2',
+                             path_submissions, config['ramp']['sandbox_dir'])

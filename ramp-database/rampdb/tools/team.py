@@ -38,10 +38,10 @@ def ask_sign_up_team(session, event_name, team_name):
     event_team : :class:`rampdb.model.EventTeam`
         The relationship event-team table.
     """
+    event = select_event_by_name(session, event_name)
+    team = select_team_by_name(session, team_name)
     event_team = select_event_team_by_name(session, event_name, team_name)
     if event_team is None:
-        event = select_event_by_name(session, event_name)
-        team = select_team_by_name(session, team_name)
         event_team = EventTeam(event=event, team=team)
         session.add(event_team)
         session.commit()

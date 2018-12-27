@@ -135,8 +135,8 @@ def select_event_team_by_name(session, event_name, team_name):
     event = select_event_by_name(session, event_name)
     team = select_team_by_name(session, team_name)
     return (session.query(EventTeam)
-                   .filter(event == event)
-                   .filter(team == team)
+                   .filter(EventTeam.event == event)
+                   .filter(EventTeam.team == team)
                    .one_or_none())
 
 

@@ -20,11 +20,14 @@ from rampdb.testing import create_test_db
 from rampdb.testing import add_events
 from rampdb.testing import add_users
 from rampdb.testing import add_problems
+from rampdb.testing import sign_up_teams_to_events
+from rampdb.testing import submit_all_starting_kits
 
 
 @pytest.fixture(scope='module')
 def database_config():
     return read_config(path_config_example(), filter_section='sqlalchemy')
+
 
 @pytest.fixture(scope='module')
 def config():
@@ -72,3 +75,18 @@ def test_add_events(session_scope_function, config):
     add_events(session_scope_function)
     with pytest.raises(ValueError):
         add_events(session_scope_function)
+
+
+def test_sign_up_team_to_events(session_scope_function, config):
+    add_users(session_scope_function)
+    add_problems(session_scope_function, config)
+    add_events(session_scope_function)
+    sign_up_teams_to_events(session_scope_function, config)
+
+
+def test_submit_all_starting_kits(session_scope_function, config):
+    add_users(session_scope_function)
+    add_problems(session_scope_function, config)
+    add_events(session_scope_function)
+    sign_up_teams_to_events(session_scope_function, config)
+    submit_all_starting_kits(session_scope_function, config)

@@ -9,11 +9,6 @@ import pandas as pd
 from numpy.testing import assert_allclose
 from pandas.testing import assert_frame_equal
 
-# TODO: we temporary use the setup of databoard to create a dataset
-from databoard import db
-from databoard import deployment_path
-from databoard.testing import create_toy_db
-
 from ramputils import read_config
 from ramputils.testing import path_config_example
 
@@ -21,6 +16,12 @@ from rampdb.exceptions import UnknownStateError
 from rampdb.model import Submission
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
+
+from rampdb.model import Model
+
+from rampdb.testing import create_toy_db
+
+from rampdb.tools.submission import add_submission
 
 from rampdb.tools.submission import get_event_nb_folds
 from rampdb.tools.submission import get_predictions
@@ -45,35 +46,44 @@ HERE = os.path.dirname(__file__)
 
 
 @pytest.fixture(scope='module')
-def config_database():
+def database_config():
     return read_config(path_config_example(), filter_section='sqlalchemy')
 
 
+@pytest.fixture(scope='module')
+def config():
+    return read_config(path_config_example())
+
+
 @pytest.fixture
-def session_scope_function(config_database):
+def session_scope_function(config):
     try:
-        create_toy_db()
-        with session_scope(config_database) as session:
+        create_toy_db(config)
+        with session_scope(config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(deployment_path, ignore_errors=True)
-        db.session.close()
-        db.session.remove()
-        db.drop_all()
+        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
+        db, Session = setup_db(config['sqlalchemy'])
+        with db.connect() as conn:
+            session = Session(bind=conn)
+            session.close()
+        Model.metadata.drop_all(db)
 
 
 @pytest.fixture(scope='module')
-def session_scope_module(config_database):
+def session_scope_module(config):
     try:
-        create_toy_db()
-        with session_scope(config_database) as session:
+        create_toy_db(config)
+        with session_scope(config['sqlalchemy']) as session:
             _change_state_db(session)
             yield session
     finally:
-        shutil.rmtree(deployment_path, ignore_errors=True)
-        db.session.close()
-        db.session.remove()
-        db.drop_all()
+        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
+        db, Session = setup_db(config['sqlalchemy'])
+        with db.connect() as conn:
+            session = Session(bind=conn)
+            session.close()
+        Model.metadata.drop_all(db)
 
 
 def _change_state_db(session):
@@ -84,6 +94,10 @@ def _change_state_db(session):
                     .first())
     sub.set_state('trained')
     session.commit()
+
+
+def test_add_submission(session_scope_function):
+    pass
 
 
 @pytest.mark.parametrize(

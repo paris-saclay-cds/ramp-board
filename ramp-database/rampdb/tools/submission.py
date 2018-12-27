@@ -2,6 +2,7 @@ from collections import defaultdict
 import datetime
 import logging
 import os
+import shutil
 
 import numpy as np
 import pandas as pd
@@ -33,6 +34,7 @@ logger = logging.getLogger('DATABASE')
 
 # Add functions: add information to the database
 # TODO: move the queries in "_query"
+# TODO: there is nothing regarding leaderboard update
 def add_submission(session, event_name, team_name, submission_name,
                     submission_path):
     """Create a submission in the database and returns an handle.
@@ -58,10 +60,13 @@ def add_submission(session, event_name, team_name, submission_name,
     event = select_event_by_name(session, event_name)
     team = select_team_by_name(session, team_name)
     event_team = select_event_team_by_name(session, event_name, team_name)
-    submission = select_submissions_by_state(session, event_name, state=None)
+    submission = (session.query(Submission)
+                         .filter(Submission.name == submission_name)
+                         .filter(Submission.event_team == event_team)
+                         .one_or_none())
 
     # create a new submission
-    if submission is None or not submission:
+    if submission is None:
         all_submissions = (session.query(Submission)
                                   .filter(Submission.event_team == event_team)
                                   .order_by(Submission.submission_timestamp)
@@ -654,4 +659,52 @@ def score_submission(session, submission_id):
     submission.test_time_cv_std = np.std(
         [ts.test_time for ts in submission.on_cv_folds])
     submission.state = 'scored'
+    session.commit()
+
+
+def submit_starting_kits(session, event_name, team_name, path_submission,
+                         sandbox_name):
+    """Submit all starting kits for a given event.
+
+    Some kits contain several starting kits. This function allows to submit
+    all these kits at once for a specific user.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The name of the event.
+    team_name : str
+        The name of the team.
+    path_submission : str
+        The path of the files associated to the current submission.
+    sandbox_name : str
+        The name of the sandbox submission.
+    """
+    event = select_event_by_name(session, event_name=event_name)
+    submission_names = os.listdir(path_submission)
+    # we temporary bypass the limit time between two submissions
+    min_duration_between_submissions = event.min_duration_between_submissions
+    event.min_duration_between_submissions = 0
+    for submission_name in submission_names:
+        from_submission_path = os.path.join(path_submission, submission_name)
+        # one of the starting kit is usually used a sandbox and we need to
+        # change the name to not have any duplicate
+        submission_name = (submission_name
+                           if submission_name != sandbox_name
+                           else submission_name + '_test')
+        submission = add_submission(session, event_name, team_name,
+                                    submission_name, from_submission_path)
+        # copy the files
+        if os.path.exists(submission.path):
+            shutil.rmtree(submission.path)
+        os.makedirs(submission.path)
+        for filename in submission.f_names:
+            shutil.copy2(src=os.path.join(from_submission_path, filename),
+                         dst=os.path.join(submission.path, filename))
+        logger.info('Copying the submission files into the deployment folder')
+        logger.info('Adding {}'.format(submission))
+    # revert the minimum duration between two submissions
+    event.min_duration_between_submissions = min_duration_between_submissions
     session.commit()
