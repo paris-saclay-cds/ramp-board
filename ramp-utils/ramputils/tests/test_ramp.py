@@ -23,6 +23,8 @@ def test_generate_ramp_config(config):
         'ramp_kits_dir': os.path.join('/tmp/databoard_test', 'ramp-kits'),
         'ramp_data_dir': os.path.join('/tmp/databoard_test', 'ramp-data'),
         'ramp_submissions_dir': os.path.join('/tmp/databoard_test',
-                                             'submissions')
+                                             'submissions'),
+        'ramp_sandbox_dir': os.path.join('/tmp/databoard_test', 'ramp-kits',
+                                         'iris', 'submissions', 'starting_kit')
     }
     assert ramp_config == expected_config

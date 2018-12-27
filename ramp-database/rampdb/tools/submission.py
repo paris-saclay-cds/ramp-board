@@ -1,20 +1,181 @@
 from collections import defaultdict
+import datetime
 import logging
 import os
 
 import numpy as np
 import pandas as pd
 
+from ..exceptions import DuplicateSubmissionError
+from ..exceptions import MissingExtensionError
+from ..exceptions import MissingSubmissionFileError
+from ..exceptions import TooEarlySubmissionError
 from ..exceptions import UnknownStateError
-from ..model.submission import submission_states
 
+from ..model.submission import submission_states
+from ..model import Submission
+from ..model import SubmissionFile
+from ..model import SubmissionFileTypeExtension
+from ..model import SubmissionOnCVFold
+
+from ._query import select_event_by_name
+from ._query import select_event_team_by_name
+from ._query import select_extension_by_name
 from ._query import select_submissions_by_state
 from ._query import select_submission_by_id
 from ._query import select_submission_by_name
-from ._query import select_event_by_name
+from ._query import select_submission_file_type_by_name
+from ._query import select_team_by_name
 
 STATES = submission_states.enums
 logger = logging.getLogger('DATABASE')
+
+
+# Add functions: add information to the database
+# TODO: move the queries in "_query"
+def add_submission(session, event_name, team_name, submission_name,
+                    submission_path):
+    """Create a submission in the database and returns an handle.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The event associated to the submission.
+    team_name : str
+        The team associated to the submission.
+    submission_name : str
+        The name to give to the current submission.
+    submission_path : str
+        The path of the files associated to the current submission.
+
+    Returns
+    -------
+    submission : :class:`rampdb.model.Submission`
+        The newly created submission.
+    """
+    event = select_event_by_name(session, event_name)
+    team = select_team_by_name(session, team_name)
+    event_team = select_event_team_by_name(session, event_name, team_name)
+    submission = select_submissions_by_state(session, event_name, state=None)
+
+    # create a new submission
+    if submission is None or not submission:
+        all_submissions = (session.query(Submission)
+                                  .filter(Submission.event_team == event_team)
+                                  .order_by(Submission.submission_timestamp)
+                                  .all())
+        last_submission = None if not all_submissions else all_submissions[-1]
+        # check for non-admin user if they wait enough to make a new submission
+        if (team.admin.access_level != 'admin' and last_submission is not None
+               and last_submission.is_not_sandbox):
+            time_to_last_submission = (datetime.datetime.utcnow() -
+                                       last_submission.submission_timestamp)
+            min_resubmit_time = datetime.timedelta(
+                seconds=event.min_duration_between_submissions)
+            awaiting_time = int((min_resubmit_time - time_to_last_submission)
+                                .total_seconds())
+            if awaiting_time > 0:
+                raise TooEarlySubmissionError(
+                    'You need to wait {} more seconds until next submission'
+                    .format(awaiting_time))
+
+        submission = Submission(name=submission_name, event_team=event_team,
+                                session=session)
+        for cv_fold in event.cv_folds:
+            submission_on_cv_fold = SubmissionOnCVFold(submission=submission,
+                                                       cv_fold=cv_fold)
+            session.add(submission_on_cv_fold)
+        session.add(submission)
+
+    # the submission already exist
+    else:
+        # We allow resubmit for new or failing submissions
+        if (submission.is_not_sandbox and
+                (submission.state == 'new' or submission.is_error)):
+            submission.set_state('new')
+            submission.submission_timestamp = datetime.datetime.utcnow()
+            for submission_on_cv_fold in submission.on_cv_folds:
+                submission_on_cv_fold.reset()
+        else:
+            error_msg = ('Submission "{}" of team "{}" at event "{}" exists '
+                         'already'
+                         .format(submission_name, team_name, event_name))
+            raise DuplicateSubmissionError(error_msg)
+
+    files_type_extension = [os.path.splitext(filename)
+                            for filename in os.listdir(submission_path)]
+    # filter the files which contain an extension
+    # remove the dot of the extension.
+    files_type_extension = [(filename, extension[1:])
+                            for filename, extension in files_type_extension
+                            if extension != '']
+
+    for workflow_element in event.problem.workflow.elements:
+        try:
+            desposited_types, deposited_extensions = zip(
+                *[(filename, extension)
+                for filename, extension in files_type_extension
+                if filename == workflow_element.name]
+            )
+        except ValueError as e:
+            session.rollback()
+            if 'values to unpack' in str(e):
+                # no file matching the workflow element
+                raise MissingSubmissionFileError(
+                    'No file corresponding to the workflow element "{}"'
+                    .format(workflow_element)
+                    )
+            raise
+
+        # check that files have the correct extension ...
+        for extension_name in deposited_extensions:
+            extension = select_extension_by_name(session, extension_name)
+            if extension is not None:
+                break
+        # ... otherwise we raise an error
+        else:
+            session.rollback()
+            raise MissingExtensionError(
+                'All extensions "{}" are unknown for the submission "{}".'
+                .format(", ".join(deposited_extensions), submission_name)
+            )
+
+        # check if it is a resubmission
+        submission_file = (session.query(SubmissionFile)
+                                  .filter(SubmissionFile.workflow_element ==
+                                          workflow_element)
+                                  .filter(SubmissionFile.submission ==
+                                          submission)
+                                  .one_or_none())
+        # TODO: handle if resubmitted file changed extension
+        if submission_file is None:
+            submission_file_type = select_submission_file_type_by_name(
+                session, workflow_element.file_type
+            )
+            type_extension = \
+                (session.query(SubmissionFileTypeExtension)
+                        .filter(SubmissionFileTypeExtension.type ==
+                                submission_file_type)
+                        .filter(SubmissionFileTypeExtension.extension ==
+                                extension)
+                        .one())
+            submission_file = SubmissionFile(
+                submission=submission, workflow_element=workflow_element,
+                submission_file_type_extension=type_extension
+            )
+            session.add(submission_file)
+
+    # for remembering it in the sandbox view
+    event_team.last_submission_name = submission_name
+    session.commit()
+
+    # TODO: test missing there for those update
+    # TODO: add those functions back
+    # update_leaderboards(event_name)
+    # update_user_leaderboards(event_name, team.name)
+    return submission
 
 
 # Getter functions: get information from the database

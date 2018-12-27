@@ -115,6 +115,31 @@ def select_event_by_name(session, event_name):
     return session.query(Event).filter(Event.name == event_name).one_or_none()
 
 
+def select_event_team_by_name(session, event_name, team_name):
+    """Query an event-team entry given the event and team name.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    event_name : str
+        The name of the RAMP event.
+    team_name : str
+        The name of the team.
+
+    Returns
+    -------
+    event_team : :class:`rampdb.model.EventTeam`
+        The queried event-team.
+    """
+    event = select_event_by_name(session, event_name)
+    team = select_team_by_name(session, team_name)
+    return (session.query(EventTeam)
+                   .filter(event == event)
+                   .filter(team == team)
+                   .one_or_none())
+
+
 def select_user_by_name(session, user_name):
     """Query an user given its name.
 
