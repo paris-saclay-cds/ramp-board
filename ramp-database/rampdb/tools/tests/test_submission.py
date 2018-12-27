@@ -12,7 +12,12 @@ from ramputils import read_config
 from ramputils import generate_ramp_config
 from ramputils.testing import path_config_example
 
+from rampdb.exceptions import DuplicateSubmissionError
+from rampdb.exceptions import MissingSubmissionFileError
+from rampdb.exceptions import MissingExtensionError
+from rampdb.exceptions import TooEarlySubmissionError
 from rampdb.exceptions import UnknownStateError
+from rampdb.model import Event
 from rampdb.model import Model
 from rampdb.model import Submission
 from rampdb.testing import add_events
@@ -134,6 +139,116 @@ def test_add_submission_create_new_submission(base_db, config):
     assert submission_file.extension == 'py'
     assert (os.path.join('submission_000000005',
                          'classifier.py') in submission_file.path)
+
+
+def test_add_submission_too_early_submission(base_db, config):
+    # check that we raise an error when the elapsed time was not large enough
+    # between the new submission and the previous submission
+    session = base_db
+    event_name, username = _setup_sign_up(session, config)
+    ramp_config = generate_ramp_config(config)
+
+    # check that we have an awaiting time for the event
+    event = (session.query(Event)
+                    .filter(Event.name == event_name)
+                    .one_or_none())
+    assert event.min_duration_between_submissions == 900
+
+    # make 2 submissions which are too close from each other
+    for submission_idx, submission_name in enumerate(['random_forest_10_10',
+                                                      'too_early_submission']):
+        path_submission = os.path.join(
+            os.path.dirname(ramp_config['ramp_sandbox_dir']), submission_name
+        )
+        if submission_idx == 1:
+            err_msg = 'You need to wait'
+            with pytest.raises(TooEarlySubmissionError, match=err_msg):
+                add_submission(session, event_name, username, submission_name,
+                               path_submission)
+        else:
+            add_submission(session, event_name, username, submission_name,
+                           path_submission)
+
+
+def test_make_submission_resubmission(base_db, config):
+    # check that resubmitting the a submission with the same name will raise
+    # an error
+    session = base_db
+    event_name, username = _setup_sign_up(session, config)
+    ramp_config = generate_ramp_config(config)
+
+    # submitting the starting_kit which is used as the default submission for
+    # the sandbox should raise an error
+    err_msg = ('Submission "starting_kit" of team "test_user" at event '
+               '"iris_test" exists already')
+    with pytest.raises(DuplicateSubmissionError, match=err_msg):
+        add_submission(session, event_name, username,
+                       os.path.basename(ramp_config['ramp_sandbox_dir']),
+                       ramp_config['ramp_sandbox_dir'])
+
+    # submitting twice a normal submission should raise an error as well
+    submission_name = 'random_forest_10_10'
+    path_submission = os.path.join(
+        os.path.dirname(ramp_config['ramp_sandbox_dir']), submission_name
+    )
+    # first submission
+    add_submission(session, event_name, username, submission_name,
+                   path_submission)
+    # mock that we scored the submission
+    set_submission_state(session, 5, 'scored')
+    # second submission
+    err_msg = ('Submission "random_forest_10_10" of team "test_user" at event '
+               '"iris_test" exists already')
+    with pytest.raises(DuplicateSubmissionError, match=err_msg):
+        add_submission(session, event_name, username, submission_name,
+                       path_submission)
+
+    # a resubmission can take place if it is tagged as "new" or failed
+
+    # mock that the submission failed during the training
+    set_submission_state(session, 5, 'training_error')
+    add_submission(session, event_name, username, submission_name,
+                   path_submission)
+    # mock that the submissions are new submissions
+    set_submission_state(session, 5, 'new')
+    add_submission(session, event_name, username, submission_name,
+                   path_submission)
+
+
+def test_add_submission_wrong_submission_files(base_db, config):
+    # check that we raise an error if the file required by the workflow is not
+    # present in the submission or that it has the wrong extension
+    session = base_db
+    event_name, username = _setup_sign_up(session, config)
+    ramp_config = generate_ramp_config(config)
+
+    submission_name = 'corrupted_submission'
+    path_submission = os.path.join(
+        os.path.dirname(ramp_config['ramp_sandbox_dir']), submission_name
+    )
+    os.makedirs(path_submission)
+
+    # case that there is not files in the submission
+    err_msg = 'No file corresponding to the workflow element'
+    with pytest.raises(MissingSubmissionFileError, match=err_msg):
+        add_submission(session, event_name, username, submission_name,
+                       path_submission)
+
+    # case that there is not file corresponding to the workflow component
+    filename = os.path.join(path_submission, 'unknown_file.xxx')
+    open(filename, "w+").close()
+    err_msg = 'No file corresponding to the workflow element'
+    with pytest.raises(MissingSubmissionFileError, match=err_msg):
+        add_submission(session, event_name, username, submission_name,
+                       path_submission)
+
+    # case that we have the correct filename but not the right extension
+    filename = os.path.join(path_submission, 'classifier.xxx')
+    open(filename, "w+").close()
+    err_msg = 'All extensions "xxx" are unknown for the submission'
+    with pytest.raises(MissingExtensionError, match=err_msg):
+        add_submission(session, event_name, username, submission_name,
+                       path_submission)
 
 
 @pytest.mark.parametrize(

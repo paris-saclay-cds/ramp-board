@@ -529,7 +529,7 @@ def test_make_submission_wrong_submission_files(setup_db):
     event_name, username = _setup_sign_up()
     sign_up_team(event_name, username)
 
-    submission_name  = 'corrupted_submission'
+    submission_name = 'corrupted_submission'
     path_submission = os.path.join(
             ramp_config['ramp_kits_path'], 'iris',
             ramp_config['submissions_dir'], submission_name
