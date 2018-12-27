@@ -4,22 +4,25 @@ import shutil
 import pytest
 
 import numpy as np
-import pandas as pd
-
 from numpy.testing import assert_allclose
+import pandas as pd
 from pandas.testing import assert_frame_equal
 
 from ramputils import read_config
+from ramputils import generate_ramp_config
 from ramputils.testing import path_config_example
 
 from rampdb.exceptions import UnknownStateError
+from rampdb.model import Model
 from rampdb.model import Submission
+from rampdb.testing import add_events
+from rampdb.testing import add_problems
+from rampdb.testing import add_users
+from rampdb.testing import create_toy_db
+from rampdb.testing import create_test_db
+from rampdb.testing import sign_up_teams_to_events
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
-
-from rampdb.model import Model
-
-from rampdb.testing import create_toy_db
 
 from rampdb.tools.submission import add_submission
 
@@ -56,26 +59,10 @@ def config():
 
 
 @pytest.fixture
-def session_scope_function(config):
+def base_db(config):
     try:
-        create_toy_db(config)
+        create_test_db(config)
         with session_scope(config['sqlalchemy']) as session:
-            yield session
-    finally:
-        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, Session = setup_db(config['sqlalchemy'])
-        with db.connect() as conn:
-            session = Session(bind=conn)
-            session.close()
-        Model.metadata.drop_all(db)
-
-
-@pytest.fixture(scope='module')
-def session_scope_module(config):
-    try:
-        create_toy_db(config)
-        with session_scope(config['sqlalchemy']) as session:
-            _change_state_db(session)
             yield session
     finally:
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
@@ -96,8 +83,57 @@ def _change_state_db(session):
     session.commit()
 
 
-def test_add_submission(session_scope_function):
-    pass
+@pytest.fixture(scope='module')
+def session_scope_module(config):
+    try:
+        create_toy_db(config)
+        with session_scope(config['sqlalchemy']) as session:
+            _change_state_db(session)
+            yield session
+    finally:
+        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
+        db, Session = setup_db(config['sqlalchemy'])
+        with db.connect() as conn:
+            session = Session(bind=conn)
+            session.close()
+        Model.metadata.drop_all(db)
+
+
+def _setup_sign_up(session, config):
+    # asking to sign up required a user, a problem, and an event.
+    add_users(session)
+    add_problems(session, config)
+    add_events(session)
+    sign_up_teams_to_events(session, config)
+    return config['ramp']['event_name'], 'test_user'
+
+
+def test_add_submission_create_new_submission(base_db, config):
+    # check that we can make a new submission to the database
+    # it will require to have already a team and an event
+    session = base_db
+    event_name, username = _setup_sign_up(session, config)
+    ramp_config = generate_ramp_config(config)
+
+    submission_name = 'random_forest_10_10'
+    path_submission = os.path.join(
+        os.path.dirname(ramp_config['ramp_sandbox_dir']), submission_name
+    )
+    add_submission(session, event_name, username, submission_name,
+                   path_submission)
+    all_submissions = get_submissions(session, event_name, None)
+
+    # `sign_up_team` make a submission (sandbox) by user. This submission will
+    # be the third submission.
+    assert len(all_submissions) == 3
+    submission = get_submission_by_name(session, event_name, username,
+                                        submission_name)
+    assert submission.name == submission_name
+    submission_file = submission.files[0]
+    assert submission_file.name == 'classifier'
+    assert submission_file.extension == 'py'
+    assert (os.path.join('submission_000000005',
+                         'classifier.py') in submission_file.path)
 
 
 @pytest.mark.parametrize(

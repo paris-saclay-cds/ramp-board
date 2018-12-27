@@ -15,12 +15,10 @@ from ramputils import read_config
 from ramputils.testing import path_config_example
 
 from rampdb.model import Model
-
-from rampdb.tools.submission import get_submissions
-
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
 from rampdb.testing import create_toy_db
+from rampdb.tools.submission import get_submissions
 
 from rampbkd.local import CondaEnvWorker
 from rampbkd.dispatcher import Dispatcher

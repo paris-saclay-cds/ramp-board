@@ -24,6 +24,7 @@ from rampdb.tools.user import get_user_by_name
 def database_config():
     return read_config(path_config_example(), filter_section='sqlalchemy')
 
+
 @pytest.fixture(scope='module')
 def config():
     return read_config(path_config_example())
