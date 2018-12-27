@@ -48,7 +48,9 @@ from rampdb.tools.submission import set_submission_error_msg
 from rampdb.tools.submission import set_submission_max_ram
 from rampdb.tools.submission import set_submission_state
 from rampdb.tools.submission import set_time
+
 from rampdb.tools.submission import score_submission
+from rampdb.tools.submission import submit_starting_kits
 
 HERE = os.path.dirname(__file__)
 
@@ -406,3 +408,24 @@ def test_score_submission(session_scope_module):
     score_submission(session_scope_module, submission_id)
     scores = get_scores(session_scope_module, submission_id)
     assert_frame_equal(scores, expected_df, check_less_precise=True)
+
+
+def test_submit_starting_kits(base_db, config):
+    session = base_db
+    event_name, username = _setup_sign_up(session, config)
+    ramp_config = generate_ramp_config(config)
+
+    submit_starting_kits(session, event_name, username,
+                         os.path.join(ramp_config['ramp_kits_dir'],
+                                      ramp_config['event'],
+                                      config['ramp']['submissions_dir']),
+                         config['ramp']['sandbox_dir'])
+
+    submissions = get_submissions(session, event_name, None)
+    submissions_id = [sub[0] for sub in submissions]
+    assert len(submissions) == 5
+    expected_submission_name = {'starting_kit', 'starting_kit_test',
+                                'random_forest_10_10', 'error'}
+    submission_name = set(get_submission_by_id(session, sub_id).name
+                          for sub_id in submissions_id)
+    assert submission_name == expected_submission_name
