@@ -173,7 +173,7 @@ def add_problem(session, problem_name, kits_dir, force=False):
     """
     problem = select_problem_by_name(session, problem_name)
     problem_kits_path = os.path.join(kits_dir, problem_name)
-    if problem is not None and not force:
+    if problem is not None:
         if not force:
             raise ValueError('Attempting to overwrite a problem and '
                              'delete all linked events. Use"force=True" '
