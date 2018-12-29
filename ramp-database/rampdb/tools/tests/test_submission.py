@@ -84,8 +84,8 @@ def _change_state_db(session):
     # change the state of one of the submission in the iris event
     submission_id = 1
     sub = (session.query(Submission)
-                    .filter(Submission.id == submission_id)
-                    .first())
+                  .filter(Submission.id == submission_id)
+                  .first())
     sub.set_state('trained')
     session.commit()
 
@@ -171,7 +171,8 @@ def test_add_submission_too_early_submission(base_db, config):
                                False)
         else:
             add_submission(session, event_name, username, submission_name,
-                           path_submission, ramp_config['ramp_submissions_dir'],
+                           path_submission,
+                           ramp_config['ramp_submissions_dir'],
                            False)
 
 
@@ -220,7 +221,7 @@ def test_make_submission_resubmission(base_db, config):
     set_submission_state(session, 5, 'new')
     add_submission(session, event_name, username, submission_name,
                    path_submission, ramp_config['ramp_submissions_dir'],
-                    False)
+                   False)
 
 
 def test_add_submission_wrong_submission_files(base_db, config):
@@ -272,7 +273,7 @@ def test_submit_starting_kits(base_db, config):
                                       ramp_config['event'],
                                       config['ramp']['submissions_dir']),
                         ramp_config['ramp_submissions_dir'],
-                         config['ramp']['sandbox_dir'])
+                        config['ramp']['sandbox_dir'])
 
     submissions = get_submissions(session, event_name, None)
     submissions_id = [sub[0] for sub in submissions]
@@ -337,7 +338,8 @@ def test_get_submission_state(session_scope_module, submission_id, state):
 def test_set_submission_state(session_scope_module):
     submission_id = 2
     set_submission_state(session_scope_module, submission_id, 'trained')
-    assert get_submission_state(session_scope_module, submission_id) == 'trained'
+    state = get_submission_state(session_scope_module, submission_id)
+    assert state == 'trained'
 
 
 def test_set_submission_state_unknown_state(session_scope_module):
@@ -353,7 +355,7 @@ def test_check_time(session_scope_module):
     submission_time = get_time(session_scope_module, submission_id)
     expected_df = pd.DataFrame(
         {'fold': [0, 1],
-         'train' : [0.032130, 0.002414],
+         'train': [0.032130, 0.002414],
          'valid': [0.000583648681640625, 0.000548362731933594],
          'test': [0.000515460968017578, 0.000481128692626953]}
     ).set_index('fold')

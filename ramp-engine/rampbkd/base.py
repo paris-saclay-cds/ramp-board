@@ -1,10 +1,9 @@
 import logging
-import os
-import sys
 from abc import ABCMeta, abstractmethod
 import six
 
 logger = logging.getLogger('WORKER')
+
 
 class BaseWorker(six.with_metaclass(ABCMeta)):
     """Metaclass used to build a RAMP worker. Do not use this class directly.

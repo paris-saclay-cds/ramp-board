@@ -232,7 +232,8 @@ def select_similarities_by_target(session, target_submission):
 
     Returns
     -------
-    submission_similarities : list of :class:`rampdb.model.SubmissionSimilarity`
+    submission_similarities : list of \
+:class:`rampdb.model.SubmissionSimilarity`
         The queried submission similarity.
     """
     return (session.query(SubmissionSimilarity)
@@ -253,7 +254,8 @@ def select_similarities_by_source(session, source_submission):
 
     Returns
     -------
-    submission_similarities : list of :class:`rampdb.model.SubmissionSimilarity`
+    submission_similarities : list of \
+:class:`rampdb.model.SubmissionSimilarity`
         The queried submission similarity.
     """
     return (session.query(SubmissionSimilarity)
@@ -318,7 +320,8 @@ def select_submission_file_type_by_name(session, type_name):
 
     Returns
     -------
-    submission_file_type : :class:`rampdb.model.SubmissionFileType` or list of :class:`rampdb.model.SubmissionFileType`
+    submission_file_type : :class:`rampdb.model.SubmissionFileType` or list \
+of :class:`rampdb.model.SubmissionFileType`
         The queried submission file type.
     """
     if type_name is None:
@@ -345,7 +348,9 @@ def select_submission_type_extension_by_name(session, type_name,
 
     Returns
     -------
-    submission_file_type_extension : :class:`rampdb.model.SubmissionFileTypeExtension` or list of :class:`rampdb.model.SubmissionFileTypeExtension`
+    submission_file_type_extension : \
+:class:`rampdb.model.SubmissionFileTypeExtension` or list of \
+:class:`rampdb.model.SubmissionFileTypeExtension`
         The queried submission file type extension.
     """
     if type_name is None and extension_name is None:
@@ -374,7 +379,9 @@ def select_submission_type_extension_by_extension(session, extension):
 
     Returns
     -------
-    submission_file_type_extension : :class:`rampdb.model.SubmissionFileTypeExtension` or list of :class:`rampdb.model.SubmissionFileTypeExtension`
+    submission_file_type_extension : \
+:class:`rampdb.model.SubmissionFileTypeExtension` or list of \
+:class:`rampdb.model.SubmissionFileTypeExtension`
         The queried submission file type extension.
     """
     if extension is None:

@@ -75,9 +75,10 @@ def test_get_user_by_name(session_scope_function, name, query_type):
     create_user(session_scope_function, name='test_user', password='password',
                 lastname='lastname', firstname='firstname',
                 email='test_user@email.com', access_level='asked')
-    create_user(session_scope_function, name='test_user_2', password='password',
-                lastname='lastname', firstname='firstname',
-                email='test_user_2@email.com', access_level='asked')
+    create_user(session_scope_function, name='test_user_2',
+                password='password', lastname='lastname',
+                firstname='firstname', email='test_user_2@email.com',
+                access_level='asked')
     user = get_user_by_name(session_scope_function, name)
     assert isinstance(user, query_type)
 
@@ -89,9 +90,10 @@ def test_get_team_by_name(session_scope_function, name, query_type):
     create_user(session_scope_function, name='test_user', password='password',
                 lastname='lastname', firstname='firstname',
                 email='test_user@email.com', access_level='asked')
-    create_user(session_scope_function, name='test_user_2', password='password',
-                lastname='lastname', firstname='firstname',
-                email='test_user_2@email.com', access_level='asked')
+    create_user(session_scope_function, name='test_user_2',
+                password='password', lastname='lastname',
+                firstname='firstname', email='test_user_2@email.com',
+                access_level='asked')
     team = get_team_by_name(session_scope_function, name)
     assert isinstance(team, query_type)
 

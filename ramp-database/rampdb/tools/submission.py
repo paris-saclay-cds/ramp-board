@@ -128,8 +128,8 @@ def add_submission(session, event_name, team_name, submission_name,
         try:
             desposited_types, deposited_extensions = zip(
                 *[(filename, extension)
-                for filename, extension in files_type_extension
-                if filename == workflow_element.name]
+                  for filename, extension in files_type_extension
+                  if filename == workflow_element.name]
             )
         except ValueError as e:
             session.rollback()
@@ -631,7 +631,7 @@ def score_submission(session, submission_id):
     submission = select_submission_by_id(session, submission_id)
     if submission.state != 'tested':
         raise ValueError('Submission state must be "tested"'
-                            ' to score, not "{}"'.format(submission.state))
+                         ' to score, not "{}"'.format(submission.state))
 
     # We are conservative:
     # only score if all stages (train, test, validation)

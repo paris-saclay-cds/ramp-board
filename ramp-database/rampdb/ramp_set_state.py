@@ -9,6 +9,7 @@ from .model.submission import submission_states
 
 STATES = submission_states.enums
 
+
 def init_parser():
     """Defines command-line interface"""
     parser = argparse.ArgumentParser(

@@ -272,7 +272,8 @@ def get_problem(session, problem_name):
 
     Returns
     -------
-    problem : :class:`rampdb.model.Problem` or list of :class:`rampdb.model.Problem`
+    problem : :class:`rampdb.model.Problem` or list of \
+:class:`rampdb.model.Problem`
         The queried problem.
     """
     return select_problem_by_name(session, problem_name)
@@ -291,7 +292,8 @@ def get_workflow(session, workflow_name):
 
     Returns
     -------
-    workflow : :class:`rampdb.model.Workflow` or list of :class:`rampdb.model.Workflow`
+    workflow : :class:`rampdb.model.Workflow` or list of \
+:class:`rampdb.model.Workflow`
         The queried workflow.
     """
     return select_workflow_by_name(session, workflow_name)

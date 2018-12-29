@@ -91,12 +91,12 @@ def setup_ramp_kits_ramp_data(config, problem_name):
     problem_kits_path = os.path.join(ramp_config['ramp_kits_dir'],
                                      problem_name)
     ramp_kits_url = 'https://github.com/ramp-kits/{}.git'.format(problem_name)
-    ramp_kits_repo = Repo.clone_from(ramp_kits_url, problem_kits_path)
+    Repo.clone_from(ramp_kits_url, problem_kits_path)
 
     problem_data_path = os.path.join(ramp_config['ramp_data_dir'],
                                      problem_name)
     ramp_data_url = 'https://github.com/ramp-data/{}.git'.format(problem_name)
-    ramp_data_repo = Repo.clone_from(ramp_data_url, problem_data_path)
+    Repo.clone_from(ramp_data_url, problem_data_path)
 
     current_directory = os.getcwd()
     os.chdir(problem_data_path)
