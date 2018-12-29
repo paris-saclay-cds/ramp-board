@@ -76,7 +76,8 @@ def test_sign_up_team(session_scope_function, config):
     ramp_config = generate_ramp_config(config)
 
     sign_up_team(session_scope_function, event_name, username,
-                 ramp_config['ramp_sandbox_dir'])
+                 ramp_config['ramp_sandbox_dir'],
+                 ramp_config['ramp_submissions_dir'])
     event_team = session_scope_function.query(EventTeam).all()
     assert len(event_team) == 1
     event_team = event_team[0]

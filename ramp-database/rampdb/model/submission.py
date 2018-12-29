@@ -20,8 +20,6 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from ramputils import encode_string
 
 from .base import Model
-# TODO: we should not use this variable
-from .base import get_deployment_path
 from .event import EventScoreType
 from .datatype import NumpyType
 
@@ -104,9 +102,16 @@ class Submission(Model):
     # later also ramp_id
     UniqueConstraint(event_team_id, name, name='ts_constraint')
 
-    def __init__(self, name, event_team, session=None):
+    # XXX: big change in the database
+    is_sandbox = Column(Boolean, default=False)
+    path_ramp_submissions = Column(String, nullable=False, unique=False)
+
+    def __init__(self, name, event_team, path_ramp_submissions, is_sandbox,
+                 session=None):
         self.name = name
         self.event_team = event_team
+        self.path_ramp_submissions = path_ramp_submissions
+        self.is_sandbox = is_sandbox
         self.session = inspect(event_team).session
         sha_hasher = hashlib.sha1()
         sha_hasher.update(encode_string(self.event.name))
@@ -122,7 +127,8 @@ class Submission(Model):
         else:
             event_score_types = (session.query(EventScoreType)
                                         .filter(EventScoreType.event ==
-                                                event_team.event).all())
+                                                event_team.event)
+                                        .all())
         for event_score_type in event_score_types:
             submission_score = SubmissionScore(
                 submission=self, event_score_type=event_score_type)
@@ -175,14 +181,11 @@ class Submission(Model):
 
     @hybrid_property
     def is_not_sandbox(self):
-        return self.name != os.getenv('RAMP_SANDBOX_DIR', 'starting_kit')
+        return not self.is_sandbox
 
     @hybrid_property
     def is_error(self):
-        return (self.state == 'training_error') |\
-            (self.state == 'checking_error') |\
-            (self.state == 'validating_error') |\
-            (self.state == 'testing_error')
+        return 'error' in self.state
 
     @hybrid_property
     def is_public_leaderboard(self):
@@ -194,10 +197,7 @@ class Submission(Model):
 
     @property
     def path(self):
-        return os.path.join(
-            get_deployment_path(),
-            'submissions',
-            'submission_' + '{0:09d}'.format(self.id))
+        return os.path.join(self.path_ramp_submissions, self.basename)
 
     @property
     def basename(self):

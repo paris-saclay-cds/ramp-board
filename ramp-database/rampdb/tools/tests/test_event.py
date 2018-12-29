@@ -68,7 +68,8 @@ def test_check_problem(session_scope_function, config):
         setup_ramp_kits_ramp_data(config, problem_name)
         ramp_config = generate_ramp_config(config)
         add_problem(session_scope_function, problem_name,
-                    ramp_config['ramp_kits_dir'])
+                    ramp_config['ramp_kits_dir'],
+                    ramp_config['ramp_data_dir'])
     problem = get_problem(session_scope_function, problem_names[0])
     assert problem.name == problem_names[0]
     assert isinstance(problem, Problem)
@@ -80,11 +81,13 @@ def test_check_problem(session_scope_function, config):
     err_msg = 'Attempting to overwrite a problem and delete all linked events'
     with pytest.raises(ValueError, match=err_msg):
         add_problem(session_scope_function, problem_names[0],
-                    ramp_config['ramp_kits_dir'], force=False)
+                    ramp_config['ramp_kits_dir'], ramp_config['ramp_data_dir'],
+                    force=False)
 
     # Force add the problem
     add_problem(session_scope_function, problem_names[0],
-                ramp_config['ramp_kits_dir'], force=True)
+                ramp_config['ramp_kits_dir'], ramp_config['ramp_data_dir'],
+                force=True)
     problem = get_problem(session_scope_function, problem_names[0])
     assert problem.name == problem_names[0]
     assert isinstance(problem, Problem)
@@ -171,7 +174,8 @@ def test_check_event(session_scope_function, config):
         setup_ramp_kits_ramp_data(config, problem_name)
         ramp_config = generate_ramp_config(config)
         add_problem(session_scope_function, problem_name,
-                    ramp_config['ramp_kits_dir'])
+                    ramp_config['ramp_kits_dir'],
+                    ramp_config['ramp_data_dir'])
 
     for problem_name in problem_names:
         event_name = '{}_test'.format(problem_name)

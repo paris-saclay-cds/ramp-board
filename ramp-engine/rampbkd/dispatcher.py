@@ -157,6 +157,7 @@ class Dispatcher(object):
                 # do not make any update in case of failed submission
                 logger.info('Skip update for {} due to failure during the '
                             'processing'.format(submission_name))
+                print('XXXXXXXXXXXXXXXX')
                 continue
             logger.info('Update the results obtained on each fold for '
                         '{}'.format(submission_name))

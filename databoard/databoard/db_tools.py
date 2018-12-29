@@ -519,7 +519,9 @@ def add_problem(problem_name, force=False):
     problem_module = import_module_from_source(
         os.path.join(problem_kits_path, 'problem.py'), 'problem')
     add_workflow(problem_module.workflow)
-    problem = Problem(name=problem_name)
+    problem = Problem(name=problem_name,
+                      path_ramp_kits=ramp_config['ramp_kits_path'],
+                      path_ramp_data=ramp_config['ramp_data_path'])
     logger.info('Adding {}'.format(problem))
     db.session.add(problem)
     db.session.commit()

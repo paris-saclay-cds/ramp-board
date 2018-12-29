@@ -36,7 +36,7 @@ logger = logging.getLogger('DATABASE')
 # TODO: move the queries in "_query"
 # TODO: there is nothing regarding leaderboard update
 def add_submission(session, event_name, team_name, submission_name,
-                   submission_path):
+                   submission_path, submission_deployment_path, is_sandbox):
     """Create a submission in the database and returns an handle.
 
     Parameters
@@ -51,6 +51,10 @@ def add_submission(session, event_name, team_name, submission_name,
         The name to give to the current submission.
     submission_path : str
         The path of the files associated to the current submission.
+    submission_deployment_path:
+        Path to the deployment RAMP submissions directory.
+    is_sandbox : bool
+        If the submission is the sandbox submission.
 
     Returns
     -------
@@ -86,8 +90,11 @@ def add_submission(session, event_name, team_name, submission_name,
                     'You need to wait {} more seconds until next submission'
                     .format(awaiting_time))
 
-        submission = Submission(name=submission_name, event_team=event_team,
-                                session=session)
+        submission = Submission(
+            name=submission_name, event_team=event_team,
+            path_ramp_submissions=submission_deployment_path,
+            is_sandbox=is_sandbox, session=session
+        )
         for cv_fold in event.cv_folds:
             submission_on_cv_fold = SubmissionOnCVFold(submission=submission,
                                                        cv_fold=cv_fold)
@@ -663,7 +670,7 @@ def score_submission(session, submission_id):
 
 
 def submit_starting_kits(session, event_name, team_name, path_submission,
-                         sandbox_name):
+                         path_ramp_submissions, sandbox_name):
     """Submit all starting kits for a given event.
 
     Some kits contain several starting kits. This function allows to submit
@@ -679,6 +686,8 @@ def submit_starting_kits(session, event_name, team_name, path_submission,
         The name of the team.
     path_submission : str
         The path of the files associated to the current submission.
+    path_ramp_submissions : str
+        Path to the deployment RAMP submissions directory.
     sandbox_name : str
         The name of the sandbox submission.
     """
@@ -695,7 +704,9 @@ def submit_starting_kits(session, event_name, team_name, path_submission,
                            if submission_name != sandbox_name
                            else submission_name + '_test')
         submission = add_submission(session, event_name, team_name,
-                                    submission_name, from_submission_path)
+                                    submission_name, from_submission_path,
+                                    path_ramp_submissions,
+                                    False)
         # copy the files
         if os.path.exists(submission.path):
             shutil.rmtree(submission.path)

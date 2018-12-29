@@ -182,7 +182,8 @@ def add_problems(session, config):
     for problem_name in problems:
         setup_ramp_kits_ramp_data(config, problem_name)
         add_problem(session, problem_name,
-                    ramp_config['ramp_kits_dir'])
+                    ramp_config['ramp_kits_dir'],
+                    ramp_config['ramp_data_dir'])
 
 
 def add_events(session):
@@ -227,8 +228,10 @@ def sign_up_teams_to_events(session, config):
             ramp_config['ramp_kits_dir'], event,
             'submissions', config['ramp']['sandbox_dir']
         )
-        sign_up_team(session, event_name, 'test_user', path_sandbox)
-        sign_up_team(session, event_name, 'test_user_2', path_sandbox)
+        sign_up_team(session, event_name, 'test_user', path_sandbox,
+                     ramp_config['ramp_submissions_dir'])
+        sign_up_team(session, event_name, 'test_user_2', path_sandbox,
+                     ramp_config['ramp_submissions_dir'])
 
 
 def submit_all_starting_kits(session, config):
@@ -239,6 +242,10 @@ def submit_all_starting_kits(session, config):
             ramp_config['ramp_kits_dir'], event, 'submissions'
         )
         submit_starting_kits(session, event_name, 'test_user',
-                             path_submissions, config['ramp']['sandbox_dir'])
+                             path_submissions,
+                             ramp_config['ramp_submissions_dir'],
+                             config['ramp']['sandbox_dir'])
         submit_starting_kits(session, event_name, 'test_user_2',
-                             path_submissions, config['ramp']['sandbox_dir'])
+                             path_submissions,
+                             ramp_config['ramp_submissions_dir'],
+                             config['ramp']['sandbox_dir'])

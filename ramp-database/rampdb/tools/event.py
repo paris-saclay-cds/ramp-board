@@ -156,7 +156,7 @@ def add_workflow(session, workflow_object):
     session.commit()
 
 
-def add_problem(session, problem_name, kits_dir, force=False):
+def add_problem(session, problem_name, kits_dir, data_dir, force=False):
     """Add a RAMP problem to the database.
 
     Parameters
@@ -167,6 +167,8 @@ def add_problem(session, problem_name, kits_dir, force=False):
         The name of the problem to register in the database.
     kits_dir : str
         The directory where the RAMP kits are located.
+    data_dir : str
+        The directory where the RAMP data are located.
     force : bool, default is False
         Whether to force add the problem. If ``force=False``, an error is
         raised if the problem was already in the database.
@@ -185,7 +187,8 @@ def add_problem(session, problem_name, kits_dir, force=False):
     problem_module = import_module_from_source(
         os.path.join(problem_kits_path, 'problem.py'), 'problem')
     add_workflow(session, problem_module.workflow)
-    problem = Problem(name=problem_name, session=session)
+    problem = Problem(name=problem_name, path_ramp_kits=kits_dir,
+                      path_ramp_data=data_dir, session=session)
     logger.info('Adding {}'.format(problem))
     session.add(problem)
     session.commit()

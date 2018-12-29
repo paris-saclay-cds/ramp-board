@@ -13,16 +13,7 @@ from ramputils import import_module_from_source
 from ramputils import encode_string
 
 from .base import Model
-from .base import get_deployment_path
 from .workflow import Workflow
-
-# TODO: This will be really wrong at some point.
-# TODO: We need to pass the configuration or the path to the data instead.
-DEPLOYMENT_PATH = get_deployment_path()
-RAMP_KITS_PATH = os.path.join(
-    DEPLOYMENT_PATH, os.getenv('RAMP_KITS_DIR', 'ramp-kits'))
-RAMP_DATA_PATH = os.path.join(
-    DEPLOYMENT_PATH, os.getenv('RAMP_DATA_DIR', 'ramp-data'))
 
 
 __all__ = [
@@ -44,8 +35,14 @@ class Problem(Model):
     workflow = relationship(
         'Workflow', backref=backref('problems'))
 
-    def __init__(self, name, session=None):
+    # XXX: big change in the database
+    path_ramp_kits = Column(String, nullable=False, unique=False)
+    path_ramp_data = Column(String, nullable=False, unique=False)
+
+    def __init__(self, name, path_ramp_kits, path_ramp_data, session=None):
         self.name = name
+        self.path_ramp_kits = path_ramp_kits
+        self.path_ramp_data = path_ramp_data
         self.reset(session)
         # to check if the module and all required fields are there
         self.module
@@ -71,7 +68,7 @@ class Problem(Model):
     @property
     def module(self):
         return import_module_from_source(
-            os.path.join(RAMP_KITS_PATH, self.name, 'problem.py'),
+            os.path.join(self.path_ramp_kits, self.name, 'problem.py'),
             'problem'
         )
 
@@ -84,11 +81,11 @@ class Problem(Model):
         return self.module.Predictions
 
     def get_train_data(self):
-        path = os.path.join(RAMP_DATA_PATH, self.name)
+        path = os.path.join(self.path_ramp_data, self.name)
         return self.module.get_train_data(path=path)
 
     def get_test_data(self):
-        path = os.path.join(RAMP_DATA_PATH, self.name)
+        path = os.path.join(self.path_ramp_data, self.name)
         return self.module.get_test_data(path=path)
 
     def ground_truths_train(self):

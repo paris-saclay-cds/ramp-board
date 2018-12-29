@@ -127,7 +127,7 @@ def test_add_submission_create_new_submission(base_db, config):
         os.path.dirname(ramp_config['ramp_sandbox_dir']), submission_name
     )
     add_submission(session, event_name, username, submission_name,
-                   path_submission)
+                   path_submission, ramp_config['ramp_submissions_dir'], False)
     all_submissions = get_submissions(session, event_name, None)
 
     # `sign_up_team` make a submission (sandbox) by user. This submission will
@@ -166,10 +166,13 @@ def test_add_submission_too_early_submission(base_db, config):
             err_msg = 'You need to wait'
             with pytest.raises(TooEarlySubmissionError, match=err_msg):
                 add_submission(session, event_name, username, submission_name,
-                               path_submission)
+                               path_submission,
+                               ramp_config['ramp_submissions_dir'],
+                               False)
         else:
             add_submission(session, event_name, username, submission_name,
-                           path_submission)
+                           path_submission, ramp_config['ramp_submissions_dir'],
+                           False)
 
 
 def test_make_submission_resubmission(base_db, config):
@@ -186,7 +189,8 @@ def test_make_submission_resubmission(base_db, config):
     with pytest.raises(DuplicateSubmissionError, match=err_msg):
         add_submission(session, event_name, username,
                        os.path.basename(ramp_config['ramp_sandbox_dir']),
-                       ramp_config['ramp_sandbox_dir'])
+                       ramp_config['ramp_sandbox_dir'],
+                       ramp_config['ramp_submissions_dir'], False)
 
     # submitting twice a normal submission should raise an error as well
     submission_name = 'random_forest_10_10'
@@ -195,7 +199,7 @@ def test_make_submission_resubmission(base_db, config):
     )
     # first submission
     add_submission(session, event_name, username, submission_name,
-                   path_submission)
+                   path_submission, ramp_config['ramp_submissions_dir'], False)
     # mock that we scored the submission
     set_submission_state(session, 5, 'scored')
     # second submission
@@ -203,18 +207,20 @@ def test_make_submission_resubmission(base_db, config):
                '"iris_test" exists already')
     with pytest.raises(DuplicateSubmissionError, match=err_msg):
         add_submission(session, event_name, username, submission_name,
-                       path_submission)
+                       path_submission, ramp_config['ramp_submissions_dir'],
+                       False)
 
     # a resubmission can take place if it is tagged as "new" or failed
 
     # mock that the submission failed during the training
     set_submission_state(session, 5, 'training_error')
     add_submission(session, event_name, username, submission_name,
-                   path_submission)
+                   path_submission, ramp_config['ramp_submissions_dir'], False)
     # mock that the submissions are new submissions
     set_submission_state(session, 5, 'new')
     add_submission(session, event_name, username, submission_name,
-                   path_submission)
+                   path_submission, ramp_config['ramp_submissions_dir'],
+                    False)
 
 
 def test_add_submission_wrong_submission_files(base_db, config):
@@ -234,7 +240,8 @@ def test_add_submission_wrong_submission_files(base_db, config):
     err_msg = 'No file corresponding to the workflow element'
     with pytest.raises(MissingSubmissionFileError, match=err_msg):
         add_submission(session, event_name, username, submission_name,
-                       path_submission)
+                       path_submission, ramp_config['ramp_submissions_dir'],
+                       False)
 
     # case that there is not file corresponding to the workflow component
     filename = os.path.join(path_submission, 'unknown_file.xxx')
@@ -242,7 +249,8 @@ def test_add_submission_wrong_submission_files(base_db, config):
     err_msg = 'No file corresponding to the workflow element'
     with pytest.raises(MissingSubmissionFileError, match=err_msg):
         add_submission(session, event_name, username, submission_name,
-                       path_submission)
+                       path_submission, ramp_config['ramp_submissions_dir'],
+                       False)
 
     # case that we have the correct filename but not the right extension
     filename = os.path.join(path_submission, 'classifier.xxx')
@@ -250,7 +258,8 @@ def test_add_submission_wrong_submission_files(base_db, config):
     err_msg = 'All extensions "xxx" are unknown for the submission'
     with pytest.raises(MissingExtensionError, match=err_msg):
         add_submission(session, event_name, username, submission_name,
-                       path_submission)
+                       path_submission, ramp_config['ramp_submissions_dir'],
+                       False)
 
 
 def test_submit_starting_kits(base_db, config):
@@ -262,6 +271,7 @@ def test_submit_starting_kits(base_db, config):
                          os.path.join(ramp_config['ramp_kits_dir'],
                                       ramp_config['event'],
                                       config['ramp']['submissions_dir']),
+                        ramp_config['ramp_submissions_dir'],
                          config['ramp']['sandbox_dir'])
 
     submissions = get_submissions(session, event_name, None)
