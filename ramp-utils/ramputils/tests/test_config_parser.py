@@ -2,13 +2,12 @@ import tempfile
 import yaml
 import pytest
 
-from ramputils.testing import path_config_example
 from ramputils import read_config
 
 
 @pytest.fixture
 def simple_config():
-    data = {'sqlalchemy' : {'username': 'mrramp', 'password': 'mrramp'},
+    data = {'sqlalchemy': {'username': 'mrramp', 'password': 'mrramp'},
             'ramp': {'event_name': 'iris_test'}}
     with tempfile.NamedTemporaryFile(mode='w', suffix='.yml') as config_file:
         yaml.dump(data, config_file, default_flow_style=False)
@@ -17,7 +16,7 @@ def simple_config():
 
 @pytest.mark.parametrize(
     "filter_section, expected_config",
-    [(None, {'sqlalchemy' : {'username': 'mrramp', 'password': 'mrramp'},
+    [(None, {'sqlalchemy': {'username': 'mrramp', 'password': 'mrramp'},
              'ramp': {'event_name': 'iris_test'}}),
      (['ramp'], {'ramp': {'event_name': 'iris_test'}}),
      ('ramp', {'event_name': 'iris_test'})]
