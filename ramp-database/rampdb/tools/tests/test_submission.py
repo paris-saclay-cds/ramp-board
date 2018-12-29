@@ -429,4 +429,3 @@ def test_score_submission(session_scope_module):
     score_submission(session_scope_module, submission_id)
     scores = get_scores(session_scope_module, submission_id)
     assert_frame_equal(scores, expected_df, check_less_precise=True)
-

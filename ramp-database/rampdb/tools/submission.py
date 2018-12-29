@@ -36,7 +36,7 @@ logger = logging.getLogger('DATABASE')
 # TODO: move the queries in "_query"
 # TODO: there is nothing regarding leaderboard update
 def add_submission(session, event_name, team_name, submission_name,
-                    submission_path):
+                   submission_path):
     """Create a submission in the database and returns an handle.
 
     Parameters
@@ -74,7 +74,7 @@ def add_submission(session, event_name, team_name, submission_name,
         last_submission = None if not all_submissions else all_submissions[-1]
         # check for non-admin user if they wait enough to make a new submission
         if (team.admin.access_level != 'admin' and last_submission is not None
-               and last_submission.is_not_sandbox):
+                and last_submission.is_not_sandbox):
             time_to_last_submission = (datetime.datetime.utcnow() -
                                        last_submission.submission_timestamp)
             min_resubmit_time = datetime.timedelta(
