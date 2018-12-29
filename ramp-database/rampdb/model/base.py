@@ -136,16 +136,3 @@ def get_deployment_path():
             'DATABOARD_DEPLOYMENT_PATH_TEST', '/tmp/databoard_test')
     else:
         return '.'
-
-# TODO: remove this code
-# DUPLICATE: with ramp-utils
-def encode_string(text):
-    if PYTHON3:
-        if isinstance(text, str):
-            encoded_text = bytes(text, 'utf-8')
-        else:
-            encoded_text = text
-    else:
-        encoded_text = text.encode('utf8')
-
-    return encoded_text

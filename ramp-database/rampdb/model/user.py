@@ -12,8 +12,9 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
+from ramputils import encode_string
+
 from .base import Model
-from .base import encode_string
 from .event import EventTeam
 
 __all__ = [
