@@ -15,8 +15,8 @@ def deploy_ramp_event(config):
 
     This utility will:
 
-    * Create and setup the database;
-    * Clone the the kit and data.
+    * create and setup the database;
+    * clone the the kit and data.
 
     Parameters
     ----------

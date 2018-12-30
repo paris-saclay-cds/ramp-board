@@ -10,8 +10,6 @@ ramp:
     event_name: iris_test
     event_title: "Iris event"
     event_is_public: true
-    # TODO: change these three path once we finally manage to migrate the
-    # db_tools.
     deployment_dir: /tmp/databoard_test
     data_dir: ramp-data
     kits_dir: ramp-kits
