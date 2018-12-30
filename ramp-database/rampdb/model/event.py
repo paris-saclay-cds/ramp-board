@@ -368,6 +368,8 @@ class Event(Model):
 class EventScoreType(Model):
     """EventScoreType table.
 
+    This is a many-to-many relationship between Event and ScoreType.
+
     Parameters
     ----------
     event : :class:`rampdb.model.Event`
@@ -461,36 +463,87 @@ class EventScoreType(Model):
 
 
 class EventAdmin(Model):
+    """EventAdmin table.
+
+    This is a many-to-many relationship between Event and User to defined
+    admins.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    event_id : int
+        The ID of the event.
+    event : :class:`rampdb.model.Event`
+        The event instance.
+    admin_id : int
+        The ID of the user defined as an admin.
+    admin : :class:`rampdb.model.User`
+        The user instance.
+    """
     __tablename__ = 'event_admins'
 
     id = Column(Integer, primary_key=True)
 
-    event_id = Column(
-        Integer, ForeignKey('events.id'), nullable=False)
-    event = relationship('Event', backref=backref(
-        'event_admins', cascade='all, delete-orphan'))
+    event_id = Column(Integer, ForeignKey('events.id'), nullable=False)
+    event = relationship('Event',
+                         backref=backref('event_admins',
+                                         cascade='all, delete-orphan'))
 
-    admin_id = Column(
-        Integer, ForeignKey('users.id'), nullable=False)
-    admin = relationship(
-        'User', backref=backref('admined_events'))
+    admin_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    admin = relationship('User', backref=backref('admined_events'))
 
 
-# many-to-many
 class EventTeam(Model):
+    """EventTeam table.
+
+    This is a many-to-many relationship between Event and Team.
+
+    Parameters
+    ----------
+    event : :class:`rampdb.model.Event`
+        The event instance.
+    team : :class:`rampdb.model.Team`
+        The team instance.
+
+    Attributes
+    ----------
+    id : int
+        The ID of a row in the table.
+    event_id : int
+        The ID of the event.
+    event : :class:`rampdb.model.Event`
+        The event instance.
+    team_id : int
+        The ID of the team.
+    team : :class:`rampdb.model.Team`
+        The team instance.
+    is_active : bool
+        Whether the team is active for the event.
+    last_submission_name : str
+        The name of the last submission to the event.
+    signup_timestamp : datetime
+        The date and time when the team signed up for the event.
+    approved : bool
+        Whether the team has been approved to participate to the event.
+    leaderboard_html : str
+        The leaderboard for the team for the specific event.
+    failed_leaderboard_html : str
+        The failed submission board for the team for the specific event.
+    new_leaderboard_html : str
+        The new submission board for the team for the specific event.
+    """
     __tablename__ = 'event_teams'
 
     id = Column(Integer, primary_key=True)
 
-    event_id = Column(
-        Integer, ForeignKey('events.id'), nullable=False)
-    event = relationship('Event', backref=backref(
-        'event_teams', cascade='all, delete-orphan'))
+    event_id = Column(Integer, ForeignKey('events.id'), nullable=False)
+    event = relationship('Event',
+                         backref=backref('event_teams',
+                                         cascade='all, delete-orphan'))
 
-    team_id = Column(
-        Integer, ForeignKey('teams.id'), nullable=False)
-    team = relationship(
-        'Team', backref=backref('team_events'))
+    team_id = Column(Integer, ForeignKey('teams.id'), nullable=False)
+    team = relationship('Team', backref=backref('team_events'))
 
     is_active = Column(Boolean, default=True)
     last_submission_name = Column(String, default=None)
@@ -509,5 +562,4 @@ class EventTeam(Model):
         self.signup_timestamp = datetime.datetime.utcnow()
 
     def __repr__(self):
-        repr = '{}/{}'.format(self.event, self.team)
-        return repr
+        return '{}/{}'.format(self.event, self.team)

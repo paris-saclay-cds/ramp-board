@@ -10,6 +10,7 @@ from rampwf.prediction_types.base import BasePrediction
 from rampwf.score_types.accuracy import Accuracy
 
 from rampdb.model import EventScoreType
+from rampdb.model import EventTeam
 from rampdb.model import Model
 from rampdb.model import Workflow
 
@@ -18,6 +19,7 @@ from rampdb.utils import session_scope
 from rampdb.testing import create_toy_db
 
 from rampdb.tools.event import get_event
+from rampdb.tools.user import get_team_by_name
 
 
 @pytest.fixture(scope='module')
@@ -118,3 +120,14 @@ def test_event_score_type_model(session_scope_module):
     assert event_type_score.maximum == pytest.approx(1)
     assert event_type_score.worst == pytest.approx(0)
     assert callable(event_type_score.score_type_object.score_function)
+
+
+def test_event_team(session_scope_module):
+    event = get_event(session_scope_module, 'iris_test')
+    team = get_team_by_name(session_scope_module, 'test_user')
+
+    event_team = (session_scope_module.query(EventTeam)
+                                      .filter(EventTeam.event_id == event.id)
+                                      .filter(EventTeam.team_id == team.id)
+                                      .one())
+    assert repr(event_team) == "Event(iris_test)/Team(b'test_user')"
