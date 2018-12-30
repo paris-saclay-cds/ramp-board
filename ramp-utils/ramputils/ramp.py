@@ -26,12 +26,20 @@ def generate_ramp_config(config):
     ramp_config = {}
     ramp_config['event'] = config['event']
     ramp_config['event_name'] = config['event_name']
+    ramp_config['event_title'] = config['event_title']
+    ramp_config['event_is_public'] = config['event_is_public']
+    ramp_config['sandbox_name'] = config['sandbox_dir']
     ramp_config['deployment_dir'] = config['deployment_dir']
     ramp_config['ramp_kits_dir'] = os.path.join(
         config['deployment_dir'], config['kits_dir']
     )
     ramp_config['ramp_data_dir'] = os.path.join(
         config['deployment_dir'], config['data_dir']
+    )
+    ramp_config['ramp_kit_submissions_dir'] = os.path.join(
+        ramp_config['ramp_kits_dir'],
+        ramp_config['event'],
+        'submissions'
     )
     ramp_config['ramp_submissions_dir'] = os.path.join(
         config['deployment_dir'], config['submissions_dir']

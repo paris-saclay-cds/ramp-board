@@ -148,8 +148,7 @@ class CondaEnvWorker(BaseWorker):
         super(CondaEnvWorker, self).collect_results()
         if self.status == 'finished' or self.status == 'running':
             # communicate() will wait for the process to be completed
-            self._proc_log, err = self._proc.communicate()
-            print(err)
+            self._proc_log, _ = self._proc.communicate()
             # write the log into the disk
             log_dir = os.path.join(self.config['logs_dir'],
                                    self.submission)
