@@ -193,19 +193,70 @@ class Event(Model):
                                          name=self.official_score_name)
                               .one())
 
+    def get_official_score_type(self, session):
+        """Get the type of the default score used for the current event.
+
+        Parameters
+        ----------
+        session : :class:`sqlalchemy.orm.Session`
+            The session used to make the query.
+
+        Returns
+        -------
+        event_type_score : :class:`rampdb.model.EventTypeScore`
+            The default type score for the current event.
+        """
+        return (session.query(EventScoreType)
+                       .filter(EventScoreType.event == self)
+                       .filter(EventScoreType.name == self.official_score_name)
+                       .one())
+
     @property
     # XXX: This will only work with Flask
     def official_score_function(self):
         """callable: The default function used for scoring in the event."""
         return self.official_score_type.score_function
 
+    def get_official_score_function(self, session):
+        """The default function used for scoring in the event.
+
+        Parameters
+        ----------
+        session : :class:`sqlalchemy.orm.Session`
+            The session used to make the query.
+
+        Returns
+        -------
+        score_func : callable
+            The scoring function used to evaluate submissions.
+        """
+        return self.get_official_score_type(session).score_function
+
     @property
     # XXX: This will only work with Flask
     def combined_combined_valid_score_str(self):
         """str: Convert to string the combined public score for all folds."""
-        return None if self.combined_combined_valid_score is None else str(
-            round(self.combined_combined_valid_score,
-                  self.official_score_type.precision))
+        return (None if self.combined_combined_valid_score is None
+                else str(round(self.combined_combined_valid_score,
+                               self.official_score_type.precision)))
+
+    def get_combined_combined_valid_score_str(self, session):
+        """Convert to string the combined public score for all folds.
+
+        Parameters
+        ----------
+        session : :class:`sqlalchemy.orm.Session`
+            The session used to make the query.
+
+        Returns
+        -------
+        score : str
+            The combined public score for all folds.
+        """
+        return (None if self.combined_combined_valid_score is None
+                else str(round(self.combined_combined_valid_score,
+                               self.get_official_score_type(session)
+                                   .precision)))
 
     @property
     # XXX: This will only work with Flask
@@ -215,6 +266,24 @@ class Event(Model):
                 else str(round(self.combined_combined_test_score,
                                self.official_score_type.precision)))
 
+    def get_combined_combined_test_score_str(self, session):
+        """Convert to string the combined private score for all folds.
+
+        Parameters
+        ----------
+        session : :class:`sqlalchemy.orm.Session`
+            The session used to make the query.
+
+        Returns
+        -------
+        score : str
+            The combined private score for all folds.
+        """
+        return (None if self.combined_combined_test_score is None
+                else str(round(self.combined_combined_test_score,
+                               self.get_official_score_type(session)
+                                   .precision)))
+
     @property
     # XXX: This will only work with Flask
     def combined_foldwise_valid_score_str(self):
@@ -223,6 +292,24 @@ class Event(Model):
                 else str(round(self.combined_foldwise_valid_score,
                                self.official_score_type.precision)))
 
+    def get_combined_foldwise_valid_score_str(self, session):
+        """Convert to string the combined public score for each fold.
+
+        Parameters
+        ----------
+        session : :class:`sqlalchemy.orm.Session`
+            The session used to make the query.
+
+        Returns
+        -------
+        score : str
+            The combined public score for each fold.
+        """
+        return (None if self.combined_foldwise_valid_score is None
+                else str(round(self.combined_foldwise_valid_score,
+                               self.get_official_score_type(session)
+                                   .precision)))
+
     @property
     # XXX: This will only work with Flask
     def combined_foldwise_test_score_str(self):
@@ -230,6 +317,24 @@ class Event(Model):
         return (None if self.combined_foldwise_test_score is None
                 else str(round(self.combined_foldwise_test_score,
                                self.official_score_type.precision)))
+
+    def get_combined_foldwise_test_score_str(self, session):
+        """Convert to string the combined private score for each fold.
+
+        Parameters
+        ----------
+        session : :class:`sqlalchemy.orm.Session`
+            The session used to make the query.
+
+        Returns
+        -------
+        score : str
+            The combined private score for each fold.
+        """
+        return (None if self.combined_foldwise_test_score is None
+                else str(round(self.combined_foldwise_test_score,
+                               self.get_official_score_type(session)
+                                   .precision)))
 
     @property
     def is_open(self):
@@ -261,21 +366,46 @@ class Event(Model):
 
 
 class EventScoreType(Model):
+    """EventScoreType table.
+
+    Parameters
+    ----------
+    event : :class:`rampdb.model.Event`
+        The event instance.
+    score_type_object : :class:`rampwf.score_types`
+        A scoring instance.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    name : str
+        The name name of the score.
+    event_id : int
+        The ID of the event associated.
+    event : :class:`rampdb.model.Event`
+        The event instance.
+    score_type_id : int
+        The ID of the score.
+    score_type : :class:`rampdb.model.ScoreType`
+        The score type instance.
+    precision : int
+        The numerical precision of the score.
+    """
     __tablename__ = 'event_score_types'
 
     id = Column(Integer, primary_key=True)
     # Can be renamed, default is the same as score_type.name
     name = Column(String, nullable=False)
 
-    event_id = Column(
-        Integer, ForeignKey('events.id'), nullable=False)
-    event = relationship('Event', backref=backref(
-        'score_types', cascade='all, delete-orphan'))
+    event_id = Column(Integer, ForeignKey('events.id'), nullable=False)
+    event = relationship('Event',
+                         backref=backref('score_types',
+                                         cascade='all, delete-orphan'))
 
-    score_type_id = Column(
-        Integer, ForeignKey('score_types.id'), nullable=False)
-    score_type = relationship(
-        'ScoreType', backref=backref('events'))
+    score_type_id = Column(Integer, ForeignKey('score_types.id'),
+                           nullable=False)
+    score_type = relationship('ScoreType', backref=backref('events'))
 
     # display precision in n_digits
     # default is the same as score_type.precision
@@ -286,26 +416,19 @@ class EventScoreType(Model):
 
     def __init__(self, event, score_type_object):
         self.event = event
-        # XXX
         self.score_type = ScoreType(str(uuid.uuid4()), True, 0, 1)
         # XXX after migration we should store the index of the
         # score_type so self.score_type_object (should be renamed
         # score_type) wouldn't have to do a search each time.
         self.name = score_type_object.name
         self.precision = score_type_object.precision
-        self.score_type_object
-        self.score_function
-        self.is_lower_the_better
-        self.minimum
-        self.maximum
-        self.worst
 
     def __repr__(self):
-        repr = '{}: {}'.format(self.name, self.event)
-        return repr
+        return '{}: {}'.format(self.name, self.event)
 
     @property
     def score_type_object(self):
+        """:class:`rampwf.score_types`: Score type object."""
         score_types = self.event.problem.module.score_types
         for score_type in score_types:
             if score_type.name == self.name:
@@ -313,22 +436,27 @@ class EventScoreType(Model):
 
     @property
     def score_function(self):
+        """callable: Scoring function."""
         return self.score_type_object.score_function
 
     @property
     def is_lower_the_better(self):
+        """bool: Whether a lower score is better."""
         return self.score_type_object.is_lower_the_better
 
     @property
     def minimum(self):
+        """float: the lower bound of the score."""
         return self.score_type_object.minimum
 
     @property
     def maximum(self):
+        """float: the higher bound of the score."""
         return self.score_type_object.maximum
 
     @property
     def worst(self):
+        """float: the worst possible score."""
         return self.score_type_object.worst
 
 

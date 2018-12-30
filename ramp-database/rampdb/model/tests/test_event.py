@@ -7,7 +7,9 @@ from ramputils import read_config
 from ramputils.testing import path_config_example
 
 from rampwf.prediction_types.base import BasePrediction
+from rampwf.score_types.accuracy import Accuracy
 
+from rampdb.model import EventScoreType
 from rampdb.model import Model
 from rampdb.model import Workflow
 
@@ -46,10 +48,28 @@ def test_event_model(session_scope_module):
     assert isinstance(event.workflow, Workflow)
     assert event.workflow.name == 'Classifier'
 
+    event_type_score = event.get_official_score_type(session_scope_module)
+    assert event_type_score.name == 'acc'
+    assert callable(event.get_official_score_function(session_scope_module))
+
     assert event.combined_combined_valid_score_str is None
     assert event.combined_combined_test_score_str is None
     assert event.combined_foldwise_valid_score_str is None
     assert event.combined_foldwise_test_score_str is None
+
+    event.combined_combined_valid_score = 0.1
+    event.combined_combined_test_score = 0.2
+    event.combined_foldwise_valid_score = 0.3
+    event.combined_foldwise_test_score = 0.4
+
+    assert (event.get_combined_combined_valid_score_str(
+        session_scope_module) == '0.1')
+    assert (event.get_combined_combined_test_score_str(
+        session_scope_module) == '0.2')
+    assert (event.get_combined_foldwise_valid_score_str(
+        session_scope_module) == '0.3')
+    assert (event.get_combined_foldwise_test_score_str(
+        session_scope_module) == '0.4')
 
     assert event.is_open is True
     # store the original timestamp before to force them
@@ -80,3 +100,21 @@ def test_event_model(session_scope_module):
     assert event.n_participants == 2
 
     assert event.n_jobs == 2
+
+
+def test_event_score_type_model(session_scope_module):
+    event = get_event(session_scope_module, 'iris_test')
+    # get only the accuracy score
+    event_type_score = \
+        (session_scope_module.query(EventScoreType)
+                             .filter(EventScoreType.event_id == event.id)
+                             .filter(EventScoreType.name == 'acc')
+                             .one())
+
+    assert repr(event_type_score) == "acc: Event(iris_test)"
+    assert isinstance(event_type_score.score_type_object, Accuracy)
+    assert event_type_score.is_lower_the_better is False
+    assert event_type_score.minimum == pytest.approx(0)
+    assert event_type_score.maximum == pytest.approx(1)
+    assert event_type_score.worst == pytest.approx(0)
+    assert callable(event_type_score.score_type_object.score_function)
