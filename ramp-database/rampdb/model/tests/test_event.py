@@ -4,6 +4,7 @@ import shutil
 import pytest
 
 from ramputils import read_config
+from ramputils import encode_string
 from ramputils.testing import path_config_example
 
 from rampwf.prediction_types.base import BasePrediction
@@ -130,4 +131,5 @@ def test_event_team(session_scope_module):
                                       .filter(EventTeam.event_id == event.id)
                                       .filter(EventTeam.team_id == team.id)
                                       .one())
-    assert repr(event_team) == "Event(iris_test)/Team(b'test_user')"
+    assert repr(event_team) == "Event(iris_test)/Team({})".format(
+        encode_string('test_user'))
