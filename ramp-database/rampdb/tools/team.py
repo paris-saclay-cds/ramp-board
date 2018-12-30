@@ -61,9 +61,13 @@ def sign_up_team(session, event_name, team_name, path_sandbox_submission,
     team_name : str
         The name of the team.
     path_sandbox_submission : str
-        Path to the sandbox submission.
+        Path to the sandbox submission. It will corresponds to the key
+        `ramp_sandbox_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
     path_ramp_submissions : str
-        Path to the deployment RAMP submissions directory.
+        Path to the deployment RAMP submissions directory. It will corresponds
+        to the key `ramp_submissions_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
     """
     event, team, event_team = ask_sign_up_team(session, event_name, team_name)
     # setup the sandbox

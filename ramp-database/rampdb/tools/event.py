@@ -166,9 +166,13 @@ def add_problem(session, problem_name, kits_dir, data_dir, force=False):
     problem_name : str
         The name of the problem to register in the database.
     kits_dir : str
-        The directory where the RAMP kits are located.
+        The directory where the RAMP kits are located. It will corresponds to
+        the key `ramp_kits_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
     data_dir : str
-        The directory where the RAMP data are located.
+        The directory where the RAMP data are located. It will corresponds to
+        the key `ramp_data_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
     force : bool, default is False
         Whether to force add the problem. If ``force=False``, an error is
         raised if the problem was already in the database.

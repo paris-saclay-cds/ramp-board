@@ -5,11 +5,9 @@ from flask import Flask
 from flask_mail import Mail
 from flask_login import LoginManager
 # from flask_sqlalchemy import SQLAlchemy
-
-from rampdb.model.base import Model
-
 from flask_sqlalchemy import SQLAlchemy as SQLAlchemyBase
 
+from rampdb.model.base import Model
 from rampdb.model.base import set_query_property
 
 __version__ = '0.1.dev'
@@ -31,7 +29,7 @@ class SQLAlchemy(SQLAlchemyBase):
         """Creates or extends the declarative base."""
         if self.model_class is None:
             self.model_class = \
-                super(SQLAlchemyBase, self).make_declarative_base(Model)
+                super(SQLAlchemy, self).make_declarative_base(Model)
         else:
             set_query_property(self.model_class, self.session)
         return self.model_class

@@ -25,6 +25,81 @@ __all__ = [
 
 
 class Event(Model):
+    """Event table.
+
+    This table contains all information of a RAMP event.
+
+    Parameters
+    ----------
+    problem_name : str
+        The name of the problem.
+    name : str
+        The name of the event.
+    event_title : str
+        The title to give for the event.
+    session : None or :class:`sqlalchemy.orm.Session`, optional
+        The session used to perform some required queries. It is a required
+        argument when interacting with the database outside of Flask.
+
+    Attributes
+    ----------
+    id : int
+        ID of the table row.
+    name : str
+        Event name.
+    title : str
+        Event title.
+    problem_id : int
+        The problem ID associated with this event.
+    problem : :class:`rampdb.model.Problem`
+        The :class:`rampdb.model.Problem` instance.
+    max_members_per_team : int
+        The maximum number of members per team.
+    max_n_ensemble : int
+        The maximum number of models in the ensemble.
+    is_send_trained_mails : bool
+        Whether or not to send an email when a model is trained.
+    is_public : bool
+        Whether or not the event is public.
+    is_controled_signup : bool
+        Whether or not the sign-up to the event is moderated.
+    is_competitive : bool
+        Whether or not the challenge is in the competitive phase.
+    min_duration_between_submission : int
+        The amount of time to wait between two submissions.
+    opening_timestamp : datetime
+        The date and time of the event opening.
+    public_opening_timestamp : datetime
+        The date and time of the publicly event opening.
+    closing_timestamp : datetime
+        The date and time of the event closure.
+    official_score_name : str
+        The name of the official score used to evaluate the submissions.
+    combined_combined_valid_score : float
+        The combined public score for all folds.
+    combine_combined_test_score : float
+        The combined private score for all folds.
+    combined_foldwise_valid_score : float
+        The combined public scores for each fold.
+    combined_foldwise_test_score : float
+        The combined public scores for each fold.
+    n_submissions : int
+        The number of submissions for an event.
+    public_leaderboard_html_no_links : str
+        The public leaderboard in HTML format with links to the submissions.
+    public_leaderboard_html_with_links : str
+        The public leaderboard in HTML format.
+    private_leaderboard_html : str
+        The private leaderboard in HTML.
+    failed_leaderboard_html : str
+        The leaderboard with the failed submissions.
+    new_leaderboard_html : str
+        The leaderboard with the new submitted submissions.
+    public_competition_leaderboard_html : str
+        The public leaderboard of the competition in HTML.
+    private_competition_leaderboard_html : str
+        The private leaderboard of the competition in HTML.
+    """
     __tablename__ = 'events'
 
     id = Column(Integer, primary_key=True)
@@ -78,23 +153,20 @@ class Event(Model):
 
     def __init__(self, problem_name, name, event_title, session=None):
         self.name = name
-        # to check if the module and all required fields are there
-        # db fields are later initialized by tools._set_table_attribute
-        self._session = session
-        if self._session is None:
+        if session is None:
             self.problem = Problem.query.filter_by(name=problem_name).one()
         else:
-            self.problem = (self._session.query(Problem)
-                                         .filter(Problem.name == problem_name)
-                                         .one())
+            self.problem = (session.query(Problem)
+                                   .filter(Problem.name == problem_name)
+                                   .one())
         self.title = event_title
-        self.Predictions
 
     def __repr__(self):
-        repr = 'Event({})'.format(self.name)
-        return repr
+        return 'Event({})'.format(self.name)
 
     def set_n_submissions(self):
+        """Set the number of submissions for the current event by checking
+        each team."""
         self.n_submissions = 0
         for event_team in self.event_teams:
             # substract one for starting kit
@@ -102,71 +174,89 @@ class Event(Model):
 
     @property
     def Predictions(self):
+        """:class:`rampwf.prediction_types.base.BasePrediction`: Predictions
+        for the given event."""
         return self.problem.Predictions
 
     @property
     def workflow(self):
+        """:class:`rampdb.model.Workflow`: The workflow used for the event."""
         return self.problem.workflow
 
     @property
+    # XXX: This will only work with Flask
     def official_score_type(self):
-        return EventScoreType.query.filter_by(
-                event=self, name=self.official_score_name).one()
+        """:class:`rampdb.model.EventScoreType`: The score type for the current
+        event."""
+        return (EventScoreType.query
+                              .filter_by(event=self,
+                                         name=self.official_score_name)
+                              .one())
 
     @property
+    # XXX: This will only work with Flask
     def official_score_function(self):
+        """callable: The default function used for scoring in the event."""
         return self.official_score_type.score_function
 
     @property
+    # XXX: This will only work with Flask
     def combined_combined_valid_score_str(self):
-        return None if self.combined_foldwise_valid_score is None else str(
+        """str: Convert to string the combined public score for all folds."""
+        return None if self.combined_combined_valid_score is None else str(
             round(self.combined_combined_valid_score,
                   self.official_score_type.precision))
 
     @property
+    # XXX: This will only work with Flask
     def combined_combined_test_score_str(self):
-        return None if self.combined_combined_test_score is None else str(
-            round(self.combined_combined_test_score,
-                  self.official_score_type.precision))
+        """str: Convert to string the combined private score for all folds."""
+        return (None if self.combined_combined_test_score is None
+                else str(round(self.combined_combined_test_score,
+                               self.official_score_type.precision)))
 
     @property
+    # XXX: This will only work with Flask
     def combined_foldwise_valid_score_str(self):
-        return None if self.combined_foldwise_valid_score is None else str(
-            round(self.combined_foldwise_valid_score,
-                  self.official_score_type.precision))
+        """str: Convert to string the combined public score for each fold."""
+        return (None if self.combined_foldwise_valid_score is None
+                else str(round(self.combined_foldwise_valid_score,
+                               self.official_score_type.precision)))
 
     @property
+    # XXX: This will only work with Flask
     def combined_foldwise_test_score_str(self):
-        return None if self.combined_foldwise_test_score is None else str(
-            round(self.combined_foldwise_test_score,
-                  self.official_score_type.precision))
+        """str: Convert to string the combined public score for each fold."""
+        return (None if self.combined_foldwise_test_score is None
+                else str(round(self.combined_foldwise_test_score,
+                               self.official_score_type.precision)))
 
     @property
     def is_open(self):
+        """bool: Whether or not the event is opened."""
         now = datetime.datetime.utcnow()
-        return now > self.opening_timestamp and now < self.closing_timestamp
+        return self.closing_timestamp > now > self.opening_timestamp
 
     @property
     def is_public_open(self):
+        """bool: Whether or not the public phase of the event is opened."""
         now = datetime.datetime.utcnow()
-        return now > self.public_opening_timestamp\
-            and now < self.closing_timestamp
+        return self.closing_timestamp > now > self.public_opening_timestamp
 
     @property
     def is_closed(self):
+        """bool: Whether or not the event is closed."""
         now = datetime.datetime.utcnow()
         return now > self.closing_timestamp
 
     @property
     def n_jobs(self):
-        """Number of jobs for local parallelization.
-
-        return: number of live cv folds.
-        """
+        """int: The number of cv fold which can be used as number of jobs."""
         return sum(1 for cv_fold in self.cv_folds if cv_fold.type == 'live')
 
     @property
     def n_participants(self):
+        """int: The number of participants to the event."""
         return len(self.event_teams)
 
 

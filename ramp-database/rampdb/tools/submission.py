@@ -50,9 +50,13 @@ def add_submission(session, event_name, team_name, submission_name,
     submission_name : str
         The name to give to the current submission.
     submission_path : str
-        The path of the files associated to the current submission.
-    submission_deployment_path:
-        Path to the deployment RAMP submissions directory.
+        The path of the files associated to the current submission. It will
+        corresponds to the key `ramp_kit_subissions_dir` of the dictionary
+        created with :func:`ramputils.generate_ramp_config`.
+    submission_deployment_path : str
+        Path to the deployment RAMP submissions directory. It will corresponds
+        to the key `ramp_submissions_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
     is_sandbox : bool
         If the submission is the sandbox submission.
 
@@ -685,9 +689,13 @@ def submit_starting_kits(session, event_name, team_name, path_submission,
     team_name : str
         The name of the team.
     path_submission : str
-        The path of the files associated to the current submission.
+        The path of the files associated to the current submission. It will
+        corresponds to the key `ramp_kit_submissions_dir` of the dictionary
+        created with :func:`ramputils.generate_ramp_config`.
     path_ramp_submissions : str
-        Path to the deployment RAMP submissions directory.
+        Path to the deployment RAMP submissions directory. It will corresponds
+        to the key `ramp_submissions_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
     sandbox_name : str
         The name of the sandbox submission.
     """
