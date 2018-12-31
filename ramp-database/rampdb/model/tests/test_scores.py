@@ -5,7 +5,6 @@ import pytest
 from ramputils import read_config
 from ramputils.testing import path_config_example
 
-
 from rampdb.model import Model
 from rampdb.model import ScoreType
 

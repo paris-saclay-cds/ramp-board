@@ -56,16 +56,90 @@ submission_types = Enum('live', 'test', name='submission_types')
 
 
 class Submission(Model):
-    """An abstract (untrained) submission."""
+    """Submission table.
 
+    Parameters
+    ----------
+    name : str
+        The submission name.
+    event_name : str
+        The event name.
+    path_ramp_submissions : str
+        Path to the deployment RAMP submissions directory. It will corresponds
+        to the key `ramp_submissions_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
+    is_sandbox : bool
+        Whether it is a sandbox submission.
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    event_team_id : int
+        The event/team ID.
+    event_team : :class:`rampdb.model.EventTeam`
+        The event/team instance.
+    name : str
+        The name of the submission.
+    hash_ : string
+        A hash to identify the submission.
+    submission_timestamp : datetime
+        The date and time when the submission was added to the database.
+    sent_to_training_timestamp : datetime
+        The date and time when the submission was sent for training.
+    training_timestamp : datetime
+        The date and time when the training finished.
+    contributivity : float
+        The contributivity of the submission.
+    historical_contributivity : float
+        The historical contributivity.
+    type : {'live' or 'test'}
+        The type of submission.
+    state : str
+        The state of the submission.
+    error_msg : str
+        The error message of the submission.
+    is_valid : bool
+        Is it a valid submission.
+    is_to_ensemble : bool
+        Whether to use the submission for the contributivity score.
+    is_in_competition : bool
+        Whether the submission is used to participate to the comptetition.
+    notes : str
+        Store any note regarding the submission.
+    train_time_cv_mean : float
+        The mean of the computation time for a fold on the train data.
+    valid_time_cv_mean : float
+        The mean of the computation time for a fold on the valid data.
+    test_time_cv_mean : float
+        The mean of the computation time for a fold on the test data.
+    train_time_cv_std : float
+        The standard deviation of the computation time for a fold on the train
+        data.
+    valid_time_cv_std : float
+        The standard deviation of the computation time for a fold on the valid
+        data.
+    test_time_cv_std : float
+        The standard deviation of the computation time for a fold on the test
+        data.
+    max_ram : float
+        The maximum amount of RAM consume during training.
+    is_sandbox : bool
+        Whether it is a sandbox submission.
+    path_ramp_submissions : str
+        Path to the deployment RAMP submissions directory.
+    """
     __tablename__ = 'submissions'
 
     id = Column(Integer, primary_key=True)
 
-    event_team_id = Column(
-        Integer, ForeignKey('event_teams.id'), nullable=False)
-    event_team = relationship('EventTeam', backref=backref(
-        'submissions', cascade='all, delete-orphan'))
+    event_team_id = Column(Integer, ForeignKey('event_teams.id'),
+                           nullable=False)
+    event_team = relationship('EventTeam',
+                              backref=backref('submissions',
+                                              cascade='all, delete-orphan'))
 
     name = Column(String(20, convert_unicode=True), nullable=False)
     hash_ = Column(String, nullable=False, index=True, unique=True)
@@ -122,8 +196,8 @@ class Submission(Model):
         self.hash_ = '{}'.format(sha_hasher.hexdigest())
         self.submission_timestamp = datetime.datetime.utcnow()
         if session is None:
-            event_score_types = EventScoreType.query.filter_by(
-                event=event_team.event)
+            event_score_types = \
+            (EventScoreType.query.filter_by(event=event_team.event))
         else:
             event_score_types = (session.query(EventScoreType)
                                         .filter(EventScoreType.event ==
@@ -140,67 +214,83 @@ class Submission(Model):
             self.event.name, self.team.name, self.name)
 
     def __repr__(self):
-        repr = '''Submission(event_name={}, team_name={}, name={}, files={},
-                  state={}, train_time={})'''.format(
-            encode_string(self.event.name),
-            encode_string(self.team.name),
-            encode_string(self.name),
-            self.files,
-            self.state,
-            self.train_time_cv_mean)
-        return repr
+        return  ('Submission(event_name={}, team_name={}, name={}, files={}, '
+                 'state={}, train_time={})'
+                 .format(encode_string(self.event.name),
+                         encode_string(self.team.name),
+                         encode_string(self.name),
+                         self.files, self.state, self.train_time_cv_mean))
 
     @hybrid_property
     def team(self):
+        """str: The team name."""
         return self.event_team.team
 
     @hybrid_property
     def event(self):
+        """:class:`rampdb.model.Event`: The event associated with the
+        submission."""
         return self.event_team.event
 
     @property
+    # This will work only with Flask
     def official_score_function(self):
+        """callable: The scoring function."""
         return self.event.official_score_function
 
     @property
     def official_score_name(self):
+        """str: The name of the default score."""
         return self.event.official_score_name
 
     @property
     def official_score(self):
+        """:class:`rampdb.model.SubmissionScore`: The official score."""
         score_dict = {score.score_name: score for score in self.scores}
         return score_dict[self.official_score_name]
 
     @property
     def score_types(self):
+        """list of :class:`rampdb.model.EventScoreType`: All the scores used
+        for the submissions."""
         return self.event.score_types
 
     @property
     def Predictions(self):
+        """:class:`rampwf.prediction_types`: The predictions used for the
+        problem."""
         return self.event.Predictions
 
     @hybrid_property
     def is_not_sandbox(self):
+        """bool: Whether the submission is not a sandbox."""
         return not self.is_sandbox
 
     @hybrid_property
     def is_error(self):
+        """bool: Whether the training of the submission failed."""
         return 'error' in self.state
 
     @hybrid_property
     def is_public_leaderboard(self):
-        return self.is_not_sandbox & self.is_valid & (self.state == 'scored')
+        """bool: Whether the submission is part of the public leaderboard."""
+        return (self.is_not_sandbox and self.is_valid and
+                (self.state == 'scored'))
 
     @hybrid_property
     def is_private_leaderboard(self):
-        return self.is_not_sandbox & self.is_valid & (self.state == 'scored')
+        """bool: Whether the submission is part of the private leaderboard."""
+        return (self.is_not_sandbox and self.is_valid and
+                (self.state == 'scored'))
 
     @property
     def path(self):
+        """str: The path to the submission."""
         return os.path.join(self.path_ramp_submissions, self.basename)
 
     @property
     def basename(self):
+        """str: The base name of the submission."""
         return 'submission_' + '{0:09d}'.format(self.id)
 
     @property
