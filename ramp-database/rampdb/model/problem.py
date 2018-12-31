@@ -145,20 +145,52 @@ class Problem(Model):
 
 
 class HistoricalContributivity(Model):
+    """HistoricalContributivity table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    timestamp : datetime
+        The date and time of the submission.
+    submission_id : int
+        The ID of the submission.
+    submission : :class:`rampwf.model.Submission`
+        The submission instance.
+    contributivity : float
+        The contributivity of the current submission.
+    historical_contributivity : float
+        The historical contributivity.
+    """
     __tablename__ = 'historical_contributivity'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, nullable=False)
-    submission_id = Column(
-        Integer, ForeignKey('submissions.id'))
-    submission = relationship('Submission', backref=backref(
-        'historical_contributivitys', cascade='all, delete-orphan'))
+    submission_id = Column(Integer, ForeignKey('submissions.id'))
+    submission = relationship('Submission',
+                              backref=backref('historical_contributivitys',
+                                              cascade='all, delete-orphan'))
 
     contributivity = Column(Float, default=0.0)
     historical_contributivity = Column(Float, default=0.0)
 
 
 class Keyword(Model):
+    """Keyword table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    name : str
+        The keyword name.
+    type : {'data_domain', 'data_science_theme'}
+        The type of keyword.
+    category : str
+        The category of the keyword.
+    descritption : str
+        The description of the keyword.
+    """
     __tablename__ = 'keywords'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -171,20 +203,36 @@ class Keyword(Model):
 
 
 class ProblemKeyword(Model):
+    """ProblemKeyword table.
+
+    This a many-to-many relationship between a Problem and a Keyword.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    description : str
+        Optional description of the keyword for a particular problem.
+    problem_id : int
+        The ID of the problem.
+    problem : :class:`rampdb.model.Problem`
+        The problem instance.
+    keyword_id : int
+        The ID of the keyword.
+    keyword : :class:`rampdb.model.Keyword`
+        The keyword instance.
+    """
     __tablename__ = 'problem_keywords'
 
     id = Column(Integer, primary_key=True)
-    # optional description of the keyword particular to a problem
     description = Column(String)
 
-    problem_id = Column(
-        Integer, ForeignKey('problems.id'), nullable=False)
-    problem = relationship(
-        'Problem', backref=backref(
-            'keywords', cascade='all, delete-orphan'))
+    problem_id = Column(Integer, ForeignKey('problems.id'), nullable=False)
+    problem = relationship('Problem',
+                           backref=backref('keywords',
+                                           cascade='all, delete-orphan'))
 
-    keyword_id = Column(
-        Integer, ForeignKey('keywords.id'), nullable=False)
-    keyword = relationship(
-        'Keyword', backref=backref(
-            'problems', cascade='all, delete-orphan'))
+    keyword_id = Column(Integer, ForeignKey('keywords.id'), nullable=False)
+    keyword = relationship('Keyword',
+                           backref=backref('problems',
+                                           cascade='all, delete-orphan'))
