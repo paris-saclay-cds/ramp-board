@@ -126,3 +126,78 @@ def test_submission_model_set_error(session_scope_module):
     for cv_fold in submission.on_cv_folds:
         assert cv_fold.state == error
         assert cv_fold.error_msg == error_msg
+
+
+@pytest.mark.parametrize(
+    "state, expected_contributivity",
+    [('scored', 0.3), ('training_error', 0.0)]
+)
+def test_submission_model_set_contributivity(session_scope_module, state,
+                                             expected_contributivity):
+    submission = get_submission_by_id(session_scope_module, 5)
+    # set the state of the submission such that the contributivity
+    submission.set_state(state)
+    # set the fold contributivity to non-default
+    for cv_fold in submission.on_cv_folds:
+        cv_fold.contributivity = 0.3
+    submission.set_contributivity()
+    assert submission.contributivity == pytest.approx(expected_contributivity)
+
+
+@pytest.mark.parametrize(
+    "state_cv_folds, expected_state",
+    [(['tested', 'tested'], 'tested'),
+     (['tested', 'validated'], 'validated'),
+     (['validated', 'validated'], 'validated'),
+     (['trained', 'validated'], 'trained'),
+     (['trained', 'tested'], 'trained'),
+     (['trained', 'trained'], 'trained'),
+     (['training_error', 'tested'], 'training_error'),
+     (['validating_error', 'tested'], 'validating_error'),
+     (['testing_error', 'tested'], 'testing_error')]
+)
+def test_submission_model_set_state_after_training(session_scope_module,
+                                                   state_cv_folds,
+                                                   expected_state):
+    submission = get_submission_by_id(session_scope_module, 5)
+    # set the state of the each fold
+    for cv_fold, fold_state in zip(submission.on_cv_folds, state_cv_folds):
+        cv_fold.state = fold_state
+    submission.set_state_after_training()
+    assert submission.state == expected_state
+
+
+def test_submission_score_model_property(session_scope_module):
+    # get the submission associated with the 5th submission (iris)
+    # we get only the information linked to the accuracy score which the first
+    # score
+    submission_score = \
+        (session_scope_module.query(SubmissionScore)
+                             .filter(SubmissionScore.submission_id == 5)
+                             .first())
+    assert submission_score.score_name == 'acc'
+    assert callable(submission_score.score_function)
+    assert submission_score.precision == 2
+
+
+@pytest.mark.parametrize(
+    "step_score", ['train_score', 'valid_score', 'test_score']
+)
+def test_submission_score_model_scoring(session_scope_module, step_score):
+    # get the submission associated with the 5th submission (iris)
+    # we get only the information linked to the accuracy score which the first
+    # score
+    submission_score = \
+        (session_scope_module.query(SubmissionScore)
+                             .filter(SubmissionScore.submission_id == 5)
+                             .first())
+    # we set the score on the different fold to check the mean and std
+    # computation on those folds.
+    for cv_fold, fold_score in zip(submission_score.on_cv_folds,
+                                   [0.2, 0.8]):
+        setattr(cv_fold, step_score, fold_score)
+
+    assert (getattr(submission_score, '{}_cv_mean'.format(step_score)) ==
+            pytest.approx(0.5))
+    assert (getattr(submission_score, '{}_cv_std'.format(step_score)) ==
+            pytest.approx(0.3))

@@ -437,6 +437,13 @@ class Submission(Model):
 
     # contributivity could be a property but then we could not query on it
     def set_contributivity(self):
+        """Compute the contributivity of a submission.
+
+        Notes
+        -----
+        The contributivity is computed only id the submission is public and
+        valid and this is not the sandbox submission.
+        """
         self.contributivity = 0.0
         if self.is_public_leaderboard:
             # we share a unit of 1. among folds
@@ -446,10 +453,13 @@ class Submission(Model):
                                         submission_on_cv_fold.contributivity)
 
     def set_state_after_training(self):
+        """Set the state of a submission depending of the state of the fold
+        after training.
+        """
         self.training_timestamp = datetime.datetime.utcnow()
         states = [submission_on_cv_fold.state
                   for submission_on_cv_fold in self.on_cv_folds]
-        if all(state in ['tested'] for state in states):
+        if all(state == 'tested' for state in states):
             self.state = 'tested'
         elif all(state in ['tested', 'validated'] for state in states):
             self.state = 'validated'
@@ -473,18 +483,42 @@ class Submission(Model):
 
 
 class SubmissionScore(Model):
+    """SubmissionScore table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the row table.
+    submission_id : int
+        The ID of the associated submission.
+    submission : :class:`rampdb.model.Submission`
+        The submission instance associated.
+    event_score_type_id : int
+        The ID of the event/score type associated.
+    event_score_type : :class:`rampdb.model.EventScoreType`
+        The event/score type instance associated.
+    valid_score_cv_bag : float
+        The validation bagged scores.
+    test_score_cv_bag : float
+        The testing bagged scores.
+    valid_score_cv_bags : ndarray
+        The partial validation scores for all CV bags.
+    test_score_cv_bags : ndarray
+        The partial testing scores for all CV bags.
+    """
     __tablename__ = 'submission_scores'
 
     id = Column(Integer, primary_key=True)
-    submission_id = Column(
-        Integer, ForeignKey('submissions.id'), nullable=False)
-    submission = relationship('Submission', backref=backref(
-        'scores', cascade='all, delete-orphan'))
+    submission_id = Column(Integer, ForeignKey('submissions.id'),
+                           nullable=False)
+    submission = relationship('Submission',
+                              backref=backref('scores',
+                                              cascade='all, delete-orphan'))
 
-    event_score_type_id = Column(
-        Integer, ForeignKey('event_score_types.id'), nullable=False)
-    event_score_type = relationship(
-        'EventScoreType', backref=backref('submissions'))
+    event_score_type_id = Column(Integer, ForeignKey('event_score_types.id'),
+                                 nullable=False)
+    event_score_type = relationship('EventScoreType',
+                                    backref=backref('submissions'))
 
     # These are cv-bagged scores. Individual scores are found in
     # SubmissionToTrain
@@ -497,39 +531,49 @@ class SubmissionScore(Model):
 
     @property
     def score_name(self):
+        """str: The name of the score."""
         return self.event_score_type.name
 
     @property
     def score_function(self):
+        """callable: The function used to score."""
         return self.event_score_type.score_function
 
     # default display precision in n_digits
     @property
     def precision(self):
+        """int: The numerical precision of the associated score."""
         return self.event_score_type.precision
 
     @property
     def train_score_cv_mean(self):
+        """float: The mean score on the CV folds for the training set."""
         return np.mean([ts.train_score for ts in self.on_cv_folds])
 
     @property
     def valid_score_cv_mean(self):
+        """float: The mean score on the CV folds for the validation set."""
         return np.mean([ts.valid_score for ts in self.on_cv_folds])
 
     @property
     def test_score_cv_mean(self):
+        """float: The mean score on the CV folds for the testing set."""
         return np.mean([ts.test_score for ts in self.on_cv_folds])
 
     @property
     def train_score_cv_std(self):
+        """float: The std. dev. score on the CV folds for the training set."""
         return np.std([ts.train_score for ts in self.on_cv_folds])
 
     @property
     def valid_score_cv_std(self):
+        """float: The std. dev. score on the CV folds for the validation
+        set."""
         return np.std([ts.valid_score for ts in self.on_cv_folds])
 
     @property
     def test_score_cv_std(self):
+        """float: The std. dev. score on the CV folds for the testing set."""
         return np.std([ts.test_score for ts in self.on_cv_folds])
 
 
@@ -546,25 +590,26 @@ class SubmissionFile(Model):
     __tablename__ = 'submission_files'
 
     id = Column(Integer, primary_key=True)
-    submission_id = Column(
-        Integer, ForeignKey('submissions.id'), nullable=False)
-    submission = relationship(
-        'Submission',
-        backref=backref('files', cascade='all, delete-orphan'))
+    submission_id = Column(Integer, ForeignKey('submissions.id'),
+                           nullable=False)
+    submission = relationship('Submission',
+                              backref=backref('files',
+                                              cascade='all, delete-orphan'))
 
     # e.g. 'regression', 'external_data'
-    workflow_element_id = Column(
-        Integer, ForeignKey('workflow_elements.id'),
-        nullable=False)
-    workflow_element = relationship(
-        'WorkflowElement', backref=backref('submission_files'))
+    workflow_element_id = Column(Integer, ForeignKey('workflow_elements.id'),
+                                 nullable=False)
+    workflow_element = relationship('WorkflowElement',
+                                    backref=backref('submission_files'))
 
     # e.g., ('code', 'py'), ('data', 'csv')
     submission_file_type_extension_id = Column(
         Integer, ForeignKey('submission_file_type_extensions.id'),
-        nullable=False)
+        nullable=False
+    )
     submission_file_type_extension = relationship(
-        'SubmissionFileTypeExtension', backref=backref('submission_files'))
+        'SubmissionFileTypeExtension', backref=backref('submission_files')
+    )
 
     # eg, 'py'
     @property
@@ -624,15 +669,13 @@ class SubmissionFileTypeExtension(Model):
 
     id = Column(Integer, primary_key=True)
 
-    type_id = Column(
-        Integer, ForeignKey('submission_file_types.id'), nullable=False)
-    type = relationship(
-        'SubmissionFileType', backref=backref('extensions'))
+    type_id = Column(Integer, ForeignKey('submission_file_types.id'),
+                     nullable=False)
+    type = relationship('SubmissionFileType', backref=backref('extensions'))
 
-    extension_id = Column(
-        Integer, ForeignKey('extensions.id'), nullable=False)
-    extension = relationship(
-        'Extension', backref=backref('submission_file_types'))
+    extension_id = Column(Integer, ForeignKey('extensions.id'), nullable=False)
+    extension = relationship('Extension',
+                             backref=backref('submission_file_types'))
 
     UniqueConstraint(type_id, extension_id, name='we_constraint')
 
@@ -668,15 +711,19 @@ class SubmissionScoreOnCVFold(Model):
 
     id = Column(Integer, primary_key=True)
     submission_on_cv_fold_id = Column(
-        Integer, ForeignKey('submission_on_cv_folds.id'), nullable=False)
+        Integer, ForeignKey('submission_on_cv_folds.id'), nullable=False
+    )
     submission_on_cv_fold = relationship(
-        'SubmissionOnCVFold', backref=backref(
-            'scores', cascade='all, delete-orphan'))
+        'SubmissionOnCVFold',
+        backref=backref('scores', cascade='all, delete-orphan')
+    )
 
-    submission_score_id = Column(
-        Integer, ForeignKey('submission_scores.id'), nullable=False)
-    submission_score = relationship('SubmissionScore', backref=backref(
-        'on_cv_folds', cascade='all, delete-orphan'))
+    submission_score_id = Column(Integer, ForeignKey('submission_scores.id'),
+                                 nullable=False)
+    submission_score = relationship(
+        'SubmissionScore',
+        backref=backref('on_cv_folds', cascade='all, delete-orphan')
+    )
 
     train_score = Column(Float)
     valid_score = Column(Float)
@@ -716,17 +763,17 @@ class SubmissionOnCVFold(Model):
 
     id = Column(Integer, primary_key=True)
 
-    submission_id = Column(
-        Integer, ForeignKey('submissions.id'), nullable=False)
-    submission = relationship(
-        'Submission', backref=backref(
-            'on_cv_folds', cascade="all, delete-orphan"))
+    submission_id = Column(Integer, ForeignKey('submissions.id'),
+                           nullable=False)
+    submission = relationship('Submission',
+                              backref=backref('on_cv_folds',
+                                              cascade="all, delete-orphan"))
 
     cv_fold_id = Column(
         Integer, ForeignKey('cv_folds.id'), nullable=False)
-    cv_fold = relationship(
-        'CVFold', backref=backref(
-            'submissions', cascade="all, delete-orphan"))
+    cv_fold = relationship('CVFold',
+                           backref=backref('submissions',
+                                           cascade="all, delete-orphan"))
 
     # filled by cv_fold.get_combined_predictions
     contributivity = Column(Float, default=0.0)

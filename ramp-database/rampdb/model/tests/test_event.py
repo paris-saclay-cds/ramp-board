@@ -56,15 +56,15 @@ def test_event_model_property(session_scope_module):
 
 @pytest.mark.parametrize(
     "opening, public_opening, closure, properties, expected_values",
-    ([None, None, None, ['is_open'], [True]],
-     [None, None, datetime.datetime.utcnow(), ['is_open', 'is_closed'],
-      [False, True]],
-     [datetime.datetime.utcnow() + datetime.timedelta(days=1), None, None,
-      ['is_open', 'is_closed'], [False, False]],
-     [None, None, datetime.datetime.utcnow(), ['is_public_open', 'is_closed'],
-      [False, True]],
-     [None, datetime.datetime.utcnow() + datetime.timedelta(days=1), None,
-      ['is_public_open', 'is_closed'], [False, False]])
+    [(None, None, None, ['is_open'], [True]),
+     (None, None, datetime.datetime.utcnow(), ['is_open', 'is_closed'],
+      [False, True]),
+     (datetime.datetime.utcnow() + datetime.timedelta(days=1), None, None,
+      ['is_open', 'is_closed'], [False, False]),
+     (None, None, datetime.datetime.utcnow(), ['is_public_open', 'is_closed'],
+      [False, True]),
+     (None, datetime.datetime.utcnow() + datetime.timedelta(days=1), None,
+      ['is_public_open', 'is_closed'], [False, False])]
 )
 def test_even_model_timestamp(session_scope_module, opening, public_opening,
                               closure, properties, expected_values):
