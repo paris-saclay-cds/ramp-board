@@ -696,6 +696,24 @@ class SubmissionFile(Model):
 
 
 class SubmissionFileTypeExtension(Model):
+    """SubmissionFileTypeExtension table.
+
+    This a many-to-many relationship between the SubmissionFileType and
+    Extension.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    type_id : int
+        The ID of the submission file type.
+    type : :class:`rampdb.model.SubmissionFileType`
+        The submission file type instance.
+    extension_id : int
+        The ID of the extension.
+    extension : :class:`rampdb.model.Extension`
+        The file extension instance.
+    """
     __tablename__ = 'submission_file_type_extensions'
 
     id = Column(Integer, primary_key=True)
@@ -712,32 +730,75 @@ class SubmissionFileTypeExtension(Model):
 
     @property
     def file_type(self):
+        """str: The name of the file type."""
         return self.type.name
 
     @property
     def extension_name(self):
+        """str: The name of the file extension."""
         return self.extension.name
 
 
 class SubmissionFileType(Model):
+    """SubmissionFileType table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    name : str
+        The name of the submission file type.
+    is_editable : bool
+        Whether or not this type of file is editable.
+    max_size : int
+        The maximum size of this file type.
+    """
     __tablename__ = 'submission_file_types'
 
     id = Column(Integer, primary_key=True)
-    # eg. 'code', 'text', 'data'
     name = Column(String, nullable=False, unique=True)
     is_editable = Column(Boolean, default=True)
     max_size = Column(Integer, default=None)
 
 
 class Extension(Model):
+    """Extension table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    name : str
+        The name of the extension.
+    """
     __tablename__ = 'extensions'
 
     id = Column(Integer, primary_key=True)
-    # eg. 'py', 'csv', 'R'
     name = Column(String, nullable=False, unique=True)
 
 
 class SubmissionScoreOnCVFold(Model):
+    """SubmissionScoreOnCVFold table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    submission_on_cv_fold_id : int
+        The ID of the CV fold.
+    submission_on_cv_fold : :class:`rampdb.model.SubmissionOnCVFold`
+        The submission on CV fold instance.
+    submission_score_id : int
+        The ID of the submission score.
+    submission_score : :class:`rampdb.model.SubmissionScore`
+        The submission score instance.
+    train_score : float
+        The training score on the fold.
+    valid_score : float
+        The validation score on the fold.
+    test_score : float
+        The testing score on the fold.
+    """
     __tablename__ = 'submission_score_on_cv_folds'
 
     id = Column(Integer, primary_key=True)
@@ -765,14 +826,17 @@ class SubmissionScoreOnCVFold(Model):
 
     @property
     def name(self):
+        """str: The name of the score."""
         return self.event_score_type.name
 
     @property
     def event_score_type(self):
+        """:class:`EventScoreType`: The event/score type instance."""
         return self.submission_score.event_score_type
 
     @property
     def score_function(self):
+        """callable: the scoring function."""
         return self.event_score_type.score_function
 
 

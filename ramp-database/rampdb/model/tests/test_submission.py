@@ -14,7 +14,9 @@ from rampdb.model import Event
 from rampdb.model import EventScoreType
 from rampdb.model import Model
 from rampdb.model import SubmissionFile
+from rampdb.model import SubmissionFileTypeExtension
 from rampdb.model import SubmissionScore
+from rampdb.model import SubmissionScoreOnCVFold
 from rampdb.model import Team
 
 from rampdb.utils import setup_db
@@ -226,3 +228,22 @@ def test_submission_file_model_property(session_scope_module):
                     submission_file.get_code())
     submission_file.set_code(code='# overwriting a code file')
     assert submission_file.get_code() == '# overwriting a code file'
+
+
+def test_submission_file_type_extension_model_property(session_scope_module):
+    submission_file_type_extension = \
+        (session_scope_module.query(SubmissionFileTypeExtension).first())
+    assert submission_file_type_extension.file_type == 'code'
+    assert submission_file_type_extension.extension_name == 'py'
+
+
+def test_submission_score_on_cv_fold_model_property(session_scope_module):
+    cv_fold_score = (session_scope_module
+        .query(SubmissionScoreOnCVFold)
+        .filter(SubmissionScoreOnCVFold.submission_score_id ==
+                SubmissionScore.id)
+        .filter(SubmissionScore.submission_id == 5)
+        .first())
+    assert cv_fold_score.name == 'acc'
+    assert isinstance(cv_fold_score.event_score_type, EventScoreType)
+    assert callable(cv_fold_score.score_function)
