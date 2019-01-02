@@ -85,6 +85,8 @@ class Submission(Model):
         The name of the submission.
     hash_ : string
         A hash to identify the submission.
+    files : list of :class:`rampdb.model.SubmissionFile`
+        The list of the files associated with the submission.
     submission_timestamp : datetime
         The date and time when the submission was added to the database.
     sent_to_training_timestamp : datetime
@@ -295,44 +297,63 @@ class Submission(Model):
 
     @property
     def module(self):
+        """str: Path of the submission as a module."""
         return self.path.lstrip('./').replace('/', '.')
 
     @property
     def f_names(self):
+        """list of str: File names of a submission."""
         return [file.f_name for file in self.files]
 
     @property
     def link(self):
+        """str: Unique link to the first submission file."""
         return self.files[0].link
 
     @property
     def full_name_with_link(self):
+        """str: HTML hyperlink to the first submission file with event, team,
+        and submission information.
+
+        The hyperlink forward to the first submission file while the text
+        corresponds to the event, team, and submission name.
+        """
         return '<a href={}>{}/{}/{}</a>'.format(
             self.link, self.event.name, self.team.name, self.name[:20])
 
     @property
     def name_with_link(self):
+        """str: HTML hyperlink to the first submission file with submission
+        information.
+
+        The hyperlink forward to the first submission file while the text
+        corresponds to submission name.
+        """
         return '<a href={}>{}</a>'.format(self.link, self.name[:20])
 
     @property
     def state_with_link(self):
+        """str: HTML hyperlink to the state file to report error."""
         return '<a href=/{}>{}</a>'.format(
             os.path.join(self.hash_, 'error.txt'), self.state)
 
     def ordered_scores(self, score_names):
-        """Iterator yielding SubmissionScores.
+        """Generator yielding :class:`rampdb.model.SubmissionScore`.
 
-        Ordered according to score_names. Called by get_public_leaderboard
-        and get_private_leaderboard, making sure scores are listed in the
-        correct column.
+        Ordered according to ``score_names``. Called by
+        :func:`rampdb.tools.leaderboard.get_public_leaderboard` and
+        :func:`rampdb.tools.get_private_leaderboard`, making sure scores are
+        listed in the correct column.
 
         Parameters
         ----------
-        score_names : list of strings
+        score_names : list of str
+            Name of the scores.
 
-        Return
-        ----------
-        scores : iterator of SubmissionScore objects
+        Returns
+        -------
+        scores : generator of :class:`rampdb.model.submission.SubmissionScore``
+            Generate a scoring instance.
         """
         score_dict = {score.score_name: score for score in self.scores}
         for score_name in score_names:
@@ -368,11 +389,23 @@ class Submission(Model):
     #     return np.std([ts.test_time for ts in self.on_cv_folds])
 
     def set_state(self, state):
+        """Set the state of the submission and of each CV fold.
+
+        Parameters
+        ----------
+        state : str
+            The state of the new submission.
+        """
         self.state = state
         for submission_on_cv_fold in self.on_cv_folds:
             submission_on_cv_fold.state = state
 
     def reset(self):
+        """Reset the submission to an initial stage.
+
+        The contributivity, state, error, and scores will be reset to initial
+        values.
+        """
         self.contributivity = 0.0
         self.state = 'new'
         self.error_msg = ''
@@ -383,6 +416,19 @@ class Submission(Model):
             score.test_score_cv_bags = None
 
     def set_error(self, error, error_msg):
+        """Fail the submission as well as the CV folds.
+
+        Parameters
+        ----------
+        error : str
+            The error state of the submission and each fold.
+        error_msg : str
+            The associated error message for the submission and each fold.
+
+        Notes
+        -----
+        Setting the error will be first reset the submission.
+        """
         self.reset()
         self.state = error
         self.error_msg = error_msg
@@ -396,8 +442,8 @@ class Submission(Model):
             # we share a unit of 1. among folds
             unit_contributivity = 1. / len(self.on_cv_folds)
             for submission_on_cv_fold in self.on_cv_folds:
-                self.contributivity +=\
-                    unit_contributivity * submission_on_cv_fold.contributivity
+                self.contributivity += (unit_contributivity *
+                                        submission_on_cv_fold.contributivity)
 
     def set_state_after_training(self):
         self.training_timestamp = datetime.datetime.utcnow()

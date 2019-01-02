@@ -108,8 +108,9 @@ class Event(Model):
 
     problem_id = Column(
         Integer, ForeignKey('problems.id'), nullable=False)
-    problem = relationship('Problem', backref=backref(
-        'events', cascade='all, delete-orphan'))
+    problem = relationship('Problem',
+                           backref=backref('events',
+                                           cascade='all, delete-orphan'))
 
     max_members_per_team = Column(Integer, default=1)
     # max number of submissions in Caruana's ensemble
