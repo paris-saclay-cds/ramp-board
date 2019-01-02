@@ -13,6 +13,7 @@ from rampwf.prediction_types.base import BasePrediction
 from rampdb.model import Event
 from rampdb.model import EventScoreType
 from rampdb.model import Model
+from rampdb.model import SubmissionFile
 from rampdb.model import SubmissionScore
 from rampdb.model import Team
 
@@ -201,3 +202,27 @@ def test_submission_score_model_scoring(session_scope_module, step_score):
             pytest.approx(0.5))
     assert (getattr(submission_score, '{}_cv_std'.format(step_score)) ==
             pytest.approx(0.3))
+
+
+def test_submission_file_model_property(session_scope_module):
+    # get the submission file of an iris submission with only a classifier file
+    submission_file = \
+        (session_scope_module.query(SubmissionFile)
+                             .filter(SubmissionFile.submission_id == 5)
+                             .first())
+    assert re.match('SubmissionFile(.*)',
+                    repr(submission_file))
+    assert submission_file.is_editable is True
+    assert submission_file.extension == 'py'
+    assert submission_file.type == 'classifier'
+    assert submission_file.name == 'classifier'
+    assert submission_file.f_name == 'classifier.py'
+    assert re.match('/.*classifier.py', submission_file.link)
+    assert re.match('.*submissions.*submission_000000005.*classifier.py',
+                    submission_file.path)
+    assert re.match('<a href=".*classifier.py">.*classifier</a>',
+                    submission_file.name_with_link)
+    assert re.match('from sklearn.base import BaseEstimator.*',
+                    submission_file.get_code())
+    submission_file.set_code(code='# overwriting a code file')
+    assert submission_file.get_code() == '# overwriting a code file'
