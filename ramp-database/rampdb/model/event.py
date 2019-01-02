@@ -383,7 +383,7 @@ class EventScoreType(Model):
     id : int
         The ID of the table row.
     name : str
-        The name name of the score.
+        The name of the score.
     event_id : int
         The ID of the event associated.
     event : :class:`rampdb.model.Event`

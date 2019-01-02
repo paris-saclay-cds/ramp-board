@@ -427,7 +427,7 @@ class Submission(Model):
 
         Notes
         -----
-        Setting the error will be first reset the submission.
+        Setting the error will first reset the submission.
         """
         self.reset()
         self.state = error
@@ -847,11 +847,51 @@ class SubmissionScoreOnCVFold(Model):
 class SubmissionOnCVFold(Model):
     """SubmissionOnCVFold.
 
-    is an instantiation of Submission, to be trained on a data file and a cv
-    fold. We don't actually store the trained model in the db (lack of disk and
-    pickling issues), so trained submission is not a database column. On the
-    other hand, we will store train, valid, and test predictions. In a sense
-    substituting CPU time for storage.
+    Parameters
+    ----------
+    submission : :class:`rampdb.model.Submission`
+        The submission used.
+    cv_fold : :class:`rampdb.model.CVFold`
+        The fold to associate with the submission.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    submission_id : int
+        The ID of the submission.
+    submission : :class:`rampdb.model.Submission`
+        The submission instance.
+    cv_fold_id : int
+        The ID of the CV fold.
+    cv_fold : :class:`rampdb.model.CVFold`
+        The CV fold instance.
+    contributivity : float
+        The contributivity of the submission.
+    best : bool
+        Whether or not the submission is the best.
+    full_train_y_pred : ndarray
+        Predictions on the full training set.
+    test_y_pred : ndarray
+        Predictions on the testing set.
+    train_time : float
+        Computation time for the training set.
+    valid_time : float
+        Computation time for the validation set.
+    test_time : float
+        Computation time for the testing set.
+    state : str
+        State of of the submission on this fold.
+    error_msg : str
+        Error message in case of failing submission.
+
+    Notes
+    -----
+    SubmissionOnCVFold is an instantiation of Submission, to be trained on a
+    data file and a cv fold. We don't actually store the trained model in the
+    db (lack of disk and pickling issues), so trained submission is not a
+    database column. On the other hand, we will store train, valid, and test
+    predictions. In a sense substituting CPU time for storage.
     """
 
     __tablename__ = 'submission_on_cv_folds'
@@ -864,8 +904,7 @@ class SubmissionOnCVFold(Model):
                               backref=backref('on_cv_folds',
                                               cascade="all, delete-orphan"))
 
-    cv_fold_id = Column(
-        Integer, ForeignKey('cv_folds.id'), nullable=False)
+    cv_fold_id = Column(Integer, ForeignKey('cv_folds.id'), nullable=False)
     cv_fold = relationship('CVFold',
                            backref=backref('submissions',
                                            cascade="all, delete-orphan"))
@@ -897,63 +936,78 @@ class SubmissionOnCVFold(Model):
         self.reset()
 
     def __repr__(self):
-        repr = 'state = {}, c = {}'\
-            ', best = {}'.format(
-                self.state, self.contributivity, self.best)
-        return repr
+        return ('state = {}, c = {}, best = {}'
+                .format(self.state, self.contributivity, self.best))
 
     @hybrid_property
     def is_public_leaderboard(self):
+        """bool: Whether or not the submission is scored and ready to be on
+        the public leaderboard."""
         return self.state == 'scored'
 
     @hybrid_property
     def is_trained(self):
-        return self.state in\
-            ['trained', 'validated', 'tested', 'validating_error',
-             'testing_error', 'scored']
+        """bool: Whether or not the submission was trained."""
+        return self.state in ('trained', 'validated', 'tested',
+                              'validating_error', 'testing_error', 'scored')
 
     @hybrid_property
     def is_validated(self):
-        return self.state in ['validated', 'tested', 'testing_error', 'scored']
+        """bool: Whether or not the submission was validated."""
+        return self.state in ('validated', 'tested', 'testing_error', 'scored')
 
     @hybrid_property
     def is_tested(self):
-        return self.state in ['tested', 'scored']
+        """bool: Whether or not the submission was tested."""
+        return self.state in ('tested', 'scored')
 
     @hybrid_property
     def is_error(self):
-        return (self.state == 'training_error') |\
-            (self.state == 'checking_error') |\
-            (self.state == 'validating_error') |\
-            (self.state == 'testing_error')
+        """bool: Whether or not the submission failed at one of the stage."""
+        return 'error' in self.state
 
     # The following four functions are converting the stored numpy arrays
     # <>_y_pred into Prediction instances
     @property
     def full_train_predictions(self):
+        """:class:`rampwf.prediction_types.Predictions`: Training
+        predictions."""
         return self.submission.Predictions(y_pred=self.full_train_y_pred)
 
     @property
     def train_predictions(self):
+        """:class:`rampwf.prediction_types.Predictions`: Training
+        predictions."""
         return self.submission.Predictions(
             y_pred=self.full_train_y_pred[self.cv_fold.train_is])
 
     @property
     def valid_predictions(self):
+        """:class:`rampwf.prediction_types.Predictions`: Validation
+        predictions."""
         return self.submission.Predictions(
             y_pred=self.full_train_y_pred[self.cv_fold.test_is])
 
     @property
     def test_predictions(self):
+        """:class:`rampwf.prediction_types.Predictions`: Testing
+        predictions."""
         return self.submission.Predictions(y_pred=self.test_y_pred)
 
     @property
     def official_score(self):
+        """:class:`rampdb.model.SubmissionScoreOnCVFold`: The official score
+        used for the submission."""
         for score in self.scores:
             if self.submission.official_score_name == score.name:
                 return score
 
     def reset(self):
+        """Reset the submission on CV fold to an initial stage.
+
+        The contributivity, state, error, and scores will be reset to initial
+        values.
+        """
         self.contributivity = 0.0
         self.best = False
         self.full_train_y_pred = None
@@ -969,47 +1023,74 @@ class SubmissionOnCVFold(Model):
             score.test_score = score.event_score_type.worst
 
     def set_error(self, error, error_msg):
+        """Fail the CV fold.
+
+        Parameters
+        ----------
+        error : str
+            The error state of the submission and each fold.
+        error_msg : str
+            The associated error message for the submission and each fold.
+
+        Notes
+        -----
+        Setting the error will first reset the submission.
+        """
         self.reset()
         self.state = error
         self.error_msg = error_msg
 
     def compute_train_scores(self):
+        """Compute all training scores."""
         if self.is_trained:
-            true_full_train_predictions =\
+            true_full_train_predictions = \
                 self.submission.event.problem.ground_truths_train()
             for score in self.scores:
                 score.train_score = float(score.score_function(
-                    true_full_train_predictions, self.full_train_predictions,
+                    true_full_train_predictions,
+                    self.full_train_predictions,
                     self.cv_fold.train_is))
         else:
             for score in self.scores:
                 score.train_score = score.event_score_type.worst
 
     def compute_valid_scores(self):
+        """Compute all validating scores."""
         if self.is_validated:
-            true_full_train_predictions =\
+            true_full_train_predictions = \
                 self.submission.event.problem.ground_truths_train()
             for score in self.scores:
                 score.valid_score = float(score.score_function(
-                    true_full_train_predictions, self.full_train_predictions,
+                    true_full_train_predictions,
+                    self.full_train_predictions,
                     self.cv_fold.test_is))
         else:
             for score in self.scores:
                 score.valid_score = score.event_score_type.worst
 
     def compute_test_scores(self):
+        """Compute all testing scores."""
         if self.is_tested:
-            true_test_predictions =\
+            true_test_predictions = \
                 self.submission.event.problem.ground_truths_test()
             for score in self.scores:
                 score.test_score = float(score.score_function(
-                    true_test_predictions, self.test_predictions))
+                    true_test_predictions,
+                    self.test_predictions))
         else:
             for score in self.scores:
                 score.test_score = score.event_score_type.worst
 
     def update(self, detached_submission_on_cv_fold):
-        """From trained DetachedSubmissionOnCVFold."""
+        """Update the submission on CV Fold from a detached submission.
+
+        Parameters
+        ----------
+        detached_submission_on_cv_fold : \
+:class:`rampdb.model.DetachedSubmissionOnCVFold`
+            The detached submission from which we will update the current
+            submission.
+        """
         self.state = detached_submission_on_cv_fold.state
         if self.is_error:
             self.error_msg = detached_submission_on_cv_fold.error_msg
@@ -1018,7 +1099,7 @@ class SubmissionOnCVFold(Model):
                 self.train_time = detached_submission_on_cv_fold.train_time
             if self.is_validated:
                 self.valid_time = detached_submission_on_cv_fold.valid_time
-                self.full_train_y_pred =\
+                self.full_train_y_pred = \
                     detached_submission_on_cv_fold.full_train_y_pred
             if self.is_tested:
                 self.test_time = detached_submission_on_cv_fold.test_time
@@ -1039,22 +1120,21 @@ class DetachedSubmissionOnCVFold(object):
         self.full_train_y_pred = submission_on_cv_fold.full_train_y_pred
         self.test_y_pred = submission_on_cv_fold.test_y_pred
         self.state = submission_on_cv_fold.state
-        self.name = submission_on_cv_fold.submission.event.name + '/'\
-            + submission_on_cv_fold.submission.team.name + '/'\
-            + submission_on_cv_fold.submission.name
+        self.name = (submission_on_cv_fold.submission.event.name + '/' +
+                     submission_on_cv_fold.submission.team.name + '/' +
+                     submission_on_cv_fold.submission.name)
         self.path = submission_on_cv_fold.submission.path
         self.error_msg = submission_on_cv_fold.error_msg
         self.train_time = submission_on_cv_fold.train_time
         self.valid_time = submission_on_cv_fold.valid_time
         self.test_time = submission_on_cv_fold.test_time
         self.trained_submission = None
-        self.workflow =\
+        self.workflow = \
             submission_on_cv_fold.submission.event.problem.workflow_object
 
     def __repr__(self):
-        text = 'Submission({}) on fold {}'.format(
-            self.name, str(self.train_is)[:10])
-        return text
+        return ('Submission({}) on fold {}'
+                .format(self.name, str(self.train_is)[:10]))
 
 
 submission_similarity_type = Enum(
@@ -1066,6 +1146,33 @@ submission_similarity_type = Enum(
 
 
 class SubmissionSimilarity(Model):
+    """SubmissionSimilarity table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    type : str
+        The type of similarity.
+    note : str
+        Note about the similarity.
+    timestamp : datetime
+        The date and time of the submission.
+    similarity : float
+        The similarity index.
+    user_id : int
+        The ID of the user.
+    user : :class:`rampdb.model.User`
+        The user instance.
+    source_submission_id : int
+        The ID of the submission used as source.
+    source_submission : :class:`rampdb.model.Submission`
+        The source submission instance.
+    target_submission_id : int
+        The ID of the submission used as target.
+    target_submission : :class:`rampdb.model.Submission`
+        The target submission instance.
+    """
     __tablename__ = 'submission_similaritys'
 
     id = Column(Integer, primary_key=True)
@@ -1075,27 +1182,25 @@ class SubmissionSimilarity(Model):
     similarity = Column(Float, default=0.0)
 
     user_id = Column(Integer, ForeignKey('users.id'))
-    user = relationship(
-        'User', backref=backref('submission_similaritys'))
+    user = relationship('User', backref=backref('submission_similaritys'))
 
-    source_submission_id = Column(
-        Integer, ForeignKey('submissions.id'))
+    source_submission_id = Column(Integer, ForeignKey('submissions.id'))
     source_submission = relationship(
         'Submission', primaryjoin=(
             'SubmissionSimilarity.source_submission_id == Submission.id'),
-        backref=backref('sources', cascade='all, delete-orphan'))
+        backref=backref('sources', cascade='all, delete-orphan')
+    )
 
-    target_submission_id = Column(
-        Integer, ForeignKey('submissions.id'))
+    target_submission_id = Column(Integer, ForeignKey('submissions.id'))
     target_submission = relationship(
         'Submission', primaryjoin=(
             'SubmissionSimilarity.target_submission_id == Submission.id'),
         backref=backref('targets', cascade='all, delete-orphan'))
 
     def __repr__(self):
-        text = 'type={}, user={}, source={}, target={} '.format(
-            self.type, self.user, self.source_submission,
-            self.target_submission)
-        text += 'similarity={}, timestamp={}'.format(
-            self.similarity, self.timestamp)
+        text = ('type={}, user={}, source={}, target={} '
+                .format(self.type, self.user, self.source_submission,
+                        self.target_submission))
+        text += 'similarity={}, timestamp={}'.format(self.similarity,
+                                                     self.timestamp)
         return text
