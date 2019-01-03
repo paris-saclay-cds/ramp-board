@@ -20,7 +20,6 @@ from rampdb.model import SubmissionFileTypeExtension
 from rampdb.model import SubmissionOnCVFold
 from rampdb.model import SubmissionScore
 from rampdb.model import SubmissionScoreOnCVFold
-from rampdb.model import SubmissionSimilarity
 from rampdb.model import Team
 
 from rampdb.utils import setup_db
