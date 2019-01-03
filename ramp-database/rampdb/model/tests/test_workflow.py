@@ -8,6 +8,7 @@ from ramputils.testing import path_config_example
 
 from rampdb.model import Model
 from rampdb.model import Problem
+from rampdb.model import SubmissionFile
 from rampdb.model import SubmissionFileType
 from rampdb.model import Workflow
 from rampdb.model import WorkflowElement
@@ -55,6 +56,25 @@ def test_workflow_element_type_model(session_scope_module):
                     repr(workflow_element_type))
 
 
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('workflows', WorkflowElement)]
+)
+def test_workflow_element_type_model_backref(session_scope_module, backref,
+                                             expected_type):
+    workflow_element_type = \
+        (session_scope_module.query(WorkflowElementType)
+                             .filter(WorkflowElementType.type_id ==
+                                     SubmissionFileType.id)
+                             .filter(SubmissionFileType.name == 'code')
+                             .first())
+    backref_attr = getattr(workflow_element_type, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)
+
+
 def test_workflow_model(session_scope_module):
     workflow = get_workflow(session_scope_module, 'Classifier')
     assert re.match(r'Workflow\(.*\)\n\t.*WorkflowElement.*', repr(workflow))
@@ -62,7 +82,8 @@ def test_workflow_model(session_scope_module):
 
 @pytest.mark.parametrize(
     'backref, expected_type',
-    [('problems', Problem)]
+    [('problems', Problem),
+     ('elements', WorkflowElement)]
 )
 def test_workflow_model_backref(session_scope_module, backref, expected_type):
     workflow = get_workflow(session_scope_module, 'Classifier')
@@ -87,3 +108,22 @@ def test_workflow_element_model(session_scope_module):
     assert workflow_element.file_type == 'code'
     assert workflow_element.is_editable is True
     assert workflow_element.max_size == 100000
+
+
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('submission_files', SubmissionFile)]
+)
+def test_workflow_element_model_backref(session_scope_module, backref,
+                                        expected_type):
+    workflow_element = \
+        (session_scope_module.query(WorkflowElement)
+                             .filter(WorkflowElement.workflow_id ==
+                                     Workflow.id)
+                             .filter(Workflow.name == 'Classifier')
+                             .one())
+    backref_attr = getattr(workflow_element, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)

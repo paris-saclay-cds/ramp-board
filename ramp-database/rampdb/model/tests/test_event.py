@@ -16,6 +16,7 @@ from rampdb.model import EventScoreType
 from rampdb.model import EventTeam
 from rampdb.model import Model
 from rampdb.model import Submission
+from rampdb.model import SubmissionScore
 from rampdb.model import Workflow
 
 from rampdb.utils import setup_db
@@ -160,6 +161,26 @@ def test_event_score_type_model_property(session_scope_module):
     assert event_type_score.maximum == pytest.approx(1)
     assert event_type_score.worst == pytest.approx(0)
     assert callable(event_type_score.score_type_object.score_function)
+
+
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('submissions', SubmissionScore)]
+)
+def test_event_score_type_model_backref(session_scope_module, backref,
+                                        expected_type):
+    event = get_event(session_scope_module, 'iris_test')
+    # get only the accuracy score
+    event_type_score = \
+        (session_scope_module.query(EventScoreType)
+                             .filter(EventScoreType.event_id == event.id)
+                             .filter(EventScoreType.name == 'acc')
+                             .one())
+    backref_attr = getattr(event_type_score, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)
 
 
 def test_event_team_model(session_scope_module):

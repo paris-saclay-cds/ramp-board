@@ -27,6 +27,8 @@ class WorkflowElementType(Model):
         The ID of the submission file type.
     type : :class:`rampdb.model.SubmissionFileType`
         The submission file type instance.
+    workflows : list of :class:`rampdb.model.WorkflowElement`
+        A back-reference to the workflows linked with the workflow element.
     """
     __tablename__ = 'workflow_element_types'
 
@@ -86,6 +88,8 @@ class Workflow(Model):
         The name of the workflow.
     problems : list of :class:`rampdb.model.Problem`
         A back-reference to the problems using this workflow.
+    elements : list of :class:`rampdb.model.WorkflowElement`
+        A back-reference to the elements of the workflow.
     """
     __tablename__ = 'workflows'
 
@@ -132,6 +136,9 @@ class WorkflowElement(Model):
         The ID of the associated workflow element type.
     workflow_element_type : :class:`rampdb.model.WorkflowElementType`
         The workflow element type instance.
+    submission_files : list of :class:`rampdb.model.SubmissionFile`
+        A back-reference to the submission file associated with the workflow
+        element.
     """
     __tablename__ = 'workflow_elements'
 
@@ -154,8 +161,8 @@ class WorkflowElement(Model):
     def __init__(self, workflow, workflow_element_type, name_in_workflow=None):
         self.workflow = workflow
         self.workflow_element_type = workflow_element_type
-        self.name = (self.workflow_element_type.name if name_in_workflow is None
-                     else name_in_workflow)
+        self.name = (self.workflow_element_type.name
+                     if name_in_workflow is None else name_in_workflow)
 
     def __repr__(self):
         return 'Workflow({}): WorkflowElement({})'.format(self.workflow.name,

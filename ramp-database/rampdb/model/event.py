@@ -401,6 +401,8 @@ class EventScoreType(Model):
         The score type instance.
     precision : int
         The numerical precision of the score.
+    submissions : list of :class:`rampdb.model.SubmissionScore`
+        A back-reference of the submissions for the event/score type.
     """
     __tablename__ = 'event_score_types'
 

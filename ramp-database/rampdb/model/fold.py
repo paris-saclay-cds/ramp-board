@@ -35,6 +35,8 @@ class CVFold(Model):
         The ID of the event.
     event : :class:`rampdb.model.Event`
         The event instance.
+    submissions : list of :class:`rampdb.model.SubmissionOnCVFold`
+        A back-reference to the submissions linked with this fold.
     """
 
     __tablename__ = 'cv_folds'

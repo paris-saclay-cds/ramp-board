@@ -8,6 +8,8 @@ from ramputils.testing import path_config_example
 
 from rampdb.model import EventAdmin
 from rampdb.model import Model
+from rampdb.model import SubmissionSimilarity
+from rampdb.model import Team
 
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
@@ -48,7 +50,9 @@ def test_user_model_properties(session_scope_module):
 
 @pytest.mark.parametrize(
     'backref, expected_type',
-    [('admined_events', EventAdmin)]
+    [('admined_events', EventAdmin),
+     ('submission_similaritys', SubmissionSimilarity),
+     ('admined_teams', Team)]
 )
 def test_user_model_backref(session_scope_module, backref, expected_type):
     user = get_user_by_name(session_scope_module, 'test_user')

@@ -14,14 +14,18 @@ from rampwf.prediction_types.base import BasePrediction
 from rampdb.model import DetachedSubmissionOnCVFold
 from rampdb.model import Event
 from rampdb.model import EventScoreType
+from rampdb.model import Extension
 from rampdb.model import HistoricalContributivity
 from rampdb.model import Model
+from rampdb.model import Submission
 from rampdb.model import SubmissionFile
+from rampdb.model import SubmissionFileType
 from rampdb.model import SubmissionFileTypeExtension
 from rampdb.model import SubmissionOnCVFold
 from rampdb.model import SubmissionScore
 from rampdb.model import SubmissionScoreOnCVFold
 from rampdb.model import Team
+from rampdb.model import WorkflowElementType
 
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
@@ -153,9 +157,15 @@ def test_submission_model_set_contributivity(session_scope_module, state,
 
 @pytest.mark.parametrize(
     'backref, expected_type',
-    [('historical_contributivitys', HistoricalContributivity)]
+    [('historical_contributivitys', HistoricalContributivity),
+     ('scores', SubmissionScore),
+     ('files', SubmissionFile),
+     ('on_cv_folds', SubmissionOnCVFold),
+     ('sources', Submission),
+     ('targets', Submission)]
 )
-def test_submission_model_backref(session_scope_module, backref, expected_type):
+def test_submission_model_backref(session_scope_module, backref,
+                                  expected_type):
     submission = get_submission_by_id(session_scope_module, 5)
     backref_attr = getattr(submission, backref)
     assert isinstance(backref_attr, list)
@@ -223,6 +233,23 @@ def test_submission_score_model_scoring(session_scope_module, step_score):
             pytest.approx(0.3))
 
 
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('on_cv_folds', SubmissionScoreOnCVFold)]
+)
+def test_submission_score_model_backref(session_scope_module, backref,
+                                        expected_type):
+    submission_score = \
+        (session_scope_module.query(SubmissionScore)
+                             .filter(SubmissionScore.submission_id == 5)
+                             .first())
+    backref_attr = getattr(submission_score, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)
+
+
 def test_submission_file_model_property(session_scope_module):
     # get the submission file of an iris submission with only a classifier file
     submission_file = \
@@ -252,6 +279,21 @@ def test_submission_file_type_extension_model_property(session_scope_module):
         (session_scope_module.query(SubmissionFileTypeExtension).first())
     assert submission_file_type_extension.file_type == 'code'
     assert submission_file_type_extension.extension_name == 'py'
+
+
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('submission_files', SubmissionFile)]
+)
+def test_submission_file_type_extension_model_backref(session_scope_module,
+                                                      backref, expected_type):
+    submission_file_type_extension = \
+        (session_scope_module.query(SubmissionFileTypeExtension).first())
+    backref_attr = getattr(submission_file_type_extension, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)
 
 
 def test_submission_score_on_cv_fold_model_property(session_scope_module):
@@ -574,6 +616,23 @@ def test_submission_on_cv_fold_model_update(session_scope_module):
     assert_allclose(cv_fold.test_y_pred, np.zeros((30, 3)))
 
 
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('scores', SubmissionScoreOnCVFold)]
+)
+def test_submission_on_cv_fold_model_backref(session_scope_module, backref,
+                                             expected_type):
+    cv_fold = \
+        (session_scope_module.query(SubmissionOnCVFold)
+                             .filter(SubmissionOnCVFold.submission_id == 5)
+                             .first())
+    backref_attr = getattr(cv_fold, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)
+
+
 def test_detached_submission_on_cv_fold_model(session_scope_module):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
@@ -582,3 +641,31 @@ def test_detached_submission_on_cv_fold_model(session_scope_module):
 
     detached_cv_fold = DetachedSubmissionOnCVFold(cv_fold)
     assert re.match('Submission(.*).*', repr(detached_cv_fold))
+
+
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('submission_file_types', SubmissionFileTypeExtension)]
+)
+def test_extension_model_backref(session_scope_module, backref, expected_type):
+    extension = session_scope_module.query(Extension).first()
+    backref_attr = getattr(extension, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)
+
+
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('workflow_element_types', WorkflowElementType)]
+)
+def test_submission_file_type_model_backref(session_scope_module, backref,
+                                            expected_type):
+    submission_file_type = (session_scope_module.query(SubmissionFileType)
+                                                .first())
+    backref_attr = getattr(submission_file_type, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)

@@ -135,6 +135,12 @@ class Submission(Model):
     historical_contributivitys : list of \
 :class:`rampdb.model.HistoricalContributivity`
         A back-reference of the historical contributivities for the submission.
+    scores : list of :class:`rampdb.model.SubmissionScore`
+        A back-reference of scores for the submission.
+    files : list of :class:`rampdb.model.SubmissionFile`
+        A back-reference of files attached to the submission.
+    on_cv_folds : list of :class:`rampdb.model.SubmissionOnCVFold`
+        A back-reference of the CV fold for this submission.
     """
     __tablename__ = 'submissions'
 
@@ -202,7 +208,7 @@ class Submission(Model):
         self.submission_timestamp = datetime.datetime.utcnow()
         if session is None:
             event_score_types = \
-            (EventScoreType.query.filter_by(event=event_team.event))
+                (EventScoreType.query.filter_by(event=event_team.event))
         else:
             event_score_types = (session.query(EventScoreType)
                                         .filter(EventScoreType.event ==
@@ -219,12 +225,12 @@ class Submission(Model):
             self.event.name, self.team.name, self.name)
 
     def __repr__(self):
-        return  ('Submission(event_name={}, team_name={}, name={}, files={}, '
-                 'state={}, train_time={})'
-                 .format(encode_string(self.event.name),
-                         encode_string(self.team.name),
-                         encode_string(self.name),
-                         self.files, self.state, self.train_time_cv_mean))
+        return ('Submission(event_name={}, team_name={}, name={}, files={}, '
+                'state={}, train_time={})'
+                .format(encode_string(self.event.name),
+                        encode_string(self.team.name),
+                        encode_string(self.name),
+                        self.files, self.state, self.train_time_cv_mean))
 
     @hybrid_property
     def team(self):
@@ -508,6 +514,8 @@ class SubmissionScore(Model):
         The partial validation scores for all CV bags.
     test_score_cv_bags : ndarray
         The partial testing scores for all CV bags.
+    on_cv_folds : list of :class:`rampdb.model.SubmissionScoreOnCVFold`
+        A back-reference the CV fold associated with the score.
     """
     __tablename__ = 'submission_scores'
 
@@ -619,13 +627,11 @@ class SubmissionFile(Model):
                               backref=backref('files',
                                               cascade='all, delete-orphan'))
 
-    # e.g. 'regression', 'external_data'
     workflow_element_id = Column(Integer, ForeignKey('workflow_elements.id'),
                                  nullable=False)
     workflow_element = relationship('WorkflowElement',
                                     backref=backref('submission_files'))
 
-    # e.g., ('code', 'py'), ('data', 'csv')
     submission_file_type_extension_id = Column(
         Integer, ForeignKey('submission_file_type_extensions.id'),
         nullable=False
@@ -716,6 +722,9 @@ class SubmissionFileTypeExtension(Model):
         The ID of the extension.
     extension : :class:`rampdb.model.Extension`
         The file extension instance.
+    submission_files : list of \
+:class:`rampdb.model.SubmissionFileTypeExtension`
+        A back-reference to the submission files related to the type extension.
     """
     __tablename__ = 'submission_file_type_extensions'
 
@@ -755,6 +764,9 @@ class SubmissionFileType(Model):
         Whether or not this type of file is editable.
     max_size : int
         The maximum size of this file type.
+    workflow_element_types : list of :class:`rampdb.model.WorkflowElementType`
+        A back-reference to the workflow element type for this submission file
+        type.
     """
     __tablename__ = 'submission_file_types'
 
@@ -773,6 +785,9 @@ class Extension(Model):
         The ID of the table row.
     name : str
         The name of the extension.
+    submission_file_types : list of \
+:class:`rampdb.model.SubmissionFileTypeExtension`
+        A back-reference to the submission file types for this extension.
     """
     __tablename__ = 'extensions'
 
@@ -887,6 +902,8 @@ class SubmissionOnCVFold(Model):
         State of of the submission on this fold.
     error_msg : str
         Error message in case of failing submission.
+    scores : list of :class:`rampdb.model.SubmissionScoreOnCVFold`
+        A back-reference on the scores for this fold.
 
     Notes
     -----

@@ -9,6 +9,7 @@ from ramputils.testing import path_config_example
 
 from rampdb.model import CVFold
 from rampdb.model import Model
+from rampdb.model import SubmissionOnCVFold
 
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
@@ -42,4 +43,20 @@ def test_cv_fold_model(session_scope_module):
     cv_fold = (session_scope_module.query(CVFold)
                                    .filter(CVFold.event_id == event.id)
                                    .all())
-    assert  "train fold [" in repr(cv_fold[0])
+    assert "train fold [" in repr(cv_fold[0])
+
+
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('submissions', SubmissionOnCVFold)]
+)
+def test_cv_fold_model_backref(session_scope_module, backref, expected_type):
+    event = get_event(session_scope_module, 'iris_test')
+    cv_fold = (session_scope_module.query(CVFold)
+                                   .filter(CVFold.event_id == event.id)
+                                   .first())
+    backref_attr = getattr(cv_fold, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)

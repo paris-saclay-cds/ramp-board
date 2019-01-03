@@ -101,6 +101,12 @@ class User(Model):
         Whether or not the user wants to receive RAMP news.
     is_authenticated : bool
         Whether or not the user logged-in.
+    admined_events : list of :class:`rampdb.model.EventAdmin`
+        A back-reference to the events administrated by the user.
+    submission_similaritys : list of :class:`rampdb.model.SubmissionSimilarity`
+        A back-reference to the submission similarity.
+    admined_teams : list of :class:`rampdb.model.Team`
+        A back-reference to the teams administrated by the user.
     """
     __tablename__ = 'users'
 
@@ -263,8 +269,6 @@ is None
         The submission file ID.
     submission_file : :class:`rampdb.model.SubmissionFile`
         The submission file instance.
-    admined_events : list of :class:`rampdb.model.EventAdmin`
-        A back-reference to the events administrated by the user.
     """
     __tablename__ = 'user_interactions'
 
