@@ -38,6 +38,8 @@ class ScoreType(Model):
         The minimum possible score.
     maximum : float
         The maximum possible score.
+    events : list of :class:`rampdb.model.EventScoreType`
+        A back-reference to the event using the score.
     """
     __tablename__ = 'score_types'
 

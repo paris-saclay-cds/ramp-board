@@ -84,6 +84,8 @@ class Workflow(Model):
         The ID of the table row.
     name : str
         The name of the workflow.
+    problems : list of :class:`rampdb.model.Problem`
+        A back-reference to the problems using this workflow.
     """
     __tablename__ = 'workflows'
 

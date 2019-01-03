@@ -132,6 +132,9 @@ class Submission(Model):
         Whether it is a sandbox submission.
     path_ramp_submissions : str
         Path to the deployment RAMP submissions directory.
+    historical_contributivitys : list of \
+:class:`rampdb.model.HistoricalContributivity`
+        A back-reference of the historical contributivities for the submission.
     """
     __tablename__ = 'submissions'
 

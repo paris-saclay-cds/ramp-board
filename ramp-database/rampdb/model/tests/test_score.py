@@ -1,3 +1,4 @@
+import re
 import shutil
 
 import pytest
@@ -5,6 +6,7 @@ import pytest
 from ramputils import read_config
 from ramputils.testing import path_config_example
 
+from rampdb.model import EventScoreType
 from rampdb.model import Model
 from rampdb.model import ScoreType
 
@@ -35,4 +37,17 @@ def session_scope_module(config):
 
 def test_score_type_model(session_scope_module):
     score_type = session_scope_module.query(ScoreType).first()
-    assert 'ScoreType(name=' in repr(score_type)
+    assert re.match(r'ScoreType\(name=.*\)', repr(score_type))
+
+
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('events', EventScoreType)]
+)
+def test_score_type_model_backref(session_scope_module, backref, expected_type):
+    score_type = session_scope_module.query(ScoreType).first()
+    backref_attr = getattr(score_type, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)

@@ -10,9 +10,12 @@ from ramputils.testing import path_config_example
 from rampwf.prediction_types.base import BasePrediction
 from rampwf.score_types.accuracy import Accuracy
 
+from rampdb.model import CVFold
+from rampdb.model import EventAdmin
 from rampdb.model import EventScoreType
 from rampdb.model import EventTeam
 from rampdb.model import Model
+from rampdb.model import Submission
 from rampdb.model import Workflow
 
 from rampdb.utils import setup_db
@@ -125,6 +128,22 @@ def test_event_model_score(session_scope_module):
         session_scope_module) == '0.4')
 
 
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('score_types', EventScoreType),
+     ('event_admins', EventAdmin),
+     ('event_teams', EventTeam),
+     ('cv_folds', CVFold)]
+)
+def test_event_model_backref(session_scope_module, backref, expected_type):
+    event = get_event(session_scope_module, 'iris_test')
+    backref_attr = getattr(event, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)
+
+
 def test_event_score_type_model_property(session_scope_module):
     event = get_event(session_scope_module, 'iris_test')
     # get only the accuracy score
@@ -153,3 +172,21 @@ def test_event_team_model(session_scope_module):
                                       .one())
     assert repr(event_team) == "Event(iris_test)/Team({})".format(
         encode_string('test_user'))
+
+
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('submissions', Submission)]
+)
+def test_event_team_model_backref(session_scope_module, backref, expected_type):
+    event = get_event(session_scope_module, 'iris_test')
+    team = get_team_by_name(session_scope_module, 'test_user')
+    event_team = (session_scope_module.query(EventTeam)
+                                      .filter(EventTeam.event_id == event.id)
+                                      .filter(EventTeam.team_id == team.id)
+                                      .one())
+    backref_attr = getattr(event_team, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)

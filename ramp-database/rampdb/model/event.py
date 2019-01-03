@@ -99,6 +99,14 @@ class Event(Model):
         The public leaderboard of the competition in HTML.
     private_competition_leaderboard_html : str
         The private leaderboard of the competition in HTML.
+    score_types : list of :class:`rampdb.model.EventScoreType`
+        A back-reference to the score type used in the event.
+    event_admins : list of :class:`rampdb.model.EventAdmin`
+        A back-reference to the admin for the event.
+    event_teams: list of :class:`rampdb.model.EventTeam`
+        A back-reference to the teams enrolled in the event.
+    cv_folds : list of :class:`rampdb.model.CVFold`
+        A back-reference to the CV folds for the event.
     """
     __tablename__ = 'events'
 
@@ -106,8 +114,7 @@ class Event(Model):
     name = Column(String, nullable=False, unique=True)
     title = Column(String, nullable=False)
 
-    problem_id = Column(
-        Integer, ForeignKey('problems.id'), nullable=False)
+    problem_id = Column(Integer, ForeignKey('problems.id'), nullable=False)
     problem = relationship('Problem',
                            backref=backref('events',
                                            cascade='all, delete-orphan'))
@@ -533,6 +540,8 @@ class EventTeam(Model):
         The failed submission board for the team for the specific event.
     new_leaderboard_html : str
         The new submission board for the team for the specific event.
+    submissions : list of :class:`rampdb.model.Submission`
+        A back-reference to the submissions associated with this event/team.
     """
     __tablename__ = 'event_teams'
 

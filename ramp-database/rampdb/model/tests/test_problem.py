@@ -9,7 +9,9 @@ from ramputils.testing import path_config_example
 from rampwf.prediction_types.base import BasePrediction
 from rampwf.workflows.classifier import Classifier
 
+from rampdb.model import Event
 from rampdb.model import Model
+from rampdb.model import ProblemKeyword
 
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
@@ -68,3 +70,17 @@ def test_problem_model(session_scope_module):
     assert gt_valid.y_pred.shape == (3, 3)
 
     assert isinstance(problem.workflow_object, Classifier)
+
+
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('events', Event),
+     ('keywords', ProblemKeyword)]
+)
+def test_problem_model_backref(session_scope_module, backref, expected_type):
+    problem = get_problem(session_scope_module, 'iris')
+    backref_attr = getattr(problem, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)

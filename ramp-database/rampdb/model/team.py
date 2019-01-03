@@ -47,6 +47,8 @@ class Team(Model):
         The ID of the team accepting the merging.
     acceptor : :class:`rampdb.model.Team`
         The team instance accepting the merging.
+    team_events : :class:`rampdb.model.EventTeam`
+        A back-reference to the events to which the team is enroll.
     """
     __tablename__ = 'teams'
 

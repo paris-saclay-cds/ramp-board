@@ -6,6 +6,7 @@ import pytest
 from ramputils import read_config
 from ramputils.testing import path_config_example
 
+from rampdb.model import EventAdmin
 from rampdb.model import Model
 
 from rampdb.utils import setup_db
@@ -43,3 +44,16 @@ def test_user_model_properties(session_scope_module):
     assert user.get_id() == '1'
     assert re.match(r'User\(.*test_user.*\)', str(user))
     assert re.match(r'User\(name=.*test_user.*, lastname.*\)', repr(user))
+
+
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('admined_events', EventAdmin)]
+)
+def test_user_model_backref(session_scope_module, backref, expected_type):
+    user = get_user_by_name(session_scope_module, 'test_user')
+    backref_attr = getattr(user, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)

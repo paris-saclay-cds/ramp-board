@@ -7,6 +7,7 @@ from ramputils import read_config
 from ramputils.testing import path_config_example
 
 from rampdb.model import Model
+from rampdb.model import Problem
 from rampdb.model import SubmissionFileType
 from rampdb.model import Workflow
 from rampdb.model import WorkflowElement
@@ -57,6 +58,19 @@ def test_workflow_element_type_model(session_scope_module):
 def test_workflow_model(session_scope_module):
     workflow = get_workflow(session_scope_module, 'Classifier')
     assert re.match(r'Workflow\(.*\)\n\t.*WorkflowElement.*', repr(workflow))
+
+
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('problems', Problem)]
+)
+def test_workflow_model_backref(session_scope_module, backref, expected_type):
+    workflow = get_workflow(session_scope_module, 'Classifier')
+    backref_attr = getattr(workflow, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)
 
 
 def test_workflow_element_model(session_scope_module):

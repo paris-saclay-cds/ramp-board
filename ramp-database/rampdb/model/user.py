@@ -263,6 +263,8 @@ is None
         The submission file ID.
     submission_file : :class:`rampdb.model.SubmissionFile`
         The submission file instance.
+    admined_events : list of :class:`rampdb.model.EventAdmin`
+        A back-reference to the events administrated by the user.
     """
     __tablename__ = 'user_interactions'
 

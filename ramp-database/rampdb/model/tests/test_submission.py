@@ -14,6 +14,7 @@ from rampwf.prediction_types.base import BasePrediction
 from rampdb.model import DetachedSubmissionOnCVFold
 from rampdb.model import Event
 from rampdb.model import EventScoreType
+from rampdb.model import HistoricalContributivity
 from rampdb.model import Model
 from rampdb.model import SubmissionFile
 from rampdb.model import SubmissionFileTypeExtension
@@ -148,6 +149,19 @@ def test_submission_model_set_contributivity(session_scope_module, state,
         cv_fold.contributivity = 0.3
     submission.set_contributivity()
     assert submission.contributivity == pytest.approx(expected_contributivity)
+
+
+@pytest.mark.parametrize(
+    'backref, expected_type',
+    [('historical_contributivitys', HistoricalContributivity)]
+)
+def test_submission_model_backref(session_scope_module, backref, expected_type):
+    submission = get_submission_by_id(session_scope_module, 5)
+    backref_attr = getattr(submission, backref)
+    assert isinstance(backref_attr, list)
+    # only check if the list is not empty
+    if backref_attr:
+        assert isinstance(backref_attr[0], expected_type)
 
 
 @pytest.mark.parametrize(

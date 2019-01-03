@@ -56,6 +56,10 @@ class Problem(Model):
         The path where the kits are located.
     path_ramp_data : str
         The path where the data are located.
+    events : list of :class:`rampdb.model.Event`
+        A back-reference to the event.
+    keywords : list of :class:`rampdb.model.ProblemKeyword`
+        A back-reference to the keywords associated with the problem.
     """
     __tablename__ = 'problems'
 
@@ -188,8 +192,10 @@ class Keyword(Model):
         The type of keyword.
     category : str
         The category of the keyword.
-    descritption : str
+    description : str
         The description of the keyword.
+    problems : list of :class:`rampdb.model.ProblemKeyword`
+        A back-reference to the problems associated with the keyword.
     """
     __tablename__ = 'keywords'
 
