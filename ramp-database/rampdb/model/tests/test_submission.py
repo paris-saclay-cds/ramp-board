@@ -52,9 +52,9 @@ def session_scope_module(config):
 def test_submission_model_property(session_scope_module):
     # check that the property of Submission
     submission = get_submission_by_id(session_scope_module, 5)
-    assert (str(submission) ==
-            'Submission(iris_test/test_user/starting_kit_test)')
-    assert 'Submission(event_name=' in repr(submission)
+    assert re.match(r'Submission\(iris_test/test_user/.*\)',
+                    str(submission))
+    assert re.match(r'Submission\(event_name.*\)', repr(submission))
 
     assert isinstance(submission.team, Team)
     assert isinstance(submission.event, Event)
@@ -567,5 +567,4 @@ def test_detached_submission_on_cv_fold_model(session_scope_module):
                              .first())
 
     detached_cv_fold = DetachedSubmissionOnCVFold(cv_fold)
-    assert re.match('Submission(.*starting_kit_test).*',
-                    repr(detached_cv_fold))
+    assert re.match('Submission(.*).*', repr(detached_cv_fold))
