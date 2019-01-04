@@ -411,6 +411,39 @@ def get_scores(session, submission_id):
     return scores
 
 
+def get_bagged_scores(session, submission_id):
+    """Get the bagged scores for each fold of a submission.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submission_id : int
+        The id of the submission.
+
+    Returns
+    -------
+    bagged_scores : pd.DataFrame
+        A pandas dataframe containing the bagged scores.
+    """
+    submission = select_submission_by_id(session, submission_id)
+    bagged_scores = {}
+    for step in ('valid', 'test'):
+        score_dict = {}
+        for score in submission.scores:
+            score_all_bags = getattr(score, '{}_score_cv_bags'.format(step))
+            if score_all_bags is None:
+                continue
+            score_dict[score.score_name] = \
+                {n: sc for n, sc in enumerate(score_all_bags)}
+        bagged_scores[step] = score_dict
+    bagged_scores = pd.concat({step: pd.DataFrame(scores)
+                               for step, scores in bagged_scores.items()})
+    bagged_scores.columns = bagged_scores.columns.rename('scores')
+    bagged_scores.index = bagged_scores.index.rename(['step', 'n_bag'])
+    return bagged_scores
+
+
 def get_submission_max_ram(session, submission_id):
     """Get the max amount RAM used by a submission during processing.
 
@@ -576,6 +609,38 @@ def set_scores(session, submission_id, path_predictions):
             for step in scores_update.index:
                 value = scores_update.loc[step, score.name]
                 setattr(score, step + '_score', value)
+    session.commit()
+
+
+def set_bagged_scores(session, submission_id, path_predictions):
+    """Set the bagged scores in the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submission_id : int
+        The id of the submission.
+    path_predictions : str
+        The path where the results files are located.
+    """
+    submission = select_submission_by_id(session, submission_id)
+    df = pd.read_csv(os.path.join(path_predictions, 'bagged_scores.csv'),
+                     index_col=[0, 1])
+    df_steps = df.index.get_level_values('step').unique().tolist()
+    for score in submission.scores:
+        for step in ('valid', 'test'):
+            highest_n_bag = df.index.get_level_values('n_bag').max()
+            if step in df_steps:
+                score_last_bag = df.loc[(step, highest_n_bag),
+                                        score.score_name]
+                score_all_bags = (df.loc[(step, slice(None)), score.score_name]
+                                    .tolist())
+            else:
+                score_last_bag = float(score.event_score_type.worst)
+                score_all_bags = None
+            setattr(score, '{}_score_cv_bag'.format(step), score_last_bag)
+            setattr(score, '{}_score_cv_bags'.format(step), score_all_bags)
     session.commit()
 
 

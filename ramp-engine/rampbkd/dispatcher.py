@@ -23,6 +23,7 @@ from databoard.db_tools import update_submission_on_cv_fold
 from rampdb.tools.submission import get_submissions
 from rampdb.tools.submission import get_submission_state
 
+from rampdb.tools.submission import set_bagged_scores
 from rampdb.tools.submission import set_predictions
 from rampdb.tools.submission import set_time
 from rampdb.tools.submission import set_scores
@@ -166,6 +167,7 @@ class Dispatcher(object):
             set_predictions(session, submission_id, path_predictions)
             set_time(session, submission_id, path_predictions)
             set_scores(session, submission_id, path_predictions)
+            set_bagged_scores(session, submission_id, path_predictions)
             # TODO: test those two last functions
             update_leaderboards(self._ramp_config['event_name'])
             update_all_user_leaderboards(self._ramp_config['event_name'])

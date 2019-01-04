@@ -31,6 +31,7 @@ from rampdb.utils import session_scope
 
 from rampdb.tools.submission import add_submission
 
+from rampdb.tools.submission import get_bagged_scores
 from rampdb.tools.submission import get_event_nb_folds
 from rampdb.tools.submission import get_predictions
 from rampdb.tools.submission import get_scores
@@ -42,6 +43,7 @@ from rampdb.tools.submission import get_submission_max_ram
 from rampdb.tools.submission import get_submissions
 from rampdb.tools.submission import get_time
 
+from rampdb.tools.submission import set_bagged_scores
 from rampdb.tools.submission import set_predictions
 from rampdb.tools.submission import set_scores
 from rampdb.tools.submission import set_submission_error_msg
@@ -378,6 +380,26 @@ def test_check_scores(session_scope_module):
          'f1_70': [0.333333, 0.33333, 0.666667, 0.33333, 0.33333, 0.666667]},
         index=multi_index
     )
+    assert_frame_equal(scores, expected_df, check_less_precise=True)
+
+
+def test_check_bagged_scores(session_scope_module):
+    # check both set_bagged_scores and get_bagged_scores
+    submission_id = 1
+    path_results = os.path.join(HERE, 'data', 'iris_predictions')
+    set_bagged_scores(session_scope_module, submission_id, path_results)
+    scores = get_bagged_scores(session_scope_module, submission_id)
+    multi_index = pd.MultiIndex(levels=[['test', 'valid'], [0, 1]],
+                                labels=[[0, 0, 1, 1], [0, 1, 0, 1]],
+                                names=['step', 'n_bag'])
+    expected_df = pd.DataFrame(
+        {'acc': [0.70833333333, 0.70833333333, 0.65, 0.6486486486486],
+         'error': [0.29166666667, 0.29166666667, 0.35, 0.35135135135],
+         'nll': [0.80029268745, 0.66183018275, 0.52166532641, 0.58510855181],
+         'f1_70': [0.66666666667, 0.33333333333, 0.33333333333, 0.33333333333]},
+        index=multi_index
+    )
+    expected_df.columns = expected_df.columns.rename('scores')
     assert_frame_equal(scores, expected_df, check_less_precise=True)
 
 
