@@ -47,4 +47,7 @@ if __name__ == "__main__":
         platforms='any',
         packages=find_packages(),
         package_data=PACKAGE_DATA,
+        entry_points={
+            'console_scripts': ['utils = ramputils.cli:start']
+        }
         )
