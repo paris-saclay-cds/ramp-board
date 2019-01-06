@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block head %}
+    {{ super() }}
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?skin=sunburst"></script>
+{% endblock %}
+
+{% block title %}Submission code - Diff{% endblock %}
+
+{% block content %}
+
+<div class="col-xs-12">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+            Diff
+          </div>
+      </div>
+    </div>
+    <div class="card-body">
+        <pre class="prettyprint linenums">{{ diff }}</pre>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

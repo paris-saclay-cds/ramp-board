@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block title %}{{ event.name }} Description{% endblock %}
+{% block content %}
+
+<!-- Loading mathjax macro -->
+<!-- Load mathjax -->
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+    <!-- MathJax configuration -->
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": {
+            styles: {'.MathJax_Display': {"margin": 0}},
+            linebreaks: { automatic: true }
+        }
+    });
+    </script>
+    <!-- End of mathjax configuration -->
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+{% if messages %}
+    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    {% for category, message in messages %}
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+                </div>
+                <div class="modal-body">
+                    {{ message }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+{% endif %}
+
+{% endwith %}
+<div class="page-title">
+    <span class="title">{{ event.problem.title }}, {{ event.title }}</span>
+</div>
+
+<div class="col-xs-12">
+  <div class="card">
+    <div class="card-body">
+      <a class="btn btn-warning" href="https://github.com/ramp-kits/{{ event.problem.name }}">starting kit</a>
+    </div>
+  </div>
+</div>
+
+{% if approved %}
+{% elif current_user.access_level in ['user', 'admin'] %}
+    {% if asked %}
+        <strong><font color="#e84b3a">Waiting for approval...</font></strong>
+    {% else %}
+        <div class="col-xs-12">
+          <div class="card">
+            <div class="card-body">
+              <a class="btn btn-warning" href="/events/{{ event.name }}/sign_up">Sign up <span"></span></a>
+            </div>
+          </div>
+        </div>
+     {% endif %}
+{% endif %}
+
+<div class="col-xs-12">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">Rules</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <ul>
+      <li>Submissions will open at (UTC) {{ event.opening_timestamp }}
+      <li>When you submit, your submission is sent to be trained automatically. The jobs may wait some time in a queue before being run so be patient.</li>
+      <li>Pending (untrained) and failing submissions can be resubmitted under the same name at an arbitrary frequency.</li>
+      <li>Once your submission is trained, it cannot be deleted or replaced.</li>
+      <li> After each succesfully trained submission, you have to wait {{ event.min_duration_between_submissions }}s to resubmit. </li>
+      <li>The leaderboard is in "hidden" mode until (UTC) {{ event.public_opening_timestamp }} which means that all scores are visible, but the links pointing to the code of the participants are hidden. After (UTC) {{ event.public_opening_timestamp }}, all submitted codes are public. <b>You will be encouraged to look at and reuse each other's code.</b>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="col-xs-12">
+  <div class="card">
+    <div class="card-body">
+	  {{ description|safe }}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+

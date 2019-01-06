@@ -4,36 +4,12 @@ import logging
 from flask import Flask
 from flask_mail import Mail
 from flask_login import LoginManager
-# from flask_sqlalchemy import SQLAlchemy
-from flask_sqlalchemy import SQLAlchemy as SQLAlchemyBase
+from flask_sqlalchemy import SQLAlchemy
 
 from rampdb.model.base import Model
 from rampdb.model.base import set_query_property
 
 __version__ = '0.1.dev'
-
-class SQLAlchemy(SQLAlchemyBase):
-    """Flask extension that integrates alchy with Flask-SQLAlchemy."""
-    def __init__(self,
-                 app=None,
-                 use_native_unicode=True,
-                 session_options=None,
-                 model_class=None):
-        self.model_class = Model
-
-        super(SQLAlchemy, self).__init__(app,
-                                         use_native_unicode,
-                                         session_options)
-
-    def make_declarative_base(self, model, metadata=None):
-        """Creates or extends the declarative base."""
-        if self.model_class is None:
-            self.model_class = \
-                super(SQLAlchemy, self).make_declarative_base(Model)
-        else:
-            set_query_property(self.model_class, self.session)
-        return self.model_class
-
 
 app = Flask('databoard')
 
