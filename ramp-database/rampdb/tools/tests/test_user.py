@@ -1,6 +1,8 @@
 import shutil
 
+import pandas as pd
 import pytest
+import six
 
 from ramputils import read_config
 from ramputils.password import check_password
@@ -14,10 +16,12 @@ from rampdb.model import User
 from rampdb.model import Team
 from rampdb.testing import create_test_db
 
+from rampdb.tools.user import add_user
+from rampdb.tools.user import add_user_interaction
 from rampdb.tools.user import approve_user
-from rampdb.tools.user import create_user
 from rampdb.tools.user import get_team_by_name
 from rampdb.tools.user import get_user_by_name
+from rampdb.tools.user import get_user_interactions_by_name
 
 
 @pytest.fixture(scope='module')
@@ -45,16 +49,16 @@ def session_scope_function(config):
         Model.metadata.drop_all(db)
 
 
-def test_create_user(session_scope_function):
+def test_add_user(session_scope_function):
     name = 'test_user'
     password = 'test'
     lastname = 'Test'
     firstname = 'User'
     email = 'test.user@gmail.com'
     access_level = 'asked'
-    create_user(session_scope_function, name=name, password=password,
-                lastname=lastname, firstname=firstname, email=email,
-                access_level=access_level)
+    add_user(session_scope_function, name=name, password=password,
+             lastname=lastname, firstname=firstname, email=email,
+             access_level=access_level)
     user = get_user_by_name(session_scope_function, name)
     assert user.name == name
     assert check_password(password, user.hashed_password)
@@ -72,13 +76,13 @@ def test_create_user(session_scope_function):
     "name, query_type", [(None, list), ('test_user', User)]
 )
 def test_get_user_by_name(session_scope_function, name, query_type):
-    create_user(session_scope_function, name='test_user', password='password',
-                lastname='lastname', firstname='firstname',
-                email='test_user@email.com', access_level='asked')
-    create_user(session_scope_function, name='test_user_2',
-                password='password', lastname='lastname',
-                firstname='firstname', email='test_user_2@email.com',
-                access_level='asked')
+    add_user(session_scope_function, name='test_user', password='password',
+             lastname='lastname', firstname='firstname',
+             email='test_user@email.com', access_level='asked')
+    add_user(session_scope_function, name='test_user_2',
+             password='password', lastname='lastname',
+             firstname='firstname', email='test_user_2@email.com',
+             access_level='asked')
     user = get_user_by_name(session_scope_function, name)
     assert isinstance(user, query_type)
 
@@ -87,21 +91,21 @@ def test_get_user_by_name(session_scope_function, name, query_type):
     "name, query_type", [(None, list), ('test_user', Team)]
 )
 def test_get_team_by_name(session_scope_function, name, query_type):
-    create_user(session_scope_function, name='test_user', password='password',
-                lastname='lastname', firstname='firstname',
-                email='test_user@email.com', access_level='asked')
-    create_user(session_scope_function, name='test_user_2',
-                password='password', lastname='lastname',
-                firstname='firstname', email='test_user_2@email.com',
-                access_level='asked')
+    add_user(session_scope_function, name='test_user', password='password',
+             lastname='lastname', firstname='firstname',
+             email='test_user@email.com', access_level='asked')
+    add_user(session_scope_function, name='test_user_2',
+             password='password', lastname='lastname',
+             firstname='firstname', email='test_user_2@email.com',
+             access_level='asked')
     team = get_team_by_name(session_scope_function, name)
     assert isinstance(team, query_type)
 
 
 def test_approve_user(session_scope_function):
-    create_user(session_scope_function, name='test_user', password='test',
-                lastname='Test', firstname='User', email='test.user@gmail.com',
-                access_level='asked')
+    add_user(session_scope_function, name='test_user', password='test',
+             lastname='Test', firstname='User', email='test.user@gmail.com',
+             access_level='asked')
     user = get_user_by_name(session_scope_function, 'test_user')
     assert user.access_level == 'asked'
     assert user.is_authenticated is False
@@ -109,3 +113,29 @@ def test_approve_user(session_scope_function):
     user = get_user_by_name(session_scope_function, 'test_user')
     assert user.access_level == 'user'
     assert user.is_authenticated is True
+
+
+@pytest.mark.parametrize(
+    "output_format, expected_format",
+    [('dataframe', pd.DataFrame),
+     ('html', six.string_types)]
+)
+def test_check_user_interactions(session_scope_function, output_format,
+                                 expected_format):
+    add_user(session_scope_function, name='test_user', password='password',
+             lastname='lastname', firstname='firstname',
+             email='test_user@email.com', access_level='asked')
+    params = {'interaction': 'landing'}
+    add_user_interaction(session_scope_function, **params)
+    params = {'interaction': 'landing',
+              'user': get_user_by_name(session_scope_function, 'test_user')}
+    add_user_interaction(session_scope_function, **params)
+    user_interaction = get_user_interactions_by_name(
+        session_scope_function, output_format=output_format)
+    if isinstance(user_interaction, pd.DataFrame):
+        assert user_interaction.shape[0] == 2
+    assert isinstance(user_interaction, expected_format)
+    user_interaction = get_user_interactions_by_name(
+        session_scope_function, name='test_user', output_format=output_format)
+    if isinstance(user_interaction, pd.DataFrame):
+        assert user_interaction.shape[0] == 1

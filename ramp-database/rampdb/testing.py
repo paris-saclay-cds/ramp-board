@@ -18,7 +18,7 @@ from .tools.database import add_submission_file_type_extension
 from .tools.event import add_event
 from .tools.event import add_problem
 from .tools.user import approve_user
-from .tools.user import create_user
+from .tools.user import add_user
 from .tools.team import sign_up_team
 from .tools.submission import submit_starting_kits
 
@@ -151,17 +151,17 @@ def add_users(session):
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
     """
-    create_user(
+    add_user(
         session, name='test_user', password='test',
         lastname='Test', firstname='User',
         email='test.user@gmail.com', access_level='asked')
     approve_user(session, 'test_user')
-    create_user(
+    add_user(
         session, name='test_user_2', password='test',
         lastname='Test_2', firstname='User_2',
         email='test.user.2@gmail.com', access_level='asked')
     approve_user(session, 'test_user_2')
-    create_user(
+    add_user(
         session, name='test_iris_admin', password='test',
         lastname='Admin', firstname='Iris',
         email='iris.admin@gmail.com', access_level='user')

@@ -1,4 +1,7 @@
+from collections import defaultdict
 import logging
+
+import pandas as pd
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
@@ -8,6 +11,7 @@ from ramputils.password import hash_password
 from ..exceptions import NameClashError
 from ..model import Team
 from ..model import User
+from ..model import UserInteraction
 
 from ._query import select_team_by_name
 from ._query import select_user_by_email
@@ -16,11 +20,11 @@ from ._query import select_user_by_name
 logger = logging.getLogger('DATABASE')
 
 
-def create_user(session, name, password, lastname, firstname, email,
-                access_level='user', hidden_notes='', linkedin_url='',
-                twitter_url='', facebook_url='', google_url='', github_url='',
-                website_url='', bio='', is_want_news=True):
-    """Create a new user in the database.
+def add_user(session, name, password, lastname, firstname, email,
+             access_level='user', hidden_notes='', linkedin_url='',
+             twitter_url='', facebook_url='', google_url='', github_url='',
+             website_url='', bio='', is_want_news=True):
+    """Add a new user in the database.
 
     Parameters
     ----------
@@ -109,6 +113,46 @@ def create_user(session, name, password, lastname, firstname, email,
     return user
 
 
+def add_user_interaction(session, interaction=None, user=None, problem=None,
+                         event=None, ip=None, note=None, submission=None,
+                         submission_file=None, diff=None, similarity=None):
+    """Add a user interaction in the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    interactions : None or str, default is None
+        The type of interaction.
+    user : None or :class:`rampdb.model.User`, default is None
+        The user instance.
+    problem : None or :class:`rampdb.model.Problem`, default is None
+        The problem instance.
+    event : None or :class:`rampdb.model.Event`, default is None
+        The event instance.
+    ip : None or str, default is None
+        The ip address from the server.
+    note : None or str, default is None
+        Some notes.
+    submission : None or :class:`rampdb.model.Submission`, default is None
+        The submission instance.
+    submission_file : None or :class:`rampdb.model.SubmissionFile`, default \
+is None
+        The submission file instance.
+    diff : None or str, default is None
+        The difference between two submissions.
+    similarity : None or float, default is None
+        The similarity of the submission.
+    """
+    user_interaction = UserInteraction(
+        session=session, interaction=interaction, user=user, problem=problem,
+        ip=ip, note=note, submission=submission,
+        submission_file=submission_file, diff=diff, similarity=similarity
+    )
+    session.add(user_interaction)
+    session.commit()
+
+
 def approve_user(session, name):
     """Approve a user once it is created.
 
@@ -129,7 +173,7 @@ def approve_user(session, name):
 
 
 def get_user_by_name(session, name):
-    """Get a user by his/her name
+    """Get a user by his/her name.
 
     Parameters
     ----------
@@ -147,7 +191,7 @@ def get_user_by_name(session, name):
 
 
 def get_team_by_name(session, name):
-    """Get a team by its name
+    """Get a team by its name.
 
     Parameters
     ----------
@@ -162,3 +206,62 @@ def get_team_by_name(session, name):
         The queried team.
     """
     return select_team_by_name(session, name)
+
+
+def get_user_interactions_by_name(session, name=None,
+                                  output_format='dataframe'):
+    """Get the user interactions.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    name : str or None, default is None
+        The name of the user. By default all interactions are returned.
+    output_format : {'dataframe', 'html'}
+        The output format to be returned.
+
+    Returns
+    -------
+    user_interactions : output_format
+        The user interactions queried and return as specified by
+        ``output_format``.
+
+    """
+    user_interactions = session.query(UserInteraction)
+    if name is None:
+        user_interactions = user_interactions.all()
+    else:
+        user_interactions = \
+            (user_interactions.filter(UserInteraction.user_id == User.id)
+                              .filter(User.name == name)
+                              .all())
+
+    map_columns_attributes = defaultdict(list)
+    for ui in user_interactions:
+        map_columns_attributes['timestamp (UTC)'].append(ui.timestamp)
+        map_columns_attributes['IP'].append(ui.ip)
+        map_columns_attributes['interaction'].append(ui.interaction)
+        map_columns_attributes['user'].append(getattr(ui.user, 'name', None))
+        map_columns_attributes['event'].append(getattr(
+            getattr(ui.event_team, 'event', None), 'name', None))
+        map_columns_attributes['team'].append(getattr(
+            getattr(ui.event_team, 'team', None), 'name', None))
+        map_columns_attributes['submission_id'].append(ui.submission_id)
+        map_columns_attributes['submission'].append(
+            getattr(ui.submission, 'name_with_link', None))
+        map_columns_attributes['file'].append(
+            getattr(ui.submission_file, 'name_with_link', None))
+        map_columns_attributes['code similarity'].append(
+            ui.submission_file_similarity)
+        map_columns_attributes['diff'].append(
+            None if ui.submission_file_diff is None
+            else '<a href="{}">diff</a>'.format(
+                ui.submission_file_diff))
+    df = (pd.DataFrame(map_columns_attributes)
+            .sort_values('timestamp (UTC)', ascending=False)
+            .set_index('timestamp (UTC)'))
+    if output_format == 'html':
+        return df.to_html(escape=False, index=False, max_cols=None,
+                          max_rows=None, justify='left')
+    return df

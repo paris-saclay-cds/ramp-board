@@ -36,13 +36,13 @@ def main(ctx, config):
 @click.option('--hidden_notes', default='',
               help="User's additional hidden notes")
 @click.pass_context
-def create_user(ctx, login, password, lastname, firstname, email,
+def add_user(ctx, login, password, lastname, firstname, email,
                 access_level, hidden_notes):
     with ctx.obj['db'].connect() as conn:
         session = ctx.obj['Session'](bind=conn)
-        new_user = user.create_user(session, login, password, lastname,
-                                    firstname, email, access_level,
-                                    hidden_notes)
+        new_user = user.add_user(session, login, password, lastname,
+                                 firstname, email, access_level,
+                                 hidden_notes)
         logger.info('Create a new user: {}'.format(new_user))
 
 

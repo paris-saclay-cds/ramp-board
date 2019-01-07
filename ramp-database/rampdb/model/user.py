@@ -209,6 +209,8 @@ user_interaction_type = Enum(
 class UserInteraction(Model):
     """UserInteraction table.
 
+    We log the activity of the user on the website.
+
     Parameters
     ----------
     interactions : None or str, default is None
@@ -269,6 +271,8 @@ is None
         The submission file ID.
     submission_file : :class:`rampdb.model.SubmissionFile`
         The submission file instance.
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
     """
     __tablename__ = 'user_interactions'
 
@@ -324,10 +328,7 @@ is None
                             .filter(EventTeam.event == event)
                             .filter(EventTeam.team == user.admined_teams[0])
                             .one_or_none())
-        if ip is None:
-            self.ip = os.getenv('REMOTE_ADDR')
-        else:
-            self.ip = ip
+        self.ip = ip
         self.note = note
         self.submission = submission
         self.submission_file = submission_file

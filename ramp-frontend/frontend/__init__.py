@@ -5,24 +5,28 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 
-from .views import general
+from rampdb.model import Model
 
 HERE = os.path.dirname(__file__)
-db = SQLAlchemy()
+db = SQLAlchemy(model_class=Model)
 
 
 def create_app(config):
     app = Flask('ramp-frontend', root_path=HERE)
     app.config.update(config)
-    db.init_app(app)
-    # register the login manager
-    # login_manager = LoginManager()
-    # login_manager.init_app(app)
-    # login_manager.login_view = 'login'
-    # login_manager.login_message = ('Please log in or sign up to access this '
-    #                                'page.')
-    # register the email manager
-    # mail = Mail(app)
-    # register our blueprint
-    app.register_blueprint(general.mod)
+    with app.app_context():
+        db.init_app(app)
+        # register the login manager
+        login_manager = LoginManager()
+        login_manager.init_app(app)
+        login_manager.login_view = 'login'
+        login_manager.login_message = ('Please log in or sign up to access this '
+                                       'page.')
+        # register the email manager
+        mail = Mail(app)
+        # register our blueprint
+        from .views import general
+        from .views import auth
+        app.register_blueprint(general.mod)
+        app.register_blueprint(auth.mod)
     return app

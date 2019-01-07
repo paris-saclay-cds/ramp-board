@@ -31,10 +31,10 @@ def teardown_module(module):
     Model.metadata.drop_all(db)
 
 
-def test_create_user():
+def test_add_user():
     runner = CliRunner()
     result = runner.invoke(main, ['--config', path_config_example(),
-                                  'create-user',
+                                  'add-user',
                                   '--login', 'glemaitre',
                                   '--password', 'xxx',
                                   '--lastname', 'xxx',

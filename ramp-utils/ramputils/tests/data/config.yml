@@ -15,16 +15,6 @@ flask:
     mail_use_ssl: true
     mail_debug: false
     sqlalchemy_track_modifications: true
-    sqlalchemy_migrate_repo: None
-    sqlalchemy_record_queries: false
-    sqlalchemy_bind: None
-    sqlalchemy_native_unicode: None
-    sqlalchemy_echo: false
-    sqlalchemy_pool_size: None
-    sqlalchemy_pool_timeout: None
-    sqlalchemy_pool_recycle: None
-    sqlalchemy_max_overflow: None
-    sqlalchemy_commit_on_teardown: false
 sqlalchemy:
     drivername: postgresql
     username: mrramp
