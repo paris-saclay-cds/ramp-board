@@ -794,6 +794,7 @@ def update_user(user, form):
         a instance from :class:`databoard.forms.UserUpdateProfileForm`.
     """
     logger.info('Updating {}'.format(user))
+
     def _update_and_log(user, form, field):
         if getattr(user, field) != getattr(form, field).data:
             logger.info(
@@ -801,6 +802,7 @@ def update_user(user, form):
                 .format(field, getattr(user, field), getattr(form, field).data)
                 )
             setattr(user, field, getattr(form, field).data)
+
     for field in ('lastname', 'firstname', 'linkedin_url', 'twitter_url',
                   'facebook_url', 'google_url', 'github_url', 'website_url',
                   'bio', 'email', 'is_want_news'):

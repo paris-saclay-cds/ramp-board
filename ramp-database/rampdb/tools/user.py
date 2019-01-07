@@ -265,3 +265,66 @@ def get_user_interactions_by_name(session, name=None,
         return df.to_html(escape=False, index=False, max_cols=None,
                           max_rows=None, justify='left')
     return df
+
+
+def set_user_by_instance(session, user, lastname, firstname, email,
+                         linkedin_url='', twitter_url='', facebook_url='',
+                         google_url='', github_url='', website_url='', bio='',
+                         is_want_news=True):
+    """Set the information of a user.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    user : :class:`rampdb.model.User`
+        The user instance to update.
+    lastname : str
+        The user lastname.
+    firstname : str
+        The user firstname.
+    email : str
+        The user email address.
+    linkedin_url : str, default=''
+        Linkedin URL.
+    twitter_url : str, default=''
+        Twitter URL.
+    facebook_url : str, default=''
+        Facebook URL.
+    google_url : str, default=''
+        Google URL.
+    github_url : str, default=''
+        GitHub URL.
+    website_url : str, default=''
+        Website URL.
+    bio : str, default = ''
+        User biography.
+    is_want_news : bool, default is True
+        User wish to receive some news.
+    """
+    logger.info('Update the profile of "{}"'.format(user))
+
+    for field in ('lastname', 'firstname', 'linkedin_url', 'twitter_url',
+                  'facebook_url', 'google_url', 'github_url', 'website_url',
+                  'bio', 'email', 'is_want_news'):
+        local_attr = locals()[field]
+        if getattr(user, field) != local_attr:
+            logger.info('Update the "{}" field from {} to {}'
+                        .format(field, getattr(user, field), local_attr))
+            setattr(user, field, local_attr)
+    try:
+        session.commit()
+    except IntegrityError as e:
+        session.rollback()
+        message = ''
+        try:
+            select_user_by_email(session, user.email)
+            message += 'email is already in use'
+        except NoResultFound:
+            pass
+        if len(message) > 0:
+            logger.error(message)
+            raise NameClashError(message)
+        else:
+            logger.error(repr(e))
+            raise e

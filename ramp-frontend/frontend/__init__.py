@@ -9,6 +9,8 @@ from rampdb.model import Model
 
 HERE = os.path.dirname(__file__)
 db = SQLAlchemy(model_class=Model)
+login_manager = LoginManager()
+mail = Mail()
 
 
 def create_app(config):
@@ -17,13 +19,12 @@ def create_app(config):
     with app.app_context():
         db.init_app(app)
         # register the login manager
-        login_manager = LoginManager()
         login_manager.init_app(app)
         login_manager.login_view = 'login'
-        login_manager.login_message = ('Please log in or sign up to access this '
-                                       'page.')
+        login_manager.login_message = ('Please log in or sign up to access '
+                                       'this page.')
         # register the email manager
-        mail = Mail(app)
+        mail.init_app(app)
         # register our blueprint
         from .views import general
         from .views import auth
