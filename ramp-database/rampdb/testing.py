@@ -77,6 +77,16 @@ def setup_toy_db(session, config):
     submit_all_starting_kits(session, config)
 
 
+def _delete_line_from_file(f_name, line_to_delete):
+    with open(f_name, "r+") as f:
+        lines = f.readlines()
+        f.seek(0)
+        for line in lines:
+            if line != line_to_delete:
+                f.write(line)
+        f.truncate()
+
+
 def setup_ramp_kits_ramp_data(config, problem_name):
     """Clone ramp-kits and ramp-data repository and setup it up.
 
@@ -102,10 +112,12 @@ def setup_ramp_kits_ramp_data(config, problem_name):
     os.chdir(problem_data_path)
     subprocess.check_output(["python", "prepare_data.py"])
     os.chdir(problem_kits_path)
-    # TODO: I don't think that we need to convert the notebook here. It should
-    # not be used the related tests.
     subprocess.check_output(["jupyter", "nbconvert", "--to", "html",
                              "{}_starting_kit.ipynb".format(problem_name)])
+    # delete this line since it trigger in the front-end
+    # (try to open execute "custom.css".)
+    _delete_line_from_file("{}_starting_kit.html".format(problem_name),
+                           '<link rel="stylesheet" href="custom.css">\n')
     os.chdir(current_directory)
 
 
@@ -159,12 +171,12 @@ def add_users(session):
     add_user(
         session, name='test_user_2', password='test',
         lastname='Test_2', firstname='User_2',
-        email='test.user.2@gmail.com', access_level='asked')
+        email='test.user.2@gmail.com', access_level='user')
     approve_user(session, 'test_user_2')
     add_user(
         session, name='test_iris_admin', password='test',
         lastname='Admin', firstname='Iris',
-        email='iris.admin@gmail.com', access_level='user')
+        email='iris.admin@gmail.com', access_level='admin')
 
 
 def add_problems(session, config):

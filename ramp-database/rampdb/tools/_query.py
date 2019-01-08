@@ -4,6 +4,7 @@ reduces the complexity of having queries and database connection in the same
 file. Then, those queries are tested through the public API.
 """
 from ..model import Event
+from ..model import EventAdmin
 from ..model import EventTeam
 from ..model import Extension
 from ..model import Problem
@@ -435,4 +436,27 @@ def select_workflow_element_by_workflow_and_type(session, workflow,
                    .filter(WorkflowElement.workflow == workflow)
                    .filter(WorkflowElement.workflow_element_type ==
                            workflow_element_type)
+                   .one_or_none())
+
+
+def select_event_admin_by_instance(session, event, user):
+    """Query a event/admin given and event and a user.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    event : :class:`rampdb.model.Event`
+        The event instance.
+    user : :class:`rampdb.model.User`
+        The user instance.
+
+    Returns
+    -------
+    event_admin : :class:`rampdb.model.EventAdmin` or None
+        The queried event/admin instance.
+    """
+    return (session.query(EventAdmin)
+                   .filter(EventAdmin.event == event)
+                   .filter(EventAdmin.admin == user)
                    .one_or_none())

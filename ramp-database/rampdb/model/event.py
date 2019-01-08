@@ -478,6 +478,14 @@ class EventAdmin(Model):
     This is a many-to-many relationship between Event and User to defined
     admins.
 
+    Parameters
+    ----------
+    event : :class:`rampdb.model.Event`
+        The event instance.
+    admin : :class:`rampdb.model.User`
+        The user instance.
+
+
     Attributes
     ----------
     id : int

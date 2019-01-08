@@ -3,7 +3,6 @@ import logging
 import flask_login
 
 from flask import Blueprint
-from flask import current_app
 from flask import flash
 from flask import redirect
 from flask import request
@@ -14,8 +13,8 @@ from flask import url_for
 from sqlalchemy.orm.exc import NoResultFound
 
 from ramputils.password import check_password
-from ramputils.password import hash_password
 
+from rampdb.tools.user import add_user
 from rampdb.tools.user import add_user_interaction
 from rampdb.tools.user import get_user_by_name
 from rampdb.tools.user import set_user_by_instance
@@ -26,6 +25,7 @@ from frontend import db
 from frontend import login_manager
 
 from ..forms import LoginForm
+from ..forms import UserCreateProfileForm
 from ..forms import UserUpdateProfileForm
 
 logger = logging.getLogger('FRONTEND')
@@ -34,17 +34,27 @@ mod = Blueprint('auth', __name__)
 
 @login_manager.user_loader
 def load_user(id):
+    """Load a user in the login manager.
+
+    This function is used by Flask-Login to manage the current-user connection.
+
+    Parameters
+    ----------
+    id : int
+        The user ID.
+    """
     return User.query.get(id)
 
 
 @mod.route("/login", methods=['GET', 'POST'])
 def login():
+    """Login request."""
     add_user_interaction(db.session, interaction='landing')
 
     if flask_login.current_user.is_authenticated:
         logger.info('User already logged-in')
         session['logged_in'] = True
-        return redirect(url_for('general.problems'))
+        return redirect(url_for('ramp.problems'))
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -71,7 +81,7 @@ def login():
                              user=flask_login.current_user)
         next_ = request.args.get('next')
         if next_ is None:
-            next_ = url_for('general.problems')
+            next_ = url_for('ramp.problems')
         return redirect(next_)
 
     return render_template('login.html', form=form)
@@ -80,6 +90,7 @@ def login():
 @mod.route("/logout")
 @flask_login.login_required
 def logout():
+    """Logout request."""
     user = flask_login.current_user
     add_user_interaction(db.session, interaction='logout', user=user)
     session['logged_in'] = False
@@ -91,9 +102,47 @@ def logout():
     return redirect(url_for('auth.login'))
 
 
+@mod.route("/sign_up", methods=['GET', 'POST'])
+def sign_up():
+    """Sign-up request."""
+    if flask_login.current_user.is_authenticated:
+        session['logged_in'] = True
+        return redirect(url_for('ramp.problems'))
+
+    form = UserCreateProfileForm()
+    if form.validate_on_submit():
+        if form.linkedin_url.data != 'http://doxycycline-cheapbuy.site/':
+            try:
+                user = add_user(
+                    session=db.session,
+                    name=form.user_name.data,
+                    password=form.password.data,
+                    lastname=form.lastname.data,
+                    firstname=form.firstname.data,
+                    email=form.email.data,
+                    linkedin_url=form.linkedin_url.data,
+                    twitter_url=form.twitter_url.data,
+                    facebook_url=form.facebook_url.data,
+                    google_url=form.google_url.data,
+                    github_url=form.github_url.data,
+                    website_url=form.website_url.data,
+                    bio=form.bio.data,
+                    is_want_news=form.is_want_news.data,
+                    access_level='asked'
+                )
+                print(user.is_authenticated)
+            except Exception as e:
+                flash(u'{}'.format(e), category='Sign-up error')
+                return redirect(url_for('auth.sign_up'))
+            # send_register_request_mail(user)
+        return redirect(url_for('auth.login'))
+    return render_template('sign_up.html', form=form)
+
+
 @mod.route("/update_profile", methods=['GET', 'POST'])
 @flask_login.login_required
 def update_profile():
+    """User profile update."""
     form = UserUpdateProfileForm()
     form.user_name.data = flask_login.current_user.name
     if form.validate_on_submit():
@@ -111,7 +160,7 @@ def update_profile():
             flash(u'{}'.format(e), category='Update profile error')
             return redirect(url_for('auth.update_profile'))
         # send_register_request_mail(user)
-        return redirect(url_for('general.problems'))
+        return redirect(url_for('ramp.problems'))
     form.lastname.data = flask_login.current_user.lastname
     form.firstname.data = flask_login.current_user.firstname
     form.email.data = flask_login.current_user.email

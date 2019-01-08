@@ -26,8 +26,10 @@ def create_app(config):
         # register the email manager
         mail.init_app(app)
         # register our blueprint
-        from .views import general
         from .views import auth
-        app.register_blueprint(general.mod)
+        from .views import general
+        from .views import ramp
         app.register_blueprint(auth.mod)
+        app.register_blueprint(general.mod)
+        app.register_blueprint(ramp.mod)
     return app

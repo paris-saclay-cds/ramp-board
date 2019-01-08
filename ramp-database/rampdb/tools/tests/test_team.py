@@ -103,3 +103,4 @@ def test_sign_up_team(session_scope_function, config):
         assert fold.state == 'new'
         assert fold.best is False
         assert fold.contributivity == pytest.approx(0)
+

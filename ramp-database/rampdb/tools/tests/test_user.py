@@ -22,6 +22,7 @@ from rampdb.tools.user import approve_user
 from rampdb.tools.user import get_team_by_name
 from rampdb.tools.user import get_user_by_name
 from rampdb.tools.user import get_user_interactions_by_name
+from rampdb.tools.user import set_user_by_instance
 
 
 @pytest.fixture(scope='module')
@@ -85,6 +86,34 @@ def test_get_user_by_name(session_scope_function, name, query_type):
              access_level='asked')
     user = get_user_by_name(session_scope_function, name)
     assert isinstance(user, query_type)
+
+
+def test_set_user_by_instance(session_scope_function):
+    add_user(session_scope_function, name='test_user', password='password',
+             lastname='lastname', firstname='firstname',
+             email='test_user@email.com', access_level='asked')
+    add_user(session_scope_function, name='test_user_2',
+             password='password', lastname='lastname',
+             firstname='firstname', email='test_user_2@email.com',
+             access_level='asked')
+    user = get_user_by_name(session_scope_function, 'test_user')
+    set_user_by_instance(session_scope_function, user, lastname='a',
+                         firstname='b', email='c', linkedin_url='d',
+                         twitter_url='e', facebook_url='f', google_url='g',
+                         github_url='h', website_url='i', bio='j',
+                         is_want_news=False)
+    user = get_user_by_name(session_scope_function, 'test_user')
+    assert user.lastname == 'a'
+    assert user.firstname == 'b'
+    assert user.email == 'c'
+    assert user.linkedin_url == 'd'
+    assert user.twitter_url == 'e'
+    assert user.facebook_url == 'f'
+    assert user.google_url == 'g'
+    assert user.github_url == 'h'
+    assert user.website_url == 'i'
+    assert user.bio == 'j'
+    assert user.is_want_news is False
 
 
 @pytest.mark.parametrize(

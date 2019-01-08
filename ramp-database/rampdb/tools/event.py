@@ -5,6 +5,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from ramputils.utils import import_module_from_source
 
+from ._query import select_event_admin_by_instance
 from ._query import select_event_by_name
 from ._query import select_extension_by_name
 from ._query import select_problem_by_name
@@ -13,12 +14,14 @@ from ._query import select_similarities_by_source
 from ._query import select_similarities_by_target
 from ._query import select_submission_by_id
 from ._query import select_submission_type_extension_by_extension
+from ._query import select_user_by_name
 from ._query import select_workflow_by_name
 from ._query import select_workflow_element_by_workflow_and_type
 from ._query import select_workflow_element_type_by_name
 
 from ..model import CVFold
 from ..model import Event
+from ..model import EventAdmin
 from ..model import EventScoreType
 from ..model import Problem
 from ..model import Workflow
@@ -262,6 +265,26 @@ def add_event(session, problem_name, event_name, event_title, is_public=False,
     return event
 
 
+def add_event_admin(session, event_name, user_name):
+    """Add an administrator event.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The event name.
+    user_name : str
+        The user name.
+    """
+    event = select_event_by_name(session, event_name)
+    user = select_user_by_name(session, user_name)
+    event_admin = select_event_admin_by_instance(session, event, user)
+    if event_admin is None:
+        event_admin = EventAdmin(event=event, admin=user)
+        session.commit()
+
+
 # Getter functions: get information from the database
 def get_problem(session, problem_name):
     """Get problem from the database.
@@ -320,3 +343,71 @@ def get_event(session, event_name):
         The queried problem.
     """
     return select_event_by_name(session, event_name)
+
+
+def get_event_admin(session, event_name, user_name):
+    """Get an administrator event.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The event name.
+    user_name : str
+        The user name.
+
+    Returns
+    -------
+    event_admin : :class:`rampdb.model.EventAdmin` or None
+        The event/admin instance queried.
+    """
+    event = select_event_by_name(session, event_name)
+    user = select_user_by_name(session, user_name)
+    return select_event_admin_by_instance(session, event, user)
+
+
+# Is functions
+def is_admin(session, event_name, user_name):
+    """Whether or not a user is administrator or administrate an event.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The event name.
+    user_name : str
+        The user name.
+    """
+    event = select_event_by_name(session, event_name)
+    user = select_user_by_name(session, user_name)
+    if user.access_level == 'admin':
+        return True
+    event_admin = select_event_admin_by_instance(session, event, user)
+    if event_admin is None:
+        return False
+    return True
+
+def is_accessible_event(session, event_name, user_name):
+    """Whether or not an event is public or and a user is registered to RAMP
+    or and admin.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The event name.
+    user_name : str
+        The user name.
+    """
+    event = select_event_by_name(session, event_name)
+    user = select_user_by_name(session, user_name)
+    if event is None:
+        return False
+    if user.access_level == 'asked':
+        return False
+    if event.is_public or is_admin(session, event_name, user_name):
+        return True
+    return False

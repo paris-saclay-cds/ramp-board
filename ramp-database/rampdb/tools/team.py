@@ -91,3 +91,47 @@ def sign_up_team(session, event_name, team_name, path_sandbox_submission,
     #               body='')
     event_team.approved = True
     session.commit()
+
+
+def get_event_team_by_name(session, event_name, user_name):
+    """Get the event/team given an event and a user.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The RAMP event name.
+    team_name : str
+        The name of the team.
+
+    Returns
+    -------
+    event_team : :class:`rampdb.model.EventTeam`
+        The event/team instance queried.
+    """
+    return select_event_team_by_name(session, event_name, user_name)
+
+
+def is_user_signed_up(session, event_name, user_name):
+    """Whether or not user signed up to an event.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The RAMP event name.
+    team_name : str
+        The name of the team.
+
+    Returns
+    -------
+    is_signed_up : bool
+        Whether or not the user is signed up for the event.
+    """
+    event_team = get_event_team_by_name(session, event_name, user_name)
+    if (event_team is not None and
+            (event_team.is_active and event_team.approved)):
+        return True
+    return False
