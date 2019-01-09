@@ -19,6 +19,7 @@ from wtforms.widgets import TextArea
 from werkzeug.utils import secure_filename
 
 from rampdb.model import EventTeam
+from rampdb.model import Submission
 from rampdb.model import SubmissionFile
 from rampdb.model import User
 from rampdb.model import WorkflowElement
@@ -216,8 +217,6 @@ def my_submissions(event_name):
 @mod.route("/events/<event_name>/sandbox", methods=['GET', 'POST'])
 @flask_login.login_required
 def sandbox(event_name):
-    if request.method == 'POST':
-        print(request.form)
     event = get_event(db.session, event_name)
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
@@ -231,15 +230,19 @@ def sandbox(event_name):
                      'already signed up, please wait for approval.'
                      .format(event.name))
         return redirect_to_user(error_str)
-
-    sandbox_submission = get_submission_by_name(db.session, event_name,
-                                                flask_login.current_user.name,
-                                                event.ramp_sandbox_name)
-    event_team = get_event_team_by_name(db.session, event_name,
-                                        flask_login.current_user.name)
-
-    # The amount of python magic we have to do for rendering a variable number
-    # of textareas, named and populated at run time, is mind boggling.
+    # setup the webpage when loading
+    # we use the code store in the sandbox to show to the user
+    sandbox_submission = get_submission_by_name(
+        db.session, event_name, flask_login.current_user.name,
+        event.ramp_sandbox_name
+    )
+    event_team = get_event_team_by_name(
+        db.session, event_name, flask_login.current_user.name
+    )
+    # initialize the form for the code
+    # The amount of python magic we have to do for rendering a variable
+    # number of textareas, named and populated at run time, is mind
+    # boggling.
 
     # First we need to make sure CodeForm is empty
     # for name_code in CodeForm.names_codes:
@@ -247,200 +250,226 @@ def sandbox(event_name):
     #     delattr(CodeForm, name)
     CodeForm.names_codes = []
 
-    # Then we create named
-    # fields in the CodeForm class for each editable submission file. They have
-    # to be populated when the code_form object is created, so we also
-    # create a code_form_kwargs dictionary and populate it with the codes.
+    # Then we create named fields in the CodeForm class for each editable
+    # submission file. They have to be populated when the code_form object
+    # is created, so we also create a code_form_kwargs dictionary and
+    # populate it with the codes.
     code_form_kwargs = {}
     for submission_file in sandbox_submission.files:
         if submission_file.is_editable:
             f_field = submission_file.name
-            setattr(CodeForm, f_field, StringField(u'Text', widget=TextArea()))
+            setattr(CodeForm,
+                    f_field, StringField(u'Text', widget=TextArea()))
             code_form_kwargs[f_field] = submission_file.get_code()
-    code_form = CodeForm(**code_form_kwargs)
-    # Then, to be able to iterate over the files in the sandbox.html template,
-    # we also fill a separate table of pairs (file name, code). The text areas
-    # in the template will then have to be created manually.
+    code_form = CodeForm(**code_form_kwargs, prefix="code")
+    # Then, to be able to iterate over the files in the sandbox.html
+    # template, we also fill a separate table of pairs (file name, code).
+    # The text areas in the template will then have to be created manually.
     for submission_file in sandbox_submission.files:
         if submission_file.is_editable:
             code_form.names_codes.append(
                 (submission_file.name, submission_file.get_code()))
 
-    submit_form = SubmitForm(submission_name=event_team.last_submission_name)
-    upload_form = UploadForm()
+    # initialize the submission field and the the uploading form
+    submit_form = SubmitForm(
+        submission_name=event_team.last_submission_name, prefix='submit'
+    )
+    upload_form = UploadForm(prefix='upload')
 
-    # print(code_form.names_codes)
-    # print(getattr(code_form, code_form.names_codes[0][0]).data)
-    if (code_form.names_codes and
-            code_form.validate_on_submit() and
-            getattr(code_form, code_form.names_codes[0][0]).data):
-        try:
-            for submission_file in sandbox_submission.files:
-                if submission_file.is_editable:
-                    old_code = submission_file.get_code()
-                    submission_file.set_code(
-                        getattr(code_form, submission_file.name).data)
-                    new_code = submission_file.get_code()
-                    diff = '\n'.join(difflib.unified_diff(
-                        old_code.splitlines(), new_code.splitlines()))
-                    similarity = difflib.SequenceMatcher(
-                        a=old_code, b=new_code).ratio()
-                    add_user_interaction(
-                        db.session,
-                        interaction='save',
-                        user=flask_login.current_user,
-                        event=event,
-                        submission_file=submission_file,
-                        diff=diff, similarity=similarity
-                    )
-        except Exception as e:
-            return redirect_to_sandbox(event, u'Error: {}'.format(e))
-        return redirect_to_sandbox(
-            event,
-            u'{} saved submission files for {}.'
-            .format(flask_login.current_user.name, event),
-            is_error=False,
-            category='File saved'
+    admin = is_admin(db.session, event_name, flask_login.current_user.name)
+    if request.method == 'GET':
+        return render_template(
+            'sandbox.html',
+            submission_names=sandbox_submission.f_names,
+            code_form=code_form,
+            submit_form=submit_form, upload_form=upload_form,
+            event=event,
+            admin=admin
         )
 
-    if upload_form.validate_on_submit() and upload_form.file.data:
-        upload_f_name = secure_filename(upload_form.file.data.filename)
-        upload_name = upload_f_name.split('.')[0]
-        # TODO: create a get_function
-        upload_workflow_element = WorkflowElement.query.filter_by(
-            name=upload_name, workflow=event.workflow).one_or_none()
-        if upload_workflow_element is None:
-            return redirect_to_sandbox(event,
-                                       u'{} is not in the file list.'
-                                       .format(upload_f_name))
-
-        # TODO: create a get_function
-        submission_file = SubmissionFile.query.filter_by(
-            submission=sandbox_submission,
-            workflow_element=upload_workflow_element).one()
-        if submission_file.is_editable:
-            old_code = submission_file.get_code()
-
-        tmp_f_name = os.path.join(tempfile.gettempdir(), upload_f_name)
-        upload_form.file.data.save(tmp_f_name)
-        file_length = os.stat(tmp_f_name).st_size
-        if (upload_workflow_element.max_size is not None and
-                file_length > upload_workflow_element.max_size):
-            return redirect_to_sandbox(
-                event,
-                u'File is too big: {} exceeds max size {}'
-                .format(file_length, upload_workflow_element.max_size)
-            )
-        if submission_file.is_editable:
+    if request.method == 'POST':
+        if ('code-csrf_token' in request.form and
+                code_form.validate_on_submit()):
             try:
-                with open(tmp_f_name) as f:
-                    code = f.read()
-                    submission_file.set_code(code)  # to verify eg asciiness
+                for submission_file in sandbox_submission.files:
+                    if submission_file.is_editable:
+                        old_code = submission_file.get_code()
+                        submission_file.set_code(
+                            request.form[submission_file.name])
+                        new_code = submission_file.get_code()
+                        diff = '\n'.join(difflib.unified_diff(
+                            old_code.splitlines(), new_code.splitlines()))
+                        similarity = difflib.SequenceMatcher(
+                            a=old_code, b=new_code).ratio()
+                        add_user_interaction(
+                            db.session,
+                            interaction='save',
+                            user=flask_login.current_user,
+                            event=event,
+                            submission_file=submission_file,
+                            diff=diff, similarity=similarity
+                        )
             except Exception as e:
                 return redirect_to_sandbox(event, u'Error: {}'.format(e))
-        else:
-            # non-editable files are not verified for now
-            dst = os.path.join(sandbox_submission.path, upload_f_name)
-            shutil.copy2(tmp_f_name, dst)
-        logger.info(u'{} uploaded {} in {}'
-                    .format(flask_login.current_user.name, upload_f_name,
-                            event))
+            return render_template(
+                'sandbox.html',
+                submission_names=sandbox_submission.f_names,
+                code_form=code_form,
+                submit_form=submit_form,
+                upload_form=upload_form,
+                event=event,
+                admin=admin
+            )
 
-        if submission_file.is_editable:
-            new_code = submission_file.get_code()
-            diff = '\n'.join(difflib.unified_diff(
-                old_code.splitlines(), new_code.splitlines()))
-            similarity = difflib.SequenceMatcher(
-                a=old_code, b=new_code).ratio()
+        elif request.files:
+            upload_f_name = secure_filename(
+                request.files['file'].filename)
+            upload_name = upload_f_name.split('.')[0]
+            # TODO: create a get_function
+            upload_workflow_element = WorkflowElement.query.filter_by(
+                name=upload_name, workflow=event.workflow).one_or_none()
+            if upload_workflow_element is None:
+                return redirect_to_sandbox(event,
+                                           u'{} is not in the file list.'
+                                           .format(upload_f_name))
+
+            # TODO: create a get_function
+            submission_file = SubmissionFile.query.filter_by(
+                submission=sandbox_submission,
+                workflow_element=upload_workflow_element).one()
+            if submission_file.is_editable:
+                old_code = submission_file.get_code()
+
+            tmp_f_name = os.path.join(tempfile.gettempdir(), upload_f_name)
+            request.files['file'].save(tmp_f_name)
+            file_length = os.stat(tmp_f_name).st_size
+            if (upload_workflow_element.max_size is not None and
+                    file_length > upload_workflow_element.max_size):
+                return redirect_to_sandbox(
+                    event,
+                    u'File is too big: {} exceeds max size {}'
+                    .format(file_length, upload_workflow_element.max_size)
+                )
+            if submission_file.is_editable:
+                try:
+                    with open(tmp_f_name) as f:
+                        code = f.read()
+                        submission_file.set_code(code)
+                except Exception as e:
+                    return redirect_to_sandbox(event, u'Error: {}'.format(e))
+            else:
+                # non-editable files are not verified for now
+                dst = os.path.join(sandbox_submission.path, upload_f_name)
+                shutil.copy2(tmp_f_name, dst)
+            logger.info(u'{} uploaded {} in {}'
+                        .format(flask_login.current_user.name, upload_f_name,
+                                event))
+
+            if submission_file.is_editable:
+                new_code = submission_file.get_code()
+                diff = '\n'.join(difflib.unified_diff(
+                    old_code.splitlines(), new_code.splitlines()))
+                similarity = difflib.SequenceMatcher(
+                    a=old_code, b=new_code).ratio()
+                add_user_interaction(
+                    db.session,
+                    interaction='upload',
+                    user=flask_login.current_user,
+                    event=event,
+                    submission_file=submission_file,
+                    diff=diff,
+                    similarity=similarity
+                )
+            else:
+                add_user_interaction(
+                    db.session,
+                    interaction='upload',
+                    user=flask_login.current_user,
+                    event=event,
+                    submission_file=submission_file
+                )
+
+            return redirect(request.referrer)
+            # TODO: handle different extensions for the same workflow element
+            # ie: now we let upload eg external_data.bla, and only fail at
+            # submission, without giving a message
+
+        elif ('submit-csrf_token' in request.form and
+              submit_form.validate_on_submit()):
+            new_submission_name = request.form['submit-submission_name']
+            if not (4 < len(new_submission_name) < 20):
+                return redirect_to_sandbox(
+                    event,
+                    'Submission name should have length between 4 and '
+                    '20 characters.'
+                )
+            try:
+                new_submission_name.encode('ascii')
+            except Exception as e:
+                return redirect_to_sandbox(event, u'Error: {}'.format(e))
+
+            try:
+                new_submission = add_submission(db.session, event_name,
+                                                event_team.team.name,
+                                                new_submission_name,
+                                                sandbox_submission.path)
+                if os.path.exists(new_submission.path):
+                    shutil.rmtree(new_submission.path)
+                os.makedirs(new_submission.path)
+                for filename in new_submission.f_names:
+                    shutil.copy2(
+                        src=os.path.join(sandbox_submission.path, filename),
+                        dst=os.path.join(new_submission.path, filename)
+                    )
+            except DuplicateSubmissionError:
+                return redirect_to_sandbox(
+                    event,
+                    u'Submission {} already exists. Please change the name.'
+                    .format(new_submission_name)
+                )
+            except MissingExtensionError as e:
+                return redirect_to_sandbox(
+                    event, 'Missing extension'
+                )
+            except TooEarlySubmissionError as e:
+                return redirect_to_sandbox(event, str(e))
+
+            logger.info(u'{} submitted {} for {}.'
+                        .format(flask_login.current_user.name,
+                                new_submission.name, event_team))
+            # if event.is_send_submitted_mails:
+            #     try:
+            #         send_submission_mails(
+            #             flask_login.current_user, new_submission, event_team)
+            #     except Exception as e:
+            #         error_str = u'mail was not sent {} '.format(
+            #             flask_login.current_user.name)
+            #         error_str += u'submitted {} for {}\n{}.'.format(
+            #             new_submission.name, event_team, e)
+            #         logger.error(error_str)
+            flash(u'{} submitted {} for {}.'
+                  .format(flask_login.current_user.firstname,
+                          new_submission.name,
+                          event_team),
+                  category='Submission')
+
             add_user_interaction(
                 db.session,
-                interaction='upload',
+                interaction='submit',
                 user=flask_login.current_user,
                 event=event,
-                submission_file=submission_file,
-                diff=diff,
-                similarity=similarity
+                submission=new_submission
             )
-        else:
-            add_user_interaction(
-                db.session,
-                interaction='upload',
-                user=flask_login.current_user,
+
+            # return redirect(u'/credit/{}'.format(new_submission.hash_))
+            return render_template(
+                'sandbox.html',
+                submission_names=sandbox_submission.f_names,
+                code_form=code_form,
+                submit_form=submit_form, upload_form=upload_form,
                 event=event,
-                submission_file=submission_file
+                admin=admin
             )
-
-        return redirect(request.referrer)
-        # TODO: handle different extensions for the same workflow element
-        # ie: now we let upload eg external_data.bla, and only fail at
-        # submission, without giving a message
-
-    # print(submit_form.is_submitted())
-    # print(submit_form.validate())
-    # print(submit_form.validate_on_submit())
-    # print(submit_form.submission_name.data)
-    if submit_form.validate_on_submit() and submit_form.submission_name.data:
-        new_submission_name = submit_form.submission_name.data
-        if not 4 > len(new_submission_name) > 20:
-            return redirect_to_sandbox(event, 'Submission name should have '
-                                       'length between 4 and 20 characters.')
-        try:
-            new_submission_name.encode('ascii')
-        except Exception as e:
-            return redirect_to_sandbox(event, u'Error: {}'.format(e))
-
-        try:
-            new_submission = add_submission(db.session, event_name,
-                                            event_team.team.name,
-                                            new_submission_name,
-                                            sandbox_submission.path)
-            if os.path.exists(new_submission.path):
-                shutil.rmtree(new_submission.path)
-            os.makedirs(new_submission.path)
-            from_submission_path = os.path.join(sandbox_submission.path,
-                                                new_submission_name)
-            for filename in new_submission.f_names:
-                shutil.copy2(src=os.path.join(from_submission_path, filename),
-                             dst=os.path.join(new_submission.path, filename))
-        except DuplicateSubmissionError:
-            return redirect_to_sandbox(
-                event,
-                u'Submission {} already exists. Please change the name.'
-                .format(new_submission_name)
-            )
-        except MissingExtensionError as e:
-            return redirect_to_sandbox(
-                event, 'Missing extension'
-            )
-        except TooEarlySubmissionError as e:
-            return redirect_to_sandbox(event, str(e))
-
-        logger.info(u'{} submitted {} for {}.'.format(
-            flask_login.current_user.name, new_submission.name, event_team))
-        # if event.is_send_submitted_mails:
-        #     try:
-        #         send_submission_mails(
-        #             flask_login.current_user, new_submission, event_team)
-        #     except Exception as e:
-        #         error_str = u'mail was not sent {} '.format(
-        #             flask_login.current_user.name)
-        #         error_str += u'submitted {} for {}\n{}.'.format(
-        #             new_submission.name, event_team, e)
-        #         logger.error(error_str)
-        flash(u'{} submitted {} for {}.'
-              .format(flask_login.current_user.firstname, new_submission.name,
-                      event_team),
-              category='Submission')
-
-        add_user_interaction(
-            db.session,
-            interaction='submit',
-            user=flask_login.current_user,
-            event=event,
-            submission=new_submission
-        )
-
-        return redirect(u'/credit/{}'.format(new_submission.hash_))
 
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     return render_template(

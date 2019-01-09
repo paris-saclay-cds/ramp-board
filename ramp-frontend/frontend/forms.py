@@ -72,6 +72,7 @@ class UserUpdateProfileForm(FlaskForm):
     bio = StringField('bio')
     is_want_news = BooleanField()
 
+
 class UserCreateProfileForm(UserUpdateProfileForm):
     """User profile form.
 

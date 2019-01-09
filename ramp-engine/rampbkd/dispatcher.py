@@ -13,7 +13,6 @@ else:
     from Queue import Queue
     from Queue import LifoQueue
 
-from databoard import ramp_config
 # from databoard.db_tools import get_submissions
 from databoard.db_tools import get_submission_on_cv_folds
 from databoard.db_tools import update_all_user_leaderboards
