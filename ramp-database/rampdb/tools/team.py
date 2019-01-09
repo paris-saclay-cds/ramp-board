@@ -48,8 +48,7 @@ def ask_sign_up_team(session, event_name, team_name):
     return event, team, event_team
 
 
-def sign_up_team(session, event_name, team_name, path_sandbox_submission,
-                 path_ramp_submissions):
+def sign_up_team(session, event_name, team_name):
     """Register a team to a RAMP event and submit the starting kit.
 
     Parameters
@@ -60,21 +59,16 @@ def sign_up_team(session, event_name, team_name, path_sandbox_submission,
         The RAMP event name.
     team_name : str
         The name of the team.
-    path_sandbox_submission : str
-        Path to the sandbox submission. It will corresponds to the key
-        `ramp_sandbox_dir` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
-    path_ramp_submissions : str
-        Path to the deployment RAMP submissions directory. It will corresponds
-        to the key `ramp_submissions_dir` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
     """
     event, team, event_team = ask_sign_up_team(session, event_name, team_name)
     # setup the sandbox
-    submission_name = os.path.basename(path_sandbox_submission)
+    path_sandbox_submission = os.path.join(event.problem.path_ramp_kits,
+                                           event.problem.name,
+                                           'submissions',
+                                           event.ramp_sandbox_name)
+    submission_name = event.ramp_sandbox_name
     submission = add_submission(session, event_name, team_name,
-                                submission_name, path_sandbox_submission,
-                                path_ramp_submissions, True)
+                                submission_name, path_sandbox_submission)
     if os.path.exists(submission.path):
         shutil.rmtree(submission.path)
     os.makedirs(submission.path)

@@ -72,8 +72,8 @@ def setup_toy_db(session, config):
     """
     add_users(session)
     add_problems(session, config)
-    add_events(session)
-    sign_up_teams_to_events(session, config)
+    add_events(session, config)
+    sign_up_teams_to_events(session)
     submit_all_starting_kits(session, config)
 
 
@@ -198,28 +198,8 @@ def add_problems(session, config):
                     ramp_config['ramp_data_dir'])
 
 
-def add_events(session):
+def add_events(session, config):
     """Add events in the database.
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-
-    Notes
-    -----
-    Be aware that :func:`add_problems` needs to be called before.
-    """
-    problems = ['iris', 'boston_housing']
-    for problem_name in problems:
-        event_name = '{}_test'.format(problem_name)
-        event_title = 'test event'
-        add_event(session, problem_name=problem_name, event_name=event_name,
-                  event_title=event_title, is_public=True, force=False)
-
-
-def sign_up_teams_to_events(session, config):
-    """Sign up user to the events in the database.
 
     Parameters
     ----------
@@ -230,23 +210,48 @@ def sign_up_teams_to_events(session, config):
 
     Notes
     -----
+    Be aware that :func:`add_problems` needs to be called before.
+    """
+    ramp_config = generate_ramp_config(config)
+    problems = ['iris', 'boston_housing']
+    for problem_name in problems:
+        event_name = '{}_test'.format(problem_name)
+        event_title = 'test event'
+        add_event(session, problem_name=problem_name, event_name=event_name,
+                  event_title=event_title,
+                  ramp_sandbox_name=ramp_config['sandbox_name'],
+                  ramp_submissions_path=ramp_config['ramp_submissions_dir'],
+                  is_public=True, force=False)
+
+
+def sign_up_teams_to_events(session):
+    """Sign up user to the events in the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+
+    Notes
+    -----
     Be aware that :func:`add_users`, :func:`add_problems`,
     and :func:`add_events` need to be called before.
     """
-    ramp_config = generate_ramp_config(config)
-    for event, event_name in zip(['iris', 'boston_housing'],
-                                 ['iris_test', 'boston_housing_test']):
-        path_sandbox = os.path.join(
-            ramp_config['ramp_kits_dir'], event,
-            'submissions', config['ramp']['sandbox_dir']
-        )
-        sign_up_team(session, event_name, 'test_user', path_sandbox,
-                     ramp_config['ramp_submissions_dir'])
-        sign_up_team(session, event_name, 'test_user_2', path_sandbox,
-                     ramp_config['ramp_submissions_dir'])
+    for event_name in ['iris_test', 'boston_housing_test']:
+        sign_up_team(session, event_name, 'test_user')
+        sign_up_team(session, event_name, 'test_user_2')
 
 
 def submit_all_starting_kits(session, config):
+    """Submit all starting kits.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    config : dict
+        Configuration dictionary containing the ramp information.
+    """
     ramp_config = generate_ramp_config(config)
     for event, event_name in zip(['iris', 'boston_housing'],
                                  ['iris_test', 'boston_housing_test']):
@@ -254,10 +259,6 @@ def submit_all_starting_kits(session, config):
             ramp_config['ramp_kits_dir'], event, 'submissions'
         )
         submit_starting_kits(session, event_name, 'test_user',
-                             path_submissions,
-                             ramp_config['ramp_submissions_dir'],
-                             config['ramp']['sandbox_dir'])
+                             path_submissions)
         submit_starting_kits(session, event_name, 'test_user_2',
-                             path_submissions,
-                             ramp_config['ramp_submissions_dir'],
-                             config['ramp']['sandbox_dir'])
+                             path_submissions)

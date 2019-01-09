@@ -48,13 +48,9 @@ def test_deploy_ramp_event(session_scope_function):
     # submitted the starting kit
     with session_scope(config['sqlalchemy']) as session:
         add_users(session)
-        sign_up_team(session, ramp_config['event_name'], 'test_user',
-                     ramp_config['ramp_sandbox_dir'],
-                     ramp_config['ramp_submissions_dir'])
+        sign_up_team(session, ramp_config['event_name'], 'test_user')
         submit_starting_kits(session, ramp_config['event_name'], 'test_user',
-                             ramp_config['ramp_kit_submissions_dir'],
-                             ramp_config['ramp_submissions_dir'],
-                             ramp_config['sandbox_name'])
+                             ramp_config['ramp_kit_submissions_dir'])
 
     # run the dispatcher on the event which are in the dataset
     dispatcher = Dispatcher(config=config,

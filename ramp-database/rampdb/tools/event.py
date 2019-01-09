@@ -201,7 +201,8 @@ def add_problem(session, problem_name, kits_dir, data_dir, force=False):
     session.commit()
 
 
-def add_event(session, problem_name, event_name, event_title, is_public=False,
+def add_event(session, problem_name, event_name, event_title,
+              ramp_sandbox_name, ramp_submissions_path, is_public=False,
               force=False):
     """Add a RAMP event in the database.
 
@@ -220,6 +221,14 @@ def add_event(session, problem_name, event_name, event_title, is_public=False,
         The event name.
     event_title : str
         The even title.
+    ramp_sandbox_name : str
+        Name of the submission which will be considered the sandbox. It will
+        correspond to the key ``sandbox_name`` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
+    ramp_submissions_path : str
+        Path to the deployment RAMP submissions directory. It will corresponds
+        to the key `ramp_submissions_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
     is_public : bool, default is False
         Whether the event is made public or not.
     force : bool, default is False
@@ -239,7 +248,10 @@ def add_event(session, problem_name, event_name, event_title, is_public=False,
         delete_event(session, event_name)
 
     event = Event(name=event_name, problem_name=problem_name,
-                  event_title=event_title, session=session)
+                  event_title=event_title,
+                  ramp_sandbox_name=ramp_sandbox_name,
+                  path_ramp_submissions=ramp_submissions_path,
+                  session=session)
     event.is_public = is_public
     event.is_send_submitted_mails = False
     event.is_send_trained_mails = False

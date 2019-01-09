@@ -112,8 +112,8 @@ def _setup_sign_up(session, config):
     # asking to sign up required a user, a problem, and an event.
     add_users(session)
     add_problems(session, config)
-    add_events(session)
-    sign_up_teams_to_events(session, config)
+    add_events(session, config)
+    sign_up_teams_to_events(session)
     return config['ramp']['event_name'], 'test_user'
 
 
@@ -129,7 +129,7 @@ def test_add_submission_create_new_submission(base_db, config):
         os.path.dirname(ramp_config['ramp_sandbox_dir']), submission_name
     )
     add_submission(session, event_name, username, submission_name,
-                   path_submission, ramp_config['ramp_submissions_dir'], False)
+                   path_submission)
     all_submissions = get_submissions(session, event_name, None)
 
     # `sign_up_team` make a submission (sandbox) by user. This submission will
@@ -168,14 +168,10 @@ def test_add_submission_too_early_submission(base_db, config):
             err_msg = 'You need to wait'
             with pytest.raises(TooEarlySubmissionError, match=err_msg):
                 add_submission(session, event_name, username, submission_name,
-                               path_submission,
-                               ramp_config['ramp_submissions_dir'],
-                               False)
+                               path_submission)
         else:
             add_submission(session, event_name, username, submission_name,
-                           path_submission,
-                           ramp_config['ramp_submissions_dir'],
-                           False)
+                           path_submission)
 
 
 def test_make_submission_resubmission(base_db, config):
@@ -192,8 +188,7 @@ def test_make_submission_resubmission(base_db, config):
     with pytest.raises(DuplicateSubmissionError, match=err_msg):
         add_submission(session, event_name, username,
                        os.path.basename(ramp_config['ramp_sandbox_dir']),
-                       ramp_config['ramp_sandbox_dir'],
-                       ramp_config['ramp_submissions_dir'], False)
+                       ramp_config['ramp_sandbox_dir'])
 
     # submitting twice a normal submission should raise an error as well
     submission_name = 'random_forest_10_10'
@@ -202,7 +197,7 @@ def test_make_submission_resubmission(base_db, config):
     )
     # first submission
     add_submission(session, event_name, username, submission_name,
-                   path_submission, ramp_config['ramp_submissions_dir'], False)
+                   path_submission,)
     # mock that we scored the submission
     set_submission_state(session, 5, 'scored')
     # second submission
@@ -210,20 +205,18 @@ def test_make_submission_resubmission(base_db, config):
                '"iris_test" exists already')
     with pytest.raises(DuplicateSubmissionError, match=err_msg):
         add_submission(session, event_name, username, submission_name,
-                       path_submission, ramp_config['ramp_submissions_dir'],
-                       False)
+                       path_submission)
 
     # a resubmission can take place if it is tagged as "new" or failed
 
     # mock that the submission failed during the training
     set_submission_state(session, 5, 'training_error')
     add_submission(session, event_name, username, submission_name,
-                   path_submission, ramp_config['ramp_submissions_dir'], False)
+                   path_submission)
     # mock that the submissions are new submissions
     set_submission_state(session, 5, 'new')
     add_submission(session, event_name, username, submission_name,
-                   path_submission, ramp_config['ramp_submissions_dir'],
-                   False)
+                   path_submission)
 
 
 def test_add_submission_wrong_submission_files(base_db, config):
@@ -243,8 +236,7 @@ def test_add_submission_wrong_submission_files(base_db, config):
     err_msg = 'No file corresponding to the workflow element'
     with pytest.raises(MissingSubmissionFileError, match=err_msg):
         add_submission(session, event_name, username, submission_name,
-                       path_submission, ramp_config['ramp_submissions_dir'],
-                       False)
+                       path_submission)
 
     # case that there is not file corresponding to the workflow component
     filename = os.path.join(path_submission, 'unknown_file.xxx')
@@ -252,8 +244,7 @@ def test_add_submission_wrong_submission_files(base_db, config):
     err_msg = 'No file corresponding to the workflow element'
     with pytest.raises(MissingSubmissionFileError, match=err_msg):
         add_submission(session, event_name, username, submission_name,
-                       path_submission, ramp_config['ramp_submissions_dir'],
-                       False)
+                       path_submission)
 
     # case that we have the correct filename but not the right extension
     filename = os.path.join(path_submission, 'classifier.xxx')
@@ -261,8 +252,7 @@ def test_add_submission_wrong_submission_files(base_db, config):
     err_msg = 'All extensions "xxx" are unknown for the submission'
     with pytest.raises(MissingExtensionError, match=err_msg):
         add_submission(session, event_name, username, submission_name,
-                       path_submission, ramp_config['ramp_submissions_dir'],
-                       False)
+                       path_submission)
 
 
 def test_submit_starting_kits(base_db, config):
@@ -273,9 +263,7 @@ def test_submit_starting_kits(base_db, config):
     submit_starting_kits(session, event_name, username,
                          os.path.join(ramp_config['ramp_kits_dir'],
                                       ramp_config['event'],
-                                      config['ramp']['submissions_dir']),
-                        ramp_config['ramp_submissions_dir'],
-                        config['ramp']['sandbox_dir'])
+                                      config['ramp']['submissions_dir']))
 
     submissions = get_submissions(session, event_name, None)
     submissions_id = [sub[0] for sub in submissions]

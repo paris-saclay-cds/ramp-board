@@ -64,12 +64,6 @@ class Submission(Model):
         The submission name.
     event_name : str
         The event name.
-    path_ramp_submissions : str
-        Path to the deployment RAMP submissions directory. It will corresponds
-        to the key `ramp_submissions_dir` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
-    is_sandbox : bool
-        Whether it is a sandbox submission.
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
 
@@ -128,10 +122,6 @@ class Submission(Model):
         data.
     max_ram : float
         The maximum amount of RAM consume during training.
-    is_sandbox : bool
-        Whether it is a sandbox submission.
-    path_ramp_submissions : str
-        Path to the deployment RAMP submissions directory.
     historical_contributivitys : list of \
 :class:`rampdb.model.HistoricalContributivity`
         A back-reference of the historical contributivities for the submission.
@@ -187,16 +177,9 @@ class Submission(Model):
     # later also ramp_id
     UniqueConstraint(event_team_id, name, name='ts_constraint')
 
-    # XXX: big change in the database
-    is_sandbox = Column(Boolean, default=False)
-    path_ramp_submissions = Column(String, nullable=False, unique=False)
-
-    def __init__(self, name, event_team, path_ramp_submissions, is_sandbox,
-                 session=None):
+    def __init__(self, name, event_team, session=None):
         self.name = name
         self.event_team = event_team
-        self.path_ramp_submissions = path_ramp_submissions
-        self.is_sandbox = is_sandbox
         self.session = inspect(event_team).session
         sha_hasher = hashlib.sha1()
         sha_hasher.update(encode_string(self.event.name))
@@ -275,7 +258,7 @@ class Submission(Model):
     @hybrid_property
     def is_not_sandbox(self):
         """bool: Whether the submission is not a sandbox."""
-        return not self.is_sandbox
+        return self.name != self.event.ramp_sandbox_name
 
     @hybrid_property
     def is_error(self):
@@ -297,7 +280,7 @@ class Submission(Model):
     @property
     def path(self):
         """str: The path to the submission."""
-        return os.path.join(self.path_ramp_submissions, self.basename)
+        return os.path.join(self.event.path_ramp_submissions, self.basename)
 
     @property
     def basename(self):

@@ -64,9 +64,7 @@ def sign_up_team(ctx, name):
     ramp_config = generate_ramp_config(ctx.obj['config'])
     with ctx.obj['db'].connect() as conn:
         session = ctx.obj['Session'](bind=conn)
-        team.sign_up_team(session, ramp_config['event_name'], name,
-                          ramp_config['ramp_sandbox_dir'],
-                          ramp_config['ramp_submissions_dir'])
+        team.sign_up_team(session, ramp_config['event_name'], name)
         logger.info('Sign up the team "{}" to the event "{}"'
                     .format(name, ramp_config['event_name']))
 
