@@ -20,7 +20,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
                 </div>
-            </div>     
+            </div>
         </div>
     </div>
 {% endif %}
@@ -48,9 +48,9 @@
          			 <div class="card-body">
                 		<input type="checkbox" onClick="toggle_users(this)" checked> Approve all users<br/><br/>
                 		{% for asked_user in asked_users %}
-							<input type="checkbox" name="approve_users" value="{{ asked_user.name }}" checked> {{ asked_user.name }} - {{ asked_user.email }} - {{ asked_user.firstname }} {{ asked_user.lastname }}<br> 
-						{% endfor %}			
-					 </div>	
+							<input type="checkbox" name="approve_users" value="{{ asked_user.name }}" checked> {{ asked_user.name }}: {{ asked_user.firstname }} {{ asked_user.lastname }} - {{ asked_user.email }}<br>
+						{% endfor %}
+					 </div>
 				  </div>
 			 </div>
              <div class="col-xs-6 col-lg-6">
@@ -63,9 +63,9 @@
          			 <div class="card-body">
                 		<input type="checkbox" onClick="toggle_event_teams(this)" checked> Approve all event teams<br/><br/>
                 		{% for asked_event_team in asked_sign_up %}
-							<input type="checkbox" name="approve_event_teams" value="{{ asked_event_team.id }}" checked> {{ asked_event_team.event.name }} - {{ asked_event_team.team.name }} <br> 
-						{% endfor %}			
-					 </div>	
+							<input type="checkbox" name="approve_event_teams" value="{{ asked_event_team.id }}" checked> {{ asked_event_team.event.name }} - {{ asked_event_team.team.name }} <br>
+						{% endfor %}
+					 </div>
 				  </div>
 			 </div>
 			</form>

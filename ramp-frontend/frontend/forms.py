@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 
 from wtforms import BooleanField
+from wtforms import FileField
 from wtforms import PasswordField
 from wtforms import StringField
 from wtforms import validators
@@ -104,3 +105,16 @@ class UserCreateProfileForm(UserUpdateProfileForm):
         Whether the user want some info from us.
     """
     password = PasswordField('password', [validators.DataRequired()])
+
+
+class CodeForm(FlaskForm):
+    names_codes = []
+
+
+class SubmitForm(FlaskForm):
+    submission_name = StringField('submission_name',
+                                  [validators.DataRequired(), _space_check])
+
+
+class UploadForm(FlaskForm):
+    file = FileField('file')
