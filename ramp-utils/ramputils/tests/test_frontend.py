@@ -30,16 +30,6 @@ def test_generate_flask_config(config):
         'MAIL_USE_SSL': True,
         'MAIL_DEBUG': False,
         'SQLALCHEMY_TRACK_MODIFICATIONS': True,
-        'SQLALCHEMY_MIGRATE_REPO': 'None',
-        'SQLALCHEMY_RECORD_QUERIES': False,
-        'SQLALCHEMY_BIND': 'None',
-        'SQLALCHEMY_NATIVE_UNICODE': 'None',
-        'SQLALCHEMY_ECHO': False,
-        'SQLALCHEMY_POOL_SIZE': 'None',
-        'SQLALCHEMY_POOL_TIMEOUT': 'None',
-        'SQLALCHEMY_POOL_RECYCLE': 'None',
-        'SQLALCHEMY_MAX_OVERFLOW': 'None',
-        'SQLALCHEMY_COMMIT_ON_TEARDOWN': False,
         'SQLALCHEMY_DATABASE_URI': ('postgresql://mrramp:mrramp@localhost:5432'
                                     '/databoard_test')
         }
