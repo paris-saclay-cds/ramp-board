@@ -181,7 +181,9 @@ def test_check_event(session_scope_function, config):
         event_name = '{}_test'.format(problem_name)
         event_title = 'event title'
         add_event(session_scope_function, problem_name, event_name,
-                  event_title, is_public=True, force=False)
+                  event_title, ramp_config['sandbox_name'],
+                  ramp_config['ramp_submissions_dir'],
+                  is_public=True, force=False)
 
     event = get_event(session_scope_function, None)
     assert len(event) == 2
@@ -196,10 +198,13 @@ def test_check_event(session_scope_function, config):
     err_msg = 'Attempting to overwrite existing event.'
     with pytest.raises(ValueError, match=err_msg):
         add_event(session_scope_function, 'iris', 'iris_test', event_title,
-                  is_public=True, force=False)
+                  ramp_config['sandbox_name'],
+                  ramp_config['ramp_submissions_dir'], is_public=True,
+                  force=False)
 
     # add event by force
     add_event(session_scope_function, 'iris', 'iris_test', event_title,
+              ramp_config['sandbox_name'], ramp_config['ramp_submissions_dir'],
               is_public=True, force=True)
     event = get_event(session_scope_function, 'iris_test')
     _check_event(session_scope_function, event, 'iris_test', 'event title',

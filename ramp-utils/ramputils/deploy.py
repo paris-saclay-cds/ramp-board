@@ -42,6 +42,10 @@ def deploy_ramp_event(config):
         add_problem(session, ramp_config['event'],
                     ramp_config['ramp_kits_dir'],
                     ramp_config['ramp_data_dir'])
-        add_event(session, ramp_config['event'], ramp_config['event_name'],
-                  ramp_config['event_title'], ramp_config['event_is_public'],
+        add_event(session, ramp_config['event'],
+                  ramp_config['event_name'],
+                  ramp_config['event_title'],
+                  ramp_config['sandbox_name'],
+                  ramp_config['ramp_submissions_dir'],
+                  ramp_config['event_is_public'],
                   False)

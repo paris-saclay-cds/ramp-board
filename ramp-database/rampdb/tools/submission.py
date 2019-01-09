@@ -36,7 +36,7 @@ logger = logging.getLogger('DATABASE')
 # TODO: move the queries in "_query"
 # TODO: there is nothing regarding leaderboard update
 def add_submission(session, event_name, team_name, submission_name,
-                   submission_path, submission_deployment_path, is_sandbox):
+                   submission_path):
     """Create a submission in the database and returns an handle.
 
     Parameters
@@ -53,12 +53,6 @@ def add_submission(session, event_name, team_name, submission_name,
         The path of the files associated to the current submission. It will
         corresponds to the key `ramp_kit_subissions_dir` of the dictionary
         created with :func:`ramputils.generate_ramp_config`.
-    submission_deployment_path : str
-        Path to the deployment RAMP submissions directory. It will corresponds
-        to the key `ramp_submissions_dir` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
-    is_sandbox : bool
-        If the submission is the sandbox submission.
 
     Returns
     -------
@@ -95,9 +89,7 @@ def add_submission(session, event_name, team_name, submission_name,
                     .format(awaiting_time))
 
         submission = Submission(
-            name=submission_name, event_team=event_team,
-            path_ramp_submissions=submission_deployment_path,
-            is_sandbox=is_sandbox, session=session
+            name=submission_name, event_team=event_team, session=session
         )
         for cv_fold in event.cv_folds:
             submission_on_cv_fold = SubmissionOnCVFold(submission=submission,
@@ -738,8 +730,7 @@ def score_submission(session, submission_id):
     session.commit()
 
 
-def submit_starting_kits(session, event_name, team_name, path_submission,
-                         path_ramp_submissions, sandbox_name):
+def submit_starting_kits(session, event_name, team_name, path_submission):
     """Submit all starting kits for a given event.
 
     Some kits contain several starting kits. This function allows to submit
@@ -757,12 +748,6 @@ def submit_starting_kits(session, event_name, team_name, path_submission,
         The path of the files associated to the current submission. It will
         corresponds to the key `ramp_kit_submissions_dir` of the dictionary
         created with :func:`ramputils.generate_ramp_config`.
-    path_ramp_submissions : str
-        Path to the deployment RAMP submissions directory. It will corresponds
-        to the key `ramp_submissions_dir` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
-    sandbox_name : str
-        The name of the sandbox submission.
     """
     event = select_event_by_name(session, event_name=event_name)
     submission_names = os.listdir(path_submission)
@@ -774,12 +759,10 @@ def submit_starting_kits(session, event_name, team_name, path_submission,
         # one of the starting kit is usually used a sandbox and we need to
         # change the name to not have any duplicate
         submission_name = (submission_name
-                           if submission_name != sandbox_name
+                           if submission_name != event.ramp_sandbox_name
                            else submission_name + '_test')
         submission = add_submission(session, event_name, team_name,
-                                    submission_name, from_submission_path,
-                                    path_ramp_submissions,
-                                    False)
+                                    submission_name, from_submission_path)
         # copy the files
         if os.path.exists(submission.path):
             shutil.rmtree(submission.path)
