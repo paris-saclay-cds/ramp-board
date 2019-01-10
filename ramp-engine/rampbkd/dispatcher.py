@@ -20,6 +20,7 @@ from databoard.db_tools import update_leaderboards
 from databoard.db_tools import update_submission_on_cv_fold
 
 from rampdb.tools.submission import get_submissions
+from rampdb.tools.submission import get_submission_by_id
 from rampdb.tools.submission import get_submission_state
 
 from rampdb.tools.submission import set_bagged_scores
@@ -90,6 +91,10 @@ class Dispatcher(object):
             logger.info('No new submissions fetch from the database')
             return
         for submission_id, submission_name, _ in submissions:
+            # do not train the sandbox submission
+            submission = get_submission_by_id(session, submission_id)
+            if not submission.is_not_sandbox:
+                continue
             # create the worker
             worker = self.worker(self._worker_config, submission_name)
             set_submission_state(session, submission_id, 'sent_to_training')
