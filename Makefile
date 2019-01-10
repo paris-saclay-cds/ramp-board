@@ -16,6 +16,13 @@ install:
     cd databoard && pip install . && cd ..
     cd ramp-database && pip install . && cd ..
     cd ramp-engine && pip install . && cd ..
+    cd ramp-utils && pip install . && cd ..
+
+inplace:
+    cd databoard && pip install -e . && cd ..
+    cd ramp-database && pip install -e . && cd ..
+    cd ramp-engine && pip install -e . && cd ..
+    cd ramp-utils && pip install -e . && cd ..
 
 test-all:
     pytest -vsl
