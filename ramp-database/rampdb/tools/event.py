@@ -423,3 +423,31 @@ def is_accessible_event(session, event_name, user_name):
     if event.is_public or is_admin(session, event_name, user_name):
         return True
     return False
+
+
+def is_accessible_leaderboard(session, event_name, user_name):
+    """Whether or not a leaderboard is public or and a user is registered to
+    RAMP or and admin.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The event name.
+    user_name : str
+        The user name.
+    """
+    # to avoid circular dependencies
+    from .team import is_user_signed_up
+    event = select_event_by_name(session, event_name)
+    user = select_user_by_name(session, user_name)
+    if not user.is_authenticated or not user.is_active:
+        return False
+    if is_admin(session, event_name, user_name):
+        return True
+    if not is_user_signed_up(session, event_name, user_name):
+        return False
+    if event.is_public_open:
+        return True
+    return False

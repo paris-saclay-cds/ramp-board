@@ -12,6 +12,7 @@ from flask import flash
 from flask import render_template
 from flask import request
 from flask import redirect
+from flask import send_from_directory
 from flask import url_for
 
 from sqlalchemy.exc import IntegrityError
@@ -35,6 +36,7 @@ from rampdb.exceptions import TooEarlySubmissionError
 from rampdb.tools.event import get_event
 from rampdb.tools.event import get_problem
 from rampdb.tools.event import is_accessible_event
+from rampdb.tools.event import is_accessible_leaderboard
 from rampdb.tools.event import is_admin
 from rampdb.tools.submission import add_submission
 from rampdb.tools.submission import is_accessible_code
@@ -51,11 +53,14 @@ from frontend import db
 
 from ..forms import CodeForm
 from ..forms import EventUpdateProfileForm
+from ..forms import ImportForm
 from ..forms import SubmitForm
 from ..forms import UploadForm
 
 from .redirect import redirect_to_sandbox
 from .redirect import redirect_to_user
+
+from .visualization import score_plot
 
 mod = Blueprint('ramp', __name__)
 logger = logging.getLogger('FRONTEND')
@@ -402,7 +407,7 @@ def sandbox(event_name):
         elif ('submit-csrf_token' in request.form and
               submit_form.validate_on_submit()):
             new_submission_name = request.form['submit-submission_name']
-            if not (4 < len(new_submission_name) < 20):
+            if not 4 < len(new_submission_name) < 20:
                 return redirect_to_sandbox(
                     event,
                     'Submission name should have length between 4 and '
@@ -487,6 +492,88 @@ def sandbox(event_name):
     )
 
 
+@mod.route("/events/<event_name>/leaderboard")
+@flask_login.login_required
+def leaderboard(event_name):
+    event = get_event(db.session, event_name)
+    if not is_accessible_event(db.session, event_name,
+                               flask_login.current_user.name):
+        return redirect_to_user(
+            u'{}: no event named "{}"'
+            .format(flask_login.current_user.firstname, event_name))
+    add_user_interaction(
+        db.session,
+        interaction='looking at leaderboard',
+        user=flask_login.current_user,
+        event=event
+    )
+
+    if is_accessible_leaderboard(db.session, event_name,
+                                 flask_login.current_user.name):
+        leaderboard_html = event.public_leaderboard_html_with_links
+    else:
+        leaderboard_html = event.public_leaderboard_html_no_links
+    if event.official_score_type.is_lower_the_better:
+        sorting_direction = 'asc'
+    else:
+        sorting_direction = 'desc'
+
+    leaderboard_kwargs = dict(
+        leaderboard=leaderboard_html,
+        leaderboard_title='Leaderboard',
+        sorting_column_index=4,
+        sorting_direction=sorting_direction,
+        event=event
+    )
+
+    if is_admin(db.session, event_name, flask_login.current_user.name):
+        failed_leaderboard_html = event.failed_leaderboard_html
+        new_leaderboard_html = event.new_leaderboard_html
+        template = render_template(
+            'leaderboard.html',
+            failed_leaderboard=failed_leaderboard_html,
+            new_leaderboard=new_leaderboard_html,
+            admin=True,
+            **leaderboard_kwargs
+        )
+    else:
+        template = render_template(
+            'leaderboard.html', **leaderboard_kwargs
+        )
+
+    return template
+
+
+@mod.route("/events/<event_name>/competition_leaderboard")
+@flask_login.login_required
+def competition_leaderboard(event_name):
+    event = get_event(db.session, event_name)
+    if not is_accessible_event(db.session, event_name,
+                               flask_login.current_user.name):
+        return redirect_to_user(
+            u'{}: no event named "{}"'
+            .format(flask_login.current_user.firstname, event_name)
+        )
+    add_user_interaction(
+        db.session,
+        interaction='looking at leaderboard',
+        user=flask_login.current_user,
+        event=event
+    )
+    admin = is_admin(db.session, event_name, flask_login.current_user.name)
+    leaderboard_html = event.public_competition_leaderboard_html
+    leaderboard_kwargs = dict(
+        leaderboard=leaderboard_html,
+        leaderboard_title='Leaderboard',
+        sorting_column_index=0,
+        sorting_direction='asc',
+        event=event,
+        admin=admin
+    )
+
+    return render_template('leaderboard.html', **leaderboard_kwargs)
+
+
 @mod.route("/events/<event_name>/update", methods=['GET', 'POST'])
 @flask_login.login_required
 def update_event(event_name):
@@ -558,7 +645,7 @@ def update_event(event_name):
             # #     message += 'email is already in use'
             # except NoResultFound:
             #     pass
-            if len(message) > 0:
+            if message:
                 e = NameClashError(message)
             flash(u'{}'.format(e), category='Update event error')
             return redirect(url_for('update_event', event_name=event.name))
@@ -571,6 +658,168 @@ def update_event(event_name):
         event=event,
         admin=admin,
     )
+
+
+@mod.route("/event_plots/<event_name>")
+@flask_login.login_required
+def event_plots(event_name):
+    from bokeh.embed import components
+    from bokeh.plotting import show
+    event = get_event(db.session, event_name)
+    if not is_accessible_code(db.session, event_name,
+                              flask_login.current_user.name):
+        return redirect_to_user(
+            u'{}: no event named "{}"'
+            .format(flask_login.current_user.firstname, event_name)
+        )
+    if event:
+        p = score_plot(db.session, event)
+        script, div = components(p)
+        return render_template('event_plots.html',
+                               script=script,
+                               div=div,
+                               event=event)
+    return redirect_to_user(u'Event {} does not exist.'
+                            .format(event_name),
+                            is_error=True)
+
+
+@mod.route("/<submission_hash>/<f_name>", methods=['GET', 'POST'])
+@flask_login.login_required
+def view_model(submission_hash, f_name):
+    """Rendering submission codes using templates/submission.html.
+
+    The code of f_name is displayed in the left panel, the list of submissions
+    files is in the right panel. Clicking on a file will show that file (using
+    the same template). Clicking on the name on the top will download the file
+    itself (managed in the template). Clicking on "Archive" will zip all the
+    submission files and download them (managed here).
+
+    Parameters
+    ----------
+    submission_hash : string
+        The hash_ of the submission.
+    f_name : string
+        The name of the submission file
+
+    Returns
+    -------
+     : html string
+        The rendered submission.html page.
+    """
+    submission = (Submission.query.filter_by(hash_=submission_hash)
+                                  .one_or_none())
+    if (submission is None or
+            not is_accessible_code(db.session, submission.event_name,
+                                   flask_login.current_user.name,
+                                   submission.name)):
+        error_str = u'Missing submission: {}'.format(submission_hash)
+        return redirect_to_user(error_str)
+    event = submission.event_team.event
+    team = submission.event_team.team
+    workflow_element_name = f_name.split('.')[0]
+    workflow_element = \
+        (WorkflowElement.query.filter_by(name=workflow_element_name,
+                                         workflow=event.workflow)
+                              .one_or_none())
+    if workflow_element is None:
+        error_str = (u'{} is not a valid workflow element by {} '
+                     .format(workflow_element_name,
+                             flask_login.current_user.name))
+        error_str += u'in {}/{}/{}/{}'.format(event, team, submission, f_name)
+        return redirect_to_user(error_str)
+    submission_file = \
+        (SubmissionFile.query.filter_by(submission=submission,
+                                        workflow_element=workflow_element)
+                             .one_or_none())
+    if submission_file is None:
+        error_str = (u'No submission file by {} in {}/{}/{}/{}'
+                     .format(flask_login.current_user.name,
+                             event, team, submission, f_name))
+        return redirect_to_user(error_str)
+
+    # superfluous, perhaps when we'll have different extensions?
+    f_name = submission_file.f_name
+
+    submission_abspath = os.path.abspath(submission.path)
+    if not os.path.exists(submission_abspath):
+        error_str = (u'{} does not exist by {} in {}/{}/{}/{}'
+                     .format(submission_abspath, flask_login.current_user.name,
+                             event, team, submission, f_name))
+        return redirect_to_user(error_str)
+
+    add_user_interaction(
+        db.session,
+        interaction='looking at submission',
+        user=flask_login.current_user,
+        event=event,
+        submission=submission,
+        submission_file=submission_file
+    )
+
+    logger.info(u'{} is looking at {}/{}/{}/{}'
+                .format(flask_login.current_user.name, event, team, submission,
+                        f_name))
+
+    # Downloading file if it is not editable (e.g., external_data.csv)
+    if not workflow_element.is_editable:
+        # archive_filename = f_name  + '.zip'
+        # with changedir(submission_abspath):
+        #    with ZipFile(archive_filename, 'w') as archive:
+        #        archive.write(f_name)
+        add_user_interaction(
+            db.session,
+            interaction='download',
+            user=flask_login.current_user,
+            event=event,
+            submission=submission,
+            submission_file=submission_file
+        )
+
+        return send_from_directory(
+            submission_abspath, f_name, as_attachment=True,
+            attachment_filename=u'{}_{}'.format(submission.hash_[:6], f_name),
+            mimetype='application/octet-stream'
+        )
+
+    # Importing selected files into sandbox
+    choices = [(f, f) for f in submission.f_names]
+    import_form = ImportForm()
+    import_form.selected_f_names.choices = choices
+    if import_form.validate_on_submit():
+        sandbox_submission = get_sandbox(event, flask_login.current_user)
+        for f_name in import_form.selected_f_names.data:
+            logger.info(u'{} is importing {}/{}/{}/{}'.format(
+                flask_login.current_user.name, event, team, submission, f_name))
+
+            # TODO: deal with different extensions of the same file
+            src = os.path.join(submission.path, f_name)
+            dst = os.path.join(sandbox_submission.path, f_name)
+            shutil.copy2(src, dst)  # copying also metadata
+            logger.info(u'Copying {} to {}'.format(src, dst))
+
+            workflow_element = WorkflowElement.query.filter_by(
+                name=f_name.split('.')[0], workflow=event.workflow).one()
+            submission_file = SubmissionFile.query.filter_by(
+                submission=submission,
+                workflow_element=workflow_element).one()
+            add_user_interaction(
+                interaction='copy', user=flask_login.current_user, event=event,
+                submission=submission, submission_file=submission_file)
+
+        return redirect(u'/events/{}/sandbox'.format(event.name))
+
+    with open(os.path.join(submission.path, f_name)) as f:
+        code = f.read()
+    admin = check_admin(flask_login.current_user, event)
+    return render_template(
+        'submission.html',
+        event=event,
+        code=code,
+        submission=submission,
+        f_name=f_name,
+        import_form=import_form,
+        admin=admin)
 
 
 # TODO: Function that should go in an admin blueprint and admin board

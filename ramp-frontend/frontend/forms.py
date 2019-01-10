@@ -6,6 +6,7 @@ from wtforms import BooleanField
 from wtforms import DateTimeField
 from wtforms import FileField
 from wtforms import IntegerField
+from wtforms import MultipleFileField
 from wtforms import PasswordField
 from wtforms import StringField
 from wtforms import validators
@@ -158,3 +159,7 @@ class EventUpdateProfileForm(FlaskForm):
         'closing_timestamp', [], format='%Y-%m-%d %H:%M:%S')
     public_opening_timestamp = DateTimeField(
         'public_opening_timestamp', [], format='%Y-%m-%d %H:%M:%S')
+
+
+class ImportForm(FlaskForm):
+    selected_f_names = MultiCheckboxField('selected_f_names')

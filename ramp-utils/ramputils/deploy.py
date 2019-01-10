@@ -38,10 +38,12 @@ def deploy_ramp_event(config):
 
     with session_scope(database_config) as session:
         setup_files_extension_type(session)
-        setup_ramp_kits_ramp_data(config, ramp_config['event'])
-        add_problem(session, ramp_config['event'],
-                    ramp_config['ramp_kits_dir'],
-                    ramp_config['ramp_data_dir'])
+        # check if the problem was already created previously
+        if not os.path.exists(ramp_config['ramp_kits_dir']):
+            setup_ramp_kits_ramp_data(config, ramp_config['event'])
+            add_problem(session, ramp_config['event'],
+                        ramp_config['ramp_kits_dir'],
+                        ramp_config['ramp_data_dir'])
         add_event(session, ramp_config['event'],
                   ramp_config['event_name'],
                   ramp_config['event_title'],
