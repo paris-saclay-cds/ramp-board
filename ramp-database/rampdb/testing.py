@@ -27,7 +27,8 @@ logger = logging.getLogger('RAMP-DATABASE')
 
 def create_test_db(config):
     """Create an empty test database and the setup the files for RAMP.
-
+    Note: this will forcedly remove any existing content in the deployment
+    directory.
     Parameters
     ----------
     config : dict
