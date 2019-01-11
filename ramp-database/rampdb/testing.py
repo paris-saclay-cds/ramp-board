@@ -22,7 +22,7 @@ from .tools.user import create_user
 from .tools.team import sign_up_team
 from .tools.submission import submit_starting_kits
 
-logger = logging.getLogger('DATABASE')
+logger = logging.getLogger('RAMP-DATABASE')
 
 
 def create_test_db(config):
