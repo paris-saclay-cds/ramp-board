@@ -120,7 +120,7 @@ class Submission(Model):
         The standard deviation of the computation time for a fold on the test
         data.
     max_ram : float
-        The maximum amount of RAM consume during training.
+        The maximum amount of RAM consumed during training.
     historical_contributivitys : list of \
 :class:`rampdb.model.HistoricalContributivity`
         A back-reference of the historical contributivities for the submission.
