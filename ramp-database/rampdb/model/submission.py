@@ -64,8 +64,6 @@ class Submission(Model):
         The submission name.
     event_name : str
         The event name.
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
 
     Attributes
     ----------
