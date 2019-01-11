@@ -86,3 +86,24 @@ def test_is_accessible_event(session_toy_db, event_name, user_name,
         session_toy_db.commit()
     assert is_accessible_event(session_toy_db, event_name,
                                user_name) is is_accessible
+
+
+@pytest.mark.parametrize(
+    "event_name, user_name, is_accessible",
+    [('boston_housing', 'test_iris_admin', False),
+     ('boston_housing_test', 'test_iris_admin', False),
+     ('iris_test', 'test_user', True)]
+)
+def test_user_signed_up(session_toy_db, event_name, user_name, is_accessible):
+    assert is_user_signed_up(session_toy_db, event_name,
+                             user_name) is is_accessible
+
+
+def test_is_accessible_code(session_toy_db):
+    event_name = 'iris_test'
+    user = get_user_by_name(session_toy_db, 'test_user_2')
+    user.is_authenticated = False
+    assert not is_accessible_code(session_toy_db, event_name, user.name)
+    user = get_user_by_name(session_toy_db, 'test_iris_admin')
+    user.is_authenticated = True
+    assert is_accessible_code(session_toy_db, event_name, 'test_iris_admin')

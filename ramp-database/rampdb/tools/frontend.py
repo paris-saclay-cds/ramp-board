@@ -98,10 +98,10 @@ def is_accessible_code(session, event_name, user_name,
     is_accessible : bool
         Whether or not the submission can be shown.
     """
-    # local import to avoid circular import issue
     user = select_user_by_name(session, user_name)
     if not user.is_authenticated or not user.is_active:
         return False
+    print(is_admin(session, event_name, user_name))
     if is_admin(session, event_name, user_name):
         return True
     if not is_user_signed_up(session, event_name, user_name):
