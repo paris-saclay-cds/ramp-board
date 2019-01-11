@@ -29,7 +29,7 @@ from ._query import select_submission_file_type_by_name
 from ._query import select_team_by_name
 
 STATES = submission_states.enums
-logger = logging.getLogger('DATABASE')
+logger = logging.getLogger('RAMP-DATABASE')
 
 
 # Add functions: add information to the database
