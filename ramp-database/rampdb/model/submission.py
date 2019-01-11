@@ -17,7 +17,7 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from ramputils import encode_string
+from ramputils.utils import encode_string
 
 from .base import Model
 # TODO: we should not use this variable

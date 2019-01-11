@@ -32,7 +32,7 @@ def create_test_db(config):
     Parameters
     ----------
     config : dict
-        Configuration file containing all ramp information.
+        Configuration dictionary containing all ramp information.
     """
     database_config = config['sqlalchemy']
     # we can automatically setup the database from the config file used for the
@@ -54,8 +54,8 @@ def create_toy_db(config):
 
     Parameters
     ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
+    config : dict
+        Configuration dictionary containing all ramp information.
     """
     create_test_db(config)
     with session_scope(config['sqlalchemy']) as session:

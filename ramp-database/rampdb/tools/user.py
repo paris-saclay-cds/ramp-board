@@ -3,7 +3,7 @@ import logging
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
-from ramputils.password import hash_password
+from ramputils.utils import hash_password
 
 from ..exceptions import NameClashError
 from ..model import Team

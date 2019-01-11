@@ -15,7 +15,7 @@ from sklearn.utils.validation import assert_all_finite
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
-from ramputils import import_module_from_source
+from ramputils.utils import import_module_from_source
 from rampdb.exceptions import DuplicateSubmissionError
 from rampdb.exceptions import MissingExtensionError
 from rampdb.exceptions import MissingSubmissionFileError

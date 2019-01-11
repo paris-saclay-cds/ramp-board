@@ -9,8 +9,8 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
-from ramputils import import_module_from_source
-from ramputils import encode_string
+from ramputils.utils import import_module_from_source
+from ramputils.utils import encode_string
 
 from .base import Model
 from .base import get_deployment_path
