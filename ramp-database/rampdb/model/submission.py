@@ -92,7 +92,8 @@ class Submission(Model):
     type : {'live' or 'test'}
         The type of submission.
     state : str
-        The state of the submission.
+        The state of the submission. For possible states, see the
+        ``submission_states`` enum in this module (top of this file).
     error_msg : str
         The error message of the submission.
     is_valid : bool

@@ -19,7 +19,9 @@ cv_fold_types = Enum('live', 'test', name='cv_fold_types')
 class CVFold(Model):
     """CVFold table.
 
-    Storing train and test folds, more precisely: train and test indices.
+    Storing train and test folds, more precisely: train and test indices for
+    a single fold. Multiple records of this table are then linked to a
+    submission (through `SubmissionOnCVFold`).
 
     Attributes
     ----------
@@ -36,7 +38,7 @@ class CVFold(Model):
     event : :class:`rampdb.model.Event`
         The event instance.
     submissions : list of :class:`rampdb.model.SubmissionOnCVFold`
-        A back-reference to the submissions linked with this fold.
+        A back-reference to the submission linked with this fold.
     """
 
     __tablename__ = 'cv_folds'

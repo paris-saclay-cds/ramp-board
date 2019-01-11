@@ -100,27 +100,27 @@ class Problem(Model):
         return self.module.Predictions
 
     def get_train_data(self):
-        """ndarray: The training data."""
+        """The training data."""
         path = os.path.join(RAMP_DATA_PATH, self.name)
         return self.module.get_train_data(path=path)
 
     def get_test_data(self):
-        """ndarray: The testing data."""
+        """The testing data."""
         path = os.path.join(RAMP_DATA_PATH, self.name)
         return self.module.get_test_data(path=path)
 
     def ground_truths_train(self):
-        """ndarray: The true labels for the training."""
+        """Predictions: The true labels for the training."""
         _, y_train = self.get_train_data()
         return self.Predictions(y_true=y_train)
 
     def ground_truths_test(self):
-        """ndarray: the true labels for the testing."""
+        """Predictions: the true labels for the testing."""
         _, y_test = self.get_test_data()
         return self.Predictions(y_true=y_test)
 
     def ground_truths_valid(self, test_is):
-        """ndarray: the true labels for the validation."""
+        """Predictions: the true labels for the validation."""
         _, y_train = self.get_train_data()
         return self.Predictions(y_true=y_train[test_is])
 
