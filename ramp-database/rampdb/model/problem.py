@@ -38,16 +38,6 @@ class Problem(Model):
     ----------
     name : str
         The name of the problem.
-    path_ramp_kits : str
-        The path where the kits are located. It will corresponds to
-        the key `ramp_kits_dir` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
-    path_ramp_data : str
-        The path where the data are located. It will corresponds to
-        the key `ramp_data_dir` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
 
     Attributes
     ----------
@@ -59,10 +49,6 @@ class Problem(Model):
         The ID of the associated workflow.
     workflow : :class:`rampdb.model.Worflow`
         The workflow instance.
-    path_ramp_kits : str
-        The path where the kits are located.
-    path_ramp_data : str
-        The path where the data are located.
     events : list of :class:`rampdb.model.Event`
         A back-reference to the event.
     keywords : list of :class:`rampdb.model.ProblemKeyword`

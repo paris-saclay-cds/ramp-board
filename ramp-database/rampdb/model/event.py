@@ -37,17 +37,6 @@ class Event(Model):
         The name of the event.
     event_title : str
         The title to give for the event.
-    ramp_sandbox_name : str
-        Name of the submission which will be considered the sandbox. It will
-        correspond to the key ``sandbox_name`` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
-    path_ramp_submissions : str
-        Path to the deployment RAMP submissions directory. It will corresponds
-        to the key ``ramp_submissions_dir`` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
-    session : None or :class:`sqlalchemy.orm.Session`, optional
-        The session used to perform some required queries. It is a required
-        argument when interacting with the database outside of Flask.
 
     Attributes
     ----------
@@ -108,12 +97,6 @@ class Event(Model):
     private_competition_leaderboard_html : str
         The private leaderboard of the competition in HTML.path_ramp_kits : str
         The path where the kits are located.
-    ramp_sandbox_name : str
-        Name of the submission which will be considered the sandbox.
-    path_ramp_submissions : str
-        Path to the deployment RAMP submissions directory. It will correspond
-        to the key `ramp_submissions_dir` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
     score_types : list of :class:`rampdb.model.EventScoreType`
         A back-reference to the score type used in the event.
     event_admins : list of :class:`rampdb.model.EventAdmin`
