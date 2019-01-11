@@ -25,7 +25,7 @@ from ..model import Workflow
 from ..model import WorkflowElement
 from ..model import WorkflowElementType
 
-logger = logging.getLogger('DATABASE')
+logger = logging.getLogger('RAMP-DATABASE')
 
 
 # Delete functions: remove from the database some information

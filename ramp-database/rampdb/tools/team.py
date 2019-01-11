@@ -10,7 +10,7 @@ from ._query import select_event_by_name
 from ._query import select_event_team_by_name
 from ._query import select_team_by_name
 
-logger = logging.getLogger('DATABASE')
+logger = logging.getLogger('RAMP-DATABASE')
 
 
 def ask_sign_up_team(session, event_name, team_name):

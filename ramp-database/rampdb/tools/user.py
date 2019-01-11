@@ -13,7 +13,7 @@ from ._query import select_team_by_name
 from ._query import select_user_by_email
 from ._query import select_user_by_name
 
-logger = logging.getLogger('DATABASE')
+logger = logging.getLogger('RAMP-DATABASE')
 
 
 def create_user(session, name, password, lastname, firstname, email,
