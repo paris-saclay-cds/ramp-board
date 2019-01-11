@@ -180,7 +180,7 @@ class Event(Model):
     path_ramp_submissions = Column(String, nullable=False, unique=False)
 
     def __init__(self, problem_name, name, event_title,
-                ramp_sandbox_name, path_ramp_submissions, session=None):
+                 ramp_sandbox_name, path_ramp_submissions, session=None):
         self.name = name
         self.ramp_sandbox_name = ramp_sandbox_name
         self.path_ramp_submissions = path_ramp_submissions

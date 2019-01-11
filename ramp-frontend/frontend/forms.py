@@ -6,11 +6,13 @@ from wtforms import BooleanField
 from wtforms import DateTimeField
 from wtforms import FileField
 from wtforms import IntegerField
-from wtforms import MultipleFileField
 from wtforms import PasswordField
+from wtforms import SelectMultipleField
 from wtforms import StringField
 from wtforms import validators
 from wtforms import ValidationError
+from wtforms.widgets import CheckboxInput
+from wtforms.widgets import ListWidget
 
 
 def _space_check(form, field):
@@ -159,6 +161,11 @@ class EventUpdateProfileForm(FlaskForm):
         'closing_timestamp', [], format='%Y-%m-%d %H:%M:%S')
     public_opening_timestamp = DateTimeField(
         'public_opening_timestamp', [], format='%Y-%m-%d %H:%M:%S')
+
+
+class MultiCheckboxField(SelectMultipleField):
+    widget = ListWidget(prefix_label=False)
+    option_widget = CheckboxInput()
 
 
 class ImportForm(FlaskForm):

@@ -35,11 +35,12 @@ from rampdb.exceptions import TooEarlySubmissionError
 
 from rampdb.tools.event import get_event
 from rampdb.tools.event import get_problem
-from rampdb.tools.event import is_accessible_event
-from rampdb.tools.event import is_accessible_leaderboard
-from rampdb.tools.event import is_admin
+from rampdb.tools.frontend import is_admin
+from rampdb.tools.frontend import is_accessible_code
+from rampdb.tools.frontend import is_accessible_event
+from rampdb.tools.frontend import is_accessible_leaderboard
+from rampdb.tools.frontend import is_user_signed_up
 from rampdb.tools.submission import add_submission
-from rampdb.tools.submission import is_accessible_code
 from rampdb.tools.submission import get_submission_by_name
 from rampdb.tools.user import add_user_interaction
 from rampdb.tools.user import approve_user
@@ -47,7 +48,6 @@ from rampdb.tools.user import get_user_by_name
 from rampdb.tools.team import ask_sign_up_team
 from rampdb.tools.team import get_event_team_by_name
 from rampdb.tools.team import sign_up_team
-from rampdb.tools.team import is_user_signed_up
 
 from frontend import db
 
@@ -684,142 +684,142 @@ def event_plots(event_name):
                             is_error=True)
 
 
-@mod.route("/<submission_hash>/<f_name>", methods=['GET', 'POST'])
-@flask_login.login_required
-def view_model(submission_hash, f_name):
-    """Rendering submission codes using templates/submission.html.
+# @mod.route("/<submission_hash>/<f_name>", methods=['GET', 'POST'])
+# @flask_login.login_required
+# def view_model(submission_hash, f_name):
+#     """Rendering submission codes using templates/submission.html.
 
-    The code of f_name is displayed in the left panel, the list of submissions
-    files is in the right panel. Clicking on a file will show that file (using
-    the same template). Clicking on the name on the top will download the file
-    itself (managed in the template). Clicking on "Archive" will zip all the
-    submission files and download them (managed here).
+#     The code of f_name is displayed in the left panel, the list of submissions
+#     files is in the right panel. Clicking on a file will show that file (using
+#     the same template). Clicking on the name on the top will download the file
+#     itself (managed in the template). Clicking on "Archive" will zip all the
+#     submission files and download them (managed here).
 
-    Parameters
-    ----------
-    submission_hash : string
-        The hash_ of the submission.
-    f_name : string
-        The name of the submission file
+#     Parameters
+#     ----------
+#     submission_hash : string
+#         The hash_ of the submission.
+#     f_name : string
+#         The name of the submission file
 
-    Returns
-    -------
-     : html string
-        The rendered submission.html page.
-    """
-    submission = (Submission.query.filter_by(hash_=submission_hash)
-                                  .one_or_none())
-    if (submission is None or
-            not is_accessible_code(db.session, submission.event_name,
-                                   flask_login.current_user.name,
-                                   submission.name)):
-        error_str = u'Missing submission: {}'.format(submission_hash)
-        return redirect_to_user(error_str)
-    event = submission.event_team.event
-    team = submission.event_team.team
-    workflow_element_name = f_name.split('.')[0]
-    workflow_element = \
-        (WorkflowElement.query.filter_by(name=workflow_element_name,
-                                         workflow=event.workflow)
-                              .one_or_none())
-    if workflow_element is None:
-        error_str = (u'{} is not a valid workflow element by {} '
-                     .format(workflow_element_name,
-                             flask_login.current_user.name))
-        error_str += u'in {}/{}/{}/{}'.format(event, team, submission, f_name)
-        return redirect_to_user(error_str)
-    submission_file = \
-        (SubmissionFile.query.filter_by(submission=submission,
-                                        workflow_element=workflow_element)
-                             .one_or_none())
-    if submission_file is None:
-        error_str = (u'No submission file by {} in {}/{}/{}/{}'
-                     .format(flask_login.current_user.name,
-                             event, team, submission, f_name))
-        return redirect_to_user(error_str)
+#     Returns
+#     -------
+#      : html string
+#         The rendered submission.html page.
+#     """
+#     submission = (Submission.query.filter_by(hash_=submission_hash)
+#                                   .one_or_none())
+#     if (submission is None or
+#             not is_accessible_code(db.session, submission.event_name,
+#                                    flask_login.current_user.name,
+#                                    submission.name)):
+#         error_str = u'Missing submission: {}'.format(submission_hash)
+#         return redirect_to_user(error_str)
+#     event = submission.event_team.event
+#     team = submission.event_team.team
+#     workflow_element_name = f_name.split('.')[0]
+#     workflow_element = \
+#         (WorkflowElement.query.filter_by(name=workflow_element_name,
+#                                          workflow=event.workflow)
+#                               .one_or_none())
+#     if workflow_element is None:
+#         error_str = (u'{} is not a valid workflow element by {} '
+#                      .format(workflow_element_name,
+#                              flask_login.current_user.name))
+#         error_str += u'in {}/{}/{}/{}'.format(event, team, submission, f_name)
+#         return redirect_to_user(error_str)
+#     submission_file = \
+#         (SubmissionFile.query.filter_by(submission=submission,
+#                                         workflow_element=workflow_element)
+#                              .one_or_none())
+#     if submission_file is None:
+#         error_str = (u'No submission file by {} in {}/{}/{}/{}'
+#                      .format(flask_login.current_user.name,
+#                              event, team, submission, f_name))
+#         return redirect_to_user(error_str)
 
-    # superfluous, perhaps when we'll have different extensions?
-    f_name = submission_file.f_name
+#     # superfluous, perhaps when we'll have different extensions?
+#     f_name = submission_file.f_name
 
-    submission_abspath = os.path.abspath(submission.path)
-    if not os.path.exists(submission_abspath):
-        error_str = (u'{} does not exist by {} in {}/{}/{}/{}'
-                     .format(submission_abspath, flask_login.current_user.name,
-                             event, team, submission, f_name))
-        return redirect_to_user(error_str)
+#     submission_abspath = os.path.abspath(submission.path)
+#     if not os.path.exists(submission_abspath):
+#         error_str = (u'{} does not exist by {} in {}/{}/{}/{}'
+#                      .format(submission_abspath, flask_login.current_user.name,
+#                              event, team, submission, f_name))
+#         return redirect_to_user(error_str)
 
-    add_user_interaction(
-        db.session,
-        interaction='looking at submission',
-        user=flask_login.current_user,
-        event=event,
-        submission=submission,
-        submission_file=submission_file
-    )
+#     add_user_interaction(
+#         db.session,
+#         interaction='looking at submission',
+#         user=flask_login.current_user,
+#         event=event,
+#         submission=submission,
+#         submission_file=submission_file
+#     )
 
-    logger.info(u'{} is looking at {}/{}/{}/{}'
-                .format(flask_login.current_user.name, event, team, submission,
-                        f_name))
+#     logger.info(u'{} is looking at {}/{}/{}/{}'
+#                 .format(flask_login.current_user.name, event, team, submission,
+#                         f_name))
 
-    # Downloading file if it is not editable (e.g., external_data.csv)
-    if not workflow_element.is_editable:
-        # archive_filename = f_name  + '.zip'
-        # with changedir(submission_abspath):
-        #    with ZipFile(archive_filename, 'w') as archive:
-        #        archive.write(f_name)
-        add_user_interaction(
-            db.session,
-            interaction='download',
-            user=flask_login.current_user,
-            event=event,
-            submission=submission,
-            submission_file=submission_file
-        )
+#     # Downloading file if it is not editable (e.g., external_data.csv)
+#     if not workflow_element.is_editable:
+#         # archive_filename = f_name  + '.zip'
+#         # with changedir(submission_abspath):
+#         #    with ZipFile(archive_filename, 'w') as archive:
+#         #        archive.write(f_name)
+#         add_user_interaction(
+#             db.session,
+#             interaction='download',
+#             user=flask_login.current_user,
+#             event=event,
+#             submission=submission,
+#             submission_file=submission_file
+#         )
 
-        return send_from_directory(
-            submission_abspath, f_name, as_attachment=True,
-            attachment_filename=u'{}_{}'.format(submission.hash_[:6], f_name),
-            mimetype='application/octet-stream'
-        )
+#         return send_from_directory(
+#             submission_abspath, f_name, as_attachment=True,
+#             attachment_filename=u'{}_{}'.format(submission.hash_[:6], f_name),
+#             mimetype='application/octet-stream'
+#         )
 
-    # Importing selected files into sandbox
-    choices = [(f, f) for f in submission.f_names]
-    import_form = ImportForm()
-    import_form.selected_f_names.choices = choices
-    if import_form.validate_on_submit():
-        sandbox_submission = get_sandbox(event, flask_login.current_user)
-        for f_name in import_form.selected_f_names.data:
-            logger.info(u'{} is importing {}/{}/{}/{}'.format(
-                flask_login.current_user.name, event, team, submission, f_name))
+#     # Importing selected files into sandbox
+#     choices = [(f, f) for f in submission.f_names]
+#     import_form = ImportForm()
+#     import_form.selected_f_names.choices = choices
+#     if import_form.validate_on_submit():
+#         sandbox_submission = get_sandbox(event, flask_login.current_user)
+#         for f_name in import_form.selected_f_names.data:
+#             logger.info(u'{} is importing {}/{}/{}/{}'.format(
+#                 flask_login.current_user.name, event, team, submission, f_name))
 
-            # TODO: deal with different extensions of the same file
-            src = os.path.join(submission.path, f_name)
-            dst = os.path.join(sandbox_submission.path, f_name)
-            shutil.copy2(src, dst)  # copying also metadata
-            logger.info(u'Copying {} to {}'.format(src, dst))
+#             # TODO: deal with different extensions of the same file
+#             src = os.path.join(submission.path, f_name)
+#             dst = os.path.join(sandbox_submission.path, f_name)
+#             shutil.copy2(src, dst)  # copying also metadata
+#             logger.info(u'Copying {} to {}'.format(src, dst))
 
-            workflow_element = WorkflowElement.query.filter_by(
-                name=f_name.split('.')[0], workflow=event.workflow).one()
-            submission_file = SubmissionFile.query.filter_by(
-                submission=submission,
-                workflow_element=workflow_element).one()
-            add_user_interaction(
-                interaction='copy', user=flask_login.current_user, event=event,
-                submission=submission, submission_file=submission_file)
+#             workflow_element = WorkflowElement.query.filter_by(
+#                 name=f_name.split('.')[0], workflow=event.workflow).one()
+#             submission_file = SubmissionFile.query.filter_by(
+#                 submission=submission,
+#                 workflow_element=workflow_element).one()
+#             add_user_interaction(
+#                 interaction='copy', user=flask_login.current_user, event=event,
+#                 submission=submission, submission_file=submission_file)
 
-        return redirect(u'/events/{}/sandbox'.format(event.name))
+#         return redirect(u'/events/{}/sandbox'.format(event.name))
 
-    with open(os.path.join(submission.path, f_name)) as f:
-        code = f.read()
-    admin = check_admin(flask_login.current_user, event)
-    return render_template(
-        'submission.html',
-        event=event,
-        code=code,
-        submission=submission,
-        f_name=f_name,
-        import_form=import_form,
-        admin=admin)
+#     with open(os.path.join(submission.path, f_name)) as f:
+#         code = f.read()
+#     admin = check_admin(flask_login.current_user, event)
+#     return render_template(
+#         'submission.html',
+#         event=event,
+#         code=code,
+#         submission=submission,
+#         f_name=f_name,
+#         import_form=import_form,
+#         admin=admin)
 
 
 # TODO: Function that should go in an admin blueprint and admin board

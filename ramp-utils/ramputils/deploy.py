@@ -4,6 +4,7 @@ from rampdb.testing import setup_files_extension_type
 from rampdb.testing import setup_ramp_kits_ramp_data
 from rampdb.tools.event import add_event
 from rampdb.tools.event import add_problem
+from rampdb.tools.event import get_problem
 from rampdb.utils import session_scope
 
 from .config_parser import read_config
@@ -39,7 +40,7 @@ def deploy_ramp_event(config):
     with session_scope(database_config) as session:
         setup_files_extension_type(session)
         # check if the problem was already created previously
-        if not os.path.exists(ramp_config['ramp_kits_dir']):
+        if get_problem(session, ramp_config['event']) is None:
             setup_ramp_kits_ramp_data(config, ramp_config['event'])
             add_problem(session, ramp_config['event'],
                         ramp_config['ramp_kits_dir'],
