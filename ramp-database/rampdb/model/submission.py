@@ -62,8 +62,8 @@ class Submission(Model):
     ----------
     name : str
         The submission name.
-    event_name : str
-        The event name.
+    event_team : :class:`rampdb.model.EventTeam`
+        The event/team instance.
 
     Attributes
     ----------
