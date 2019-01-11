@@ -17,9 +17,26 @@ cv_fold_types = Enum('live', 'test', name='cv_fold_types')
 
 
 class CVFold(Model):
-    """Storing train and test folds, more precisely: train and test indices.
+    """CVFold table.
 
-    Created when the ramp event is set up.
+    Storing train and test folds, more precisely: train and test indices.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    type : {'live', 'test'}
+        The type of the CV fold.
+    train_is : ndarray
+        The training indices.
+    test_is : ndarray
+        The testing indices.
+    event_id : int
+        The ID of the event.
+    event : :class:`rampdb.model.Event`
+        The event instance.
+    submissions : list of :class:`rampdb.model.SubmissionOnCVFold`
+        A back-reference to the submissions linked with this fold.
     """
 
     __tablename__ = 'cv_folds'
@@ -37,11 +54,12 @@ class CVFold(Model):
 
     @staticmethod
     def _pretty_printing(array):
+        """Make pretty printing of an array by skipping portion when it is too
+        large."""
         if array.size > 10:
             return 'fold {} ... {}'.format(str(array[:5])[:-1],
                                            str(array[-5:])[1:])
-        else:
-            return 'fold {}'.format(array)
+        return 'fold {}'.format(array)
 
     def __repr__(self):
         train_repr = self._pretty_printing(self.train_is)

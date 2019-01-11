@@ -15,6 +15,21 @@ __all__ = [
 
 
 class WorkflowElementType(Model):
+    """WorkflowElementType table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    name : str
+        The name of the workflow element type.
+    type_id : int
+        The ID of the submission file type.
+    type : :class:`rampdb.model.SubmissionFileType`
+        The submission file type instance.
+    workflows : list of :class:`rampdb.model.WorkflowElement`
+        A back-reference to the workflows linked with the workflow element.
+    """
     __tablename__ = 'workflow_element_types'
 
     id = Column(Integer, primary_key=True)
@@ -29,22 +44,25 @@ class WorkflowElementType(Model):
         'SubmissionFileType', backref=backref('workflow_element_types'))
 
     def __repr__(self):
-        text = 'WorkflowElementType(name={}, type={}'.format(
-            self.name, self.type.name)
-        text += 'is_editable={}, max_size={})'.format(
-            self.type.is_editable, self.type.max_size)
-        return text
+        return (
+            'WorkflowElementType(name={}, type={} is_editable={}, max_size={})'
+            .format(self.name, self.type.name, self.type.is_editable,
+                    self.type.max_size)
+        )
 
     @property
     def file_type(self):
+        """str: Name of the submission file type."""
         return self.type.name
 
     @property
     def is_editable(self):
+        """bool: Whether or not the submission file is an editable type."""
         return self.type.is_editable
 
     @property
     def max_size(self):
+        """int: The maximum size of supported by the submission file type."""
         return self.type.max_size
 
 
@@ -55,6 +73,24 @@ class WorkflowElementType(Model):
 # have both workflow-level and workflow-element-level code to avoid code
 # repetiotion.
 class Workflow(Model):
+    """Workflow table.
+
+    Parameters
+    ----------
+    name : str
+        The name of the workflow.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    name : str
+        The name of the workflow.
+    problems : list of :class:`rampdb.model.Problem`
+        A back-reference to the problems using this workflow.
+    elements : list of :class:`rampdb.model.WorkflowElement`
+        A back-reference to the elements of the workflow.
+    """
     __tablename__ = 'workflows'
 
     id = Column(Integer, primary_key=True)
@@ -62,7 +98,6 @@ class Workflow(Model):
 
     def __init__(self, name):
         self.name = name
-        # to check if the module and all required fields are there
 
     def __repr__(self):
         text = 'Workflow({})'.format(self.name)
@@ -77,6 +112,34 @@ class Workflow(Model):
 # is not the same workflow as a feature_extractor + regressor + external data,
 # even though the training codes are the same.
 class WorkflowElement(Model):
+    """WorkflowElement table.
+
+    Parameters
+    ----------
+    workflow : :class:`rampdb.model.Workflow`
+        A workflow instance.
+    workflow_element_type : :class:`rampdb.model.WorkflowElementType`
+        A workflow element type instance.
+    name_in_workflow : None or str, default is None
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    name : str
+        The name of the workflow element.
+    workflow_id : int
+        The ID of the associated workflow.
+    workflow : :class:`rampdb.model.Workflow`
+        The workflow instance.
+    workflow_element_type_id : int
+        The ID of the associated workflow element type.
+    workflow_element_type : :class:`rampdb.model.WorkflowElementType`
+        The workflow element type instance.
+    submission_files : list of :class:`rampdb.model.SubmissionFile`
+        A back-reference to the submission file associated with the workflow
+        element.
+    """
     __tablename__ = 'workflow_elements'
 
     id = Column(Integer, primary_key=True)
@@ -106,22 +169,25 @@ class WorkflowElement(Model):
             self.name = name_in_workflow
 
     def __repr__(self):
-        return 'Workflow({}): WorkflowElement({})'.format(
-            self.workflow.name, self.name)
+        return 'Workflow({}): WorkflowElement({})'.format(self.workflow.name,
+                                                          self.name)
 
-    # e.g. 'regression', 'external_data'. Normally == name
     @property
     def type(self):
+        """str: Name of the workflow element type."""
         return self.workflow_element_type.name
 
     @property
     def file_type(self):
+        """str: Name of the submission file type."""
         return self.workflow_element_type.file_type
 
     @property
     def is_editable(self):
+        """bool: Whether or not the submission file is an editable type."""
         return self.workflow_element_type.is_editable
 
     @property
     def max_size(self):
+        """int: The maximum size of supported by the submission file type."""
         return self.workflow_element_type.max_size

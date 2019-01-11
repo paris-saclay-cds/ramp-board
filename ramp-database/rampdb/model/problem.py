@@ -32,6 +32,42 @@ __all__ = [
 
 
 class Problem(Model):
+    """Problem table.
+
+    Parameters
+    ----------
+    name : str
+        The name of the problem.
+    path_ramp_kits : str
+        The path where the kits are located. It will corresponds to
+        the key `ramp_kits_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
+    path_ramp_data : str
+        The path where the data are located. It will corresponds to
+        the key `ramp_data_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    name : str
+        The name of the problem.
+    workflow_id : id
+        The ID of the associated workflow.
+    workflow : :class:`rampdb.model.Worflow`
+        The workflow instance.
+    path_ramp_kits : str
+        The path where the kits are located.
+    path_ramp_data : str
+        The path where the data are located.
+    events : list of :class:`rampdb.model.Event`
+        A back-reference to the event.
+    keywords : list of :class:`rampdb.model.ProblemKeyword`
+        A back-reference to the keywords associated with the problem.
+    """
     __tablename__ = 'problems'
 
     id = Column(Integer, primary_key=True)
@@ -51,8 +87,8 @@ class Problem(Model):
         self.workflow_object
 
     def __repr__(self):
-        return 'Problem({})\n{}'.format(
-            encode_string(self.name), self.workflow)
+        return 'Problem({})\n{}'.format(encode_string(self.name),
+                                        self.workflow)
 
     def reset(self):
         self.workflow = Workflow.query.filter_by(
@@ -60,6 +96,7 @@ class Problem(Model):
 
     @property
     def module(self):
+        """module: Get the problem module."""
         return import_module_from_source(
             os.path.join(RAMP_KITS_PATH, self.name, 'problem.py'),
             'problem'
@@ -67,38 +104,65 @@ class Problem(Model):
 
     @property
     def title(self):
+        """str: The title of the problem."""
         return self.module.problem_title
 
     @property
     def Predictions(self):
+        """:class:`rampwf.prediction_types`: The predictions used for the
+        problem."""
         return self.module.Predictions
 
     def get_train_data(self):
+        """ndarray: The training data."""
         path = os.path.join(RAMP_DATA_PATH, self.name)
         return self.module.get_train_data(path=path)
 
     def get_test_data(self):
+        """ndarray: The testing data."""
         path = os.path.join(RAMP_DATA_PATH, self.name)
         return self.module.get_test_data(path=path)
 
     def ground_truths_train(self):
+        """ndarray: The true labels for the training."""
         _, y_train = self.get_train_data()
         return self.Predictions(y_true=y_train)
 
     def ground_truths_test(self):
+        """ndarray: the true labels for the testing."""
         _, y_test = self.get_test_data()
         return self.Predictions(y_true=y_test)
 
     def ground_truths_valid(self, test_is):
+        """ndarray: the true labels for the validation."""
         _, y_train = self.get_train_data()
         return self.Predictions(y_true=y_train[test_is])
 
     @property
     def workflow_object(self):
+        """:class:`rampwf.worflows`: The workflow instance used for the
+        problem."""
         return self.module.workflow
 
 
 class HistoricalContributivity(Model):
+    """HistoricalContributivity table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    timestamp : datetime
+        The date and time of the submission.
+    submission_id : int
+        The ID of the submission.
+    submission : :class:`rampwf.model.Submission`
+        The submission instance.
+    contributivity : float
+        The contributivity of the current submission.
+    historical_contributivity : float
+        The historical contributivity.
+    """
     __tablename__ = 'historical_contributivity'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -113,6 +177,23 @@ class HistoricalContributivity(Model):
 
 
 class Keyword(Model):
+    """Keyword table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    name : str
+        The keyword name.
+    type : {'data_domain', 'data_science_theme'}
+        The type of keyword.
+    category : str
+        The category of the keyword.
+    description : str
+        The description of the keyword.
+    problems : list of :class:`rampdb.model.ProblemKeyword`
+        A back-reference to the problems associated with the keyword.
+    """
     __tablename__ = 'keywords'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -125,6 +206,25 @@ class Keyword(Model):
 
 
 class ProblemKeyword(Model):
+    """ProblemKeyword table.
+
+    This a many-to-many relationship between a Problem and a Keyword.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    description : str
+        Optional description of the keyword for a particular problem.
+    problem_id : int
+        The ID of the problem.
+    problem : :class:`rampdb.model.Problem`
+        The problem instance.
+    keyword_id : int
+        The ID of the keyword.
+    keyword : :class:`rampdb.model.Keyword`
+        The keyword instance.
+    """
     __tablename__ = 'problem_keywords'
 
     id = Column(Integer, primary_key=True)
