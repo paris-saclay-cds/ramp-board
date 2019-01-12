@@ -89,7 +89,7 @@ def is_accessible_code(session, event_name, user_name,
         The event name.
     user_name : str
         The user name.
-    submission_name : str, default == 'sandbox
+    submission_name : str, default == 'sandbox'
         The submission name which you should be shown. Default is the sandbox
         submission.
 

@@ -1,9 +1,9 @@
+import datetime
 import shutil
 
 import pytest
 
 from ramputils import read_config
-from ramputils import generate_ramp_config
 from ramputils.testing import path_config_example
 
 from rampdb.model import Model
@@ -15,6 +15,7 @@ from rampdb.testing import create_toy_db
 from rampdb.tools.event import add_event_admin
 from rampdb.tools.event import get_event
 from rampdb.tools.event import get_event_admin
+from rampdb.tools.user import add_user
 from rampdb.tools.user import get_user_by_name
 
 from rampdb.tools.frontend import is_admin
@@ -101,9 +102,41 @@ def test_user_signed_up(session_toy_db, event_name, user_name, is_accessible):
 
 def test_is_accessible_code(session_toy_db):
     event_name = 'iris_test'
+    # simulate a user which is not authenticated
     user = get_user_by_name(session_toy_db, 'test_user_2')
     user.is_authenticated = False
     assert not is_accessible_code(session_toy_db, event_name, user.name)
+    # simulate a user which authenticated and author of the submission to a
+    # public event
+    user.is_authenticated = True
+    assert is_accessible_code(session_toy_db, event_name, user.name)
+    # simulate an admin user
     user = get_user_by_name(session_toy_db, 'test_iris_admin')
     user.is_authenticated = True
     assert is_accessible_code(session_toy_db, event_name, 'test_iris_admin')
+    # simulate a user which is not signed up to the event
+    user = add_user(session_toy_db, 'xx', 'xx', 'xx', 'xx', 'xx', 'user')
+    user.is_authenticated = True
+    assert not is_accessible_code(session_toy_db, event_name, user.name)
+
+
+def test_is_accessible_leaderboard(session_toy_db):
+    event_name = 'iris_test'
+    # simulate a user which is not authenticated
+    user = get_user_by_name(session_toy_db, 'test_user_2')
+    user.is_authenticated = False
+    assert not is_accessible_leaderboard(session_toy_db, event_name, user.name)
+    # simulate a user which authenticated and author of the submission to a
+    # public event
+    user.is_authenticated = True
+    assert is_accessible_leaderboard(session_toy_db, event_name, user.name)
+    # simulate an admin user
+    user = get_user_by_name(session_toy_db, 'test_iris_admin')
+    user.is_authenticated = True
+    assert is_accessible_leaderboard(session_toy_db, event_name,
+                                     'test_iris_admin')
+    # simulate a close event
+    event = get_event(session_toy_db, event_name)
+    event.closing_timestamp = datetime.datetime.utcnow()
+    assert not is_accessible_leaderboard(session_toy_db, event_name,
+                                         'test_user_2')
