@@ -170,3 +170,9 @@ class MultiCheckboxField(SelectMultipleField):
 
 class ImportForm(FlaskForm):
     selected_f_names = MultiCheckboxField('selected_f_names')
+
+
+class CreditForm(FlaskForm):
+    note = StringField('submission_name')
+    self_credit = StringField('self credit')
+    name_credits = []

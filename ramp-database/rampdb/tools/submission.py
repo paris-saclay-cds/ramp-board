@@ -18,9 +18,8 @@ from ..model import Submission
 from ..model import SubmissionFile
 from ..model import SubmissionFileTypeExtension
 from ..model import SubmissionOnCVFold
-
-from .event import get_event
-from .user import get_user_by_name
+from ..model import SubmissionSimilarity
+from ..model import UserInteraction
 
 from ._query import select_event_by_name
 from ._query import select_event_team_by_name
@@ -777,4 +776,39 @@ def submit_starting_kits(session, event_name, team_name, path_submission):
         logger.info('Adding {}'.format(submission))
     # revert the minimum duration between two submissions
     event.min_duration_between_submissions = min_duration_between_submissions
+    session.commit()
+
+
+# TODO: to be tested
+def get_source_submissions(session, submission_id):
+    submission = select_submission_by_id(session, submission_id)
+    submissions = (session.query(Submission)
+                          .filter_by(event_team=submission.event_team)
+                          .all())
+    # there is for the moment a single admin
+    users = [submission.team.admin]
+    for user in users:
+        user_interactions = \
+            (session.query(UserInteraction)
+                    .filter_by(user=user, interaction='looking at submission')
+                    .all())
+        submissions += [user_interaction.submission
+                        for user_interaction in user_interactions
+                        if user_interaction.event == submission.event]
+    submissions = list(set(submissions))
+    submissions = [s for s in submissions
+                   if s.submission_timestamp < submission.submission_timestamp]
+    submissions.sort(key=lambda x: x.submission_timestamp, reverse=True)
+    return submissions
+
+
+# TODO: to be tested
+def add_submission_similarity(session, credit_type, user, source_submission,
+                              target_submission, similarity, timestamp):
+    submission_similarity = SubmissionSimilarity(
+        type=credit_type, user=user, source_submission=source_submission,
+        target_submission=target_submission, similarity=similarity,
+        timestamp=timestamp
+    )
+    session.add(submission_similarity)
     session.commit()

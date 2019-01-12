@@ -27,6 +27,7 @@ from rampdb.tools.submission import set_bagged_scores
 from rampdb.tools.submission import set_predictions
 from rampdb.tools.submission import set_time
 from rampdb.tools.submission import set_scores
+from rampdb.tools.submission import set_submission_error_msg
 from rampdb.tools.submission import set_submission_state
 
 from rampdb.utils import session_scope
@@ -144,11 +145,12 @@ class Dispatcher(object):
                 time.sleep(0)
             else:
                 logger.info('Collecting results from worker {}'.format(worker))
-                returncode = worker.collect_results()
+                returncode, stderr = worker.collect_results()
                 set_submission_state(
                     session, submission_id,
                     'tested' if not returncode else 'training_error'
                 )
+                set_submission_error_msg(session, submission_id, stderr)
                 self._processed_submission_queue.put_nowait(
                     (submission_id, submission_name))
                 worker.teardown()
@@ -159,7 +161,8 @@ class Dispatcher(object):
             submission_id, submission_name = \
                 self._processed_submission_queue.get_nowait()
             if 'error' in get_submission_state(session, submission_id):
-                # do not make any update in case of failed submission
+                update_leaderboards(self._ramp_config['event_name'])
+                update_all_user_leaderboards(self._ramp_config['event_name'])
                 logger.info('Skip update for {} due to failure during the '
                             'processing'.format(submission_name))
                 continue

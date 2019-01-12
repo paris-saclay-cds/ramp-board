@@ -45,3 +45,13 @@ def redirect_to_sandbox(event, message_str, is_error=True, category=None):
     else:
         logger.info(message_str)
     return redirect('/events/{}/sandbox'.format(event.name))
+
+
+def redirect_to_credit(submission_hash, message_str, is_error=True,
+                       category=None):
+    flash(message_str, category=category)
+    if is_error:
+        logger.error(message_str)
+    else:
+        logger.info(message_str)
+    return redirect(u'/credit/{}'.format(submission_hash))
