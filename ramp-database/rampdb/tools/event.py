@@ -70,7 +70,6 @@ def delete_event(session, event_name):
     session.commit()
 
 
-# TODO: this function is only tested through delete_problem
 def delete_submission_similarity(session, submission_id):
     """Delete the submission similarity associated with a submission.
 

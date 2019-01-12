@@ -1,3 +1,4 @@
+import datetime
 import os
 import shutil
 
@@ -17,9 +18,11 @@ from rampdb.exceptions import MissingSubmissionFileError
 from rampdb.exceptions import MissingExtensionError
 from rampdb.exceptions import TooEarlySubmissionError
 from rampdb.exceptions import UnknownStateError
+
 from rampdb.model import Event
 from rampdb.model import Model
 from rampdb.model import Submission
+from rampdb.model import SubmissionSimilarity
 from rampdb.testing import add_events
 from rampdb.testing import add_problems
 from rampdb.testing import add_users
@@ -29,12 +32,17 @@ from rampdb.testing import sign_up_teams_to_events
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
 
+from rampdb.tools.user import add_user_interaction
+from rampdb.tools.user import get_user_by_name
+
 from rampdb.tools.submission import add_submission
+from rampdb.tools.submission import add_submission_similarity
 
 from rampdb.tools.submission import get_bagged_scores
 from rampdb.tools.submission import get_event_nb_folds
 from rampdb.tools.submission import get_predictions
 from rampdb.tools.submission import get_scores
+from rampdb.tools.submission import get_source_submissions
 from rampdb.tools.submission import get_submission_by_id
 from rampdb.tools.submission import get_submission_by_name
 from rampdb.tools.submission import get_submission_state
@@ -451,3 +459,48 @@ def test_score_submission(session_scope_module):
     score_submission(session_scope_module, submission_id)
     scores = get_scores(session_scope_module, submission_id)
     assert_frame_equal(scores, expected_df, check_less_precise=True)
+
+
+def test_get_source_submission(session_scope_module):
+    # since we do not record interaction without the front-end, we should get
+    # an empty list
+    submission_id = 1
+    submissions = get_source_submissions(session_scope_module, submission_id)
+    assert not submissions
+    # we simulate some user interaction
+    # case 1: the interaction come after the file to be submitted so there
+    # is no submission to show
+    submission = get_submission_by_id(session_scope_module, submission_id)
+    event = submission.event_team.event
+    user = submission.event_team.team.admin
+    add_user_interaction(
+        session_scope_module, user=user, interaction='looking at submission',
+        event=event, submission=get_submission_by_id(session_scope_module, 2)
+    )
+    submissions = get_source_submissions(session_scope_module, submission_id)
+    assert not submissions
+    # case 2: we postpone the time of the submission to simulate that we
+    # already check other submission.
+    submission.submission_timestamp += datetime.timedelta(days=1)
+    submissions = get_source_submissions(session_scope_module, submission_id)
+    assert submissions
+    assert all([sub.event_team.event.name == event.name
+                for sub in submissions])
+
+
+def test_add_submission_similarity(session_scope_module):
+    user = get_user_by_name(session_scope_module, 'test_user')
+    source_submission = get_submission_by_id(session_scope_module, 1)
+    target_submission = get_submission_by_id(session_scope_module, 2)
+    add_submission_similarity(session_scope_module, 'target_credit', user,
+                              source_submission, target_submission, 0.5,
+                              datetime.datetime.utcnow())
+    similarity = session_scope_module.query(SubmissionSimilarity).all()
+    assert len(similarity) == 1
+    similarity = similarity[0]
+    assert similarity.type == 'target_credit'
+    assert similarity.user == user
+    assert similarity.source_submission == source_submission
+    assert similarity.target_submission == target_submission
+    assert similarity.similarity == pytest.approx(0.5)
+    assert isinstance(similarity.timestamp, datetime.datetime)

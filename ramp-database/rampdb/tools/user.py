@@ -146,7 +146,7 @@ is None
     """
     user_interaction = UserInteraction(
         session=session, interaction=interaction, user=user, problem=problem,
-        ip=ip, note=note, submission=submission,
+        ip=ip, note=note, submission=submission, event=event,
         submission_file=submission_file, diff=diff, similarity=similarity
     )
     session.add(user_interaction)

@@ -25,6 +25,7 @@ from wtforms.widgets import TextArea
 
 from werkzeug.utils import secure_filename
 
+from rampdb.model import Event
 from rampdb.model import EventTeam
 from rampdb.model import Submission
 from rampdb.model import SubmissionFile
@@ -51,6 +52,7 @@ from rampdb.tools.submission import get_submission_by_name
 from rampdb.tools.user import add_user_interaction
 from rampdb.tools.user import approve_user
 from rampdb.tools.user import get_user_by_name
+from rampdb.tools.user import get_user_interactions_by_name
 from rampdb.tools.team import ask_sign_up_team
 from rampdb.tools.team import get_event_team_by_name
 from rampdb.tools.team import sign_up_team
@@ -1124,4 +1126,64 @@ def update_event(event_name):
         form=form,
         event=event,
         admin=admin,
+    )
+
+
+@mod.route("/user_interactions")
+@flask_login.login_required
+def user_interactions():
+    if (not flask_login.current_user.is_authenticated or
+            flask_login.current_user.access_level != 'admin'):
+        return redirect(url_for('auth.login'))
+    user_interactions_html = get_user_interactions_by_name(
+        db.session, output_format='html'
+    )
+    return render_template(
+        'user_interactions.html',
+        user_interactions_title='User interactions',
+        user_interactions=user_interactions_html
+    )
+
+
+@mod.route("/events/<event_name>/dashboard_submissions")
+@flask_login.login_required
+def dashboard_submissions(event_name):
+    event = get_event(db.session, event_name)
+
+    if is_admin(db.session, event_name, flask_login.current_user.name):
+        # Get dates and number of submissions
+        submissions = \
+            (Submission.query
+                       .filter(Event.name == event.name)
+                       .filter(Event.id == EventTeam.event_id)
+                       .filter(EventTeam.id == Submission.event_team_id)
+                       .order_by(Submission.submission_timestamp)
+                       .all())
+        submissions = [sub for sub in submissions if sub.is_not_sandbox]
+        timestamp_submissions = [
+            sub.submission_timestamp.strftime('%Y-%m-%d %H:%M:%S')
+            for sub in submissions]
+        name_submissions = [sub.name for sub in submissions]
+        cumulated_submissions = range(1, 1 + len(submissions))
+        training_sec = [
+            (sub.training_timestamp - sub.submission_timestamp).seconds / 60.
+            if sub.training_timestamp is not None else 0
+            for sub in submissions
+        ]
+        dashboard_kwargs = {'event': event,
+                            'timestamp_submissions': timestamp_submissions,
+                            'training_sec': training_sec,
+                            'cumulated_submissions': cumulated_submissions,
+                            'name_submissions': name_submissions}
+        failed_leaderboard_html = event.failed_leaderboard_html
+        new_leaderboard_html = event.new_leaderboard_html
+        return render_template(
+            'dashboard_submissions.html',
+            failed_leaderboard=failed_leaderboard_html,
+            new_leaderboard=new_leaderboard_html,
+            admin=True,
+            **dashboard_kwargs)
+    return redirect_to_user(
+        u'Sorry {}, you do not have admin access for {}"'
+        .format(flask_login.current_user.firstname, event_name)
     )

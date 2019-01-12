@@ -188,6 +188,36 @@ def add_submission(session, event_name, team_name, submission_name,
     return submission
 
 
+def add_submission_similarity(session, credit_type, user, source_submission,
+                              target_submission, similarity, timestamp):
+    """Add submission similarity entry.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    credit_type : {'target_credit', 'source_credit', 'thirdparty_credit'}
+        The type of credit to create.
+    user : :class:`rampdb.model.User`
+        The user which adding credit.
+    source_submission : :class:`rampdb.model.Submission`
+        The submission inspiring the target submission.
+    target_submission : :class:`rampdb.model.Submission`
+        The submission which is being submitted by the ``user``.
+    similarity : float
+        The similarity between the two submissions.
+    timestamp : datetime
+        The date and time of the creation of the similarity.
+    """
+    submission_similarity = SubmissionSimilarity(
+        type=credit_type, user=user, source_submission=source_submission,
+        target_submission=target_submission, similarity=similarity,
+        timestamp=timestamp
+    )
+    session.add(submission_similarity)
+    session.commit()
+
+
 # Getter functions: get information from the database
 def get_submissions(session, event_name, state='new'):
     """Get information about submissions from an event with a specific state
@@ -496,6 +526,42 @@ def get_event_nb_folds(session, event_name):
     return len(event.cv_folds)
 
 
+def get_source_submissions(session, submission_id):
+    """Get the submissions with which a user interacted.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submission_id : int
+        The id of the submission which is going to be submitted.
+
+    Returns
+    -------
+    submissions : list of :class`rampdb.model.Submission`
+        List of the submissions connected with the submission to be trained.
+    """
+    submission = select_submission_by_id(session, submission_id)
+    submissions = (session.query(Submission)
+                          .filter_by(event_team=submission.event_team)
+                          .all())
+    # there is for the moment a single admin
+    users = [submission.team.admin]
+    for user in users:
+        user_interactions = \
+            (session.query(UserInteraction)
+                    .filter_by(user=user, interaction='looking at submission')
+                    .all())
+        submissions += [user_interaction.submission
+                        for user_interaction in user_interactions
+                        if user_interaction.event == submission.event]
+    submissions = list(set(submissions))
+    submissions = [s for s in submissions
+                   if s.submission_timestamp < submission.submission_timestamp]
+    submissions.sort(key=lambda x: x.submission_timestamp, reverse=True)
+    return submissions
+
+
 # Setter functions: set information in the database
 def set_submission_state(session, submission_id, state):
     """Set the set of a submission.
@@ -776,39 +842,4 @@ def submit_starting_kits(session, event_name, team_name, path_submission):
         logger.info('Adding {}'.format(submission))
     # revert the minimum duration between two submissions
     event.min_duration_between_submissions = min_duration_between_submissions
-    session.commit()
-
-
-# TODO: to be tested
-def get_source_submissions(session, submission_id):
-    submission = select_submission_by_id(session, submission_id)
-    submissions = (session.query(Submission)
-                          .filter_by(event_team=submission.event_team)
-                          .all())
-    # there is for the moment a single admin
-    users = [submission.team.admin]
-    for user in users:
-        user_interactions = \
-            (session.query(UserInteraction)
-                    .filter_by(user=user, interaction='looking at submission')
-                    .all())
-        submissions += [user_interaction.submission
-                        for user_interaction in user_interactions
-                        if user_interaction.event == submission.event]
-    submissions = list(set(submissions))
-    submissions = [s for s in submissions
-                   if s.submission_timestamp < submission.submission_timestamp]
-    submissions.sort(key=lambda x: x.submission_timestamp, reverse=True)
-    return submissions
-
-
-# TODO: to be tested
-def add_submission_similarity(session, credit_type, user, source_submission,
-                              target_submission, similarity, timestamp):
-    submission_similarity = SubmissionSimilarity(
-        type=credit_type, user=user, source_submission=source_submission,
-        target_submission=target_submission, similarity=similarity,
-        timestamp=timestamp
-    )
-    session.add(submission_similarity)
     session.commit()
