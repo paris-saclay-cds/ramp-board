@@ -16,7 +16,9 @@ from .tools.database import add_extension
 from .tools.database import add_submission_file_type
 from .tools.database import add_submission_file_type_extension
 from .tools.event import add_event
+from .tools.event import add_keyword
 from .tools.event import add_problem
+from .tools.event import add_problem_keyword
 from .tools.user import approve_user
 from .tools.user import add_user
 from .tools.team import sign_up_team
@@ -180,7 +182,8 @@ def add_users(session):
 
 
 def add_problems(session, config):
-    """Add dummy problems into the database.
+    """Add dummy problems into the database. In addition, we add couple of
+    keyword.
 
     Parameters
     ----------
@@ -196,6 +199,15 @@ def add_problems(session, config):
         add_problem(session, problem_name,
                     ramp_config['ramp_kits_dir'],
                     ramp_config['ramp_data_dir'])
+        add_keyword(session, problem_name, 'data_domain',
+                    category='scientific data')
+        add_problem_keyword(session, problem_name=problem_name,
+                            keyword_name=problem_name)
+        add_keyword(session, problem_name + '_theme', 'data_science_theme',
+                    category='classification')
+        add_problem_keyword(session, problem_name=problem_name,
+                            keyword_name=problem_name + '_theme')
+
 
 
 def add_events(session, config):

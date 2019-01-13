@@ -24,7 +24,7 @@ def config():
     return read_config(path_config_example())
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def client_session(config):
     try:
         create_toy_db(config)
@@ -53,9 +53,37 @@ def test_ramp(client_session):
     client, _ = client_session
     rv = client.get('/description')
     assert rv.status_code == 200
-    assert b'The RAMP is a versatile management and software tool' in rv.data
+    assert (b'The RAMP is a <b>versatile management and software tool</b>' in
+            rv.data)
 
 
 def test_domain(client_session):
     client, session = client_session
-    # create several
+    rv = client.get('/data_domains')
+    assert rv.status_code == 200
+    assert b'Scientific data domains' in rv.data
+    assert b'boston_housing' in rv.data
+    assert b'Boston housing price regression' in rv.data
+
+
+def test_teaching(client_session):
+    client, _ = client_session
+    rv = client.get('/teaching')
+    assert rv.status_code == 200
+    assert b'RAMP for teaching support' in rv.data
+
+
+def test_data_science_themes(client_session):
+    client, _ = client_session
+    rv = client.get('/data_science_themes')
+    assert rv.status_code == 200
+    assert b'boston_housing_theme' in rv.data
+    assert b'iris_theme' in rv.data
+
+def test_keywords(client_session):
+    client, _ = client_session
+    rv = client.get('/keywords/boston_housing')
+    assert rv.status_code == 200
+    assert b'Related problems' in rv.data
+    assert b'boston_housing' in rv.data
+    assert b'Boston housing price regression' in rv.data
