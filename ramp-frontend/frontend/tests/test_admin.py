@@ -11,7 +11,11 @@ from rampdb.testing import create_toy_db
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
 
+from rampdb.tools.user import add_user
+
 from frontend import create_app
+from frontend.testing import login
+from frontend.testing import logout
 
 
 @pytest.fixture(scope='module')
@@ -41,21 +45,15 @@ def client_session(config):
         Model.metadata.drop_all(db)
 
 
-def test_index(client_session):
-    client, _ = client_session
-    rv = client.get('/')
-    assert rv.status_code == 200
-    assert (b'RAMP: collaborative data science challenges at Paris Saclay' in
-            rv.data)
-
-
-def test_ramp(client_session):
-    client, _ = client_session
-    rv = client.get('/description')
-    assert rv.status_code == 200
-    assert b'The RAMP is a versatile management and software tool' in rv.data
-
-
-def test_domain(client_session):
-    client, session = client_session
-    # create several
+# def test_approve_users(client_session):
+#     client, session = client_session
+#     add_user(
+#         session, name='new_user', password='xxx', lastname='xxx',
+#         firstname='xxx', email='new_user@xx.com',
+#     )
+#     rv = client.get('/approve_users', follow_redirects=True)
+#     assert b'Login Error' in rv.data
+#     assert b'Please log in or sign up to access this page' in rv.data
+#     login(client, 'test_iris_admin', 'test')
+#     rv = client.get('/approve_users', follow_redirects=True)
+#     print(rv.data)

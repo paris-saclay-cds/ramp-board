@@ -1,9 +1,11 @@
+"""Blueprint for all authentication functions for the RAMP frontend."""
 import logging
 
 import flask_login
 
 from flask import Blueprint
 from flask import flash
+from flask import jsonify
 from flask import redirect
 from flask import request
 from flask import render_template
@@ -130,7 +132,6 @@ def sign_up():
                     is_want_news=form.is_want_news.data,
                     access_level='asked'
                 )
-                print(user.is_authenticated)
             except Exception as e:
                 flash(u'{}'.format(e), category='Sign-up error')
                 return redirect(url_for('auth.sign_up'))
@@ -155,7 +156,6 @@ def update_profile():
                 form.website_url.data, form.bio.data, form.email.data,
                 form.is_want_news.data
             )
-            # update_user(flask_login.current_user, form)
         except Exception as e:
             flash(u'{}'.format(e), category='Update profile error')
             return redirect(url_for('auth.update_profile'))

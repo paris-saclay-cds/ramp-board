@@ -23,7 +23,9 @@ from ..model import CVFold
 from ..model import Event
 from ..model import EventAdmin
 from ..model import EventScoreType
+from ..model import Keyword
 from ..model import Problem
+from ..model import ProblemKeyword
 from ..model import Workflow
 from ..model import WorkflowElement
 from ..model import WorkflowElementType
@@ -296,6 +298,80 @@ def add_event_admin(session, event_name, user_name):
         session.commit()
 
 
+def add_keyword(session, name, keyword_type, category=None, description=None,
+                force=False):
+    """Add a keyword to the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    name : str
+        The name of the keyword.
+    keyword_type : {'data_domain', 'data_science_theme'}
+        The type of keyword.
+    category : None or str, default is None
+        The category of the keyword.
+    description : None or str, default is None
+        The description of the keyword.
+    force : bool, default is False
+        Whether or not to overwrite the keyword if it already exists.
+    """
+    keyword = session.query(Keyword).filter_by(name=name).one_or_none()
+    if keyword is not None:
+        if not force:
+            raise ValueError(
+                'Attempting to update an existing keyword. Use "force=True"'
+                'to overwrite the keyword.'
+            )
+        keyword.type = keyword_type
+        keyword.category = category
+        keyword.description = description
+    else:
+        keyword = Keyword(name=name, type=keyword_type, category=category,
+                          description=description)
+        session.add(keyword)
+    session.commit()
+
+
+def add_problem_keyword(session, problem_name, keyword_name, description=None,
+                        force=False):
+    """Add relationship between a keyword and a problem.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    problem_name : str
+        The name of the problem.
+    keyword_name : str
+        The name of the keyword.
+    description : None or str, default is None
+        A particular description of the keyword of the particular problem.
+    force : bool, default is False
+        Whether or not to overwrite the relationship.
+    """
+    problem = select_problem_by_name(session, problem_name)
+    keyword = get_keyword_by_name(session, keyword_name)
+    problem_keyword = (session.query(ProblemKeyword)
+                              .filter_by(problem=problem, keyword=keyword)
+                              .one_or_none())
+    if problem_keyword is not None:
+        if not force:
+            raise ValueError(
+                'Attempting to update an existing problem-keyword '
+                'relationship. Use "force=True" if you want to overwrite the '
+                'relationship.'
+            )
+        problem_keyword.description = description
+    else:
+        problem_keyword = ProblemKeyword(
+            problem=problem, keyword=keyword, description=description
+        )
+        session.add(problem_keyword)
+    session.commit()
+
+
 # Getter functions: get information from the database
 def get_problem(session, problem_name):
     """Get problem from the database.
@@ -376,3 +452,49 @@ def get_event_admin(session, event_name, user_name):
     event = select_event_by_name(session, event_name)
     user = select_user_by_name(session, user_name)
     return select_event_admin_by_instance(session, event, user)
+
+
+def get_keyword_by_name(session, name):
+    """Get the keyword filtering by there name
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    name : str or None
+        The name of the keyword. If None, all keywords will be returned.
+
+    Returns
+    -------
+    keyword : :class:`rampdb.model.Keyword` or  list of \
+:class:`ramp.model.Keyword`
+        The keyword which have been queried.
+    """
+    q = session.query(Keyword)
+    if name is None:
+        return q.all()
+    return q.filter_by(name=name).one_or_none()
+
+
+def get_problem_keyword_by_name(session, problem_name, keyword_name):
+    """Get a problem-keyword relationship given their names.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    problem_name : str
+        The name of the problem.
+    keyword_name : str
+        The name of the keyword.
+
+    Returns
+    -------
+    problem_keyword : :class:`rampdb.model.ProblemKeyword`
+        The problem-keyword relationship.
+    """
+    problem = select_problem_by_name(session, problem_name)
+    keyword = session.query(Keyword).filter_by(name=keyword_name).one_or_none()
+    return (session.query(ProblemKeyword)
+                   .filter_by(problem=problem, keyword=keyword)
+                   .one_or_none())

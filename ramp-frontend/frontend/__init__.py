@@ -20,16 +20,20 @@ def create_app(config):
         db.init_app(app)
         # register the login manager
         login_manager.init_app(app)
-        login_manager.login_view = 'login'
+        login_manager.login_view = 'auth.login'
         login_manager.login_message = ('Please log in or sign up to access '
                                        'this page.')
         # register the email manager
         mail.init_app(app)
         # register our blueprint
+        from .views import admin
         from .views import auth
         from .views import general
+        from .views import leaderboard
         from .views import ramp
+        app.register_blueprint(admin.mod)
         app.register_blueprint(auth.mod)
         app.register_blueprint(general.mod)
+        app.register_blueprint(leaderboard.mod)
         app.register_blueprint(ramp.mod)
     return app

@@ -9,9 +9,10 @@ from ramputils.testing import path_config_example
 from rampdb.model import Model
 from rampdb.testing import create_toy_db
 from rampdb.utils import setup_db
-from rampdb.utils import session_scope
 
 from frontend import create_app
+from frontend.testing import login
+from frontend.testing import logout
 
 
 @pytest.fixture(scope='module')
@@ -25,13 +26,14 @@ def config():
 
 
 @pytest.fixture
-def client_session(config):
+def client(config):
     try:
         create_toy_db(config)
         flask_config = generate_flask_config(config)
         app = create_app(flask_config)
-        with session_scope(config['sqlalchemy']) as session:
-            yield app.test_client(), session
+        app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = False
+        yield app.test_client()
     finally:
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
         db, Session = setup_db(config['sqlalchemy'])
@@ -41,21 +43,16 @@ def client_session(config):
         Model.metadata.drop_all(db)
 
 
-def test_index(client_session):
-    client, _ = client_session
-    rv = client.get('/')
+def test_login_logout(client):
+    # check that we can login and logout a client
+    rv = login(client, 'test_iris_admin', 'test')
+    # the login function will follow the redirection and should be a 200 code
     assert rv.status_code == 200
-    assert (b'RAMP: collaborative data science challenges at Paris Saclay' in
-            rv.data)
-
-
-def test_ramp(client_session):
-    client, _ = client_session
-    rv = client.get('/description')
+    assert b'iris.admin@gmail.com' in rv.data
+    assert b'Iris classification' in rv.data
+    assert b'Boston housing price regression' in rv.data
+    rv = logout(client)
     assert rv.status_code == 200
-    assert b'The RAMP is a versatile management and software tool' in rv.data
-
-
-def test_domain(client_session):
-    client, session = client_session
-    # create several
+    assert b'Login' in rv.data
+    assert b'Username' in rv.data
+    assert b'Password' in rv.data

@@ -12,30 +12,23 @@ import flask_login
 
 from flask import Blueprint
 from flask import flash
+from flask import redirect
 from flask import render_template
 from flask import request
-from flask import redirect
 from flask import send_from_directory
-from flask import url_for
-
-from sqlalchemy.exc import IntegrityError
 
 from wtforms import StringField
 from wtforms.widgets import TextArea
 
 from werkzeug.utils import secure_filename
 
-from rampdb.model import Event
-from rampdb.model import EventTeam
 from rampdb.model import Submission
 from rampdb.model import SubmissionFile
 from rampdb.model import SubmissionSimilarity
-from rampdb.model import User
 from rampdb.model import WorkflowElement
 
 from rampdb.exceptions import DuplicateSubmissionError
 from rampdb.exceptions import MissingExtensionError
-from rampdb.exceptions import NameClashError
 from rampdb.exceptions import TooEarlySubmissionError
 
 from rampdb.tools.event import get_event
@@ -43,16 +36,12 @@ from rampdb.tools.event import get_problem
 from rampdb.tools.frontend import is_admin
 from rampdb.tools.frontend import is_accessible_code
 from rampdb.tools.frontend import is_accessible_event
-from rampdb.tools.frontend import is_accessible_leaderboard
 from rampdb.tools.frontend import is_user_signed_up
 from rampdb.tools.submission import add_submission
 from rampdb.tools.submission import add_submission_similarity
 from rampdb.tools.submission import get_source_submissions
 from rampdb.tools.submission import get_submission_by_name
 from rampdb.tools.user import add_user_interaction
-from rampdb.tools.user import approve_user
-from rampdb.tools.user import get_user_by_name
-from rampdb.tools.user import get_user_interactions_by_name
 from rampdb.tools.team import ask_sign_up_team
 from rampdb.tools.team import get_event_team_by_name
 from rampdb.tools.team import sign_up_team
@@ -61,7 +50,6 @@ from frontend import db
 
 from ..forms import CodeForm
 from ..forms import CreditForm
-from ..forms import EventUpdateProfileForm
 from ..forms import ImportForm
 from ..forms import SubmitForm
 from ..forms import UploadForm
@@ -190,49 +178,6 @@ def sign_up_for_event(event_name):
         is_error=False,
         category='Successful sign-up'
     )
-
-
-@mod.route("/events/<event_name>/my_submissions")
-@flask_login.login_required
-def my_submissions(event_name):
-    event = get_event(db.session, event_name)
-    if not is_accessible_event(db.session, event_name,
-                               flask_login.current_user.name):
-        return redirect_to_user(
-            u'{}: no event named "{}"'
-            .format(flask_login.current_user.firstname, event_name)
-        )
-    add_user_interaction(
-        db.session, interaction='looking at my_submissions',
-        user=flask_login.current_user, event=event
-    )
-    if not is_accessible_code(db.session, event_name,
-                              flask_login.current_user.name):
-        error_str = ('No access to my submissions for event {}. If you have '
-                     'already signed up, please wait for approval.'
-                     .format(event.name))
-        return redirect_to_user(error_str)
-
-    # Doesn't work if team mergers are allowed
-    event_team = get_event_team_by_name(db.session, event_name,
-                                        flask_login.current_user.name)
-    leaderboard_html = event_team.leaderboard_html
-    failed_leaderboard_html = event_team.failed_leaderboard_html
-    new_leaderboard_html = event_team.new_leaderboard_html
-    admin = is_admin(db.session, event_name, flask_login.current_user.name)
-    if event.official_score_type.is_lower_the_better:
-        sorting_direction = 'asc'
-    else:
-        sorting_direction = 'desc'
-    return render_template('leaderboard.html',
-                           leaderboard_title='Trained submissions',
-                           leaderboard=leaderboard_html,
-                           failed_leaderboard=failed_leaderboard_html,
-                           new_leaderboard=new_leaderboard_html,
-                           sorting_column_index=4,
-                           sorting_direction=sorting_direction,
-                           event=event,
-                           admin=admin)
 
 
 @mod.route("/events/<event_name>/sandbox", methods=['GET', 'POST'])
@@ -501,171 +446,6 @@ def sandbox(event_name):
         event=event,
         admin=admin
     )
-
-
-@mod.route("/events/<event_name>/leaderboard")
-@flask_login.login_required
-def leaderboard(event_name):
-    event = get_event(db.session, event_name)
-    if not is_accessible_event(db.session, event_name,
-                               flask_login.current_user.name):
-        return redirect_to_user(
-            u'{}: no event named "{}"'
-            .format(flask_login.current_user.firstname, event_name))
-    add_user_interaction(
-        db.session,
-        interaction='looking at leaderboard',
-        user=flask_login.current_user,
-        event=event
-    )
-
-    if is_accessible_leaderboard(db.session, event_name,
-                                 flask_login.current_user.name):
-        leaderboard_html = event.public_leaderboard_html_with_links
-    else:
-        leaderboard_html = event.public_leaderboard_html_no_links
-    if event.official_score_type.is_lower_the_better:
-        sorting_direction = 'asc'
-    else:
-        sorting_direction = 'desc'
-
-    leaderboard_kwargs = dict(
-        leaderboard=leaderboard_html,
-        leaderboard_title='Leaderboard',
-        sorting_column_index=4,
-        sorting_direction=sorting_direction,
-        event=event
-    )
-
-    if is_admin(db.session, event_name, flask_login.current_user.name):
-        failed_leaderboard_html = event.failed_leaderboard_html
-        new_leaderboard_html = event.new_leaderboard_html
-        template = render_template(
-            'leaderboard.html',
-            failed_leaderboard=failed_leaderboard_html,
-            new_leaderboard=new_leaderboard_html,
-            admin=True,
-            **leaderboard_kwargs
-        )
-    else:
-        template = render_template(
-            'leaderboard.html', **leaderboard_kwargs
-        )
-
-    return template
-
-
-@mod.route("/events/<event_name>/competition_leaderboard")
-@flask_login.login_required
-def competition_leaderboard(event_name):
-    event = get_event(db.session, event_name)
-    if not is_accessible_event(db.session, event_name,
-                               flask_login.current_user.name):
-        return redirect_to_user(
-            u'{}: no event named "{}"'
-            .format(flask_login.current_user.firstname, event_name)
-        )
-    add_user_interaction(
-        db.session,
-        interaction='looking at leaderboard',
-        user=flask_login.current_user,
-        event=event
-    )
-    admin = is_admin(db.session, event_name, flask_login.current_user.name)
-    leaderboard_html = event.public_competition_leaderboard_html
-    leaderboard_kwargs = dict(
-        leaderboard=leaderboard_html,
-        leaderboard_title='Leaderboard',
-        sorting_column_index=0,
-        sorting_direction='asc',
-        event=event,
-        admin=admin
-    )
-
-    return render_template('leaderboard.html', **leaderboard_kwargs)
-
-
-@mod.route("/events/<event_name>/private_leaderboard")
-@flask_login.login_required
-def private_leaderboard(event_name):
-    if not flask_login.current_user.is_authenticated:
-        return redirect(url_for('auth.login'))
-    event = get_event(db.session, event_name)
-    if not is_accessible_event(db.session, event_name,
-                               flask_login.current_user.name):
-        return redirect_to_user(
-            u'{}: no event named "{}"'
-            .format(flask_login.current_user.firstname, event_name)
-        )
-    if (not is_admin(db.session, event_name, flask_login.current_user.name) and
-            (event.closing_timestamp is None or
-             event.closing_timestamp > datetime.datetime.utcnow())):
-        return redirect(url_for('ramp.problems'))
-
-    add_user_interaction(
-        db.session,
-        interaction='looking at private leaderboard',
-        user=flask_login.current_user,
-        event=event
-    )
-    leaderboard_html = event.private_leaderboard_html
-    admin = is_admin(db.session, event_name, flask_login.current_user.name)
-    if event.official_score_type.is_lower_the_better:
-        sorting_direction = 'asc'
-    else:
-        sorting_direction = 'desc'
-
-    template = render_template(
-        'leaderboard.html',
-        leaderboard_title='Leaderboard',
-        leaderboard=leaderboard_html,
-        sorting_column_index=5,
-        sorting_direction=sorting_direction,
-        event=event,
-        private=True,
-        admin=admin
-    )
-
-    return template
-
-
-@mod.route("/events/<event_name>/private_competition_leaderboard")
-@flask_login.login_required
-def private_competition_leaderboard(event_name):
-    if not flask_login.current_user.is_authenticated:
-        return redirect(url_for('auth.login'))
-    event = get_event(db.session, event_name)
-    if not is_accessible_event(db.session, event_name,
-                               flask_login.current_user.name):
-        return redirect_to_user(
-            u'{}: no event named "{}"'
-            .format(flask_login.current_user.firstname, event_name)
-        )
-    if (not is_admin(db.session, event_name, flask_login.current_user.name) and
-            (event.closing_timestamp is None or
-             event.closing_timestamp > datetime.datetime.utcnow())):
-        return redirect(url_for('ramp.problems'))
-
-    add_user_interaction(
-        db.session,
-        interaction='looking at private leaderboard',
-        user=flask_login.current_user,
-        event=event
-    )
-
-    admin = is_admin(db.session, event_name, flask_login.current_user.name)
-    leaderboard_html = event.private_competition_leaderboard_html
-
-    leaderboard_kwargs = dict(
-        leaderboard=leaderboard_html,
-        leaderboard_title='Leaderboard',
-        sorting_column_index=0,
-        sorting_direction='asc',
-        event=event,
-        admin=admin
-    )
-
-    return render_template('leaderboard.html', **leaderboard_kwargs)
 
 
 @mod.route("/credit/<submission_hash>", methods=['GET', 'POST'])
@@ -990,200 +770,4 @@ def view_submission_error(submission_hash):
 
     return render_template(
         'submission_error.html', submission=submission, team=team, event=event
-    )
-
-
-# TODO: Function that should go in an admin blueprint and admin board
-@mod.route("/approve_users", methods=['GET', 'POST'])
-@flask_login.login_required
-def approve_users():
-    if not flask_login.current_user.access_level == 'admin':
-        return redirect_to_user(
-            u'Sorry {}, you do not have admin rights'
-            .format(flask_login.current_user.firstname),
-            is_error=True
-        )
-    if request.method == 'GET':
-        # TODO: replace by some get_functions
-        asked_users = User.query.filter_by(access_level='asked').all()
-        asked_sign_up = EventTeam.query.filter_by(approved=False).all()
-        return render_template('approve.html',
-                               asked_users=asked_users,
-                               asked_sign_up=asked_sign_up,
-                               admin=True)
-    users_to_be_approved = request.form.getlist('approve_users')
-    event_teams_to_be_approved = request.form.getlist('approve_event_teams')
-    message = "Approved users:\n"
-    for asked_user in users_to_be_approved:
-        approve_user(db.session, asked_user)
-        message += "{}\n".format(asked_user)
-    message += "Approved event_team:\n"
-    for asked_id in event_teams_to_be_approved:
-        asked_event_team = EventTeam.query.get(asked_id)
-        sign_up_team(db.session, asked_event_team.event.name,
-                     asked_event_team.team.name)
-        message += "{}\n".format(asked_event_team)
-    return redirect_to_user(message, is_error=False, category="Approved users")
-
-
-@mod.route("/events/<event_name>/sign_up/<user_name>")
-@flask_login.login_required
-def approve_sign_up_for_event(event_name, user_name):
-    event = get_event(db.session, event_name)
-    user = get_user_by_name(db.session, user_name)
-    if not is_admin(db.session, event_name, flask_login.current_user.name):
-        return redirect_to_user(u'Sorry {}, you do not have admin rights'
-                                .format(flask_login.current_user.firstname),
-                                is_error=True)
-    if not event or not user:
-        return redirect_to_user(u'Oups, no event {} or no user {}.'
-                                .format(event_name, user_name), is_error=True)
-    sign_up_team(db.session, event.name, user.name)
-    return redirect_to_user(u'{} is signed up for {}.'.format(user, event),
-                            is_error=False, category='Successful sign-up')
-
-
-@mod.route("/events/<event_name>/update", methods=['GET', 'POST'])
-@flask_login.login_required
-def update_event(event_name):
-    if not flask_login.current_user.is_authenticated:
-        return redirect(url_for('login'))
-    event = get_event(db.session, event_name)
-    if not is_accessible_event(db.session, event_name,
-                               flask_login.current_user.name):
-        return redirect_to_user(
-            u'{}: no event named "{}"'
-            .format(flask_login.current_user.firstname, event_name)
-        )
-    if not is_admin(db.session, event_name, flask_login.current_user.name):
-        return redirect(url_for('ramp.problems'))
-    logger.info(u'{} is updating event {}'
-                .format(flask_login.current_user.name, event.name))
-    admin = is_admin(db.session, event_name, flask_login.current_user.name)
-    # We assume here that event name has the syntax <problem_name>_<suffix>
-    suffix = event.name[len(event.problem.name) + 1:]
-
-    h = event.min_duration_between_submissions // 3600
-    m = event.min_duration_between_submissions // 60 % 60
-    s = event.min_duration_between_submissions % 60
-    form = EventUpdateProfileForm(
-        suffix=suffix, title=event.title,
-        is_send_trained_mails=event.is_send_trained_mails,
-        is_send_submitted_mails=event.is_send_submitted_mails,
-        is_public=event.is_public,
-        is_controled_signup=event.is_controled_signup,
-        is_competitive=event.is_competitive,
-        min_duration_between_submissions_hour=h,
-        min_duration_between_submissions_minute=m,
-        min_duration_between_submissions_second=s,
-        opening_timestamp=event.opening_timestamp,
-        closing_timestamp=event.closing_timestamp,
-        public_opening_timestamp=event.public_opening_timestamp,
-    )
-    if form.validate_on_submit():
-        try:
-            if form.suffix.data == '':
-                event.name = event.problem.name
-            else:
-                event.name = event.problem.name + '_' + form.suffix.data
-            event.title = form.title.data
-            event.is_send_trained_mails = form.is_send_trained_mails.data
-            event.is_send_submitted_mails = form.is_send_submitted_mails.data
-            event.is_public = form.is_public.data
-            event.is_controled_signup = form.is_controled_signup.data
-            event.is_competitive = form.is_competitive.data
-            event.min_duration_between_submissions = (
-                form.min_duration_between_submissions_hour.data * 3600 +
-                form.min_duration_between_submissions_minute.data * 60 +
-                form.min_duration_between_submissions_second.data)
-            event.opening_timestamp = form.opening_timestamp.data
-            event.closing_timestamp = form.closing_timestamp.data
-            event.public_opening_timestamp = form.public_opening_timestamp.data
-            db.session.commit()
-
-        except IntegrityError as e:
-            db.session.rollback()
-            message = ''
-            existing_event = get_event(db.session, event.name)
-            if existing_event is not None:
-                message += 'event name is already in use'
-            # # try:
-            # #     User.query.filter_by(email=email).one()
-            # #     if len(message) > 0:
-            # #         message += ' and '
-            # #     message += 'email is already in use'
-            # except NoResultFound:
-            #     pass
-            if message:
-                e = NameClashError(message)
-            flash(u'{}'.format(e), category='Update event error')
-            return redirect(url_for('update_event', event_name=event.name))
-
-        return redirect(url_for('ramp.problems'))
-
-    return render_template(
-        'update_event.html',
-        form=form,
-        event=event,
-        admin=admin,
-    )
-
-
-@mod.route("/user_interactions")
-@flask_login.login_required
-def user_interactions():
-    if (not flask_login.current_user.is_authenticated or
-            flask_login.current_user.access_level != 'admin'):
-        return redirect(url_for('auth.login'))
-    user_interactions_html = get_user_interactions_by_name(
-        db.session, output_format='html'
-    )
-    return render_template(
-        'user_interactions.html',
-        user_interactions_title='User interactions',
-        user_interactions=user_interactions_html
-    )
-
-
-@mod.route("/events/<event_name>/dashboard_submissions")
-@flask_login.login_required
-def dashboard_submissions(event_name):
-    event = get_event(db.session, event_name)
-
-    if is_admin(db.session, event_name, flask_login.current_user.name):
-        # Get dates and number of submissions
-        submissions = \
-            (Submission.query
-                       .filter(Event.name == event.name)
-                       .filter(Event.id == EventTeam.event_id)
-                       .filter(EventTeam.id == Submission.event_team_id)
-                       .order_by(Submission.submission_timestamp)
-                       .all())
-        submissions = [sub for sub in submissions if sub.is_not_sandbox]
-        timestamp_submissions = [
-            sub.submission_timestamp.strftime('%Y-%m-%d %H:%M:%S')
-            for sub in submissions]
-        name_submissions = [sub.name for sub in submissions]
-        cumulated_submissions = range(1, 1 + len(submissions))
-        training_sec = [
-            (sub.training_timestamp - sub.submission_timestamp).seconds / 60.
-            if sub.training_timestamp is not None else 0
-            for sub in submissions
-        ]
-        dashboard_kwargs = {'event': event,
-                            'timestamp_submissions': timestamp_submissions,
-                            'training_sec': training_sec,
-                            'cumulated_submissions': cumulated_submissions,
-                            'name_submissions': name_submissions}
-        failed_leaderboard_html = event.failed_leaderboard_html
-        new_leaderboard_html = event.new_leaderboard_html
-        return render_template(
-            'dashboard_submissions.html',
-            failed_leaderboard=failed_leaderboard_html,
-            new_leaderboard=new_leaderboard_html,
-            admin=True,
-            **dashboard_kwargs)
-    return redirect_to_user(
-        u'Sorry {}, you do not have admin access for {}"'
-        .format(flask_login.current_user.firstname, event_name)
     )

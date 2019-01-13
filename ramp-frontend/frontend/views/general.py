@@ -22,8 +22,9 @@ def ramp():
 
 @mod.route("/data_domains")
 def data_domains():
-    keywords = Keyword.query.order_by(Keyword.name)
-    return render_template('data_domains.html', keywords=keywords)
+    current_keywords = Keyword.query.order_by(Keyword.name)
+    return render_template('data_domains.html',
+                           keywords=current_keywords)
 
 
 @mod.route("/teaching")
@@ -33,8 +34,9 @@ def teaching():
 
 @mod.route("/data_science_themes")
 def data_science_themes():
-    keywords = Keyword.query.order_by(Keyword.name)
-    return render_template('data_science_themes.html', keywords=keywords)
+    current_keywords = Keyword.query.order_by(Keyword.name)
+    return render_template('data_science_themes.html',
+                           keywords=current_keywords)
 
 
 @mod.route("/keywords/<keyword_name>")

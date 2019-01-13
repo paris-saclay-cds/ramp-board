@@ -13,8 +13,10 @@ from ramputils.testing import path_config_example
 from rampdb.model import CVFold
 from rampdb.model import Event
 from rampdb.model import EventScoreType
+from rampdb.model import Keyword
 from rampdb.model import Model
 from rampdb.model import Problem
+from rampdb.model import ProblemKeyword
 from rampdb.model import Workflow
 
 from rampdb.utils import setup_db
@@ -24,19 +26,19 @@ from rampdb.testing import create_test_db
 from rampdb.testing import create_toy_db
 from rampdb.testing import setup_ramp_kits_ramp_data
 
-from rampdb.tools.user import get_user_by_name
-
 from rampdb.tools.event import add_event
-from rampdb.tools.event import add_event_admin
+from rampdb.tools.event import add_keyword
 from rampdb.tools.event import add_problem
+from rampdb.tools.event import add_problem_keyword
 from rampdb.tools.event import add_workflow
 
 from rampdb.tools.event import delete_event
 from rampdb.tools.event import delete_problem
 
 from rampdb.tools.event import get_event
-from rampdb.tools.event import get_event_admin
+from rampdb.tools.event import get_keyword_by_name
 from rampdb.tools.event import get_problem
+from rampdb.tools.event import get_problem_keyword_by_name
 from rampdb.tools.event import get_workflow
 
 HERE = os.path.dirname(__file__)
@@ -233,3 +235,50 @@ def test_check_event(session_scope_function, config):
     delete_event(session_scope_function, 'iris_test')
     event = get_event(session_scope_function, None)
     assert len(event) == 1
+
+
+def test_check_keyword(session_scope_function):
+    add_keyword(session_scope_function, 'keyword', 'data_domain')
+    keyword = get_keyword_by_name(session_scope_function, None)
+    assert isinstance(keyword, list)
+    assert len(keyword) == 1
+    keyword = get_keyword_by_name(session_scope_function, 'keyword')
+    assert isinstance(keyword, Keyword)
+    assert keyword.name == 'keyword'
+    assert keyword.type == 'data_domain'
+    assert keyword.category is None
+    assert keyword.description is None
+
+    err_msg = 'Attempting to update an existing keyword'
+    with pytest.raises(ValueError, match=err_msg):
+        add_keyword(session_scope_function, 'keyword', 'data_domain')
+
+    add_keyword(session_scope_function, 'keyword', 'data_science_theme',
+                category='some cat', description='new description', force=True)
+    keyword = get_keyword_by_name(session_scope_function, 'keyword')
+    assert keyword.type == 'data_science_theme'
+    assert keyword.category == 'some cat'
+    assert keyword.description == 'new description'
+
+
+def test_check_problem_keyword(session_toy_db):
+    add_keyword(session_toy_db, 'keyword', 'data_domain')
+    add_problem_keyword(session_toy_db, 'iris', 'keyword')
+    problem_keyword = get_problem_keyword_by_name(
+        session_toy_db, 'iris', 'keyword'
+    )
+    assert isinstance(problem_keyword, ProblemKeyword)
+    assert problem_keyword.problem.name == 'iris'
+    assert problem_keyword.keyword.name == 'keyword'
+    assert problem_keyword.description is None
+
+    err_msg = 'Attempting to update an existing problem-keyword relationship'
+    with pytest.raises(ValueError, match=err_msg):
+        add_problem_keyword(session_toy_db, 'iris', 'keyword')
+
+    add_problem_keyword(session_toy_db, 'iris', 'keyword',
+                        description='new description', force=True)
+    problem_keyword = get_problem_keyword_by_name(
+        session_toy_db, 'iris', 'keyword'
+    )
+    assert problem_keyword.description == 'new description'
