@@ -48,3 +48,8 @@ def test_login(client_session):
 
     # GET without any previous login
     rv = client.get('/login')
+    assert rv.status_code == 200
+    assert b'Login' in rv.data
+    assert b'Username' in rv.data
+    assert b'Password' in rv.data
+    print(rv.data)

@@ -5,7 +5,6 @@ import flask_login
 
 from flask import Blueprint
 from flask import flash
-from flask import jsonify
 from flask import redirect
 from flask import request
 from flask import render_template

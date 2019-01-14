@@ -259,55 +259,29 @@ class Submission(Model):
     @hybrid_property
     def is_not_sandbox(self):
         """bool: Whether the submission is not a sandbox."""
-<<<<<<< HEAD
         return self.name != self.event.ramp_sandbox_name
-=======
-        return self.name != os.getenv('RAMP_SANDBOX_DIR', 'starting_kit')
->>>>>>> origin/master
 
     @hybrid_property
     def is_error(self):
         """bool: Whether the training of the submission failed."""
-<<<<<<< HEAD
         return 'error' in self.state
-=======
-        return (self.state == 'training_error') |\
-            (self.state == 'checking_error') |\
-            (self.state == 'validating_error') |\
-            (self.state == 'testing_error')
->>>>>>> origin/master
 
     @hybrid_property
     def is_public_leaderboard(self):
         """bool: Whether the submission is part of the public leaderboard."""
-<<<<<<< HEAD
         return (self.is_not_sandbox and self.is_valid and
                 (self.state == 'scored'))
-=======
-        return self.is_not_sandbox & self.is_valid & (self.state == 'scored')
->>>>>>> origin/master
 
     @hybrid_property
     def is_private_leaderboard(self):
         """bool: Whether the submission is part of the private leaderboard."""
-<<<<<<< HEAD
         return (self.is_not_sandbox and self.is_valid and
                 (self.state == 'scored'))
-=======
-        return self.is_not_sandbox & self.is_valid & (self.state == 'scored')
->>>>>>> origin/master
 
     @property
     def path(self):
         """str: The path to the submission."""
-<<<<<<< HEAD
         return os.path.join(self.event.path_ramp_submissions, self.basename)
-=======
-        return os.path.join(
-            get_deployment_path(),
-            'submissions',
-            'submission_' + '{0:09d}'.format(self.id))
->>>>>>> origin/master
 
     @property
     def basename(self):
