@@ -36,7 +36,8 @@ class Event(Model):
     name : str
         The name of the event.
     event_title : str
-        The title to give for the event.
+        The title to give for the event (used in the frontend, can contain
+        spaces).
     ramp_sandbox_name : str
         Name of the submission which will be considered the sandbox. It will
         correspond to the key ``sandbox_name`` of the dictionary created with
@@ -106,7 +107,8 @@ class Event(Model):
     public_competition_leaderboard_html : str
         The public leaderboard of the competition in HTML.
     private_competition_leaderboard_html : str
-        The private leaderboard of the competition in HTML.path_ramp_kits : str
+        The private leaderboard of the competition in HTML.
+    path_ramp_kits : str
         The path where the kits are located.
     ramp_sandbox_name : str
         Name of the submission which will be considered the sandbox.
@@ -399,7 +401,10 @@ class Event(Model):
 class EventScoreType(Model):
     """EventScoreType table.
 
-    This is a many-to-many relationship between Event and ScoreType.
+    This is a many-to-one relationship between Event and ScoreType. Stores the
+    ScoresTypes for each event.
+    For each Event / ScoreType combo, also a new record in ScoreType is
+    created, which is not that useful (TODO consider removing ScoreType table)
 
     Parameters
     ----------

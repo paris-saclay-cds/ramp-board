@@ -203,10 +203,12 @@ user_interaction_type = Enum(
 )
 
 
+# TODO: the ip should not be read from the environment variable but from the
+# config file instead.
 class UserInteraction(Model):
     """UserInteraction table.
 
-    We log the activity of the user on the website.
+    This class is used to record the interaction of a user with the frontend.
 
     Parameters
     ----------
