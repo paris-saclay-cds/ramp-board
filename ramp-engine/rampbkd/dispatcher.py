@@ -13,11 +13,8 @@ else:
     from Queue import Queue
     from Queue import LifoQueue
 
-# from databoard.db_tools import get_submissions
-from databoard.db_tools import get_submission_on_cv_folds
-from databoard.db_tools import update_all_user_leaderboards
-from databoard.db_tools import update_leaderboards
-from databoard.db_tools import update_submission_on_cv_fold
+# from databoard.db_tools import update_all_user_leaderboards
+# from databoard.db_tools import update_leaderboards
 
 from rampdb.tools.submission import get_submissions
 from rampdb.tools.submission import get_submission_by_id
@@ -161,8 +158,8 @@ class Dispatcher(object):
             submission_id, submission_name = \
                 self._processed_submission_queue.get_nowait()
             if 'error' in get_submission_state(session, submission_id):
-                update_leaderboards(self._ramp_config['event_name'])
-                update_all_user_leaderboards(self._ramp_config['event_name'])
+                # update_leaderboards(self._ramp_config['event_name'])
+                # update_all_user_leaderboards(self._ramp_config['event_name'])
                 logger.info('Skip update for {} due to failure during the '
                             'processing'.format(submission_name))
                 continue
@@ -176,8 +173,8 @@ class Dispatcher(object):
             set_scores(session, submission_id, path_predictions)
             set_bagged_scores(session, submission_id, path_predictions)
             # TODO: test those two last functions
-            update_leaderboards(self._ramp_config['event_name'])
-            update_all_user_leaderboards(self._ramp_config['event_name'])
+            # update_leaderboards(self._ramp_config['event_name'])
+            # update_all_user_leaderboards(self._ramp_config['event_name'])
             set_submission_state(session, submission_id, 'scored')
 
     def launch(self):

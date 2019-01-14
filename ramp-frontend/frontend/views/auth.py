@@ -68,7 +68,7 @@ def login():
             return redirect(url_for('auth.login'))
         if not check_password(form.password.data,
                               user.hashed_password):
-            msg = 'Wong password'
+            msg = 'Wrong password'
             flash(msg)
             logger.info(msg)
             return redirect(url_for('auth.login'))
@@ -78,8 +78,9 @@ def login():
         db.session.commit()
         logger.info(u'User "{}" is logged in'
                     .format(flask_login.current_user.name))
-        add_user_interaction(db.session, interaction='login',
-                             user=flask_login.current_user)
+        add_user_interaction(
+            db.session, interaction='login', user=flask_login.current_user
+        )
         next_ = request.args.get('next')
         if next_ is None:
             next_ = url_for('ramp.problems')
@@ -112,29 +113,24 @@ def sign_up():
 
     form = UserCreateProfileForm()
     if form.validate_on_submit():
-        if form.linkedin_url.data != 'http://doxycycline-cheapbuy.site/':
-            try:
-                user = add_user(
-                    session=db.session,
-                    name=form.user_name.data,
-                    password=form.password.data,
-                    lastname=form.lastname.data,
-                    firstname=form.firstname.data,
-                    email=form.email.data,
-                    linkedin_url=form.linkedin_url.data,
-                    twitter_url=form.twitter_url.data,
-                    facebook_url=form.facebook_url.data,
-                    google_url=form.google_url.data,
-                    github_url=form.github_url.data,
-                    website_url=form.website_url.data,
-                    bio=form.bio.data,
-                    is_want_news=form.is_want_news.data,
-                    access_level='asked'
-                )
-            except Exception as e:
-                flash(u'{}'.format(e), category='Sign-up error')
-                return redirect(url_for('auth.sign_up'))
-            # send_register_request_mail(user)
+        user = add_user(
+            session=db.session,
+            name=form.user_name.data,
+            password=form.password.data,
+            lastname=form.lastname.data,
+            firstname=form.firstname.data,
+            email=form.email.data,
+            linkedin_url=form.linkedin_url.data,
+            twitter_url=form.twitter_url.data,
+            facebook_url=form.facebook_url.data,
+            google_url=form.google_url.data,
+            github_url=form.github_url.data,
+            website_url=form.website_url.data,
+            bio=form.bio.data,
+            is_want_news=form.is_want_news.data,
+            access_level='asked'
+        )
+        # send_register_request_mail(user)
         return redirect(url_for('auth.login'))
     return render_template('sign_up.html', form=form)
 
@@ -146,18 +142,20 @@ def update_profile():
     form = UserUpdateProfileForm()
     form.user_name.data = flask_login.current_user.name
     if form.validate_on_submit():
-        try:
-            set_user_by_instance(
-                db.session, flask_login.current_user, form.lastname.data,
-                form.firstname.data, form.linkedin_url.data,
-                form.twitter_url.data, form.facebook_url.data,
-                form.google_url.data, form.github_url.data,
-                form.website_url.data, form.bio.data, form.email.data,
-                form.is_want_news.data
-            )
-        except Exception as e:
-            flash(u'{}'.format(e), category='Update profile error')
-            return redirect(url_for('auth.update_profile'))
+        set_user_by_instance(
+            db.session,
+            user=flask_login.current_user,
+            lastname=form.lastname.data,
+            firstname=form.firstname.data,
+            email=form.email.data,
+            linkedin_url=form.linkedin_url.data,
+            twitter_url=form.twitter_url.data,
+            facebook_url=form.facebook_url.data,
+            google_url=form.google_url.data,
+            github_url=form.github_url.data,
+            website_url=form.website_url.data,
+            is_want_news=form.is_want_news.data
+        )
         # send_register_request_mail(user)
         return redirect(url_for('ramp.problems'))
     form.lastname.data = flask_login.current_user.lastname
