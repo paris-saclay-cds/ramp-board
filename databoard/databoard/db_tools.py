@@ -15,7 +15,7 @@ from sklearn.utils.validation import assert_all_finite
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
-from ramputils import import_module_from_source
+from ramputils.utils import import_module_from_source
 from rampdb.exceptions import DuplicateSubmissionError
 from rampdb.exceptions import MissingExtensionError
 from rampdb.exceptions import MissingSubmissionFileError
@@ -42,7 +42,7 @@ from .utils import remove_non_ascii
 from .utils import send_mail
 from .utils import table_format
 
-logger = logging.getLogger('DATABASE')
+logger = logging.getLogger('RAMP-DATABASE')
 pd.set_option('display.max_colwidth', -1)  # cause to_html truncates the output
 
 

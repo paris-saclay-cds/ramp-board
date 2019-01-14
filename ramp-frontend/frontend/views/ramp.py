@@ -61,7 +61,7 @@ from .redirect import redirect_to_user
 from .visualization import score_plot
 
 mod = Blueprint('ramp', __name__)
-logger = logging.getLogger('FRONTEND')
+logger = logging.getLogger('RAMP-FRONTEND')
 
 
 @mod.route("/problems")

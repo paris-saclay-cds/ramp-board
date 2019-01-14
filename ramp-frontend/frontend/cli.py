@@ -7,7 +7,7 @@ from ramputils import read_config
 
 from . import create_app
 
-logger = logging.getLogger('FRONTEND-CLI')
+logger = logging.getLogger('RAMP-FRONTEND-CLI')
 
 
 @click.group()

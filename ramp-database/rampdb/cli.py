@@ -10,7 +10,7 @@ from .utils import setup_db
 from .tools import team
 from .tools import user
 
-logger = logging.getLogger('DATABASE-CLI')
+logger = logging.getLogger('RAMP-DATABASE-CLI')
 
 
 @click.group()

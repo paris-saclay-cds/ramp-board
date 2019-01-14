@@ -24,16 +24,19 @@ from .tools.user import add_user
 from .tools.team import sign_up_team
 from .tools.submission import submit_starting_kits
 
-logger = logging.getLogger('DATABASE')
+logger = logging.getLogger('RAMP-DATABASE')
 
 
 def create_test_db(config):
     """Create an empty test database and the setup the files for RAMP.
 
+    Note: this will forcedly remove any existing content in the deployment
+    directory.
+
     Parameters
     ----------
     config : dict
-        Configuration file containing all ramp information.
+        Configuration dictionary containing all ramp information.
     """
     database_config = config['sqlalchemy']
     # we can automatically setup the database from the config file used for the
@@ -55,8 +58,8 @@ def create_toy_db(config):
 
     Parameters
     ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
+    config : dict
+        Configuration dictionary containing all ramp information.
     """
     create_test_db(config)
     with session_scope(config['sqlalchemy']) as session:

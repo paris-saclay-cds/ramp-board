@@ -5,7 +5,7 @@ import pytest
 import six
 
 from ramputils import read_config
-from ramputils.password import check_password
+from ramputils.utils import check_password
 from ramputils.testing import path_config_example
 
 from rampdb.utils import setup_db

@@ -6,7 +6,7 @@ import pandas as pd
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
-from ramputils.password import hash_password
+from ramputils.utils import hash_password
 
 from ..exceptions import NameClashError
 from ..model import Team
@@ -17,7 +17,7 @@ from ._query import select_team_by_name
 from ._query import select_user_by_email
 from ._query import select_user_by_name
 
-logger = logging.getLogger('DATABASE')
+logger = logging.getLogger('RAMP-DATABASE')
 
 
 def add_user(session, name, password, lastname, firstname, email,

@@ -5,7 +5,7 @@ import click
 from ramputils import generate_ramp_config
 from ramputils import deploy
 
-logger = logging.getLogger('UTILS-CLI')
+logger = logging.getLogger('RAMP-UTILS-CLI')
 
 
 @click.group()

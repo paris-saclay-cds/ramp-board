@@ -36,7 +36,7 @@ from ramputils import generate_worker_config
 
 from .local import CondaEnvWorker
 
-logger = logging.getLogger('DISPATCHER')
+logger = logging.getLogger('RAMP-DISPATCHER')
 
 
 class Dispatcher(object):

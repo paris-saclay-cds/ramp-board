@@ -8,7 +8,7 @@ from ._query import select_extension_by_name
 from ._query import select_submission_file_type_by_name
 from ._query import select_submission_type_extension_by_name
 
-logger = logging.getLogger('DATABASE')
+logger = logging.getLogger('RAMP-DATABASE')
 
 
 # Add functions: add entries in the database

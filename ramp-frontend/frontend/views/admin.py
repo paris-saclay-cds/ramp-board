@@ -34,7 +34,7 @@ from ..forms import EventUpdateProfileForm
 from .redirect import redirect_to_user
 
 mod = Blueprint('admin', __name__)
-logger = logging.getLogger('FRONTEND')
+logger = logging.getLogger('RAMP-FRONTEND')
 
 
 @mod.route("/approve_users", methods=['GET', 'POST'])

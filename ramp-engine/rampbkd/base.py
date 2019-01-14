@@ -2,7 +2,7 @@ import logging
 from abc import ABCMeta, abstractmethod
 import six
 
-logger = logging.getLogger('WORKER')
+logger = logging.getLogger('RAMP-WORKER')
 
 
 class BaseWorker(six.with_metaclass(ABCMeta)):

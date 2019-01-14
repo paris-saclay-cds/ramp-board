@@ -4,7 +4,7 @@ from flask import flash
 from flask import redirect
 from flask import url_for
 
-logger = logging.getLogger('FRONTEND')
+logger = logging.getLogger('RAMP-FRONTEND')
 
 
 def redirect_to_user(message_str, is_error=True, category=None):

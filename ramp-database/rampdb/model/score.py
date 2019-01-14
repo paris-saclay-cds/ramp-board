@@ -4,7 +4,7 @@ from sqlalchemy import String
 from sqlalchemy import Integer
 from sqlalchemy import Boolean
 
-from ramputils import encode_string
+from ramputils.utils import encode_string
 
 from .base import Model
 

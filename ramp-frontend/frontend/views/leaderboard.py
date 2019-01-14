@@ -22,7 +22,7 @@ from frontend import db
 from .redirect import redirect_to_user
 
 mod = Blueprint('leaderboard', __name__)
-logger = logging.getLogger('FRONTEND')
+logger = logging.getLogger('RAMP-FRONTEND')
 
 
 @mod.route("/events/<event_name>/my_submissions")

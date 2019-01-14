@@ -6,7 +6,7 @@ import subprocess
 
 from .base import BaseWorker
 
-logger = logging.getLogger('WORKER')
+logger = logging.getLogger('RAMP-WORKER')
 
 
 class CondaEnvWorker(BaseWorker):

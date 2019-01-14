@@ -29,7 +29,7 @@ from ..forms import LoginForm
 from ..forms import UserCreateProfileForm
 from ..forms import UserUpdateProfileForm
 
-logger = logging.getLogger('FRONTEND')
+logger = logging.getLogger('RAMP-FRONTEND')
 mod = Blueprint('auth', __name__)
 
 
