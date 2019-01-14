@@ -265,7 +265,7 @@ class EventScoreType(Model):
     This is a many-to-one relationship between Event and ScoreType. Stores the
     ScoresTypes for each event.
     For each Event / ScoreType combo, also a new record in ScoreType is
-    created, which is not that useful (TODO consider removeing ScoreType table)
+    created, which is not that useful (TODO consider removing ScoreType table)
 
     Parameters
     ----------

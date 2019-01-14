@@ -21,7 +21,7 @@ class CVFold(Model):
 
     Storing train and test folds, more precisely: train and test indices for
     a single fold. Multiple records of this table are then linked to a
-    submission (through `SubmissionOnCVFold`).
+    submission (through :class:`rampdb.model.SubmissionOnCVFold`).
 
     Attributes
     ----------
