@@ -1,6 +1,8 @@
 import os
 import datetime
 
+import six
+
 from sqlalchemy import Enum
 from sqlalchemy import Float
 from sqlalchemy import Column
@@ -24,6 +26,88 @@ __all__ = [
 
 
 class User(Model):
+    """User table.
+
+    Parameters
+    ----------
+    name : str
+        The user name.
+    hashed_password : str
+        The hashed password.
+    lastname : str
+        The user's last name.
+    firstname : str
+        The user's first name.
+    email : str
+        The user's email
+    access_level : {'admin', 'user', 'asked'}
+        The user's admin level.
+    hidden_notes : str
+        Some hidden notes.
+    signup_timestamp : datetime
+        The date and time of the user's sign-up.
+    linkedin_url : str
+        The user's LinkedIn URL.
+    twitter_url : str
+        The user's Twitter URL.
+    facebook_url : str
+        The user's Facebook URL.
+    google_url : str
+        The user's Google URL.
+    github_url : str
+        The user's GitHub URL.
+    website_url : str
+        The user's personal website URL.
+    bio : str
+        The user's biography.
+    is_want_news : bool
+        Whether or not the user wants to receive RAMP news.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    name : str
+        The user name.
+    hashed_password : str
+        The hashed password.
+    lastname : str
+        The user's last name.
+    firstname : str
+        The user's first name.
+    email : str
+        The user's email
+    access_level : {'admin', 'user', 'asked'}
+        The user's admin level.
+    hidden_notes : str
+        Some hidden notes.
+    signup_timestamp : datetime
+        The date and time of the user's sign-up.
+    linkedin_url : str
+        The user's LinkedIn URL.
+    twitter_url : str
+        The user's Twitter URL.
+    facebook_url : str
+        The user's Facebook URL.
+    google_url : str
+        The user's Google URL.
+    github_url : str
+        The user's GitHub URL.
+    website_url : str
+        The user's personal website URL.
+    bio : str
+        The user's biography.
+    is_want_news : bool
+        Whether or not the user wants to receive RAMP news.
+    is_authenticated : bool
+        Whether or not the user logged-in.
+    admined_events : list of :class:`rampdb.model.EventAdmin`
+        A back-reference to the events administrated by the user.
+    submission_similaritys : list of :class:`rampdb.model.SubmissionSimilarity`
+        A back-reference to the submission similarity.
+    admined_teams : list of :class:`rampdb.model.Team`
+        A back-reference to the teams administrated by the user.
+    """
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True)
@@ -72,31 +156,27 @@ class User(Model):
 
     @property
     def is_active(self):
+        """bool: Return True."""
         return True
 
     @property
     def is_anonymous(self):
+        """bool: Return False."""
         return False
 
     def get_id(self):
-        try:
-            return unicode(self.id)  # python 2
-        except NameError:
-            return str(self.id)  # python 3
+        """str: Return the user ID."""
+        return six.text_type(self.id)
 
     def __str__(self):
         return 'User({})'.format(encode_string(self.name))
 
     def __repr__(self):
-        text = ("User(name={}, lastname={}, firstname={}, email={}, "
+        return ("User(name={}, lastname={}, firstname={}, email={}, "
                 "admined_teams={})"
-                .format(
-                    encode_string(self.name),
-                    encode_string(self.lastname),
-                    encode_string(self.firstname),
-                    encode_string(self.email),
-                    self.admined_teams))
-        return text
+                .format(encode_string(self.name), encode_string(self.lastname),
+                        encode_string(self.firstname),
+                        encode_string(self.email), self.admined_teams))
 
 
 user_interaction_type = Enum(
@@ -123,7 +203,74 @@ user_interaction_type = Enum(
 )
 
 
+# TODO: the ip should not be read from the environment variable but from the
+# config file instead.
 class UserInteraction(Model):
+    """UserInteraction table.
+    
+    This class is used to record the interaction of a user with the frontend.
+
+    Parameters
+    ----------
+    interactions : None or str, default is None
+        The type of interaction.
+    user : None or :class:`rampdb.model.User`, default is None
+        The user instance.
+    problem : None or :class:`rampdb.model.Problem`, default is None
+        The problem instance.
+    event : None or :class:`rampdb.model.Event`, default is None
+        The event instance.
+    ip : None or str, default is None
+        The ip address from the server.
+    note : None or str, default is None
+        Some notes.
+    submission : None or :class:`rampdb.model.Submission`, default is None
+        The submission instance.
+    submission_file : None or :class:`rampdb.model.SubmissionFile`, default \
+is None
+        The submission file instance.
+    diff : None or str, default is None
+        The difference between two submissions.
+    similarity : None or float, default is None
+        The similarity of the submission.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    timestamp : datetime
+        The date and time the interaction was created.
+    interactions : str
+        The type of interaction.
+    note : str
+        Some note regarding the interaction.
+    submission_file_diff : str
+        The difference between two submission files.
+    submission_file_similarity : float
+        The similarity between two submission files.
+    ip : str
+        The IP of the remove server.
+    user_id : int
+        The ID of the user linked to the interaction.
+    user : :class:`rampdb.model.User`
+        The user instance.
+    problem_id : int
+        The ID of the problem.
+    problem : :class:`rampdb.model.Problem`
+        The problem instance.
+    event_team_id : int
+        The ID of the event/team.
+    event_team : :class:`rampdb.model.EventTeam`
+        The event/team instance.
+    submission_id : int
+        The submission ID.
+    submission : :class:`rampdb.model.Submission`
+        The submission instance.
+    submission_file_id : int
+        The submission file ID.
+    submission_file : :class:`rampdb.model.SubmissionFile`
+        The submission file instance.
+    """
     __tablename__ = 'user_interactions'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -220,54 +367,20 @@ class UserInteraction(Model):
     #         self.submission_file_id = eval(tokens[9])
 
     def __repr__(self):
-        repr = self.timestamp.__repr__()
-        repr += ';' + self.interaction.__repr__()
-        repr += ';' + self.note.__repr__()
-        repr += ';' + self.submission_file_diff.__repr__()
-        repr += ';' + self.submission_file_similarity.__repr__()
-        repr += ';' + self.ip.__repr__()
-        if self.user is None:
-            repr += ';None'
-        else:
-            repr += ';' + self.user.id.__repr__()
-        if self.problem is None:
-            repr += ';None'
-        else:
-            repr += ';' + self.problem.id.__repr__()
-        if self.event_team is None:
-            repr += ';None'
-        else:
-            repr += ';' + self.event_team.id.__repr__()
-        if self.submission is None:
-            repr += ';None'
-        else:
-            repr += ';' + self.submission.id.__repr__()
-        if self.submission_file is None:
-            repr += ';None'
-        else:
-            repr += ';' + self.submission_file.id.__repr__()
-        return repr
-
-    # @property
-    # def submission_file_diff_link(self):
-    #     if self.submission_file_diff is None:
-    #         return None
-    #     return os.path.join(
-    #         deployment_path,
-    #         ramp_config['submissions_dir'],
-    #         'diff_bef24208a45043059',
-    #         str(self.id))
+        return "; ".join(repr(member)
+                         for member in (self.timestamp, self.interaction,
+                                        self.note, self.submission_file_diff,
+                                        self.submission_file_similarity,
+                                        self.ip, self.user, self.problem,
+                                        self.event_team, self.submission,
+                                        self.submission_file))
 
     @property
     def event(self):
-        if self.event_team:
-            return self.event_team.event
-        else:
-            return None
+        """:class:`rampdb.model.Event`: The event instance."""
+        return self.event_team.event if self.event_team else None
 
     @property
     def team(self):
-        if self.event_team:
-            return self.event_team.team
-        else:
-            return None
+        """:class:`rampdb.model.Team`: The team instance."""
+        return self.event_team.team if self.event_team else None

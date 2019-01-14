@@ -58,8 +58,81 @@ submission_types = Enum('live', 'test', name='submission_types')
 
 
 class Submission(Model):
-    """An abstract (untrained) submission."""
+    """Submission table.
 
+    Parameters
+    ----------
+    name : str
+        The submission name.
+    event_team : :class:`rampdb.model.EventTeam`
+        The event/team instance.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    event_team_id : int
+        The event/team ID.
+    event_team : :class:`rampdb.model.EventTeam`
+        The event/team instance.
+    name : str
+        The name of the submission.
+    hash_ : string
+        A hash to identify the submission.
+    files : list of :class:`rampdb.model.SubmissionFile`
+        The list of the files associated with the submission.
+    submission_timestamp : datetime
+        The date and time when the submission was added to the database.
+    sent_to_training_timestamp : datetime
+        The date and time when the submission was sent for training.
+    training_timestamp : datetime
+        The date and time when the training finished.
+    contributivity : float
+        The contributivity of the submission.
+    historical_contributivity : float
+        The historical contributivity.
+    type : {'live' or 'test'}
+        The type of submission.
+    state : str
+        The state of the submission. For possible states, see the
+        ``submission_states`` enum in this module (top of this file).
+    error_msg : str
+        The error message of the submission.
+    is_valid : bool
+        Is it a valid submission.
+    is_to_ensemble : bool
+        Whether to use the submission for the contributivity score.
+    is_in_competition : bool
+        Whether the submission is used to participate to the comptetition.
+    notes : str
+        Store any note regarding the submission.
+    train_time_cv_mean : float
+        The mean of the computation time for a fold on the train data.
+    valid_time_cv_mean : float
+        The mean of the computation time for a fold on the valid data.
+    test_time_cv_mean : float
+        The mean of the computation time for a fold on the test data.
+    train_time_cv_std : float
+        The standard deviation of the computation time for a fold on the train
+        data.
+    valid_time_cv_std : float
+        The standard deviation of the computation time for a fold on the valid
+        data.
+    test_time_cv_std : float
+        The standard deviation of the computation time for a fold on the test
+        data.
+    max_ram : float
+        The maximum amount of RAM consumed during training.
+    historical_contributivitys : list of \
+:class:`rampdb.model.HistoricalContributivity`
+        A back-reference of the historical contributivities for the submission.
+    scores : list of :class:`rampdb.model.SubmissionScore`
+        A back-reference of scores for the submission.
+    files : list of :class:`rampdb.model.SubmissionFile`
+        A back-reference of files attached to the submission.
+    on_cv_folds : list of :class:`rampdb.model.SubmissionOnCVFold`
+        A back-reference of the CV fold for this submission.
+    """
     __tablename__ = 'submissions'
 
     id = Column(Integer, primary_key=True)
@@ -134,51 +207,61 @@ class Submission(Model):
             self.event.name, self.team.name, self.name)
 
     def __repr__(self):
-        repr = '''Submission(event_name={}, team_name={}, name={}, files={},
-                  state={}, train_time={})'''.format(
-            encode_string(self.event.name),
-            encode_string(self.team.name),
-            encode_string(self.name),
-            self.files,
-            self.state,
-            self.train_time_cv_mean)
-        return repr
+        return ('Submission(event_name={}, team_name={}, name={}, files={}, '
+                'state={}, train_time={})'
+                .format(encode_string(self.event.name),
+                        encode_string(self.team.name),
+                        encode_string(self.name),
+                        self.files, self.state, self.train_time_cv_mean))
 
     @hybrid_property
     def team(self):
+        """str: The team name."""
         return self.event_team.team
 
     @hybrid_property
     def event(self):
+        """:class:`rampdb.model.Event`: The event associated with the
+        submission."""
         return self.event_team.event
 
     @property
+    # This will work only with Flask
     def official_score_function(self):
+        """callable: The scoring function."""
         return self.event.official_score_function
 
     @property
     def official_score_name(self):
+        """str: The name of the default score."""
         return self.event.official_score_name
 
     @property
     def official_score(self):
+        """:class:`rampdb.model.SubmissionScore`: The official score."""
         score_dict = {score.score_name: score for score in self.scores}
         return score_dict[self.official_score_name]
 
     @property
     def score_types(self):
+        """list of :class:`rampdb.model.EventScoreType`: All the scores used
+        for the submissions."""
         return self.event.score_types
 
     @property
     def Predictions(self):
+        """:class:`rampwf.prediction_types`: The predictions used for the
+        problem."""
         return self.event.Predictions
 
     @hybrid_property
     def is_not_sandbox(self):
+        """bool: Whether the submission is not a sandbox."""
         return self.name != os.getenv('RAMP_SANDBOX_DIR', 'starting_kit')
 
     @hybrid_property
     def is_error(self):
+        """bool: Whether the training of the submission failed."""
         return (self.state == 'training_error') |\
             (self.state == 'checking_error') |\
             (self.state == 'validating_error') |\
@@ -186,14 +269,17 @@ class Submission(Model):
 
     @hybrid_property
     def is_public_leaderboard(self):
+        """bool: Whether the submission is part of the public leaderboard."""
         return self.is_not_sandbox & self.is_valid & (self.state == 'scored')
 
     @hybrid_property
     def is_private_leaderboard(self):
+        """bool: Whether the submission is part of the private leaderboard."""
         return self.is_not_sandbox & self.is_valid & (self.state == 'scored')
 
     @property
     def path(self):
+        """str: The path to the submission."""
         return os.path.join(
             get_deployment_path(),
             'submissions',
@@ -201,48 +287,68 @@ class Submission(Model):
 
     @property
     def basename(self):
+        """str: The base name of the submission."""
         return 'submission_' + '{0:09d}'.format(self.id)
 
     @property
     def module(self):
+        """str: Path of the submission as a module."""
         return self.path.lstrip('./').replace('/', '.')
 
     @property
     def f_names(self):
+        """list of str: File names of a submission."""
         return [file.f_name for file in self.files]
 
     @property
     def link(self):
+        """str: Unique link to the first submission file."""
         return self.files[0].link
 
     @property
     def full_name_with_link(self):
+        """str: HTML hyperlink to the first submission file with event, team,
+        and submission information.
+
+        The hyperlink forward to the first submission file while the text
+        corresponds to the event, team, and submission name.
+        """
         return '<a href={}>{}/{}/{}</a>'.format(
             self.link, self.event.name, self.team.name, self.name[:20])
 
     @property
     def name_with_link(self):
+        """str: HTML hyperlink to the first submission file with submission
+        information.
+
+        The hyperlink forward to the first submission file while the text
+        corresponds to submission name.
+        """
         return '<a href={}>{}</a>'.format(self.link, self.name[:20])
 
     @property
     def state_with_link(self):
+        """str: HTML hyperlink to the state file to report error."""
         return '<a href=/{}>{}</a>'.format(
             os.path.join(self.hash_, 'error.txt'), self.state)
 
     def ordered_scores(self, score_names):
-        """Iterator yielding SubmissionScores.
+        """Generator yielding :class:`rampdb.model.SubmissionScore`.
 
-        Ordered according to score_names. Called by get_public_leaderboard
-        and get_private_leaderboard, making sure scores are listed in the
-        correct column.
+        Ordered according to ``score_names``. Called by
+        :func:`rampdb.tools.leaderboard.get_public_leaderboard` and
+        :func:`rampdb.tools.get_private_leaderboard`, making sure scores are
+        listed in the correct column.
 
         Parameters
         ----------
-        score_names : list of strings
+        score_names : list of str
+            Name of the scores.
 
-        Return
-        ----------
-        scores : iterator of SubmissionScore objects
+        Returns
+        -------
+        scores : generator of :class:`rampdb.model.submission.SubmissionScore``
+            Generate a scoring instance.
         """
         score_dict = {score.score_name: score for score in self.scores}
         for score_name in score_names:
@@ -278,11 +384,23 @@ class Submission(Model):
     #     return np.std([ts.test_time for ts in self.on_cv_folds])
 
     def set_state(self, state):
+        """Set the state of the submission and of each CV fold.
+
+        Parameters
+        ----------
+        state : str
+            The state of the new submission.
+        """
         self.state = state
         for submission_on_cv_fold in self.on_cv_folds:
             submission_on_cv_fold.state = state
 
     def reset(self):
+        """Reset the submission to an initial stage.
+
+        The contributivity, state, error, and scores will be reset to initial
+        values.
+        """
         self.contributivity = 0.0
         self.state = 'new'
         self.error_msg = ''
@@ -293,6 +411,19 @@ class Submission(Model):
             score.test_score_cv_bags = None
 
     def set_error(self, error, error_msg):
+        """Fail the submission as well as the CV folds.
+
+        Parameters
+        ----------
+        error : str
+            The error state of the submission and each fold.
+        error_msg : str
+            The associated error message for the submission and each fold.
+
+        Notes
+        -----
+        Setting the error will first reset the submission.
+        """
         self.reset()
         self.state = error
         self.error_msg = error_msg
@@ -301,19 +432,29 @@ class Submission(Model):
 
     # contributivity could be a property but then we could not query on it
     def set_contributivity(self):
+        """Compute the contributivity of a submission.
+
+        Notes
+        -----
+        The contributivity is computed only id the submission is public and
+        valid and this is not the sandbox submission.
+        """
         self.contributivity = 0.0
         if self.is_public_leaderboard:
             # we share a unit of 1. among folds
             unit_contributivity = 1. / len(self.on_cv_folds)
             for submission_on_cv_fold in self.on_cv_folds:
-                self.contributivity +=\
-                    unit_contributivity * submission_on_cv_fold.contributivity
+                self.contributivity += (unit_contributivity *
+                                        submission_on_cv_fold.contributivity)
 
     def set_state_after_training(self):
+        """Set the state of a submission depending of the state of the fold
+        after training.
+        """
         self.training_timestamp = datetime.datetime.utcnow()
         states = [submission_on_cv_fold.state
                   for submission_on_cv_fold in self.on_cv_folds]
-        if all(state in ['tested'] for state in states):
+        if all(state == 'tested' for state in states):
             self.state = 'tested'
         elif all(state in ['tested', 'validated'] for state in states):
             self.state = 'validated'
@@ -337,6 +478,31 @@ class Submission(Model):
 
 
 class SubmissionScore(Model):
+    """SubmissionScore table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the row table.
+    submission_id : int
+        The ID of the associated submission.
+    submission : :class:`rampdb.model.Submission`
+        The submission instance associated.
+    event_score_type_id : int
+        The ID of the event/score type associated.
+    event_score_type : :class:`rampdb.model.EventScoreType`
+        The event/score type instance associated.
+    valid_score_cv_bag : float
+        The validation bagged scores.
+    test_score_cv_bag : float
+        The testing bagged scores.
+    valid_score_cv_bags : ndarray
+        The partial validation scores for all CV bags.
+    test_score_cv_bags : ndarray
+        The partial testing scores for all CV bags.
+    on_cv_folds : list of :class:`rampdb.model.SubmissionScoreOnCVFold`
+        A back-reference the CV fold associated with the score.
+    """
     __tablename__ = 'submission_scores'
 
     id = Column(Integer, primary_key=True)
@@ -361,52 +527,82 @@ class SubmissionScore(Model):
 
     @property
     def score_name(self):
+        """str: The name of the score."""
         return self.event_score_type.name
 
     @property
     def score_function(self):
+        """callable: The function used to score."""
         return self.event_score_type.score_function
 
     # default display precision in n_digits
     @property
     def precision(self):
+        """int: The numerical precision of the associated score."""
         return self.event_score_type.precision
 
     @property
     def train_score_cv_mean(self):
+        """float: The mean score on the CV folds for the training set."""
         return np.mean([ts.train_score for ts in self.on_cv_folds])
 
     @property
     def valid_score_cv_mean(self):
+        """float: The mean score on the CV folds for the validation set."""
         return np.mean([ts.valid_score for ts in self.on_cv_folds])
 
     @property
     def test_score_cv_mean(self):
+        """float: The mean score on the CV folds for the testing set."""
         return np.mean([ts.test_score for ts in self.on_cv_folds])
 
     @property
     def train_score_cv_std(self):
+        """float: The std. dev. score on the CV folds for the training set."""
         return np.std([ts.train_score for ts in self.on_cv_folds])
 
     @property
     def valid_score_cv_std(self):
+        """float: The std. dev. score on the CV folds for the validation
+        set."""
         return np.std([ts.valid_score for ts in self.on_cv_folds])
 
     @property
     def test_score_cv_std(self):
+        """float: The std. dev. score on the CV folds for the testing set."""
         return np.std([ts.test_score for ts in self.on_cv_folds])
 
 
 # TODO: we should have a SubmissionWorkflowElementType table, describing the
 # type of files we are expecting for a given RAMP. Fast unit test should be
 # set up there, and each file should be unit tested right after submission.
-# Kozmetics: erhaps mark which file the leaderboard link should point to (right
+# Cosmetic: Perhaps mark which file the leaderboard link should point to (right
 # now it is set to the first file in the list which is arbitrary).
-# We will also have to handle auxiliary files (like csvs or other classes).
-# User interface could have a sinlge submission form with a menu containing
+# We will also have to handle auxiliary files (like CSVs or other classes).
+# User interface could have a single submission form with a menu containing
 # the file names for a given ramp + an "other" field when users will have to
 # name their files
 class SubmissionFile(Model):
+    """SubmissionFile table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    submission_id : int
+        The ID of the associated submission.
+    submission : :class:`rampdb.model.Submission`
+        The submission instance associated.
+    workflow_element_id : int
+        The ID of the associated workflow element.
+    workflow_element : :class:`rampdb.model.WorkflowElement`
+        The workflow element associated with the submission.
+    submission_file_type_extension_id : int
+        The ID of the associated submission file type extension.
+    submission_file_type_extension : \
+:class:`rampdb.model.SubmissionFileTypeExtension`
+        The associated submission file type extension instance.
+    """
     __tablename__ = 'submission_files'
 
     id = Column(Integer, primary_key=True)
@@ -433,47 +629,59 @@ class SubmissionFile(Model):
     # eg, 'py'
     @property
     def is_editable(self):
+        """bool: Whether the submission file is from an editable format."""
         return self.workflow_element.is_editable
 
-    # eg, 'py'
     @property
     def extension(self):
+        """str: The extension of the file format."""
         return self.submission_file_type_extension.extension.name
 
-    # eg, 'regressor'
     @property
     def type(self):
+        """str: The workflow type associated with the file."""
         return self.workflow_element.type
 
-    # eg, 'regressor', Normally same as type, except when type appears more
-    # than once in workflow
     @property
     def name(self):
+        """str: The name of the workflow element."""
         return self.workflow_element.name
 
-    # Complete file name, eg, 'regressor.py'
     @property
     def f_name(self):
+        """str: The corresponding file name."""
         return self.type + '.' + self.extension
 
     @property
     def link(self):
+        """str: A unique link to the file. The hash is generated by the
+        Submission instance."""
         return '/' + os.path.join(self.submission.hash_, self.f_name)
 
     @property
     def path(self):
+        """str: The path to the file in the deployment directory."""
         return os.path.join(self.submission.path, self.f_name)
 
     @property
     def name_with_link(self):
+        """str: The HTML hyperlink of the name of the submission file."""
         return '<a href="' + self.link + '">' + self.name + '</a>'
 
     def get_code(self):
+        """str: Get the content of the file."""
         with open(self.path) as f:
             code = f.read()
         return code
 
     def set_code(self, code):
+        """Set the content of the submission file.
+
+        Parameters
+        ----------
+        code : str
+            The code to write into the submission file.
+        """
         code.encode('ascii')  # to raise an exception if code is not ascii
         with open(self.path, 'w') as f:
             f.write(code)
@@ -484,6 +692,27 @@ class SubmissionFile(Model):
 
 
 class SubmissionFileTypeExtension(Model):
+    """SubmissionFileTypeExtension table.
+
+    This a many-to-many relationship between the SubmissionFileType and
+    Extension.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    type_id : int
+        The ID of the submission file type.
+    type : :class:`rampdb.model.SubmissionFileType`
+        The submission file type instance.
+    extension_id : int
+        The ID of the extension.
+    extension : :class:`rampdb.model.Extension`
+        The file extension instance.
+    submission_files : list of \
+:class:`rampdb.model.SubmissionFileTypeExtension`
+        A back-reference to the submission files related to the type extension.
+    """
     __tablename__ = 'submission_file_type_extensions'
 
     id = Column(Integer, primary_key=True)
@@ -502,14 +731,32 @@ class SubmissionFileTypeExtension(Model):
 
     @property
     def file_type(self):
+        """str: The name of the file type."""
         return self.type.name
 
     @property
     def extension_name(self):
+        """str: The name of the file extension."""
         return self.extension.name
 
 
 class SubmissionFileType(Model):
+    """SubmissionFileType table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    name : str
+        The name of the submission file type.
+    is_editable : bool
+        Whether or not this type of file is editable.
+    max_size : int
+        The maximum size of this file type.
+    workflow_element_types : list of :class:`rampdb.model.WorkflowElementType`
+        A back-reference to the workflow element type for this submission file
+        type.
+    """
     __tablename__ = 'submission_file_types'
 
     id = Column(Integer, primary_key=True)
@@ -520,6 +767,18 @@ class SubmissionFileType(Model):
 
 
 class Extension(Model):
+    """Extension table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    name : str
+        The name of the extension.
+    submission_file_types : list of \
+:class:`rampdb.model.SubmissionFileTypeExtension`
+        A back-reference to the submission file types for this extension.
+    """
     __tablename__ = 'extensions'
 
     id = Column(Integer, primary_key=True)
@@ -528,6 +787,27 @@ class Extension(Model):
 
 
 class SubmissionScoreOnCVFold(Model):
+    """SubmissionScoreOnCVFold table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    submission_on_cv_fold_id : int
+        The ID of the CV fold.
+    submission_on_cv_fold : :class:`rampdb.model.SubmissionOnCVFold`
+        The submission on CV fold instance.
+    submission_score_id : int
+        The ID of the submission score.
+    submission_score : :class:`rampdb.model.SubmissionScore`
+        The submission score instance.
+    train_score : float
+        The training score on the fold.
+    valid_score : float
+        The validation score on the fold.
+    test_score : float
+        The testing score on the fold.
+    """
     __tablename__ = 'submission_score_on_cv_folds'
 
     id = Column(Integer, primary_key=True)
@@ -551,14 +831,17 @@ class SubmissionScoreOnCVFold(Model):
 
     @property
     def name(self):
+        """str: The name of the score."""
         return self.event_score_type.name
 
     @property
     def event_score_type(self):
+        """:class:`EventScoreType`: The event/score type instance."""
         return self.submission_score.event_score_type
 
     @property
     def score_function(self):
+        """callable: the scoring function."""
         return self.event_score_type.score_function
 
 
@@ -569,11 +852,53 @@ class SubmissionScoreOnCVFold(Model):
 class SubmissionOnCVFold(Model):
     """SubmissionOnCVFold.
 
-    is an instantiation of Submission, to be trained on a data file and a cv
-    fold. We don't actually store the trained model in the db (lack of disk and
-    pickling issues), so trained submission is not a database column. On the
-    other hand, we will store train, valid, and test predictions. In a sense
-    substituting CPU time for storage.
+    Parameters
+    ----------
+    submission : :class:`rampdb.model.Submission`
+        The submission used.
+    cv_fold : :class:`rampdb.model.CVFold`
+        The fold to associate with the submission.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    submission_id : int
+        The ID of the submission.
+    submission : :class:`rampdb.model.Submission`
+        The submission instance.
+    cv_fold_id : int
+        The ID of the CV fold.
+    cv_fold : :class:`rampdb.model.CVFold`
+        The CV fold instance.
+    contributivity : float
+        The contributivity of the submission.
+    best : bool
+        Whether or not the submission is the best.
+    full_train_y_pred : ndarray
+        Predictions on the full training set.
+    test_y_pred : ndarray
+        Predictions on the testing set.
+    train_time : float
+        Computation time for the training set.
+    valid_time : float
+        Computation time for the validation set.
+    test_time : float
+        Computation time for the testing set.
+    state : str
+        State of of the submission on this fold.
+    error_msg : str
+        Error message in case of failing submission.
+    scores : list of :class:`rampdb.model.SubmissionScoreOnCVFold`
+        A back-reference on the scores for this fold.
+
+    Notes
+    -----
+    SubmissionOnCVFold is an instantiation of Submission, to be trained on a
+    data file and a cv fold. We don't actually store the trained model in the
+    db (lack of disk and pickling issues), so trained submission is not a
+    database column. On the other hand, we will store train, valid, and test
+    predictions. In a sense substituting CPU time for storage.
     """
 
     __tablename__ = 'submission_on_cv_folds'
@@ -619,63 +944,78 @@ class SubmissionOnCVFold(Model):
         self.reset()
 
     def __repr__(self):
-        repr = 'state = {}, c = {}'\
-            ', best = {}'.format(
-                self.state, self.contributivity, self.best)
-        return repr
+        return ('state = {}, c = {}, best = {}'
+                .format(self.state, self.contributivity, self.best))
 
     @hybrid_property
     def is_public_leaderboard(self):
+        """bool: Whether or not the submission is scored and ready to be on
+        the public leaderboard."""
         return self.state == 'scored'
 
     @hybrid_property
     def is_trained(self):
-        return self.state in\
-            ['trained', 'validated', 'tested', 'validating_error',
-             'testing_error', 'scored']
+        """bool: Whether or not the submission was trained."""
+        return self.state in ('trained', 'validated', 'tested',
+                              'validating_error', 'testing_error', 'scored')
 
     @hybrid_property
     def is_validated(self):
-        return self.state in ['validated', 'tested', 'testing_error', 'scored']
+        """bool: Whether or not the submission was validated."""
+        return self.state in ('validated', 'tested', 'testing_error', 'scored')
 
     @hybrid_property
     def is_tested(self):
-        return self.state in ['tested', 'scored']
+        """bool: Whether or not the submission was tested."""
+        return self.state in ('tested', 'scored')
 
     @hybrid_property
     def is_error(self):
-        return (self.state == 'training_error') |\
-            (self.state == 'checking_error') |\
-            (self.state == 'validating_error') |\
-            (self.state == 'testing_error')
+        """bool: Whether or not the submission failed at one of the stage."""
+        return 'error' in self.state
 
     # The following four functions are converting the stored numpy arrays
     # <>_y_pred into Prediction instances
     @property
     def full_train_predictions(self):
+        """:class:`rampwf.prediction_types.Predictions`: Training
+        predictions."""
         return self.submission.Predictions(y_pred=self.full_train_y_pred)
 
     @property
     def train_predictions(self):
+        """:class:`rampwf.prediction_types.Predictions`: Training
+        predictions."""
         return self.submission.Predictions(
             y_pred=self.full_train_y_pred[self.cv_fold.train_is])
 
     @property
     def valid_predictions(self):
+        """:class:`rampwf.prediction_types.Predictions`: Validation
+        predictions."""
         return self.submission.Predictions(
             y_pred=self.full_train_y_pred[self.cv_fold.test_is])
 
     @property
     def test_predictions(self):
+        """:class:`rampwf.prediction_types.Predictions`: Testing
+        predictions."""
         return self.submission.Predictions(y_pred=self.test_y_pred)
 
     @property
     def official_score(self):
+        """:class:`rampdb.model.SubmissionScoreOnCVFold`: The official score
+        used for the submission."""
         for score in self.scores:
             if self.submission.official_score_name == score.name:
                 return score
 
     def reset(self):
+        """Reset the submission on CV fold to an initial stage.
+
+        The contributivity, state, error, and scores will be reset to initial
+        values.
+        """
         self.contributivity = 0.0
         self.best = False
         self.full_train_y_pred = None
@@ -691,47 +1031,74 @@ class SubmissionOnCVFold(Model):
             score.test_score = score.event_score_type.worst
 
     def set_error(self, error, error_msg):
+        """Fail the CV fold.
+
+        Parameters
+        ----------
+        error : str
+            The error state of the submission and each fold.
+        error_msg : str
+            The associated error message for the submission and each fold.
+
+        Notes
+        -----
+        Setting the error will first reset the submission.
+        """
         self.reset()
         self.state = error
         self.error_msg = error_msg
 
     def compute_train_scores(self):
+        """Compute all training scores."""
         if self.is_trained:
-            true_full_train_predictions =\
+            true_full_train_predictions = \
                 self.submission.event.problem.ground_truths_train()
             for score in self.scores:
                 score.train_score = float(score.score_function(
-                    true_full_train_predictions, self.full_train_predictions,
+                    true_full_train_predictions,
+                    self.full_train_predictions,
                     self.cv_fold.train_is))
         else:
             for score in self.scores:
                 score.train_score = score.event_score_type.worst
 
     def compute_valid_scores(self):
+        """Compute all validating scores."""
         if self.is_validated:
-            true_full_train_predictions =\
+            true_full_train_predictions = \
                 self.submission.event.problem.ground_truths_train()
             for score in self.scores:
                 score.valid_score = float(score.score_function(
-                    true_full_train_predictions, self.full_train_predictions,
+                    true_full_train_predictions,
+                    self.full_train_predictions,
                     self.cv_fold.test_is))
         else:
             for score in self.scores:
                 score.valid_score = score.event_score_type.worst
 
     def compute_test_scores(self):
+        """Compute all testing scores."""
         if self.is_tested:
-            true_test_predictions =\
+            true_test_predictions = \
                 self.submission.event.problem.ground_truths_test()
             for score in self.scores:
                 score.test_score = float(score.score_function(
-                    true_test_predictions, self.test_predictions))
+                    true_test_predictions,
+                    self.test_predictions))
         else:
             for score in self.scores:
                 score.test_score = score.event_score_type.worst
 
     def update(self, detached_submission_on_cv_fold):
-        """From trained DetachedSubmissionOnCVFold."""
+        """Update the submission on CV Fold from a detached submission.
+
+        Parameters
+        ----------
+        detached_submission_on_cv_fold : \
+:class:`rampdb.model.DetachedSubmissionOnCVFold`
+            The detached submission from which we will update the current
+            submission.
+        """
         self.state = detached_submission_on_cv_fold.state
         if self.is_error:
             self.error_msg = detached_submission_on_cv_fold.error_msg
@@ -740,7 +1107,7 @@ class SubmissionOnCVFold(Model):
                 self.train_time = detached_submission_on_cv_fold.train_time
             if self.is_validated:
                 self.valid_time = detached_submission_on_cv_fold.valid_time
-                self.full_train_y_pred =\
+                self.full_train_y_pred = \
                     detached_submission_on_cv_fold.full_train_y_pred
             if self.is_tested:
                 self.test_time = detached_submission_on_cv_fold.test_time
@@ -774,9 +1141,8 @@ class DetachedSubmissionOnCVFold(object):
             submission_on_cv_fold.submission.event.problem.workflow_object
 
     def __repr__(self):
-        text = 'Submission({}) on fold {}'.format(
-            self.name, str(self.train_is)[:10])
-        return text
+        return ('Submission({}) on fold {}'
+                .format(self.name, str(self.train_is)[:10]))
 
 
 submission_similarity_type = Enum(
@@ -788,6 +1154,33 @@ submission_similarity_type = Enum(
 
 
 class SubmissionSimilarity(Model):
+    """SubmissionSimilarity table.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    type : str
+        The type of similarity.
+    note : str
+        Note about the similarity.
+    timestamp : datetime
+        The date and time of the submission.
+    similarity : float
+        The similarity index.
+    user_id : int
+        The ID of the user.
+    user : :class:`rampdb.model.User`
+        The user instance.
+    source_submission_id : int
+        The ID of the submission used as source.
+    source_submission : :class:`rampdb.model.Submission`
+        The source submission instance.
+    target_submission_id : int
+        The ID of the submission used as target.
+    target_submission : :class:`rampdb.model.Submission`
+        The target submission instance.
+    """
     __tablename__ = 'submission_similaritys'
 
     id = Column(Integer, primary_key=True)
@@ -815,9 +1208,9 @@ class SubmissionSimilarity(Model):
         backref=backref('targets', cascade='all, delete-orphan'))
 
     def __repr__(self):
-        text = 'type={}, user={}, source={}, target={} '.format(
-            self.type, self.user, self.source_submission,
-            self.target_submission)
-        text += 'similarity={}, timestamp={}'.format(
-            self.similarity, self.timestamp)
+        text = ('type={}, user={}, source={}, target={} '
+                .format(self.type, self.user, self.source_submission,
+                        self.target_submission))
+        text += 'similarity={}, timestamp={}'.format(self.similarity,
+                                                     self.timestamp)
         return text

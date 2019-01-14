@@ -11,9 +11,36 @@ from .base import Model
 __all__ = ['ScoreType']
 
 
-# Deprecated: scort types are now defined in problem.py.
+# XXX: Should probably be addressed at some point?
+# Deprecated: score types are now defined in problem.py.
 # EventScoreType.score_type should be deleted then DB migrated.
 class ScoreType(Model):
+    """ScoreType table.
+
+    Parameters
+    ----------
+    name : str
+        The name of the score.
+    is_lower_the_better : bool
+        Whether a lower score is better.
+    minimum : float
+        The minimum possible score.
+    maximum : float
+        The maximum possible score.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the row table.
+    is_lower_the_better : bool
+        Whether a lower score is better.
+    minimum : float
+        The minimum possible score.
+    maximum : float
+        The maximum possible score.
+    events : list of :class:`rampdb.model.EventScoreType`
+        A back-reference to the event using the score.
+    """
     __tablename__ = 'score_types'
 
     id = Column(Integer, primary_key=True)

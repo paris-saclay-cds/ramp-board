@@ -25,6 +25,87 @@ __all__ = [
 
 
 class Event(Model):
+    """Event table.
+
+    This table contains all information of a RAMP event.
+
+    Parameters
+    ----------
+    problem_name : str
+        The name of the problem.
+    name : str
+        The name of the event.
+    event_title : str
+        The title to give for the event (used in the frontend, can contain
+        spaces).
+
+    Attributes
+    ----------
+    id : int
+        ID of the table row.
+    name : str
+        Event name.
+    title : str
+        Event title.
+    problem_id : int
+        The problem ID associated with this event.
+    problem : :class:`rampdb.model.Problem`
+        The :class:`rampdb.model.Problem` instance.
+    max_members_per_team : int
+        The maximum number of members per team.
+    max_n_ensemble : int
+        The maximum number of models in the ensemble.
+    is_send_trained_mails : bool
+        Whether or not to send an email when a model is trained.
+    is_public : bool
+        Whether or not the event is public.
+    is_controled_signup : bool
+        Whether or not the sign-up to the event is moderated.
+    is_competitive : bool
+        Whether or not the challenge is in the competitive phase.
+    min_duration_between_submission : int
+        The amount of time to wait between two submissions.
+    opening_timestamp : datetime
+        The date and time of the event opening.
+    public_opening_timestamp : datetime
+        The date and time of the publicly event opening.
+    closing_timestamp : datetime
+        The date and time of the event closure.
+    official_score_name : str
+        The name of the official score used to evaluate the submissions.
+    combined_combined_valid_score : float
+        The combined public score for all folds.
+    combine_combined_test_score : float
+        The combined private score for all folds.
+    combined_foldwise_valid_score : float
+        The combined public scores for each fold.
+    combined_foldwise_test_score : float
+        The combined public scores for each fold.
+    n_submissions : int
+        The number of submissions for an event.
+    public_leaderboard_html_no_links : str
+        The public leaderboard in HTML format with links to the submissions.
+    public_leaderboard_html_with_links : str
+        The public leaderboard in HTML format.
+    private_leaderboard_html : str
+        The private leaderboard in HTML.
+    failed_leaderboard_html : str
+        The leaderboard with the failed submissions.
+    new_leaderboard_html : str
+        The leaderboard with the new submitted submissions.
+    public_competition_leaderboard_html : str
+        The public leaderboard of the competition in HTML.
+    private_competition_leaderboard_html : str
+        The private leaderboard of the competition in HTML.
+    score_types : list of :class:`rampdb.model.EventScoreType`
+        A back-reference to the score type used in the event.
+    event_admins : list of :class:`rampdb.model.EventAdmin`
+        A back-reference to the admin for the event.
+    event_teams: list of :class:`rampdb.model.EventTeam`
+        A back-reference to the teams enrolled in the event.
+    cv_folds : list of :class:`rampdb.model.CVFold`
+        A back-reference to the CV folds for the event.
+    """
     __tablename__ = 'events'
 
     id = Column(Integer, primary_key=True)
@@ -95,6 +176,8 @@ class Event(Model):
         return repr
 
     def set_n_submissions(self):
+        """Set the number of submissions for the current event by checking
+        each team."""
         self.n_submissions = 0
         for event_team in self.event_teams:
             # substract one for starting kit
@@ -102,75 +185,120 @@ class Event(Model):
 
     @property
     def Predictions(self):
+        """:class:`rampwf.prediction_types.base.BasePrediction`: Predictions
+        for the given event."""
         return self.problem.Predictions
 
     @property
     def workflow(self):
+        """:class:`rampdb.model.Workflow`: The workflow used for the event."""
         return self.problem.workflow
 
     @property
     def official_score_type(self):
-        return EventScoreType.query.filter_by(
-                event=self, name=self.official_score_name).one()
+        """:class:`rampdb.model.EventScoreType`: The score type for the current
+        event."""
+        return (EventScoreType.query
+                              .filter_by(event=self,
+                                         name=self.official_score_name)
+                              .one())
 
     @property
     def official_score_function(self):
+        """callable: The default function used for scoring in the event."""
         return self.official_score_type.score_function
 
     @property
     def combined_combined_valid_score_str(self):
-        return None if self.combined_foldwise_valid_score is None else str(
-            round(self.combined_combined_valid_score,
-                  self.official_score_type.precision))
+        """str: Convert to string the combined public score for all folds."""
+        return (None if self.combined_combined_valid_score is None
+                else str(round(self.combined_combined_valid_score,
+                               self.official_score_type.precision)))
 
     @property
     def combined_combined_test_score_str(self):
-        return None if self.combined_combined_test_score is None else str(
-            round(self.combined_combined_test_score,
-                  self.official_score_type.precision))
+        """str: Convert to string the combined private score for all folds."""
+        return (None if self.combined_combined_test_score is None
+                else str(round(self.combined_combined_test_score,
+                               self.official_score_type.precision)))
 
     @property
     def combined_foldwise_valid_score_str(self):
-        return None if self.combined_foldwise_valid_score is None else str(
-            round(self.combined_foldwise_valid_score,
-                  self.official_score_type.precision))
+        """str: Convert to string the combined public score for each fold."""
+        return (None if self.combined_foldwise_valid_score is None
+                else str(round(self.combined_foldwise_valid_score,
+                               self.official_score_type.precision)))
 
     @property
     def combined_foldwise_test_score_str(self):
-        return None if self.combined_foldwise_test_score is None else str(
-            round(self.combined_foldwise_test_score,
-                  self.official_score_type.precision))
+        """str: Convert to string the combined public score for each fold."""
+        return (None if self.combined_foldwise_test_score is None
+                else str(round(self.combined_foldwise_test_score,
+                               self.official_score_type.precision)))
 
     @property
     def is_open(self):
+        """bool: Whether or not the event is opened."""
         now = datetime.datetime.utcnow()
-        return now > self.opening_timestamp and now < self.closing_timestamp
+        return self.closing_timestamp > now > self.opening_timestamp
 
     @property
     def is_public_open(self):
+        """bool: Whether or not the public phase of the event is opened."""
         now = datetime.datetime.utcnow()
-        return now > self.public_opening_timestamp\
-            and now < self.closing_timestamp
+        return self.closing_timestamp > now > self.public_opening_timestamp
 
     @property
     def is_closed(self):
+        """bool: Whether or not the event is closed."""
         now = datetime.datetime.utcnow()
         return now > self.closing_timestamp
 
     @property
     def n_jobs(self):
-        """Number of jobs for local parallelization.
-
-        return: number of live cv folds.
-        """
+        """int: The number of cv fold which can be used as number of jobs."""
         return sum(1 for cv_fold in self.cv_folds if cv_fold.type == 'live')
 
     @property
     def n_participants(self):
+        """int: The number of participants to the event."""
         return len(self.event_teams)
 
 
 class EventScoreType(Model):
+    """EventScoreType table.
+
+    This is a many-to-one relationship between Event and ScoreType. Stores the
+    ScoresTypes for each event.
+    For each Event / ScoreType combo, also a new record in ScoreType is
+    created, which is not that useful (TODO consider removing ScoreType table)
+
+    Parameters
+    ----------
+    event : :class:`rampdb.model.Event`
+        The event instance.
+    score_type_object : :class:`rampwf.score_types`
+        A scoring instance.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    name : str
+        The name of the score.
+    event_id : int
+        The ID of the event associated.
+    event : :class:`rampdb.model.Event`
+        The event instance.
+    score_type_id : int
+        The ID of the score.
+    score_type : :class:`rampdb.model.ScoreType`
+        The score type instance.
+    precision : int
+        The numerical precision of the score.
+    submissions : list of :class:`rampdb.model.SubmissionScore`
+        A back-reference of the submissions for the event/score type.
+    """
     __tablename__ = 'event_score_types'
 
     id = Column(Integer, primary_key=True)
@@ -196,7 +324,6 @@ class EventScoreType(Model):
 
     def __init__(self, event, score_type_object):
         self.event = event
-        # XXX
         self.score_type = ScoreType(str(uuid.uuid4()), True, 0, 1)
         # XXX after migration we should store the index of the
         # score_type so self.score_type_object (should be renamed
@@ -211,11 +338,11 @@ class EventScoreType(Model):
         self.worst
 
     def __repr__(self):
-        repr = '{}: {}'.format(self.name, self.event)
-        return repr
+        return '{}: {}'.format(self.name, self.event)
 
     @property
     def score_type_object(self):
+        """:class:`rampwf.score_types`: Score type object."""
         score_types = self.event.problem.module.score_types
         for score_type in score_types:
             if score_type.name == self.name:
@@ -223,26 +350,49 @@ class EventScoreType(Model):
 
     @property
     def score_function(self):
+        """callable: Scoring function."""
         return self.score_type_object.score_function
 
     @property
     def is_lower_the_better(self):
+        """bool: Whether a lower score is better."""
         return self.score_type_object.is_lower_the_better
 
     @property
     def minimum(self):
+        """float: the lower bound of the score."""
         return self.score_type_object.minimum
 
     @property
     def maximum(self):
+        """float: the higher bound of the score."""
         return self.score_type_object.maximum
 
     @property
     def worst(self):
+        """float: the worst possible score."""
         return self.score_type_object.worst
 
 
 class EventAdmin(Model):
+    """EventAdmin table.
+
+    This is a many-to-many relationship between Event and User to defined
+    admins.
+
+    Attributes
+    ----------
+    id : int
+        The ID of the table row.
+    event_id : int
+        The ID of the event.
+    event : :class:`rampdb.model.Event`
+        The event instance.
+    admin_id : int
+        The ID of the user defined as an admin.
+    admin : :class:`rampdb.model.User`
+        The user instance.
+    """
     __tablename__ = 'event_admins'
 
     id = Column(Integer, primary_key=True)
@@ -258,8 +408,47 @@ class EventAdmin(Model):
         'User', backref=backref('admined_events'))
 
 
-# many-to-many
 class EventTeam(Model):
+    """EventTeam table.
+
+    This is a many-to-many relationship between Event and Team.
+
+    Parameters
+    ----------
+    event : :class:`rampdb.model.Event`
+        The event instance.
+    team : :class:`rampdb.model.Team`
+        The team instance.
+
+    Attributes
+    ----------
+    id : int
+        The ID of a row in the table.
+    event_id : int
+        The ID of the event.
+    event : :class:`rampdb.model.Event`
+        The event instance.
+    team_id : int
+        The ID of the team.
+    team : :class:`rampdb.model.Team`
+        The team instance.
+    is_active : bool
+        Whether the team is active for the event.
+    last_submission_name : str
+        The name of the last submission to the event.
+    signup_timestamp : datetime
+        The date and time when the team signed up for the event.
+    approved : bool
+        Whether the team has been approved to participate to the event.
+    leaderboard_html : str
+        The leaderboard for the team for the specific event.
+    failed_leaderboard_html : str
+        The failed submission board for the team for the specific event.
+    new_leaderboard_html : str
+        The new submission board for the team for the specific event.
+    submissions : list of :class:`rampdb.model.Submission`
+        A back-reference to the submissions associated with this event/team.
+    """
     __tablename__ = 'event_teams'
 
     id = Column(Integer, primary_key=True)
@@ -291,5 +480,4 @@ class EventTeam(Model):
         self.signup_timestamp = datetime.datetime.utcnow()
 
     def __repr__(self):
-        repr = '{}/{}'.format(self.event, self.team)
-        return repr
+        return '{}/{}'.format(self.event, self.team)
