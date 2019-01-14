@@ -2,7 +2,7 @@ import shutil
 
 import pytest
 
-from ramputils import encode_string
+from ramputils.utils import encode_string
 from ramputils import read_config
 from ramputils.testing import path_config_example
 

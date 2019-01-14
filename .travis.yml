@@ -18,7 +18,8 @@ install:
     - conda env update -n testenv -f environment.yml
     - conda env create -f ci_tools/environment_iris_kit.yml
     - source activate testenv
-    - cd databoard
+    # install ramp-frontend
+    - cd ramp-frontend
     - pip install .
     - cd ..
     # install ramp-engine
@@ -34,7 +35,7 @@ install:
     - pip install .
     - cd ..
 script:
-    - bash ci_tools/travis/test_ramp_board.sh
+    - bash ci_tools/travis/test_ramp_frontend.sh
     - bash ci_tools/travis/test_ramp_engine.sh
     - bash ci_tools/travis/test_ramp_database.sh
     - bash ci_tools/travis/test_ramp_utils.sh

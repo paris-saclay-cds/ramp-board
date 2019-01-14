@@ -4,7 +4,7 @@ import shutil
 import pytest
 
 from ramputils import read_config
-from ramputils import encode_string
+from ramputils.utils import encode_string
 from ramputils.testing import path_config_example
 
 from rampwf.prediction_types.base import BasePrediction
