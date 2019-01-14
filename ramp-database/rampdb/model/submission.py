@@ -66,6 +66,8 @@ class Submission(Model):
         The submission name.
     event_team : :class:`rampdb.model.EventTeam`
         The event/team instance.
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
 
     Attributes
     ----------
