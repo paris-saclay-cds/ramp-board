@@ -104,7 +104,6 @@ def test_approve_users(client_session):
     add_user(session, 'yy', 'yy', 'yy', 'yy', 'yy', access_level='asked')
     # ask for sign up for an event for the first user
     _, _, event_team = ask_sign_up_team(session, 'iris_test', 'xx')
-    print(event_team.id)
 
     login(client, 'test_iris_admin', 'test')
 
@@ -122,15 +121,17 @@ def test_approve_users(client_session):
     rv = client.post('/approve_users', data=data)
     assert rv.status_code == 302
     assert rv.location == 'http://localhost/problems'
-    rv = client.post('/approve_users', data=data, follow_redirects=True)
+
+    # ensure that the previous change have been committed within our session
+    session.commit()
     user = get_user_by_name(session, 'yy')
     assert user.access_level == 'user'
-    # event_team = get_event_team_by_name(session, 'iris_test', 'xx')
-    print(event_team.id)
-    print(event_team.approved)
+    event_team = get_event_team_by_name(session, 'iris_test', 'xx')
     assert event_team.approved
     with client.session_transaction() as cs:
         flash_message = dict(cs['_flashes'])
-    print(flash_message)
+    assert re.match(r"Approved users:\nyy\nApproved event_team:\n"
+                    r"Event\(iris_test\)/Team\(.*xx.*\)\n",
+                    flash_message['Approved users'])
 
     logout(client)

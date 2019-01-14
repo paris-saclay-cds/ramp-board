@@ -70,8 +70,6 @@ def approve_users():
             sign_up_team(db.session, asked_event_team.event.name,
                          asked_event_team.team.name)
             message += "{}\n".format(asked_event_team)
-            print(asked_event_team.approved)
-            print(asked_event_team.id)
         return redirect_to_user(message, is_error=False,
                                 category="Approved users")
 
