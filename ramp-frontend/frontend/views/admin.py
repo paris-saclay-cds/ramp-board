@@ -78,13 +78,13 @@ def approve_users():
 @flask_login.login_required
 def approve_sign_up_for_event(event_name, user_name):
     event = get_event(db.session, event_name)
-    user = get_user_by_name(db.session, user_name)
+    user = User.query.filter_by(name=user_name).one_or_none()
     if not is_admin(db.session, event_name, flask_login.current_user.name):
         return redirect_to_user(u'Sorry {}, you do not have admin rights'
                                 .format(flask_login.current_user.firstname),
                                 is_error=True)
     if not event or not user:
-        return redirect_to_user(u'Oups, no event {} or no user {}.'
+        return redirect_to_user(u'No event {} or no user {}'
                                 .format(event_name, user_name), is_error=True)
     sign_up_team(db.session, event.name, user.name)
     return redirect_to_user(u'{} is signed up for {}.'.format(user, event),

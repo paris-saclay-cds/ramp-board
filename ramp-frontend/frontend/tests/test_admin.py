@@ -46,6 +46,12 @@ def client_session(config):
             yield app.test_client(), session
     finally:
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
+        try:
+            # In case of failure we should close the global flask engine
+            from frontend import db as db_flask
+            db_flask.close()
+        except Exception:
+            pass
         db, Session = setup_db(config['sqlalchemy'])
         with db.connect() as conn:
             session = Session(bind=conn)
@@ -133,5 +139,43 @@ def test_approve_users(client_session):
     assert re.match(r"Approved users:\nyy\nApproved event_team:\n"
                     r"Event\(iris_test\)/Team\(.*xx.*\)\n",
                     flash_message['Approved users'])
+
+    logout(client)
+
+
+def test_approve_sign_up_for_event(client_session):
+    client, session = client_session
+
+    login(client, 'test_iris_admin', 'test')
+
+    # check the redirection if the user or the event does not exist
+    rv = client.get("/events/xxx/sign_up/test_user")
+    session.commit()
+    assert rv.status_code == 302
+    assert rv.location == "http://localhost/problems"
+    with client.session_transaction() as cs:
+        flash_message = dict(cs['_flashes'])
+    assert flash_message['message'] == 'No event xxx or no user test_user'
+
+    rv = client.get("/events/iris_test/sign_up/xxxx")
+    session.commit()
+    assert rv.status_code == 302
+    assert rv.location == "http://localhost/problems"
+    with client.session_transaction() as cs:
+        flash_message = dict(cs['_flashes'])
+    assert flash_message['message'] == 'No event iris_test or no user xxxx'
+
+    add_user(session, 'zz', 'zz', 'zz', 'zz', 'zz', access_level='user')
+    _, _, event_team = ask_sign_up_team(session, 'iris_test', 'zz')
+    assert not event_team.approved
+    rv = client.get('/events/iris_test/sign_up/zz')
+    assert rv.status_code == 302
+    assert rv.location == "http://localhost/problems"
+    session.commit()
+    event_team = get_event_team_by_name(session, 'iris_test', 'zz')
+    assert event_team.approved
+    with client.session_transaction() as cs:
+        flash_message = dict(cs['_flashes'])
+    assert "is signed up for Event" in flash_message['Successful sign-up']
 
     logout(client)
