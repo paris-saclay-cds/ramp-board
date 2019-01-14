@@ -21,11 +21,11 @@ from rampdb.model import Team
 from rampdb.model import User
 from rampdb.model import Workflow
 
-from rampdb.model import DuplicateSubmissionError
-from rampdb.model import MissingExtensionError
-from rampdb.model import MissingSubmissionFileError
-from rampdb.model import NameClashError
-from rampdb.model import TooEarlySubmissionError
+from rampdb.exceptions import DuplicateSubmissionError
+from rampdb.exceptions import MissingExtensionError
+from rampdb.exceptions import MissingSubmissionFileError
+from rampdb.exceptions import NameClashError
+from rampdb.exceptions import TooEarlySubmissionError
 
 from databoard import db
 from databoard import deployment_path
@@ -33,7 +33,7 @@ from databoard import ramp_config
 
 from databoard.testing import create_test_db
 from databoard.testing import create_toy_db
-from databoard.testing import _setup_ramp_kits_ramp_data
+from databoard.testing import setup_ramp_kits_ramp_data
 
 from databoard.utils import check_password
 
@@ -247,14 +247,14 @@ def _check_problem(name, workflow_name):
 def _setup_problem(problem_name):
     # a problem requires a name
     # setup the ramp-kit and ramp-data for the iris challenge
-    _setup_ramp_kits_ramp_data(problem_name)
+    setup_ramp_kits_ramp_data(problem_name)
     add_problem(problem_name)
 
 
 def test_add_problem(setup_db):
     problem_name = 'iris'
     # setup the ramp-kit and ramp-data for the iris challenge
-    _setup_ramp_kits_ramp_data(problem_name)
+    setup_ramp_kits_ramp_data(problem_name)
 
     add_problem(problem_name)
     _check_problem(problem_name, 'Classifier')
@@ -272,7 +272,7 @@ def test_add_problem(setup_db):
 def test_delete_problem(setup_db):
     problem_name = 'iris'
     # setup the ramp-kit and ramp-data for the iris challenge
-    _setup_ramp_kits_ramp_data(problem_name)
+    setup_ramp_kits_ramp_data(problem_name)
     add_problem(problem_name)
     _check_problem(problem_name, 'Classifier')
     delete_problem(problem_name)
@@ -529,7 +529,7 @@ def test_make_submission_wrong_submission_files(setup_db):
     event_name, username = _setup_sign_up()
     sign_up_team(event_name, username)
 
-    submission_name  = 'corrupted_submission'
+    submission_name = 'corrupted_submission'
     path_submission = os.path.join(
             ramp_config['ramp_kits_path'], 'iris',
             ramp_config['submissions_dir'], submission_name

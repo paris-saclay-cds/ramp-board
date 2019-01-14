@@ -16,6 +16,6 @@ ramp:
     submissions_dir: submissions
     predictions_dir: preds
     logs_dir: log
+    sandbox_dir: starting_kit
 worker:
     conda_env: ramp-iris
-    sandbox_dir: starting_kit

@@ -4,8 +4,9 @@ from sqlalchemy import String
 from sqlalchemy import Integer
 from sqlalchemy import Boolean
 
+from ramputils.utils import encode_string
+
 from .base import Model
-from .base import encode_string
 
 __all__ = ['ScoreType']
 

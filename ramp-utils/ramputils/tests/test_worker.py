@@ -15,7 +15,6 @@ def test_generate_worker_config(config):
     worker_config = generate_worker_config(config)
     expected_config = {
         'conda_env': 'ramp-iris',
-        'sandbox_dir': 'starting_kit',
         'kit_dir': os.path.join('/tmp/databoard_test', 'ramp-kits', 'iris'),
         'data_dir': os.path.join('/tmp/databoard_test', 'ramp-data', 'iris'),
         'submissions_dir': os.path.join('/tmp/databoard_test', 'submissions'),

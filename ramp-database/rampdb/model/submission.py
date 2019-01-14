@@ -17,8 +17,10 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
+from ramputils.utils import encode_string
+
 from .base import Model
-from .base import encode_string
+# TODO: we should not use this variable
 from .base import get_deployment_path
 from .event import EventScoreType
 from .datatype import NumpyType
@@ -64,6 +66,8 @@ class Submission(Model):
         The submission name.
     event_team : :class:`rampdb.model.EventTeam`
         The event/team instance.
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
 
     Attributes
     ----------
@@ -175,7 +179,7 @@ class Submission(Model):
     # later also ramp_id
     UniqueConstraint(event_team_id, name, name='ts_constraint')
 
-    def __init__(self, name, event_team):
+    def __init__(self, name, event_team, session=None):
         self.name = name
         self.event_team = event_team
         self.session = inspect(event_team).session
@@ -187,8 +191,13 @@ class Submission(Model):
         # url which is maybe not a good idea.
         self.hash_ = '{}'.format(sha_hasher.hexdigest())
         self.submission_timestamp = datetime.datetime.utcnow()
-        event_score_types = EventScoreType.query.filter_by(
-            event=event_team.event)
+        if session is None:
+            event_score_types = EventScoreType.query.filter_by(
+                event=event_team.event)
+        else:
+            event_score_types = (session.query(EventScoreType)
+                                        .filter(EventScoreType.event ==
+                                                event_team.event).all())
         for event_score_type in event_score_types:
             submission_score = SubmissionScore(
                 submission=self, event_score_type=event_score_type)

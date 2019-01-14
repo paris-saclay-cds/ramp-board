@@ -4,7 +4,6 @@ from .fold import *  # noqa
 from .team import *  # noqa
 from .score import *  # noqa
 from .event import *  # noqa
-from .error import *  # noqa
 from .problem import *  # noqa
 from .workflow import *  # noqa
 from .datatype import *  # noqa

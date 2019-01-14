@@ -9,13 +9,15 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
-from ramputils import import_module_from_source
+from ramputils.utils import import_module_from_source
+from ramputils.utils import encode_string
 
 from .base import Model
-from .base import encode_string
 from .base import get_deployment_path
 from .workflow import Workflow
 
+# TODO: This will be really wrong at some point.
+# TODO: We need to pass the configuration or the path to the data instead.
 DEPLOYMENT_PATH = get_deployment_path()
 RAMP_KITS_PATH = os.path.join(
     DEPLOYMENT_PATH, os.getenv('RAMP_KITS_DIR', 'ramp-kits'))
@@ -38,6 +40,8 @@ class Problem(Model):
     ----------
     name : str
         The name of the problem.
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
 
     Attributes
     ----------
@@ -64,9 +68,9 @@ class Problem(Model):
     workflow = relationship(
         'Workflow', backref=backref('problems'))
 
-    def __init__(self, name):
+    def __init__(self, name, session=None):
         self.name = name
-        self.reset()
+        self.reset(session)
         # to check if the module and all required fields are there
         self.module
         self.Predictions
@@ -76,9 +80,17 @@ class Problem(Model):
         return 'Problem({})\n{}'.format(encode_string(self.name),
                                         self.workflow)
 
-    def reset(self):
-        self.workflow = Workflow.query.filter_by(
-            name=type(self.module.workflow).__name__).one()
+    def reset(self, session):
+        if session is not None:
+            self.workflow = \
+                (session.query(Workflow)
+                        .filter(Workflow.name == type(self.module.workflow)
+                        .__name__).one())
+        else:
+            self.workflow = \
+                (Workflow.query
+                         .filter_by(name=type(self.module.workflow).__name__)
+                         .one())
 
     @property
     def module(self):

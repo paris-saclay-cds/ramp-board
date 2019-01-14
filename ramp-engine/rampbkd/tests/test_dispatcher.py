@@ -11,32 +11,40 @@ else:
 
 import pytest
 
-from databoard import db
-from databoard import deployment_path
-from databoard.db_tools import get_submissions
-from databoard.testing import create_toy_db
-
 from ramputils import read_config
 from ramputils.testing import path_config_example
+
+from rampdb.model import Model
+from rampdb.utils import setup_db
+from rampdb.utils import session_scope
+from rampdb.testing import create_toy_db
+from rampdb.tools.submission import get_submissions
 
 from rampbkd.local import CondaEnvWorker
 from rampbkd.dispatcher import Dispatcher
 
 
 @pytest.fixture(scope='module')
-def setup_db():
+def config():
+    return read_config(path_config_example())
+
+
+@pytest.fixture(scope='module')
+def session_scope_module(config):
     try:
-        create_toy_db()
-        yield
+        create_toy_db(config)
+        with session_scope(config['sqlalchemy']) as session:
+            yield session
     finally:
-        shutil.rmtree(deployment_path, ignore_errors=True)
-        db.session.close()
-        db.session.remove()
-        db.drop_all()
+        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
+        db, Session = setup_db(config['sqlalchemy'])
+        with db.connect() as conn:
+            session = Session(bind=conn)
+            session.close()
+        Model.metadata.drop_all(db)
 
 
-def test_dispatcher(setup_db, caplog):
-    config = read_config(path_config_example())
+def test_dispatcher(session_scope_module, caplog, config):
     # with tempfile.TemporaryDirectory() as local_tmp_dir:
     dispatcher = Dispatcher(config=config,
                             worker=CondaEnvWorker, n_worker=-1,
@@ -44,8 +52,7 @@ def test_dispatcher(setup_db, caplog):
     dispatcher.launch()
 
     # the iris kit contain a submission which should fail for each user
-    submissions = get_submissions(
-        event_name=config['ramp']['event_name'],
-    )
-    is_submission_failed = ['error' in sub.state for sub in submissions]
-    assert sum(is_submission_failed) == 2
+    with session_scope(config['sqlalchemy']) as session:
+        submission = get_submissions(session, config['ramp']['event_name'],
+                                     'training_error')
+        assert len(submission) == 2

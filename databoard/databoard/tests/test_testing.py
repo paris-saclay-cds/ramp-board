@@ -9,7 +9,7 @@ from git.exc import GitCommandError
 
 from rampdb.model import Problem
 from rampdb.model import User
-from rampdb.model import NameClashError
+from rampdb.exceptions import NameClashError
 
 from databoard import db
 from databoard import deployment_path
