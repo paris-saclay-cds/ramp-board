@@ -78,8 +78,6 @@ class Problem(Model):
         return 'Problem({})\n{}'.format(encode_string(self.name),
                                         self.workflow)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     def reset(self, session):
         if session is not None:
             self.workflow = \
@@ -91,13 +89,6 @@ class Problem(Model):
                 (Workflow.query
                          .filter_by(name=type(self.module.workflow).__name__)
                          .one())
-=======
-=======
->>>>>>> origin/master
-    def reset(self):
-        self.workflow = Workflow.query.filter_by(
-            name=type(self.module.workflow).__name__).one()
->>>>>>> DOC: document the database model (#116)
 
     @property
     def module(self):
