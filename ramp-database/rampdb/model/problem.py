@@ -40,6 +40,8 @@ class Problem(Model):
     ----------
     name : str
         The name of the problem.
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
 
     Attributes
     ----------

@@ -38,6 +38,8 @@ class Event(Model):
     event_title : str
         The title to give for the event (used in the frontend, can contain
         spaces).
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
 
     Attributes
     ----------
