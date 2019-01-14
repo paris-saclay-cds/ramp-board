@@ -7,7 +7,7 @@ from flask import url_for
 logger = logging.getLogger('RAMP-FRONTEND')
 
 
-def redirect_to_user(message_str, is_error=True, category=None):
+def redirect_to_user(message_str, is_error=True, category='message'):
     """Redirect the page to the problem landing page.
 
     Parameters

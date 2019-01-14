@@ -70,6 +70,8 @@ def approve_users():
             sign_up_team(db.session, asked_event_team.event.name,
                          asked_event_team.team.name)
             message += "{}\n".format(asked_event_team)
+            print(asked_event_team.approved)
+            print(asked_event_team.id)
         return redirect_to_user(message, is_error=False,
                                 category="Approved users")
 
@@ -94,8 +96,12 @@ def approve_sign_up_for_event(event_name, user_name):
 @mod.route("/events/<event_name>/update", methods=['GET', 'POST'])
 @flask_login.login_required
 def update_event(event_name):
-    if not flask_login.current_user.is_authenticated:
-        return redirect(url_for('auth.login'))
+    if not is_admin(db.session, event_name, flask_login.current_user.name):
+        return redirect_to_user(
+            u'Sorry {}, you do not have admin rights'
+            .format(flask_login.current_user.firstname),
+            is_error=True
+        )
     event = get_event(db.session, event_name)
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
@@ -103,8 +109,6 @@ def update_event(event_name):
             u'{}: no event named "{}"'
             .format(flask_login.current_user.firstname, event_name)
         )
-    if not is_admin(db.session, event_name, flask_login.current_user.name):
-        return redirect(url_for('ramp.problems'))
     logger.info(u'{} is updating event {}'
                 .format(flask_login.current_user.name, event.name))
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
@@ -180,9 +184,12 @@ def update_event(event_name):
 @mod.route("/user_interactions")
 @flask_login.login_required
 def user_interactions():
-    if (not flask_login.current_user.is_authenticated or
-            flask_login.current_user.access_level != 'admin'):
-        return redirect(url_for('auth.login'))
+    if flask_login.current_user.access_level != 'admin':
+        return redirect_to_user(
+            u'Sorry {}, you do not have admin rights'
+            .format(flask_login.current_user.firstname),
+            is_error=True
+        )
     user_interactions_html = get_user_interactions_by_name(
         db.session, output_format='html'
     )
@@ -196,42 +203,42 @@ def user_interactions():
 @mod.route("/events/<event_name>/dashboard_submissions")
 @flask_login.login_required
 def dashboard_submissions(event_name):
+    if not is_admin(db.session, event_name, flask_login.current_user.name):
+        return redirect_to_user(
+            u'Sorry {}, you do not have admin rights'
+            .format(flask_login.current_user.firstname),
+            is_error=True
+        )
     event = get_event(db.session, event_name)
-
-    if is_admin(db.session, event_name, flask_login.current_user.name):
-        # Get dates and number of submissions
-        submissions = \
-            (Submission.query
-                       .filter(Event.name == event.name)
-                       .filter(Event.id == EventTeam.event_id)
-                       .filter(EventTeam.id == Submission.event_team_id)
-                       .order_by(Submission.submission_timestamp)
-                       .all())
-        submissions = [sub for sub in submissions if sub.is_not_sandbox]
-        timestamp_submissions = [
-            sub.submission_timestamp.strftime('%Y-%m-%d %H:%M:%S')
-            for sub in submissions]
-        name_submissions = [sub.name for sub in submissions]
-        cumulated_submissions = range(1, 1 + len(submissions))
-        training_sec = [
-            (sub.training_timestamp - sub.submission_timestamp).seconds / 60.
-            if sub.training_timestamp is not None else 0
-            for sub in submissions
-        ]
-        dashboard_kwargs = {'event': event,
-                            'timestamp_submissions': timestamp_submissions,
-                            'training_sec': training_sec,
-                            'cumulated_submissions': cumulated_submissions,
-                            'name_submissions': name_submissions}
-        failed_leaderboard_html = event.failed_leaderboard_html
-        new_leaderboard_html = event.new_leaderboard_html
-        return render_template(
-            'dashboard_submissions.html',
-            failed_leaderboard=failed_leaderboard_html,
-            new_leaderboard=new_leaderboard_html,
-            admin=True,
-            **dashboard_kwargs)
-    return redirect_to_user(
-        u'Sorry {}, you do not have admin access for {}"'
-        .format(flask_login.current_user.firstname, event_name)
-    )
+    # Get dates and number of submissions
+    submissions = \
+        (Submission.query
+                    .filter(Event.name == event.name)
+                    .filter(Event.id == EventTeam.event_id)
+                    .filter(EventTeam.id == Submission.event_team_id)
+                    .order_by(Submission.submission_timestamp)
+                    .all())
+    submissions = [sub for sub in submissions if sub.is_not_sandbox]
+    timestamp_submissions = [
+        sub.submission_timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        for sub in submissions]
+    name_submissions = [sub.name for sub in submissions]
+    cumulated_submissions = range(1, 1 + len(submissions))
+    training_sec = [
+        (sub.training_timestamp - sub.submission_timestamp).seconds / 60.
+        if sub.training_timestamp is not None else 0
+        for sub in submissions
+    ]
+    dashboard_kwargs = {'event': event,
+                        'timestamp_submissions': timestamp_submissions,
+                        'training_sec': training_sec,
+                        'cumulated_submissions': cumulated_submissions,
+                        'name_submissions': name_submissions}
+    failed_leaderboard_html = event.failed_leaderboard_html
+    new_leaderboard_html = event.new_leaderboard_html
+    return render_template(
+        'dashboard_submissions.html',
+        failed_leaderboard=failed_leaderboard_html,
+        new_leaderboard=new_leaderboard_html,
+        admin=True,
+        **dashboard_kwargs)
