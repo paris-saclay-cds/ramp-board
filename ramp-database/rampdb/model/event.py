@@ -96,7 +96,7 @@ class Event(Model):
     public_competition_leaderboard_html : str
         The public leaderboard of the competition in HTML.
     private_competition_leaderboard_html : str
-        The private leaderboard of the competition in HTML.path_ramp_kits : str
+        The private leaderboard of the competition in HTML.
         The path where the kits are located.
     score_types : list of :class:`rampdb.model.EventScoreType`
         A back-reference to the score type used in the event.
