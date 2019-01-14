@@ -1,5 +1,5 @@
 from itsdangerous import URLSafeTimedSerializer
 
-from databoard import app
+from frontend import app
 
 ts = URLSafeTimedSerializer(app.config["SECRET_KEY"])
