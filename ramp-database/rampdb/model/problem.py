@@ -79,6 +79,7 @@ class Problem(Model):
                                         self.workflow)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     def reset(self, session):
         if session is not None:
             self.workflow = \
@@ -91,6 +92,8 @@ class Problem(Model):
                          .filter_by(name=type(self.module.workflow).__name__)
                          .one())
 =======
+=======
+>>>>>>> origin/master
     def reset(self):
         self.workflow = Workflow.query.filter_by(
             name=type(self.module.workflow).__name__).one()
