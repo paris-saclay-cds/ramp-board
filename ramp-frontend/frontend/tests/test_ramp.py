@@ -41,9 +41,12 @@ def client_session(config):
             yield app.test_client(), session
     finally:
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        # In case of failure we should close the global flask engine
-        from frontend import db as db_flask
-        db_flask.session.close()
+        try:
+            # In case of failure we should close the global flask engine
+            from frontend import db as db_flask
+            db_flask.session.close()
+        except RuntimeError:
+            pass
         db, Session = setup_db(config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
@@ -71,7 +74,7 @@ def test_check_login_required(client_session, page):
     ["/events/xxx",
      "/events/xxx/sign_up",
      "/events/xxx/sandbox",
-     "/event_plots/iris_test"]
+     "/event_plots/xxx"]
 )
 def test_check_unknown_events(client_session, page):
     client, _ = client_session
