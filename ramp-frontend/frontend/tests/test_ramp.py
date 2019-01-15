@@ -11,6 +11,8 @@ from rampdb.testing import create_toy_db
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
 
+from rampdb.tools.user import add_user
+
 from frontend import create_app
 from frontend.testing import login_scope
 
@@ -50,8 +52,26 @@ def client_session(config):
         Model.metadata.drop_all(db)
 
 
+@pytest.mark.parametrize(
+    "page",
+    ["/events/iris_test",
+     "/events/iris_test/sign_up",
+     "/events/iris_test/sandbox",
+     "/credit/xxx",
+     "/event_plots/iris_test"]
+)
+def test_check_login_required(client_session, page):
+    client, _ = client_session
+
+    rv = client.get(page)
+    assert rv.status_code == 302
+    assert 'http://localhost/login' in rv.location
+    rv = client.get(page, follow_redirects=True)
+    assert rv.status_code == 200
+
+
 def test_problems(client_session):
-    client, session = client_session
+    client, _ = client_session
 
     # GET: access the problems page without login
     rv = client.get('/problems')
@@ -83,5 +103,50 @@ def test_problem(client_session):
     assert flash_message['message'] == "Problem xxx does not exist"
     rv = client.get('/problems/xxx', follow_redirects=True)
     assert rv.status_code == 200
-    print(rv.data)
 
+    # GET: looking at the problem without being logged-in
+    rv = client.get('problems/iris')
+    assert rv.status_code == 200
+    assert b'Iris classification' in rv.data
+    assert b'Current events on this problem' in rv.data
+    assert b'Keywords' in rv.data
+
+    # GET: looking at the problem being logged-in
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('problems/iris')
+        assert rv.status_code == 200
+        assert b'Iris classification' in rv.data
+        assert b'Current events on this problem' in rv.data
+        assert b'Keywords' in rv.data
+
+
+def test_user_event(client_session):
+    client, session = client_session
+
+    # behavior when a user is not approved yet
+    add_user(session, 'xx', 'xx', 'xx', 'xx', 'xx', access_level='asked')
+    with login_scope(client, 'xx', 'xx') as client:
+        rv = client.get('/events/iris_test')
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert (flash_message['message'] ==
+                "Your account has not been approved yet by the administrator")
+
+    # trigger that the event does not exist
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('/events/xxx')
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert "no event named" in flash_message['message']
+
+    # GET
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('events/iris_test')
+        assert rv.status_code == 200
+        assert b'Iris classification' in rv.data
+        assert b'Rules' in rv.data
+        assert b'RAMP on iris' in rv.data

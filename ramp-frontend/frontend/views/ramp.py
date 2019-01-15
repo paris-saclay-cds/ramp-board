@@ -103,7 +103,7 @@ def problem(problem_name):
         return render_template('problem.html', problem=current_problem,
                                description=description)
     else:
-        return redirect_to_user(u'Problem {} does not exist.'
+        return redirect_to_user(u'Problem {} does not exist'
                                 .format(problem_name), is_error=True)
 
 
@@ -121,12 +121,8 @@ def user_event(event_name):
                                         event_name))
     event = get_event(db.session, event_name)
     if event:
-        if flask_login.current_user.is_authenticated:
-            add_user_interaction(db.session, interaction='looking at event',
-                                 user=flask_login.current_user, event=event)
-        else:
-            add_user_interaction(db.session, interaction='looking at event',
-                                 event=event)
+        add_user_interaction(db.session, interaction='looking at event',
+                             event=event, user=flask_login.current_user)
         description_f_name = os.path.join(
             event.problem.path_ramp_kits,
             event.problem.name,
