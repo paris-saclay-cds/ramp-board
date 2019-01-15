@@ -228,3 +228,12 @@ def test_user_interactions(client_session):
         rv = client.get('/user_interactions')
         assert rv.status_code == 200
         assert b'landing' in rv.data
+
+
+# TODO: To be tested when we implemented properly the leaderboard
+# def test_dashboard_submissions(client_session):
+#     client, session = client_session
+
+#     with login_scope(client, 'test_iris_admin', 'test') as client:
+#         rv = client.get('/events/iris_test/dashboard_submissions')
+#         print(rv.data.decode('utf-8'))
