@@ -41,16 +41,10 @@ def client_session(config):
             yield app.test_client(), session
     finally:
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        try:
-            # In case of failure we should close the global flask engine
-            from frontend import db as db_flask
-            db_flask.close()
-        except Exception:
-            pass
+        # In case of failure we should close the global flask engine
+        from frontend import db as db_flask
+        db_flask.session.close()
         db, Session = setup_db(config['sqlalchemy'])
-        with db.connect() as conn:
-            session = Session(bind=conn)
-            session.close()
         Model.metadata.drop_all(db)
 
 
@@ -70,6 +64,26 @@ def test_check_login_required(client_session, page):
     assert 'http://localhost/login' in rv.location
     rv = client.get(page, follow_redirects=True)
     assert rv.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "page",
+    ["/events/xxx",
+     "/events/xxx/sign_up",
+     "/events/xxx/sandbox",
+     "/event_plots/iris_test"]
+)
+def test_check_unknown_events(client_session, page):
+    client, _ = client_session
+
+    # trigger that the event does not exist
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get(page)
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert "no event named" in flash_message['message']
 
 
 def test_problems(client_session):
@@ -197,3 +211,20 @@ def test_sign_up_for_event(client_session):
         event_team = get_event_team_by_name(session, 'boston_housing_test',
                                             'yy')
         assert event_team.approved
+
+
+# def test_sandbox(client_session):
+#     client, session = client_session
+
+
+def test_event_plots(client_session):
+    client, session = client_session
+
+    # trigger that the event does not exist
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('/events_plots/xxx/sign_up')
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert "no event named" in flash_message['message']

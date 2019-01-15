@@ -36,16 +36,9 @@ def client(config):
         yield app.test_client()
     finally:
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        try:
-            # In case of failure we should close the global flask engine
-            from frontend import db as db_flask
-            db_flask.close()
-        except Exception:
-            pass
+        from frontend import db as db_flask
+        db_flask.session.close()
         db, Session = setup_db(config['sqlalchemy'])
-        with db.connect() as conn:
-            session = Session(bind=conn)
-            session.close()
         Model.metadata.drop_all(db)
 
 

@@ -131,14 +131,10 @@ def user_event(event_name):
         with codecs.open(description_f_name, 'r', 'utf-8') as description_file:
             description = description_file.read()
         admin = is_admin(db.session, event_name, flask_login.current_user.name)
-        if flask_login.current_user.is_anonymous:
-            approved = False
-            asked = False
-        else:
-            approved = is_user_signed_up(
-                db.session, event_name, flask_login.current_user.name
-            )
-            asked = approved
+        approved = is_user_signed_up(
+            db.session, event_name, flask_login.current_user.name
+        )
+        asked = approved
         return render_template('event.html',
                                description=description,
                                event=event,
@@ -183,7 +179,7 @@ def sandbox(event_name):
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
         return redirect_to_user(
-            u'{}: no access or no event named "{}"'
+            u'{}: no event named "{}"'
             .format(flask_login.current_user.firstname, event_name)
         )
     if not is_accessible_code(db.session, event_name,
@@ -559,12 +555,11 @@ def credit(submission_hash):
 @flask_login.login_required
 def event_plots(event_name):
     event = get_event(db.session, event_name)
-    if not is_accessible_code(db.session, event_name,
-                              flask_login.current_user.name):
-        return redirect_to_user(
-            u'{}: no event named "{}"'
-            .format(flask_login.current_user.firstname, event_name)
-        )
+    if not is_accessible_event(db.session, event_name,
+                               flask_login.current_user.name):
+        return redirect_to_user(u'{}: no event named "{}"'
+                                .format(flask_login.current_user.firstname,
+                                        event_name))
     if event:
         p = score_plot(db.session, event)
         script, div = components(p)

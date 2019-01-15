@@ -63,9 +63,7 @@ def session_scope_function(config):
     finally:
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
         db, Session = setup_db(config['sqlalchemy'])
-        with db.connect() as conn:
-            session = Session(bind=conn)
-            session.close()
+
         Model.metadata.drop_all(db)
 
 
@@ -78,9 +76,7 @@ def session_toy_db(config):
     finally:
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
         db, Session = setup_db(config['sqlalchemy'])
-        with db.connect() as conn:
-            session = Session(bind=conn)
-            session.close()
+
         Model.metadata.drop_all(db)
 
 
