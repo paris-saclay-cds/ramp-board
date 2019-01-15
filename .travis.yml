@@ -16,6 +16,7 @@ before_install:
 install:
     - conda create --yes -n testenv python=$PYTHON_VERSION
     - conda env update -n testenv -f environment.yml
+    - conda list
     - conda env create -f ci_tools/environment_iris_kit.yml
     - source activate testenv
     # install ramp-frontend
