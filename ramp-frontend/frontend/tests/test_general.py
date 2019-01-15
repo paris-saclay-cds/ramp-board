@@ -83,6 +83,7 @@ def test_data_science_themes(client_session):
     assert b'boston_housing_theme' in rv.data
     assert b'iris_theme' in rv.data
 
+
 def test_keywords(client_session):
     client, _ = client_session
     rv = client.get('/keywords/boston_housing')
