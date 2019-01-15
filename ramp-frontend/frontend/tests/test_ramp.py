@@ -216,18 +216,11 @@ def test_sign_up_for_event(client_session):
         assert event_team.approved
 
 
+# TODO: to be tested
 # def test_sandbox(client_session):
 #     client, session = client_session
 
 
-def test_event_plots(client_session):
-    client, session = client_session
-
-    # trigger that the event does not exist
-    with login_scope(client, 'test_user', 'test') as client:
-        rv = client.get('/events_plots/xxx/sign_up')
-        assert rv.status_code == 302
-        assert rv.location == 'http://localhost/problems'
-        with client.session_transaction() as cs:
-            flash_message = dict(cs['_flashes'])
-        assert "no event named" in flash_message['message']
+# TODO: required to have run some submission
+# def test_event_plots(client_session):
+#     client, session = client_session

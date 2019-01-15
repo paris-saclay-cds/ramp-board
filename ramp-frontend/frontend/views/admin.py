@@ -77,6 +77,15 @@ def approve_users():
 @mod.route("/events/<event_name>/sign_up/<user_name>")
 @flask_login.login_required
 def approve_sign_up_for_event(event_name, user_name):
+    """Approve a user for a specific event.
+
+    Parameters
+    ----------
+    event_name : str
+        The name of the event.
+    user_name : str
+        The name of the user.
+    """
     event = get_event(db.session, event_name)
     user = User.query.filter_by(name=user_name).one_or_none()
     if not is_admin(db.session, event_name, flask_login.current_user.name):
@@ -94,6 +103,13 @@ def approve_sign_up_for_event(event_name, user_name):
 @mod.route("/events/<event_name>/update", methods=['GET', 'POST'])
 @flask_login.login_required
 def update_event(event_name):
+    """Update the parameters of an event.
+
+    Parameters
+    ----------
+    event_name : str
+        The name of the event.
+    """
     if not is_admin(db.session, event_name, flask_login.current_user.name):
         return redirect_to_user(
             u'Sorry {}, you do not have admin rights'
@@ -182,6 +198,7 @@ def update_event(event_name):
 @mod.route("/user_interactions")
 @flask_login.login_required
 def user_interactions():
+    """Show the user interactions recorded on the website."""
     if flask_login.current_user.access_level != 'admin':
         return redirect_to_user(
             u'Sorry {}, you do not have admin rights'
@@ -201,6 +218,13 @@ def user_interactions():
 @mod.route("/events/<event_name>/dashboard_submissions")
 @flask_login.login_required
 def dashboard_submissions(event_name):
+    """Show information about all submissions for a given event.
+
+    Parameters
+    ----------
+    event_name : str
+        The name of the event.
+    """
     if not is_admin(db.session, event_name, flask_login.current_user.name):
         return redirect_to_user(
             u'Sorry {}, you do not have admin rights'

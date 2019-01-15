@@ -28,6 +28,13 @@ logger = logging.getLogger('RAMP-FRONTEND')
 @mod.route("/events/<event_name>/my_submissions")
 @flask_login.login_required
 def my_submissions(event_name):
+    """Landing page of all user's submission information.
+
+    Parameters
+    ----------
+    event_name : str
+        The name of the event.
+    """
     event = get_event(db.session, event_name)
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
@@ -71,6 +78,13 @@ def my_submissions(event_name):
 @mod.route("/events/<event_name>/leaderboard")
 @flask_login.login_required
 def leaderboard(event_name):
+    """Landing page showing all user's submissions information.
+
+    Parameters
+    ----------
+    event_name : str
+        The name of the event.
+    """
     event = get_event(db.session, event_name)
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
@@ -123,6 +137,13 @@ def leaderboard(event_name):
 @mod.route("/events/<event_name>/competition_leaderboard")
 @flask_login.login_required
 def competition_leaderboard(event_name):
+    """Landing page for the competition leaderboard for all users.
+
+    Parameters
+    ----------
+    event_name : str
+        The event name.
+    """
     event = get_event(db.session, event_name)
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
@@ -153,6 +174,13 @@ def competition_leaderboard(event_name):
 @mod.route("/events/<event_name>/private_leaderboard")
 @flask_login.login_required
 def private_leaderboard(event_name):
+    """Landing page for the private leaderboard.
+
+    Parameters
+    ----------
+    event_name : str
+        The event name.
+    """
     if not flask_login.current_user.is_authenticated:
         return redirect(url_for('auth.login'))
     event = get_event(db.session, event_name)
@@ -197,6 +225,13 @@ def private_leaderboard(event_name):
 @mod.route("/events/<event_name>/private_competition_leaderboard")
 @flask_login.login_required
 def private_competition_leaderboard(event_name):
+    """Landing page for the private competition leaderboard.
+
+    Parameters
+    ----------
+    event_name : str
+        The event name.
+    """
     if not flask_login.current_user.is_authenticated:
         return redirect(url_for('auth.login'))
     event = get_event(db.session, event_name)

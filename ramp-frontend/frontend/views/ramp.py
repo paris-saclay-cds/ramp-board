@@ -66,7 +66,7 @@ logger = logging.getLogger('RAMP-FRONTEND')
 
 @mod.route("/problems")
 def problems():
-    """Problems request."""
+    """Landing page showing all the RAMP problems."""
     user = (flask_login.current_user
             if flask_login.current_user.is_authenticated else None)
     add_user_interaction(
@@ -80,6 +80,13 @@ def problems():
 
 @mod.route("/problems/<problem_name>")
 def problem(problem_name):
+    """Landing page for a single RAMP problem.
+
+    Parameters
+    ----------
+    problem_name : str
+        The name of a problem.
+    """
     current_problem = get_problem(db.session, problem_name)
     if current_problem:
         if flask_login.current_user.is_authenticated:
@@ -110,6 +117,13 @@ def problem(problem_name):
 @mod.route("/events/<event_name>")
 @flask_login.login_required
 def user_event(event_name):
+    """Landing page for a given event.
+
+    Parameters
+    ----------
+    event_name : str
+        The event name.
+    """
     if flask_login.current_user.access_level == 'asked':
         msg = 'Your account has not been approved yet by the administrator'
         logger.error(msg)
@@ -148,6 +162,13 @@ def user_event(event_name):
 @mod.route("/events/<event_name>/sign_up")
 @flask_login.login_required
 def sign_up_for_event(event_name):
+    """Landing page to sign-up to a specific RAMP event.
+
+    Parameters
+    ----------
+    event_name : str
+        The name of the event.
+    """
     event = get_event(db.session, event_name)
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
@@ -175,6 +196,13 @@ def sign_up_for_event(event_name):
 @mod.route("/events/<event_name>/sandbox", methods=['GET', 'POST'])
 @flask_login.login_required
 def sandbox(event_name):
+    """Landing page for the user's sandbox.
+
+    Parameters
+    ----------
+    event_name : str
+        The event name.
+    """
     event = get_event(db.session, event_name)
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
@@ -443,6 +471,13 @@ def sandbox(event_name):
 @mod.route("/credit/<submission_hash>", methods=['GET', 'POST'])
 @flask_login.login_required
 def credit(submission_hash):
+    """The landing page to credit other submission when a user submit is own.
+
+    Parameters
+    ----------
+    submission_hash : str
+        The submission hash of the current submission.
+    """
     submission = (Submission.query.filter_by(hash_=submission_hash)
                                   .one_or_none())
     access_code = is_accessible_code(
@@ -554,6 +589,14 @@ def credit(submission_hash):
 @mod.route("/event_plots/<event_name>")
 @flask_login.login_required
 def event_plots(event_name):
+    """Landing page of the plot illustrating the score evolution over time for
+    a specific RAMP event.
+
+    Parameters
+    ----------
+    event_name : str
+        The name of the event.
+    """
     event = get_event(db.session, event_name)
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
@@ -585,15 +628,10 @@ def view_model(submission_hash, f_name):
 
     Parameters
     ----------
-    submission_hash : string
+    submission_hash : str
         The hash_ of the submission.
-    f_name : string
-        The name of the submission file
-
-    Returns
-    -------
-     : html string
-        The rendered submission.html page.
+    f_name : tr
+        The name of the submission file.
     """
     submission = (Submission.query.filter_by(hash_=submission_hash)
                                   .one_or_none())
@@ -734,13 +772,8 @@ def view_submission_error(submission_hash):
 
     Parameters
     ----------
-    submission_hash : string
-        The hash_ of the submission.
-
-    Returns
-    -------
-     : html string
-        The rendered submission_error.html page.
+    submission_hash : str
+        The hash of the submission.
     """
     submission = Submission.query.filter_by(hash_=submission_hash).one()
     if submission is None:
