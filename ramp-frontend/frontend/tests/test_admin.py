@@ -12,6 +12,7 @@ from rampdb.testing import create_toy_db
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
 
+from rampdb.tools.event import get_event
 from rampdb.tools.user import add_user
 from rampdb.tools.user import get_user_by_name
 from rampdb.tools.team import ask_sign_up_team
@@ -177,5 +178,45 @@ def test_approve_sign_up_for_event(client_session):
     with client.session_transaction() as cs:
         flash_message = dict(cs['_flashes'])
     assert "is signed up for Event" in flash_message['Successful sign-up']
+
+    logout(client)
+
+
+def test_update_event(client_session):
+    client, session = client_session
+
+    login(client, 'test_iris_admin', 'test')
+
+    # case tha the event does not exist
+    rv = client.get('/events/boston_housing/update')
+    assert rv.status_code == 302
+    assert rv.location == 'http://localhost/problems'
+    with client.session_transaction() as cs:
+        flash_message = dict(cs['_flashes'])
+    assert 'no event named "boston_housing"' in flash_message['message']
+
+    # GET: pre-fill the forms
+    rv = client.get('/events/iris_test/update')
+    assert rv.status_code == 200
+    assert b'Minimum duration between submissions' in rv.data
+
+    # POST: update the event data
+    event_info = {
+        'suffix': 'test',
+        'title': 'Iris new title',
+        'is_send_trained_mail': True,
+        'is_public': True,
+        'is_controled_signup': True,
+        'is_competitive': False,
+        'min_duration_between_submissions_hour': 0,
+        'min_duration_between_submissions_minute': 0,
+        'min_duration_between_submissions_second': 0,
+        'opening_timestamp': "2000-01-01 00:00:00",
+        'closing_timestamp': "2100-01-01 00:00:00",
+        'public_opening_timestamp': "2000-01-01 00:00:00"
+    }
+    rv = client.post('/events/iris_test/update', data=event_info)
+    assert rv.status_code == 302
+    assert rv.location == "http://localhost/problems"
 
     logout(client)
