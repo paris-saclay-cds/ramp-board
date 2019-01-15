@@ -11,7 +11,9 @@ from rampdb.testing import create_toy_db
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
 
+from rampdb.tools.event import get_event
 from rampdb.tools.user import add_user
+from rampdb.tools.team import get_event_team_by_name
 
 from frontend import create_app
 from frontend.testing import login_scope
@@ -150,3 +152,48 @@ def test_user_event(client_session):
         assert b'Iris classification' in rv.data
         assert b'Rules' in rv.data
         assert b'RAMP on iris' in rv.data
+
+
+def test_sign_up_for_event(client_session):
+    client, session = client_session
+
+    # trigger that the event does not exist
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('/events/xxx/sign_up')
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert "no event named" in flash_message['message']
+
+    # GET: sign-up to a new controlled event
+    add_user(session, 'yy', 'yy', 'yy', 'yy', 'yy', access_level='user')
+    with login_scope(client, 'yy', 'yy') as client:
+        rv = client.get('/events/iris_test/sign_up')
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert "Sign-up request is sent" in flash_message['Request sent']
+        # make sure that the database has been updated for our session
+        session.commit()
+        event_team = get_event_team_by_name(session, 'iris_test', 'yy')
+        assert not event_team.approved
+
+    # GET: sign-up to a new uncontrolled event
+    event = get_event(session, 'boston_housing_test')
+    event.is_controled_signup = False
+    session.commit()
+    with login_scope(client, 'yy', 'yy') as client:
+        rv = client.get('/events/boston_housing_test/sign_up')
+        assert rv.status_code == 302
+        assert (rv.location ==
+                'http://localhost/events/boston_housing_test/sandbox')
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert "is signed up for" in flash_message['Successful sign-up']
+        # make sure that the database has been updated for our session
+        session.commit()
+        event_team = get_event_team_by_name(session, 'boston_housing_test',
+                                            'yy')
+        assert event_team.approved
