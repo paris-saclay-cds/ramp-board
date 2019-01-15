@@ -218,5 +218,7 @@ def test_update_event(client_session):
     rv = client.post('/events/iris_test/update', data=event_info)
     assert rv.status_code == 302
     assert rv.location == "http://localhost/problems"
+    event = get_event(session, 'iris_test')
+    assert event.min_duration_between_submissions == 0
 
     logout(client)
