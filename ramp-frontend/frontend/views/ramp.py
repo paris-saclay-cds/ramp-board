@@ -247,7 +247,8 @@ def sandbox(event_name):
             setattr(CodeForm,
                     f_field, StringField(u'Text', widget=TextArea()))
             code_form_kwargs[f_field] = submission_file.get_code()
-    code_form = CodeForm(**code_form_kwargs, prefix="code")
+    code_form_kwargs['prefix'] = 'code'
+    code_form = CodeForm(**code_form_kwargs)
     # Then, to be able to iterate over the files in the sandbox.html
     # template, we also fill a separate table of pairs (file name, code).
     # The text areas in the template will then have to be created manually.
