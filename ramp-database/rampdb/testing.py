@@ -212,7 +212,6 @@ def add_problems(session, config):
                             keyword_name=problem_name + '_theme')
 
 
-
 def add_events(session, config):
     """Add events in the database.
 

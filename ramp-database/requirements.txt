@@ -1,0 +1,8 @@
+click
+gitpython
+invoke
+numpy
+pandas
+psycopg2
+six
+sqlalchemy

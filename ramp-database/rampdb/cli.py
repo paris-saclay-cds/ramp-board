@@ -37,7 +37,7 @@ def main(ctx, config):
               help="User's additional hidden notes")
 @click.pass_context
 def add_user(ctx, login, password, lastname, firstname, email,
-                access_level, hidden_notes):
+             access_level, hidden_notes):
     with ctx.obj['db'].connect() as conn:
         session = ctx.obj['Session'](bind=conn)
         new_user = user.add_user(session, login, password, lastname,
