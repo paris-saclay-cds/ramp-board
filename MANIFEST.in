@@ -2,6 +2,5 @@ include README.md
 include LICENSE
 include Makefile
 include .gitignore
-include pytest.ini
 include environment.yml
 include requirements.txt
