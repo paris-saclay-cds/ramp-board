@@ -1,6 +1,8 @@
 click
 gitpython
 invoke
+ipykernel
+jupyter
 numpy
 pandas
 psycopg2
