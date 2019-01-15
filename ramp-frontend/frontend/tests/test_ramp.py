@@ -1,3 +1,4 @@
+import os
 import shutil
 
 import pytest
@@ -13,6 +14,7 @@ from rampdb.utils import session_scope
 
 from rampdb.tools.event import get_event
 from rampdb.tools.user import add_user
+from rampdb.tools.submission import get_submission_by_name
 from rampdb.tools.team import get_event_team_by_name
 
 from frontend import create_app
@@ -224,3 +226,52 @@ def test_sign_up_for_event(client_session):
 # TODO: required to have run some submission
 # def test_event_plots(client_session):
 #     client, session = client_session
+
+
+# TODO: test the behavior with a non code file
+# TODO: test the importing behavior
+def test_view_model(client_session):
+    client, session = client_session
+
+    # unknown submission
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('/xxxxx/xx.py')
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert "Missing submission" in flash_message['message']
+
+    submission = get_submission_by_name(session, 'iris_test', 'test_user',
+                                        'random_forest_10_10')
+    submission_hash = submission.hash_
+
+    # unknown workflow element
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('{}/{}'.format(submission_hash, 'extractor.py'))
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert "is not a valid workflow element" in flash_message['message']
+
+    # The file does not exist on the server
+    # temporary rename the file
+    os.rename(submission.path, submission.path + 'xxxxx')
+    try:
+        with login_scope(client, 'test_user', 'test') as client:
+            rv = client.get('{}/{}'.format(submission_hash, 'classifier.py'))
+            assert rv.status_code == 302
+            assert rv.location == 'http://localhost/problems'
+            with client.session_transaction() as cs:
+                flash_message = dict(cs['_flashes'])
+            assert "does not exist by" in flash_message['message']
+    finally:
+        os.rename(submission.path + 'xxxxx', submission.path)
+
+    # GET: normal file display
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('{}/{}'.format(submission_hash, 'classifier.py'))
+        assert rv.status_code == 200
+        assert b'file = classifier.py' in rv.data
+        assert b'from sklearn.base import BaseEstimator' in rv.data
