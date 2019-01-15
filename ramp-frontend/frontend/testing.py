@@ -1,6 +1,8 @@
 """The :mod:`frontend.testing` module contains all functions used to easily
 test the frontend."""
 
+from contextlib import contextmanager
+
 
 def login(client, username, password):
     """Simulate a log-in from a user.
@@ -44,3 +46,26 @@ def logout(client):
         The response of the client.
     """
     return client.get('/logout', follow_redirects=True)
+
+
+@contextmanager
+def login_scope(client, username, password):
+    """Context manager to log-in during the ``with`` scope.
+
+    Parameters
+    ----------
+    client : :class:`flask.testing.FlaskClient`
+        The testing client used for unit testing.
+    username : str
+        The user's name.
+    password : str
+        The user's password.
+
+    Returns
+    -------
+    client : :class:`flask.testing.FlaskClient`
+        A client which is logged-in for the duration of the ``with`` scope.
+    """
+    login(client, username, password)
+    yield client
+    logout(client)

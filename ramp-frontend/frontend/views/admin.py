@@ -211,11 +211,11 @@ def dashboard_submissions(event_name):
     # Get dates and number of submissions
     submissions = \
         (Submission.query
-                    .filter(Event.name == event.name)
-                    .filter(Event.id == EventTeam.event_id)
-                    .filter(EventTeam.id == Submission.event_team_id)
-                    .order_by(Submission.submission_timestamp)
-                    .all())
+                   .filter(Event.name == event.name)
+                   .filter(Event.id == EventTeam.event_id)
+                   .filter(EventTeam.id == Submission.event_team_id)
+                   .order_by(Submission.submission_timestamp)
+                   .all())
     submissions = [sub for sub in submissions if sub.is_not_sandbox]
     timestamp_submissions = [
         sub.submission_timestamp.strftime('%Y-%m-%d %H:%M:%S')

@@ -21,6 +21,7 @@ from rampdb.tools.team import get_event_team_by_name
 from werkzeug.datastructures import ImmutableMultiDict
 
 from frontend import create_app
+from frontend.testing import login_scope
 from frontend.testing import login
 from frontend.testing import logout
 
@@ -89,18 +90,17 @@ def test_check_login_required(client_session, page):
 def test_check_admin_required(client_session, page, request_function):
     client, _ = client_session
 
-    login(client, 'test_user', 'test')
-    for rf in request_function:
-        rv = getattr(client, rf)(page)
-        with client.session_transaction() as cs:
-            flash_message = dict(cs['_flashes'])
-        assert (flash_message['message'] ==
-                'Sorry User, you do not have admin rights')
-        assert rv.status_code == 302
-        assert rv.location == 'http://localhost/problems'
-        rv = getattr(client, rf)(page, follow_redirects=True)
-        assert rv.status_code == 200
-    logout(client)
+    with login_scope(client, 'test_user', 'test') as client:
+        for rf in request_function:
+            rv = getattr(client, rf)(page)
+            with client.session_transaction() as cs:
+                flash_message = dict(cs['_flashes'])
+            assert (flash_message['message'] ==
+                    'Sorry User, you do not have admin rights')
+            assert rv.status_code == 302
+            assert rv.location == 'http://localhost/problems'
+            rv = getattr(client, rf)(page, follow_redirects=True)
+            assert rv.status_code == 200
 
 
 def test_approve_users(client_session):
@@ -112,113 +112,119 @@ def test_approve_users(client_session):
     # ask for sign up for an event for the first user
     _, _, event_team = ask_sign_up_team(session, 'iris_test', 'xx')
 
-    login(client, 'test_iris_admin', 'test')
+    with login_scope(client, 'test_iris_admin', 'test') as client:
 
-    # GET check that we get all new user to be approved
-    rv = client.get('/approve_users')
-    assert rv.status_code == 200
-    # line for user approval
-    assert b'yy: yy yy - yy' in rv.data
-    # line for the event approval
-    assert b'iris_test - xx'
+        # GET check that we get all new user to be approved
+        rv = client.get('/approve_users')
+        assert rv.status_code == 200
+        # line for user approval
+        assert b'yy: yy yy - yy' in rv.data
+        # line for the event approval
+        assert b'iris_test - xx'
 
-    # POST check that we are able to approve a user and event
-    data = ImmutableMultiDict([('approve_users', 'yy'),
-                               ('approve_event_teams', str(event_team.id))])
-    rv = client.post('/approve_users', data=data)
-    assert rv.status_code == 302
-    assert rv.location == 'http://localhost/problems'
+        # POST check that we are able to approve a user and event
+        data = ImmutableMultiDict([
+            ('approve_users', 'yy'),
+            ('approve_event_teams', str(event_team.id))]
+        )
+        rv = client.post('/approve_users', data=data)
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
 
-    # ensure that the previous change have been committed within our session
-    session.commit()
-    user = get_user_by_name(session, 'yy')
-    assert user.access_level == 'user'
-    event_team = get_event_team_by_name(session, 'iris_test', 'xx')
-    assert event_team.approved
-    with client.session_transaction() as cs:
-        flash_message = dict(cs['_flashes'])
-    assert re.match(r"Approved users:\nyy\nApproved event_team:\n"
-                    r"Event\(iris_test\)/Team\(.*xx.*\)\n",
-                    flash_message['Approved users'])
-
-    logout(client)
+        # ensure that the previous change have been committed within our
+        # session
+        session.commit()
+        user = get_user_by_name(session, 'yy')
+        assert user.access_level == 'user'
+        event_team = get_event_team_by_name(session, 'iris_test', 'xx')
+        assert event_team.approved
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert re.match(r"Approved users:\nyy\nApproved event_team:\n"
+                        r"Event\(iris_test\)/Team\(.*xx.*\)\n",
+                        flash_message['Approved users'])
 
 
 def test_approve_sign_up_for_event(client_session):
     client, session = client_session
 
-    login(client, 'test_iris_admin', 'test')
+    with login_scope(client, 'test_iris_admin', 'test') as client:
 
-    # check the redirection if the user or the event does not exist
-    rv = client.get("/events/xxx/sign_up/test_user")
-    session.commit()
-    assert rv.status_code == 302
-    assert rv.location == "http://localhost/problems"
-    with client.session_transaction() as cs:
-        flash_message = dict(cs['_flashes'])
-    assert flash_message['message'] == 'No event xxx or no user test_user'
+        # check the redirection if the user or the event does not exist
+        rv = client.get("/events/xxx/sign_up/test_user")
+        session.commit()
+        assert rv.status_code == 302
+        assert rv.location == "http://localhost/problems"
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert flash_message['message'] == 'No event xxx or no user test_user'
 
-    rv = client.get("/events/iris_test/sign_up/xxxx")
-    session.commit()
-    assert rv.status_code == 302
-    assert rv.location == "http://localhost/problems"
-    with client.session_transaction() as cs:
-        flash_message = dict(cs['_flashes'])
-    assert flash_message['message'] == 'No event iris_test or no user xxxx'
+        rv = client.get("/events/iris_test/sign_up/xxxx")
+        session.commit()
+        assert rv.status_code == 302
+        assert rv.location == "http://localhost/problems"
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert flash_message['message'] == 'No event iris_test or no user xxxx'
 
-    add_user(session, 'zz', 'zz', 'zz', 'zz', 'zz', access_level='user')
-    _, _, event_team = ask_sign_up_team(session, 'iris_test', 'zz')
-    assert not event_team.approved
-    rv = client.get('/events/iris_test/sign_up/zz')
-    assert rv.status_code == 302
-    assert rv.location == "http://localhost/problems"
-    session.commit()
-    event_team = get_event_team_by_name(session, 'iris_test', 'zz')
-    assert event_team.approved
-    with client.session_transaction() as cs:
-        flash_message = dict(cs['_flashes'])
-    assert "is signed up for Event" in flash_message['Successful sign-up']
-
-    logout(client)
+        add_user(session, 'zz', 'zz', 'zz', 'zz', 'zz', access_level='user')
+        _, _, event_team = ask_sign_up_team(session, 'iris_test', 'zz')
+        assert not event_team.approved
+        rv = client.get('/events/iris_test/sign_up/zz')
+        assert rv.status_code == 302
+        assert rv.location == "http://localhost/problems"
+        session.commit()
+        event_team = get_event_team_by_name(session, 'iris_test', 'zz')
+        assert event_team.approved
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert "is signed up for Event" in flash_message['Successful sign-up']
 
 
 def test_update_event(client_session):
     client, session = client_session
 
-    login(client, 'test_iris_admin', 'test')
+    with login_scope(client, 'test_iris_admin', 'test') as client:
 
-    # case tha the event does not exist
-    rv = client.get('/events/boston_housing/update')
-    assert rv.status_code == 302
-    assert rv.location == 'http://localhost/problems'
-    with client.session_transaction() as cs:
-        flash_message = dict(cs['_flashes'])
-    assert 'no event named "boston_housing"' in flash_message['message']
+        # case tha the event does not exist
+        rv = client.get('/events/boston_housing/update')
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert 'no event named "boston_housing"' in flash_message['message']
 
-    # GET: pre-fill the forms
-    rv = client.get('/events/iris_test/update')
-    assert rv.status_code == 200
-    assert b'Minimum duration between submissions' in rv.data
+        # GET: pre-fill the forms
+        rv = client.get('/events/iris_test/update')
+        assert rv.status_code == 200
+        assert b'Minimum duration between submissions' in rv.data
 
-    # POST: update the event data
-    event_info = {
-        'suffix': 'test',
-        'title': 'Iris new title',
-        'is_send_trained_mail': True,
-        'is_public': True,
-        'is_controled_signup': True,
-        'is_competitive': False,
-        'min_duration_between_submissions_hour': 0,
-        'min_duration_between_submissions_minute': 0,
-        'min_duration_between_submissions_second': 0,
-        'opening_timestamp': "2000-01-01 00:00:00",
-        'closing_timestamp': "2100-01-01 00:00:00",
-        'public_opening_timestamp': "2000-01-01 00:00:00"
-    }
-    rv = client.post('/events/iris_test/update', data=event_info)
-    assert rv.status_code == 302
-    assert rv.location == "http://localhost/problems"
-    event = get_event(session, 'iris_test')
-    assert event.min_duration_between_submissions == 0
+        # POST: update the event data
+        event_info = {
+            'suffix': 'test',
+            'title': 'Iris new title',
+            'is_send_trained_mail': True,
+            'is_public': True,
+            'is_controled_signup': True,
+            'is_competitive': False,
+            'min_duration_between_submissions_hour': 0,
+            'min_duration_between_submissions_minute': 0,
+            'min_duration_between_submissions_second': 0,
+            'opening_timestamp': "2000-01-01 00:00:00",
+            'closing_timestamp': "2100-01-01 00:00:00",
+            'public_opening_timestamp': "2000-01-01 00:00:00"
+        }
+        rv = client.post('/events/iris_test/update', data=event_info)
+        assert rv.status_code == 302
+        assert rv.location == "http://localhost/problems"
+        event = get_event(session, 'iris_test')
+        assert event.min_duration_between_submissions == 0
 
-    logout(client)
+
+def test_user_interactions(client_session):
+    client, _ = client_session
+
+    with login_scope(client, 'test_iris_admin', 'test') as client:
+        rv = client.get('/user_interactions')
+        assert rv.status_code == 200
+        assert b'landing' in rv.data

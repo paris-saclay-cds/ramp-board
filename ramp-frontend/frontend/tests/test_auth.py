@@ -14,6 +14,7 @@ from rampdb.utils import session_scope
 from rampdb.tools.user import get_user_by_name
 
 from frontend import create_app
+from frontend.testing import login_scope
 from frontend.testing import login
 from frontend.testing import logout
 
@@ -64,13 +65,12 @@ def test_login(client_session):
     assert b'Password' in rv.data
 
     # GET with a previous login
-    login(client, 'test_user', 'test')
-    rv = client.get('/login')
-    assert rv.status_code == 302
-    assert rv.location == 'http://localhost/problems'
-    rv = client.get('/login', follow_redirects=True)
-    assert rv.status_code == 200
-    logout(client)
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('/login')
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        rv = client.get('/login', follow_redirects=True)
+        assert rv.status_code == 200
 
     # POST with unknown username
     login_info = {'user_name': 'unknown', 'password': 'xxx'}
@@ -146,13 +146,12 @@ def test_sign_up_already_logged_in(client_session, request_function):
     client, _ = client_session
 
     # sign-up when already logged-in
-    login(client, 'test_user', 'test')
-    rv = getattr(client, request_function)('/sign_up')
-    assert rv.status_code == 302
-    assert rv.location == 'http://localhost/problems'
-    rv = getattr(client, request_function)('/sign_up', follow_redirects=True)
-    assert rv.status_code == 200
-    logout(client)
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = getattr(client, request_function)('/sign_up')
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        rv = getattr(client, request_function)('/sign_up', follow_redirects=True)
+        assert rv.status_code == 200
 
 
 def test_sign_up(client_session):
@@ -187,26 +186,26 @@ def test_update_profile(client_session):
     rv = client.get('/update_profile', follow_redirects=True)
     assert rv.status_code == 200
 
-    login(client, 'test_user', 'test')
-    # GET function once logged-in
-    rv = client.get('/update_profile')
-    assert rv.status_code == 200
-    for attr in [b'Username', b'First name', b'Last name', b'Email', b'User',
-                 b'Test', b'test.user@gmail.com']:
-        assert attr in rv.data
+    with login_scope(client, 'test_user', 'test') as client:
+        # GET function once logged-in
+        rv = client.get('/update_profile')
+        assert rv.status_code == 200
+        for attr in [b'Username', b'First name', b'Last name', b'Email',
+                     b'User', b'Test', b'test.user@gmail.com']:
+            assert attr in rv.data
 
-    # POST function once logged-in
-    user_profile = {'lastname': 'XXX', 'firstname': 'YYY',
-                    'email': 'xxx@gmail.com'}
-    rv = client.post('/update_profile', data=user_profile)
-    assert rv.status_code == 302
-    assert rv.location == 'http://localhost/problems'
-    user = get_user_by_name(session, 'test_user')
-    assert user.lastname == 'XXX'
-    assert user.firstname == 'YYY'
-    assert user.email == 'xxx@gmail.com'
-    user_profile = {'lastname': 'Test', 'firstname': 'User',
-                    'email': 'test.user@gmail.com'}
-    rv = client.post('/update_profile', data=user_profile,
-                     follow_redirects=True)
-    assert rv.status_code == 200
+        # POST function once logged-in
+        user_profile = {'lastname': 'XXX', 'firstname': 'YYY',
+                        'email': 'xxx@gmail.com'}
+        rv = client.post('/update_profile', data=user_profile)
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        user = get_user_by_name(session, 'test_user')
+        assert user.lastname == 'XXX'
+        assert user.firstname == 'YYY'
+        assert user.email == 'xxx@gmail.com'
+        user_profile = {'lastname': 'Test', 'firstname': 'User',
+                        'email': 'test.user@gmail.com'}
+        rv = client.post('/update_profile', data=user_profile,
+                         follow_redirects=True)
+        assert rv.status_code == 200
