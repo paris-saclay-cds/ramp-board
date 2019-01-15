@@ -775,7 +775,8 @@ def view_submission_error(submission_hash):
     submission_hash : str
         The hash of the submission.
     """
-    submission = Submission.query.filter_by(hash_=submission_hash).one()
+    submission = (Submission.query.filter_by(hash_=submission_hash)
+                                  .one_or_none())
     if submission is None:
         error_str = (u'Missing submission {}: {}'
                      .format(flask_login.current_user.name, submission_hash))

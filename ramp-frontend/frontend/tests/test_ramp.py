@@ -275,3 +275,27 @@ def test_view_model(client_session):
         assert rv.status_code == 200
         assert b'file = classifier.py' in rv.data
         assert b'from sklearn.base import BaseEstimator' in rv.data
+
+
+def test_view_submission_error(client_session):
+    client, session = client_session
+
+    # unknown submission
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('/xxxxx/error.txt')
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert "Missing submission" in flash_message['message']
+
+    submission = get_submission_by_name(session, 'iris_test', 'test_user',
+                                        'error')
+    submission.error_msg = 'This submission is a failure'
+    session.commit()
+    submission_hash = submission.hash_
+    # GET: normal error display
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('{}/{}'.format(submission_hash, 'error.txt'))
+        assert rv.status_code == 200
+        assert b'This submission is a failure' in rv.data
