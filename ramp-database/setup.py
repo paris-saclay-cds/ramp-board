@@ -16,7 +16,7 @@ URL = 'https://github.com/paris-saclay-cds/ramp-board'
 LICENSE = 'BSD (3-clause)'
 DOWNLOAD_URL = 'https://github.com/paris-saclay-cds/ramp-board'
 INSTALL_REQUIRES = ['click', 'gitpython', 'ipykernel', 'jupyter', 'numpy',
-                    'pandas', 'psycog2', 'six', 'sqlalchemy']
+                    'pandas', 'psycopg2', 'six', 'sqlalchemy']
 
 
 if __name__ == "__main__":

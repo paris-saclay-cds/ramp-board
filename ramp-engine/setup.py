@@ -16,7 +16,7 @@ MAINTAINER_EMAIL = 'boucaud.alexandre@gmail.com'
 URL = 'https://github.com/paris-saclay-cds/ramp-backend'
 LICENSE = 'BSD (3-clause)'
 DOWNLOAD_URL = 'https://github.com/paris-saclay-cds/ramp-backend'
-INSTALL_REQUIRES = ['click', 'numpy','psycopg2', 'sqlalchemy', 'six']
+INSTALL_REQUIRES = ['click', 'numpy', 'psycopg2', 'sqlalchemy', 'six']
 
 
 if __name__ == "__main__":
