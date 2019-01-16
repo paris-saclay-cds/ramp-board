@@ -16,6 +16,9 @@ MAINTAINER_EMAIL = 'g.lemaitre58@gmail.com'
 URL = 'https://github.com/paris-saclay-cds/ramp-board'
 LICENSE = 'BSD (3-clause)'
 DOWNLOAD_URL = 'https://github.com/paris-saclay-cds/ramp-board'
+INSTALL_REQUIRES = ['bokeh', 'click', 'Flask', 'Flask-Login', 'Flask-Mail',
+                    'Flask-SQLAlchemy', 'Flask-WTF', 'numpy', 'pandas',
+                    'six']
 
 
 if __name__ == "__main__":
@@ -45,6 +48,7 @@ if __name__ == "__main__":
         ],
         platforms='any',
         packages=find_packages(),
+        install_requires=INSTALL_REQUIRES,
         entry_points={
             'console_scripts': ['frontend = frontend.cli:start']
         }

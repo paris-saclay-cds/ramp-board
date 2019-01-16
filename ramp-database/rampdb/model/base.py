@@ -104,7 +104,7 @@ class QueryProperty(object):
             if not getattr(Model, 'query_class', None):
                 Model.query_class = BaseQuery
 
-            query_property = Model.query_class(mapper, session=self.session())
+            query_property = Model.query_class(mapper, session=self.session)
 
             return query_property
 

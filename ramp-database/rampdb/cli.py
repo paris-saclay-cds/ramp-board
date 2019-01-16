@@ -1,5 +1,3 @@
-import logging
-
 import click
 
 from ramputils import generate_ramp_config
@@ -9,8 +7,6 @@ from .utils import setup_db
 
 from .tools import team
 from .tools import user
-
-logger = logging.getLogger('RAMP-DATABASE-CLI')
 
 
 @click.group()
@@ -22,7 +18,6 @@ def main(ctx, config):
     ctx.obj['db'], ctx.obj['Session'] = setup_db(
         ctx.obj['config']['sqlalchemy']
     )
-    logger.info('Create an engine to the database')
 
 
 @main.command()
@@ -43,7 +38,6 @@ def add_user(ctx, login, password, lastname, firstname, email,
         new_user = user.add_user(session, login, password, lastname,
                                  firstname, email, access_level,
                                  hidden_notes)
-        logger.info('Create a new user: {}'.format(new_user))
 
 
 @main.command()
@@ -54,7 +48,6 @@ def approve_user(ctx, login):
     with ctx.obj['db'].connect() as conn:
         session = ctx.obj['Session'](bind=conn)
         user.approve_user(session, login)
-        logger.info('Approved user: {}'.format(user))
 
 
 @main.command()
@@ -65,8 +58,6 @@ def sign_up_team(ctx, name):
     with ctx.obj['db'].connect() as conn:
         session = ctx.obj['Session'](bind=conn)
         team.sign_up_team(session, ramp_config['event_name'], name)
-        logger.info('Sign up the team "{}" to the event "{}"'
-                    .format(name, ramp_config['event_name']))
 
 
 def start():

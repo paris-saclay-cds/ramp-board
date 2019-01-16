@@ -1,13 +1,9 @@
-import logging
-
 import click
 
 from ramputils import generate_flask_config
 from ramputils import read_config
 
 from . import create_app
-
-logger = logging.getLogger('RAMP-FRONTEND-CLI')
 
 
 @click.group()

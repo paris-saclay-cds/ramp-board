@@ -217,7 +217,6 @@ class Event(Model):
         return self.problem.workflow
 
     @property
-    # XXX: This will only work with Flask
     def official_score_type(self):
         """:class:`rampdb.model.EventScoreType`: The score type for the current
         event."""
@@ -226,148 +225,38 @@ class Event(Model):
                                          name=self.official_score_name)
                               .one())
 
-    def get_official_score_type(self, session):
-        """Get the type of the default score used for the current event.
-
-        Parameters
-        ----------
-        session : :class:`sqlalchemy.orm.Session`
-            The session used to make the query.
-
-        Returns
-        -------
-        event_type_score : :class:`rampdb.model.EventTypeScore`
-            The default type score for the current event.
-        """
-        return (session.query(EventScoreType)
-                       .filter(EventScoreType.event == self)
-                       .filter(EventScoreType.name == self.official_score_name)
-                       .one())
-
     @property
-    # XXX: This will only work with Flask
     def official_score_function(self):
         """callable: The default function used for scoring in the event."""
         return self.official_score_type.score_function
 
-    def get_official_score_function(self, session):
-        """The default function used for scoring in the event.
-
-        Parameters
-        ----------
-        session : :class:`sqlalchemy.orm.Session`
-            The session used to make the query.
-
-        Returns
-        -------
-        score_func : callable
-            The scoring function used to evaluate submissions.
-        """
-        return self.get_official_score_type(session).score_function
-
     @property
-    # XXX: This will only work with Flask
     def combined_combined_valid_score_str(self):
         """str: Convert to string the combined public score for all folds."""
         return (None if self.combined_combined_valid_score is None
                 else str(round(self.combined_combined_valid_score,
                                self.official_score_type.precision)))
 
-    def get_combined_combined_valid_score_str(self, session):
-        """Convert to string the combined public score for all folds.
-
-        Parameters
-        ----------
-        session : :class:`sqlalchemy.orm.Session`
-            The session used to make the query.
-
-        Returns
-        -------
-        score : str
-            The combined public score for all folds.
-        """
-        return (None if self.combined_combined_valid_score is None
-                else str(round(self.combined_combined_valid_score,
-                               self.get_official_score_type(session)
-                                   .precision)))
-
     @property
-    # XXX: This will only work with Flask
     def combined_combined_test_score_str(self):
         """str: Convert to string the combined private score for all folds."""
         return (None if self.combined_combined_test_score is None
                 else str(round(self.combined_combined_test_score,
                                self.official_score_type.precision)))
 
-    def get_combined_combined_test_score_str(self, session):
-        """Convert to string the combined private score for all folds.
-
-        Parameters
-        ----------
-        session : :class:`sqlalchemy.orm.Session`
-            The session used to make the query.
-
-        Returns
-        -------
-        score : str
-            The combined private score for all folds.
-        """
-        return (None if self.combined_combined_test_score is None
-                else str(round(self.combined_combined_test_score,
-                               self.get_official_score_type(session)
-                                   .precision)))
-
     @property
-    # XXX: This will only work with Flask
     def combined_foldwise_valid_score_str(self):
         """str: Convert to string the combined public score for each fold."""
         return (None if self.combined_foldwise_valid_score is None
                 else str(round(self.combined_foldwise_valid_score,
                                self.official_score_type.precision)))
 
-    def get_combined_foldwise_valid_score_str(self, session):
-        """Convert to string the combined public score for each fold.
-
-        Parameters
-        ----------
-        session : :class:`sqlalchemy.orm.Session`
-            The session used to make the query.
-
-        Returns
-        -------
-        score : str
-            The combined public score for each fold.
-        """
-        return (None if self.combined_foldwise_valid_score is None
-                else str(round(self.combined_foldwise_valid_score,
-                               self.get_official_score_type(session)
-                                   .precision)))
-
     @property
-    # XXX: This will only work with Flask
     def combined_foldwise_test_score_str(self):
         """str: Convert to string the combined public score for each fold."""
         return (None if self.combined_foldwise_test_score is None
                 else str(round(self.combined_foldwise_test_score,
                                self.official_score_type.precision)))
-
-    def get_combined_foldwise_test_score_str(self, session):
-        """Convert to string the combined private score for each fold.
-
-        Parameters
-        ----------
-        session : :class:`sqlalchemy.orm.Session`
-            The session used to make the query.
-
-        Returns
-        -------
-        score : str
-            The combined private score for each fold.
-        """
-        return (None if self.combined_foldwise_test_score is None
-                else str(round(self.combined_foldwise_test_score,
-                               self.get_official_score_type(session)
-                                   .precision)))
 
     @property
     def is_open(self):

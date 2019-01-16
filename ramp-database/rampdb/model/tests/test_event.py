@@ -10,6 +10,8 @@ from ramputils.testing import path_config_example
 from rampwf.prediction_types.base import BasePrediction
 from rampwf.score_types.accuracy import Accuracy
 
+from rampdb.model.base import set_query_property
+
 from rampdb.model import CVFold
 from rampdb.model import EventAdmin
 from rampdb.model import EventScoreType
@@ -96,6 +98,9 @@ def test_even_model_timestamp(session_scope_module, opening, public_opening,
 
 
 def test_event_model_score(session_scope_module):
+    # Make Model usable in declarative mode
+    set_query_property(Model, session_scope_module)
+
     event = get_event(session_scope_module, 'iris_test')
 
     assert repr(event) == 'Event(iris_test)'
@@ -103,9 +108,8 @@ def test_event_model_score(session_scope_module):
     assert isinstance(event.workflow, Workflow)
     assert event.workflow.name == 'Classifier'
 
-    event_type_score = event.get_official_score_type(session_scope_module)
+    event_type_score = event.official_score_type
     assert event_type_score.name == 'acc'
-    assert callable(event.get_official_score_function(session_scope_module))
 
     assert event.combined_combined_valid_score_str is None
     assert event.combined_combined_test_score_str is None
@@ -117,14 +121,10 @@ def test_event_model_score(session_scope_module):
     event.combined_foldwise_valid_score = 0.3
     event.combined_foldwise_test_score = 0.4
 
-    assert (event.get_combined_combined_valid_score_str(
-        session_scope_module) == '0.1')
-    assert (event.get_combined_combined_test_score_str(
-        session_scope_module) == '0.2')
-    assert (event.get_combined_foldwise_valid_score_str(
-        session_scope_module) == '0.3')
-    assert (event.get_combined_foldwise_test_score_str(
-        session_scope_module) == '0.4')
+    assert event.combined_combined_valid_score_str == '0.1'
+    assert event.combined_combined_test_score_str == '0.2'
+    assert event.combined_foldwise_valid_score_str == '0.3'
+    assert event.combined_foldwise_test_score_str == '0.4'
 
 
 @pytest.mark.parametrize(
