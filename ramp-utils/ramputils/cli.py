@@ -1,11 +1,7 @@
-import logging
-
 import click
 
 from ramputils import generate_ramp_config
 from ramputils import deploy
-
-logger = logging.getLogger('RAMP-UTILS-CLI')
 
 
 @click.group()
@@ -20,8 +16,6 @@ def main(ctx, config):
 def deploy_ramp_event(ctx):
     ramp_config = generate_ramp_config(ctx.obj['config_filename'])
     deploy.deploy_ramp_event(ctx.obj['config_filename'])
-    logger.info('Deploy the RAMP event: {}'
-                .format(ramp_config['event']))
 
 
 def start():
