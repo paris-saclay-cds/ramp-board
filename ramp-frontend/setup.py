@@ -50,6 +50,6 @@ if __name__ == "__main__":
         packages=find_packages(),
         install_requires=INSTALL_REQUIRES,
         entry_points={
-            'console_scripts': ['frontend = frontend.cli:start']
+            'console_scripts': ['ramp-frontend = frontend.cli:start']
         }
         )

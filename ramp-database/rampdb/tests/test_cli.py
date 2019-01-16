@@ -17,8 +17,9 @@ from rampdb.cli import main
 def setup_module(module):
     config = read_config(path_config_example())
     create_test_db(config)
-    subprocess.check_call(["utils", "--config", path_config_example(),
-                           "deploy-ramp-event"])
+    subprocess.check_call(["ramp-utils",
+                           "deploy-ramp-event",
+                           "--config", path_config_example()])
 
 
 def teardown_module(module):
@@ -30,31 +31,29 @@ def teardown_module(module):
 
 def test_add_user():
     runner = CliRunner()
-    result = runner.invoke(main, ['--config', path_config_example(),
-                                  'add-user',
+    result = runner.invoke(main, ['add-user',
+                                  '--config', path_config_example(),
                                   '--login', 'glemaitre',
                                   '--password', 'xxx',
                                   '--lastname', 'xxx',
                                   '--firstname', 'xxx',
                                   '--email', 'xxx',
                                   '--access_level', 'admin'],
-                           obj={}, catch_exceptions=False)
+                           catch_exceptions=False)
     assert result.exit_code == 0
 
 
 def test_approve_user():
     runner = CliRunner()
-    result = runner.invoke(main, ['--config', path_config_example(),
-                                  'approve-user',
-                                  '--login', 'glemaitre'],
-                           obj={})
+    result = runner.invoke(main, ['approve-user',
+                                  '--config', path_config_example(),
+                                  '--login', 'glemaitre'])
     assert result.exit_code == 0
 
 
 def test_sign_up_team():
     runner = CliRunner()
-    result = runner.invoke(main, ['--config', path_config_example(),
-                                  'sign-up-team',
-                                  '--name', 'glemaitre'],
-                           obj={})
+    result = runner.invoke(main, ['sign-up-team',
+                                  '--config', path_config_example(),
+                                  '--name', 'glemaitre'])
     assert result.exit_code == 0

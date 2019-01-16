@@ -48,6 +48,6 @@ if __name__ == "__main__":
         platforms='any',
         packages=find_packages(),
         entry_points={
-            'console_scripts': ['database = rampdb.cli:start']
+            'console_scripts': ['ramp-database = rampdb.cli:start']
         }
         )

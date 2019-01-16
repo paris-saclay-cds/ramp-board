@@ -3,24 +3,20 @@ import click
 from ramputils import generate_ramp_config
 from ramputils import read_config
 
-from .utils import setup_db
+from .utils import session_scope
 
 from .tools import team
 from .tools import user
 
 
 @click.group()
-@click.option("--config", help='Configuration file in YAML format')
-@click.pass_context
-def main(ctx, config):
-    ctx.obj['config_filename'] = config
-    ctx.obj['config'] = read_config(config)
-    ctx.obj['db'], ctx.obj['Session'] = setup_db(
-        ctx.obj['config']['sqlalchemy']
-    )
+def main():
+    pass
 
 
 @main.command()
+@click.option("--config", default='config.yml',
+              help='Configuration file in YAML format')
 @click.option('--login', help='Login')
 @click.option('--password', help='Password')
 @click.option('--lastname', help="User's last name")
@@ -30,38 +26,37 @@ def main(ctx, config):
               help="User's administration rights")
 @click.option('--hidden_notes', default='',
               help="User's additional hidden notes")
-@click.pass_context
-def add_user(ctx, login, password, lastname, firstname, email,
+def add_user(config, login, password, lastname, firstname, email,
              access_level, hidden_notes):
-    with ctx.obj['db'].connect() as conn:
-        session = ctx.obj['Session'](bind=conn)
-        new_user = user.add_user(session, login, password, lastname,
-                                 firstname, email, access_level,
-                                 hidden_notes)
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        user.add_user(session, login, password, lastname, firstname, email,
+                      access_level, hidden_notes)
 
 
 @main.command()
+@click.option("--config", default='config.yml',
+              help='Configuration file in YAML format')
 @click.option('--login', help="User's login to be approved")
-@click.pass_context
-def approve_user(ctx, login):
-    ramp_config = generate_ramp_config(ctx.obj['config'])
-    with ctx.obj['db'].connect() as conn:
-        session = ctx.obj['Session'](bind=conn)
+def approve_user(config, login):
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
         user.approve_user(session, login)
 
 
 @main.command()
+@click.option("--config", default='config.yml',
+              help='Configuration file in YAML format')
 @click.option('--name', help='Name of the team to sign up')
-@click.pass_context
-def sign_up_team(ctx, name):
-    ramp_config = generate_ramp_config(ctx.obj['config'])
-    with ctx.obj['db'].connect() as conn:
-        session = ctx.obj['Session'](bind=conn)
+def sign_up_team(config, name):
+    config = read_config(config)
+    ramp_config = generate_ramp_config(config)
+    with session_scope(config['sqlalchemy']) as session:
         team.sign_up_team(session, ramp_config['event_name'], name)
 
 
 def start():
-    main(obj={})
+    main()
 
 
 if __name__ == '__main__':

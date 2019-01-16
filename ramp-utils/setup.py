@@ -49,7 +49,7 @@ if __name__ == "__main__":
         packages=find_packages(),
         package_data=PACKAGE_DATA,
         entry_points={
-            'console_scripts': ['utils = ramputils.cli:start']
+            'console_scripts': ['ramp-utils = ramputils.cli:start']
         },
         install_requires=INSTALL_REQUIRES,
         )

@@ -20,7 +20,6 @@ def teardown_module(module):
 
 def test_deploy_ramp_event():
     runner = CliRunner()
-    result = runner.invoke(main, ['--config', path_config_example(),
-                                  'deploy-ramp-event'],
-                           obj={})
+    result = runner.invoke(main, ['deploy-ramp-event',
+                                  '--config', path_config_example()])
     assert result.exit_code == 0
