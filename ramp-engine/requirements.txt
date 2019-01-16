@@ -1,6 +1,0 @@
-click
-invoke
-numpy
-psycopg2
-sqlalchemy
-six
