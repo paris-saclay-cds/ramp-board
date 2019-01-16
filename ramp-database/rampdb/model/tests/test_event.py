@@ -96,6 +96,9 @@ def test_even_model_timestamp(session_scope_module, opening, public_opening,
 
 
 def test_event_model_score(session_scope_module):
+    from rampdb.model.base import set_query_property
+    set_query_property(Model, session_scope_module)
+
     event = get_event(session_scope_module, 'iris_test')
 
     assert repr(event) == 'Event(iris_test)'
@@ -103,7 +106,7 @@ def test_event_model_score(session_scope_module):
     assert isinstance(event.workflow, Workflow)
     assert event.workflow.name == 'Classifier'
 
-    event_type_score = event.get_official_score_type(session_scope_module)
+    event_type_score = event.official_score_type
     assert event_type_score.name == 'acc'
     assert callable(event.get_official_score_function(session_scope_module))
 
