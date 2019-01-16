@@ -1,5 +1,4 @@
 flask:
-    server_name: localhost:8080
     secret_key: abcdefghijkl
     wtf_csrf_enabled: true
     log_filename: None
