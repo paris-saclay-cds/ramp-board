@@ -1,6 +1,5 @@
 click
 gitpython
-invoke
 ipykernel
 jupyter
 numpy

@@ -1,10 +1,10 @@
 bokeh
+click
 Flask
 Flask-Login
 Flask-Mail
 Flask-SQLAlchemy
 Flask-WTF
-invoke
 numpy
 pandas
 six
