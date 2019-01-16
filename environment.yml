@@ -10,7 +10,6 @@ dependencies:
   - Flask-SQLAlchemy
   - Flask-Wtf
   - gitpython
-  - invoke
   - ipykernel
   - jupyter
   - numpy
