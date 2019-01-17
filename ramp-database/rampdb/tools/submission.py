@@ -36,7 +36,6 @@ logger = logging.getLogger('RAMP-DATABASE')
 
 # Add functions: add information to the database
 # TODO: move the queries in "_query"
-# TODO: there is nothing regarding leaderboard update
 def add_submission(session, event_name, team_name, submission_name,
                    submission_path):
     """Create a submission in the database and returns an handle.
@@ -181,10 +180,10 @@ def add_submission(session, event_name, team_name, submission_name,
     event_team.last_submission_name = submission_name
     session.commit()
 
-    # TODO: test missing there for those update
-    # TODO: add those functions back
-    # update_leaderboards(event_name)
-    # update_user_leaderboards(event_name, team.name)
+    from .leaderboard import update_leaderboards
+    from .leaderboard import update_user_leaderboards
+    update_leaderboards(session, event_name)
+    update_user_leaderboards(session, event_name, team.name)
     return submission
 
 

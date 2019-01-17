@@ -267,6 +267,12 @@ class Submission(Model):
         return 'error' in self.state
 
     @hybrid_property
+    def is_new(self):
+        """bool: Whether the submission is a new submission."""
+        return (self.state in ['new', 'training', 'sent_to_training'] and
+                self.is_not_sandbox)
+
+    @hybrid_property
     def is_public_leaderboard(self):
         """bool: Whether the submission is part of the public leaderboard."""
         return (self.is_not_sandbox and self.is_valid and

@@ -225,6 +225,23 @@ class Event(Model):
                                          name=self.official_score_name)
                               .one())
 
+    def get_official_score_type(self, session):
+        """Get the type of the default score used for the current event.
+
+        Parameters
+        ----------
+        session : :class:`sqlalchemy.orm.Session`
+            The session used to make the query.
+        Returns
+        -------
+        event_type_score : :class:`rampdb.model.EventTypeScore`
+            The default type score for the current event.
+        """
+        return (session.query(EventScoreType)
+                       .filter(EventScoreType.event == self)
+                       .filter(EventScoreType.name == self.official_score_name)
+                       .one())
+
     @property
     def official_score_function(self):
         """callable: The default function used for scoring in the event."""

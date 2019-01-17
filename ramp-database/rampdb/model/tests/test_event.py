@@ -110,6 +110,8 @@ def test_event_model_score(session_scope_module):
 
     event_type_score = event.official_score_type
     assert event_type_score.name == 'acc'
+    event_type_score = event.get_official_score_type(session_scope_module)
+    assert event_type_score.name == 'acc'
 
     assert event.combined_combined_valid_score_str is None
     assert event.combined_combined_test_score_str is None

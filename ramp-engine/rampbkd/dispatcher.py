@@ -27,6 +27,9 @@ from rampdb.tools.submission import set_scores
 from rampdb.tools.submission import set_submission_error_msg
 from rampdb.tools.submission import set_submission_state
 
+from rampdb.tools.leaderboard import update_all_user_leaderboards
+from rampdb.tools.leaderboard import update_leaderboards
+
 from rampdb.utils import session_scope
 
 from ramputils import generate_worker_config
@@ -158,8 +161,9 @@ class Dispatcher(object):
             submission_id, submission_name = \
                 self._processed_submission_queue.get_nowait()
             if 'error' in get_submission_state(session, submission_id):
-                # update_leaderboards(self._ramp_config['event_name'])
-                # update_all_user_leaderboards(self._ramp_config['event_name'])
+                update_leaderboards(session, self._ramp_config['event_name'])
+                update_all_user_leaderboards(session,
+                                             self._ramp_config['event_name'])
                 logger.info('Skip update for {} due to failure during the '
                             'processing'.format(submission_name))
                 continue
@@ -172,10 +176,10 @@ class Dispatcher(object):
             set_time(session, submission_id, path_predictions)
             set_scores(session, submission_id, path_predictions)
             set_bagged_scores(session, submission_id, path_predictions)
-            # TODO: test those two last functions
-            # update_leaderboards(self._ramp_config['event_name'])
-            # update_all_user_leaderboards(self._ramp_config['event_name'])
             set_submission_state(session, submission_id, 'scored')
+            update_leaderboards(session, self._ramp_config['event_name'])
+            update_all_user_leaderboards(session,
+                                         self._ramp_config['event_name'])
 
     def launch(self):
         """Launch the dispatcher."""
