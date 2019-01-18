@@ -3,6 +3,8 @@ import shutil
 
 import pytest
 
+from werkzeug.datastructures import ImmutableMultiDict
+
 from ramputils import generate_flask_config
 from ramputils import read_config
 from ramputils.testing import path_config_example

@@ -1,7 +1,5 @@
 import shutil
 
-from flask import appcontext_pushed
-
 import pytest
 
 from ramputils import generate_flask_config
@@ -14,6 +12,7 @@ from rampdb.utils import setup_db
 from rampdb.utils import session_scope
 
 from frontend import create_app
+from frontend import mail
 from frontend.utils import send_mail
 
 
@@ -49,7 +48,13 @@ def client_session(config):
         Model.metadata.drop_all(db)
 
 
+@pytest.mark.xfail
 def test_send_mail(client_session):
     client, _ = client_session
     with client.application.app_context():
-        send_mail('xx@gmail.com', 'xxx', 'xxxx')
+        with mail.record_messages() as outbox:
+            send_mail('xx@gmail.com', 'subject', 'body')
+            assert len(outbox) == 1
+            assert outbox[0].subject == 'subject'
+            assert outbox[0].body == 'body'
+            assert outbox[0].recipients == ['xx@gmail.com']

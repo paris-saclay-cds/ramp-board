@@ -20,15 +20,8 @@ def test_generate_flask_config(config):
         'MAX_CONTENT_LENGTH': 1073741824,
         'DEBUG': True,
         'TESTING': False,
-        'MAIL_SERVER': 'smtp.gmail.com',
-        'MAIL_PORT': 587,
-        'MAIL_USERNAME': 'user',
-        'MAIL_PASSWORD': 'password',
-        'MAIL_DEFAULT_SENDER': ['RAMP admin', 'rampmailer@gmail.com'],
-        'MAIL_RECIPIENTS': [],
-        'MAIL_USE_TLS': False,
-        'MAIL_USE_SSL': True,
-        'MAIL_DEBUG': False,
+        'MAIL_SERVER': 'localhost',
+        'MAIL_PORT': 8025,
         'SQLALCHEMY_TRACK_MODIFICATIONS': True,
         'SQLALCHEMY_DATABASE_URI': ('postgresql://mrramp:mrramp@localhost:5432'
                                     '/databoard_test')
