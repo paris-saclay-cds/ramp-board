@@ -18,12 +18,8 @@ from rampdb.tools.user import get_user_by_name
 from rampdb.tools.team import ask_sign_up_team
 from rampdb.tools.team import get_event_team_by_name
 
-from werkzeug.datastructures import ImmutableMultiDict
-
 from frontend import create_app
 from frontend.testing import login_scope
-from frontend.testing import login
-from frontend.testing import logout
 
 
 @pytest.fixture(scope='module')
@@ -54,7 +50,7 @@ def client_session(config):
             db_flask.session.close()
         except RuntimeError:
             pass
-        db, Session = setup_db(config['sqlalchemy'])
+        db, _ = setup_db(config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 

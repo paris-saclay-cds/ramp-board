@@ -20,6 +20,8 @@ install:
     - source activate testenv
     - make install
 script:
+    # start the server mail from python for the test
+    - python -m smtpd -n -c DebuggingServer localhost:8025
     - bash ci_tools/travis/test_ramp_frontend.sh
     - bash ci_tools/travis/test_ramp_engine.sh
     - bash ci_tools/travis/test_ramp_database.sh
