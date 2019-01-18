@@ -66,8 +66,8 @@ def delete_event(session, event_name):
     """
     event = select_event_by_name(session, event_name)
     submissions = select_submissions_by_state(session, event_name, state=None)
-    for sub_id, _, _ in submissions:
-        delete_submission_similarity(session, sub_id)
+    for sub in submissions:
+        delete_submission_similarity(session, sub.id)
     session.delete(event)
     session.commit()
 
