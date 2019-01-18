@@ -77,12 +77,6 @@ def sign_up_team(session, event_name, team_name):
                      dst=os.path.join(submission.path, filename))
     logger.info('Copying the submission files into the deployment folder')
     logger.info('Adding {}'.format(submission))
-    # TODO: be sure that we send an email
-    # for user in get_team_members(team):
-    #     send_mail(to=user.email,
-    #               subject='signed up for {} as team {}'.format(
-    #                   event_name, team_name),
-    #               body='')
     event_team.approved = True
     session.commit()
 

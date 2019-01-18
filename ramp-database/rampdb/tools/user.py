@@ -168,8 +168,6 @@ def approve_user(session, name):
         user.access_level = 'user'
     user.is_authenticated = True
     session.commit()
-    # TODO: be sure that we send an email
-    # send_mail(user.email, 'RAMP sign-up approved', '')
 
 
 def get_user_by_name(session, name):

@@ -22,6 +22,7 @@ def test_generate_flask_config(config):
         'TESTING': False,
         'MAIL_SERVER': 'localhost',
         'MAIL_PORT': 8025,
+        'MAIL_DEFAULT_SENDER': ['RAMP admin', 'rampmailer@localhost.com'],
         'SQLALCHEMY_TRACK_MODIFICATIONS': True,
         'SQLALCHEMY_DATABASE_URI': ('postgresql://mrramp:mrramp@localhost:5432'
                                     '/databoard_test')

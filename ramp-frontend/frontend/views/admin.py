@@ -23,13 +23,13 @@ from rampdb.tools.event import get_event
 from rampdb.tools.frontend import is_admin
 from rampdb.tools.frontend import is_accessible_event
 from rampdb.tools.user import approve_user
-from rampdb.tools.user import get_user_by_name
 from rampdb.tools.user import get_user_interactions_by_name
 from rampdb.tools.team import sign_up_team
 
 from frontend import db
 
 from ..forms import EventUpdateProfileForm
+from ..utils import send_mail
 
 from .redirect import redirect_to_user
 
@@ -63,12 +63,31 @@ def approve_users():
         message = "Approved users:\n"
         for asked_user in users_to_be_approved:
             approve_user(db.session, asked_user)
+
+            subject = 'Your RAMP account have been approved'
+            body = ('{}, you account have been approved. You can now sign-up '
+                    'for any opened RAMP event.'
+                    .format(flask_login.current_user.name))
+            send_mail(
+                to=flask_login.current_user.email, subject=subject, body=body
+            )
+
             message += "{}\n".format(asked_user)
         message += "Approved event_team:\n"
         for asked_id in event_teams_to_be_approved:
             asked_event_team = EventTeam.query.get(asked_id)
             sign_up_team(db.session, asked_event_team.event.name,
                          asked_event_team.team.name)
+
+            subject = ('Signed up for the RAMP event {}'
+                       .format(asked_event_team.event.name))
+            body = ('{}, you have been registered to the RAMP event {}. '
+                    'You can now proceed to your sandbox and make submission.'
+                    '\nHave fun!!!'.format(flask_login.current_user.name,
+                                           asked_event_team.event.name))
+            send_mail(
+                to=flask_login.current_user.email, subject=subject, body=body
+            )
             message += "{}\n".format(asked_event_team)
         return redirect_to_user(message, is_error=False,
                                 category="Approved users")
@@ -96,6 +115,17 @@ def approve_sign_up_for_event(event_name, user_name):
         return redirect_to_user(u'No event {} or no user {}'
                                 .format(event_name, user_name), is_error=True)
     sign_up_team(db.session, event.name, user.name)
+
+    subject = ('Signed up for the RAMP event {}'
+               .format(event.name))
+    body = ('{}, you have been registered to the RAMP event {}. '
+            'You can now proceed to your sandbox and make submission.'
+            '\nHave fun!!!'.format(flask_login.current_user.name,
+                                   event.name))
+    send_mail(
+        to=flask_login.current_user.email, subject=subject, body=body
+    )
+
     return redirect_to_user(u'{} is signed up for {}.'.format(user, event),
                             is_error=False, category='Successful sign-up')
 
