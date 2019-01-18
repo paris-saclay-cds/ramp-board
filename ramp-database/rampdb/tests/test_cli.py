@@ -130,10 +130,6 @@ def test_get_submission_by_state():
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output
     assert "ID" in result.output
-    assert "name" in result.output
-    assert "team" in result.output
-    assert "path" in result.output
-    assert "state" in result.output
     result = runner.invoke(main, ['get-submissions-by-state',
                                   '--config', path_config_example(),
                                   '--event', 'iris_test',
