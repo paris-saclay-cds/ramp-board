@@ -309,8 +309,10 @@ def get_leaderboard(session, leaderboard_type, event_name, user_name=None,
         ]
         df = pd.DataFrame(data, columns=columns)
     else:
-        submissions = [sub for sub in submissions
-                       if not sub.is_error and sub.is_public_leaderboard]
+        # make some extra filtering
+        submissions = [sub for sub in submissions if sub.is_public_leaderboard]
+        if not submissions:
+            return None
         competition_type = ('public' if 'public' in leaderboard_type
                             else 'private')
         df = _compute_competition_leaderboard(
