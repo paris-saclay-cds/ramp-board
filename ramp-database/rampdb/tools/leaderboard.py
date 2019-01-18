@@ -218,16 +218,20 @@ def _compute_competition_leaderboard(session, submissions, leaderboard_type,
         ascending=[score_type.is_lower_the_better, True])
     leaderboard_df['private rank'] = np.arange(len(leaderboard_df)) + 1
 
-    leaderboard_df['move'] =\
+    leaderboard_df['move'] = \
         leaderboard_df['public rank'] - leaderboard_df['private rank']
     leaderboard_df['move'] = [
         '{0:+d}'.format(m) if m != 0 else '-' for m in leaderboard_df['move']]
 
-    df = leaderboard_df[[
+    col_selected = [
         leaderboard_type + ' rank', 'team', 'submission',
         leaderboard_type + ' ' + score_name, 'train time [s]', 'test time [s]',
         'submitted at (UTC)'
-    ]]
+    ]
+    if leaderboard_type == 'private':
+        col_selected.insert(1, 'move')
+
+    df = leaderboard_df[col_selected]
     df = df.rename(columns={
         leaderboard_type + ' ' + score_name: score_name,
         leaderboard_type + ' rank': 'rank'
@@ -250,7 +254,8 @@ def get_leaderboard(session, leaderboard_type, event_name, user_name=None,
     event_name : str
         The event name.
     user_name : None or str, default is None
-        The user name. If None, scores from all users will be queried.
+        The user name. If None, scores from all users will be queried. This
+        parameter is discarded when requesting the competition leaderboard.
     with_links : bool, default is True
         Whether or not the submission name should be clickable.
 
