@@ -14,7 +14,15 @@ from rampdb.utils import setup_db
 from rampdb.utils import session_scope
 from rampdb.testing import create_toy_db
 
+from rampdb.model import EventTeam
+
+from rampdb.tools.event import get_event
+from rampdb.tools.team import get_event_team_by_name
+
 from rampdb.tools.leaderboard import get_leaderboard
+from rampdb.tools.leaderboard import update_all_user_leaderboards
+from rampdb.tools.leaderboard import update_leaderboards
+from rampdb.tools.leaderboard import update_user_leaderboards
 
 
 @pytest.fixture(scope='module')
@@ -37,6 +45,84 @@ def session_toy_db(config):
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
         db, _ = setup_db(config['sqlalchemy'])
         Model.metadata.drop_all(db)
+
+
+@pytest.fixture
+def session_toy_function(config):
+    try:
+        create_toy_db(config)
+        with session_scope(config['sqlalchemy']) as session:
+            yield session
+    finally:
+        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
+        db, _ = setup_db(config['sqlalchemy'])
+        Model.metadata.drop_all(db)
+
+
+def test_update_leaderboard_functions(session_toy_function, config):
+    event_name = 'iris_test'
+    user_name = 'test_user'
+    for leaderboard_type in ['public', 'private', 'failed',
+                             'public competition', 'private competition']:
+        leaderboard = get_leaderboard(session_toy_function, leaderboard_type,
+                                      event_name)
+        assert leaderboard is None
+    leaderboard = get_leaderboard(session_toy_function, 'new', event_name)
+    assert leaderboard
+
+    event = get_event(session_toy_function, event_name)
+    assert event.private_leaderboard_html is None
+    assert event.public_leaderboard_html_with_links is None
+    assert event.public_leaderboard_html_no_links is None
+    assert event.failed_leaderboard_html is None
+    assert event.public_competition_leaderboard_html is None
+    assert event.private_competition_leaderboard_html is None
+    assert event.new_leaderboard_html
+
+    event_team = get_event_team_by_name(session_toy_function, event_name,
+                                        user_name)
+    assert event_team.leaderboard_html is None
+    assert event_team.failed_leaderboard_html is None
+    assert event_team.new_leaderboard_html
+
+    event_teams = (session_toy_function.query(EventTeam)
+                                       .filter_by(event=event)
+                                       .all())
+    for et in event_teams:
+        assert et.leaderboard_html is None
+        assert et.failed_leaderboard_html is None
+        assert et.new_leaderboard_html
+
+    # run the dispatcher to process the different submissions
+    dispatcher = Dispatcher(config, n_worker=-1, hunger_policy='exit')
+    dispatcher.launch()
+
+    update_leaderboards(session_toy_function, event_name)
+    event = get_event(session_toy_function, event_name)
+    assert event.private_leaderboard_html
+    assert event.public_leaderboard_html_with_links
+    assert event.public_leaderboard_html_no_links
+    assert event.failed_leaderboard_html
+    assert event.public_competition_leaderboard_html
+    assert event.private_competition_leaderboard_html
+    assert event.new_leaderboard_html is None
+
+    update_user_leaderboards(session_toy_function, event_name, user_name)
+    event_team = get_event_team_by_name(session_toy_function, event_name,
+                                        user_name)
+    assert event_team.leaderboard_html
+    assert event_team.failed_leaderboard_html
+    assert event_team.new_leaderboard_html is None
+
+    update_all_user_leaderboards(session_toy_function, event_name)
+    event_teams = (session_toy_function.query(EventTeam)
+                                       .filter_by(event=event)
+                                       .all())
+    for et in event_teams:
+        assert et.leaderboard_html
+        assert et.failed_leaderboard_html
+        assert et.new_leaderboard_html is None
+
 
 
 @pytest.mark.parametrize(
