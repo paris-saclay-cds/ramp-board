@@ -48,15 +48,6 @@ if __name__ == "__main__":
         platforms='any',
         packages=find_packages(),
         entry_points={
-            'console_scripts': [
-                'ramp_set_state='
-                'rampbkd.ramp_set_state:main',
-                'ramp_new_submissions='
-                'rampbkd.ramp_new_submissions:main',
-                'ramp_aws_train='
-                'rampbkd.aws.ramp_aws_train:main',
-                'ramp_aws_train_loop='
-                'rampbkd.aws.ramp_aws_train_loop:main',
-                'ramp_score_submission='
-                'rampbkd.ramp_score_submission:main'
-            ]})
+            'console_scripts': ['ramp-launch = rampbkd.cli:start']
+        }
+    )
