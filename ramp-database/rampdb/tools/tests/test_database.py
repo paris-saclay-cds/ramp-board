@@ -41,8 +41,7 @@ def session_scope_function(config):
             yield session
     finally:
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, Session = setup_db(config['sqlalchemy'])
-
+        db, _ = setup_db(config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 

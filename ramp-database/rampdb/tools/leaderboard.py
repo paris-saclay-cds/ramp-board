@@ -52,7 +52,6 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
         df_scores_bag.index = df_scores_bag.index.droplevel('n_bag')
         df_scores_bag = df_scores_bag.round(map_score_precision)
 
-        # if leaderboard_type == 'private':
         df_scores = get_scores(session, sub.id)
         df_scores = df_scores.round(map_score_precision)
 
