@@ -8,6 +8,7 @@ from ramputils import read_config
 from .utils import session_scope
 
 from .tools import event as event_module
+from .tools import leaderboard as leaderboard_module
 from .tools import submission as submission_module
 from .tools import team as team_module
 from .tools import user as user_module
@@ -164,6 +165,39 @@ def set_submission_state(config, submission_id, state):
     with session_scope(config['sqlalchemy']) as session:
         submission_module.set_submission_state(session, submission_id, state)
 
+
+@main.command()
+@click.option("--config", default='config.yml',
+              help='Configuration file in YAML format')
+@click.option("--event", help='The event name')
+def update_leaderboards(config, event):
+    """Update the leaderboards for a given event."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        leaderboard_module.update_leaderboards(session, event)
+
+
+@main.command()
+@click.option("--config", default='config.yml',
+              help='Configuration file in YAML format')
+@click.option("--event", help='The event name')
+@click.option("--user", help='The user name')
+def update_user_leaderboards(config, event, user):
+    """Update the user leaderboards for a given event."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        leaderboard_module.update_user_leaderboards(session, event, user)
+
+
+@main.command()
+@click.option("--config", default='config.yml',
+              help='Configuration file in YAML format')
+@click.option("--event", help='The event name')
+def update_all_users_leaderboards(config, event):
+    """Update the leaderboards of all users for a given event."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        leaderboard_module.update_all_user_leaderboards(session, event)
 
 
 def start():

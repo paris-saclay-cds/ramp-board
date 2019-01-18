@@ -151,3 +151,31 @@ def test_set_submission_state():
                                   '--state', 'scored'],
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output
+
+
+def test_update_leaderboards():
+    runner = CliRunner()
+    result = runner.invoke(main, ['update-leaderboards',
+                                  '--config', path_config_example(),
+                                  '--event', 'iris_test'],
+                           catch_exceptions=False)
+    assert result.exit_code == 0, result.output
+
+
+def test_update_user_leaderboards():
+    runner = CliRunner()
+    result = runner.invoke(main, ['update-user-leaderboards',
+                                  '--config', path_config_example(),
+                                  '--event', 'iris_test',
+                                  '--user', 'glemaitre'],
+                           catch_exceptions=False)
+    assert result.exit_code == 0, result.output
+
+
+def test_update_all_user_leaderboards():
+    runner = CliRunner()
+    result = runner.invoke(main, ['update-all-users-leaderboards',
+                                  '--config', path_config_example(),
+                                  '--event', 'iris_test'],
+                           catch_exceptions=False)
+    assert result.exit_code == 0, result.output
