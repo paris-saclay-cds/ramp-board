@@ -1,6 +1,5 @@
-
+import os
 import shutil
-import subprocess
 
 from click.testing import CliRunner
 
@@ -10,17 +9,14 @@ from ramputils.testing import path_config_example
 
 from rampdb.utils import setup_db
 from rampdb.model import Model
-from rampdb.testing import create_test_db
+from rampdb.testing import create_toy_db
 
 from rampdb.cli import main
 
 
 def setup_module(module):
     config = read_config(path_config_example())
-    create_test_db(config)
-    subprocess.check_call(["ramp-utils",
-                           "deploy-ramp-event",
-                           "--config", path_config_example()])
+    create_toy_db(config)
 
 
 def teardown_module(module):
@@ -49,16 +45,6 @@ def test_approve_user():
     result = runner.invoke(main, ['approve-user',
                                   '--config', path_config_example(),
                                   '--login', 'glemaitre'],
-                           catch_exceptions=False)
-    assert result.exit_code == 0, result.output
-
-
-def test_sign_up_team():
-    runner = CliRunner()
-    result = runner.invoke(main, ['sign-up-team',
-                                  '--config', path_config_example(),
-                                  '--event', 'iris_test',
-                                  '--team', 'glemaitre'],
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output
 
@@ -93,11 +79,75 @@ def test_add_event():
     assert result.exit_code == 0, result.output
 
 
+def test_sign_up_team():
+    runner = CliRunner()
+    result = runner.invoke(main, ['sign-up-team',
+                                  '--config', path_config_example(),
+                                  '--event', 'iris_test',
+                                  '--team', 'glemaitre'],
+                           catch_exceptions=False)
+    assert result.exit_code == 0, result.output
+
+
+
 def test_add_event_admin():
     runner = CliRunner()
     result = runner.invoke(main, ['add-event-admin',
                                   '--config', path_config_example(),
                                   '--event', 'iris_test',
                                   '--user', 'glemaitre'],
+                           catch_exceptions=False)
+    assert result.exit_code == 0, result.output
+
+
+def test_add_submission():
+    ramp_config = generate_ramp_config(path_config_example())
+    submission_name = 'new_submission'
+    submission_path = os.path.join(ramp_config['ramp_kit_submissions_dir'],
+                                   submission_name)
+    shutil.copytree(
+        os.path.join(ramp_config['ramp_kit_submissions_dir'],
+                     'random_forest_10_10'),
+        submission_path
+    )
+    runner = CliRunner()
+    result = runner.invoke(main, ['add-submission',
+                                  '--config', path_config_example(),
+                                  '--event', 'iris_test',
+                                  '--team', 'glemaitre',
+                                  '--submission', submission_name,
+                                  '--path', submission_path],
+                           catch_exceptions=False)
+    assert result.exit_code == 0, result.output
+
+
+def test_get_submission_by_state():
+    runner = CliRunner()
+    result = runner.invoke(main, ['get-submissions-by-state',
+                                  '--config', path_config_example(),
+                                  '--event', 'boston_housing_test',
+                                  '--state', 'new'],
+                           catch_exceptions=False)
+    assert result.exit_code == 0, result.output
+    assert "ID" in result.output
+    assert "name" in result.output
+    assert "team" in result.output
+    assert "path" in result.output
+    assert "state" in result.output
+    result = runner.invoke(main, ['get-submissions-by-state',
+                                  '--config', path_config_example(),
+                                  '--event', 'iris_test',
+                                  '--state', 'scored'],
+                           catch_exceptions=False)
+    assert result.exit_code == 0, result.output
+    assert 'No submission for this event and this state' in result.output
+
+
+def test_set_submission_state():
+    runner = CliRunner()
+    result = runner.invoke(main, ['set-submission-state',
+                                  '--config', path_config_example(),
+                                  '--submission-id', 3,
+                                  '--state', 'scored'],
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output

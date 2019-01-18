@@ -1,10 +1,14 @@
+from collections import defaultdict
+
 import click
+import pandas as pd
 
 from ramputils import read_config
 
 from .utils import session_scope
 
 from .tools import event as event_module
+from .tools import submission as submission_module
 from .tools import team as team_module
 from .tools import user as user_module
 
@@ -106,6 +110,60 @@ def add_event_admin(config, event, user):
     config = read_config(config)
     with session_scope(config['sqlalchemy']) as session:
         event_module.add_event_admin(session, event, user)
+
+
+@main.command()
+@click.option("--config", default='config.yml',
+              help='Configuration file in YAML format')
+@click.option("--event", help='Name of the event')
+@click.option("--team", help='Name of the team')
+@click.option("--submission", help='Name of the submission')
+@click.option("--path", help='Path to the submission')
+def add_submission(config, event, team, submission, path):
+    """Add a submission to the database."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        submission_module.add_submission(session, event, team, submission,
+                                         path)
+
+
+@main.command()
+@click.option("--config", default='config.yml',
+              help='Configuration file in YAML format')
+@click.option("--event", help='Name of the event')
+@click.option("--state", help='The state of the submissions to display')
+def get_submissions_by_state(config, event, state):
+    """Display the list of submission for an event in a particular state."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        submissions = submission_module.get_submissions(session, event, state)
+        if submissions:
+            data = defaultdict(list)
+            for sub_info in submissions:
+                sub = submission_module.get_submission_by_id(
+                    session, sub_info[0]
+                )
+                data['ID'].append(sub.id)
+                data['name'].append(sub.name)
+                data['team'].append(sub.team)
+                data['path'].append(sub.path)
+                data['state'].append(sub.state)
+            click.echo(pd.DataFrame(data).set_index('ID'))
+        else:
+            click.echo('No submission for this event and this state')
+
+
+@main.command()
+@click.option("--config", default='config.yml',
+              help='Configuration file in YAML format')
+@click.option("--submission-id", help='The submission ID')
+@click.option("--state", help='The state to affect to the submission')
+def set_submission_state(config, submission_id, state):
+    """Set the state of a submission."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        submission_module.set_submission_state(session, submission_id, state)
+
 
 
 def start():
