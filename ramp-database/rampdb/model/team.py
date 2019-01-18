@@ -59,15 +59,15 @@ class Team(Model):
     admin = relationship('User', backref=backref('admined_teams'))
 
     # initiator asks for merge, acceptor accepts
-    initiator_id = Column(
-        Integer, ForeignKey('teams.id'), default=None)
+    initiator_id = Column(Integer, ForeignKey('teams.id'), default=None)
     initiator = relationship(
-        'Team', primaryjoin=('Team.initiator_id == Team.id'), uselist=False)
+        'Team', primaryjoin=('Team.initiator_id == Team.id'), uselist=False
+    )
 
-    acceptor_id = Column(
-        Integer, ForeignKey('teams.id'), default=None)
+    acceptor_id = Column(Integer, ForeignKey('teams.id'), default=None)
     acceptor = relationship(
-        'Team', primaryjoin=('Team.acceptor_id == Team.id'), uselist=False)
+        'Team', primaryjoin=('Team.acceptor_id == Team.id'), uselist=False
+    )
 
     creation_timestamp = Column(DateTime, nullable=False)
 

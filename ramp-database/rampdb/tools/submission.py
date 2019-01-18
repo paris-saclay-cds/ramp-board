@@ -18,6 +18,8 @@ from ..model import Submission
 from ..model import SubmissionFile
 from ..model import SubmissionFileTypeExtension
 from ..model import SubmissionOnCVFold
+from ..model import SubmissionSimilarity
+from ..model import UserInteraction
 
 from ._query import select_event_by_name
 from ._query import select_event_team_by_name
@@ -34,7 +36,6 @@ logger = logging.getLogger('RAMP-DATABASE')
 
 # Add functions: add information to the database
 # TODO: move the queries in "_query"
-# TODO: there is nothing regarding leaderboard update
 def add_submission(session, event_name, team_name, submission_name,
                    submission_path):
     """Create a submission in the database and returns an handle.
@@ -50,7 +51,9 @@ def add_submission(session, event_name, team_name, submission_name,
     submission_name : str
         The name to give to the current submission.
     submission_path : str
-        The path of the files associated to the current submission.
+        The path of the files associated to the current submission. It will
+        corresponds to the key `ramp_kit_subissions_dir` of the dictionary
+        created with :func:`ramputils.generate_ramp_config`.
 
     Returns
     -------
@@ -86,8 +89,9 @@ def add_submission(session, event_name, team_name, submission_name,
                     'You need to wait {} more seconds until next submission'
                     .format(awaiting_time))
 
-        submission = Submission(name=submission_name, event_team=event_team,
-                                session=session)
+        submission = Submission(
+            name=submission_name, event_team=event_team, session=session
+        )
         for cv_fold in event.cv_folds:
             submission_on_cv_fold = SubmissionOnCVFold(submission=submission,
                                                        cv_fold=cv_fold)
@@ -121,8 +125,8 @@ def add_submission(session, event_name, team_name, submission_name,
         try:
             desposited_types, deposited_extensions = zip(
                 *[(filename, extension)
-                for filename, extension in files_type_extension
-                if filename == workflow_element.name]
+                  for filename, extension in files_type_extension
+                  if filename == workflow_element.name]
             )
         except ValueError as e:
             session.rollback()
@@ -176,11 +180,41 @@ def add_submission(session, event_name, team_name, submission_name,
     event_team.last_submission_name = submission_name
     session.commit()
 
-    # TODO: test missing there for those update
-    # TODO: add those functions back
-    # update_leaderboards(event_name)
-    # update_user_leaderboards(event_name, team.name)
+    from .leaderboard import update_leaderboards
+    from .leaderboard import update_user_leaderboards
+    update_leaderboards(session, event_name)
+    update_user_leaderboards(session, event_name, team.name)
     return submission
+
+
+def add_submission_similarity(session, credit_type, user, source_submission,
+                              target_submission, similarity, timestamp):
+    """Add submission similarity entry.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    credit_type : {'target_credit', 'source_credit', 'thirdparty_credit'}
+        The type of credit to create.
+    user : :class:`rampdb.model.User`
+        The user which adding credit.
+    source_submission : :class:`rampdb.model.Submission`
+        The submission inspiring the target submission.
+    target_submission : :class:`rampdb.model.Submission`
+        The submission which is being submitted by the ``user``.
+    similarity : float
+        The similarity between the two submissions.
+    timestamp : datetime
+        The date and time of the creation of the similarity.
+    """
+    submission_similarity = SubmissionSimilarity(
+        type=credit_type, user=user, source_submission=source_submission,
+        target_submission=target_submission, similarity=similarity,
+        timestamp=timestamp
+    )
+    session.add(submission_similarity)
+    session.commit()
 
 
 # Getter functions: get information from the database
@@ -400,6 +434,39 @@ def get_scores(session, submission_id):
     return scores
 
 
+def get_bagged_scores(session, submission_id):
+    """Get the bagged scores for each fold of a submission.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submission_id : int
+        The id of the submission.
+
+    Returns
+    -------
+    bagged_scores : pd.DataFrame
+        A pandas dataframe containing the bagged scores.
+    """
+    submission = select_submission_by_id(session, submission_id)
+    bagged_scores = {}
+    for step in ('valid', 'test'):
+        score_dict = {}
+        for score in submission.scores:
+            score_all_bags = getattr(score, '{}_score_cv_bags'.format(step))
+            if score_all_bags is None:
+                continue
+            score_dict[score.score_name] = \
+                {n: sc for n, sc in enumerate(score_all_bags)}
+        bagged_scores[step] = score_dict
+    bagged_scores = pd.concat({step: pd.DataFrame(scores)
+                               for step, scores in bagged_scores.items()})
+    bagged_scores.columns = bagged_scores.columns.rename('scores')
+    bagged_scores.index = bagged_scores.index.rename(['step', 'n_bag'])
+    return bagged_scores
+
+
 def get_submission_max_ram(session, submission_id):
     """Get the max amount RAM used by a submission during processing.
 
@@ -456,6 +523,42 @@ def get_event_nb_folds(session, event_name):
     """
     event = select_event_by_name(session, event_name)
     return len(event.cv_folds)
+
+
+def get_source_submissions(session, submission_id):
+    """Get the submissions with which a user interacted.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submission_id : int
+        The id of the submission which is going to be submitted.
+
+    Returns
+    -------
+    submissions : list of :class`rampdb.model.Submission`
+        List of the submissions connected with the submission to be trained.
+    """
+    submission = select_submission_by_id(session, submission_id)
+    submissions = (session.query(Submission)
+                          .filter_by(event_team=submission.event_team)
+                          .all())
+    # there is for the moment a single admin
+    users = [submission.team.admin]
+    for user in users:
+        user_interactions = \
+            (session.query(UserInteraction)
+                    .filter_by(user=user, interaction='looking at submission')
+                    .all())
+        submissions += [user_interaction.submission
+                        for user_interaction in user_interactions
+                        if user_interaction.event == submission.event]
+    submissions = list(set(submissions))
+    submissions = [s for s in submissions
+                   if s.submission_timestamp < submission.submission_timestamp]
+    submissions.sort(key=lambda x: x.submission_timestamp, reverse=True)
+    return submissions
 
 
 # Setter functions: set information in the database
@@ -568,6 +671,38 @@ def set_scores(session, submission_id, path_predictions):
     session.commit()
 
 
+def set_bagged_scores(session, submission_id, path_predictions):
+    """Set the bagged scores in the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submission_id : int
+        The id of the submission.
+    path_predictions : str
+        The path where the results files are located.
+    """
+    submission = select_submission_by_id(session, submission_id)
+    df = pd.read_csv(os.path.join(path_predictions, 'bagged_scores.csv'),
+                     index_col=[0, 1])
+    df_steps = df.index.get_level_values('step').unique().tolist()
+    for score in submission.scores:
+        for step in ('valid', 'test'):
+            highest_n_bag = df.index.get_level_values('n_bag').max()
+            if step in df_steps:
+                score_last_bag = df.loc[(step, highest_n_bag),
+                                        score.score_name]
+                score_all_bags = (df.loc[(step, slice(None)), score.score_name]
+                                    .tolist())
+            else:
+                score_last_bag = float(score.event_score_type.worst)
+                score_all_bags = None
+            setattr(score, '{}_score_cv_bag'.format(step), score_last_bag)
+            setattr(score, '{}_score_cv_bags'.format(step), score_all_bags)
+    session.commit()
+
+
 def set_submission_max_ram(session, submission_id, max_ram_mb):
     """Set the max amount RAM used by a submission during processing.
 
@@ -624,7 +759,7 @@ def score_submission(session, submission_id):
     submission = select_submission_by_id(session, submission_id)
     if submission.state != 'tested':
         raise ValueError('Submission state must be "tested"'
-                            ' to score, not "{}"'.format(submission.state))
+                         ' to score, not "{}"'.format(submission.state))
 
     # We are conservative:
     # only score if all stages (train, test, validation)
@@ -662,8 +797,7 @@ def score_submission(session, submission_id):
     session.commit()
 
 
-def submit_starting_kits(session, event_name, team_name, path_submission,
-                         sandbox_name):
+def submit_starting_kits(session, event_name, team_name, path_submission):
     """Submit all starting kits for a given event.
 
     Some kits contain several starting kits. This function allows to submit
@@ -678,9 +812,9 @@ def submit_starting_kits(session, event_name, team_name, path_submission,
     team_name : str
         The name of the team.
     path_submission : str
-        The path of the files associated to the current submission.
-    sandbox_name : str
-        The name of the sandbox submission.
+        The path of the files associated to the current submission. It will
+        corresponds to the key `ramp_kit_submissions_dir` of the dictionary
+        created with :func:`ramputils.generate_ramp_config`.
     """
     event = select_event_by_name(session, event_name=event_name)
     submission_names = os.listdir(path_submission)
@@ -692,7 +826,7 @@ def submit_starting_kits(session, event_name, team_name, path_submission,
         # one of the starting kit is usually used a sandbox and we need to
         # change the name to not have any duplicate
         submission_name = (submission_name
-                           if submission_name != sandbox_name
+                           if submission_name != event.ramp_sandbox_name
                            else submission_name + '_test')
         submission = add_submission(session, event_name, team_name,
                                     submission_name, from_submission_path)

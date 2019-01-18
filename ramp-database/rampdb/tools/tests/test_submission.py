@@ -1,3 +1,4 @@
+import datetime
 import os
 import shutil
 
@@ -17,9 +18,11 @@ from rampdb.exceptions import MissingSubmissionFileError
 from rampdb.exceptions import MissingExtensionError
 from rampdb.exceptions import TooEarlySubmissionError
 from rampdb.exceptions import UnknownStateError
+
 from rampdb.model import Event
 from rampdb.model import Model
 from rampdb.model import Submission
+from rampdb.model import SubmissionSimilarity
 from rampdb.testing import add_events
 from rampdb.testing import add_problems
 from rampdb.testing import add_users
@@ -29,11 +32,17 @@ from rampdb.testing import sign_up_teams_to_events
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
 
-from rampdb.tools.submission import add_submission
+from rampdb.tools.user import add_user_interaction
+from rampdb.tools.user import get_user_by_name
 
+from rampdb.tools.submission import add_submission
+from rampdb.tools.submission import add_submission_similarity
+
+from rampdb.tools.submission import get_bagged_scores
 from rampdb.tools.submission import get_event_nb_folds
 from rampdb.tools.submission import get_predictions
 from rampdb.tools.submission import get_scores
+from rampdb.tools.submission import get_source_submissions
 from rampdb.tools.submission import get_submission_by_id
 from rampdb.tools.submission import get_submission_by_name
 from rampdb.tools.submission import get_submission_state
@@ -42,6 +51,7 @@ from rampdb.tools.submission import get_submission_max_ram
 from rampdb.tools.submission import get_submissions
 from rampdb.tools.submission import get_time
 
+from rampdb.tools.submission import set_bagged_scores
 from rampdb.tools.submission import set_predictions
 from rampdb.tools.submission import set_scores
 from rampdb.tools.submission import set_submission_error_msg
@@ -73,10 +83,7 @@ def base_db(config):
             yield session
     finally:
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, Session = setup_db(config['sqlalchemy'])
-        with db.connect() as conn:
-            session = Session(bind=conn)
-            session.close()
+        db, _ = setup_db(config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
@@ -84,8 +91,8 @@ def _change_state_db(session):
     # change the state of one of the submission in the iris event
     submission_id = 1
     sub = (session.query(Submission)
-                    .filter(Submission.id == submission_id)
-                    .first())
+                  .filter(Submission.id == submission_id)
+                  .first())
     sub.set_state('trained')
     session.commit()
 
@@ -99,10 +106,7 @@ def session_scope_module(config):
             yield session
     finally:
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, Session = setup_db(config['sqlalchemy'])
-        with db.connect() as conn:
-            session = Session(bind=conn)
-            session.close()
+        db, _ = setup_db(config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
@@ -110,8 +114,8 @@ def _setup_sign_up(session, config):
     # asking to sign up required a user, a problem, and an event.
     add_users(session)
     add_problems(session, config)
-    add_events(session)
-    sign_up_teams_to_events(session, config)
+    add_events(session, config)
+    sign_up_teams_to_events(session)
     return config['ramp']['event_name'], 'test_user'
 
 
@@ -195,7 +199,7 @@ def test_make_submission_resubmission(base_db, config):
     )
     # first submission
     add_submission(session, event_name, username, submission_name,
-                   path_submission)
+                   path_submission,)
     # mock that we scored the submission
     set_submission_state(session, 5, 'scored')
     # second submission
@@ -261,8 +265,7 @@ def test_submit_starting_kits(base_db, config):
     submit_starting_kits(session, event_name, username,
                          os.path.join(ramp_config['ramp_kits_dir'],
                                       ramp_config['event'],
-                                      config['ramp']['submissions_dir']),
-                         config['ramp']['sandbox_dir'])
+                                      config['ramp']['submissions_dir']))
 
     submissions = get_submissions(session, event_name, None)
     submissions_id = [sub[0] for sub in submissions]
@@ -327,7 +330,8 @@ def test_get_submission_state(session_scope_module, submission_id, state):
 def test_set_submission_state(session_scope_module):
     submission_id = 2
     set_submission_state(session_scope_module, submission_id, 'trained')
-    assert get_submission_state(session_scope_module, submission_id) == 'trained'
+    state = get_submission_state(session_scope_module, submission_id)
+    assert state == 'trained'
 
 
 def test_set_submission_state_unknown_state(session_scope_module):
@@ -343,7 +347,7 @@ def test_check_time(session_scope_module):
     submission_time = get_time(session_scope_module, submission_id)
     expected_df = pd.DataFrame(
         {'fold': [0, 1],
-         'train' : [0.032130, 0.002414],
+         'train': [0.032130, 0.002414],
          'valid': [0.000583648681640625, 0.000548362731933594],
          'test': [0.000515460968017578, 0.000481128692626953]}
     ).set_index('fold')
@@ -366,6 +370,26 @@ def test_check_scores(session_scope_module):
          'f1_70': [0.333333, 0.33333, 0.666667, 0.33333, 0.33333, 0.666667]},
         index=multi_index
     )
+    assert_frame_equal(scores, expected_df, check_less_precise=True)
+
+
+def test_check_bagged_scores(session_scope_module):
+    # check both set_bagged_scores and get_bagged_scores
+    submission_id = 1
+    path_results = os.path.join(HERE, 'data', 'iris_predictions')
+    set_bagged_scores(session_scope_module, submission_id, path_results)
+    scores = get_bagged_scores(session_scope_module, submission_id)
+    multi_index = pd.MultiIndex(levels=[['test', 'valid'], [0, 1]],
+                                labels=[[0, 0, 1, 1], [0, 1, 0, 1]],
+                                names=['step', 'n_bag'])
+    expected_df = pd.DataFrame(
+        {'acc': [0.70833333333, 0.70833333333, 0.65, 0.6486486486486],
+         'error': [0.29166666667, 0.29166666667, 0.35, 0.35135135135],
+         'nll': [0.80029268745, 0.66183018275, 0.52166532641, 0.58510855181],
+         'f1_70': [0.66666666667, 0.33333333333, 0.33333333333, 0.33333333333]},
+        index=multi_index
+    )
+    expected_df.columns = expected_df.columns.rename('scores')
     assert_frame_equal(scores, expected_df, check_less_precise=True)
 
 
@@ -429,3 +453,48 @@ def test_score_submission(session_scope_module):
     score_submission(session_scope_module, submission_id)
     scores = get_scores(session_scope_module, submission_id)
     assert_frame_equal(scores, expected_df, check_less_precise=True)
+
+
+def test_get_source_submission(session_scope_module):
+    # since we do not record interaction without the front-end, we should get
+    # an empty list
+    submission_id = 1
+    submissions = get_source_submissions(session_scope_module, submission_id)
+    assert not submissions
+    # we simulate some user interaction
+    # case 1: the interaction come after the file to be submitted so there
+    # is no submission to show
+    submission = get_submission_by_id(session_scope_module, submission_id)
+    event = submission.event_team.event
+    user = submission.event_team.team.admin
+    add_user_interaction(
+        session_scope_module, user=user, interaction='looking at submission',
+        event=event, submission=get_submission_by_id(session_scope_module, 2)
+    )
+    submissions = get_source_submissions(session_scope_module, submission_id)
+    assert not submissions
+    # case 2: we postpone the time of the submission to simulate that we
+    # already check other submission.
+    submission.submission_timestamp += datetime.timedelta(days=1)
+    submissions = get_source_submissions(session_scope_module, submission_id)
+    assert submissions
+    assert all([sub.event_team.event.name == event.name
+                for sub in submissions])
+
+
+def test_add_submission_similarity(session_scope_module):
+    user = get_user_by_name(session_scope_module, 'test_user')
+    source_submission = get_submission_by_id(session_scope_module, 1)
+    target_submission = get_submission_by_id(session_scope_module, 2)
+    add_submission_similarity(session_scope_module, 'target_credit', user,
+                              source_submission, target_submission, 0.5,
+                              datetime.datetime.utcnow())
+    similarity = session_scope_module.query(SubmissionSimilarity).all()
+    assert len(similarity) == 1
+    similarity = similarity[0]
+    assert similarity.type == 'target_credit'
+    assert similarity.user == user
+    assert similarity.source_submission == source_submission
+    assert similarity.target_submission == target_submission
+    assert similarity.similarity == pytest.approx(0.5)
+    assert isinstance(similarity.timestamp, datetime.datetime)

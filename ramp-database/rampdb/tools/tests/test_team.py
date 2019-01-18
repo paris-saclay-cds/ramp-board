@@ -42,14 +42,11 @@ def session_scope_function(config):
         with session_scope(config['sqlalchemy']) as session:
             add_users(session)
             add_problems(session, config['ramp'])
-            add_events(session)
+            add_events(session, config['ramp'])
             yield session
     finally:
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, Session = setup_db(config['sqlalchemy'])
-        with db.connect() as conn:
-            session = Session(bind=conn)
-            session.close()
+        db, _ = setup_db(config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
@@ -71,12 +68,10 @@ def test_ask_sign_up_team(session_scope_function):
     assert event_team.approved is False
 
 
-def test_sign_up_team(session_scope_function, config):
+def test_sign_up_team(session_scope_function):
     event_name, username = 'iris_test', 'test_user'
-    ramp_config = generate_ramp_config(config)
 
-    sign_up_team(session_scope_function, event_name, username,
-                 ramp_config['ramp_sandbox_dir'])
+    sign_up_team(session_scope_function, event_name, username)
     event_team = session_scope_function.query(EventTeam).all()
     assert len(event_team) == 1
     event_team = event_team[0]

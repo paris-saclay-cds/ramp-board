@@ -49,10 +49,10 @@ class CVFold(Model):
     train_is = Column(NumpyType, nullable=False)
     test_is = Column(NumpyType, nullable=False)
 
-    event_id = Column(
-        Integer, ForeignKey('events.id'), nullable=False)
-    event = relationship('Event', backref=backref(
-        'cv_folds', cascade='all, delete-orphan'))
+    event_id = Column(Integer, ForeignKey('events.id'), nullable=False)
+    event = relationship('Event',
+                         backref=backref('cv_folds',
+                                         cascade='all, delete-orphan'))
 
     @staticmethod
     def _pretty_printing(array):

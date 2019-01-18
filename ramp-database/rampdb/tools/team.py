@@ -48,7 +48,7 @@ def ask_sign_up_team(session, event_name, team_name):
     return event, team, event_team
 
 
-def sign_up_team(session, event_name, team_name, path_sandbox_submission):
+def sign_up_team(session, event_name, team_name):
     """Register a team to a RAMP event and submit the starting kit.
 
     Parameters
@@ -59,12 +59,14 @@ def sign_up_team(session, event_name, team_name, path_sandbox_submission):
         The RAMP event name.
     team_name : str
         The name of the team.
-    path_sandbox_submission : str
-        Path to the sandbox submission.
     """
     event, team, event_team = ask_sign_up_team(session, event_name, team_name)
     # setup the sandbox
-    submission_name = os.path.basename(path_sandbox_submission)
+    path_sandbox_submission = os.path.join(event.problem.path_ramp_kits,
+                                           event.problem.name,
+                                           'submissions',
+                                           event.ramp_sandbox_name)
+    submission_name = event.ramp_sandbox_name
     submission = add_submission(session, event_name, team_name,
                                 submission_name, path_sandbox_submission)
     if os.path.exists(submission.path):
@@ -75,11 +77,25 @@ def sign_up_team(session, event_name, team_name, path_sandbox_submission):
                      dst=os.path.join(submission.path, filename))
     logger.info('Copying the submission files into the deployment folder')
     logger.info('Adding {}'.format(submission))
-    # TODO: be sure that we send an email
-    # for user in get_team_members(team):
-    #     send_mail(to=user.email,
-    #               subject='signed up for {} as team {}'.format(
-    #                   event_name, team_name),
-    #               body='')
     event_team.approved = True
     session.commit()
+
+
+def get_event_team_by_name(session, event_name, user_name):
+    """Get the event/team given an event and a user.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The RAMP event name.
+    team_name : str
+        The name of the team.
+
+    Returns
+    -------
+    event_team : :class:`rampdb.model.EventTeam`
+        The event/team instance queried.
+    """
+    return select_event_team_by_name(session, event_name, user_name)

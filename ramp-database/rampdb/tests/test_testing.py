@@ -42,10 +42,7 @@ def session_scope_function(config):
             yield session
     finally:
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, Session = setup_db(config['sqlalchemy'])
-        with db.connect() as conn:
-            session = Session(bind=conn)
-            session.close()
+        db, _ = setup_db(config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
@@ -72,21 +69,21 @@ def test_add_problems(session_scope_function, config):
 
 def test_add_events(session_scope_function, config):
     add_problems(session_scope_function, config)
-    add_events(session_scope_function)
+    add_events(session_scope_function, config)
     with pytest.raises(ValueError):
-        add_events(session_scope_function)
+        add_events(session_scope_function, config)
 
 
 def test_sign_up_team_to_events(session_scope_function, config):
     add_users(session_scope_function)
     add_problems(session_scope_function, config)
-    add_events(session_scope_function)
-    sign_up_teams_to_events(session_scope_function, config)
+    add_events(session_scope_function, config)
+    sign_up_teams_to_events(session_scope_function)
 
 
 def test_submit_all_starting_kits(session_scope_function, config):
     add_users(session_scope_function)
     add_problems(session_scope_function, config)
-    add_events(session_scope_function)
-    sign_up_teams_to_events(session_scope_function, config)
+    add_events(session_scope_function, config)
+    sign_up_teams_to_events(session_scope_function)
     submit_all_starting_kits(session_scope_function, config)

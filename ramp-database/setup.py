@@ -15,6 +15,8 @@ MAINTAINER_EMAIL = 'boucaud.alexandre@gmail.com'
 URL = 'https://github.com/paris-saclay-cds/ramp-board'
 LICENSE = 'BSD (3-clause)'
 DOWNLOAD_URL = 'https://github.com/paris-saclay-cds/ramp-board'
+INSTALL_REQUIRES = ['click', 'gitpython', 'ipykernel', 'jupyter', 'numpy',
+                    'pandas', 'psycopg2', 'six', 'sqlalchemy']
 
 
 if __name__ == "__main__":
@@ -42,12 +44,10 @@ if __name__ == "__main__":
             'Operating System :: Unix',
             'Operating System :: MacOS',
         ],
-        install_requires=[
-            'numpy',
-            'pyyaml',
-            'sqlalchemy',
-            'psycopg2',
-        ],
+        install_requires=INSTALL_REQUIRES,
         platforms='any',
         packages=find_packages(),
-        )
+        entry_points={
+            'console_scripts': ['ramp-database = rampdb.cli:start']
+        }
+    )

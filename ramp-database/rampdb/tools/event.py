@@ -5,6 +5,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from ramputils.utils import import_module_from_source
 
+from ._query import select_event_admin_by_instance
 from ._query import select_event_by_name
 from ._query import select_extension_by_name
 from ._query import select_problem_by_name
@@ -13,14 +14,18 @@ from ._query import select_similarities_by_source
 from ._query import select_similarities_by_target
 from ._query import select_submission_by_id
 from ._query import select_submission_type_extension_by_extension
+from ._query import select_user_by_name
 from ._query import select_workflow_by_name
 from ._query import select_workflow_element_by_workflow_and_type
 from ._query import select_workflow_element_type_by_name
 
 from ..model import CVFold
 from ..model import Event
+from ..model import EventAdmin
 from ..model import EventScoreType
+from ..model import Keyword
 from ..model import Problem
+from ..model import ProblemKeyword
 from ..model import Workflow
 from ..model import WorkflowElement
 from ..model import WorkflowElementType
@@ -67,7 +72,6 @@ def delete_event(session, event_name):
     session.commit()
 
 
-# TODO: this function is only tested through delete_problem
 def delete_submission_similarity(session, submission_id):
     """Delete the submission similarity associated with a submission.
 
@@ -156,7 +160,7 @@ def add_workflow(session, workflow_object):
     session.commit()
 
 
-def add_problem(session, problem_name, kits_dir, force=False):
+def add_problem(session, problem_name, kits_dir, data_dir, force=False):
     """Add a RAMP problem to the database.
 
     Parameters
@@ -166,7 +170,13 @@ def add_problem(session, problem_name, kits_dir, force=False):
     problem_name : str
         The name of the problem to register in the database.
     kits_dir : str
-        The directory where the RAMP kits are located.
+        The directory where the RAMP kits are located. It will corresponds to
+        the key `ramp_kits_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
+    data_dir : str
+        The directory where the RAMP data are located. It will corresponds to
+        the key `ramp_data_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
     force : bool, default is False
         Whether to force add the problem. If ``force=False``, an error is
         raised if the problem was already in the database.
@@ -185,13 +195,15 @@ def add_problem(session, problem_name, kits_dir, force=False):
     problem_module = import_module_from_source(
         os.path.join(problem_kits_path, 'problem.py'), 'problem')
     add_workflow(session, problem_module.workflow)
-    problem = Problem(name=problem_name, session=session)
+    problem = Problem(name=problem_name, path_ramp_kits=kits_dir,
+                      path_ramp_data=data_dir, session=session)
     logger.info('Adding {}'.format(problem))
     session.add(problem)
     session.commit()
 
 
-def add_event(session, problem_name, event_name, event_title, is_public=False,
+def add_event(session, problem_name, event_name, event_title,
+              ramp_sandbox_name, ramp_submissions_path, is_public=False,
               force=False):
     """Add a RAMP event in the database.
 
@@ -210,6 +222,14 @@ def add_event(session, problem_name, event_name, event_title, is_public=False,
         The event name.
     event_title : str
         The even title.
+    ramp_sandbox_name : str
+        Name of the submission which will be considered the sandbox. It will
+        correspond to the key ``sandbox_name`` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
+    ramp_submissions_path : str
+        Path to the deployment RAMP submissions directory. It will corresponds
+        to the key `ramp_submissions_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
     is_public : bool, default is False
         Whether the event is made public or not.
     force : bool, default is False
@@ -229,7 +249,10 @@ def add_event(session, problem_name, event_name, event_title, is_public=False,
         delete_event(session, event_name)
 
     event = Event(name=event_name, problem_name=problem_name,
-                  event_title=event_title, session=session)
+                  event_title=event_title,
+                  ramp_sandbox_name=ramp_sandbox_name,
+                  path_ramp_submissions=ramp_submissions_path,
+                  session=session)
     event.is_public = is_public
     event.is_send_submitted_mails = False
     event.is_send_trained_mails = False
@@ -255,6 +278,100 @@ def add_event(session, problem_name, event_name, event_title, is_public=False,
     return event
 
 
+def add_event_admin(session, event_name, user_name):
+    """Add an administrator event.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The event name.
+    user_name : str
+        The user name.
+    """
+    event = select_event_by_name(session, event_name)
+    user = select_user_by_name(session, user_name)
+    event_admin = select_event_admin_by_instance(session, event, user)
+    if event_admin is None:
+        event_admin = EventAdmin(event=event, admin=user)
+        session.commit()
+
+
+def add_keyword(session, name, keyword_type, category=None, description=None,
+                force=False):
+    """Add a keyword to the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    name : str
+        The name of the keyword.
+    keyword_type : {'data_domain', 'data_science_theme'}
+        The type of keyword.
+    category : None or str, default is None
+        The category of the keyword.
+    description : None or str, default is None
+        The description of the keyword.
+    force : bool, default is False
+        Whether or not to overwrite the keyword if it already exists.
+    """
+    keyword = session.query(Keyword).filter_by(name=name).one_or_none()
+    if keyword is not None:
+        if not force:
+            raise ValueError(
+                'Attempting to update an existing keyword. Use "force=True"'
+                'to overwrite the keyword.'
+            )
+        keyword.type = keyword_type
+        keyword.category = category
+        keyword.description = description
+    else:
+        keyword = Keyword(name=name, type=keyword_type, category=category,
+                          description=description)
+        session.add(keyword)
+    session.commit()
+
+
+def add_problem_keyword(session, problem_name, keyword_name, description=None,
+                        force=False):
+    """Add relationship between a keyword and a problem.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    problem_name : str
+        The name of the problem.
+    keyword_name : str
+        The name of the keyword.
+    description : None or str, default is None
+        A particular description of the keyword of the particular problem.
+    force : bool, default is False
+        Whether or not to overwrite the relationship.
+    """
+    problem = select_problem_by_name(session, problem_name)
+    keyword = get_keyword_by_name(session, keyword_name)
+    problem_keyword = (session.query(ProblemKeyword)
+                              .filter_by(problem=problem, keyword=keyword)
+                              .one_or_none())
+    if problem_keyword is not None:
+        if not force:
+            raise ValueError(
+                'Attempting to update an existing problem-keyword '
+                'relationship. Use "force=True" if you want to overwrite the '
+                'relationship.'
+            )
+        problem_keyword.description = description
+    else:
+        problem_keyword = ProblemKeyword(
+            problem=problem, keyword=keyword, description=description
+        )
+        session.add(problem_keyword)
+    session.commit()
+
+
 # Getter functions: get information from the database
 def get_problem(session, problem_name):
     """Get problem from the database.
@@ -269,7 +386,8 @@ def get_problem(session, problem_name):
 
     Returns
     -------
-    problem : :class:`rampdb.model.Problem` or list of :class:`rampdb.model.Problem`
+    problem : :class:`rampdb.model.Problem` or list of \
+:class:`rampdb.model.Problem`
         The queried problem.
     """
     return select_problem_by_name(session, problem_name)
@@ -288,7 +406,8 @@ def get_workflow(session, workflow_name):
 
     Returns
     -------
-    workflow : :class:`rampdb.model.Workflow` or list of :class:`rampdb.model.Workflow`
+    workflow : :class:`rampdb.model.Workflow` or list of \
+:class:`rampdb.model.Workflow`
         The queried workflow.
     """
     return select_workflow_by_name(session, workflow_name)
@@ -311,3 +430,71 @@ def get_event(session, event_name):
         The queried problem.
     """
     return select_event_by_name(session, event_name)
+
+
+def get_event_admin(session, event_name, user_name):
+    """Get an administrator event.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The event name.
+    user_name : str
+        The user name.
+
+    Returns
+    -------
+    event_admin : :class:`rampdb.model.EventAdmin` or None
+        The event/admin instance queried.
+    """
+    event = select_event_by_name(session, event_name)
+    user = select_user_by_name(session, user_name)
+    return select_event_admin_by_instance(session, event, user)
+
+
+def get_keyword_by_name(session, name):
+    """Get the keyword filtering by there name
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    name : str or None
+        The name of the keyword. If None, all keywords will be returned.
+
+    Returns
+    -------
+    keyword : :class:`rampdb.model.Keyword` or  list of \
+:class:`ramp.model.Keyword`
+        The keyword which have been queried.
+    """
+    q = session.query(Keyword)
+    if name is None:
+        return q.all()
+    return q.filter_by(name=name).one_or_none()
+
+
+def get_problem_keyword_by_name(session, problem_name, keyword_name):
+    """Get a problem-keyword relationship given their names.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    problem_name : str
+        The name of the problem.
+    keyword_name : str
+        The name of the keyword.
+
+    Returns
+    -------
+    problem_keyword : :class:`rampdb.model.ProblemKeyword`
+        The problem-keyword relationship.
+    """
+    problem = select_problem_by_name(session, problem_name)
+    keyword = session.query(Keyword).filter_by(name=keyword_name).one_or_none()
+    return (session.query(ProblemKeyword)
+                   .filter_by(problem=problem, keyword=keyword)
+                   .one_or_none())

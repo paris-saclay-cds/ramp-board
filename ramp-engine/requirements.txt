@@ -1,5 +1,0 @@
-numpy
-pyyaml
-sqlalchemy
-psycopg2
-backports.tempfile  # to be removed when dropping Python 2

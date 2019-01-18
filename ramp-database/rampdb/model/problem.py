@@ -13,16 +13,7 @@ from ramputils.utils import import_module_from_source
 from ramputils.utils import encode_string
 
 from .base import Model
-from .base import get_deployment_path
 from .workflow import Workflow
-
-# TODO: This will be really wrong at some point.
-# TODO: We need to pass the configuration or the path to the data instead.
-DEPLOYMENT_PATH = get_deployment_path()
-RAMP_KITS_PATH = os.path.join(
-    DEPLOYMENT_PATH, os.getenv('RAMP_KITS_DIR', 'ramp-kits'))
-RAMP_DATA_PATH = os.path.join(
-    DEPLOYMENT_PATH, os.getenv('RAMP_DATA_DIR', 'ramp-data'))
 
 
 __all__ = [
@@ -40,6 +31,14 @@ class Problem(Model):
     ----------
     name : str
         The name of the problem.
+    path_ramp_kits : str
+        The path where the kits are located. It will corresponds to
+        the key `ramp_kits_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
+    path_ramp_data : str
+        The path where the data are located. It will corresponds to
+        the key `ramp_data_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
 
@@ -53,6 +52,10 @@ class Problem(Model):
         The ID of the associated workflow.
     workflow : :class:`rampdb.model.Worflow`
         The workflow instance.
+    path_ramp_kits : str
+        The path where the kits are located.
+    path_ramp_data : str
+        The path where the data are located.
     events : list of :class:`rampdb.model.Event`
         A back-reference to the event.
     keywords : list of :class:`rampdb.model.ProblemKeyword`
@@ -63,29 +66,31 @@ class Problem(Model):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, unique=True)
 
-    workflow_id = Column(
-        Integer, ForeignKey('workflows.id'), nullable=False)
-    workflow = relationship(
-        'Workflow', backref=backref('problems'))
+    workflow_id = Column(Integer, ForeignKey('workflows.id'), nullable=False)
+    workflow = relationship('Workflow', backref=backref('problems'))
 
-    def __init__(self, name, session=None):
+    # XXX: big change in the database
+    path_ramp_kits = Column(String, nullable=False, unique=False)
+    path_ramp_data = Column(String, nullable=False, unique=False)
+
+    def __init__(self, name, path_ramp_kits, path_ramp_data, session=None):
         self.name = name
+        self.path_ramp_kits = path_ramp_kits
+        self.path_ramp_data = path_ramp_data
         self.reset(session)
-        # to check if the module and all required fields are there
-        self.module
-        self.Predictions
-        self.workflow_object
 
     def __repr__(self):
         return 'Problem({})\n{}'.format(encode_string(self.name),
                                         self.workflow)
 
     def reset(self, session):
+        """Reset the workflow."""
         if session is not None:
             self.workflow = \
                 (session.query(Workflow)
-                        .filter(Workflow.name == type(self.module.workflow)
-                        .__name__).one())
+                        .filter(Workflow.name ==
+                                type(self.module.workflow).__name__)
+                        .one())
         else:
             self.workflow = \
                 (Workflow.query
@@ -96,7 +101,7 @@ class Problem(Model):
     def module(self):
         """module: Get the problem module."""
         return import_module_from_source(
-            os.path.join(RAMP_KITS_PATH, self.name, 'problem.py'),
+            os.path.join(self.path_ramp_kits, self.name, 'problem.py'),
             'problem'
         )
 
@@ -113,16 +118,16 @@ class Problem(Model):
 
     def get_train_data(self):
         """The training data."""
-        path = os.path.join(RAMP_DATA_PATH, self.name)
+        path = os.path.join(self.path_ramp_data, self.name)
         return self.module.get_train_data(path=path)
 
     def get_test_data(self):
         """The testing data."""
-        path = os.path.join(RAMP_DATA_PATH, self.name)
+        path = os.path.join(self.path_ramp_data, self.name)
         return self.module.get_test_data(path=path)
 
     def ground_truths_train(self):
-        """Predictions: The true labels for the training."""
+        """Predictions: the true labels for the training."""
         _, y_train = self.get_train_data()
         return self.Predictions(y_true=y_train)
 
@@ -165,10 +170,10 @@ class HistoricalContributivity(Model):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, nullable=False)
-    submission_id = Column(
-        Integer, ForeignKey('submissions.id'))
-    submission = relationship('Submission', backref=backref(
-        'historical_contributivitys', cascade='all, delete-orphan'))
+    submission_id = Column(Integer, ForeignKey('submissions.id'))
+    submission = relationship('Submission',
+                              backref=backref('historical_contributivitys',
+                                              cascade='all, delete-orphan'))
 
     contributivity = Column(Float, default=0.0)
     historical_contributivity = Column(Float, default=0.0)
@@ -226,17 +231,14 @@ class ProblemKeyword(Model):
     __tablename__ = 'problem_keywords'
 
     id = Column(Integer, primary_key=True)
-    # optional description of the keyword particular to a problem
     description = Column(String)
 
-    problem_id = Column(
-        Integer, ForeignKey('problems.id'), nullable=False)
-    problem = relationship(
-        'Problem', backref=backref(
-            'keywords', cascade='all, delete-orphan'))
+    problem_id = Column(Integer, ForeignKey('problems.id'), nullable=False)
+    problem = relationship('Problem',
+                           backref=backref('keywords',
+                                           cascade='all, delete-orphan'))
 
-    keyword_id = Column(
-        Integer, ForeignKey('keywords.id'), nullable=False)
-    keyword = relationship(
-        'Keyword', backref=backref(
-            'problems', cascade='all, delete-orphan'))
+    keyword_id = Column(Integer, ForeignKey('keywords.id'), nullable=False)
+    keyword = relationship('Keyword',
+                           backref=backref('problems',
+                                           cascade='all, delete-orphan'))

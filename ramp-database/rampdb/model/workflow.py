@@ -38,10 +38,10 @@ class WorkflowElementType(Model):
     name = Column(String, nullable=False, unique=True)
 
     # eg, code, text, data
-    type_id = Column(
-        Integer, ForeignKey('submission_file_types.id'), nullable=False)
-    type = relationship(
-        'SubmissionFileType', backref=backref('workflow_element_types'))
+    type_id = Column(Integer, ForeignKey('submission_file_types.id'),
+                     nullable=False)
+    type = relationship('SubmissionFileType',
+                        backref=backref('workflow_element_types'))
 
     def __repr__(self):
         return (
@@ -149,24 +149,20 @@ class WorkflowElement(Model):
     # refer to workflow_element_type.type.name
     name = Column(String, nullable=False)
 
-    workflow_id = Column(
-        Integer, ForeignKey('workflows.id'))
-    workflow = relationship(
-        'Workflow', backref=backref('elements'))
+    workflow_id = Column(Integer, ForeignKey('workflows.id'))
+    workflow = relationship('Workflow', backref=backref('elements'))
 
-    workflow_element_type_id = Column(
-        Integer, ForeignKey('workflow_element_types.id'),
-        nullable=False)
-    workflow_element_type = relationship(
-        'WorkflowElementType', backref=backref('workflows'))
+    workflow_element_type_id = Column(Integer,
+                                      ForeignKey('workflow_element_types.id'),
+                                      nullable=False)
+    workflow_element_type = relationship('WorkflowElementType',
+                                         backref=backref('workflows'))
 
     def __init__(self, workflow, workflow_element_type, name_in_workflow=None):
         self.workflow = workflow
         self.workflow_element_type = workflow_element_type
-        if name_in_workflow is None:
-            self.name = self.workflow_element_type.name
-        else:
-            self.name = name_in_workflow
+        self.name = (self.workflow_element_type.name
+                     if name_in_workflow is None else name_in_workflow)
 
     def __repr__(self):
         return 'Workflow({}): WorkflowElement({})'.format(self.workflow.name,

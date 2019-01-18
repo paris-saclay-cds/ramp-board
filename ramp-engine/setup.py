@@ -16,6 +16,7 @@ MAINTAINER_EMAIL = 'boucaud.alexandre@gmail.com'
 URL = 'https://github.com/paris-saclay-cds/ramp-backend'
 LICENSE = 'BSD (3-clause)'
 DOWNLOAD_URL = 'https://github.com/paris-saclay-cds/ramp-backend'
+INSTALL_REQUIRES = ['click', 'numpy', 'psycopg2', 'sqlalchemy', 'six']
 
 
 if __name__ == "__main__":
@@ -43,23 +44,10 @@ if __name__ == "__main__":
             'Operating System :: POSIX',
             'Operating System :: Unix',
             'Operating System :: MacOS'],
-        install_requires=[
-            'numpy',
-            'pyyaml',
-            'sqlalchemy',
-            'psycopg2'],
+        install_requires=INSTALL_REQUIRES,
         platforms='any',
         packages=find_packages(),
         entry_points={
-            'console_scripts': [
-                'ramp_set_state='
-                'rampbkd.ramp_set_state:main',
-                'ramp_new_submissions='
-                'rampbkd.ramp_new_submissions:main',
-                'ramp_aws_train='
-                'rampbkd.aws.ramp_aws_train:main',
-                'ramp_aws_train_loop='
-                'rampbkd.aws.ramp_aws_train_loop:main',
-                'ramp_score_submission='
-                'rampbkd.ramp_score_submission:main'
-            ]})
+            'console_scripts': ['ramp-launch = rampbkd.cli:start']
+        }
+    )

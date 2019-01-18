@@ -13,20 +13,22 @@ else:
     from Queue import Queue
     from Queue import LifoQueue
 
-from databoard import ramp_config
-# from databoard.db_tools import get_submissions
-from databoard.db_tools import get_submission_on_cv_folds
-from databoard.db_tools import update_all_user_leaderboards
-from databoard.db_tools import update_leaderboards
-from databoard.db_tools import update_submission_on_cv_fold
+# from databoard.db_tools import update_all_user_leaderboards
+# from databoard.db_tools import update_leaderboards
 
 from rampdb.tools.submission import get_submissions
+from rampdb.tools.submission import get_submission_by_id
 from rampdb.tools.submission import get_submission_state
 
+from rampdb.tools.submission import set_bagged_scores
 from rampdb.tools.submission import set_predictions
 from rampdb.tools.submission import set_time
 from rampdb.tools.submission import set_scores
+from rampdb.tools.submission import set_submission_error_msg
 from rampdb.tools.submission import set_submission_state
+
+from rampdb.tools.leaderboard import update_all_user_leaderboards
+from rampdb.tools.leaderboard import update_leaderboards
 
 from rampdb.utils import session_scope
 
@@ -34,7 +36,7 @@ from ramputils import generate_worker_config
 
 from .local import CondaEnvWorker
 
-logger = logging.getLogger('DISPATCHER')
+logger = logging.getLogger('RAMP-DISPATCHER')
 
 
 class Dispatcher(object):
@@ -90,6 +92,10 @@ class Dispatcher(object):
             logger.info('No new submissions fetch from the database')
             return
         for submission_id, submission_name, _ in submissions:
+            # do not train the sandbox submission
+            submission = get_submission_by_id(session, submission_id)
+            if not submission.is_not_sandbox:
+                continue
             # create the worker
             worker = self.worker(self._worker_config, submission_name)
             set_submission_state(session, submission_id, 'sent_to_training')
@@ -139,11 +145,12 @@ class Dispatcher(object):
                 time.sleep(0)
             else:
                 logger.info('Collecting results from worker {}'.format(worker))
-                returncode = worker.collect_results()
+                returncode, stderr = worker.collect_results()
                 set_submission_state(
                     session, submission_id,
                     'tested' if not returncode else 'training_error'
                 )
+                set_submission_error_msg(session, submission_id, stderr)
                 self._processed_submission_queue.put_nowait(
                     (submission_id, submission_name))
                 worker.teardown()
@@ -154,7 +161,9 @@ class Dispatcher(object):
             submission_id, submission_name = \
                 self._processed_submission_queue.get_nowait()
             if 'error' in get_submission_state(session, submission_id):
-                # do not make any update in case of failed submission
+                update_leaderboards(session, self._ramp_config['event_name'])
+                update_all_user_leaderboards(session,
+                                             self._ramp_config['event_name'])
                 logger.info('Skip update for {} due to failure during the '
                             'processing'.format(submission_name))
                 continue
@@ -166,10 +175,11 @@ class Dispatcher(object):
             set_predictions(session, submission_id, path_predictions)
             set_time(session, submission_id, path_predictions)
             set_scores(session, submission_id, path_predictions)
-            # TODO: test those two last functions
-            update_leaderboards(self._ramp_config['event_name'])
-            update_all_user_leaderboards(self._ramp_config['event_name'])
+            set_bagged_scores(session, submission_id, path_predictions)
             set_submission_state(session, submission_id, 'scored')
+            update_leaderboards(session, self._ramp_config['event_name'])
+            update_all_user_leaderboards(session,
+                                         self._ramp_config['event_name'])
 
     def launch(self):
         """Launch the dispatcher."""

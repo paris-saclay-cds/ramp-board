@@ -38,8 +38,17 @@ class Event(Model):
     event_title : str
         The title to give for the event (used in the frontend, can contain
         spaces).
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
+    ramp_sandbox_name : str
+        Name of the submission which will be considered the sandbox. It will
+        correspond to the key ``sandbox_name`` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
+    path_ramp_submissions : str
+        Path to the deployment RAMP submissions directory. It will corresponds
+        to the key ``ramp_submissions_dir`` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
+    session : None or :class:`sqlalchemy.orm.Session`, optional
+        The session used to perform some required queries. It is a required
+        argument when interacting with the database outside of Flask.
 
     Attributes
     ----------
@@ -99,6 +108,14 @@ class Event(Model):
         The public leaderboard of the competition in HTML.
     private_competition_leaderboard_html : str
         The private leaderboard of the competition in HTML.
+    path_ramp_kits : str
+        The path where the kits are located.
+    ramp_sandbox_name : str
+        Name of the submission which will be considered the sandbox.
+    path_ramp_submissions : str
+        Path to the deployment RAMP submissions directory. It will correspond
+        to the key `ramp_submissions_dir` of the dictionary created with
+        :func:`ramputils.generate_ramp_config`.
     score_types : list of :class:`rampdb.model.EventScoreType`
         A back-reference to the score type used in the event.
     event_admins : list of :class:`rampdb.model.EventAdmin`
@@ -114,10 +131,10 @@ class Event(Model):
     name = Column(String, nullable=False, unique=True)
     title = Column(String, nullable=False)
 
-    problem_id = Column(
-        Integer, ForeignKey('problems.id'), nullable=False)
-    problem = relationship('Problem', backref=backref(
-        'events', cascade='all, delete-orphan'))
+    problem_id = Column(Integer, ForeignKey('problems.id'), nullable=False)
+    problem = relationship('Problem',
+                           backref=backref('events',
+                                           cascade='all, delete-orphan'))
 
     max_members_per_team = Column(Integer, default=1)
     # max number of submissions in Caruana's ensemble
@@ -159,23 +176,26 @@ class Event(Model):
     public_competition_leaderboard_html = Column(String, default=None)
     private_competition_leaderboard_html = Column(String, default=None)
 
-    def __init__(self, problem_name, name, event_title, session=None):
+    # big change in the database
+    ramp_sandbox_name = Column(String, nullable=False, unique=False,
+                               default='starting-kit')
+    path_ramp_submissions = Column(String, nullable=False, unique=False)
+
+    def __init__(self, problem_name, name, event_title,
+                 ramp_sandbox_name, path_ramp_submissions, session=None):
         self.name = name
-        # to check if the module and all required fields are there
-        # db fields are later initialized by tools._set_table_attribute
-        self._session = session
-        if self._session is None:
+        self.ramp_sandbox_name = ramp_sandbox_name
+        self.path_ramp_submissions = path_ramp_submissions
+        if session is None:
             self.problem = Problem.query.filter_by(name=problem_name).one()
         else:
-            self.problem = (self._session.query(Problem)
-                                         .filter(Problem.name == problem_name)
-                                         .one())
+            self.problem = (session.query(Problem)
+                                   .filter(Problem.name == problem_name)
+                                   .one())
         self.title = event_title
-        self.Predictions
 
     def __repr__(self):
-        repr = 'Event({})'.format(self.name)
-        return repr
+        return 'Event({})'.format(self.name)
 
     def set_n_submissions(self):
         """Set the number of submissions for the current event by checking
@@ -204,6 +224,23 @@ class Event(Model):
                               .filter_by(event=self,
                                          name=self.official_score_name)
                               .one())
+
+    def get_official_score_type(self, session):
+        """Get the type of the default score used for the current event.
+
+        Parameters
+        ----------
+        session : :class:`sqlalchemy.orm.Session`
+            The session used to make the query.
+        Returns
+        -------
+        event_type_score : :class:`rampdb.model.EventTypeScore`
+            The default type score for the current event.
+        """
+        return (session.query(EventScoreType)
+                       .filter(EventScoreType.event == self)
+                       .filter(EventScoreType.name == self.official_score_name)
+                       .one())
 
     @property
     def official_score_function(self):
@@ -307,15 +344,14 @@ class EventScoreType(Model):
     # Can be renamed, default is the same as score_type.name
     name = Column(String, nullable=False)
 
-    event_id = Column(
-        Integer, ForeignKey('events.id'), nullable=False)
-    event = relationship('Event', backref=backref(
-        'score_types', cascade='all, delete-orphan'))
+    event_id = Column(Integer, ForeignKey('events.id'), nullable=False)
+    event = relationship('Event',
+                         backref=backref('score_types',
+                                         cascade='all, delete-orphan'))
 
-    score_type_id = Column(
-        Integer, ForeignKey('score_types.id'), nullable=False)
-    score_type = relationship(
-        'ScoreType', backref=backref('events'))
+    score_type_id = Column(Integer, ForeignKey('score_types.id'),
+                           nullable=False)
+    score_type = relationship('ScoreType', backref=backref('events'))
 
     # display precision in n_digits
     # default is the same as score_type.precision
@@ -332,12 +368,6 @@ class EventScoreType(Model):
         # score_type) wouldn't have to do a search each time.
         self.name = score_type_object.name
         self.precision = score_type_object.precision
-        self.score_type_object
-        self.score_function
-        self.is_lower_the_better
-        self.minimum
-        self.maximum
-        self.worst
 
     def __repr__(self):
         return '{}: {}'.format(self.name, self.event)
@@ -382,6 +412,14 @@ class EventAdmin(Model):
     This is a many-to-many relationship between Event and User to defined
     admins.
 
+    Parameters
+    ----------
+    event : :class:`rampdb.model.Event`
+        The event instance.
+    admin : :class:`rampdb.model.User`
+        The user instance.
+
+
     Attributes
     ----------
     id : int
@@ -399,15 +437,13 @@ class EventAdmin(Model):
 
     id = Column(Integer, primary_key=True)
 
-    event_id = Column(
-        Integer, ForeignKey('events.id'), nullable=False)
-    event = relationship('Event', backref=backref(
-        'event_admins', cascade='all, delete-orphan'))
+    event_id = Column(Integer, ForeignKey('events.id'), nullable=False)
+    event = relationship('Event',
+                         backref=backref('event_admins',
+                                         cascade='all, delete-orphan'))
 
-    admin_id = Column(
-        Integer, ForeignKey('users.id'), nullable=False)
-    admin = relationship(
-        'User', backref=backref('admined_events'))
+    admin_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    admin = relationship('User', backref=backref('admined_events'))
 
 
 class EventTeam(Model):
@@ -455,15 +491,13 @@ class EventTeam(Model):
 
     id = Column(Integer, primary_key=True)
 
-    event_id = Column(
-        Integer, ForeignKey('events.id'), nullable=False)
-    event = relationship('Event', backref=backref(
-        'event_teams', cascade='all, delete-orphan'))
+    event_id = Column(Integer, ForeignKey('events.id'), nullable=False)
+    event = relationship('Event',
+                         backref=backref('event_teams',
+                                         cascade='all, delete-orphan'))
 
-    team_id = Column(
-        Integer, ForeignKey('teams.id'), nullable=False)
-    team = relationship(
-        'Team', backref=backref('team_events'))
+    team_id = Column(Integer, ForeignKey('teams.id'), nullable=False)
+    team = relationship('Team', backref=backref('team_events'))
 
     is_active = Column(Boolean, default=True)
     last_submission_name = Column(String, default=None)

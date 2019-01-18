@@ -1,6 +1,7 @@
-import zlib
-import numpy as np
 import pickle
+import zlib
+
+import numpy as np
 
 from sqlalchemy import LargeBinary
 from sqlalchemy import TypeDecorator

@@ -207,7 +207,7 @@ user_interaction_type = Enum(
 # config file instead.
 class UserInteraction(Model):
     """UserInteraction table.
-    
+
     This class is used to record the interaction of a user with the frontend.
 
     Parameters
@@ -270,6 +270,8 @@ is None
         The submission file ID.
     submission_file : :class:`rampdb.model.SubmissionFile`
         The submission file instance.
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
     """
     __tablename__ = 'user_interactions'
 
@@ -307,7 +309,7 @@ is None
 
     def __init__(self, interaction=None, user=None, problem=None, event=None,
                  ip=None, note=None, submission=None, submission_file=None,
-                 diff=None, similarity=None):
+                 diff=None, similarity=None, session=None):
         self.timestamp = datetime.datetime.utcnow()
         self.interaction = interaction
         self.user = user
@@ -316,12 +318,16 @@ is None
             # There should always be an active user team, if not, throw an
             # exception
             # The current code works only if each user admins a single team.
-            self.event_team = EventTeam.query.filter_by(
-                event=event, team=user.admined_teams[0]).one_or_none()
-        if ip is None:
-            self.ip = os.getenv('REMOTE_ADDR')
-        else:
-            self.ip = ip
+            if session is None:
+                self.event_team = EventTeam.query.filter_by(
+                    event=event, team=user.admined_teams[0]).one_or_none()
+            else:
+                self.event_team = \
+                    (session.query(EventTeam)
+                            .filter(EventTeam.event == event)
+                            .filter(EventTeam.team == user.admined_teams[0])
+                            .one_or_none())
+        self.ip = ip
         self.note = note
         self.submission = submission
         self.submission_file = submission_file

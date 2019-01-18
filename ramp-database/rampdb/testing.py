@@ -16,9 +16,11 @@ from .tools.database import add_extension
 from .tools.database import add_submission_file_type
 from .tools.database import add_submission_file_type_extension
 from .tools.event import add_event
+from .tools.event import add_keyword
 from .tools.event import add_problem
+from .tools.event import add_problem_keyword
 from .tools.user import approve_user
-from .tools.user import create_user
+from .tools.user import add_user
 from .tools.team import sign_up_team
 from .tools.submission import submit_starting_kits
 
@@ -27,8 +29,10 @@ logger = logging.getLogger('RAMP-DATABASE')
 
 def create_test_db(config):
     """Create an empty test database and the setup the files for RAMP.
+
     Note: this will forcedly remove any existing content in the deployment
     directory.
+
     Parameters
     ----------
     config : dict
@@ -73,9 +77,19 @@ def setup_toy_db(session, config):
     """
     add_users(session)
     add_problems(session, config)
-    add_events(session)
-    sign_up_teams_to_events(session, config)
+    add_events(session, config)
+    sign_up_teams_to_events(session)
     submit_all_starting_kits(session, config)
+
+
+def _delete_line_from_file(f_name, line_to_delete):
+    with open(f_name, "r+") as f:
+        lines = f.readlines()
+        f.seek(0)
+        for line in lines:
+            if line != line_to_delete:
+                f.write(line)
+        f.truncate()
 
 
 def setup_ramp_kits_ramp_data(config, problem_name):
@@ -92,21 +106,23 @@ def setup_ramp_kits_ramp_data(config, problem_name):
     problem_kits_path = os.path.join(ramp_config['ramp_kits_dir'],
                                      problem_name)
     ramp_kits_url = 'https://github.com/ramp-kits/{}.git'.format(problem_name)
-    ramp_kits_repo = Repo.clone_from(ramp_kits_url, problem_kits_path)
+    Repo.clone_from(ramp_kits_url, problem_kits_path)
 
     problem_data_path = os.path.join(ramp_config['ramp_data_dir'],
                                      problem_name)
     ramp_data_url = 'https://github.com/ramp-data/{}.git'.format(problem_name)
-    ramp_data_repo = Repo.clone_from(ramp_data_url, problem_data_path)
+    Repo.clone_from(ramp_data_url, problem_data_path)
 
     current_directory = os.getcwd()
     os.chdir(problem_data_path)
     subprocess.check_output(["python", "prepare_data.py"])
     os.chdir(problem_kits_path)
-    # TODO: I don't think that we need to convert the notebook here. It should
-    # not be used the related tests.
     subprocess.check_output(["jupyter", "nbconvert", "--to", "html",
                              "{}_starting_kit.ipynb".format(problem_name)])
+    # delete this line since it trigger in the front-end
+    # (try to open execute "custom.css".)
+    _delete_line_from_file("{}_starting_kit.html".format(problem_name),
+                           '<link rel="stylesheet" href="custom.css">\n')
     os.chdir(current_directory)
 
 
@@ -152,24 +168,25 @@ def add_users(session):
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
     """
-    create_user(
+    add_user(
         session, name='test_user', password='test',
         lastname='Test', firstname='User',
         email='test.user@gmail.com', access_level='asked')
     approve_user(session, 'test_user')
-    create_user(
+    add_user(
         session, name='test_user_2', password='test',
         lastname='Test_2', firstname='User_2',
-        email='test.user.2@gmail.com', access_level='asked')
+        email='test.user.2@gmail.com', access_level='user')
     approve_user(session, 'test_user_2')
-    create_user(
+    add_user(
         session, name='test_iris_admin', password='test',
         lastname='Admin', firstname='Iris',
-        email='iris.admin@gmail.com', access_level='user')
+        email='iris.admin@gmail.com', access_level='admin')
 
 
 def add_problems(session, config):
-    """Add dummy problems into the database.
+    """Add dummy problems into the database. In addition, we add couple of
+    keyword.
 
     Parameters
     ----------
@@ -183,31 +200,20 @@ def add_problems(session, config):
     for problem_name in problems:
         setup_ramp_kits_ramp_data(config, problem_name)
         add_problem(session, problem_name,
-                    ramp_config['ramp_kits_dir'])
+                    ramp_config['ramp_kits_dir'],
+                    ramp_config['ramp_data_dir'])
+        add_keyword(session, problem_name, 'data_domain',
+                    category='scientific data')
+        add_problem_keyword(session, problem_name=problem_name,
+                            keyword_name=problem_name)
+        add_keyword(session, problem_name + '_theme', 'data_science_theme',
+                    category='classification')
+        add_problem_keyword(session, problem_name=problem_name,
+                            keyword_name=problem_name + '_theme')
 
 
-def add_events(session):
+def add_events(session, config):
     """Add events in the database.
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-
-    Notes
-    -----
-    Be aware that :func:`add_problems` needs to be called before.
-    """
-    problems = ['iris', 'boston_housing']
-    for problem_name in problems:
-        event_name = '{}_test'.format(problem_name)
-        event_title = 'test event'
-        add_event(session, problem_name=problem_name, event_name=event_name,
-                  event_title=event_title, is_public=True, force=False)
-
-
-def sign_up_teams_to_events(session, config):
-    """Sign up user to the events in the database.
 
     Parameters
     ----------
@@ -218,21 +224,48 @@ def sign_up_teams_to_events(session, config):
 
     Notes
     -----
+    Be aware that :func:`add_problems` needs to be called before.
+    """
+    ramp_config = generate_ramp_config(config)
+    problems = ['iris', 'boston_housing']
+    for problem_name in problems:
+        event_name = '{}_test'.format(problem_name)
+        event_title = 'test event'
+        add_event(session, problem_name=problem_name, event_name=event_name,
+                  event_title=event_title,
+                  ramp_sandbox_name=ramp_config['sandbox_name'],
+                  ramp_submissions_path=ramp_config['ramp_submissions_dir'],
+                  is_public=True, force=False)
+
+
+def sign_up_teams_to_events(session):
+    """Sign up user to the events in the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+
+    Notes
+    -----
     Be aware that :func:`add_users`, :func:`add_problems`,
     and :func:`add_events` need to be called before.
     """
-    ramp_config = generate_ramp_config(config)
-    for event, event_name in zip(['iris', 'boston_housing'],
-                                 ['iris_test', 'boston_housing_test']):
-        path_sandbox = os.path.join(
-            ramp_config['ramp_kits_dir'], event,
-            'submissions', config['ramp']['sandbox_dir']
-        )
-        sign_up_team(session, event_name, 'test_user', path_sandbox)
-        sign_up_team(session, event_name, 'test_user_2', path_sandbox)
+    for event_name in ['iris_test', 'boston_housing_test']:
+        sign_up_team(session, event_name, 'test_user')
+        sign_up_team(session, event_name, 'test_user_2')
 
 
 def submit_all_starting_kits(session, config):
+    """Submit all starting kits.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    config : dict
+        Configuration dictionary containing the ramp information.
+    """
     ramp_config = generate_ramp_config(config)
     for event, event_name in zip(['iris', 'boston_housing'],
                                  ['iris_test', 'boston_housing_test']):
@@ -240,6 +273,6 @@ def submit_all_starting_kits(session, config):
             ramp_config['ramp_kits_dir'], event, 'submissions'
         )
         submit_starting_kits(session, event_name, 'test_user',
-                             path_submissions, config['ramp']['sandbox_dir'])
+                             path_submissions)
         submit_starting_kits(session, event_name, 'test_user_2',
-                             path_submissions, config['ramp']['sandbox_dir'])
+                             path_submissions)

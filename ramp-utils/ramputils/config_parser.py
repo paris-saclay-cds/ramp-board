@@ -4,7 +4,10 @@ import six
 
 REQUIRED_KEYS = {
     'sqlalchemy': {'drivername', 'username', 'password', 'host', 'port',
-                   'database'}
+                   'database'},
+    'ramp': {'event', 'event_name', 'event_title', 'event_is_public',
+             'deployment_dir', 'data_dir', 'kits_dir', 'submissions_dir',
+             'predictions_dir', 'logs_dir', 'sandbox_dir'}
 }
 
 

@@ -31,10 +31,7 @@ def database(config):
         yield
     finally:
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, Session = setup_db(config['sqlalchemy'])
-        with db.connect() as conn:
-            session = Session(bind=conn)
-            session.close()
+        db, _ = setup_db(config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 

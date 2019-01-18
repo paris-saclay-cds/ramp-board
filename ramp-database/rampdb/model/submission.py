@@ -20,8 +20,6 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from ramputils.utils import encode_string
 
 from .base import Model
-# TODO: we should not use this variable
-from .base import get_deployment_path
 from .event import EventScoreType
 from .datatype import NumpyType
 
@@ -139,10 +137,11 @@ class Submission(Model):
 
     id = Column(Integer, primary_key=True)
 
-    event_team_id = Column(
-        Integer, ForeignKey('event_teams.id'), nullable=False)
-    event_team = relationship('EventTeam', backref=backref(
-        'submissions', cascade='all, delete-orphan'))
+    event_team_id = Column(Integer, ForeignKey('event_teams.id'),
+                           nullable=False)
+    event_team = relationship('EventTeam',
+                              backref=backref('submissions',
+                                              cascade='all, delete-orphan'))
 
     name = Column(String(20, convert_unicode=True), nullable=False)
     hash_ = Column(String, nullable=False, index=True, unique=True)
@@ -192,12 +191,13 @@ class Submission(Model):
         self.hash_ = '{}'.format(sha_hasher.hexdigest())
         self.submission_timestamp = datetime.datetime.utcnow()
         if session is None:
-            event_score_types = EventScoreType.query.filter_by(
-                event=event_team.event)
+            event_score_types = \
+                (EventScoreType.query.filter_by(event=event_team.event))
         else:
             event_score_types = (session.query(EventScoreType)
                                         .filter(EventScoreType.event ==
-                                                event_team.event).all())
+                                                event_team.event)
+                                        .all())
         for event_score_type in event_score_types:
             submission_score = SubmissionScore(
                 submission=self, event_score_type=event_score_type)
@@ -259,33 +259,35 @@ class Submission(Model):
     @hybrid_property
     def is_not_sandbox(self):
         """bool: Whether the submission is not a sandbox."""
-        return self.name != os.getenv('RAMP_SANDBOX_DIR', 'starting_kit')
+        return self.name != self.event.ramp_sandbox_name
 
     @hybrid_property
     def is_error(self):
         """bool: Whether the training of the submission failed."""
-        return (self.state == 'training_error') |\
-            (self.state == 'checking_error') |\
-            (self.state == 'validating_error') |\
-            (self.state == 'testing_error')
+        return 'error' in self.state
+
+    @hybrid_property
+    def is_new(self):
+        """bool: Whether the submission is a new submission."""
+        return (self.state in ['new', 'training', 'sent_to_training'] and
+                self.is_not_sandbox)
 
     @hybrid_property
     def is_public_leaderboard(self):
         """bool: Whether the submission is part of the public leaderboard."""
-        return self.is_not_sandbox & self.is_valid & (self.state == 'scored')
+        return (self.is_not_sandbox and self.is_valid and
+                (self.state == 'scored'))
 
     @hybrid_property
     def is_private_leaderboard(self):
         """bool: Whether the submission is part of the private leaderboard."""
-        return self.is_not_sandbox & self.is_valid & (self.state == 'scored')
+        return (self.is_not_sandbox and self.is_valid and
+                (self.state == 'scored'))
 
     @property
     def path(self):
         """str: The path to the submission."""
-        return os.path.join(
-            get_deployment_path(),
-            'submissions',
-            'submission_' + '{0:09d}'.format(self.id))
+        return os.path.join(self.event.path_ramp_submissions, self.basename)
 
     @property
     def basename(self):
@@ -508,15 +510,16 @@ class SubmissionScore(Model):
     __tablename__ = 'submission_scores'
 
     id = Column(Integer, primary_key=True)
-    submission_id = Column(
-        Integer, ForeignKey('submissions.id'), nullable=False)
-    submission = relationship('Submission', backref=backref(
-        'scores', cascade='all, delete-orphan'))
+    submission_id = Column(Integer, ForeignKey('submissions.id'),
+                           nullable=False)
+    submission = relationship('Submission',
+                              backref=backref('scores',
+                                              cascade='all, delete-orphan'))
 
-    event_score_type_id = Column(
-        Integer, ForeignKey('event_score_types.id'), nullable=False)
-    event_score_type = relationship(
-        'EventScoreType', backref=backref('submissions'))
+    event_score_type_id = Column(Integer, ForeignKey('event_score_types.id'),
+                                 nullable=False)
+    event_score_type = relationship('EventScoreType',
+                                    backref=backref('submissions'))
 
     # These are cv-bagged scores. Individual scores are found in
     # SubmissionToTrain
@@ -608,27 +611,29 @@ class SubmissionFile(Model):
     __tablename__ = 'submission_files'
 
     id = Column(Integer, primary_key=True)
-    submission_id = Column(
-        Integer, ForeignKey('submissions.id'), nullable=False)
-    submission = relationship(
-        'Submission',
-        backref=backref('files', cascade='all, delete-orphan'))
+    submission_id = Column(Integer, ForeignKey('submissions.id'),
+                           nullable=False)
+    submission = relationship('Submission',
+                              backref=backref('files',
+                                              cascade='all, delete-orphan'))
 
-    # e.g. 'regression', 'external_data'
-    workflow_element_id = Column(
-        Integer, ForeignKey('workflow_elements.id'),
-        nullable=False)
-    workflow_element = relationship(
-        'WorkflowElement', backref=backref('submission_files'))
+    workflow_element_id = Column(Integer, ForeignKey('workflow_elements.id'),
+                                 nullable=False)
+    workflow_element = relationship('WorkflowElement',
+                                    backref=backref('submission_files'))
 
-    # e.g., ('code', 'py'), ('data', 'csv')
     submission_file_type_extension_id = Column(
         Integer, ForeignKey('submission_file_type_extensions.id'),
-        nullable=False)
+        nullable=False
+    )
     submission_file_type_extension = relationship(
-        'SubmissionFileTypeExtension', backref=backref('submission_files'))
+        'SubmissionFileTypeExtension', backref=backref('submission_files')
+    )
 
-    # eg, 'py'
+    def __repr__(self):
+        return ('SubmissionFile(name={}, type={}, extension={}, path={})'
+                .format(self.name, self.type, self.extension, self.path))
+
     @property
     def is_editable(self):
         """bool: Whether the submission file is from an editable format."""
@@ -688,10 +693,6 @@ class SubmissionFile(Model):
         with open(self.path, 'w') as f:
             f.write(code)
 
-    def __repr__(self):
-        return 'SubmissionFile(name={}, type={}, extension={}, path={})'.\
-            format(self.name, self.type, self.extension, self.path)
-
 
 class SubmissionFileTypeExtension(Model):
     """SubmissionFileTypeExtension table.
@@ -719,15 +720,13 @@ class SubmissionFileTypeExtension(Model):
 
     id = Column(Integer, primary_key=True)
 
-    type_id = Column(
-        Integer, ForeignKey('submission_file_types.id'), nullable=False)
-    type = relationship(
-        'SubmissionFileType', backref=backref('extensions'))
+    type_id = Column(Integer, ForeignKey('submission_file_types.id'),
+                     nullable=False)
+    type = relationship('SubmissionFileType', backref=backref('extensions'))
 
-    extension_id = Column(
-        Integer, ForeignKey('extensions.id'), nullable=False)
-    extension = relationship(
-        'Extension', backref=backref('submission_file_types'))
+    extension_id = Column(Integer, ForeignKey('extensions.id'), nullable=False)
+    extension = relationship('Extension',
+                             backref=backref('submission_file_types'))
 
     UniqueConstraint(type_id, extension_id, name='we_constraint')
 
@@ -762,7 +761,6 @@ class SubmissionFileType(Model):
     __tablename__ = 'submission_file_types'
 
     id = Column(Integer, primary_key=True)
-    # eg. 'code', 'text', 'data'
     name = Column(String, nullable=False, unique=True)
     is_editable = Column(Boolean, default=True)
     max_size = Column(Integer, default=None)
@@ -784,7 +782,6 @@ class Extension(Model):
     __tablename__ = 'extensions'
 
     id = Column(Integer, primary_key=True)
-    # eg. 'py', 'csv', 'R'
     name = Column(String, nullable=False, unique=True)
 
 
@@ -814,15 +811,19 @@ class SubmissionScoreOnCVFold(Model):
 
     id = Column(Integer, primary_key=True)
     submission_on_cv_fold_id = Column(
-        Integer, ForeignKey('submission_on_cv_folds.id'), nullable=False)
+        Integer, ForeignKey('submission_on_cv_folds.id'), nullable=False
+    )
     submission_on_cv_fold = relationship(
-        'SubmissionOnCVFold', backref=backref(
-            'scores', cascade='all, delete-orphan'))
+        'SubmissionOnCVFold',
+        backref=backref('scores', cascade='all, delete-orphan')
+    )
 
-    submission_score_id = Column(
-        Integer, ForeignKey('submission_scores.id'), nullable=False)
-    submission_score = relationship('SubmissionScore', backref=backref(
-        'on_cv_folds', cascade='all, delete-orphan'))
+    submission_score_id = Column(Integer, ForeignKey('submission_scores.id'),
+                                 nullable=False)
+    submission_score = relationship(
+        'SubmissionScore',
+        backref=backref('on_cv_folds', cascade='all, delete-orphan')
+    )
 
     train_score = Column(Float)
     valid_score = Column(Float)
@@ -907,17 +908,16 @@ class SubmissionOnCVFold(Model):
 
     id = Column(Integer, primary_key=True)
 
-    submission_id = Column(
-        Integer, ForeignKey('submissions.id'), nullable=False)
-    submission = relationship(
-        'Submission', backref=backref(
-            'on_cv_folds', cascade="all, delete-orphan"))
+    submission_id = Column(Integer, ForeignKey('submissions.id'),
+                           nullable=False)
+    submission = relationship('Submission',
+                              backref=backref('on_cv_folds',
+                                              cascade="all, delete-orphan"))
 
-    cv_fold_id = Column(
-        Integer, ForeignKey('cv_folds.id'), nullable=False)
-    cv_fold = relationship(
-        'CVFold', backref=backref(
-            'submissions', cascade="all, delete-orphan"))
+    cv_fold_id = Column(Integer, ForeignKey('cv_folds.id'), nullable=False)
+    cv_fold = relationship('CVFold',
+                           backref=backref('submissions',
+                                           cascade="all, delete-orphan"))
 
     # filled by cv_fold.get_combined_predictions
     contributivity = Column(Float, default=0.0)
@@ -1130,16 +1130,16 @@ class DetachedSubmissionOnCVFold(object):
         self.full_train_y_pred = submission_on_cv_fold.full_train_y_pred
         self.test_y_pred = submission_on_cv_fold.test_y_pred
         self.state = submission_on_cv_fold.state
-        self.name = submission_on_cv_fold.submission.event.name + '/'\
-            + submission_on_cv_fold.submission.team.name + '/'\
-            + submission_on_cv_fold.submission.name
+        self.name = (submission_on_cv_fold.submission.event.name + '/' +
+                     submission_on_cv_fold.submission.team.name + '/' +
+                     submission_on_cv_fold.submission.name)
         self.path = submission_on_cv_fold.submission.path
         self.error_msg = submission_on_cv_fold.error_msg
         self.train_time = submission_on_cv_fold.train_time
         self.valid_time = submission_on_cv_fold.valid_time
         self.test_time = submission_on_cv_fold.test_time
         self.trained_submission = None
-        self.workflow =\
+        self.workflow = \
             submission_on_cv_fold.submission.event.problem.workflow_object
 
     def __repr__(self):
@@ -1192,18 +1192,16 @@ class SubmissionSimilarity(Model):
     similarity = Column(Float, default=0.0)
 
     user_id = Column(Integer, ForeignKey('users.id'))
-    user = relationship(
-        'User', backref=backref('submission_similaritys'))
+    user = relationship('User', backref=backref('submission_similaritys'))
 
-    source_submission_id = Column(
-        Integer, ForeignKey('submissions.id'))
+    source_submission_id = Column(Integer, ForeignKey('submissions.id'))
     source_submission = relationship(
         'Submission', primaryjoin=(
             'SubmissionSimilarity.source_submission_id == Submission.id'),
-        backref=backref('sources', cascade='all, delete-orphan'))
+        backref=backref('sources', cascade='all, delete-orphan')
+    )
 
-    target_submission_id = Column(
-        Integer, ForeignKey('submissions.id'))
+    target_submission_id = Column(Integer, ForeignKey('submissions.id'))
     target_submission = relationship(
         'Submission', primaryjoin=(
             'SubmissionSimilarity.target_submission_id == Submission.id'),

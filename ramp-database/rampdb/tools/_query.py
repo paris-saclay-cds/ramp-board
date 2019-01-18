@@ -4,6 +4,7 @@ reduces the complexity of having queries and database connection in the same
 file. Then, those queries are tested through the public API.
 """
 from ..model import Event
+from ..model import EventAdmin
 from ..model import EventTeam
 from ..model import Extension
 from ..model import Problem
@@ -232,7 +233,8 @@ def select_similarities_by_target(session, target_submission):
 
     Returns
     -------
-    submission_similarities : list of :class:`rampdb.model.SubmissionSimilarity`
+    submission_similarities : list of \
+:class:`rampdb.model.SubmissionSimilarity`
         The queried submission similarity.
     """
     return (session.query(SubmissionSimilarity)
@@ -253,7 +255,8 @@ def select_similarities_by_source(session, source_submission):
 
     Returns
     -------
-    submission_similarities : list of :class:`rampdb.model.SubmissionSimilarity`
+    submission_similarities : list of \
+:class:`rampdb.model.SubmissionSimilarity`
         The queried submission similarity.
     """
     return (session.query(SubmissionSimilarity)
@@ -318,7 +321,8 @@ def select_submission_file_type_by_name(session, type_name):
 
     Returns
     -------
-    submission_file_type : :class:`rampdb.model.SubmissionFileType` or list of :class:`rampdb.model.SubmissionFileType`
+    submission_file_type : :class:`rampdb.model.SubmissionFileType` or list \
+of :class:`rampdb.model.SubmissionFileType`
         The queried submission file type.
     """
     if type_name is None:
@@ -345,7 +349,9 @@ def select_submission_type_extension_by_name(session, type_name,
 
     Returns
     -------
-    submission_file_type_extension : :class:`rampdb.model.SubmissionFileTypeExtension` or list of :class:`rampdb.model.SubmissionFileTypeExtension`
+    submission_file_type_extension : \
+:class:`rampdb.model.SubmissionFileTypeExtension` or list of \
+:class:`rampdb.model.SubmissionFileTypeExtension`
         The queried submission file type extension.
     """
     if type_name is None and extension_name is None:
@@ -374,7 +380,9 @@ def select_submission_type_extension_by_extension(session, extension):
 
     Returns
     -------
-    submission_file_type_extension : :class:`rampdb.model.SubmissionFileTypeExtension` or list of :class:`rampdb.model.SubmissionFileTypeExtension`
+    submission_file_type_extension : \
+:class:`rampdb.model.SubmissionFileTypeExtension` or list of \
+:class:`rampdb.model.SubmissionFileTypeExtension`
         The queried submission file type extension.
     """
     if extension is None:
@@ -428,4 +436,27 @@ def select_workflow_element_by_workflow_and_type(session, workflow,
                    .filter(WorkflowElement.workflow == workflow)
                    .filter(WorkflowElement.workflow_element_type ==
                            workflow_element_type)
+                   .one_or_none())
+
+
+def select_event_admin_by_instance(session, event, user):
+    """Query a event/admin given and event and a user.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    event : :class:`rampdb.model.Event`
+        The event instance.
+    user : :class:`rampdb.model.User`
+        The user instance.
+
+    Returns
+    -------
+    event_admin : :class:`rampdb.model.EventAdmin` or None
+        The queried event/admin instance.
+    """
+    return (session.query(EventAdmin)
+                   .filter(EventAdmin.event == event)
+                   .filter(EventAdmin.admin == user)
                    .one_or_none())

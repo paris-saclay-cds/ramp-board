@@ -10,6 +10,8 @@ from ramputils.testing import path_config_example
 from rampwf.prediction_types.base import BasePrediction
 from rampwf.score_types.accuracy import Accuracy
 
+from rampdb.model.base import set_query_property
+
 from rampdb.model import CVFold
 from rampdb.model import EventAdmin
 from rampdb.model import EventScoreType
@@ -40,10 +42,7 @@ def session_scope_module(config):
             yield session
     finally:
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, Session = setup_db(config['sqlalchemy'])
-        with db.connect() as conn:
-            session = Session(bind=conn)
-            session.close()
+        db, _ = setup_db(config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
@@ -98,12 +97,35 @@ def test_even_model_timestamp(session_scope_module, opening, public_opening,
 
 
 def test_event_model_score(session_scope_module):
+    # Make Model usable in declarative mode
+    set_query_property(Model, session_scope_module)
+
     event = get_event(session_scope_module, 'iris_test')
 
     assert repr(event) == 'Event(iris_test)'
     assert issubclass(event.Predictions, BasePrediction)
     assert isinstance(event.workflow, Workflow)
     assert event.workflow.name == 'Classifier'
+
+    event_type_score = event.official_score_type
+    assert event_type_score.name == 'acc'
+    event_type_score = event.get_official_score_type(session_scope_module)
+    assert event_type_score.name == 'acc'
+
+    assert event.combined_combined_valid_score_str is None
+    assert event.combined_combined_test_score_str is None
+    assert event.combined_foldwise_valid_score_str is None
+    assert event.combined_foldwise_test_score_str is None
+
+    event.combined_combined_valid_score = 0.1
+    event.combined_combined_test_score = 0.2
+    event.combined_foldwise_valid_score = 0.3
+    event.combined_foldwise_test_score = 0.4
+
+    assert event.combined_combined_valid_score_str == '0.1'
+    assert event.combined_combined_test_score_str == '0.2'
+    assert event.combined_foldwise_valid_score_str == '0.3'
+    assert event.combined_foldwise_test_score_str == '0.4'
 
 
 @pytest.mark.parametrize(

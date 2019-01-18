@@ -17,7 +17,7 @@ URL = 'https://github.com/paris-saclay-cds/ramp-board'
 LICENSE = 'BSD (3-clause)'
 DOWNLOAD_URL = 'https://github.com/paris-saclay-cds/ramp-board'
 PACKAGE_DATA = {'ramputils': [os.path.join('tests', 'data', 'config.yml')]}
-INSTALL_REQUIRES = ['bcrypt']
+INSTALL_REQUIRES = ['bcrypt', 'click', 'pyyaml', 'six']
 
 
 if __name__ == "__main__":
@@ -48,5 +48,8 @@ if __name__ == "__main__":
         platforms='any',
         packages=find_packages(),
         package_data=PACKAGE_DATA,
+        entry_points={
+            'console_scripts': ['ramp-utils = ramputils.cli:start']
+        },
         install_requires=INSTALL_REQUIRES,
         )
