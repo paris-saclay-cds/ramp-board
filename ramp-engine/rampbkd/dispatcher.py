@@ -13,9 +13,6 @@ else:
     from Queue import Queue
     from Queue import LifoQueue
 
-# from databoard.db_tools import update_all_user_leaderboards
-# from databoard.db_tools import update_leaderboards
-
 from rampdb.tools.submission import get_submissions
 from rampdb.tools.submission import get_submission_by_id
 from rampdb.tools.submission import get_submission_state
