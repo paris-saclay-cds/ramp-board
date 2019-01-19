@@ -1,5 +1,4 @@
 import shutil
-import time
 
 import pytest
 
@@ -13,7 +12,6 @@ from rampdb.testing import create_toy_db
 
 from rampdb.tools.event import get_event
 from rampdb.tools.submission import get_submissions
-from rampdb.tools.submission import get_submission_by_id
 
 from rampbkd.local import CondaEnvWorker
 from rampbkd.dispatcher import Dispatcher
