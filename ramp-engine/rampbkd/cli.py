@@ -49,6 +49,11 @@ def dispatcher(config, worker_type, n_worker, hunger_policy, verbose):
 @click.option('--submission', help='The submission name')
 @click.option('-v', '--verbose', is_flag=True)
 def worker(config, worker_type, submission, verbose):
+    """Launch a standalone RAMP worker.
+
+    The RAMP worker is in charger of processing a single submission by
+    specifying the different locations (kit, data, logs, predictions)
+    """
     if verbose:
         logging.basicConfig(format='%(levelname)s %(name)s %(message)s',
                             level=logging.DEBUG)
