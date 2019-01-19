@@ -7,8 +7,10 @@ from ramputils import read_config
 from rampbkd.dispatcher import Dispatcher
 from rampbkd.dispatcher import CondaEnvWorker
 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-@click.group()
+
+@click.group(context_settings=CONTEXT_SETTINGS)
 def main():
     """Command-line to launch engine to process RAMP submission."""
     pass
