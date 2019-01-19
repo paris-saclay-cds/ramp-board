@@ -66,6 +66,23 @@ def _remove_directory(worker):
 
 
 @pytest.mark.parametrize("submission", ('starting_kit', 'random_forest_10_10'))
+def test_conda_worker_launch(submission, get_conda_worker):
+    worker = get_conda_worker(submission)
+    try:
+        worker.launch()
+        # check that teardown removed the predictions
+        output_training_dir = os.path.join(worker.config['kit_dir'],
+                                           'submissions',
+                                           worker.submission,
+                                           'training_output')
+        assert not os.path.exists(output_training_dir), \
+            "teardown() failed to remove the predictions"
+    finally:
+        # remove all directories that we potentially created
+        _remove_directory(worker)
+
+
+@pytest.mark.parametrize("submission", ('starting_kit', 'random_forest_10_10'))
 def test_conda_worker(submission, get_conda_worker):
     worker = get_conda_worker(submission)
     try:

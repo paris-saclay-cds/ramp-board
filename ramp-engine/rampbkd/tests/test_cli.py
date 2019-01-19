@@ -1,5 +1,4 @@
 import shutil
-import subprocess
 
 from click.testing import CliRunner
 
@@ -29,5 +28,15 @@ def test_dispatcher():
     runner = CliRunner()
     result = runner.invoke(main, ["dispatcher",
                                   "--config", path_config_example(),
+                                  "--verbose"])
+    assert result.exit_code == 0, result.output
+
+
+def test_worker():
+    runner = CliRunner()
+    result = runner.invoke(main, ["worker",
+                                  "--config", path_config_example(),
+                                  "--worker-type", 'CondaEnvWorker',
+                                  "--submission", "starting_kit",
                                   "--verbose"])
     assert result.exit_code == 0, result.output

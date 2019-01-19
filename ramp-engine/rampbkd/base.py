@@ -78,6 +78,19 @@ class BaseWorker(six.with_metaclass(ABCMeta)):
                              'launch_submission() and then try again to '
                              'collect the results.')
 
+    def launch(self):
+        """Launch a standalone RAMP worker.
+
+        You can use this method when you want to use a worker without using
+        the RAMP dispatcher.
+        """
+        self.setup()
+        self.launch_submission()
+        # collecting the results will block the process until the submission
+        # is processed
+        self.collect_results()
+        self.teardown()
+
     def __str__(self):
         msg = ('{worker_name}({submission_name}): status="{status}"'
                .format(worker_name=self.__class__.__name__,
