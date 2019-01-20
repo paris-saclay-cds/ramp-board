@@ -26,7 +26,8 @@ def deploy_ramp_event(config, setup_ramp_repo=True, force=False):
     setup_ramp_repo : bool, default is True
         Whether or not to setup the RAMP kit and data repositories.
     force : bool, default is False
-        Whether or not to overwrite
+        Whether or not to potentially overwrite the repositories, problem and
+        event in the database.
     """
     config = read_config(config)
     database_config = config['sqlalchemy']
