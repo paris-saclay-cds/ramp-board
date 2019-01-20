@@ -94,7 +94,7 @@ def test_update_leaderboard_functions(session_toy_function, config):
         assert et.new_leaderboard_html
 
     # run the dispatcher to process the different submissions
-    dispatcher = Dispatcher(config, n_worker=-1, hunger_policy='exit')
+    dispatcher = Dispatcher(config, n_worker=1, hunger_policy='exit')
     dispatcher.launch()
 
     update_leaderboards(session_toy_function, event_name)
@@ -153,7 +153,7 @@ def test_get_leaderboard(session_toy_db, config):
     assert leaderboard_new.count('<tr>') == 3
 
     # run the dispatcher to process the different submissions
-    dispatcher = Dispatcher(config, n_worker=-1, hunger_policy='exit')
+    dispatcher = Dispatcher(config, n_worker=1, hunger_policy='exit')
     dispatcher.launch()
 
     assert get_leaderboard(session_toy_db, 'new', 'iris_test') is None
