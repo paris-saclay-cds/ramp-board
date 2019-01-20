@@ -62,7 +62,6 @@ def worker(config, worker_type, submission, verbose):
     config = read_config(config)
     worker_params = generate_worker_config(config)
     work = globals()[worker_type](worker_params, submission)
-    click.echo(work)
     work.launch()
 
 
