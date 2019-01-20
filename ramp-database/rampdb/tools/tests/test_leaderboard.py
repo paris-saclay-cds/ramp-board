@@ -96,7 +96,7 @@ def test_update_leaderboard_functions(session_toy_function, config):
     # run the dispatcher to process the different submissions
     dispatcher = Dispatcher(config, n_worker=-1, hunger_policy='exit')
     dispatcher.launch()
-    session_toy_db.commit()
+    session_toy_function.commit()
 
     update_leaderboards(session_toy_function, event_name)
     event = get_event(session_toy_function, event_name)
