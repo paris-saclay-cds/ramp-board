@@ -13,8 +13,14 @@ def main():
 @main.command()
 @click.option("--config", default='config.yml',
               help='Configuration file in YAML format')
-def deploy_ramp_event(config):
-    deploy.deploy_ramp_event(config)
+@click.option("--cloning/--no-cloning", default=True,
+              help='Whether or not to clone the RAMP kit and data '
+              'repositories.')
+@click.option('--force', is_flag=True,
+              help='Whether or not to potentially overwrite the '
+              'repositories, problem and event in the database.')
+def deploy_ramp_event(config, cloning, force):
+    deploy.deploy_ramp_event(config, cloning, force)
 
 
 def start():

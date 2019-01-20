@@ -92,7 +92,7 @@ def _delete_line_from_file(f_name, line_to_delete):
         f.truncate()
 
 
-def setup_ramp_kits_ramp_data(config, problem_name):
+def setup_ramp_kits_ramp_data(config, problem_name, force=False):
     """Clone ramp-kits and ramp-data repository and setup it up.
 
     Parameters
@@ -101,15 +101,36 @@ def setup_ramp_kits_ramp_data(config, problem_name):
         Configuration file containing all ramp information.
     problem_name : str
         The name of the problem.
+    force : bool, default is False
+        Whether or not to overwrite the RAMP kit and data repositories if they
+        already exists.
     """
     ramp_config = generate_ramp_config(config)
     problem_kits_path = os.path.join(ramp_config['ramp_kits_dir'],
                                      problem_name)
+    if not os.path.exists(ramp_config['ramp_kits_dir']):
+        os.makedirs(ramp_config['ramp_kits_dir'])
+    if os.path.exists(problem_kits_path):
+        if not force:
+            raise ValueError(
+                'The RAMP kit repository was previously cloned. To replace '
+                'it, you need to set "force=True".'
+            )
+        shutil.rmtree(problem_kits_path, ignore_errors=True)
     ramp_kits_url = 'https://github.com/ramp-kits/{}.git'.format(problem_name)
     Repo.clone_from(ramp_kits_url, problem_kits_path)
 
     problem_data_path = os.path.join(ramp_config['ramp_data_dir'],
                                      problem_name)
+    if not os.path.exists(ramp_config['ramp_data_dir']):
+        os.makedirs(ramp_config['ramp_data_dir'])
+    if os.path.exists(problem_data_path):
+        if not force:
+            raise ValueError(
+                'The RAMP data repository was previously cloned. To replace '
+                'it, you need to set "force=True".'
+            )
+        shutil.rmtree(problem_data_path, ignore_errors=True)
     ramp_data_url = 'https://github.com/ramp-data/{}.git'.format(problem_name)
     Repo.clone_from(ramp_data_url, problem_data_path)
 

@@ -1,9 +1,11 @@
+import os
 import shutil
 
 import pytest
 from git.exc import GitCommandError
 
 from ramputils import read_config
+from ramputils import generate_ramp_config
 from ramputils.testing import path_config_example
 
 from rampdb.utils import setup_db
@@ -20,6 +22,7 @@ from rampdb.testing import create_test_db
 from rampdb.testing import add_events
 from rampdb.testing import add_users
 from rampdb.testing import add_problems
+from rampdb.testing import setup_ramp_kits_ramp_data
 from rampdb.testing import sign_up_teams_to_events
 from rampdb.testing import submit_all_starting_kits
 
@@ -46,6 +49,19 @@ def session_scope_function(config):
         Model.metadata.drop_all(db)
 
 
+def test_ramp_kits_ramp_data(session_scope_function, config):
+    ramp_config = generate_ramp_config(config)
+    setup_ramp_kits_ramp_data(config, 'iris')
+    msg_err = 'The RAMP kit repository was previously cloned.'
+    with pytest.raises(ValueError, match=msg_err):
+        setup_ramp_kits_ramp_data(config, 'iris')
+    shutil.rmtree(os.path.join(ramp_config['ramp_kits_dir'], 'iris'))
+    msg_err = 'The RAMP data repository was previously cloned.'
+    with pytest.raises(ValueError, match=msg_err):
+        setup_ramp_kits_ramp_data(config, 'iris')
+    setup_ramp_kits_ramp_data(config, 'iris', force=True)
+
+
 def test_add_users(session_scope_function):
     add_users(session_scope_function)
     users = get_user_by_name(session_scope_function, None)
@@ -62,8 +78,9 @@ def test_add_problems(session_scope_function, config):
     for problem in problems:
         assert problem.name in ('iris', 'boston_housing')
     # trying to add twice the same problem will raise a git error since the
-    #  repositories already exist.
-    with pytest.raises(GitCommandError):
+    # repositories already exist.
+    msg_err = 'The RAMP kit repository was previously cloned.'
+    with pytest.raises(ValueError, match=msg_err):
         add_problems(session_scope_function, config)
 
 
