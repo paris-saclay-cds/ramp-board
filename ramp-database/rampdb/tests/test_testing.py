@@ -1,9 +1,11 @@
+import os
 import shutil
 
 import pytest
 from git.exc import GitCommandError
 
 from ramputils import read_config
+from ramputils import generate_ramp_config
 from ramputils.testing import path_config_example
 
 from rampdb.utils import setup_db
@@ -20,6 +22,7 @@ from rampdb.testing import create_test_db
 from rampdb.testing import add_events
 from rampdb.testing import add_users
 from rampdb.testing import add_problems
+from rampdb.testing import setup_ramp_kits_ramp_data
 from rampdb.testing import sign_up_teams_to_events
 from rampdb.testing import submit_all_starting_kits
 
@@ -44,6 +47,19 @@ def session_scope_function(config):
         shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
         db, _ = setup_db(config['sqlalchemy'])
         Model.metadata.drop_all(db)
+
+
+def test_ramp_kits_ramp_data(session_scope_function, config):
+    ramp_config = generate_ramp_config(config)
+    setup_ramp_kits_ramp_data(config, 'iris')
+    msg_err = 'The RAMP kit repository was previously cloned.'
+    with pytest.raises(ValueError, match=msg_err):
+        setup_ramp_kits_ramp_data(config, 'iris')
+    shutil.rmtree(os.path.join(ramp_config['ramp_kits_dir'], 'iris'))
+    msg_err = 'The RAMP data repository was previously cloned.'
+    with pytest.raises(ValueError, match=msg_err):
+        setup_ramp_kits_ramp_data(config, 'iris')
+    setup_ramp_kits_ramp_data(config, 'iris', force=True)
 
 
 def test_add_users(session_scope_function):
