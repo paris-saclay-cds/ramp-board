@@ -28,6 +28,5 @@ def teardown_module(module):
 def test_dispatcher():
     runner = CliRunner()
     result = runner.invoke(main, ["dispatcher",
-                                  "--config", path_config_example(),
-                                  "--verbose"])
+                                  "--config", path_config_example()])
     assert result.exit_code == 0, result.output
