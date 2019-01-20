@@ -3,6 +3,7 @@ import logging
 import click
 
 from ramputils import read_config
+from ramputils import generate_worker_config
 
 from rampbkd.dispatcher import Dispatcher
 from rampbkd.dispatcher import CondaEnvWorker
@@ -19,7 +20,7 @@ def main():
 @main.command()
 @click.option("--config", default='config.yml',
               help='Configuration file in YAML format')
-@click.option('--worker', default='CondaEnvWorker',
+@click.option('--worker-type', default='CondaEnvWorker',
               help='Type of worker to use')
 @click.option('--n-worker', default=-1,
               help='Number of worker to start in parallel')
@@ -27,7 +28,7 @@ def main():
               help='Policy to apply in case that there is no anymore workers'
               'to be processed')
 @click.option('-v', '--verbose', is_flag=True)
-def dispatcher(config, worker, n_worker, hunger_policy, verbose):
+def dispatcher(config, worker_type, n_worker, hunger_policy, verbose):
     """Launch the RAMP dispatcher.
 
     The RAMP dispatcher is in charge of starting RAMP workers, collecting
@@ -37,9 +38,31 @@ def dispatcher(config, worker, n_worker, hunger_policy, verbose):
         logging.basicConfig(format='%(levelname)s %(name)s %(message)s',
                             level=logging.DEBUG)
     config = read_config(config)
-    disp = Dispatcher(config=config, worker=globals()[worker],
+    disp = Dispatcher(config=config, worker=globals()[worker_type],
                       n_worker=n_worker, hunger_policy=hunger_policy)
     disp.launch()
+
+
+@main.command()
+@click.option("--config", default='config.yml',
+              help='Configuration file in YAML format')
+@click.option('--worker-type', default='CondaEnvWorker',
+              help='Type of worker to use')
+@click.option('--submission', help='The submission name')
+@click.option('-v', '--verbose', is_flag=True)
+def worker(config, worker_type, submission, verbose):
+    """Launch a standalone RAMP worker.
+
+    The RAMP worker is in charger of processing a single submission by
+    specifying the different locations (kit, data, logs, predictions)
+    """
+    if verbose:
+        logging.basicConfig(format='%(levelname)s %(name)s %(message)s',
+                            level=logging.DEBUG)
+    config = read_config(config)
+    worker_params = generate_worker_config(config)
+    work = globals()[worker_type](worker_params, submission)
+    work.launch()
 
 
 def start():
