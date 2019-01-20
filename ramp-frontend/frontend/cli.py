@@ -5,8 +5,10 @@ from ramputils import read_config
 
 from . import create_app
 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-@click.group()
+
+@click.group(context_settings=CONTEXT_SETTINGS)
 def main():
     pass
 

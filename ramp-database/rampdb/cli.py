@@ -13,8 +13,10 @@ from .tools import submission as submission_module
 from .tools import team as team_module
 from .tools import user as user_module
 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-@click.group()
+
+@click.group(context_settings=CONTEXT_SETTINGS)
 def main():
     """Command-line to interact directly with the database."""
     pass
