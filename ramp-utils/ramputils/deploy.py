@@ -51,11 +51,12 @@ def deploy_ramp_event(config, setup_ramp_repo=True, force=False):
                     'to the kit or to the data is different. You need to set'
                     '"force=True" if you want to overwrite these parameters.'
                 )
-            setup_ramp_kits_ramp_data(config, ramp_config['event'])
+            if setup_ramp_repo:
+                setup_ramp_kits_ramp_data(config, ramp_config['event'], force)
             add_problem(session, ramp_config['event'],
                         ramp_config['ramp_kits_dir'],
                         ramp_config['ramp_data_dir'],
-                        force=True)
+                        force)
 
         if not os.path.exists(ramp_config['ramp_submissions_dir']):
             os.makedirs(ramp_config['ramp_submissions_dir'])
