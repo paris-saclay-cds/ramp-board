@@ -78,8 +78,9 @@ def test_add_problems(session_scope_function, config):
     for problem in problems:
         assert problem.name in ('iris', 'boston_housing')
     # trying to add twice the same problem will raise a git error since the
-    #  repositories already exist.
-    with pytest.raises(GitCommandError):
+    # repositories already exist.
+    msg_err = 'The RAMP kit repository was previously cloned.'
+    with pytest.raises(ValueError, match=msg_err):
         add_problems(session_scope_function, config)
 
 
