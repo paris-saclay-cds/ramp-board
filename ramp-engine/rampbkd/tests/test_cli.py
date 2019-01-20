@@ -36,6 +36,5 @@ def test_worker():
     result = runner.invoke(main, ["worker",
                                   "--config", path_config_example(),
                                   "--worker-type", 'CondaEnvWorker',
-                                  "--submission", "starting_kit",
-                                  "--verbose"])
+                                  "--submission", "starting_kit"])
     assert result.exit_code == 0, result.output
