@@ -1,10 +1,11 @@
 import click
 
-from ramputils import generate_ramp_config
 from ramputils import deploy
 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-@click.group()
+
+@click.group(context_settings=CONTEXT_SETTINGS)
 def main():
     pass
 
