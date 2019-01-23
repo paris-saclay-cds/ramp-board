@@ -66,16 +66,6 @@ def test_send_mail(client_session):
 def test_body_formatter_user(client_session):
     _, session = client_session
     user = get_user_by_name(session, 'test_user')
-    expected_body = """
-    user = b'test_user'
-    name = b'User' b'Test'
-    email = test.user@gmail.com
-    linkedin = 
-    twitter = 
-    facebook = 
-    github = 
-    notes = b''
-    bio = b''
-
-    """
-    assert body_formatter_user(user) == expected_body
+    for word in ['test_user', 'User', 'Test', 'linkedin', 'twitter',
+                 'facebook', 'github', 'notes', 'bio']:
+        assert word in body_formatter_user(user)
