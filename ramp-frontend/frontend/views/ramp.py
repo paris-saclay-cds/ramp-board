@@ -24,6 +24,7 @@ from werkzeug.utils import secure_filename
 
 from ramputils.utils import encode_string
 
+from rampdb.model import Problem
 from rampdb.model import Submission
 from rampdb.model import SubmissionFile
 from rampdb.model import SubmissionSimilarity
@@ -34,6 +35,7 @@ from rampdb.exceptions import DuplicateSubmissionError
 from rampdb.exceptions import MissingExtensionError
 from rampdb.exceptions import TooEarlySubmissionError
 
+from rampdb.tools.event import add_event
 from rampdb.tools.event import get_event
 from rampdb.tools.event import get_problem
 from rampdb.tools.frontend import is_admin
@@ -51,6 +53,7 @@ from rampdb.tools.team import sign_up_team
 
 from frontend import db
 
+from ..forms import AskForEventForm
 from ..forms import CodeForm
 from ..forms import CreditForm
 from ..forms import ImportForm
@@ -482,6 +485,54 @@ def sandbox(event_name):
         event=event,
         admin=admin
     )
+
+
+@mod.route("/problems/<problem_name>/ask_for_event", methods=['GET', 'POST'])
+@flask_login.login_required
+def ask_for_event(problem_name):
+    problem = Problem.query.filter_by(name=problem_name).one_or_none()
+    if problem is None:
+        return redirect_to_user(
+            u'{}: no problem named "{}"'
+            .format(flask_login.current_user.firstname, problem_name)
+        )
+    logger.info(u'{} is asking for event on {}'
+                .format(flask_login.current_user.name, problem.name))
+    # We assume here that event name has the syntax <problem_name>_<suffix>
+    form = AskForEventForm(
+        min_duration_between_submissions_hour=8,
+        min_duration_between_submissions_minute=0,
+        min_duration_between_submissions_second=0,
+    )
+    if form.validate_on_submit():
+        admin_users = User.query.filter_by(access_level='admin')
+        for admin in admin_users:
+            subject = 'Request to add a new event'
+            body = """User {} asked to add a new event:
+            event name: {}
+            event title: {}
+            number of students: {}
+            waiting time between resubmission: {}:{}:{}
+            opening data: {}
+            closing data: {}
+            """.format(
+                flask_login.current_user.name,
+                problem.name + '_' + form.suffix.data,
+                form.title.data,
+                form.n_students.data,
+                form.min_duration_between_submissions_hour.data,
+                form.min_duration_between_submissions_minute.data,
+                form.min_duration_between_submissions_second.data,
+                form.opening_date.data,
+                form.closing_date.data
+            )
+            send_mail(admin, subject, body)
+        return redirect_to_user(
+            'Thank you. Your request has been sent to RAMP administrators.',
+            category='Event request', is_error=False
+        )
+
+    return render_template('ask_for_event.html', form=form, problem=problem)
 
 
 @mod.route("/credit/<submission_hash>", methods=['GET', 'POST'])

@@ -58,6 +58,7 @@ def client_session(config):
     ["/events/iris_test",
      "/events/iris_test/sign_up",
      "/events/iris_test/sandbox",
+     "problems/iris/ask_for_event",
      "/credit/xxx",
      "/event_plots/iris_test"]
 )
@@ -216,6 +217,40 @@ def test_sign_up_for_event(client_session):
         event_team = get_event_team_by_name(session, 'boston_housing_test',
                                             'yy')
         assert event_team.approved
+
+
+def test_ask_for_event(client_session):
+    client, session = client_session
+
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('/problems/xxx/ask_for_event')
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert "no problem named" in flash_message['message']
+
+        rv = client.get('problems/iris/ask_for_event')
+        assert rv.status_code == 200
+        assert b'Ask for a new event on iris' in rv.data
+
+        data = {
+            'suffix': 'test_2',
+            'title': 'whatever title',
+            'n_students': 200,
+            'min_duration_between_submissions_hour': 1,
+            'min_duration_between_submissions_minute': 2,
+            'min_duration_between_submissions_second': 3,
+            'opening_date': '2019-01-01',
+            'closing_date': '2020-01-01'
+        }
+        rv = client.post('problems/iris/ask_for_event', data=data)
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert ("Thank you. Your request has been sent" in
+                flash_message['Event request'])
 
 
 # TODO: to be tested
