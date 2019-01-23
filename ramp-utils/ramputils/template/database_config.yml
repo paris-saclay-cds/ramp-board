@@ -1,0 +1,7 @@
+sqlalchemy:
+    drivername: postgresql
+    username: mrramp
+    password: mrramp
+    host: localhost
+    port: 5432
+    database: databoard_test
