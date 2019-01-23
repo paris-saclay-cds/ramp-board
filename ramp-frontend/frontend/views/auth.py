@@ -14,6 +14,7 @@ from flask import url_for
 from sqlalchemy.orm.exc import NoResultFound
 
 from ramputils.password import check_password
+from ramputils.utils import encode_string
 
 from rampdb.tools.user import add_user
 from rampdb.tools.user import add_user_interaction
@@ -28,6 +29,9 @@ from frontend import login_manager
 from ..forms import LoginForm
 from ..forms import UserCreateProfileForm
 from ..forms import UserUpdateProfileForm
+
+from ..utils import body_formatter_user
+from ..utils import send_mail
 
 logger = logging.getLogger('RAMP-FRONTEND')
 mod = Blueprint('auth', __name__)
@@ -130,7 +134,17 @@ def sign_up():
             is_want_news=form.is_want_news.data,
             access_level='asked'
         )
-        # send_register_request_mail(user)
+        admin_users = User.query.filter_by(access_level='admin')
+        for admin in admin_users:
+            subject = 'Approve registration of {}'.format(
+                encode_string(user.name)
+            )
+            body = body_formatter_user(user)
+            url_approve = ('http://www.ramp.studio/sign_up/{}'
+                           .format(encode_string(user.name)))
+            body += 'Click on the link to approve the registration '
+            body += 'of this user: {}'.format(url_approve)
+            send_mail(admin.email, subject, body)
         return redirect(url_for('auth.login'))
     return render_template('sign_up.html', form=form)
 

@@ -22,9 +22,12 @@ from wtforms.widgets import TextArea
 
 from werkzeug.utils import secure_filename
 
+from ramputils.utils import encode_string
+
 from rampdb.model import Submission
 from rampdb.model import SubmissionFile
 from rampdb.model import SubmissionSimilarity
+from rampdb.model import User
 from rampdb.model import WorkflowElement
 
 from rampdb.exceptions import DuplicateSubmissionError
@@ -53,6 +56,9 @@ from ..forms import CreditForm
 from ..forms import ImportForm
 from ..forms import SubmitForm
 from ..forms import UploadForm
+
+from ..utils import body_formatter_user
+from ..utils import send_mail
 
 from .redirect import redirect_to_credit
 from .redirect import redirect_to_sandbox
@@ -180,7 +186,19 @@ def sign_up_for_event(event_name):
 
     ask_sign_up_team(db.session, event.name, flask_login.current_user.name)
     if event.is_controled_signup:
-        # send_sign_up_request_mail(event, flask_login.current_user)
+        admin_users = User.query.filter_by(access_level='admin')
+        for admin in admin_users:
+            subject = ('Request to sign-up {} to RAMP event {}'
+                       .format(event.name, flask_login.current_user.name))
+            body = body_formatter_user(flask_login.current_user)
+            url_approve = ('https://www.ramp.studio/events/{}/sign_up/{}'
+                           .format(
+                               event.name,
+                               encode_string(flask_login.current_user.name)
+                           ))
+            body += ('Click on this link to approve the sign-up request: {}'
+                     .format(url_approve))
+            send_mail(admin, subject, body)
         return redirect_to_user("Sign-up request is sent to event admins.",
                                 is_error=False, category='Request sent')
     sign_up_team(db.session, event.name, flask_login.current_user.name)
@@ -424,16 +442,21 @@ def sandbox(event_name):
             logger.info(u'{} submitted {} for {}.'
                         .format(flask_login.current_user.name,
                                 new_submission.name, event_team))
-            # if event.is_send_submitted_mails:
-            #     try:
-            #         send_submission_mails(
-            #             flask_login.current_user, new_submission, event_team)
-            #     except Exception as e:
-            #         error_str = u'mail was not sent {} '.format(
-            #             flask_login.current_user.name)
-            #         error_str += u'submitted {} for {}\n{}.'.format(
-            #             new_submission.name, event_team, e)
-            #         logger.error(error_str)
+            if event.is_send_submitted_mails:
+                admin_users = User.query.filter_by(access_level='admin')
+                for admin in admin_users:
+                    subject = 'Submission {} sent for training'.format(
+                        new_submission.name
+                    )
+                    body = """A new submission have been submitted:
+                    event: {}
+                    user: {}
+                    submission: {}
+                    submission path: {}
+                    """.format(event_team.event.name,
+                               flask_login.current_user.name,
+                               new_submission.name, new_submission.path)
+                    send_mail(admin, subject, body)
             flash(u'{} submitted {} for {}.'
                   .format(flask_login.current_user.firstname,
                           new_submission.name,
@@ -449,14 +472,6 @@ def sandbox(event_name):
             )
 
             return redirect(u'/credit/{}'.format(new_submission.hash_))
-            # return render_template(
-            #     'sandbox.html',
-            #     submission_names=sandbox_submission.f_names,
-            #     code_form=code_form,
-            #     submit_form=submit_form, upload_form=upload_form,
-            #     event=event,
-            #     admin=admin
-            # )
 
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     return render_template(
