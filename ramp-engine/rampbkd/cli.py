@@ -18,13 +18,13 @@ def main():
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file in YAML format')
-@click.option('--worker-type', default='CondaEnvWorker',
+@click.option('--worker-type', default='CondaEnvWorker', show_default=True,
               help='Type of worker to use')
-@click.option('--n-worker', default=-1,
+@click.option('--n-worker', default=-1, show_default=True,
               help='Number of worker to start in parallel')
-@click.option('--hunger-policy', default='exit',
+@click.option('--hunger-policy', default='exit', show_default=True,
               help='Policy to apply in case that there is no anymore workers'
               'to be processed')
 @click.option('-v', '--verbose', is_flag=True)
@@ -44,9 +44,9 @@ def dispatcher(config, worker_type, n_worker, hunger_policy, verbose):
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file in YAML format')
-@click.option('--worker-type', default='CondaEnvWorker',
+@click.option('--worker-type', default='CondaEnvWorker', show_default=True,
               help='Type of worker to use')
 @click.option('--submission', help='The submission name')
 @click.option('-v', '--verbose', is_flag=True)

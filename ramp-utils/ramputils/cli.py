@@ -11,9 +11,9 @@ def main():
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file in YAML format')
-@click.option("--cloning/--no-cloning", default=True,
+@click.option("--cloning/--no-cloning", default=True, show_default=True,
               help='Whether or not to clone the RAMP kit and data '
               'repositories.')
 @click.option('--force', is_flag=True,
