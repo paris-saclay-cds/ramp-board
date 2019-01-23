@@ -3,6 +3,7 @@ from flask_wtf import FlaskForm
 import six
 
 from wtforms import BooleanField
+from wtforms import DateField
 from wtforms import DateTimeField
 from wtforms import FileField
 from wtforms import IntegerField
@@ -22,7 +23,6 @@ def _space_check(form, field):
 
 def _ascii_check(form, field):
     try:
-        # XXX may not work in python 3, should probably be field.data.encode
         if six.PY3:
             field.data.encode('ascii')
         else:
@@ -259,3 +259,55 @@ class CreditForm(FlaskForm):
     note = StringField('submission_name')
     self_credit = StringField('self credit')
     name_credits = []
+
+
+class AskForEventForm(FlaskForm):
+    """Form to ask for a new event.
+
+    Attributes
+    ----------
+    suffix : str
+        The suffix used for the event.
+    title : str
+        The event title.
+    n_students : int
+        The number of students that will take part in the event.
+    min_duration_between_submission_hour : int
+        The number of hour to wait between two submissions.
+    min_duration_between_submission_minute : int
+        The number of minute to wait between two submissions.
+    min_duration_between_submission_second : int
+        The number of second to wait between two submissions.
+    opening_timestamp : datetime
+        The date and time when the event is opening.
+    closing_timestamp : datetime
+        The date and time when the event is closing.
+    """
+    suffix = StringField(
+        'event_suffix',
+        [validators.DataRequired(), validators.Length(max=20), _ascii_check,
+         _space_check]
+    )
+    title = StringField(
+        'event_title',
+        [validators.DataRequired(), validators.Length(max=80)]
+    )
+    n_students = IntegerField(
+        'n_students',
+        [validators.DataRequired(), validators.NumberRange(min=0)]
+    )
+    min_duration_between_submissions_hour = IntegerField(
+        'min_h', [validators.NumberRange(min=0)]
+    )
+    min_duration_between_submissions_minute = IntegerField(
+        'min_m', [validators.NumberRange(min=0, max=59)]
+    )
+    min_duration_between_submissions_second = IntegerField(
+        'min_s', [validators.NumberRange(min=0, max=59)]
+    )
+    opening_date = DateField(
+        'opening_date', [validators.DataRequired()], format='%Y-%m-%d'
+    )
+    closing_date = DateField(
+        'closing_date', [validators.DataRequired()], format='%Y-%m-%d'
+    )
