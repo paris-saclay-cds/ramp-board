@@ -11,8 +11,11 @@ from rampdb.testing import create_toy_db
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
 
+from rampdb.tools.user import get_user_by_name
+
 from frontend import create_app
 from frontend import mail
+from frontend.utils import body_formatter_user
 from frontend.utils import send_mail
 
 
@@ -58,3 +61,11 @@ def test_send_mail(client_session):
             assert outbox[0].subject == 'subject'
             assert outbox[0].body == 'body'
             assert outbox[0].recipients == ['xx@gmail.com']
+
+
+def test_body_formatter_user(client_session):
+    _, session = client_session
+    user = get_user_by_name(session, 'test_user')
+    for word in ['test_user', 'User', 'Test', 'linkedin', 'twitter',
+                 'facebook', 'github', 'notes', 'bio']:
+        assert word in body_formatter_user(user)

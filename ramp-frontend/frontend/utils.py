@@ -2,9 +2,43 @@ import logging
 
 from flask_mail import Message
 
+from ramputils.utils import encode_string
+
 from frontend import mail
 
 logger = logging.getLogger('RAMP-FRONTEND')
+
+
+def body_formatter_user(user):
+    """Create the body of an email using the user information.
+
+    Parameters
+    ----------
+    user : `rampdb.model.User`
+        The user profile.
+
+    Returns
+    -------
+    body : str
+        The email body.
+    """
+    body = """
+    user = {}
+    name = {} {}
+    email = {}
+    linkedin = {}
+    twitter = {}
+    facebook = {}
+    github = {}
+    notes = {}
+    bio = {}
+
+    """.format(encode_string(user.name), encode_string(user.firstname),
+               encode_string(user.lastname), user.email, user.linkedin_url,
+               user.twitter_url, user.facebook_url, user.github_url,
+               encode_string(user.hidden_notes), encode_string(user.bio))
+
+    return body
 
 
 def send_mail(to, subject, body):

@@ -59,6 +59,7 @@ def client_session(config):
 @pytest.mark.parametrize(
     "page",
     ["/approve_users",
+     "/sign_up/test_user",
      "/events/iris_test/sign_up/test_user",
      "/events/iris_test/update",
      "/user_interactions",
@@ -77,6 +78,7 @@ def test_check_login_required(client_session, page):
 @pytest.mark.parametrize(
     "page, request_function",
     [("/approve_users", ["get", "post"]),
+     ("/sign_up/test_user", ["get"]),
      ("/events/iris_test/sign_up/test_user", ["get"]),
      ("/events/iris_test/update", ["get", "post"]),
      ("/user_interactions", ["get"]),
@@ -138,6 +140,34 @@ def test_approve_users(client_session):
         assert re.match(r"Approved users:\nyy\nApproved event_team:\n"
                         r"Event\(iris_test\)/Team\(.*xx.*\)\n",
                         flash_message['Approved users'])
+
+
+def test_approve_single_user(client_session):
+    client, session = client_session
+
+    add_user(session, 'aa', 'aa', 'aa', 'aa', 'aa', access_level='asked')
+    with login_scope(client, 'test_iris_admin', 'test') as client:
+        rv = client.get('/sign_up/aa')
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert re.match("User(.*aa.*) is signed up",
+                        flash_message['Successful sign-up'])
+
+        # ensure that the previous change have been committed within our
+        # session
+        session.commit()
+        user = get_user_by_name(session, 'aa')
+        assert user.access_level == 'user'
+
+        rv = client.get("/sign_up/unknown_user")
+        session.commit()
+        assert rv.status_code == 302
+        assert rv.location == "http://localhost/problems"
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert flash_message['message'] == 'No user unknown_user'
 
 
 def test_approve_sign_up_for_event(client_session):

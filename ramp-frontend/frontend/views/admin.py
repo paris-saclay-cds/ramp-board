@@ -93,10 +93,36 @@ def approve_users():
                                 category="Approved users")
 
 
+@mod.route("/sign_up/<user_name>")
+@flask_login.login_required
+def approve_single_user(user_name):
+    """Approve a single user. This is usually used to approve user through
+    email."""
+    if not flask_login.current_user.access_level == 'admin':
+        return redirect_to_user(
+            u'Sorry {}, you do not have admin rights'
+            .format(flask_login.current_user.firstname),
+            is_error=True
+        )
+    user = User.query.filter_by(name=user_name).one_or_none()
+    if not user:
+        return redirect_to_user(
+            u'No user {}'.format(user_name), is_error=True
+        )
+    approve_user(db.session, user.name)
+    return redirect_to_user(
+        u'{} is signed up'.format(user), is_error=False,
+        category='Successful sign-up'
+    )
+
+
 @mod.route("/events/<event_name>/sign_up/<user_name>")
 @flask_login.login_required
 def approve_sign_up_for_event(event_name, user_name):
     """Approve a user for a specific event.
+
+    This way of approval is usually used by clicking in an email sent to the
+    admin.
 
     Parameters
     ----------
