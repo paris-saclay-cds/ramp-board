@@ -39,6 +39,22 @@ EXTRAS_REQUIRE = {
     'tests': ['pytest', 'pytest-cov'],
     'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc']
 }
+PACKAGE_DATA = {
+    'frontend': [
+        os.path.join('template', '*'),
+        os.path.join('static', 'css', 'style.css'),
+        os.path.join('static', 'css', 'themes', 'flat-blue.css'),
+        os.path.join('static', 'img', '*'),
+        os.path.join('static', 'img', 'backdrop', '*'),
+        os.path.join('static', 'img', 'partners', '*'),
+        os.path.join('static', 'img', 'powered_by', '*'),
+        os.path.join('static', 'js', '*'),
+        os.path.join('static', 'lib', 'css' '*'),
+        os.path.join('static', 'lib', 'fonts' '*'),
+        os.path.join('static', 'lib', 'img' '*'),
+        os.path.join('static', 'lib', 'js' '*'),
+    ]
+}
 
 setup(
     name=DISTNAME,
@@ -53,6 +69,7 @@ setup(
     zip_safe=False,  # the package can run out of an .egg file
     classifiers=CLASSIFIERS,
     packages=find_packages(),
+    package_data=PACKAGE_DATA,
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
     entry_points={
