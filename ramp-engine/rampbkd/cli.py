@@ -6,7 +6,8 @@ from ramputils import read_config
 from ramputils import generate_worker_config
 
 from rampbkd.dispatcher import Dispatcher
-from rampbkd.dispatcher import CondaEnvWorker
+from rampbkd import available_workers
+
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -20,8 +21,6 @@ def main():
 @main.command()
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file in YAML format')
-@click.option('--worker-type', default='CondaEnvWorker', show_default=True,
-              help='Type of worker to use')
 @click.option('--n-worker', default=-1, show_default=True,
               help='Number of worker to start in parallel')
 @click.option('--hunger-policy', default='exit', show_default=True,
@@ -38,16 +37,15 @@ def dispatcher(config, worker_type, n_worker, hunger_policy, verbose):
         logging.basicConfig(format='%(levelname)s %(name)s %(message)s',
                             level=logging.DEBUG)
     config = read_config(config)
-    disp = Dispatcher(config=config, worker=globals()[worker_type],
-                      n_worker=n_worker, hunger_policy=hunger_policy)
+    worker = available_workers[config['worker']['worker_type']]
+    disp = Dispatcher(config=config, worker=worker, n_worker=n_worker,
+                      hunger_policy=hunger_policy)
     disp.launch()
 
 
 @main.command()
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file in YAML format')
-@click.option('--worker-type', default='CondaEnvWorker', show_default=True,
-              help='Type of worker to use')
 @click.option('--submission', help='The submission name')
 @click.option('-v', '--verbose', is_flag=True)
 def worker(config, worker_type, submission, verbose):
@@ -61,7 +59,8 @@ def worker(config, worker_type, submission, verbose):
                             level=logging.DEBUG)
     config = read_config(config)
     worker_params = generate_worker_config(config)
-    work = globals()[worker_type](worker_params, submission)
+    worker = available_workers[worker_params['worker_type']]
+    work = worker(worker_params, submission)
     work.launch()
 
 
