@@ -8,8 +8,12 @@
 Toolkit for interacting with the RAMP database
 
 """
+from .local import CondaEnvWorker
 from ._version import get_versions
 
 __version__ = get_versions()['version']
 
 del get_versions
+
+
+available_workers = {'conda': CondaEnvWorker}
