@@ -5,7 +5,8 @@ from click.testing import CliRunner
 
 from ramputils import read_config
 from ramputils import generate_ramp_config
-from ramputils.testing import path_config_example
+from ramputils.testing import database_config_template
+from ramputils.testing import ramp_config_template
 
 from rampdb.utils import setup_db
 from rampdb.model import Model
@@ -15,21 +16,23 @@ from rampdb.cli import main
 
 
 def setup_module(module):
-    config = read_config(path_config_example())
-    create_toy_db(config)
+    database_config = read_config(database_config_template())
+    ramp_config = read_config(ramp_config_template())
+    create_toy_db(database_config, ramp_config)
 
 
 def teardown_module(module):
-    config = read_config(path_config_example())
-    shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-    db, _ = setup_db(config['sqlalchemy'])
+    database_config = read_config(database_config_template())
+    ramp_config = read_config(ramp_config_template())
+    shutil.rmtree(ramp_config['ramp']['deployment_dir'], ignore_errors=True)
+    db, _ = setup_db(database_config['sqlalchemy'])
     Model.metadata.drop_all(db)
 
 
 def test_add_user():
     runner = CliRunner()
     result = runner.invoke(main, ['add-user',
-                                  '--config', path_config_example(),
+                                  '--config', database_config_template(),
                                   '--login', 'glemaitre',
                                   '--password', 'xxx',
                                   '--lastname', 'xxx',
@@ -43,7 +46,7 @@ def test_add_user():
 def test_approve_user():
     runner = CliRunner()
     result = runner.invoke(main, ['approve-user',
-                                  '--config', path_config_example(),
+                                  '--config', database_config_template(),
                                   '--login', 'glemaitre'],
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output
@@ -51,9 +54,9 @@ def test_approve_user():
 
 def test_add_problem():
     runner = CliRunner()
-    ramp_config = generate_ramp_config(path_config_example())
+    ramp_config = generate_ramp_config(ramp_config_template())
     result = runner.invoke(main, ['add-problem',
-                                  '--config', path_config_example(),
+                                  '--config', database_config_template(),
                                   '--problem', 'iris',
                                   '--kits-dir', ramp_config['ramp_kits_dir'],
                                   '--data-dir', ramp_config['ramp_data_dir'],
@@ -64,9 +67,9 @@ def test_add_problem():
 
 def test_add_event():
     runner = CliRunner()
-    ramp_config = generate_ramp_config(path_config_example())
+    ramp_config = generate_ramp_config(ramp_config_template())
     result = runner.invoke(main, ['add-event',
-                                  '--config', path_config_example(),
+                                  '--config', database_config_template(),
                                   '--problem', 'iris',
                                   '--event', 'iris_test',
                                   '--title', 'Iris classification',
@@ -82,7 +85,7 @@ def test_add_event():
 def test_sign_up_team():
     runner = CliRunner()
     result = runner.invoke(main, ['sign-up-team',
-                                  '--config', path_config_example(),
+                                  '--config', database_config_template(),
                                   '--event', 'iris_test',
                                   '--team', 'glemaitre'],
                            catch_exceptions=False)
@@ -93,7 +96,7 @@ def test_sign_up_team():
 def test_add_event_admin():
     runner = CliRunner()
     result = runner.invoke(main, ['add-event-admin',
-                                  '--config', path_config_example(),
+                                  '--config', database_config_template(),
                                   '--event', 'iris_test',
                                   '--user', 'glemaitre'],
                            catch_exceptions=False)
@@ -101,7 +104,7 @@ def test_add_event_admin():
 
 
 def test_add_submission():
-    ramp_config = generate_ramp_config(path_config_example())
+    ramp_config = generate_ramp_config(ramp_config_template())
     submission_name = 'new_submission'
     submission_path = os.path.join(ramp_config['ramp_kit_submissions_dir'],
                                    submission_name)
@@ -112,7 +115,7 @@ def test_add_submission():
     )
     runner = CliRunner()
     result = runner.invoke(main, ['add-submission',
-                                  '--config', path_config_example(),
+                                  '--config', database_config_template(),
                                   '--event', 'iris_test',
                                   '--team', 'glemaitre',
                                   '--submission', submission_name,
@@ -124,14 +127,14 @@ def test_add_submission():
 def test_get_submission_by_state():
     runner = CliRunner()
     result = runner.invoke(main, ['get-submissions-by-state',
-                                  '--config', path_config_example(),
+                                  '--config', database_config_template(),
                                   '--event', 'boston_housing_test',
                                   '--state', 'new'],
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output
     assert "ID" in result.output
     result = runner.invoke(main, ['get-submissions-by-state',
-                                  '--config', path_config_example(),
+                                  '--config', database_config_template(),
                                   '--event', 'iris_test',
                                   '--state', 'scored'],
                            catch_exceptions=False)
@@ -142,7 +145,7 @@ def test_get_submission_by_state():
 def test_set_submission_state():
     runner = CliRunner()
     result = runner.invoke(main, ['set-submission-state',
-                                  '--config', path_config_example(),
+                                  '--config', database_config_template(),
                                   '--submission-id', 3,
                                   '--state', 'scored'],
                            catch_exceptions=False)
@@ -152,7 +155,7 @@ def test_set_submission_state():
 def test_update_leaderboards():
     runner = CliRunner()
     result = runner.invoke(main, ['update-leaderboards',
-                                  '--config', path_config_example(),
+                                  '--config', database_config_template(),
                                   '--event', 'iris_test'],
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output
@@ -161,7 +164,7 @@ def test_update_leaderboards():
 def test_update_user_leaderboards():
     runner = CliRunner()
     result = runner.invoke(main, ['update-user-leaderboards',
-                                  '--config', path_config_example(),
+                                  '--config', database_config_template(),
                                   '--event', 'iris_test',
                                   '--user', 'glemaitre'],
                            catch_exceptions=False)
@@ -171,7 +174,7 @@ def test_update_user_leaderboards():
 def test_update_all_user_leaderboards():
     runner = CliRunner()
     result = runner.invoke(main, ['update-all-users-leaderboards',
-                                  '--config', path_config_example(),
+                                  '--config', database_config_template(),
                                   '--event', 'iris_test'],
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output
