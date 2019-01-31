@@ -1,7 +1,30 @@
 import os
 
+HERE = os.path.dirname(__file__)
+
 
 def path_config_example():
     """Give the path a ``config.yml`` which can be used as an example."""
-    module_path = os.path.dirname(__file__)
-    return os.path.join(module_path, 'tests', 'data', 'config.yml')
+    return os.path.join(HERE, 'tests', 'data', 'config.yml')
+
+
+def database_config_template():
+    """Return the path a template database configuration file.
+
+    Returns
+    -------
+    filename : str
+        The database configuration filename.
+    """
+    return os.path.join(HERE, 'template', 'database_config.yml')
+
+
+def ramp_config_template():
+    """Return the path a template RAMP configuration file.
+
+    Returns
+    -------
+    filename : str
+        The RAMP configuration filename.
+    """
+    return os.path.join(HERE, 'template', 'ramp_config.yml')

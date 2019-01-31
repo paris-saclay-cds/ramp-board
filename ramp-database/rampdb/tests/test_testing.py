@@ -6,7 +6,9 @@ from git.exc import GitCommandError
 
 from ramputils import read_config
 from ramputils import generate_ramp_config
-from ramputils.testing import path_config_example
+
+from ramputils.testing import database_config_template
+from ramputils.testing import ramp_config_template
 
 from rampdb.utils import setup_db
 from rampdb.utils import session_scope
@@ -29,37 +31,41 @@ from rampdb.testing import submit_all_starting_kits
 
 @pytest.fixture(scope='module')
 def database_config():
-    return read_config(path_config_example(), filter_section='sqlalchemy')
+    return read_config(database_config_template())
 
 
 @pytest.fixture(scope='module')
-def config():
-    return read_config(path_config_example())
+def ramp_config():
+    return read_config(ramp_config_template())
 
 
 @pytest.fixture
-def session_scope_function(config):
+def session_scope_function(database_config, ramp_config):
     try:
-        create_test_db(config)
-        with session_scope(config['sqlalchemy']) as session:
+        create_test_db(database_config, ramp_config)
+        with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, _ = setup_db(config['sqlalchemy'])
+        shutil.rmtree(
+            ramp_config['ramp']['deployment_dir'], ignore_errors=True
+        )
+        db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
-def test_ramp_kits_ramp_data(session_scope_function, config):
-    ramp_config = generate_ramp_config(config)
-    setup_ramp_kits_ramp_data(config, 'iris')
+def test_ramp_kits_ramp_data(session_scope_function, ramp_config):
+    setup_ramp_kits_ramp_data(ramp_config, 'iris')
     msg_err = 'The RAMP kit repository was previously cloned.'
     with pytest.raises(ValueError, match=msg_err):
-        setup_ramp_kits_ramp_data(config, 'iris')
-    shutil.rmtree(os.path.join(ramp_config['ramp_kits_dir'], 'iris'))
+        setup_ramp_kits_ramp_data(ramp_config, 'iris')
+
+    # retrieve the path to the ramp kit to remove it
+    internal_ramp_config = generate_ramp_config(ramp_config)
+    shutil.rmtree(os.path.join(internal_ramp_config['ramp_kits_dir'], 'iris'))
     msg_err = 'The RAMP data repository was previously cloned.'
     with pytest.raises(ValueError, match=msg_err):
-        setup_ramp_kits_ramp_data(config, 'iris')
-    setup_ramp_kits_ramp_data(config, 'iris', force=True)
+        setup_ramp_kits_ramp_data(ramp_config, 'iris')
+    setup_ramp_kits_ramp_data(ramp_config, 'iris', force=True)
 
 
 def test_add_users(session_scope_function):
@@ -72,8 +78,8 @@ def test_add_users(session_scope_function):
         add_users(session_scope_function)
 
 
-def test_add_problems(session_scope_function, config):
-    add_problems(session_scope_function, config)
+def test_add_problems(session_scope_function, ramp_config):
+    add_problems(session_scope_function, ramp_config)
     problems = get_problem(session_scope_function, None)
     for problem in problems:
         assert problem.name in ('iris', 'boston_housing')
@@ -81,26 +87,26 @@ def test_add_problems(session_scope_function, config):
     # repositories already exist.
     msg_err = 'The RAMP kit repository was previously cloned.'
     with pytest.raises(ValueError, match=msg_err):
-        add_problems(session_scope_function, config)
+        add_problems(session_scope_function, ramp_config)
 
 
-def test_add_events(session_scope_function, config):
-    add_problems(session_scope_function, config)
-    add_events(session_scope_function, config)
+def test_add_events(session_scope_function, ramp_config):
+    add_problems(session_scope_function, ramp_config)
+    add_events(session_scope_function, ramp_config)
     with pytest.raises(ValueError):
-        add_events(session_scope_function, config)
+        add_events(session_scope_function, ramp_config)
 
 
-def test_sign_up_team_to_events(session_scope_function, config):
+def test_sign_up_team_to_events(session_scope_function, ramp_config):
     add_users(session_scope_function)
-    add_problems(session_scope_function, config)
-    add_events(session_scope_function, config)
+    add_problems(session_scope_function, ramp_config)
+    add_events(session_scope_function, ramp_config)
     sign_up_teams_to_events(session_scope_function)
 
 
-def test_submit_all_starting_kits(session_scope_function, config):
+def test_submit_all_starting_kits(session_scope_function, ramp_config):
     add_users(session_scope_function)
-    add_problems(session_scope_function, config)
-    add_events(session_scope_function, config)
+    add_problems(session_scope_function, ramp_config)
+    add_events(session_scope_function, ramp_config)
     sign_up_teams_to_events(session_scope_function)
-    submit_all_starting_kits(session_scope_function, config)
+    submit_all_starting_kits(session_scope_function, ramp_config)

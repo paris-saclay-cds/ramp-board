@@ -8,7 +8,8 @@ from numpy.testing import assert_array_equal
 from ramputils import read_config
 from ramputils import generate_ramp_config
 from ramputils.utils import import_module_from_source
-from ramputils.testing import path_config_example
+from ramputils.testing import database_config_template
+from ramputils.testing import ramp_config_template
 
 from rampdb.model import CVFold
 from rampdb.model import Event
@@ -44,41 +45,40 @@ from rampdb.tools.event import get_workflow
 HERE = os.path.dirname(__file__)
 
 
-@pytest.fixture(scope='module')
-def database_config():
-    return read_config(path_config_example(), filter_section='sqlalchemy')
-
-
-@pytest.fixture(scope='module')
-def config():
-    return read_config(path_config_example())
-
-
 @pytest.fixture
-def session_scope_function(config):
+def session_scope_function():
+    database_config = read_config(database_config_template())
+    ramp_config = read_config(ramp_config_template())
     try:
-        create_test_db(config)
-        with session_scope(config['sqlalchemy']) as session:
+        create_test_db(database_config, ramp_config)
+        with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, _ = setup_db(config['sqlalchemy'])
+        shutil.rmtree(
+            ramp_config['ramp']['deployment_dir'], ignore_errors=True
+        )
+        db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
 @pytest.fixture(scope='module')
-def session_toy_db(config):
+def session_toy_db():
+    database_config = read_config(database_config_template())
+    ramp_config = read_config(ramp_config_template())
     try:
-        create_toy_db(config)
-        with session_scope(config['sqlalchemy']) as session:
+        create_toy_db(database_config, ramp_config)
+        with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, _ = setup_db(config['sqlalchemy'])
+        shutil.rmtree(
+            ramp_config['ramp']['deployment_dir'], ignore_errors=True
+        )
+        db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
-def test_check_problem(session_scope_function, config):
+def test_check_problem(session_scope_function):
+    config = read_config(ramp_config_template())
     problem_names = ['iris', 'boston_housing']
     for problem_name in problem_names:
         setup_ramp_kits_ramp_data(config, problem_name)
@@ -183,7 +183,8 @@ def _check_event(session, event, event_name, event_title, event_is_public,
         assert_array_equal(stored_fold.test_is, test_indices)
 
 
-def test_check_event(session_scope_function, config):
+def test_check_event(session_scope_function):
+    config = read_config(ramp_config_template())
     # addition of event require some problem
     problem_names = ['iris', 'boston_housing']
     for problem_name in problem_names:
