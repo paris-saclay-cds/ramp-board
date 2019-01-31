@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block head %}
+    {{ super() }}
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?skin=sunburst"></script>
+{% endblock %}
+
+{% block title %}Submission code{% endblock %}
+
+{% block content %}
+
+<div class="page-title">
+    <span class="title">{{ event.problem.title }}, {{ event.title }}</span>
+</div>
+
+<div class="col-xs-8">
+  <div class="card">
+    {% if event.is_competitive and submission.team.admin == current_user %}
+      <div class="col-xs-12">
+        <div class="card">
+          <div class="card-body">
+            {% if submission.is_in_competition %}
+              By default, all your submissions enter the competition, and the one with the highest public leaderboard score will become your official entry. If you don't want that this submission becomes a candidate, pull it out by pressing the button.
+              <a class="btn btn-warning" href="/toggle_competition/{{ submission.hash_ }}">Pull out this submission from the competition<span"></span></a>
+            {% else %}
+              At this time, this submission is not a candidate in the official competition. You can re-enter it into the competition by pushing this button.<BR>
+              <a class="btn btn-warning" href="/toggle_competition/{{ submission.hash_ }}">Enter this submission into the competition<span"></span></a>
+              <BR>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+            <span><i class="angle right grey icon"></i></span>
+            team = {{ submission.team.name }} <BR>
+            <span><i class="angle right grey icon"></i></span>
+            submission = {{ submission.name }} <BR>
+            <span><i class="angle right grey icon"></i></span>
+            file = {{ f_name }}
+          </div>
+      </div>
+    </div>
+    <div class="card-body">
+        <a href="/credit/{{ submission.hash_ }}">Click here</a> to assess and assign credit for this submission (quantify where it comes from).
+        <pre class="prettyprint linenums">{{ code }}</pre>
+	</div>
+  </div>
+</div>
+
+<div class="col-xs-4">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+			File List
+		  </div>
+      </div> 
+    </div>
+    <div class="card-body">
+		{% if submission.f_names and f_name != 'error.txt' %}
+            {% for f in submission.f_names %}
+                {% if f==f_name %}
+					<div class="panel fresh-color panel-info">
+                      <div class="panel-heading">
+                		<i class="icon fa fa-file"></i> {{f}}
+                      </div>
+                    </div>
+                {% else %}
+                	<div class="panel panel-info">
+                      <div class="panel-heading">
+					    <a href="{{ f }}"><i class="icon fa fa-file"></i> {{ f }}</a>
+                      </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+		{% endif %}
+	</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+            Import it to my sandbox
+          </div> 
+      </div> 
+    </div> 
+    <div class="card-body">
+        <p><font color="#F17670">Be careful: this will overwrite any unsubmitted changes (even changes that you have saved but not yet submitted) in your sandbox.</font></p>
+        <form class="ui form" method="post" action="" name="import">
+            {{ import_form.hidden_tag() }}
+            {{ import_form.selected_f_names }}
+            <input type="submit" value="Import to my sandbox" class="btn btn-warning">
+        </form>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+          <div class="title">
+            Download all
+          </div> 
+      </div> 
+    </div> 
+    <div class="card-body">
+        <a href="/download/{{ submission.hash_ }}" class="btn btn-warning" role="button">Download a zip file</a>
+    </div>
+  </div>
+</div>   
+
+
+{% endblock %}

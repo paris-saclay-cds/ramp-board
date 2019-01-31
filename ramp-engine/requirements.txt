@@ -1,4 +1,0 @@
-numpy
-pyyaml
-sqlalchemy
-psycopg2

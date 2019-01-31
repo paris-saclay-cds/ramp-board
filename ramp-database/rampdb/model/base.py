@@ -1,4 +1,3 @@
-import os
 import sys
 from math import ceil
 
@@ -105,7 +104,7 @@ class QueryProperty(object):
             if not getattr(Model, 'query_class', None):
                 Model.query_class = BaseQuery
 
-            query_property = Model.query_class(mapper, session=self.session())
+            query_property = Model.query_class(mapper, session=self.session)
 
             return query_property
 
@@ -125,26 +124,3 @@ Model = declarative_base(cls=ModelBase)
 
 def set_query_property(model_class, session):
     model_class.query = QueryProperty(session)
-
-
-def get_deployment_path():
-    server_type = os.getenv('DATABOARD_STAGE', 'UNKNOWN')
-    if server_type.upper() in ['PROD', 'PRODUCTION']:
-        return os.getenv('DATABOARD_DEPLOYMENT_PATH', '/tmp/databoard')
-    elif server_type.upper() in ['TEST', 'TESTING', 'DEV', 'DEVELOPMENT']:
-        return os.getenv(
-            'DATABOARD_DEPLOYMENT_PATH_TEST', '/tmp/databoard_test')
-    else:
-        return '.'
-
-
-def encode_string(text):
-    if PYTHON3:
-        if isinstance(text, str):
-            encoded_text = bytes(text, 'utf-8')
-        else:
-            encoded_text = text
-    else:
-        encoded_text = text.encode('utf8')
-
-    return encoded_text

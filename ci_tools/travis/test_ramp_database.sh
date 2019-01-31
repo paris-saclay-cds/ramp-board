@@ -1,2 +1,2 @@
 flake8 ramp-database/
-pytest -vsl ramp-database/rampdb
+pytest -rvsl ramp-database/rampdb --cov=ramp-database --cov-report=term-missing

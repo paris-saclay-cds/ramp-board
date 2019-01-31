@@ -8,6 +8,8 @@ import boto3  # amazon api
 
 from rampdb.tools import select_submissions_by_id
 from rampdb.tools import set_predictions
+from rampdb.tools import set_time
+from rampdb.tools import set_scores
 from rampdb.tools import set_submission_state
 from rampdb.tools import get_submissions
 from rampdb.tools import get_submission_state
@@ -152,7 +154,9 @@ def train_loop(config, event_name):
                         logger.info('Downloading the predictions of "{}"'.format(label))
                         path = download_predictions(
                             conf_aws, instance_id, submission_name)
-                        set_predictions(config, submission_id, path, ext='npz')
+                        set_predictions(config, submission_id, path)
+                        set_time(config, submission_id, path)
+                        set_scores(config, submission_id, path)
                         set_submission_state(config, submission_id, 'tested')
                     else:
                         logger.info('Training of "{}" failed'.format(label))
@@ -254,8 +258,9 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
         logger.info('Downloading predictions of : "{}"'.format(label))
         predictions_folder_path = download_predictions(
             conf_aws, instance_id, submission_id)
-        set_predictions(config, submission_id,
-                        predictions_folder_path, ext='npz')
+        set_predictions(config, submission_id, predictions_folder_path)
+        set_time(config, submission_id, predictions_folder_path)
+        set_scores(config, submission_id, predictions_folder_path)
         set_submission_state(config, submission_id, 'tested')
         logger.info('Scoring "{}"'.format(label))
         score_submission(config, submission_id)

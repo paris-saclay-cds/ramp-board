@@ -14,24 +14,16 @@ before_install:
     - export PATH=/home/travis/miniconda/bin:$PATH
     - conda update --yes --quiet conda
 install:
-    - conda env create python=$PYTHON_VERSION -f environment.yml
-    - conda env create python=$PYTHON_VERSION -f ci_tools/environment_iris_kit.yml
+    - conda create --yes -n testenv python=$PYTHON_VERSION
+    - conda env update -n testenv -f environment.yml
+    - conda env create -f ci_tools/environment_iris_kit.yml
     - source activate testenv
-    - cd databoard
-    - pip install .
-    - cd ..
-    # install ramp-engine
-    - cd ramp-engine
-    - pip install .
-    - cd ..
-    # install ramp-database
-    - cd ramp-database
-    - pip install .
-    - cd ..
+    - make install
 script:
-    - bash ci_tools/travis/test_ramp_board.sh
+    - bash ci_tools/travis/test_ramp_frontend.sh
     - bash ci_tools/travis/test_ramp_engine.sh
     - bash ci_tools/travis/test_ramp_database.sh
+    - bash ci_tools/travis/test_ramp_utils.sh
 after_success:
     - make code-analysis
 notifications:
