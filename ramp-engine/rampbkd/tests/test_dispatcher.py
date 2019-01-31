@@ -3,7 +3,8 @@ import shutil
 import pytest
 
 from ramputils import read_config
-from ramputils.testing import path_config_example
+from ramputils.testing import database_config_template
+from ramputils.testing import ramp_config_template
 
 from rampdb.model import Model
 from rampdb.utils import setup_db
@@ -17,39 +18,45 @@ from rampbkd.local import CondaEnvWorker
 from rampbkd.dispatcher import Dispatcher
 
 
-@pytest.fixture(scope='module')
-def config():
-    return read_config(path_config_example())
-
-
 @pytest.fixture
-def session_toy(config):
+def session_toy():
+    database_config = read_config(database_config_template())
+    ramp_config = read_config(ramp_config_template())
     try:
-        create_toy_db(config)
-        with session_scope(config['sqlalchemy']) as session:
+        create_toy_db(database_config, ramp_config)
+        with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, _ = setup_db(config['sqlalchemy'])
+        shutil.rmtree(
+            ramp_config['ramp']['deployment_dir'], ignore_errors=True
+        )
+        db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
-def test_integration_dispatcher(session_toy, config):
-    dispatcher = Dispatcher(config=config,
-                            worker=CondaEnvWorker, n_worker=-1,
-                            hunger_policy='exit')
+def test_integration_dispatcher(session_toy):
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_config_template())
+    dispatcher = Dispatcher(
+        config=config, event_config=event_config, worker=CondaEnvWorker,
+        n_worker=-1, hunger_policy='exit'
+    )
     dispatcher.launch()
 
     # the iris kit contain a submission which should fail for each user
-    submission = get_submissions(session_toy, config['ramp']['event_name'],
-                                 'training_error')
+    submission = get_submissions(
+        session_toy, event_config['ramp']['event_name'], 'training_error'
+    )
     assert len(submission) == 2
 
 
-def test_unit_test_dispatcher(session_toy, config):
+def test_unit_test_dispatcher(session_toy):
     # make sure that the size of the list is bigger than the number of
     # submissions
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_config_template())
     dispatcher = Dispatcher(config=config,
+                            event_config=event_config,
                             worker=CondaEnvWorker, n_worker=100,
                             hunger_policy='exit')
 

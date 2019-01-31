@@ -1,6 +1,6 @@
 import pytest
 
-from ramputils.testing import path_config_example
+from ramputils.testing import database_config_template
 
 from ramputils import read_config
 from ramputils import generate_flask_config
@@ -8,8 +8,8 @@ from ramputils import generate_flask_config
 
 @pytest.mark.parametrize(
     "config",
-    [path_config_example(),
-     read_config(path_config_example())]
+    [database_config_template(),
+     read_config(database_config_template())]
 )
 def test_generate_flask_config(config):
     flask_config = generate_flask_config(config)

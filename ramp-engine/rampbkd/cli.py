@@ -19,8 +19,12 @@ def main():
 
 @main.command()
 @click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file in YAML format')
-@click.option('--worker-type', default='CondaEnvWorker', show_default=True,
+              help='Configuration file in YAML format containing the database '
+              'information.')
+@click.option("--event-config", show_default=True,
+              help='Configuration file in YAML format containing the RAMP '
+              'event information.')
+@click.option('--worker-type', default='CondaEnvWorker',
               help='Type of worker to use')
 @click.option('--n-worker', default=-1, show_default=True,
               help='Number of worker to start in parallel')
@@ -28,7 +32,8 @@ def main():
               help='Policy to apply in case that there is no anymore workers'
               'to be processed')
 @click.option('-v', '--verbose', count=True)
-def dispatcher(config, worker_type, n_worker, hunger_policy, verbose):
+def dispatcher(config, event_config, worker_type, n_worker, hunger_policy,
+               verbose):
     """Launch the RAMP dispatcher.
 
     The RAMP dispatcher is in charge of starting RAMP workers, collecting
@@ -41,11 +46,14 @@ def dispatcher(config, worker_type, n_worker, hunger_policy, verbose):
             level = logging.DEBUG
         logging.basicConfig(
             format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
-            level=level, datefmt='%Y:%m:%d %H:%M:%S')
-
+            level=level, datefmt='%Y:%m:%d %H:%M:%S'
+        )
     config = read_config(config)
-    disp = Dispatcher(config=config, worker=globals()[worker_type],
-                      n_worker=n_worker, hunger_policy=hunger_policy)
+    event_config = read_config(event_config)
+    disp = Dispatcher(
+        config=config, event_config=event_config, worker=globals()[worker_type],
+        n_worker=n_worker, hunger_policy=hunger_policy
+    )
     disp.launch()
 
 
@@ -63,8 +71,14 @@ def worker(config, worker_type, submission, verbose):
     specifying the different locations (kit, data, logs, predictions)
     """
     if verbose:
-        logging.basicConfig(format='%(levelname)s %(name)s %(message)s',
-                            level=logging.DEBUG)
+        if verbose == 1:
+            level = logging.INFO
+        else:
+            level = logging.DEBUG
+        logging.basicConfig(
+            format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
+            level=level, datefmt='%Y:%m:%d %H:%M:%S'
+        )
     config = read_config(config)
     worker_params = generate_worker_config(config)
     work = globals()[worker_type](worker_params, submission)
