@@ -4,7 +4,8 @@ import shutil
 import pytest
 
 from ramputils import read_config
-from ramputils.testing import path_config_example
+from ramputils.testing import database_config_template
+from ramputils.testing import ramp_config_template
 
 from rampbkd.dispatcher import Dispatcher
 
@@ -26,40 +27,38 @@ from rampdb.tools.leaderboard import update_user_leaderboards
 
 
 @pytest.fixture(scope='module')
-def database_config():
-    return read_config(path_config_example(), filter_section='sqlalchemy')
-
-
-@pytest.fixture(scope='module')
-def config():
-    return read_config(path_config_example())
-
-
-@pytest.fixture(scope='module')
-def session_toy_db(config):
+def session_toy_db():
+    database_config = read_config(database_config_template())
+    ramp_config = read_config(ramp_config_template())
     try:
-        create_toy_db(config)
-        with session_scope(config['sqlalchemy']) as session:
+        create_toy_db(database_config, ramp_config)
+        with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, _ = setup_db(config['sqlalchemy'])
+        shutil.rmtree(
+            ramp_config['ramp']['deployment_dir'], ignore_errors=True
+        )
+        db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
 @pytest.fixture
-def session_toy_function(config):
+def session_toy_function():
+    database_config = read_config(database_config_template())
+    ramp_config = read_config(ramp_config_template())
     try:
-        create_toy_db(config)
-        with session_scope(config['sqlalchemy']) as session:
+        create_toy_db(database_config, ramp_config)
+        with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, _ = setup_db(config['sqlalchemy'])
+        shutil.rmtree(
+            ramp_config['ramp']['deployment_dir'], ignore_errors=True
+        )
+        db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
-def test_update_leaderboard_functions(session_toy_function, config):
+def test_update_leaderboard_functions(session_toy_function):
     event_name = 'iris_test'
     user_name = 'test_user'
     for leaderboard_type in ['public', 'private', 'failed',
@@ -94,7 +93,11 @@ def test_update_leaderboard_functions(session_toy_function, config):
         assert et.new_leaderboard_html
 
     # run the dispatcher to process the different submissions
-    dispatcher = Dispatcher(config, n_worker=-1, hunger_policy='exit')
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_config_template())
+    dispatcher = Dispatcher(
+        config, event_config, n_worker=-1, hunger_policy='exit'
+    )
     dispatcher.launch()
     session_toy_function.commit()
 
@@ -146,7 +149,7 @@ def test_get_leaderboard_only_new_submissions(session_toy_db, leaderboard_type,
             session_toy_db, leaderboard_type, 'iris_test') is expected_html)
 
 
-def test_get_leaderboard(session_toy_db, config):
+def test_get_leaderboard(session_toy_db):
     leaderboard_new = get_leaderboard(session_toy_db, 'new', 'iris_test')
     assert leaderboard_new.count('<tr>') == 6
     leaderboard_new = get_leaderboard(session_toy_db, 'new', 'iris_test',
@@ -154,7 +157,11 @@ def test_get_leaderboard(session_toy_db, config):
     assert leaderboard_new.count('<tr>') == 3
 
     # run the dispatcher to process the different submissions
-    dispatcher = Dispatcher(config, n_worker=-1, hunger_policy='exit')
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_config_template())
+    dispatcher = Dispatcher(
+        config, event_config, n_worker=-1, hunger_policy='exit'
+    )
     dispatcher.launch()
     session_toy_db.commit()
 

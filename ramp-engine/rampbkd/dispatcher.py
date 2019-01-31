@@ -46,7 +46,9 @@ class Dispatcher(object):
 
     Parameters
     ----------
-    config : dict,
+    config : dict
+        A configuration YAML file containing the inforation about the database.
+    event_config : dict,
         A RAMP configuration YAML file with information regarding the worker
         and the ramp event.
     worker : Worker, default=CondaEnvWorker
@@ -64,7 +66,8 @@ class Dispatcher(object):
         * if 'exit': the dispatcher will stop after collecting the results of
           the last submissions.
     """
-    def __init__(self, config, worker=None, n_worker=1, hunger_policy=None):
+    def __init__(self, config, event_config, worker=None, n_worker=1,
+                 hunger_policy=None):
         self.worker = CondaEnvWorker if worker is None else worker
         self.n_worker = (max(multiprocessing.cpu_count() + 1 + n_worker, 1)
                          if n_worker < 0 else n_worker)
@@ -77,8 +80,8 @@ class Dispatcher(object):
         self._processed_submission_queue = Queue()
         # split the different configuration required
         self._database_config = config['sqlalchemy']
-        self._ramp_config = config['ramp']
-        self._worker_config = generate_worker_config(config)
+        self._ramp_config = event_config['ramp']
+        self._worker_config = generate_worker_config(event_config)
 
     def fetch_from_db(self, session):
         """Fetch the submission from the database and create the workers."""

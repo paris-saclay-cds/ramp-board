@@ -7,7 +7,8 @@ from numpy.testing import assert_allclose
 import pytest
 
 from ramputils import read_config
-from ramputils.testing import path_config_example
+from ramputils.testing import database_config_template
+from ramputils.testing import ramp_config_template
 
 from rampwf.prediction_types.base import BasePrediction
 
@@ -35,19 +36,18 @@ from rampdb.tools.submission import get_submission_by_id
 
 
 @pytest.fixture(scope='module')
-def config():
-    return read_config(path_config_example())
-
-
-@pytest.fixture(scope='module')
-def session_scope_module(config):
+def session_scope_module():
+    database_config = read_config(database_config_template())
+    ramp_config = read_config(ramp_config_template())
     try:
-        create_toy_db(config)
-        with session_scope(config['sqlalchemy']) as session:
+        create_toy_db(database_config, ramp_config)
+        with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, _ = setup_db(config['sqlalchemy'])
+        shutil.rmtree(
+            ramp_config['ramp']['deployment_dir'], ignore_errors=True
+        )
+        db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 

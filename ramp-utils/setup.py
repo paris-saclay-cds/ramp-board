@@ -16,7 +16,9 @@ MAINTAINER_EMAIL = 'g.lemaitre58@gmail.com'
 URL = 'https://github.com/paris-saclay-cds/ramp-board'
 LICENSE = 'BSD (3-clause)'
 DOWNLOAD_URL = 'https://github.com/paris-saclay-cds/ramp-board'
-PACKAGE_DATA = {'ramputils': [os.path.join('tests', 'data', 'config.yml')]}
+PACKAGE_DATA = {'ramputils': [os.path.join('tests', 'data', 'config.yml'),
+                              os.path.join('template', 'database_config.yml'),
+                              os.path.join('template', 'ramp_config.yml')]}
 INSTALL_REQUIRES = ['bcrypt', 'click', 'pyyaml', 'six']
 
 
