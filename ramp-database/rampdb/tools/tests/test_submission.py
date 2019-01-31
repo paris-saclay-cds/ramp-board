@@ -118,10 +118,11 @@ def _setup_sign_up(session, config):
     return config['ramp']['event_name'], 'test_user'
 
 
-def test_add_submission_create_new_submission(base_db, config):
+def test_add_submission_create_new_submission(base_db):
     # check that we can make a new submission to the database
     # it will require to have already a team and an event
     session = base_db
+    config = read_config(ramp_config_template())
     event_name, username = _setup_sign_up(session, config)
     ramp_config = generate_ramp_config(config)
 
@@ -146,10 +147,11 @@ def test_add_submission_create_new_submission(base_db, config):
                          'classifier.py') in submission_file.path)
 
 
-def test_add_submission_too_early_submission(base_db, config):
+def test_add_submission_too_early_submission(base_db):
     # check that we raise an error when the elapsed time was not large enough
     # between the new submission and the previous submission
     session = base_db
+    config = read_config(ramp_config_template())
     event_name, username = _setup_sign_up(session, config)
     ramp_config = generate_ramp_config(config)
 
@@ -175,10 +177,11 @@ def test_add_submission_too_early_submission(base_db, config):
                            path_submission)
 
 
-def test_make_submission_resubmission(base_db, config):
+def test_make_submission_resubmission(base_db):
     # check that resubmitting the a submission with the same name will raise
     # an error
     session = base_db
+    config = read_config(ramp_config_template())
     event_name, username = _setup_sign_up(session, config)
     ramp_config = generate_ramp_config(config)
 
@@ -220,10 +223,11 @@ def test_make_submission_resubmission(base_db, config):
                    path_submission)
 
 
-def test_add_submission_wrong_submission_files(base_db, config):
+def test_add_submission_wrong_submission_files(base_db):
     # check that we raise an error if the file required by the workflow is not
     # present in the submission or that it has the wrong extension
     session = base_db
+    config = read_config(ramp_config_template())
     event_name, username = _setup_sign_up(session, config)
     ramp_config = generate_ramp_config(config)
 
@@ -256,8 +260,9 @@ def test_add_submission_wrong_submission_files(base_db, config):
                        path_submission)
 
 
-def test_submit_starting_kits(base_db, config):
+def test_submit_starting_kits(base_db):
     session = base_db
+    config = read_config(ramp_config_template())
     event_name, username = _setup_sign_up(session, config)
     ramp_config = generate_ramp_config(config)
 
