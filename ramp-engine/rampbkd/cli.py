@@ -27,7 +27,7 @@ def main():
 @click.option('--hunger-policy', default='exit', show_default=True,
               help='Policy to apply in case that there is no anymore workers'
               'to be processed')
-@click.option('-v', '--verbose', is_flag=True)
+@click.option('-v', '--verbose', count=True)
 def dispatcher(config, worker_type, n_worker, hunger_policy, verbose):
     """Launch the RAMP dispatcher.
 
@@ -35,8 +35,14 @@ def dispatcher(config, worker_type, n_worker, hunger_policy, verbose):
     results from them, and update the database.
     """
     if verbose:
-        logging.basicConfig(format='%(levelname)s %(name)s %(message)s',
-                            level=logging.DEBUG)
+        if verbose == 1:
+            level = logging.INFO
+        else:
+            level = logging.DEBUG
+        logging.basicConfig(
+            format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
+            level=level, datefmt='%Y:%m:%d %H:%M:%S')
+
     config = read_config(config)
     disp = Dispatcher(config=config, worker=globals()[worker_type],
                       n_worker=n_worker, hunger_policy=hunger_policy)
