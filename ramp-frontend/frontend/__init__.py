@@ -7,6 +7,12 @@ from flask_sqlalchemy import SQLAlchemy
 
 from rampdb.model import Model
 
+from ._version import __version__
+
+all = [
+    '__version__'
+]
+
 HERE = os.path.dirname(__file__)
 db = SQLAlchemy(model_class=Model)
 login_manager = LoginManager()

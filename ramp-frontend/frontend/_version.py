@@ -1,5 +1,5 @@
 """
-``rampbkd``: Submissions orchestrator and processors for the RAMP bundle.
+``frontend``: Website for RAMP.
 """
 # Based on NiLearn package
 # License: simplified BSD

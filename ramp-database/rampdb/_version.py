@@ -1,5 +1,5 @@
 """
-``rampbkd``: Submissions orchestrator and processors for the RAMP bundle.
+``rampdb``: Database model used in the RAMP bundle.
 """
 # Based on NiLearn package
 # License: simplified BSD
