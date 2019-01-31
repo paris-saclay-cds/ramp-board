@@ -27,7 +27,7 @@ def main():
               help='Policy to apply in case that there is no anymore workers'
               'to be processed')
 @click.option('-v', '--verbose', is_flag=True)
-def dispatcher(config, worker_type, n_worker, hunger_policy, verbose):
+def dispatcher(config, n_worker, hunger_policy, verbose):
     """Launch the RAMP dispatcher.
 
     The RAMP dispatcher is in charge of starting RAMP workers, collecting
@@ -37,8 +37,8 @@ def dispatcher(config, worker_type, n_worker, hunger_policy, verbose):
         logging.basicConfig(format='%(levelname)s %(name)s %(message)s',
                             level=logging.DEBUG)
     config = read_config(config)
-    worker = available_workers[config['worker']['worker_type']]
-    disp = Dispatcher(config=config, worker=worker, n_worker=n_worker,
+    worker_type = available_workers[config['worker']['worker_type']]
+    disp = Dispatcher(config=config, worker=worker_type, n_worker=n_worker,
                       hunger_policy=hunger_policy)
     disp.launch()
 
@@ -48,7 +48,7 @@ def dispatcher(config, worker_type, n_worker, hunger_policy, verbose):
               help='Configuration file in YAML format')
 @click.option('--submission', help='The submission name')
 @click.option('-v', '--verbose', is_flag=True)
-def worker(config, worker_type, submission, verbose):
+def worker(config, submission, verbose):
     """Launch a standalone RAMP worker.
 
     The RAMP worker is in charger of processing a single submission by
@@ -59,9 +59,9 @@ def worker(config, worker_type, submission, verbose):
                             level=logging.DEBUG)
     config = read_config(config)
     worker_params = generate_worker_config(config)
-    worker = available_workers[worker_params['worker_type']]
-    work = worker(worker_params, submission)
-    work.launch()
+    worker_type = available_workers[worker_params['worker_type']]
+    worker = worker_type(worker_params, submission)
+    worker.launch()
 
 
 def start():
