@@ -14,6 +14,14 @@ def main():
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file in YAML format containing the database '
               'information')
+def deploy_ramp_database(config):
+    deploy.deploy_ramp_database(config)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file in YAML format containing the database '
+              'information')
 @click.option("--event-config", default='config.yml', show_default=True,
               help='Configuration file in YAML format containing the RAMP '
               'information')

@@ -31,3 +31,10 @@ def test_deploy_ramp_event():
                                   '--event-config', ramp_config_template(),
                                   '--force'])
     assert result.exit_code == 0, result.output
+
+
+def test_deploy_ramp_database():
+    runner = CliRunner()
+    result = runner.invoke(main, ['deploy-ramp-database',
+                                  '--config', database_config_template()])
+    assert result.exit_code == 0, result.output

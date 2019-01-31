@@ -1,15 +1,32 @@
 import os
 import shutil
 
+from rampdb.model import Model
 from rampdb.testing import setup_files_extension_type
 from rampdb.testing import setup_ramp_kits_ramp_data
 from rampdb.tools.event import add_event
 from rampdb.tools.event import add_problem
 from rampdb.tools.event import get_problem
 from rampdb.utils import session_scope
+from rampdb.utils import setup_db
 
 from .config_parser import read_config
 from .ramp import generate_ramp_config
+
+
+def deploy_ramp_database(config):
+    """Deploy the RAMP database model using the configuration file.
+
+    This utility only deploy the database structure without any data inside.
+
+    Parameters
+    ----------
+    config : str
+        The path to the YAML file containing the database information.
+    """
+    database_config = read_config(config, filter_section='sqlalchemy')
+    db, _ = setup_db(database_config)
+    Model.metadata.create_all(db)
 
 
 def deploy_ramp_event(config, event_config, setup_ramp_repo=True, force=False):

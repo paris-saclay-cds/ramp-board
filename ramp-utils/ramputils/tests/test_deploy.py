@@ -7,6 +7,7 @@ from rampdb.testing import add_users
 from rampdb.tools.team import sign_up_team
 from rampdb.tools.submission import get_submissions
 from rampdb.tools.submission import submit_starting_kits
+from rampdb.tools.user import get_user_by_name
 from rampdb.utils import session_scope
 from rampdb.utils import setup_db
 
@@ -20,6 +21,7 @@ from ramputils import read_config
 from ramputils.testing import database_config_template
 from ramputils.testing import ramp_config_template
 
+from ramputils.deploy import deploy_ramp_database
 from ramputils.deploy import deploy_ramp_event
 
 
@@ -96,3 +98,13 @@ def test_deploy_ramp_event(session_scope_function):
             session, event_config['ramp']['event_name'], 'training_error'
         )
         assert len(submission) == 1
+
+
+def test_deploy_ramp_database(session_scope_function):
+    database_config = read_config(
+        database_config_template(), filter_section='sqlalchemy'
+    )
+    deploy_ramp_database(database_config_template())
+    with session_scope(database_config) as session:
+        # check that we can make a query on the dataset even if it is empty
+        assert not get_user_by_name(session, None)
