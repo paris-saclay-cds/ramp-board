@@ -42,6 +42,7 @@ def dispatcher(config, event_config, n_worker, hunger_policy, verbose):
                             level=logging.DEBUG)
     config = read_config(config)
     event_config = read_config(event_config)
+    worker_type = available_workers[event_config['worker']['worker_type']]
     disp = Dispatcher(
         config=config, event_config=event_config, worker=worker_type,
         n_worker=n_worker, hunger_policy=hunger_policy

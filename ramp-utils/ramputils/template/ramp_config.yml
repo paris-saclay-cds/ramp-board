@@ -11,4 +11,5 @@ ramp:
     logs_dir: log
     sandbox_dir: starting_kit
 worker:
+    worker_type: conda
     conda_env: ramp-iris
