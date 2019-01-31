@@ -29,7 +29,7 @@ for k in (logging.Logger.manager.loggerDict.keys()):
     if 'boto' in k:
         logging.getLogger(k).disabled = True
 
-logger = logging.getLogger('ramp_aws')
+logger = logging.getLogger('RAMP-AWS')
 logger.setLevel(logging.DEBUG)
 
 # configuration fields

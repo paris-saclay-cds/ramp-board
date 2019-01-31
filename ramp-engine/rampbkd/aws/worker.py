@@ -1,12 +1,10 @@
 import logging
-import os
-import sys
 
 from ..base import BaseWorker
 from . import api as aws
 
 
-logger = logging.getLogger('ramp_aws_engine')
+logger = logging.getLogger('RAMP-AWS')
 logger.setLevel(logging.DEBUG)
 
 
@@ -16,12 +14,20 @@ class AWSWorker(BaseWorker):
 
     """
 
-    def __init__(self, config, submission, ramp_kit_dir):
+    def __init__(self, config, submission):
         super(AWSWorker, self).__init__(config, submission)
-        self.submissions_path = os.path.join(
-            ramp_kit_dir, 'submissions')
+        self.submissions_path = self.config['submissions_dir']
 
     def setup(self):
+        """Set up the worker.
+
+        This will launch an instance on Amazon, and copy the submission
+        to the instance.
+        """
+        # sanity check for the configuration variable
+        for required_param in ('instance_type', 'access_key_id'):
+            self._check_config_name(self.config, required_param)
+
         self.instance, = aws.launch_ec2_instances(self.config)
         exit_status = aws.upload_submission(
             self.config, self.instance.id, self.submission,
@@ -35,6 +41,11 @@ class AWSWorker(BaseWorker):
             self.status = 'setup'
 
     def launch_submission(self):
+        """Launch the submission.
+
+        Basically, this runs ``ramp_test_submission`` inside the
+        Amazon instance.
+        """
         if self.status == 'running':
             raise RuntimeError("Cannot launch submission: one is already "
                                "started")
@@ -53,6 +64,7 @@ class AWSWorker(BaseWorker):
             self.config, self.instance.id, self.submission)
 
     def collect_results(self):
+        super(AWSWorker, self).collect_results()
         if self.status == 'running':
             aws._wait_until_train_finished(
                 self.config, self.instance.id, self.submission)
@@ -65,7 +77,7 @@ class AWSWorker(BaseWorker):
 
         if aws._training_successful(
                 self.config, self.instance.id, self.submission):
-            _ = aws.download_predictions(
+            _ = aws.download_predictions(  # noqa
                 self.config, self.instance.id, self.submission)
             self.status = 'collected'
         else:
@@ -73,4 +85,5 @@ class AWSWorker(BaseWorker):
             print("problem!")
 
     def teardown(self):
+        """Terminate the Amazon instance"""
         aws.terminate_ec2_instance(self.config, self.instance.id)

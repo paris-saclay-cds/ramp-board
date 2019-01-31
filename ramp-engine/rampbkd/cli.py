@@ -6,7 +6,9 @@ from ramputils import read_config
 from ramputils import generate_worker_config
 
 from rampbkd.dispatcher import Dispatcher
-from rampbkd.dispatcher import CondaEnvWorker
+from rampbkd.local import CondaEnvWorker
+from rampbkd.aws import AWSWorker
+
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 

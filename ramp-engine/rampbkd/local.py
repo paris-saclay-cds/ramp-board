@@ -46,14 +46,6 @@ class CondaEnvWorker(BaseWorker):
         super(CondaEnvWorker, self).__init__(config=config,
                                              submission=submission)
 
-    @staticmethod
-    def _check_config_name(config, param):
-        if param not in config.keys():
-            raise ValueError("The worker required the parameter '{}' in the "
-                             "configuration given at instantiation. Only {}"
-                             "parameters were given."
-                             .format(param, config.keys()))
-
     def setup(self):
         """Set up the worker.
 

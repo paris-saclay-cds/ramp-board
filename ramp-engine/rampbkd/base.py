@@ -37,6 +37,14 @@ class BaseWorker(six.with_metaclass(ABCMeta)):
         self.status = 'setup'
         logger.info(repr(self))
 
+    @staticmethod
+    def _check_config_name(config, param):
+        if param not in config.keys():
+            raise ValueError("The worker required the parameter '{}' in the "
+                             "configuration given at instantiation. Only {}"
+                             "parameters were given."
+                             .format(param, config.keys()))
+
     def teardown(self):
         """Clean up (i.e., removing path, etc.) before killing the worker."""
         self.status = 'killed'
