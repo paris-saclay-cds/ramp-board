@@ -8,17 +8,6 @@ def path_config_example():
     return os.path.join(HERE, 'tests', 'data', 'config.yml')
 
 
-def flask_config_template():
-    """Return the path a template Flask configuration file.
-
-    Returns
-    -------
-    filename : str
-        The Flask configuration filename.
-    """
-    return os.path.join(HERE, 'template', 'flask_config.yml')
-
-
 def database_config_template():
     """Return the path a template database configuration file.
 
