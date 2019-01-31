@@ -5,7 +5,8 @@ import pytest
 
 from ramputils import generate_flask_config
 from ramputils import read_config
-from ramputils.testing import path_config_example
+from ramputils.testing import database_config_template
+from ramputils.testing import ramp_config_template
 
 from rampdb.model import Model
 from rampdb.testing import create_toy_db
@@ -22,34 +23,28 @@ from frontend.testing import login_scope
 
 
 @pytest.fixture(scope='module')
-def database_config():
-    return read_config(path_config_example(), filter_section='sqlalchemy')
-
-
-@pytest.fixture(scope='module')
-def config():
-    return read_config(path_config_example())
-
-
-@pytest.fixture(scope='module')
-def client_session(config):
+def client_session():
+    database_config = read_config(database_config_template())
+    ramp_config = read_config(ramp_config_template())
     try:
-        create_toy_db(config)
-        flask_config = generate_flask_config(config)
+        create_toy_db(database_config, ramp_config)
+        flask_config = generate_flask_config(database_config)
         app = create_app(flask_config)
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False
-        with session_scope(config['sqlalchemy']) as session:
+        with session_scope(database_config['sqlalchemy']) as session:
             yield app.test_client(), session
     finally:
-        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
+        shutil.rmtree(
+            ramp_config['ramp']['deployment_dir'], ignore_errors=True
+        )
         try:
             # In case of failure we should close the global flask engine
             from frontend import db as db_flask
             db_flask.session.close()
         except RuntimeError:
             pass
-        db, Session = setup_db(config['sqlalchemy'])
+        db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
