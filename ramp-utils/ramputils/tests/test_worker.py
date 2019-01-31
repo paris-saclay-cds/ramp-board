@@ -14,6 +14,7 @@ from ramputils import generate_worker_config
 def test_generate_worker_config(config):
     worker_config = generate_worker_config(config)
     expected_config = {
+        'worker_type': 'conda',
         'conda_env': 'ramp-iris',
         'kit_dir': os.path.join('/tmp/databoard_test', 'ramp-kits', 'iris'),
         'data_dir': os.path.join('/tmp/databoard_test', 'ramp-data', 'iris'),
