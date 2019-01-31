@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from ramputils.testing import path_config_example
+from ramputils.testing import ramp_config_template
 
 from ramputils import read_config
 from ramputils import generate_ramp_config
@@ -10,9 +10,9 @@ from ramputils import generate_ramp_config
 
 @pytest.mark.parametrize(
     "config",
-    [path_config_example(),
-     read_config(path_config_example()),
-     read_config(path_config_example(), filter_section='ramp')]
+    [ramp_config_template(),
+     read_config(ramp_config_template()),
+     read_config(ramp_config_template(), filter_section='ramp')]
 )
 def test_generate_ramp_config(config):
     ramp_config = generate_ramp_config(config)
