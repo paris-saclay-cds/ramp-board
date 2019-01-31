@@ -1,19 +1,13 @@
-"""
- ____      _    __  __ ____    _                _                  _
-|  _ \    / \  |  \/  |  _ \  | |__   __ _  ___| | _____ _ __   __| |
-| |_) |  / _ \ | |\/| | |_) | | '_ \ / _` |/ __| |/ / _ \ '_ \ / _` |
-|  _ <  / ___ \| |  | |  __/  | |_) | (_| | (__|   <  __/ | | | (_| |
-|_| \_\/_/   \_\_|  |_|_|     |_.__/ \__,_|\___|_|\_\___|_| |_|\__,_|
-
-Toolkit for interacting with the RAMP database
-
-"""
+from .dispatcher import Dispatcher
 from .local import CondaEnvWorker
-from ._version import get_versions
 
-__version__ = get_versions()['version']
-
-del get_versions
-
+from ._version import __version__
 
 available_workers = {'conda': CondaEnvWorker}
+
+__all__ = [
+    'CondaEnvWorker',
+    'Dispatcher',
+    'available_workers',
+    '__version__'
+]

@@ -1,12 +1,5 @@
-r"""
- ____      _    __  __ ____        _       _        _
-|  _ \    / \  |  \/  |  _ \    __| | __ _| |_ __ _| |__   __ _ ___  ___
-| |_) |  / _ \ | |\/| | |_) |  / _` |/ _` | __/ _` | '_ \ / _` / __|/ _ \
-|  _ <  / ___ \| |  | |  __/  | (_| | (_| | || (_| | |_) | (_| \__ \  __/
-|_| \_\/_/   \_\_|  |_|_|      \__,_|\__,_|\__\__,_|_.__/ \__,_|___/\___|
+from ._version import __version__
 
-Toolkit to manage and interact with the RAMP database.
-
-"""
-from . import model  # noqa
-from . import tools  # noqa
+all = [
+    '__version__'
+]
