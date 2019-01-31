@@ -11,7 +11,7 @@ with open(ver_file) as f:
 
 DISTNAME = 'ramp-utils'
 DESCRIPTION = "Utilities shared across the RAMP bundle"
-with codecs.open('README.md', encoding='utf-8-sig') as f:
+with codecs.open('README.rst', encoding='utf-8-sig') as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = 'A. Boucaud, B. Kegl, G. Lemaitre, J. Van den Bossche'
 MAINTAINER_EMAIL = 'boucaud.alexandre@gmail.com, guillaume.lemaitre@inria.fr'
