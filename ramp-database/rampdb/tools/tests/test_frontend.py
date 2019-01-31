@@ -4,7 +4,8 @@ import shutil
 import pytest
 
 from ramputils import read_config
-from ramputils.testing import path_config_example
+from ramputils.testing import database_config_template
+from ramputils.testing import ramp_config_template
 
 from rampdb.model import Model
 
@@ -26,24 +27,18 @@ from rampdb.tools.frontend import is_user_signed_up
 
 
 @pytest.fixture(scope='module')
-def database_config():
-    return read_config(path_config_example(), filter_section='sqlalchemy')
-
-
-@pytest.fixture(scope='module')
-def config():
-    return read_config(path_config_example())
-
-
-@pytest.fixture(scope='module')
-def session_toy_db(config):
+def session_toy_db():
+    database_config = read_config(database_config_template())
+    ramp_config = read_config(ramp_config_template())
     try:
-        create_toy_db(config)
-        with session_scope(config['sqlalchemy']) as session:
+        create_toy_db(database_config, ramp_config)
+        with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, _ = setup_db(config['sqlalchemy'])
+        shutil.rmtree(
+            ramp_config['ramp']['deployment_dir'], ignore_errors=True
+        )
+        db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 

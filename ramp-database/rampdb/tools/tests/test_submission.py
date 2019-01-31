@@ -11,7 +11,8 @@ from pandas.testing import assert_frame_equal
 
 from ramputils import read_config
 from ramputils import generate_ramp_config
-from ramputils.testing import path_config_example
+from ramputils.testing import database_config_template
+from ramputils.testing import ramp_config_template
 
 from rampdb.exceptions import DuplicateSubmissionError
 from rampdb.exceptions import MissingSubmissionFileError
@@ -65,25 +66,19 @@ from rampdb.tools.submission import submit_starting_kits
 HERE = os.path.dirname(__file__)
 
 
-@pytest.fixture(scope='module')
-def database_config():
-    return read_config(path_config_example(), filter_section='sqlalchemy')
-
-
-@pytest.fixture(scope='module')
-def config():
-    return read_config(path_config_example())
-
-
 @pytest.fixture
-def base_db(config):
+def base_db():
+    database_config = read_config(database_config_template())
+    ramp_config = read_config(ramp_config_template())
     try:
-        create_test_db(config)
-        with session_scope(config['sqlalchemy']) as session:
+        create_test_db(database_config, ramp_config)
+        with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, _ = setup_db(config['sqlalchemy'])
+        shutil.rmtree(
+            ramp_config['ramp']['deployment_dir'], ignore_errors=True
+        )
+        db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
@@ -98,15 +93,19 @@ def _change_state_db(session):
 
 
 @pytest.fixture(scope='module')
-def session_scope_module(config):
+def session_scope_module():
+    database_config = read_config(database_config_template())
+    ramp_config = read_config(ramp_config_template())
     try:
-        create_toy_db(config)
-        with session_scope(config['sqlalchemy']) as session:
+        create_toy_db(database_config, ramp_config)
+        with session_scope(database_config['sqlalchemy']) as session:
             _change_state_db(session)
             yield session
     finally:
-        shutil.rmtree(config['ramp']['deployment_dir'], ignore_errors=True)
-        db, _ = setup_db(config['sqlalchemy'])
+        shutil.rmtree(
+            ramp_config['ramp']['deployment_dir'], ignore_errors=True
+        )
+        db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
