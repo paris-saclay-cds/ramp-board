@@ -14,11 +14,11 @@ def main():
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file in YAML format')
-@click.option("--port", default=8080,
+@click.option("--port", default=8080, show_default=True,
               help='The port where to launch the website')
-@click.option("--host", default='127.0.0.1',
+@click.option("--host", default='127.0.0.1', show_default=True,
               help='The IP address where to launch the website')
 def launch(config, port, host):
     config = read_config(config)

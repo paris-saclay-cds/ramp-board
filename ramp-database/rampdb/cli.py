@@ -23,7 +23,7 @@ def main():
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
 @click.option('--login', help='Login')
@@ -31,9 +31,9 @@ def main():
 @click.option('--lastname', help="User's last name")
 @click.option('--firstname', help="User's first name")
 @click.option('--email', help="User's email")
-@click.option('--access-level', default='user',
+@click.option('--access-level', default='user', show_default=True,
               help="User's administration rights")
-@click.option('--hidden-notes', default='',
+@click.option('--hidden-notes', default='', show_default=True,
               help="User's additional hidden notes")
 def add_user(config, login, password, lastname, firstname, email,
              access_level, hidden_notes):
@@ -45,7 +45,7 @@ def add_user(config, login, password, lastname, firstname, email,
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
 @click.option('--login', help="User's login to be approved")
@@ -57,7 +57,7 @@ def approve_user(config, login):
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
 @click.option('--event', help='Name of the event')
@@ -70,13 +70,13 @@ def sign_up_team(config, event, team):
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
 @click.option('--problem', help='Name of the problem')
 @click.option('--kits-dir', help='Path to the RAMP kits')
 @click.option('--data-dir', help='Path to the RAMP data')
-@click.option('--force', default=False,
+@click.option('--force', default=False, show_default=True,
               help='Whether or not to overwrite the problem if it exists')
 def add_problem(config, problem, kits_dir, data_dir, force):
     """Add a RAMP problem in the database."""
@@ -86,7 +86,7 @@ def add_problem(config, problem, kits_dir, data_dir, force):
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
 @click.option("--problem", help='Name of the problem')
@@ -95,9 +95,9 @@ def add_problem(config, problem, kits_dir, data_dir, force):
 @click.option("--sandbox", default='starting-kit', help='Name of the sandbox')
 @click.option('--submissions-dir',
               help='Path to the deployment RAMP submissions path.')
-@click.option('--is-public', default=False,
+@click.option('--is-public', default=False, show_default=True,
               help='Whether or not the event should be public')
-@click.option('--force', default=False,
+@click.option('--force', default=False, show_default=True,
               help='Whether or not to overwrite the problem if it exists')
 def add_event(config, problem, event, title, sandbox, submissions_dir,
               is_public, force):
@@ -109,7 +109,7 @@ def add_event(config, problem, event, title, sandbox, submissions_dir,
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
 @click.option("--event", help='Name of the event')
@@ -122,7 +122,7 @@ def add_event_admin(config, event, user):
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
 @click.option("--event", help='Name of the event')
@@ -138,7 +138,7 @@ def add_submission(config, event, team, submission, path):
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
 @click.option("--event", help='Name of the event')
@@ -165,7 +165,7 @@ def get_submissions_by_state(config, event, state):
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
 @click.option("--submission-id", help='The submission ID')
@@ -178,7 +178,7 @@ def set_submission_state(config, submission_id, state):
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
 @click.option("--event", help='The event name')
@@ -190,7 +190,7 @@ def update_leaderboards(config, event):
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
 @click.option("--event", help='The event name')
@@ -203,7 +203,7 @@ def update_user_leaderboards(config, event, user):
 
 
 @main.command()
-@click.option("--config", default='config.yml',
+@click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
 @click.option("--event", help='The event name')
