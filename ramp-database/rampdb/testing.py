@@ -1,3 +1,8 @@
+"""
+The :mod:`rampdb.testing` module create facility functions to test the
+tools and model of ``ramp-database``.
+"""
+
 import logging
 import os
 import shutil
