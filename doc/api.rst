@@ -10,16 +10,40 @@ ramp-database
 :mod:`rampdb.model`: the database model
 ---------------------------------------
 
-.. image:: _static/img/schema_db.png
-   :target: _static/img/schema_db.png
-
 .. automodule:: rampdb.model
     :no-members:
     :no-inherited-members:
 
+The database schema is summarized in the figure below:
+
+.. image:: _static/img/schema_db.png
+   :target: _static/img/schema_db.png
+
 .. currentmodule:: rampdb
 
+General tables
+..............
 
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   model.Extension
+   model.Keyword
+   model.UserInteraction
+
+User-related tables
+...................
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   model.Team
+   model.User
+
+Event-related tables
+....................
 
 .. autosummary::
    :toctree: generated/
@@ -27,32 +51,37 @@ ramp-database
 
    model.CVFold
    model.Event
-   model.Extension
-   model.HistoricalContributivity
-   model.Keyword
-   model.NumpyType
    model.Problem
    model.ScoreType
+   model.Workflow
+
+Submission-related tables
+.........................
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   model.HistoricalContributivity
    model.Submission
    model.SubmissionScore
    model.SubmissionFile
    model.SubmissionFileType
    model.SubmissionOnCVFold
    model.SubmissionSimilarity
-   model.Team
-   model.User
-   model.Workflow
+
+Relationship tables
+...................
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
 
    model.EventTeam
    model.EventAdmin
    model.EventScoreType
-
    model.ProblemKeyword
-
    model.SubmissionFileTypeExtension
-
-   model.UserInteraction
-
    model.WorkflowElement
    model.WorkflowElementType
 
