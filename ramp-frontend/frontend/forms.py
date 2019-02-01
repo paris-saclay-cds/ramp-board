@@ -1,3 +1,8 @@
+"""
+The :mod:`frontend.forms` module defines the different forms used on the
+website.
+"""
+
 from flask_wtf import FlaskForm
 
 import six

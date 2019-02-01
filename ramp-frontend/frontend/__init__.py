@@ -20,6 +20,19 @@ mail = Mail()
 
 
 def create_app(config):
+    """Create the RAMP Flask app and register the views.
+
+    Parameters
+    ----------
+    config : dict
+        The Flask configuration generated with
+        :func:`ramputils.generate_flask_config`.
+
+    Returns
+    -------
+    app : Flask
+        The Flask app created.
+    """
     app = Flask('ramp-frontend', root_path=HERE)
     app.config.update(config)
     with app.app_context():

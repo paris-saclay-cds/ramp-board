@@ -1,3 +1,8 @@
+"""
+The :mod:`rampdb.model` defines the database structure which is used for the
+RAMP events.
+"""
+
 from .base import *  # noqa
 from .user import *  # noqa
 from .fold import *  # noqa

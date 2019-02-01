@@ -1,3 +1,8 @@
+"""
+The :mod:`rampdb.utils` module provides tools to setup and connect to the
+RAMP database.
+"""
+
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine
