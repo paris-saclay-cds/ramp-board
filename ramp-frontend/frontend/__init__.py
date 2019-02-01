@@ -23,7 +23,6 @@ def create_app(config):
     app = Flask('ramp-frontend', root_path=HERE)
     app.config.update(config)
     with app.app_context():
-        Model.metadata.create_all(db)
         db.init_app(app)
         # register the login manager
         login_manager.init_app(app)
@@ -43,4 +42,7 @@ def create_app(config):
         app.register_blueprint(general.mod)
         app.register_blueprint(leaderboard.mod)
         app.register_blueprint(ramp.mod)
+
+        # initialize the database
+        db.create_all()
     return app
