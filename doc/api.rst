@@ -320,8 +320,249 @@ Frontend-related database tools
 RAMP engine
 ===========
 
+The RAMP engine is made of a dispatcher to orchestrate the training and
+evaluation of submissions which are processed using workers.
+
+RAMP Dispatcher
+---------------
+
+.. currentmodule:: rampbkd
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   dispatcher.Dispatcher
+
+RAMP Workers
+------------
+
+.. currentmodule:: rampbkd
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   base.BaseWorker
+   local.CondaEnvWorker
+
 RAMP frontend
 =============
 
+The RAMP frontend is the development of the website. It uses extensively Flask.
+
+.. currentmodule:: frontend
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   create_app
+
+:mod:`frontend.views`: views used on the frontend to interact with the user
+---------------------------------------------------------------------------
+
+.. automodule:: frontend.views
+    :no-members:
+    :no-inherited-members:
+
+General views
+.............
+
+.. currentmodule:: frontend.views
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   general.index
+   general.ramp
+   general.teaching
+   general.data_science_themes
+   general.keywords
+
+Authentication views
+....................
+
+.. currentmodule:: frontend.views
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   auth.load_user
+   auth.login
+   auth.logout
+   auth.sign_up
+   auth.update_profile
+
+Admin views
+...........
+
+.. currentmodule:: frontend.views
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   admin.approve_users
+   admin.approve_single_user
+   admin.approve_sign_up_for_event
+   admin.update_event
+   admin.user_interactions
+   admin.dashboard_submissions
+
+Leaderboard views
+.................
+
+.. currentmodule:: frontend.views
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   leaderboard.my_submissions
+   leaderboard.leaderboard
+   leaderboard.competition_leaderboard
+   leaderboard.private_leaderboard
+   leaderboard.private_competition_leaderboard
+
+Submission views
+................
+
+.. currentmodule:: frontend.views
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   ramp.problems
+   ramp.problem
+   ramp.user_event
+   ramp.sign_up_for_event
+   ramp.sandbox
+   ramp.ask_for_event
+   ramp.credit
+   ramp.event_plots
+   ramp.view_model
+   ramp.view_submission_error
+
+Utilities
+.........
+
+.. currentmodule:: frontend.views
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   redirect.redirect_to_credit
+   redirect.redirect_to_sandbox
+   redirect.redirect_to_user
+   visualization.score_plot
+
+:mod:`frontend.forms`: forms used in the website
+------------------------------------------------
+
+.. automodule:: frontend.forms
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: frontend
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   forms.LoginForm
+   forms.UserUpdateProfileForm
+   forms.UserCreateProfileForm
+   forms.CodeForm
+   forms.SubmitForm
+   forms.UploadForm
+   forms.EventUpdateProfileForm
+   forms.MultiCheckboxField
+   forms.ImportForm
+   forms.CreditForm
+   forms.AskForEventForm
+
+:mod:`frontend.testing`: functionalities to test the frontend
+-------------------------------------------------------------
+
+.. automodule:: frontend.testing
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: frontend
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   testing.login
+   testing.logout
+   testing.login_scope
+
+:mod:`frontend.utils`: Utilities to ease sending email
+------------------------------------------------------
+
+.. automodule:: frontend.utils
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: frontend
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.body_formatter_user
+   utils.send_mail
+
 RAMP utils
 ==========
+
+The RAMP utils package is made of utilities used for managing configuration,
+deploying RAMP events, and other utilities shared between the different RAMP
+packages.
+
+Configuration utilities
+-----------------------
+
+.. currentmodule:: ramputils
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   generate_flask_config
+   generate_ramp_config
+   generate_worker_config
+   read_config
+   testing.database_config_template
+   testing.ramp_config_template
+
+Deployment utilities
+--------------------
+
+.. currentmodule:: ramputils
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   deploy.deploy_ramp_event
+
+RAMP shared utilities
+---------------------
+
+.. currentmodule:: ramputils
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   import_module_from_source
+   string_encoding.encode_string
+   password.check_password
+   password.hash_password
