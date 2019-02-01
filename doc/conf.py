@@ -22,6 +22,7 @@ from six import u
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('sphinxext'))
 from github_link import make_linkcode_resolve
+import generate_database_schema
 
 # -- General configuration ------------------------------------------------
 
