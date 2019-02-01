@@ -9,7 +9,7 @@ User Guide
 .. toctree::
    :numbered:
 
-   ramp_database.rst
-   ramp_engine.rst
-   ramp_utils.rst
-   ramp_frontend.rst
+   setup_server.rst
+   create_ramp_event.rst
+   note_on_workers.rst
+   design_your_own_workers.rst
