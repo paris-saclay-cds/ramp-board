@@ -42,4 +42,7 @@ def create_app(config):
         app.register_blueprint(general.mod)
         app.register_blueprint(leaderboard.mod)
         app.register_blueprint(ramp.mod)
+
+        # initialize the database
+        db.create_all()
     return app
