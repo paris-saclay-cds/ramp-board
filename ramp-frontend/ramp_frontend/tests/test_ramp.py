@@ -40,7 +40,7 @@ def client_session():
         )
         try:
             # In case of failure we should close the global flask engine
-            from frontend import db as db_flask
+            from ramp_frontend import db as db_flask
             db_flask.session.close()
         except RuntimeError:
             pass
