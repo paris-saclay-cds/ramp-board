@@ -19,7 +19,7 @@ from ramp_database.tools.submission import get_submission_by_name
 from ramp_database.tools.team import get_event_team_by_name
 
 from ramp_frontend import create_app
-from frontend.testing import login_scope
+from ramp_frontend.testing import login_scope
 
 
 @pytest.fixture(scope='module')
