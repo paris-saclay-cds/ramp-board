@@ -44,7 +44,7 @@ and submissions::
     cd ramp_deployment
 
 FIXME: we should not copy the configuration file. You need to copy the
-``database_config.yml`` file located in ``ramp-utils/ramputils/template`` and
+``database_config.yml`` file located in ``ramp-utils/ramp_utils/template`` and
 rename it ``config.yml``.
 
 This config file should look like::

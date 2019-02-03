@@ -5,7 +5,7 @@ import os
 from setuptools import find_packages, setup
 
 # get __version__ from _version.py
-ver_file = os.path.join('ramputils', '_version.py')
+ver_file = os.path.join('ramp_utils', '_version.py')
 with open(ver_file) as f:
     exec(f.read())
 
@@ -38,7 +38,7 @@ EXTRAS_REQUIRE = {
     'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc']
 }
 PACKAGE_DATA = {
-    'ramputils': [os.path.join('tests', 'data', 'config.yml'),
+    'ramp_utils': [os.path.join('tests', 'data', 'config.yml'),
                   os.path.join('template', 'database_config.yml'),
                   os.path.join('template', 'ramp_config.yml')]
 }
@@ -60,6 +60,6 @@ setup(
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
     entry_points={
-        'console_scripts': ['ramp-utils = ramputils.cli:start']
+        'console_scripts': ['ramp-utils = ramp_utils.cli:start']
     }
 )

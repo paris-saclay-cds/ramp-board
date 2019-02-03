@@ -14,7 +14,7 @@ deploying an ``iris`` event. First create a folder::
     cd iris
 
 FIXME: we should not copy the configuration file. You need to copy the
-``ramp_config.yml`` file located in ``ramp-utils/ramputils/template`` and
+``ramp_config.yml`` file located in ``ramp-utils/ramp_utils/template`` and
 rename it ``config.yml``.
 
 This config file should look like::

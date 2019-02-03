@@ -5,7 +5,7 @@ import os
 from setuptools import find_packages, setup
 
 # get __version__ from _version.py
-ver_file = os.path.join('frontend', '_version.py')
+ver_file = os.path.join('ramp_frontend', '_version.py')
 with open(ver_file) as f:
     exec(f.read())
 
@@ -40,7 +40,7 @@ EXTRAS_REQUIRE = {
     'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc']
 }
 PACKAGE_DATA = {
-    'frontend': [
+    'ramp_frontend': [
         os.path.join('template', '*'),
         os.path.join('static', 'css', 'style.css'),
         os.path.join('static', 'css', 'themes', 'flat-blue.css'),
@@ -73,6 +73,6 @@ setup(
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
     entry_points={
-        'console_scripts': ['ramp-frontend = frontend.cli:start']
+        'console_scripts': ['ramp-frontend = ramp_frontend.cli:start']
     }
 )

@@ -7,10 +7,10 @@ This is the full API documentation of the different RAMP packages.
 RAMP database
 =============
 
-:mod:`rampdb.model`: the database model
+:mod:`ramp_database.model`: the database model
 ---------------------------------------
 
-.. automodule:: rampdb.model
+.. automodule:: ramp_database.model
     :no-members:
     :no-inherited-members:
 
@@ -19,7 +19,7 @@ The database schema is summarized in the figure below:
 .. image:: _static/img/schema_db.png
    :target: _static/img/schema_db.png
 
-.. currentmodule:: rampdb
+.. currentmodule:: ramp_database
 
 General tables
 ..............
@@ -85,14 +85,14 @@ Relationship tables
    model.WorkflowElement
    model.WorkflowElementType
 
-:mod:`rampdb.tools`: the tools to communicate with the database
+:mod:`ramp_database.tools`: the tools to communicate with the database
 ---------------------------------------------------------------
 
-.. automodule:: rampdb.tools
+.. automodule:: ramp_database.tools
     :no-members:
     :no-inherited-members:
 
-.. currentmodule:: rampdb
+.. currentmodule:: ramp_database
 
 User-related database tools
 ...........................
@@ -256,14 +256,14 @@ Frontend-related database tools
    tools.frontend.is_accessible_code
    tools.frontend.is_user_signed_up
 
-:mod:`rampdb.exceptions`: type of errors raise by the database
+:mod:`ramp_database.exceptions`: type of errors raise by the database
 --------------------------------------------------------------
 
-.. automodule:: rampdb.exceptions
+.. automodule:: ramp_database.exceptions
     :no-members:
     :no-inherited-members:
 
-.. currentmodule:: rampdb
+.. currentmodule:: ramp_database
 
 .. autosummary::
    :toctree: generated/
@@ -277,14 +277,14 @@ Frontend-related database tools
    exceptions.TooEarlySubmissionError
    exceptions.UnknownStateError
 
-:mod:`rampdb.testing`: functionalities to test database model and tools
+:mod:`ramp_database.testing`: functionalities to test database model and tools
 -----------------------------------------------------------------------
 
-.. automodule:: rampdb.testing
+.. automodule:: ramp_database.testing
     :no-members:
     :no-inherited-members:
 
-.. currentmodule:: rampdb
+.. currentmodule:: ramp_database
 
 .. autosummary::
    :toctree: generated/
@@ -301,14 +301,14 @@ Frontend-related database tools
    testing.sign_up_teams_to_events
    testing.submit_all_starting_kits
 
-:mod:`rampdb.utils`: setup and connect RAMP database
+:mod:`ramp_database.utils`: setup and connect RAMP database
 ----------------------------------------------------
 
-.. automodule:: rampdb.utils
+.. automodule:: ramp_database.utils
     :no-members:
     :no-inherited-members:
 
-.. currentmodule:: rampdb
+.. currentmodule:: ramp_database
 
 .. autosummary::
    :toctree: generated/
@@ -326,7 +326,7 @@ evaluation of submissions which are processed using workers.
 RAMP Dispatcher
 ---------------
 
-.. currentmodule:: rampbkd
+.. currentmodule:: ramp_engine
 
 .. autosummary::
    :toctree: generated/
@@ -337,7 +337,7 @@ RAMP Dispatcher
 RAMP Workers
 ------------
 
-.. currentmodule:: rampbkd
+.. currentmodule:: ramp_engine
 
 .. autosummary::
    :toctree: generated/
@@ -351,7 +351,7 @@ RAMP frontend
 
 The RAMP frontend is the development of the website. It uses extensively Flask.
 
-.. currentmodule:: frontend
+.. currentmodule:: ramp_frontend
 
 .. autosummary::
    :toctree: generated/
@@ -359,17 +359,17 @@ The RAMP frontend is the development of the website. It uses extensively Flask.
 
    create_app
 
-:mod:`frontend.views`: views used on the frontend to interact with the user
+:mod:`ramp_frontend.views`: views used on the frontend to interact with the user
 ---------------------------------------------------------------------------
 
-.. automodule:: frontend.views
+.. automodule:: ramp_frontend.views
     :no-members:
     :no-inherited-members:
 
 General views
 .............
 
-.. currentmodule:: frontend.views
+.. currentmodule:: ramp_frontend.views
 
 .. autosummary::
    :toctree: generated/
@@ -384,7 +384,7 @@ General views
 Authentication views
 ....................
 
-.. currentmodule:: frontend.views
+.. currentmodule:: ramp_frontend.views
 
 .. autosummary::
    :toctree: generated/
@@ -399,7 +399,7 @@ Authentication views
 Admin views
 ...........
 
-.. currentmodule:: frontend.views
+.. currentmodule:: ramp_frontend.views
 
 .. autosummary::
    :toctree: generated/
@@ -415,7 +415,7 @@ Admin views
 Leaderboard views
 .................
 
-.. currentmodule:: frontend.views
+.. currentmodule:: ramp_frontend.views
 
 .. autosummary::
    :toctree: generated/
@@ -430,7 +430,7 @@ Leaderboard views
 Submission views
 ................
 
-.. currentmodule:: frontend.views
+.. currentmodule:: ramp_frontend.views
 
 .. autosummary::
    :toctree: generated/
@@ -450,7 +450,7 @@ Submission views
 Utilities
 .........
 
-.. currentmodule:: frontend.views
+.. currentmodule:: ramp_frontend.views
 
 .. autosummary::
    :toctree: generated/
@@ -461,14 +461,14 @@ Utilities
    redirect.redirect_to_user
    visualization.score_plot
 
-:mod:`frontend.forms`: forms used in the website
+:mod:`ramp_frontend.forms`: forms used in the website
 ------------------------------------------------
 
-.. automodule:: frontend.forms
+.. automodule:: ramp_frontend.forms
     :no-members:
     :no-inherited-members:
 
-.. currentmodule:: frontend
+.. currentmodule:: ramp_frontend
 
 .. autosummary::
    :toctree: generated/
@@ -486,14 +486,14 @@ Utilities
    forms.CreditForm
    forms.AskForEventForm
 
-:mod:`frontend.testing`: functionalities to test the frontend
+:mod:`ramp_frontend.testing`: functionalities to test the frontend
 -------------------------------------------------------------
 
-.. automodule:: frontend.testing
+.. automodule:: ramp_frontend.testing
     :no-members:
     :no-inherited-members:
 
-.. currentmodule:: frontend
+.. currentmodule:: ramp_frontend
 
 .. autosummary::
    :toctree: generated/
@@ -503,14 +503,14 @@ Utilities
    testing.logout
    testing.login_scope
 
-:mod:`frontend.utils`: Utilities to ease sending email
+:mod:`ramp_frontend.utils`: Utilities to ease sending email
 ------------------------------------------------------
 
-.. automodule:: frontend.utils
+.. automodule:: ramp_frontend.utils
     :no-members:
     :no-inherited-members:
 
-.. currentmodule:: frontend
+.. currentmodule:: ramp_frontend
 
 .. autosummary::
    :toctree: generated/
@@ -529,7 +529,7 @@ packages.
 Configuration utilities
 -----------------------
 
-.. currentmodule:: ramputils
+.. currentmodule:: ramp_utils
 
 .. autosummary::
    :toctree: generated/
@@ -545,7 +545,7 @@ Configuration utilities
 Deployment utilities
 --------------------
 
-.. currentmodule:: ramputils
+.. currentmodule:: ramp_utils
 
 .. autosummary::
    :toctree: generated/
@@ -556,7 +556,7 @@ Deployment utilities
 RAMP shared utilities
 ---------------------
 
-.. currentmodule:: ramputils
+.. currentmodule:: ramp_utils
 
 .. autosummary::
    :toctree: generated/

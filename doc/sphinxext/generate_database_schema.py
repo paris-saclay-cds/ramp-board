@@ -2,10 +2,10 @@ import os
 
 from eralchemy import render_er
 
-from rampdb.utils import setup_db
+from ramp_database.utils import setup_db
 
-from ramputils import read_config
-from ramputils.testing import database_config_template
+from ramp_utils import read_config
+from ramp_utils.testing import database_config_template
 
 
 def main():
