@@ -38,10 +38,10 @@ from ramp_database.exceptions import TooEarlySubmissionError
 from ramp_database.tools.event import add_event
 from ramp_database.tools.event import get_event
 from ramp_database.tools.event import get_problem
-from ramp_database.tools.ramp_frontend import is_admin
-from ramp_database.tools.ramp_frontend import is_accessible_code
-from ramp_database.tools.ramp_frontend import is_accessible_event
-from ramp_database.tools.ramp_frontend import is_user_signed_up
+from ramp_database.tools.frontend import is_admin
+from ramp_database.tools.frontend import is_accessible_code
+from ramp_database.tools.frontend import is_accessible_event
+from ramp_database.tools.frontend import is_user_signed_up
 from ramp_database.tools.submission import add_submission
 from ramp_database.tools.submission import add_submission_similarity
 from ramp_database.tools.submission import get_source_submissions
