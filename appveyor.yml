@@ -28,10 +28,14 @@ install:
   - conda create -n testenv --yes python=%PYTHON_VERSION% pip
   - conda env update -n testenv -f environment.yml
   - activate testenv
-  - cd ramp-frontend && pip install -e . && cd ..
-	- cd ramp-database && pip install -e . && cd ..
-	- cd ramp-engine && pip install -e . && cd ..
-	- cd ramp-utils && pip install -e . && cd ..
+  - cd ramp-frontend && pip install -e .
+  - cd ..
+	- cd ramp-database && pip install -e .
+  - cd ..
+	- cd ramp-engine && pip install -e .
+  - cd ..
+  - cd ramp-utils && pip install -e .
+  - cd ..
 
 test_script:
   - SET PGUSER=mrramp
