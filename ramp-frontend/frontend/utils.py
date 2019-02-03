@@ -1,14 +1,14 @@
 """
-The :mod:`frontend.utils` provides utilities to ease sending email.
+The :mod:`ramp_frontend.utils` provides utilities to ease sending email.
 """
 
 import logging
 
 from flask_mail import Message
 
-from ramputils.utils import encode_string
+from ramp_utils.utils import encode_string
 
-from frontend import mail
+from ramp_frontend import mail
 
 logger = logging.getLogger('RAMP-FRONTEND')
 
@@ -18,7 +18,7 @@ def body_formatter_user(user):
 
     Parameters
     ----------
-    user : :class:`rampdb.model.User`
+    user : :class:`ramp_database.model.User`
         The user profile.
 
     Returns

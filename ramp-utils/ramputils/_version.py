@@ -1,5 +1,5 @@
 """
-``ramputils``: Utilities shared across the RAMP bundle.
+``ramp_utils``: Utilities shared across the RAMP bundle.
 """
 # Based on NiLearn package
 # License: simplified BSD

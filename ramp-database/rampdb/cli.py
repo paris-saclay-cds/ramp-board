@@ -3,7 +3,7 @@ from collections import defaultdict
 import click
 import pandas as pd
 
-from ramputils import read_config
+from ramp_utils import read_config
 
 from .utils import session_scope
 

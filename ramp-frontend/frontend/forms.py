@@ -1,5 +1,5 @@
 """
-The :mod:`frontend.forms` module defines the different forms used on the
+The :mod:`ramp_frontend.forms` module defines the different forms used on the
 website.
 """
 

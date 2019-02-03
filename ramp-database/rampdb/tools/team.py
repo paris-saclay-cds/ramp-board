@@ -16,7 +16,7 @@ logger = logging.getLogger('RAMP-DATABASE')
 def ask_sign_up_team(session, event_name, team_name):
     """Register a team to a RAMP event without approving.
 
-    :class:`rampdb.model.EventTeam` as an attribute ``approved`` set to
+    :class:`ramp_database.model.EventTeam` as an attribute ``approved`` set to
     ``False`` by default. Executing this function only create the relationship
     in the database.
 
@@ -31,11 +31,11 @@ def ask_sign_up_team(session, event_name, team_name):
 
     Returns
     -------
-    event : :class:`rampdb.model.Event`
+    event : :class:`ramp_database.model.Event`
         The queried Event.
-    team : :class:`rampdb.model.Team`
+    team : :class:`ramp_database.model.Team`
         The queried team.
-    event_team : :class:`rampdb.model.EventTeam`
+    event_team : :class:`ramp_database.model.EventTeam`
         The relationship event-team table.
     """
     event = select_event_by_name(session, event_name)
@@ -95,7 +95,7 @@ def get_event_team_by_name(session, event_name, user_name):
 
     Returns
     -------
-    event_team : :class:`rampdb.model.EventTeam`
+    event_team : :class:`ramp_database.model.EventTeam`
         The event/team instance queried.
     """
     return select_event_team_by_name(session, event_name, user_name)

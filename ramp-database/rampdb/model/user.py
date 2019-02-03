@@ -14,7 +14,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
-from ramputils.utils import encode_string
+from ramp_utils.utils import encode_string
 
 from .base import Model
 from .event import EventTeam
@@ -101,11 +101,11 @@ class User(Model):
         Whether or not the user wants to receive RAMP news.
     is_authenticated : bool
         Whether or not the user logged-in.
-    admined_events : list of :class:`rampdb.model.EventAdmin`
+    admined_events : list of :class:`ramp_database.model.EventAdmin`
         A back-reference to the events administrated by the user.
-    submission_similaritys : list of :class:`rampdb.model.SubmissionSimilarity`
+    submission_similaritys : list of :class:`ramp_database.model.SubmissionSimilarity`
         A back-reference to the submission similarity.
-    admined_teams : list of :class:`rampdb.model.Team`
+    admined_teams : list of :class:`ramp_database.model.Team`
         A back-reference to the teams administrated by the user.
     """
     __tablename__ = 'users'
@@ -214,19 +214,19 @@ class UserInteraction(Model):
     ----------
     interactions : None or str, default is None
         The type of interaction.
-    user : None or :class:`rampdb.model.User`, default is None
+    user : None or :class:`ramp_database.model.User`, default is None
         The user instance.
-    problem : None or :class:`rampdb.model.Problem`, default is None
+    problem : None or :class:`ramp_database.model.Problem`, default is None
         The problem instance.
-    event : None or :class:`rampdb.model.Event`, default is None
+    event : None or :class:`ramp_database.model.Event`, default is None
         The event instance.
     ip : None or str, default is None
         The ip address from the server.
     note : None or str, default is None
         Some notes.
-    submission : None or :class:`rampdb.model.Submission`, default is None
+    submission : None or :class:`ramp_database.model.Submission`, default is None
         The submission instance.
-    submission_file : None or :class:`rampdb.model.SubmissionFile`, default \
+    submission_file : None or :class:`ramp_database.model.SubmissionFile`, default \
 is None
         The submission file instance.
     diff : None or str, default is None
@@ -252,23 +252,23 @@ is None
         The IP of the remove server.
     user_id : int
         The ID of the user linked to the interaction.
-    user : :class:`rampdb.model.User`
+    user : :class:`ramp_database.model.User`
         The user instance.
     problem_id : int
         The ID of the problem.
-    problem : :class:`rampdb.model.Problem`
+    problem : :class:`ramp_database.model.Problem`
         The problem instance.
     event_team_id : int
         The ID of the event/team.
-    event_team : :class:`rampdb.model.EventTeam`
+    event_team : :class:`ramp_database.model.EventTeam`
         The event/team instance.
     submission_id : int
         The submission ID.
-    submission : :class:`rampdb.model.Submission`
+    submission : :class:`ramp_database.model.Submission`
         The submission instance.
     submission_file_id : int
         The submission file ID.
-    submission_file : :class:`rampdb.model.SubmissionFile`
+    submission_file : :class:`ramp_database.model.SubmissionFile`
         The submission file instance.
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
@@ -383,10 +383,10 @@ is None
 
     @property
     def event(self):
-        """:class:`rampdb.model.Event`: The event instance."""
+        """:class:`ramp_database.model.Event`: The event instance."""
         return self.event_team.event if self.event_team else None
 
     @property
     def team(self):
-        """:class:`rampdb.model.Team`: The team instance."""
+        """:class:`ramp_database.model.Team`: The team instance."""
         return self.event_team.team if self.event_team else None

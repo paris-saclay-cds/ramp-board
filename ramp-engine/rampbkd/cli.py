@@ -2,11 +2,11 @@ import logging
 
 import click
 
-from ramputils import read_config
-from ramputils import generate_worker_config
+from ramp_utils import read_config
+from ramp_utils import generate_worker_config
 
-from rampbkd.dispatcher import Dispatcher
-from rampbkd import available_workers
+from ramp_engine.dispatcher import Dispatcher
+from ramp_engine import available_workers
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])

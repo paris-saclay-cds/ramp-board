@@ -1,7 +1,7 @@
 from flask import Blueprint
 from flask import render_template
 
-from rampdb.model import Keyword
+from ramp_database.model import Keyword
 
 from .redirect import redirect_to_user
 

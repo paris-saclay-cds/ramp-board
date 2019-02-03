@@ -17,7 +17,7 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from ramputils.utils import encode_string
+from ramp_utils.utils import encode_string
 
 from .base import Model
 from .event import EventScoreType
@@ -62,7 +62,7 @@ class Submission(Model):
     ----------
     name : str
         The submission name.
-    event_team : :class:`rampdb.model.EventTeam`
+    event_team : :class:`ramp_database.model.EventTeam`
         The event/team instance.
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
@@ -73,13 +73,13 @@ class Submission(Model):
         The ID of the table row.
     event_team_id : int
         The event/team ID.
-    event_team : :class:`rampdb.model.EventTeam`
+    event_team : :class:`ramp_database.model.EventTeam`
         The event/team instance.
     name : str
         The name of the submission.
     hash_ : string
         A hash to identify the submission.
-    files : list of :class:`rampdb.model.SubmissionFile`
+    files : list of :class:`ramp_database.model.SubmissionFile`
         The list of the files associated with the submission.
     submission_timestamp : datetime
         The date and time when the submission was added to the database.
@@ -124,13 +124,13 @@ class Submission(Model):
     max_ram : float
         The maximum amount of RAM consumed during training.
     historical_contributivitys : list of \
-:class:`rampdb.model.HistoricalContributivity`
+:class:`ramp_database.model.HistoricalContributivity`
         A back-reference of the historical contributivities for the submission.
-    scores : list of :class:`rampdb.model.SubmissionScore`
+    scores : list of :class:`ramp_database.model.SubmissionScore`
         A back-reference of scores for the submission.
-    files : list of :class:`rampdb.model.SubmissionFile`
+    files : list of :class:`ramp_database.model.SubmissionFile`
         A back-reference of files attached to the submission.
-    on_cv_folds : list of :class:`rampdb.model.SubmissionOnCVFold`
+    on_cv_folds : list of :class:`ramp_database.model.SubmissionOnCVFold`
         A back-reference of the CV fold for this submission.
     """
     __tablename__ = 'submissions'
@@ -223,7 +223,7 @@ class Submission(Model):
 
     @hybrid_property
     def event(self):
-        """:class:`rampdb.model.Event`: The event associated with the
+        """:class:`ramp_database.model.Event`: The event associated with the
         submission."""
         return self.event_team.event
 
@@ -240,13 +240,13 @@ class Submission(Model):
 
     @property
     def official_score(self):
-        """:class:`rampdb.model.SubmissionScore`: The official score."""
+        """:class:`ramp_database.model.SubmissionScore`: The official score."""
         score_dict = {score.score_name: score for score in self.scores}
         return score_dict[self.official_score_name]
 
     @property
     def score_types(self):
-        """list of :class:`rampdb.model.EventScoreType`: All the scores used
+        """list of :class:`ramp_database.model.EventScoreType`: All the scores used
         for the submissions."""
         return self.event.score_types
 
@@ -337,11 +337,11 @@ class Submission(Model):
             os.path.join(self.hash_, 'error.txt'), self.state)
 
     def ordered_scores(self, score_names):
-        """Generator yielding :class:`rampdb.model.SubmissionScore`.
+        """Generator yielding :class:`ramp_database.model.SubmissionScore`.
 
         Ordered according to ``score_names``. Called by
-        :func:`rampdb.tools.leaderboard.get_public_leaderboard` and
-        :func:`rampdb.tools.get_private_leaderboard`, making sure scores are
+        :func:`ramp_database.tools.leaderboard.get_public_leaderboard` and
+        :func:`ramp_database.tools.get_private_leaderboard`, making sure scores are
         listed in the correct column.
 
         Parameters
@@ -351,7 +351,7 @@ class Submission(Model):
 
         Returns
         -------
-        scores : generator of :class:`rampdb.model.submission.SubmissionScore``
+        scores : generator of :class:`ramp_database.model.submission.SubmissionScore``
             Generate a scoring instance.
         """
         score_dict = {score.score_name: score for score in self.scores}
@@ -490,11 +490,11 @@ class SubmissionScore(Model):
         The ID of the row table.
     submission_id : int
         The ID of the associated submission.
-    submission : :class:`rampdb.model.Submission`
+    submission : :class:`ramp_database.model.Submission`
         The submission instance associated.
     event_score_type_id : int
         The ID of the event/score type associated.
-    event_score_type : :class:`rampdb.model.EventScoreType`
+    event_score_type : :class:`ramp_database.model.EventScoreType`
         The event/score type instance associated.
     valid_score_cv_bag : float
         The validation bagged scores.
@@ -504,7 +504,7 @@ class SubmissionScore(Model):
         The partial validation scores for all CV bags.
     test_score_cv_bags : ndarray
         The partial testing scores for all CV bags.
-    on_cv_folds : list of :class:`rampdb.model.SubmissionScoreOnCVFold`
+    on_cv_folds : list of :class:`ramp_database.model.SubmissionScoreOnCVFold`
         A back-reference the CV fold associated with the score.
     """
     __tablename__ = 'submission_scores'
@@ -596,16 +596,16 @@ class SubmissionFile(Model):
         The ID of the table row.
     submission_id : int
         The ID of the associated submission.
-    submission : :class:`rampdb.model.Submission`
+    submission : :class:`ramp_database.model.Submission`
         The submission instance associated.
     workflow_element_id : int
         The ID of the associated workflow element.
-    workflow_element : :class:`rampdb.model.WorkflowElement`
+    workflow_element : :class:`ramp_database.model.WorkflowElement`
         The workflow element associated with the submission.
     submission_file_type_extension_id : int
         The ID of the associated submission file type extension.
     submission_file_type_extension : \
-:class:`rampdb.model.SubmissionFileTypeExtension`
+:class:`ramp_database.model.SubmissionFileTypeExtension`
         The associated submission file type extension instance.
     """
     __tablename__ = 'submission_files'
@@ -706,14 +706,14 @@ class SubmissionFileTypeExtension(Model):
         The ID of the table row.
     type_id : int
         The ID of the submission file type.
-    type : :class:`rampdb.model.SubmissionFileType`
+    type : :class:`ramp_database.model.SubmissionFileType`
         The submission file type instance.
     extension_id : int
         The ID of the extension.
-    extension : :class:`rampdb.model.Extension`
+    extension : :class:`ramp_database.model.Extension`
         The file extension instance.
     submission_files : list of \
-:class:`rampdb.model.SubmissionFileTypeExtension`
+:class:`ramp_database.model.SubmissionFileTypeExtension`
         A back-reference to the submission files related to the type extension.
     """
     __tablename__ = 'submission_file_type_extensions'
@@ -754,7 +754,7 @@ class SubmissionFileType(Model):
         Whether or not this type of file is editable.
     max_size : int
         The maximum size of this file type.
-    workflow_element_types : list of :class:`rampdb.model.WorkflowElementType`
+    workflow_element_types : list of :class:`ramp_database.model.WorkflowElementType`
         A back-reference to the workflow element type for this submission file
         type.
     """
@@ -776,7 +776,7 @@ class Extension(Model):
     name : str
         The name of the extension.
     submission_file_types : list of \
-:class:`rampdb.model.SubmissionFileTypeExtension`
+:class:`ramp_database.model.SubmissionFileTypeExtension`
         A back-reference to the submission file types for this extension.
     """
     __tablename__ = 'extensions'
@@ -794,11 +794,11 @@ class SubmissionScoreOnCVFold(Model):
         The ID of the table row.
     submission_on_cv_fold_id : int
         The ID of the CV fold.
-    submission_on_cv_fold : :class:`rampdb.model.SubmissionOnCVFold`
+    submission_on_cv_fold : :class:`ramp_database.model.SubmissionOnCVFold`
         The submission on CV fold instance.
     submission_score_id : int
         The ID of the submission score.
-    submission_score : :class:`rampdb.model.SubmissionScore`
+    submission_score : :class:`ramp_database.model.SubmissionScore`
         The submission score instance.
     train_score : float
         The training score on the fold.
@@ -857,9 +857,9 @@ class SubmissionOnCVFold(Model):
 
     Parameters
     ----------
-    submission : :class:`rampdb.model.Submission`
+    submission : :class:`ramp_database.model.Submission`
         The submission used.
-    cv_fold : :class:`rampdb.model.CVFold`
+    cv_fold : :class:`ramp_database.model.CVFold`
         The fold to associate with the submission.
 
     Attributes
@@ -868,11 +868,11 @@ class SubmissionOnCVFold(Model):
         The ID of the table row.
     submission_id : int
         The ID of the submission.
-    submission : :class:`rampdb.model.Submission`
+    submission : :class:`ramp_database.model.Submission`
         The submission instance.
     cv_fold_id : int
         The ID of the CV fold.
-    cv_fold : :class:`rampdb.model.CVFold`
+    cv_fold : :class:`ramp_database.model.CVFold`
         The CV fold instance.
     contributivity : float
         The contributivity of the submission.
@@ -892,7 +892,7 @@ class SubmissionOnCVFold(Model):
         State of of the submission on this fold.
     error_msg : str
         Error message in case of failing submission.
-    scores : list of :class:`rampdb.model.SubmissionScoreOnCVFold`
+    scores : list of :class:`ramp_database.model.SubmissionScoreOnCVFold`
         A back-reference on the scores for this fold.
 
     Notes
@@ -1006,7 +1006,7 @@ class SubmissionOnCVFold(Model):
 
     @property
     def official_score(self):
-        """:class:`rampdb.model.SubmissionScoreOnCVFold`: The official score
+        """:class:`ramp_database.model.SubmissionScoreOnCVFold`: The official score
         used for the submission."""
         for score in self.scores:
             if self.submission.official_score_name == score.name:
@@ -1097,7 +1097,7 @@ class SubmissionOnCVFold(Model):
         Parameters
         ----------
         detached_submission_on_cv_fold : \
-:class:`rampdb.model.DetachedSubmissionOnCVFold`
+:class:`ramp_database.model.DetachedSubmissionOnCVFold`
             The detached submission from which we will update the current
             submission.
         """
@@ -1172,15 +1172,15 @@ class SubmissionSimilarity(Model):
         The similarity index.
     user_id : int
         The ID of the user.
-    user : :class:`rampdb.model.User`
+    user : :class:`ramp_database.model.User`
         The user instance.
     source_submission_id : int
         The ID of the submission used as source.
-    source_submission : :class:`rampdb.model.Submission`
+    source_submission : :class:`ramp_database.model.Submission`
         The source submission instance.
     target_submission_id : int
         The ID of the submission used as target.
-    target_submission : :class:`rampdb.model.Submission`
+    target_submission : :class:`ramp_database.model.Submission`
         The target submission instance.
     """
     __tablename__ = 'submission_similaritys'

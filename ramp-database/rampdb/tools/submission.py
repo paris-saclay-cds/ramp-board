@@ -53,11 +53,11 @@ def add_submission(session, event_name, team_name, submission_name,
     submission_path : str
         The path of the files associated to the current submission. It will
         corresponds to the key `ramp_kit_subissions_dir` of the dictionary
-        created with :func:`ramputils.generate_ramp_config`.
+        created with :func:`ramp_utils.generate_ramp_config`.
 
     Returns
     -------
-    submission : :class:`rampdb.model.Submission`
+    submission : :class:`ramp_database.model.Submission`
         The newly created submission.
     """
     event = select_event_by_name(session, event_name)
@@ -197,11 +197,11 @@ def add_submission_similarity(session, credit_type, user, source_submission,
         The session to directly perform the operation on the database.
     credit_type : {'target_credit', 'source_credit', 'thirdparty_credit'}
         The type of credit to create.
-    user : :class:`rampdb.model.User`
+    user : :class:`ramp_database.model.User`
         The user which adding credit.
-    source_submission : :class:`rampdb.model.Submission`
+    source_submission : :class:`ramp_database.model.Submission`
         The submission inspiring the target submission.
-    target_submission : :class:`rampdb.model.Submission`
+    target_submission : :class:`ramp_database.model.Submission`
         The submission which is being submitted by the ``user``.
     similarity : float
         The similarity between the two submissions.
@@ -248,8 +248,8 @@ def get_submissions(session, event_name, state='new'):
 
     See also
     --------
-    rampdb.tools.get_submission_by_id : Get a single submission using an id.
-    rampdb.tools.get_submission_by_name : Get a single submission using names.
+    ramp_database.tools.get_submission_by_id : Get a single submission using an id.
+    ramp_database.tools.get_submission_by_name : Get a single submission using names.
     """
     if state is not None and state not in STATES:
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
@@ -278,13 +278,13 @@ def get_submission_by_id(session, submission_id):
 
     Returns
     -------
-    submission : :class:`rampdb.model.Submission`
+    submission : :class:`ramp_database.model.Submission`
         The queried submission.
 
     See also
     --------
-    rampdb.tools.get_submissions : Get submissions information.
-    rampdb.tools.get_submission_by_name : Get a single submission using names.
+    ramp_database.tools.get_submissions : Get submissions information.
+    ramp_database.tools.get_submission_by_name : Get a single submission using names.
     """
     submission = select_submission_by_id(session, submission_id)
     submission.event.name
@@ -308,13 +308,13 @@ def get_submission_by_name(session, event_name, team_name, name):
 
     Returns
     -------
-    submission : :class:`rampdb.model.Submission`
+    submission : :class:`ramp_database.model.Submission`
         The queried submission.
 
     See also
     --------
-    rampdb.tools.get_submissions : Get submissions information.
-    rampdb.tools.get_submission_by_id : Get a single submission using an id.
+    ramp_database.tools.get_submissions : Get submissions information.
+    ramp_database.tools.get_submission_by_id : Get a single submission using an id.
     """
     submission = select_submission_by_name(session, event_name, team_name,
                                            name)
@@ -537,7 +537,7 @@ def get_source_submissions(session, submission_id):
 
     Returns
     -------
-    submissions : list of :class`rampdb.model.Submission`
+    submissions : list of :class`ramp_database.model.Submission`
         List of the submissions connected with the submission to be trained.
     """
     submission = select_submission_by_id(session, submission_id)
@@ -814,7 +814,7 @@ def submit_starting_kits(session, event_name, team_name, path_submission):
     path_submission : str
         The path of the files associated to the current submission. It will
         corresponds to the key `ramp_kit_submissions_dir` of the dictionary
-        created with :func:`ramputils.generate_ramp_config`.
+        created with :func:`ramp_utils.generate_ramp_config`.
     """
     event = select_event_by_name(session, event_name=event_name)
     submission_names = os.listdir(path_submission)

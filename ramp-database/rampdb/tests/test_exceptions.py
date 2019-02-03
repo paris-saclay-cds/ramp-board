@@ -1,12 +1,12 @@
 import pytest
 
-from rampdb.exceptions import DuplicateSubmissionError
-from rampdb.exceptions import MergeTeamError
-from rampdb.exceptions import MissingExtensionError
-from rampdb.exceptions import MissingSubmissionFileError
-from rampdb.exceptions import NameClashError
-from rampdb.exceptions import TooEarlySubmissionError
-from rampdb.exceptions import UnknownStateError
+from ramp_database.exceptions import DuplicateSubmissionError
+from ramp_database.exceptions import MergeTeamError
+from ramp_database.exceptions import MissingExtensionError
+from ramp_database.exceptions import MissingSubmissionFileError
+from ramp_database.exceptions import NameClashError
+from ramp_database.exceptions import TooEarlySubmissionError
+from ramp_database.exceptions import UnknownStateError
 
 
 @pytest.mark.parametrize(

@@ -3,27 +3,27 @@ import shutil
 
 import pytest
 
-from ramputils import read_config
-from ramputils.testing import database_config_template
-from ramputils.testing import ramp_config_template
+from ramp_utils import read_config
+from ramp_utils.testing import database_config_template
+from ramp_utils.testing import ramp_config_template
 
-from rampbkd.dispatcher import Dispatcher
+from ramp_engine.dispatcher import Dispatcher
 
-from rampdb.model import Model
+from ramp_database.model import Model
 
-from rampdb.utils import setup_db
-from rampdb.utils import session_scope
-from rampdb.testing import create_toy_db
+from ramp_database.utils import setup_db
+from ramp_database.utils import session_scope
+from ramp_database.testing import create_toy_db
 
-from rampdb.model import EventTeam
+from ramp_database.model import EventTeam
 
-from rampdb.tools.event import get_event
-from rampdb.tools.team import get_event_team_by_name
+from ramp_database.tools.event import get_event
+from ramp_database.tools.team import get_event_team_by_name
 
-from rampdb.tools.leaderboard import get_leaderboard
-from rampdb.tools.leaderboard import update_all_user_leaderboards
-from rampdb.tools.leaderboard import update_leaderboards
-from rampdb.tools.leaderboard import update_user_leaderboards
+from ramp_database.tools.leaderboard import get_leaderboard
+from ramp_database.tools.leaderboard import update_all_user_leaderboards
+from ramp_database.tools.leaderboard import update_leaderboards
+from ramp_database.tools.leaderboard import update_user_leaderboards
 
 
 @pytest.fixture(scope='module')

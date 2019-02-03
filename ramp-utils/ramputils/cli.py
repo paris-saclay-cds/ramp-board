@@ -1,6 +1,6 @@
 import click
 
-from ramputils import deploy
+from ramp_utils import deploy
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 

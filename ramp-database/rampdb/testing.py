@@ -1,5 +1,5 @@
 """
-The :mod:`rampdb.testing` module create facility functions to test the
+The :mod:`ramp_database.testing` module create facility functions to test the
 tools and model of ``ramp-database``.
 """
 
@@ -10,7 +10,7 @@ import subprocess
 
 from git import Repo
 
-from ramputils import generate_ramp_config
+from ramp_utils import generate_ramp_config
 
 from .utils import setup_db
 from .utils import session_scope

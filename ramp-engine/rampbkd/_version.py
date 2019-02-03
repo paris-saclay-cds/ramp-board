@@ -1,5 +1,5 @@
 """
-``rampbkd``: Submissions orchestrator and processors for the RAMP bundle.
+``ramp_engine``: Submissions orchestrator and processors for the RAMP bundle.
 """
 # Based on NiLearn package
 # License: simplified BSD

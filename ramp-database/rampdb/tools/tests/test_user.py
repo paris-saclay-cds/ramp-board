@@ -4,26 +4,26 @@ import pandas as pd
 import pytest
 import six
 
-from ramputils import read_config
-from ramputils.utils import check_password
-from ramputils.testing import database_config_template
-from ramputils.testing import ramp_config_template
+from ramp_utils import read_config
+from ramp_utils.utils import check_password
+from ramp_utils.testing import database_config_template
+from ramp_utils.testing import ramp_config_template
 
-from rampdb.utils import setup_db
-from rampdb.utils import session_scope
+from ramp_database.utils import setup_db
+from ramp_database.utils import session_scope
 
-from rampdb.model import Model
-from rampdb.model import User
-from rampdb.model import Team
-from rampdb.testing import create_test_db
+from ramp_database.model import Model
+from ramp_database.model import User
+from ramp_database.model import Team
+from ramp_database.testing import create_test_db
 
-from rampdb.tools.user import add_user
-from rampdb.tools.user import add_user_interaction
-from rampdb.tools.user import approve_user
-from rampdb.tools.user import get_team_by_name
-from rampdb.tools.user import get_user_by_name
-from rampdb.tools.user import get_user_interactions_by_name
-from rampdb.tools.user import set_user_by_instance
+from ramp_database.tools.user import add_user
+from ramp_database.tools.user import add_user_interaction
+from ramp_database.tools.user import approve_user
+from ramp_database.tools.user import get_team_by_name
+from ramp_database.tools.user import get_user_by_name
+from ramp_database.tools.user import get_user_interactions_by_name
+from ramp_database.tools.user import set_user_by_instance
 
 
 @pytest.fixture

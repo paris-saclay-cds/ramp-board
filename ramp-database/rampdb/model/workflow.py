@@ -25,9 +25,9 @@ class WorkflowElementType(Model):
         The name of the workflow element type.
     type_id : int
         The ID of the submission file type.
-    type : :class:`rampdb.model.SubmissionFileType`
+    type : :class:`ramp_database.model.SubmissionFileType`
         The submission file type instance.
-    workflows : list of :class:`rampdb.model.WorkflowElement`
+    workflows : list of :class:`ramp_database.model.WorkflowElement`
         A back-reference to the workflows linked with the workflow element.
     """
     __tablename__ = 'workflow_element_types'
@@ -86,9 +86,9 @@ class Workflow(Model):
         The ID of the table row.
     name : str
         The name of the workflow.
-    problems : list of :class:`rampdb.model.Problem`
+    problems : list of :class:`ramp_database.model.Problem`
         A back-reference to the problems using this workflow.
-    elements : list of :class:`rampdb.model.WorkflowElement`
+    elements : list of :class:`ramp_database.model.WorkflowElement`
         A back-reference to the elements of the workflow.
     """
     __tablename__ = 'workflows'
@@ -116,9 +116,9 @@ class WorkflowElement(Model):
 
     Parameters
     ----------
-    workflow : :class:`rampdb.model.Workflow`
+    workflow : :class:`ramp_database.model.Workflow`
         A workflow instance.
-    workflow_element_type : :class:`rampdb.model.WorkflowElementType`
+    workflow_element_type : :class:`ramp_database.model.WorkflowElementType`
         A workflow element type instance.
     name_in_workflow : None or str, default is None
 
@@ -130,13 +130,13 @@ class WorkflowElement(Model):
         The name of the workflow element.
     workflow_id : int
         The ID of the associated workflow.
-    workflow : :class:`rampdb.model.Workflow`
+    workflow : :class:`ramp_database.model.Workflow`
         The workflow instance.
     workflow_element_type_id : int
         The ID of the associated workflow element type.
-    workflow_element_type : :class:`rampdb.model.WorkflowElementType`
+    workflow_element_type : :class:`ramp_database.model.WorkflowElementType`
         The workflow element type instance.
-    submission_files : list of :class:`rampdb.model.SubmissionFile`
+    submission_files : list of :class:`ramp_database.model.SubmissionFile`
         A back-reference to the submission file associated with the workflow
         element.
     """

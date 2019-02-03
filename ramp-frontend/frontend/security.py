@@ -1,5 +1,5 @@
 from itsdangerous import URLSafeTimedSerializer
 
-from frontend import app
+from ramp_frontend import app
 
 ts = URLSafeTimedSerializer(app.config["SECRET_KEY"])

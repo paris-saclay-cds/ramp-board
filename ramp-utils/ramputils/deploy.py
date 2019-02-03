@@ -1,12 +1,12 @@
 import os
 import shutil
 
-from rampdb.testing import setup_files_extension_type
-from rampdb.testing import setup_ramp_kits_ramp_data
-from rampdb.tools.event import add_event
-from rampdb.tools.event import add_problem
-from rampdb.tools.event import get_problem
-from rampdb.utils import session_scope
+from ramp_database.testing import setup_files_extension_type
+from ramp_database.testing import setup_ramp_kits_ramp_data
+from ramp_database.tools.event import add_event
+from ramp_database.tools.event import add_problem
+from ramp_database.tools.event import get_problem
+from ramp_database.utils import session_scope
 
 from .config_parser import read_config
 from .ramp import generate_ramp_config

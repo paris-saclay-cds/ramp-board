@@ -2,11 +2,11 @@ from os.path import join
 
 import pytest
 
-from ramputils import read_config
+from ramp_utils import read_config
 
-from ramputils.testing import database_config_template
-from ramputils.testing import path_config_example
-from ramputils.testing import ramp_config_template
+from ramp_utils.testing import database_config_template
+from ramp_utils.testing import path_config_example
+from ramp_utils.testing import ramp_config_template
 
 
 @pytest.mark.parametrize(

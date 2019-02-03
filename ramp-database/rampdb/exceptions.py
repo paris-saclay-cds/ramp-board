@@ -1,5 +1,5 @@
 """
-The :mod:`rampdb.exceptions` module include all custom warnings and errors
+The :mod:`ramp_database.exceptions` module include all custom warnings and errors
 used in ``ramp-database``.
 """
 

@@ -1,5 +1,5 @@
 """
-``frontend``: Website for RAMP.
+``ramp_frontend``: Website for RAMP.
 """
 # Based on NiLearn package
 # License: simplified BSD

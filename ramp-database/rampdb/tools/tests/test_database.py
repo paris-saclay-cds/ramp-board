@@ -2,26 +2,26 @@ import shutil
 
 import pytest
 
-from ramputils import read_config
-from ramputils.testing import database_config_template
-from ramputils.testing import ramp_config_template
+from ramp_utils import read_config
+from ramp_utils.testing import database_config_template
+from ramp_utils.testing import ramp_config_template
 
-from rampdb.model import Extension
-from rampdb.model import Model
-from rampdb.model import SubmissionFileType
-from rampdb.model import SubmissionFileTypeExtension
+from ramp_database.model import Extension
+from ramp_database.model import Model
+from ramp_database.model import SubmissionFileType
+from ramp_database.model import SubmissionFileTypeExtension
 
-from rampdb.utils import setup_db
-from rampdb.utils import session_scope
+from ramp_database.utils import setup_db
+from ramp_database.utils import session_scope
 
-from rampdb.testing import create_test_db
+from ramp_database.testing import create_test_db
 
-from rampdb.tools.database import add_extension
-from rampdb.tools.database import add_submission_file_type
-from rampdb.tools.database import add_submission_file_type_extension
-from rampdb.tools.database import get_extension
-from rampdb.tools.database import get_submission_file_type
-from rampdb.tools.database import get_submission_file_type_extension
+from ramp_database.tools.database import add_extension
+from ramp_database.tools.database import add_submission_file_type
+from ramp_database.tools.database import add_submission_file_type_extension
+from ramp_database.tools.database import get_extension
+from ramp_database.tools.database import get_submission_file_type
+from ramp_database.tools.database import get_submission_file_type_extension
 
 
 @pytest.fixture

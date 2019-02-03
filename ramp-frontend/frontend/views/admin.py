@@ -12,21 +12,21 @@ from flask import url_for
 
 from sqlalchemy.exc import IntegrityError
 
-from rampdb.model import Event
-from rampdb.model import EventTeam
-from rampdb.model import Submission
-from rampdb.model import User
+from ramp_database.model import Event
+from ramp_database.model import EventTeam
+from ramp_database.model import Submission
+from ramp_database.model import User
 
-from rampdb.exceptions import NameClashError
+from ramp_database.exceptions import NameClashError
 
-from rampdb.tools.event import get_event
-from rampdb.tools.frontend import is_admin
-from rampdb.tools.frontend import is_accessible_event
-from rampdb.tools.user import approve_user
-from rampdb.tools.user import get_user_interactions_by_name
-from rampdb.tools.team import sign_up_team
+from ramp_database.tools.event import get_event
+from ramp_database.tools.ramp_frontend import is_admin
+from ramp_database.tools.ramp_frontend import is_accessible_event
+from ramp_database.tools.user import approve_user
+from ramp_database.tools.user import get_user_interactions_by_name
+from ramp_database.tools.team import sign_up_team
 
-from frontend import db
+from ramp_frontend import db
 
 from ..forms import EventUpdateProfileForm
 from ..utils import send_mail

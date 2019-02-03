@@ -2,25 +2,25 @@ import shutil
 
 import pytest
 
-from rampdb.model import Model
-from rampdb.testing import add_users
-from rampdb.tools.team import sign_up_team
-from rampdb.tools.submission import get_submissions
-from rampdb.tools.submission import submit_starting_kits
-from rampdb.utils import session_scope
-from rampdb.utils import setup_db
+from ramp_database.model import Model
+from ramp_database.testing import add_users
+from ramp_database.tools.team import sign_up_team
+from ramp_database.tools.submission import get_submissions
+from ramp_database.tools.submission import submit_starting_kits
+from ramp_database.utils import session_scope
+from ramp_database.utils import setup_db
 
-from rampdb.tools.event import get_problem
+from ramp_database.tools.event import get_problem
 
-from rampbkd.local import CondaEnvWorker
-from rampbkd.dispatcher import Dispatcher
+from ramp_engine.local import CondaEnvWorker
+from ramp_engine.dispatcher import Dispatcher
 
-from ramputils import generate_ramp_config
-from ramputils import read_config
-from ramputils.testing import database_config_template
-from ramputils.testing import ramp_config_template
+from ramp_utils import generate_ramp_config
+from ramp_utils import read_config
+from ramp_utils.testing import database_config_template
+from ramp_utils.testing import ramp_config_template
 
-from ramputils.deploy import deploy_ramp_event
+from ramp_utils.deploy import deploy_ramp_event
 
 
 @pytest.fixture

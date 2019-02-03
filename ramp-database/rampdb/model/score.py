@@ -4,7 +4,7 @@ from sqlalchemy import String
 from sqlalchemy import Integer
 from sqlalchemy import Boolean
 
-from ramputils.utils import encode_string
+from ramp_utils.utils import encode_string
 
 from .base import Model
 
@@ -38,7 +38,7 @@ class ScoreType(Model):
         The minimum possible score.
     maximum : float
         The maximum possible score.
-    events : list of :class:`rampdb.model.EventScoreType`
+    events : list of :class:`ramp_database.model.EventScoreType`
         A back-reference to the event using the score.
     """
     __tablename__ = 'score_types'

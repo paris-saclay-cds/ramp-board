@@ -82,7 +82,7 @@ copyright = u('2015 - 2019, Paris-Saclay Center for Data Science')
 # built documents.
 #
 # The short X.Y version.
-from rampdb import __version__
+from ramp_database import __version__
 version = __version__
 # The full version, including alpha/beta/rc tags.
 release = __version__

@@ -33,7 +33,7 @@ def select_submissions_by_state(session, event_name, state):
 
     Returns
     -------
-    submissions : list of :class:`rampdb.model.Submission`
+    submissions : list of :class:`ramp_database.model.Submission`
         The queried list of submissions.
     """
     q = (session.query(Submission)
@@ -58,7 +58,7 @@ def select_submission_by_id(session, submission_id):
 
     Returns
     -------
-    submission : :class:`rampdb.model.Submission`
+    submission : :class:`ramp_database.model.Submission`
         The queried submission.
     """
     return (session.query(Submission)
@@ -82,7 +82,7 @@ def select_submission_by_name(session, event_name, team_name, name):
 
     Returns
     -------
-    submission : :class:`rampdb.model.Submission`
+    submission : :class:`ramp_database.model.Submission`
         The queried submission.
     """
     return (session.query(Submission)
@@ -108,7 +108,7 @@ def select_event_by_name(session, event_name):
 
     Returns
     -------
-    event : :class:`rampdb.model.Event`
+    event : :class:`ramp_database.model.Event`
         The queried event.
     """
     if event_name is None:
@@ -130,7 +130,7 @@ def select_event_team_by_name(session, event_name, team_name):
 
     Returns
     -------
-    event_team : :class:`rampdb.model.EventTeam`
+    event_team : :class:`ramp_database.model.EventTeam`
         The queried event-team.
     """
     event = select_event_by_name(session, event_name)
@@ -153,7 +153,7 @@ def select_user_by_name(session, user_name):
 
     Returns
     -------
-    user : :class:`rampdb.model.User`
+    user : :class:`ramp_database.model.User`
         The queried user.
     """
     if user_name is None:
@@ -173,7 +173,7 @@ def select_user_by_email(session, email):
 
     Returns
     -------
-    user : :class:`rampdb.model.User`
+    user : :class:`ramp_database.model.User`
         The queried user.
     """
     return session.query(User).filter(User.email == email).one_or_none()
@@ -191,7 +191,7 @@ def select_team_by_name(session, team_name):
 
     Returns
     -------
-    team : :class:`rampdb.model.Team`
+    team : :class:`ramp_database.model.Team`
         The queried team.
     """
     if team_name is None:
@@ -211,7 +211,7 @@ def select_problem_by_name(session, problem_name):
 
     Returns
     -------
-    problem : :class:`rampdb.model.Problem`
+    problem : :class:`ramp_database.model.Problem`
         The queried problem.
     """
     if problem_name is None:
@@ -228,13 +228,13 @@ def select_similarities_by_target(session, target_submission):
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to query the database.
-    target_submission : :class:`rampdb.model.Submission`
+    target_submission : :class:`ramp_database.model.Submission`
         The target submission.
 
     Returns
     -------
     submission_similarities : list of \
-:class:`rampdb.model.SubmissionSimilarity`
+:class:`ramp_database.model.SubmissionSimilarity`
         The queried submission similarity.
     """
     return (session.query(SubmissionSimilarity)
@@ -250,13 +250,13 @@ def select_similarities_by_source(session, source_submission):
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to query the database.
-    source_submission : :class:`rampdb.model.Submission`
+    source_submission : :class:`ramp_database.model.Submission`
         The source submission.
 
     Returns
     -------
     submission_similarities : list of \
-:class:`rampdb.model.SubmissionSimilarity`
+:class:`ramp_database.model.SubmissionSimilarity`
         The queried submission similarity.
     """
     return (session.query(SubmissionSimilarity)
@@ -277,7 +277,7 @@ def select_workflow_by_name(session, workflow_name):
 
     Returns
     -------
-    submission_similarities : :class:`rampdb.model.Workflow`
+    submission_similarities : :class:`ramp_database.model.Workflow`
         The queried workflow.
     """
     if workflow_name is None:
@@ -299,7 +299,7 @@ def select_extension_by_name(session, extension_name):
 
     Returns
     -------
-    extension : :class:`rampdb.model.Extension`
+    extension : :class:`ramp_database.model.Extension`
         The queried extension.
     """
     if extension_name is None:
@@ -321,8 +321,8 @@ def select_submission_file_type_by_name(session, type_name):
 
     Returns
     -------
-    submission_file_type : :class:`rampdb.model.SubmissionFileType` or list \
-of :class:`rampdb.model.SubmissionFileType`
+    submission_file_type : :class:`ramp_database.model.SubmissionFileType` or list \
+of :class:`ramp_database.model.SubmissionFileType`
         The queried submission file type.
     """
     if type_name is None:
@@ -350,8 +350,8 @@ def select_submission_type_extension_by_name(session, type_name,
     Returns
     -------
     submission_file_type_extension : \
-:class:`rampdb.model.SubmissionFileTypeExtension` or list of \
-:class:`rampdb.model.SubmissionFileTypeExtension`
+:class:`ramp_database.model.SubmissionFileTypeExtension` or list of \
+:class:`ramp_database.model.SubmissionFileTypeExtension`
         The queried submission file type extension.
     """
     if type_name is None and extension_name is None:
@@ -374,15 +374,15 @@ def select_submission_type_extension_by_extension(session, extension):
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to query the database.
-    extension : :class:`rampdb.model.Extension` or None
+    extension : :class:`ramp_database.model.Extension` or None
         The extension. If None, all submission file type extension will be
         returned.
 
     Returns
     -------
     submission_file_type_extension : \
-:class:`rampdb.model.SubmissionFileTypeExtension` or list of \
-:class:`rampdb.model.SubmissionFileTypeExtension`
+:class:`ramp_database.model.SubmissionFileTypeExtension` or list of \
+:class:`ramp_database.model.SubmissionFileTypeExtension`
         The queried submission file type extension.
     """
     if extension is None:
@@ -404,7 +404,7 @@ def select_workflow_element_type_by_name(session, workflow_element_type_name):
 
     Returns
     -------
-    workflow_element_type : :class:`rampdb.model.WorkflowElementType`
+    workflow_element_type : :class:`ramp_database.model.WorkflowElementType`
         The queried workflow element type.
     """
     return (session.query(WorkflowElementType)
@@ -422,14 +422,14 @@ def select_workflow_element_by_workflow_and_type(session, workflow,
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to query the database.
-    workflow : :class:`rampdb.model.Workflow`
+    workflow : :class:`ramp_database.model.Workflow`
         The workflow used to filter.
-    workflow_element_type : :class`rampdb.model.WorkflowElement`
+    workflow_element_type : :class`ramp_database.model.WorkflowElement`
         The workflow element type to filter.
 
     Returns
     -------
-    workflow_element : :class:`rampdb.model.WorkflowElement`
+    workflow_element : :class:`ramp_database.model.WorkflowElement`
         The queried workflow element.
     """
     return (session.query(WorkflowElement)
@@ -446,14 +446,14 @@ def select_event_admin_by_instance(session, event, user):
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to query the database.
-    event : :class:`rampdb.model.Event`
+    event : :class:`ramp_database.model.Event`
         The event instance.
-    user : :class:`rampdb.model.User`
+    user : :class:`ramp_database.model.User`
         The user instance.
 
     Returns
     -------
-    event_admin : :class:`rampdb.model.EventAdmin` or None
+    event_admin : :class:`ramp_database.model.EventAdmin` or None
         The queried event/admin instance.
     """
     return (session.query(EventAdmin)

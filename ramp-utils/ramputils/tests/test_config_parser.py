@@ -2,7 +2,7 @@ import tempfile
 import yaml
 import pytest
 
-from ramputils import read_config
+from ramp_utils import read_config
 
 
 @pytest.fixture

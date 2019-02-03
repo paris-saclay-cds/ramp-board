@@ -1,7 +1,7 @@
 import click
 
-from ramputils import generate_flask_config
-from ramputils import read_config
+from ramp_utils import generate_flask_config
+from ramp_utils import read_config
 
 from . import create_app
 

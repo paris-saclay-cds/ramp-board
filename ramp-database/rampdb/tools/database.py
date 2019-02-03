@@ -103,8 +103,8 @@ def get_extension(session, extension_name):
 
     Returns
     -------
-    extension : :class:`rampdb.model.Extension` or list of \
-:class:`rampdb.model.Extension`
+    extension : :class:`ramp_database.model.Extension` or list of \
+:class:`ramp_database.model.Extension`
         The queried extension.
     """
     return select_extension_by_name(session, extension_name)
@@ -123,8 +123,8 @@ def get_submission_file_type(session, type_name):
 
     Returns
     -------
-    extension : :class:`rampdb.model.SubmissionFileType` or list of \
-:class:`rampdb.model.SubmissionFileType`
+    extension : :class:`ramp_database.model.SubmissionFileType` or list of \
+:class:`ramp_database.model.SubmissionFileType`
         The queried submission file type.
     """
     return select_submission_file_type_by_name(session, type_name)
@@ -146,8 +146,8 @@ def get_submission_file_type_extension(session, type_name, extension_name):
 
     Returns
     -------
-    extension : :class:`rampdb.model.SubmissionFileTypeExtension` or list of \
-:class:`rampdb.model.SubmissionFileTypeExtension`
+    extension : :class:`ramp_database.model.SubmissionFileTypeExtension` or list of \
+:class:`ramp_database.model.SubmissionFileTypeExtension`
         The queried submission file type.
     """
     return select_submission_type_extension_by_name(

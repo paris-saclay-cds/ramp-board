@@ -21,7 +21,7 @@ class CVFold(Model):
 
     Storing train and test folds, more precisely: train and test indices for
     a single fold. Multiple records of this table are then linked to a
-    submission (through :class:`rampdb.model.SubmissionOnCVFold`).
+    submission (through :class:`ramp_database.model.SubmissionOnCVFold`).
 
     Attributes
     ----------
@@ -35,9 +35,9 @@ class CVFold(Model):
         The testing indices.
     event_id : int
         The ID of the event.
-    event : :class:`rampdb.model.Event`
+    event : :class:`ramp_database.model.Event`
         The event instance.
-    submissions : list of :class:`rampdb.model.SubmissionOnCVFold`
+    submissions : list of :class:`ramp_database.model.SubmissionOnCVFold`
         A back-reference to the submission linked with this fold.
     """
 

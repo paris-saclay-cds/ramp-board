@@ -5,7 +5,7 @@ import os
 from setuptools import find_packages, setup
 
 # get __version__ from _version.py
-ver_file = os.path.join('rampdb', '_version.py')
+ver_file = os.path.join('ramp_database', '_version.py')
 with open(ver_file) as f:
     exec(f.read())
 
@@ -55,6 +55,6 @@ setup(
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
     entry_points={
-        'console_scripts': ['ramp-database = rampdb.cli:start']
+        'console_scripts': ['ramp-database = ramp_database.cli:start']
     }
 )

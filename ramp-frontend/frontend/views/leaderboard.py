@@ -9,15 +9,15 @@ from flask import redirect
 from flask import render_template
 from flask import url_for
 
-from rampdb.tools.event import get_event
-from rampdb.tools.frontend import is_admin
-from rampdb.tools.frontend import is_accessible_code
-from rampdb.tools.frontend import is_accessible_event
-from rampdb.tools.frontend import is_accessible_leaderboard
-from rampdb.tools.user import add_user_interaction
-from rampdb.tools.team import get_event_team_by_name
+from ramp_database.tools.event import get_event
+from ramp_database.tools.ramp_frontend import is_admin
+from ramp_database.tools.ramp_frontend import is_accessible_code
+from ramp_database.tools.ramp_frontend import is_accessible_event
+from ramp_database.tools.ramp_frontend import is_accessible_leaderboard
+from ramp_database.tools.user import add_user_interaction
+from ramp_database.tools.team import get_event_team_by_name
 
-from frontend import db
+from ramp_frontend import db
 
 from .redirect import redirect_to_user
 

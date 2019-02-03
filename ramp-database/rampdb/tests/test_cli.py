@@ -3,16 +3,16 @@ import shutil
 
 from click.testing import CliRunner
 
-from ramputils import read_config
-from ramputils import generate_ramp_config
-from ramputils.testing import database_config_template
-from ramputils.testing import ramp_config_template
+from ramp_utils import read_config
+from ramp_utils import generate_ramp_config
+from ramp_utils.testing import database_config_template
+from ramp_utils.testing import ramp_config_template
 
-from rampdb.utils import setup_db
-from rampdb.model import Model
-from rampdb.testing import create_toy_db
+from ramp_database.utils import setup_db
+from ramp_database.model import Model
+from ramp_database.testing import create_toy_db
 
-from rampdb.cli import main
+from ramp_database.cli import main
 
 
 def setup_module(module):

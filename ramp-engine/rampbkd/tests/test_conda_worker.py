@@ -5,7 +5,7 @@ import shutil
 
 import pytest
 
-from rampbkd.local import CondaEnvWorker
+from ramp_engine.local import CondaEnvWorker
 
 
 def _is_conda_env_installed():

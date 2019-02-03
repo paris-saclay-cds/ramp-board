@@ -1,4 +1,4 @@
-"""The :mod:`frontend.testing` module contains all functions used to easily
+"""The :mod:`ramp_frontend.testing` module contains all functions used to easily
 test the frontend."""
 
 from contextlib import contextmanager

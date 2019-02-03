@@ -2,17 +2,17 @@ import shutil
 
 import pytest
 
-from ramputils import read_config
-from ramputils.testing import database_config_template
-from ramputils.testing import ramp_config_template
+from ramp_utils import read_config
+from ramp_utils.testing import database_config_template
+from ramp_utils.testing import ramp_config_template
 
-from rampdb.testing import create_test_db
+from ramp_database.testing import create_test_db
 
-from rampdb.model import Model
-from rampdb.model import SubmissionFileType
+from ramp_database.model import Model
+from ramp_database.model import SubmissionFileType
 
-from rampdb.utils import setup_db
-from rampdb.utils import session_scope
+from ramp_database.utils import setup_db
+from ramp_database.utils import session_scope
 
 @pytest.fixture
 def database():

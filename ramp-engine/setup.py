@@ -5,7 +5,7 @@ import os
 from setuptools import find_packages, setup
 
 # get __version__ from _version.py
-ver_file = os.path.join('rampbkd', '_version.py')
+ver_file = os.path.join('ramp_engine', '_version.py')
 with open(ver_file) as f:
     exec(f.read())
 
@@ -54,6 +54,6 @@ setup(
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
     entry_points={
-        'console_scripts': ['ramp-launch = rampbkd.cli:start']
+        'console_scripts': ['ramp-launch = ramp_engine.cli:start']
     }
 )

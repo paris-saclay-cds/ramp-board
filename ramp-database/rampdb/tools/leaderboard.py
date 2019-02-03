@@ -26,7 +26,7 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
-    submissions : list of :class:`rampdb.model.Submission`
+    submissions : list of :class:`ramp_database.model.Submission`
         The submission to report in the leaderboard.
     leaderboard_type : {'public', 'private'}
         The type of leaderboard to built.
@@ -147,7 +147,7 @@ def _compute_competition_leaderboard(session, submissions, leaderboard_type,
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
-    submissions : list of :class:`rampdb.model.Submission`
+    submissions : list of :class:`ramp_database.model.Submission`
         The submission to report in the leaderboard.
     leaderboard_type : {'public', 'private'}
         The type of leaderboard to built.

@@ -1,9 +1,9 @@
 import pytest
 
-from ramputils.testing import database_config_template
+from ramp_utils.testing import database_config_template
 
-from ramputils import read_config
-from ramputils import generate_flask_config
+from ramp_utils import read_config
+from ramp_utils import generate_flask_config
 
 
 @pytest.mark.parametrize(

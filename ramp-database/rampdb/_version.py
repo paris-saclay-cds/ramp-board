@@ -1,5 +1,5 @@
 """
-``rampdb``: Database model used in the RAMP bundle.
+``ramp_database``: Database model used in the RAMP bundle.
 """
 # Based on NiLearn package
 # License: simplified BSD

@@ -13,23 +13,23 @@ else:
     from Queue import Queue
     from Queue import LifoQueue
 
-from rampdb.tools.submission import get_submissions
-from rampdb.tools.submission import get_submission_by_id
-from rampdb.tools.submission import get_submission_state
+from ramp_database.tools.submission import get_submissions
+from ramp_database.tools.submission import get_submission_by_id
+from ramp_database.tools.submission import get_submission_state
 
-from rampdb.tools.submission import set_bagged_scores
-from rampdb.tools.submission import set_predictions
-from rampdb.tools.submission import set_time
-from rampdb.tools.submission import set_scores
-from rampdb.tools.submission import set_submission_error_msg
-from rampdb.tools.submission import set_submission_state
+from ramp_database.tools.submission import set_bagged_scores
+from ramp_database.tools.submission import set_predictions
+from ramp_database.tools.submission import set_time
+from ramp_database.tools.submission import set_scores
+from ramp_database.tools.submission import set_submission_error_msg
+from ramp_database.tools.submission import set_submission_state
 
-from rampdb.tools.leaderboard import update_all_user_leaderboards
-from rampdb.tools.leaderboard import update_leaderboards
+from ramp_database.tools.leaderboard import update_all_user_leaderboards
+from ramp_database.tools.leaderboard import update_leaderboards
 
-from rampdb.utils import session_scope
+from ramp_database.utils import session_scope
 
-from ramputils import generate_worker_config
+from ramp_utils import generate_worker_config
 
 from .local import CondaEnvWorker
 

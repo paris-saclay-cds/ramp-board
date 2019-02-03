@@ -5,24 +5,24 @@ import pytest
 
 from werkzeug.datastructures import ImmutableMultiDict
 
-from ramputils import generate_flask_config
-from ramputils import read_config
-from ramputils.testing import database_config_template
-from ramputils.testing import ramp_config_template
+from ramp_utils import generate_flask_config
+from ramp_utils import read_config
+from ramp_utils.testing import database_config_template
+from ramp_utils.testing import ramp_config_template
 
-from rampdb.model import Model
-from rampdb.testing import create_toy_db
-from rampdb.utils import setup_db
-from rampdb.utils import session_scope
+from ramp_database.model import Model
+from ramp_database.testing import create_toy_db
+from ramp_database.utils import setup_db
+from ramp_database.utils import session_scope
 
-from rampdb.tools.event import get_event
-from rampdb.tools.user import add_user
-from rampdb.tools.user import get_user_by_name
-from rampdb.tools.team import ask_sign_up_team
-from rampdb.tools.team import get_event_team_by_name
+from ramp_database.tools.event import get_event
+from ramp_database.tools.user import add_user
+from ramp_database.tools.user import get_user_by_name
+from ramp_database.tools.team import ask_sign_up_team
+from ramp_database.tools.team import get_event_team_by_name
 
-from frontend import create_app
-from frontend.testing import login_scope
+from ramp_frontend import create_app
+from ramp_frontend.testing import login_scope
 
 
 @pytest.fixture(scope='module')
@@ -43,7 +43,7 @@ def client_session():
         )
         try:
             # In case of failure we should close the global flask engine
-            from frontend import db as db_flask
+            from ramp_frontend import db as db_flask
             db_flask.session.close()
         except RuntimeError:
             pass

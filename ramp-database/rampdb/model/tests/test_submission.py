@@ -6,33 +6,33 @@ import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 
-from ramputils import read_config
-from ramputils.testing import database_config_template
-from ramputils.testing import ramp_config_template
+from ramp_utils import read_config
+from ramp_utils.testing import database_config_template
+from ramp_utils.testing import ramp_config_template
 
 from rampwf.prediction_types.base import BasePrediction
 
-from rampdb.model import DetachedSubmissionOnCVFold
-from rampdb.model import Event
-from rampdb.model import EventScoreType
-from rampdb.model import Extension
-from rampdb.model import HistoricalContributivity
-from rampdb.model import Model
-from rampdb.model import Submission
-from rampdb.model import SubmissionFile
-from rampdb.model import SubmissionFileType
-from rampdb.model import SubmissionFileTypeExtension
-from rampdb.model import SubmissionOnCVFold
-from rampdb.model import SubmissionScore
-from rampdb.model import SubmissionScoreOnCVFold
-from rampdb.model import Team
-from rampdb.model import WorkflowElementType
+from ramp_database.model import DetachedSubmissionOnCVFold
+from ramp_database.model import Event
+from ramp_database.model import EventScoreType
+from ramp_database.model import Extension
+from ramp_database.model import HistoricalContributivity
+from ramp_database.model import Model
+from ramp_database.model import Submission
+from ramp_database.model import SubmissionFile
+from ramp_database.model import SubmissionFileType
+from ramp_database.model import SubmissionFileTypeExtension
+from ramp_database.model import SubmissionOnCVFold
+from ramp_database.model import SubmissionScore
+from ramp_database.model import SubmissionScoreOnCVFold
+from ramp_database.model import Team
+from ramp_database.model import WorkflowElementType
 
-from rampdb.utils import setup_db
-from rampdb.utils import session_scope
-from rampdb.testing import create_toy_db
+from ramp_database.utils import setup_db
+from ramp_database.utils import session_scope
+from ramp_database.testing import create_toy_db
 
-from rampdb.tools.submission import get_submission_by_id
+from ramp_database.tools.submission import get_submission_by_id
 
 
 @pytest.fixture(scope='module')

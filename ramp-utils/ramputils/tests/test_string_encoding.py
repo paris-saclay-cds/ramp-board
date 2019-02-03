@@ -1,6 +1,6 @@
 import sys
 
-from ramputils import encode_string
+from ramp_utils import encode_string
 
 PYTHON3 = sys.version_info[0] == 3
 

@@ -22,36 +22,36 @@ from wtforms.widgets import TextArea
 
 from werkzeug.utils import secure_filename
 
-from ramputils.utils import encode_string
+from ramp_utils.utils import encode_string
 
-from rampdb.model import Problem
-from rampdb.model import Submission
-from rampdb.model import SubmissionFile
-from rampdb.model import SubmissionSimilarity
-from rampdb.model import User
-from rampdb.model import WorkflowElement
+from ramp_database.model import Problem
+from ramp_database.model import Submission
+from ramp_database.model import SubmissionFile
+from ramp_database.model import SubmissionSimilarity
+from ramp_database.model import User
+from ramp_database.model import WorkflowElement
 
-from rampdb.exceptions import DuplicateSubmissionError
-from rampdb.exceptions import MissingExtensionError
-from rampdb.exceptions import TooEarlySubmissionError
+from ramp_database.exceptions import DuplicateSubmissionError
+from ramp_database.exceptions import MissingExtensionError
+from ramp_database.exceptions import TooEarlySubmissionError
 
-from rampdb.tools.event import add_event
-from rampdb.tools.event import get_event
-from rampdb.tools.event import get_problem
-from rampdb.tools.frontend import is_admin
-from rampdb.tools.frontend import is_accessible_code
-from rampdb.tools.frontend import is_accessible_event
-from rampdb.tools.frontend import is_user_signed_up
-from rampdb.tools.submission import add_submission
-from rampdb.tools.submission import add_submission_similarity
-from rampdb.tools.submission import get_source_submissions
-from rampdb.tools.submission import get_submission_by_name
-from rampdb.tools.user import add_user_interaction
-from rampdb.tools.team import ask_sign_up_team
-from rampdb.tools.team import get_event_team_by_name
-from rampdb.tools.team import sign_up_team
+from ramp_database.tools.event import add_event
+from ramp_database.tools.event import get_event
+from ramp_database.tools.event import get_problem
+from ramp_database.tools.ramp_frontend import is_admin
+from ramp_database.tools.ramp_frontend import is_accessible_code
+from ramp_database.tools.ramp_frontend import is_accessible_event
+from ramp_database.tools.ramp_frontend import is_user_signed_up
+from ramp_database.tools.submission import add_submission
+from ramp_database.tools.submission import add_submission_similarity
+from ramp_database.tools.submission import get_source_submissions
+from ramp_database.tools.submission import get_submission_by_name
+from ramp_database.tools.user import add_user_interaction
+from ramp_database.tools.team import ask_sign_up_team
+from ramp_database.tools.team import get_event_team_by_name
+from ramp_database.tools.team import sign_up_team
 
-from frontend import db
+from ramp_frontend import db
 
 from ..forms import AskForEventForm
 from ..forms import CodeForm

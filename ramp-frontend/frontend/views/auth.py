@@ -13,18 +13,18 @@ from flask import url_for
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from ramputils.password import check_password
-from ramputils.utils import encode_string
+from ramp_utils.password import check_password
+from ramp_utils.utils import encode_string
 
-from rampdb.tools.user import add_user
-from rampdb.tools.user import add_user_interaction
-from rampdb.tools.user import get_user_by_name
-from rampdb.tools.user import set_user_by_instance
+from ramp_database.tools.user import add_user
+from ramp_database.tools.user import add_user_interaction
+from ramp_database.tools.user import get_user_by_name
+from ramp_database.tools.user import set_user_by_instance
 
-from rampdb.model import User
+from ramp_database.model import User
 
-from frontend import db
-from frontend import login_manager
+from ramp_frontend import db
+from ramp_frontend import login_manager
 
 from ..forms import LoginForm
 from ..forms import UserCreateProfileForm

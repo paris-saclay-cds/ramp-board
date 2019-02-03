@@ -8,7 +8,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
-from ramputils.utils import encode_string
+from ramp_utils.utils import encode_string
 
 from .base import Model
 
@@ -22,11 +22,11 @@ class Team(Model):
     ----------
     name : str
         The name of the team.
-    admin : :class:`rampdb.model.User`
+    admin : :class:`ramp_database.model.User`
         The admin user of the team.
-    initiator : None or :class:`rampdb.model.Team`, default is None
+    initiator : None or :class:`ramp_database.model.Team`, default is None
         The team initiating a merging.
-    acceptor : None or :class:`rampdb.model.Team`, default is None
+    acceptor : None or :class:`ramp_database.model.Team`, default is None
         The team accepting a merging.
 
     Attributes
@@ -37,17 +37,17 @@ class Team(Model):
         The name of the team.
     admin_id : int
         The ID of the admin user.
-    admin : :class:`rampdb.model.User`
+    admin : :class:`ramp_database.model.User`
         The admin user instance.
     initiator_id : int
         The ID of the team asking for merging.
-    initiator : :class:`rampdb.model.Team`
+    initiator : :class:`ramp_database.model.Team`
         The team instance asking for merging.
     acceptor_id : int
         The ID of the team accepting the merging.
-    acceptor : :class:`rampdb.model.Team`
+    acceptor : :class:`ramp_database.model.Team`
         The team instance accepting the merging.
-    team_events : :class:`rampdb.model.EventTeam`
+    team_events : :class:`ramp_database.model.EventTeam`
         A back-reference to the events to which the team is enroll.
     """
     __tablename__ = 'teams'

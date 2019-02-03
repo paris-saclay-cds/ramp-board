@@ -41,11 +41,11 @@ class Event(Model):
     ramp_sandbox_name : str
         Name of the submission which will be considered the sandbox. It will
         correspond to the key ``sandbox_name`` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
+        :func:`ramp_utils.generate_ramp_config`.
     path_ramp_submissions : str
         Path to the deployment RAMP submissions directory. It will corresponds
         to the key ``ramp_submissions_dir`` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
+        :func:`ramp_utils.generate_ramp_config`.
     session : None or :class:`sqlalchemy.orm.Session`, optional
         The session used to perform some required queries. It is a required
         argument when interacting with the database outside of Flask.
@@ -60,8 +60,8 @@ class Event(Model):
         Event title.
     problem_id : int
         The problem ID associated with this event.
-    problem : :class:`rampdb.model.Problem`
-        The :class:`rampdb.model.Problem` instance.
+    problem : :class:`ramp_database.model.Problem`
+        The :class:`ramp_database.model.Problem` instance.
     max_members_per_team : int
         The maximum number of members per team.
     max_n_ensemble : int
@@ -115,14 +115,14 @@ class Event(Model):
     path_ramp_submissions : str
         Path to the deployment RAMP submissions directory. It will correspond
         to the key `ramp_submissions_dir` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
-    score_types : list of :class:`rampdb.model.EventScoreType`
+        :func:`ramp_utils.generate_ramp_config`.
+    score_types : list of :class:`ramp_database.model.EventScoreType`
         A back-reference to the score type used in the event.
-    event_admins : list of :class:`rampdb.model.EventAdmin`
+    event_admins : list of :class:`ramp_database.model.EventAdmin`
         A back-reference to the admin for the event.
-    event_teams: list of :class:`rampdb.model.EventTeam`
+    event_teams: list of :class:`ramp_database.model.EventTeam`
         A back-reference to the teams enrolled in the event.
-    cv_folds : list of :class:`rampdb.model.CVFold`
+    cv_folds : list of :class:`ramp_database.model.CVFold`
         A back-reference to the CV folds for the event.
     """
     __tablename__ = 'events'
@@ -213,12 +213,12 @@ class Event(Model):
 
     @property
     def workflow(self):
-        """:class:`rampdb.model.Workflow`: The workflow used for the event."""
+        """:class:`ramp_database.model.Workflow`: The workflow used for the event."""
         return self.problem.workflow
 
     @property
     def official_score_type(self):
-        """:class:`rampdb.model.EventScoreType`: The score type for the current
+        """:class:`ramp_database.model.EventScoreType`: The score type for the current
         event."""
         return (EventScoreType.query
                               .filter_by(event=self,
@@ -234,7 +234,7 @@ class Event(Model):
             The session used to make the query.
         Returns
         -------
-        event_type_score : :class:`rampdb.model.EventTypeScore`
+        event_type_score : :class:`ramp_database.model.EventTypeScore`
             The default type score for the current event.
         """
         return (session.query(EventScoreType)
@@ -314,7 +314,7 @@ class EventScoreType(Model):
 
     Parameters
     ----------
-    event : :class:`rampdb.model.Event`
+    event : :class:`ramp_database.model.Event`
         The event instance.
     score_type_object : :class:`rampwf.score_types`
         A scoring instance.
@@ -327,15 +327,15 @@ class EventScoreType(Model):
         The name of the score.
     event_id : int
         The ID of the event associated.
-    event : :class:`rampdb.model.Event`
+    event : :class:`ramp_database.model.Event`
         The event instance.
     score_type_id : int
         The ID of the score.
-    score_type : :class:`rampdb.model.ScoreType`
+    score_type : :class:`ramp_database.model.ScoreType`
         The score type instance.
     precision : int
         The numerical precision of the score.
-    submissions : list of :class:`rampdb.model.SubmissionScore`
+    submissions : list of :class:`ramp_database.model.SubmissionScore`
         A back-reference of the submissions for the event/score type.
     """
     __tablename__ = 'event_score_types'
@@ -414,9 +414,9 @@ class EventAdmin(Model):
 
     Parameters
     ----------
-    event : :class:`rampdb.model.Event`
+    event : :class:`ramp_database.model.Event`
         The event instance.
-    admin : :class:`rampdb.model.User`
+    admin : :class:`ramp_database.model.User`
         The user instance.
 
 
@@ -426,11 +426,11 @@ class EventAdmin(Model):
         The ID of the table row.
     event_id : int
         The ID of the event.
-    event : :class:`rampdb.model.Event`
+    event : :class:`ramp_database.model.Event`
         The event instance.
     admin_id : int
         The ID of the user defined as an admin.
-    admin : :class:`rampdb.model.User`
+    admin : :class:`ramp_database.model.User`
         The user instance.
     """
     __tablename__ = 'event_admins'
@@ -453,9 +453,9 @@ class EventTeam(Model):
 
     Parameters
     ----------
-    event : :class:`rampdb.model.Event`
+    event : :class:`ramp_database.model.Event`
         The event instance.
-    team : :class:`rampdb.model.Team`
+    team : :class:`ramp_database.model.Team`
         The team instance.
 
     Attributes
@@ -464,11 +464,11 @@ class EventTeam(Model):
         The ID of a row in the table.
     event_id : int
         The ID of the event.
-    event : :class:`rampdb.model.Event`
+    event : :class:`ramp_database.model.Event`
         The event instance.
     team_id : int
         The ID of the team.
-    team : :class:`rampdb.model.Team`
+    team : :class:`ramp_database.model.Team`
         The team instance.
     is_active : bool
         Whether the team is active for the event.
@@ -484,7 +484,7 @@ class EventTeam(Model):
         The failed submission board for the team for the specific event.
     new_leaderboard_html : str
         The new submission board for the team for the specific event.
-    submissions : list of :class:`rampdb.model.Submission`
+    submissions : list of :class:`ramp_database.model.Submission`
         A back-reference to the submissions associated with this event/team.
     """
     __tablename__ = 'event_teams'

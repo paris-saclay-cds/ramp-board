@@ -5,11 +5,11 @@ import logging
 import argparse
 from argparse import RawTextHelpFormatter
 
-from rampbkd.aws.api import launch_ec2_instance_and_train
-from rampbkd.aws.api import train_on_existing_ec2_instance
-from rampbkd.aws.api import validate_config
-from rampbkd.config import read_backend_config
-from rampdb.tools import get_submission_by_name
+from ramp_engine.aws.api import launch_ec2_instance_and_train
+from ramp_engine.aws.api import train_on_existing_ec2_instance
+from ramp_engine.aws.api import validate_config
+from ramp_engine.config import read_backend_config
+from ramp_database.tools import get_submission_by_name
 
 desc = """
 Train a submission on AWS.

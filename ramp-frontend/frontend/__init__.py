@@ -5,7 +5,7 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 
-from rampdb.model import Model
+from ramp_database.model import Model
 
 from ._version import __version__
 
@@ -26,7 +26,7 @@ def create_app(config):
     ----------
     config : dict
         The Flask configuration generated with
-        :func:`ramputils.generate_flask_config`.
+        :func:`ramp_utils.generate_flask_config`.
 
     Returns
     -------

@@ -6,7 +6,7 @@ import pandas as pd
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
-from ramputils.utils import hash_password
+from ramp_utils.utils import hash_password
 
 from ..exceptions import NameClashError
 from ..model import Team
@@ -63,7 +63,7 @@ def add_user(session, name, password, lastname, firstname, email,
 
     Returns
     -------
-    user : :class:`rampdb.model.User`
+    user : :class:`ramp_database.model.User`
         The user entry in the database.
     """
     # decode the hashed password (=bytes) because database columns is
@@ -124,19 +124,19 @@ def add_user_interaction(session, interaction=None, user=None, problem=None,
         The session to directly perform the operation on the database.
     interactions : None or str, default is None
         The type of interaction.
-    user : None or :class:`rampdb.model.User`, default is None
+    user : None or :class:`ramp_database.model.User`, default is None
         The user instance.
-    problem : None or :class:`rampdb.model.Problem`, default is None
+    problem : None or :class:`ramp_database.model.Problem`, default is None
         The problem instance.
-    event : None or :class:`rampdb.model.Event`, default is None
+    event : None or :class:`ramp_database.model.Event`, default is None
         The event instance.
     ip : None or str, default is None
         The ip address from the server.
     note : None or str, default is None
         Some notes.
-    submission : None or :class:`rampdb.model.Submission`, default is None
+    submission : None or :class:`ramp_database.model.Submission`, default is None
         The submission instance.
-    submission_file : None or :class:`rampdb.model.SubmissionFile`, default \
+    submission_file : None or :class:`ramp_database.model.SubmissionFile`, default \
 is None
         The submission file instance.
     diff : None or str, default is None
@@ -182,7 +182,7 @@ def get_user_by_name(session, name):
 
     Returns
     -------
-    user : :class:`rampdb.model.User` or list of :class:`rampdb.model.User`
+    user : :class:`ramp_database.model.User` or list of :class:`ramp_database.model.User`
         The queried user.
     """
     return select_user_by_name(session, name)
@@ -200,7 +200,7 @@ def get_team_by_name(session, name):
 
     Returns
     -------
-    team : :class:`rampdb.model.Team` or list of :class:`rampdb.model.Team`
+    team : :class:`ramp_database.model.Team` or list of :class:`ramp_database.model.Team`
         The queried team.
     """
     return select_team_by_name(session, name)
@@ -275,7 +275,7 @@ def set_user_by_instance(session, user, lastname, firstname, email,
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
-    user : :class:`rampdb.model.User`
+    user : :class:`ramp_database.model.User`
         The user instance to update.
     lastname : str
         The user lastname.

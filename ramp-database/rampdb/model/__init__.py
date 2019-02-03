@@ -1,5 +1,5 @@
 """
-The :mod:`rampdb.model` defines the database structure which is used for the
+The :mod:`ramp_database.model` defines the database structure which is used for the
 RAMP events.
 """
 

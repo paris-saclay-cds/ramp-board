@@ -1,5 +1,5 @@
-from ramputils.password import hash_password
-from ramputils.password import check_password
+from ramp_utils.password import hash_password
+from ramp_utils.password import check_password
 
 
 def test_check_password():

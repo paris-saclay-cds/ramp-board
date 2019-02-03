@@ -3,7 +3,7 @@ import os
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from ramputils.utils import import_module_from_source
+from ramp_utils.utils import import_module_from_source
 
 from ._query import select_event_admin_by_instance
 from ._query import select_event_by_name
@@ -172,11 +172,11 @@ def add_problem(session, problem_name, kits_dir, data_dir, force=False):
     kits_dir : str
         The directory where the RAMP kits are located. It will corresponds to
         the key `ramp_kits_dir` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
+        :func:`ramp_utils.generate_ramp_config`.
     data_dir : str
         The directory where the RAMP data are located. It will corresponds to
         the key `ramp_data_dir` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
+        :func:`ramp_utils.generate_ramp_config`.
     force : bool, default is False
         Whether to force add the problem. If ``force=False``, an error is
         raised if the problem was already in the database.
@@ -225,11 +225,11 @@ def add_event(session, problem_name, event_name, event_title,
     ramp_sandbox_name : str
         Name of the submission which will be considered the sandbox. It will
         correspond to the key ``sandbox_name`` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
+        :func:`ramp_utils.generate_ramp_config`.
     ramp_submissions_path : str
         Path to the deployment RAMP submissions directory. It will corresponds
         to the key `ramp_submissions_dir` of the dictionary created with
-        :func:`ramputils.generate_ramp_config`.
+        :func:`ramp_utils.generate_ramp_config`.
     is_public : bool, default is False
         Whether the event is made public or not.
     force : bool, default is False
@@ -386,8 +386,8 @@ def get_problem(session, problem_name):
 
     Returns
     -------
-    problem : :class:`rampdb.model.Problem` or list of \
-:class:`rampdb.model.Problem`
+    problem : :class:`ramp_database.model.Problem` or list of \
+:class:`ramp_database.model.Problem`
         The queried problem.
     """
     return select_problem_by_name(session, problem_name)
@@ -406,8 +406,8 @@ def get_workflow(session, workflow_name):
 
     Returns
     -------
-    workflow : :class:`rampdb.model.Workflow` or list of \
-:class:`rampdb.model.Workflow`
+    workflow : :class:`ramp_database.model.Workflow` or list of \
+:class:`ramp_database.model.Workflow`
         The queried workflow.
     """
     return select_workflow_by_name(session, workflow_name)
@@ -426,7 +426,7 @@ def get_event(session, event_name):
 
     Returns
     -------
-    even : :class:`rampdb.model.Event` or list of :class:`rampdb.model.Event`
+    even : :class:`ramp_database.model.Event` or list of :class:`ramp_database.model.Event`
         The queried problem.
     """
     return select_event_by_name(session, event_name)
@@ -446,7 +446,7 @@ def get_event_admin(session, event_name, user_name):
 
     Returns
     -------
-    event_admin : :class:`rampdb.model.EventAdmin` or None
+    event_admin : :class:`ramp_database.model.EventAdmin` or None
         The event/admin instance queried.
     """
     event = select_event_by_name(session, event_name)
@@ -466,7 +466,7 @@ def get_keyword_by_name(session, name):
 
     Returns
     -------
-    keyword : :class:`rampdb.model.Keyword` or  list of \
+    keyword : :class:`ramp_database.model.Keyword` or  list of \
 :class:`ramp.model.Keyword`
         The keyword which have been queried.
     """
@@ -490,7 +490,7 @@ def get_problem_keyword_by_name(session, problem_name, keyword_name):
 
     Returns
     -------
-    problem_keyword : :class:`rampdb.model.ProblemKeyword`
+    problem_keyword : :class:`ramp_database.model.ProblemKeyword`
         The problem-keyword relationship.
     """
     problem = select_problem_by_name(session, problem_name)

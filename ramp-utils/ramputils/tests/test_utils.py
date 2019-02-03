@@ -2,10 +2,10 @@ import os
 
 import six
 
-from ramputils.utils import check_password
-from ramputils.utils import encode_string
-from ramputils.utils import hash_password
-from ramputils.utils import import_module_from_source
+from ramp_utils.utils import check_password
+from ramp_utils.utils import encode_string
+from ramp_utils.utils import hash_password
+from ramp_utils.utils import import_module_from_source
 
 
 def test_import_module_from_source():

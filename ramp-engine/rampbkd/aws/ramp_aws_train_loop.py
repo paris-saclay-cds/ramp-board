@@ -4,9 +4,9 @@ import sys
 import logging
 import argparse
 
-from rampbkd.aws.api import train_loop
-from rampbkd.aws.api import validate_config
-from rampbkd.config import read_backend_config
+from ramp_engine.aws.api import train_loop
+from ramp_engine.aws.api import validate_config
+from ramp_engine.config import read_backend_config
 
 
 def init_parser():

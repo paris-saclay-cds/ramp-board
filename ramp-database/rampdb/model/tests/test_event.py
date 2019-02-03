@@ -3,31 +3,31 @@ import shutil
 
 import pytest
 
-from ramputils import read_config
-from ramputils.utils import encode_string
-from ramputils.testing import database_config_template
-from ramputils.testing import ramp_config_template
+from ramp_utils import read_config
+from ramp_utils.utils import encode_string
+from ramp_utils.testing import database_config_template
+from ramp_utils.testing import ramp_config_template
 
 from rampwf.prediction_types.base import BasePrediction
 from rampwf.score_types.accuracy import Accuracy
 
-from rampdb.model.base import set_query_property
+from ramp_database.model.base import set_query_property
 
-from rampdb.model import CVFold
-from rampdb.model import EventAdmin
-from rampdb.model import EventScoreType
-from rampdb.model import EventTeam
-from rampdb.model import Model
-from rampdb.model import Submission
-from rampdb.model import SubmissionScore
-from rampdb.model import Workflow
+from ramp_database.model import CVFold
+from ramp_database.model import EventAdmin
+from ramp_database.model import EventScoreType
+from ramp_database.model import EventTeam
+from ramp_database.model import Model
+from ramp_database.model import Submission
+from ramp_database.model import SubmissionScore
+from ramp_database.model import Workflow
 
-from rampdb.utils import setup_db
-from rampdb.utils import session_scope
-from rampdb.testing import create_toy_db
+from ramp_database.utils import setup_db
+from ramp_database.utils import session_scope
+from ramp_database.testing import create_toy_db
 
-from rampdb.tools.event import get_event
-from rampdb.tools.user import get_team_by_name
+from ramp_database.tools.event import get_event
+from ramp_database.tools.user import get_team_by_name
 
 
 @pytest.fixture(scope='module')

@@ -9,59 +9,59 @@ from numpy.testing import assert_allclose
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from ramputils import read_config
-from ramputils import generate_ramp_config
-from ramputils.testing import database_config_template
-from ramputils.testing import ramp_config_template
+from ramp_utils import read_config
+from ramp_utils import generate_ramp_config
+from ramp_utils.testing import database_config_template
+from ramp_utils.testing import ramp_config_template
 
-from rampdb.exceptions import DuplicateSubmissionError
-from rampdb.exceptions import MissingSubmissionFileError
-from rampdb.exceptions import MissingExtensionError
-from rampdb.exceptions import TooEarlySubmissionError
-from rampdb.exceptions import UnknownStateError
+from ramp_database.exceptions import DuplicateSubmissionError
+from ramp_database.exceptions import MissingSubmissionFileError
+from ramp_database.exceptions import MissingExtensionError
+from ramp_database.exceptions import TooEarlySubmissionError
+from ramp_database.exceptions import UnknownStateError
 
-from rampdb.model import Event
-from rampdb.model import Model
-from rampdb.model import Submission
-from rampdb.model import SubmissionSimilarity
-from rampdb.testing import add_events
-from rampdb.testing import add_problems
-from rampdb.testing import add_users
-from rampdb.testing import create_toy_db
-from rampdb.testing import create_test_db
-from rampdb.testing import sign_up_teams_to_events
-from rampdb.utils import setup_db
-from rampdb.utils import session_scope
+from ramp_database.model import Event
+from ramp_database.model import Model
+from ramp_database.model import Submission
+from ramp_database.model import SubmissionSimilarity
+from ramp_database.testing import add_events
+from ramp_database.testing import add_problems
+from ramp_database.testing import add_users
+from ramp_database.testing import create_toy_db
+from ramp_database.testing import create_test_db
+from ramp_database.testing import sign_up_teams_to_events
+from ramp_database.utils import setup_db
+from ramp_database.utils import session_scope
 
-from rampdb.tools.user import add_user_interaction
-from rampdb.tools.user import get_user_by_name
+from ramp_database.tools.user import add_user_interaction
+from ramp_database.tools.user import get_user_by_name
 
-from rampdb.tools.submission import add_submission
-from rampdb.tools.submission import add_submission_similarity
+from ramp_database.tools.submission import add_submission
+from ramp_database.tools.submission import add_submission_similarity
 
-from rampdb.tools.submission import get_bagged_scores
-from rampdb.tools.submission import get_event_nb_folds
-from rampdb.tools.submission import get_predictions
-from rampdb.tools.submission import get_scores
-from rampdb.tools.submission import get_source_submissions
-from rampdb.tools.submission import get_submission_by_id
-from rampdb.tools.submission import get_submission_by_name
-from rampdb.tools.submission import get_submission_state
-from rampdb.tools.submission import get_submission_error_msg
-from rampdb.tools.submission import get_submission_max_ram
-from rampdb.tools.submission import get_submissions
-from rampdb.tools.submission import get_time
+from ramp_database.tools.submission import get_bagged_scores
+from ramp_database.tools.submission import get_event_nb_folds
+from ramp_database.tools.submission import get_predictions
+from ramp_database.tools.submission import get_scores
+from ramp_database.tools.submission import get_source_submissions
+from ramp_database.tools.submission import get_submission_by_id
+from ramp_database.tools.submission import get_submission_by_name
+from ramp_database.tools.submission import get_submission_state
+from ramp_database.tools.submission import get_submission_error_msg
+from ramp_database.tools.submission import get_submission_max_ram
+from ramp_database.tools.submission import get_submissions
+from ramp_database.tools.submission import get_time
 
-from rampdb.tools.submission import set_bagged_scores
-from rampdb.tools.submission import set_predictions
-from rampdb.tools.submission import set_scores
-from rampdb.tools.submission import set_submission_error_msg
-from rampdb.tools.submission import set_submission_max_ram
-from rampdb.tools.submission import set_submission_state
-from rampdb.tools.submission import set_time
+from ramp_database.tools.submission import set_bagged_scores
+from ramp_database.tools.submission import set_predictions
+from ramp_database.tools.submission import set_scores
+from ramp_database.tools.submission import set_submission_error_msg
+from ramp_database.tools.submission import set_submission_max_ram
+from ramp_database.tools.submission import set_submission_state
+from ramp_database.tools.submission import set_time
 
-from rampdb.tools.submission import score_submission
-from rampdb.tools.submission import submit_starting_kits
+from ramp_database.tools.submission import score_submission
+from ramp_database.tools.submission import submit_starting_kits
 
 HERE = os.path.dirname(__file__)
 

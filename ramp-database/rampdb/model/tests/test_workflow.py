@@ -3,23 +3,23 @@ import shutil
 
 import pytest
 
-from ramputils import read_config
-from ramputils.testing import database_config_template
-from ramputils.testing import ramp_config_template
+from ramp_utils import read_config
+from ramp_utils.testing import database_config_template
+from ramp_utils.testing import ramp_config_template
 
-from rampdb.model import Model
-from rampdb.model import Problem
-from rampdb.model import SubmissionFile
-from rampdb.model import SubmissionFileType
-from rampdb.model import Workflow
-from rampdb.model import WorkflowElement
-from rampdb.model import WorkflowElementType
+from ramp_database.model import Model
+from ramp_database.model import Problem
+from ramp_database.model import SubmissionFile
+from ramp_database.model import SubmissionFileType
+from ramp_database.model import Workflow
+from ramp_database.model import WorkflowElement
+from ramp_database.model import WorkflowElementType
 
-from rampdb.utils import setup_db
-from rampdb.utils import session_scope
-from rampdb.testing import create_toy_db
+from ramp_database.utils import setup_db
+from ramp_database.utils import session_scope
+from ramp_database.testing import create_toy_db
 
-from rampdb.tools.event import get_workflow
+from ramp_database.tools.event import get_workflow
 
 
 @pytest.fixture(scope='module')

@@ -1,5 +1,5 @@
 """
-The :mod:`rampdb.utils` module provides tools to setup and connect to the
+The :mod:`ramp_database.utils` module provides tools to setup and connect to the
 RAMP database.
 """
 

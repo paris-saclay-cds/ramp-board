@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from rampdb.tools.submission import get_submission_by_id
-from rampdb.tools.submission import get_submissions
+from ramp_database.tools.submission import get_submission_by_id
+from ramp_database.tools.submission import get_submissions
 
 
 def make_step_df(pareto_df, is_lower_the_better):

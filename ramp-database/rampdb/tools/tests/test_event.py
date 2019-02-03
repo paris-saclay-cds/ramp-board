@@ -5,42 +5,42 @@ import pytest
 
 from numpy.testing import assert_array_equal
 
-from ramputils import read_config
-from ramputils import generate_ramp_config
-from ramputils.utils import import_module_from_source
-from ramputils.testing import database_config_template
-from ramputils.testing import ramp_config_template
+from ramp_utils import read_config
+from ramp_utils import generate_ramp_config
+from ramp_utils.utils import import_module_from_source
+from ramp_utils.testing import database_config_template
+from ramp_utils.testing import ramp_config_template
 
-from rampdb.model import CVFold
-from rampdb.model import Event
-from rampdb.model import EventScoreType
-from rampdb.model import Keyword
-from rampdb.model import Model
-from rampdb.model import Problem
-from rampdb.model import ProblemKeyword
-from rampdb.model import Workflow
+from ramp_database.model import CVFold
+from ramp_database.model import Event
+from ramp_database.model import EventScoreType
+from ramp_database.model import Keyword
+from ramp_database.model import Model
+from ramp_database.model import Problem
+from ramp_database.model import ProblemKeyword
+from ramp_database.model import Workflow
 
-from rampdb.utils import setup_db
-from rampdb.utils import session_scope
+from ramp_database.utils import setup_db
+from ramp_database.utils import session_scope
 
-from rampdb.testing import create_test_db
-from rampdb.testing import create_toy_db
-from rampdb.testing import setup_ramp_kits_ramp_data
+from ramp_database.testing import create_test_db
+from ramp_database.testing import create_toy_db
+from ramp_database.testing import setup_ramp_kits_ramp_data
 
-from rampdb.tools.event import add_event
-from rampdb.tools.event import add_keyword
-from rampdb.tools.event import add_problem
-from rampdb.tools.event import add_problem_keyword
-from rampdb.tools.event import add_workflow
+from ramp_database.tools.event import add_event
+from ramp_database.tools.event import add_keyword
+from ramp_database.tools.event import add_problem
+from ramp_database.tools.event import add_problem_keyword
+from ramp_database.tools.event import add_workflow
 
-from rampdb.tools.event import delete_event
-from rampdb.tools.event import delete_problem
+from ramp_database.tools.event import delete_event
+from ramp_database.tools.event import delete_problem
 
-from rampdb.tools.event import get_event
-from rampdb.tools.event import get_keyword_by_name
-from rampdb.tools.event import get_problem
-from rampdb.tools.event import get_problem_keyword_by_name
-from rampdb.tools.event import get_workflow
+from ramp_database.tools.event import get_event
+from ramp_database.tools.event import get_keyword_by_name
+from ramp_database.tools.event import get_problem
+from ramp_database.tools.event import get_problem_keyword_by_name
+from ramp_database.tools.event import get_workflow
 
 HERE = os.path.dirname(__file__)
 

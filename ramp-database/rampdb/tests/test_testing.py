@@ -4,29 +4,29 @@ import shutil
 import pytest
 from git.exc import GitCommandError
 
-from ramputils import read_config
-from ramputils import generate_ramp_config
+from ramp_utils import read_config
+from ramp_utils import generate_ramp_config
 
-from ramputils.testing import database_config_template
-from ramputils.testing import ramp_config_template
+from ramp_utils.testing import database_config_template
+from ramp_utils.testing import ramp_config_template
 
-from rampdb.utils import setup_db
-from rampdb.utils import session_scope
+from ramp_database.utils import setup_db
+from ramp_database.utils import session_scope
 
-from rampdb.model import Model
+from ramp_database.model import Model
 
-from rampdb.exceptions import NameClashError
+from ramp_database.exceptions import NameClashError
 
-from rampdb.tools.user import get_user_by_name
-from rampdb.tools.event import get_problem
+from ramp_database.tools.user import get_user_by_name
+from ramp_database.tools.event import get_problem
 
-from rampdb.testing import create_test_db
-from rampdb.testing import add_events
-from rampdb.testing import add_users
-from rampdb.testing import add_problems
-from rampdb.testing import setup_ramp_kits_ramp_data
-from rampdb.testing import sign_up_teams_to_events
-from rampdb.testing import submit_all_starting_kits
+from ramp_database.testing import create_test_db
+from ramp_database.testing import add_events
+from ramp_database.testing import add_users
+from ramp_database.testing import add_problems
+from ramp_database.testing import setup_ramp_kits_ramp_data
+from ramp_database.testing import sign_up_teams_to_events
+from ramp_database.testing import submit_all_starting_kits
 
 
 @pytest.fixture(scope='module')
