@@ -40,6 +40,7 @@ install:
 test_script:
   - SET PGUSER=mrramp
   - SET PGPASSWORD=mrramp
+  - psql -U postgres -c "CREATE USER mrramp WITH PASSWORD 'mrramp';ALTER USER mrramp WITH SUPERUSER;"
   - PATH=C:\Program Files\PostgreSQL\9.6\bin\;%PATH%
   - createdb databoard_test
   - pytest -rvsl .
