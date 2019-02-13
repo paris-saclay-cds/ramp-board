@@ -1,0 +1,29 @@
+flask:
+    secret_key: abcdefghijkl
+    wtf_csrf_enabled: true
+    log_filename: None
+    max_content_length: 1073741824
+    debug: true
+    testing: false
+    # we are using the python sever to send email
+    # we give an example to use SMTP and gmail client
+    mail_server: localhost
+    mail_port: 8025
+    mail_default_sender: ['RAMP admin', 'rampmailer@localhost.com']
+    # mail_server: smtp.gmail.com
+    # mail_port: 587
+    # mail_default_sender: ['RAMP admin', 'rampmailer@gmail.com']
+    # mail_username: user
+    # mail_password: password
+    # mail_recipients: []
+    # mail_use_tls: false
+    # mail_use_ssl: false
+    # mail_debug: false
+    sqlalchemy_track_modifications: true
+sqlalchemy:
+    drivername: postgresql
+    username: mrramp
+    password: mrramp
+    host: localhost
+    port: 5432
+    database: databoard_test
