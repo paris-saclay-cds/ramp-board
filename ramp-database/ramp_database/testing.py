@@ -50,8 +50,6 @@ def create_test_db(database_config, ramp_config):
     # tests.
     ramp_config = generate_ramp_config(ramp_config)
     shutil.rmtree(ramp_config['deployment_dir'], ignore_errors=True)
-    # os.makedirs(ramp_config['ramp_kits_dir'])
-    # os.makedirs(ramp_config['ramp_data_dir'])
     os.makedirs(ramp_config['ramp_submissions_dir'])
     db, _ = setup_db(database_config)
     Model.metadata.drop_all(db)
