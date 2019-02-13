@@ -61,7 +61,7 @@ def test_ramp_kits_ramp_data(session_scope_function, ramp_config):
 
     # retrieve the path to the ramp kit to remove it
     internal_ramp_config = generate_ramp_config(ramp_config)
-    shutil.rmtree(os.path.join(internal_ramp_config['ramp_kits_dir'], 'iris'))
+    shutil.rmtree(internal_ramp_config['ramp_kits_dir'])
     msg_err = 'The RAMP data repository was previously cloned.'
     with pytest.raises(ValueError, match=msg_err):
         setup_ramp_kits_ramp_data(ramp_config, 'iris')

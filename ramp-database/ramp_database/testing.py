@@ -223,6 +223,14 @@ def add_problems(session, ramp_config):
     """
     problems = ['iris', 'boston_housing']
     for problem_name in problems:
+        # temporary overwrite the configuration to create the problem
+        ramp_config['ramp']['event'] = problem_name
+        ramp_config['ramp']['event_name'] = problem_name + '_test'
+        ramp_config['ramp']['event_title'] = problem_name + ' event'
+        ramp_config['ramp']['kits_dir'] = os.path.join('ramp-kits',
+                                                       problem_name)
+        ramp_config['ramp']['data_dir'] = os.path.join('ramp-data',
+                                                       problem_name)
         setup_ramp_kits_ramp_data(ramp_config, problem_name)
         internal_ramp_config = generate_ramp_config(ramp_config)
         add_problem(session, problem_name,
@@ -252,16 +260,26 @@ def add_events(session, ramp_config):
     -----
     Be aware that :func:`add_problems` needs to be called before.
     """
-    ramp_config = generate_ramp_config(ramp_config)
     problems = ['iris', 'boston_housing']
     for problem_name in problems:
+        # temporary overwrite the configuration to create the event
+        ramp_config['ramp']['event'] = problem_name
+        ramp_config['ramp']['event_name'] = problem_name + '_test'
+        ramp_config['ramp']['event_title'] = problem_name + ' event'
+        ramp_config['ramp']['kits_dir'] = os.path.join('ramp-kits',
+                                                       problem_name)
+        ramp_config['ramp']['data_dir'] = os.path.join('ramp-data',
+                                                       problem_name)
+        ramp_config_problem = generate_ramp_config(ramp_config)
         event_name = '{}_test'.format(problem_name)
         event_title = 'test event'
-        add_event(session, problem_name=problem_name, event_name=event_name,
-                  event_title=event_title,
-                  ramp_sandbox_name=ramp_config['sandbox_name'],
-                  ramp_submissions_path=ramp_config['ramp_submissions_dir'],
-                  is_public=True, force=False)
+        add_event(
+            session, problem_name=problem_name, event_name=event_name,
+            event_title=event_title,
+            ramp_sandbox_name=ramp_config_problem['sandbox_name'],
+            ramp_submissions_path=ramp_config_problem['ramp_submissions_dir'],
+            is_public=True, force=False
+        )
 
 
 def sign_up_teams_to_events(session):
@@ -292,11 +310,19 @@ def submit_all_starting_kits(session, ramp_config):
     ramp_config : dict
         The configuration file containing the information about a RAMP event.
     """
-    ramp_config = generate_ramp_config(ramp_config)
-    for event, event_name in zip(['iris', 'boston_housing'],
-                                 ['iris_test', 'boston_housing_test']):
+    for problem_name, event_name in zip(['iris', 'boston_housing'],
+                                        ['iris_test', 'boston_housing_test']):
+        # temporary overwrite the configuration to submit the kits
+        ramp_config['ramp']['event'] = problem_name
+        ramp_config['ramp']['event_name'] = problem_name + '_test'
+        ramp_config['ramp']['event_title'] = problem_name + ' event'
+        ramp_config['ramp']['kits_dir'] = os.path.join('ramp-kits',
+                                                       problem_name)
+        ramp_config['ramp']['data_dir'] = os.path.join('ramp-data',
+                                                       problem_name)
+        ramp_config_problem = generate_ramp_config(ramp_config)
         path_submissions = os.path.join(
-            ramp_config['ramp_kits_dir'], event, 'submissions'
+            ramp_config_problem['ramp_kits_dir'], 'submissions'
         )
         submit_starting_kits(session, event_name, 'test_user',
                              path_submissions)

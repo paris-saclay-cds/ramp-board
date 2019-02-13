@@ -52,8 +52,8 @@ def deploy_ramp_event(config, event_config, setup_ramp_repo=True, force=False):
                     not force):
                 raise ValueError(
                     'The RAMP problem already exists in the database. The path'
-                    'to the kit or to the data is different. You need to set'
-                    '"force=True" if you want to overwrite these parameters.'
+                    ' to the kit or to the data is different. You need to set'
+                    ' "force=True" if you want to overwrite these parameters.'
                 )
             if setup_ramp_repo:
                 setup_ramp_kits_ramp_data(

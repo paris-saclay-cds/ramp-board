@@ -81,6 +81,12 @@ def test_check_problem(session_scope_function):
     config = read_config(ramp_config_template())
     problem_names = ['iris', 'boston_housing']
     for problem_name in problem_names:
+        # temporary overwrite the configuration to create the problem
+        config['ramp']['event'] = problem_name
+        config['ramp']['event_name'] = problem_name + '_test'
+        config['ramp']['event_title'] = problem_name + ' event'
+        config['ramp']['kits_dir'] = os.path.join('ramp-kits', problem_name)
+        config['ramp']['data_dir'] = os.path.join('ramp-data', problem_name)
         setup_ramp_kits_ramp_data(config, problem_name)
         ramp_config = generate_ramp_config(config)
         add_problem(session_scope_function, problem_name,
