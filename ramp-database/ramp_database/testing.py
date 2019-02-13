@@ -50,8 +50,8 @@ def create_test_db(database_config, ramp_config):
     # tests.
     ramp_config = generate_ramp_config(ramp_config)
     shutil.rmtree(ramp_config['deployment_dir'], ignore_errors=True)
-    os.makedirs(ramp_config['ramp_kits_dir'])
-    os.makedirs(ramp_config['ramp_data_dir'])
+    # os.makedirs(ramp_config['ramp_kits_dir'])
+    # os.makedirs(ramp_config['ramp_data_dir'])
     os.makedirs(ramp_config['ramp_submissions_dir'])
     db, _ = setup_db(database_config)
     Model.metadata.drop_all(db)
@@ -117,10 +117,7 @@ def setup_ramp_kits_ramp_data(ramp_config, problem_name, force=False):
         already exists.
     """
     ramp_config = generate_ramp_config(ramp_config)
-    problem_kits_path = os.path.join(ramp_config['ramp_kits_dir'],
-                                     problem_name)
-    if not os.path.exists(ramp_config['ramp_kits_dir']):
-        os.makedirs(ramp_config['ramp_kits_dir'])
+    problem_kits_path = ramp_config['ramp_kits_dir']
     if os.path.exists(problem_kits_path):
         if not force:
             raise ValueError(
@@ -131,10 +128,7 @@ def setup_ramp_kits_ramp_data(ramp_config, problem_name, force=False):
     ramp_kits_url = 'https://github.com/ramp-kits/{}.git'.format(problem_name)
     Repo.clone_from(ramp_kits_url, problem_kits_path)
 
-    problem_data_path = os.path.join(ramp_config['ramp_data_dir'],
-                                     problem_name)
-    if not os.path.exists(ramp_config['ramp_data_dir']):
-        os.makedirs(ramp_config['ramp_data_dir'])
+    problem_data_path = ramp_config['ramp_data_dir']
     if os.path.exists(problem_data_path):
         if not force:
             raise ValueError(
