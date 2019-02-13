@@ -3,11 +3,6 @@ import os
 HERE = os.path.dirname(__file__)
 
 
-def path_config_example():
-    """Give the path a ``config.yml`` which can be used as an example."""
-    return os.path.join(HERE, 'tests', 'data', 'config.yml')
-
-
 def database_config_template():
     """Return the path a template database configuration file.
 
