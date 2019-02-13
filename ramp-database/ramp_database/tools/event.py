@@ -426,7 +426,8 @@ def get_event(session, event_name):
 
     Returns
     -------
-    even : :class:`ramp_database.model.Event` or list of :class:`ramp_database.model.Event`
+    even : :class:`ramp_database.model.Event` or \
+list of :class:`ramp_database.model.Event`
         The queried problem.
     """
     return select_event_by_name(session, event_name)
