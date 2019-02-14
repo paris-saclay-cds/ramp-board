@@ -28,6 +28,8 @@ class AWSWorker(BaseWorker):
         for required_param in ('instance_type', 'access_key_id'):
             self._check_config_name(self.config, required_param)
 
+        logger.info("Setting up AWSWorker for submission '{}'".format(
+            self.submission))
         self.instance, = aws.launch_ec2_instances(self.config)
         exit_status = aws.upload_submission(
             self.config, self.instance.id, self.submission,
@@ -36,6 +38,7 @@ class AWSWorker(BaseWorker):
             logger.error(
                 'Cannot upload submission "{}"'
                 ', an error occured'.format(self.submission))
+            # TODO do something with this status (no launching needs to be done)
         else:
             logger.info("Uploaded submission '{}'".format(self.submission))
             self.status = 'setup'
@@ -73,6 +76,7 @@ class AWSWorker(BaseWorker):
             raise ValueError("Cannot collect results if worker is not"
                              "'running' or 'finished'")
 
+        logger.info("Collecting submission '{}'".format(self.submission))
         aws.download_log(self.config, self.instance.id, self.submission)
 
         if aws._training_successful(
@@ -80,12 +84,14 @@ class AWSWorker(BaseWorker):
             _ = aws.download_predictions(  # noqa
                 self.config, self.instance.id, self.submission)
             self.status = 'collected'
-            return 0, ''
+            exit_status, error_msg = 0, ''
         else:
             error_msg = aws._get_traceback(
                 aws._get_log_content(self.config, self.submission))
             self.status = 'collected'
-            return 1, error_msg
+            exit_status = 1
+        logger.info(repr(self))
+        return exit_status, error_msg
 
     def teardown(self):
         """Terminate the Amazon instance"""

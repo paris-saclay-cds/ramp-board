@@ -13,8 +13,13 @@ import shutil
 
 import pytest
 
-from ramp_engine.aws import AWSWorker
+from ramp_database.tools.submission import get_submissions
+from ramp_engine import Dispatcher, AWSWorker
 from ramp_utils import generate_worker_config, read_config
+from ramp_utils.testing import database_config_template
+from ramp_utils.testing import ramp_config_template
+
+from .test_dispatcher import session_toy  # noqa
 
 
 HERE = os.path.dirname(__file__)
@@ -56,3 +61,32 @@ def test_aws_worker():
 
     worker.teardown()
     assert worker.status == 'killed'
+
+
+def test_aws_dispatcher(session_toy):  # noqa
+    # copy of test_integration_dispatcher but with AWS
+    if not os.path.isfile(os.path.join(HERE, 'config.yml')):
+        pytest.skip("Only for local tests for now")
+
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_config_template())
+
+    # patch the event_config to match local config.yml for AWS
+    worker_config = generate_worker_config(event_config)
+    aws_event_config = read_config(os.path.join(HERE, 'config.yml'))
+    event_config['worker'] = aws_event_config['worker']
+    event_config['worker']['local_predictions_folder'] = \
+        worker_config['predictions_dir']
+    event_config['worker']['local_log_folder'] = worker_config['logs_dir']
+
+    dispatcher = Dispatcher(
+        config=config, event_config=event_config, worker=AWSWorker,
+        n_worker=-1, hunger_policy='exit'
+    )
+    dispatcher.launch()
+
+    # the iris kit contain a submission which should fail for each user
+    submission = get_submissions(
+        session_toy, event_config['ramp']['event_name'], 'training_error'
+    )
+    assert len(submission) == 2
