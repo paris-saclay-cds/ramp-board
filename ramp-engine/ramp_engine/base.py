@@ -25,6 +25,7 @@ class BaseWorker(six.with_metaclass(ABCMeta)):
             * 'running': the worker is training the submission.
             * 'finished': the worker finished to train the submission.
             * 'collected': the results of the training have been collected.
+            * 'killed'
     """
     def __init__(self, config, submission):
         self.config = config
@@ -61,7 +62,7 @@ class BaseWorker(six.with_metaclass(ABCMeta)):
         if status == 'running':
             if self._is_submission_finished():
                 self._status = 'finished'
-        return status
+        return self._status
 
     @status.setter
     def status(self, status):

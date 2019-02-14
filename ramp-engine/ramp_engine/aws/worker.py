@@ -80,10 +80,14 @@ class AWSWorker(BaseWorker):
             _ = aws.download_predictions(  # noqa
                 self.config, self.instance.id, self.submission)
             self.status = 'collected'
+            return 0, ''
         else:
-            # TODO deal with failed training
-            print("problem!")
+            error_msg = aws._get_traceback(
+                aws._get_log_content(self.config, self.submission))
+            self.status = 'collected'
+            return 1, error_msg
 
     def teardown(self):
         """Terminate the Amazon instance"""
         aws.terminate_ec2_instance(self.config, self.instance.id)
+        super(AWSWorker, self).teardown()

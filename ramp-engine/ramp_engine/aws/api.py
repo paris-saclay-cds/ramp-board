@@ -327,7 +327,6 @@ def _get_log_content(config, submission_name):
 
     a str with the content of the log file
     """
-    ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
     path = os.path.join(
         config[LOCAL_LOG_FOLDER_FIELD],
         submission_name,
@@ -413,7 +412,6 @@ def download_mprof_data(config, instance_id, submission_name, folder=None):
 
 
 def _get_submission_max_ram(config, submission_name):
-    ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
     dest_path = os.path.join(
         config[LOCAL_LOG_FOLDER_FIELD], submission_name)
     filename = os.path.join(dest_path, 'mprof.dat')
@@ -458,6 +456,10 @@ def download_predictions(config, instance_id, submission_name, folder=None):
             config[LOCAL_PREDICTIONS_FOLDER_FIELD], submission_name)
     else:
         dest_path = folder
+    try:
+        os.makedirs(os.path.dirname(dest_path))
+    except OSError:
+        pass
     _download(config, instance_id, source_path, dest_path)
     return dest_path
 
@@ -715,7 +717,7 @@ def _training_successful(config, instance_id, submission_name,
     if actual_nb_folds is not None:
         return nb_folds == nb_train_files == nb_test_files == actual_nb_folds
     else:
-        return nb_folds == nb_train_files == nb_test_files
+        return nb_folds == nb_train_files == nb_test_files != 0
 
 
 def _folder_exists(config, instance_id, folder):
