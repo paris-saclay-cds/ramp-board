@@ -16,23 +16,18 @@ advise you to install it using the following command::
     conda install postgresql
 
 FIXME: I think that we can automatized this part.
-Once ``PostgreSQL`` install, we need to create a directory where to store the
-Postgres databases::
+Once ``PostgreSQL`` is installed, we initialize a Postgres database cluster::
 
-    mkdir postgres_dbs
+    initdb postgres_dbs
 
-Then, initialize the Postgre databases::
-
-    initdb prosgres_db
-
-Once the databases have been initialized, we need to create an admin user and
+Once the cluster has been initialized, we need to create an admin user and
 create the database which will be used for RAMP::
 
     createuser --pwprompt <db_user>
     createdb --owner=<db_user> <db_name>
 
-You will need to use <db_user>, <user_password>, and <db_name>. We will use
-these information in the RAMP configuration files.
+where <db_user>, <db_password> and <db_name> should be replaced with actual
+values. Those values should match with the RAMP configuration file.
 
 Set up the RAMP deployment for kits, data, and submissions
 ----------------------------------------------------------
