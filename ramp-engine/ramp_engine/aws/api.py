@@ -30,7 +30,6 @@ for k in (logging.Logger.manager.loggerDict.keys()):
         logging.getLogger(k).disabled = True
 
 logger = logging.getLogger('RAMP-AWS')
-logger.setLevel(logging.DEBUG)
 
 # configuration fields
 AWS_CONFIG_SECTION = 'aws'

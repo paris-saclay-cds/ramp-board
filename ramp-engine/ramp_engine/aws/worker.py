@@ -5,7 +5,6 @@ from . import api as aws
 
 
 logger = logging.getLogger('RAMP-AWS')
-logger.setLevel(logging.DEBUG)
 
 
 class AWSWorker(BaseWorker):
