@@ -30,9 +30,17 @@ class AWSWorker(BaseWorker):
         logger.info("Setting up AWSWorker for submission '{}'".format(
             self.submission))
         self.instance, = aws.launch_ec2_instances(self.config)
-        exit_status = aws.upload_submission(
-            self.config, self.instance.id, self.submission,
-            self.submissions_path)
+        logger.info("Instance launched for submission '{}'".format(
+            self.submission))
+        for _ in range(5):
+            # try uploading the submission a few times, as this regularly fails
+            exit_status = aws.upload_submission(
+                self.config, self.instance.id, self.submission,
+                self.submissions_path)
+            if exit_status == 0:
+                break
+            else:
+                logger.info("Uploading submission failed, retrying ...")
         if exit_status != 0:
             logger.error(
                 'Cannot upload submission "{}"'

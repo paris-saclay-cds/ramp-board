@@ -148,6 +148,7 @@ class CondaEnvWorker(BaseWorker):
                 os.makedirs(log_dir)
             with open(os.path.join(log_dir, 'log'), 'wb+') as f:
                 f.write(self._proc_log)
+                f.write(stderr)
             # copy the predictions into the disk
             # no need to create the directory, it will be handle by copytree
             pred_dir = os.path.join(self.config['predictions_dir'],
