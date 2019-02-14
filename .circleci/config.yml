@@ -18,7 +18,7 @@ jobs:
       # The name of the organization which host the repositories
       ORGANIZATION: paris-saclay-cds
       # The repository where the documentation will be hosted
-      DOC_REPO: ramp.github.io
+      DOC_REPO: ramp-docs
       # The branch of the documentation
       DOC_BRANCH: master
       # The base URL for the Github page where the documentation will be hosted
