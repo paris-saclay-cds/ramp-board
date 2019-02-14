@@ -6,7 +6,8 @@ Deploy a specific RAMP event
 
 FIXME: we should have a quick deployment for this part
 Now we will want to deploy a specific event. We will take an example by
-deploying an ``iris`` event. First create a folder::
+deploying an ``iris`` event. First create a folder (e.g. inside the
+deployment directory)::
 
     mkdir events
     cd events
