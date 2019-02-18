@@ -1,6 +1,8 @@
 Set up a new RAMP event
 =======================
 
+.. _deploy-ramp-event:
+
 Deploy a specific RAMP event
 ----------------------------
 
