@@ -50,10 +50,17 @@ repository::
 
 You can use ``conda`` instead of ``pip`` using the ``environment.yml`` file::
 
+    conda env update --file environment.yml
+
+The above command updates the base environment. If you want to keep the
+code to run ramp in a separate environment, you can also do::
+
     conda env create -f environment.yml
 
 This will create the ``testenv`` environment. You can modify the name of the
-environment by editing the ``environment.yml`` file.
+environment by editing the ``environment.yml`` file. If you go this way,
+you need to remember to ``conda activate testenv`` each time when interacting
+with ramp or the database.
 
 Install
 =======
@@ -72,12 +79,22 @@ package individually::
     cd ../ramp-frontend && pip install .
     cd ../ramp-utils && pip install .
 
+If you want to install all packages in development ("editable") mode, you
+can use::
+
+    make inplace
+
 Test
 ====
 
 You can run the test using ``pytest`` from the root direcory::
 
     pytest -vsl .
+
+The above will only work when the packages were installed in development mode.
+In the other case, you can test the individual packages with::
+
+    pytest -vsl --pyargs ramp_utils ramp_database ramp_frontend ramp_engine
 
 Contribute
 ==========
