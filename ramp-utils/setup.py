@@ -39,8 +39,8 @@ EXTRAS_REQUIRE = {
 }
 PACKAGE_DATA = {
     'ramp_utils': [os.path.join('tests', 'data', 'config.yml'),
-                  os.path.join('template', 'database_config.yml'),
-                  os.path.join('template', 'ramp_config.yml')]
+                   os.path.join('template', 'database_config.yml'),
+                   os.path.join('template', 'ramp_config.yml')]
 }
 
 setup(

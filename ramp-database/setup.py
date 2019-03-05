@@ -38,6 +38,12 @@ EXTRAS_REQUIRE = {
     'tests': ['pytest', 'pytest-cov'],
     'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc']
 }
+PACKAGE_DATA = {
+    'ramp_utils': [
+        os.path.join('tests', 'data', 'ramp_config_iris.yml'),
+        os.path.join('tests', 'data', 'ramp_config_boston_housing.yml')
+    ]
+}
 
 setup(
     name=DISTNAME,
@@ -52,6 +58,7 @@ setup(
     zip_safe=False,  # the package can run out of an .egg file
     classifiers=CLASSIFIERS,
     packages=find_packages(),
+    package_data=PACKAGE_DATA,
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
     entry_points={
