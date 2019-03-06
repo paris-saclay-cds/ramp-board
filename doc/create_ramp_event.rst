@@ -6,19 +6,26 @@ Set up a new RAMP event
 Deploy a specific RAMP event
 ----------------------------
 
-FIXME: we should have a quick deployment for this part
-Now we will want to deploy a specific event. We will take an example by
-deploying an ``iris`` event. First create a folder (e.g. inside the
-deployment directory)::
+Now we will want to deploy a specific problem and event. We will take an example by
+deploying an ``iris`` event.
 
-    mkdir events
-    cd events
-    mkdir iris
-    cd iris
+First, you need to get the starting kit and the data::
 
-FIXME: we should not copy the configuration file. You need to copy the
-``ramp_config.yml`` file located in ``ramp-utils/ramp_utils/template`` and
-rename it ``config.yml``.
+    mkdir ramp-kits
+    mkdir ramp-data
+    git clone https://github.com/ramp-kits/iris ramp-kits/iris
+    cd ramp-data/iris
+    python prepare_data.py
+    cd ../..
+
+Next, you need to create a configuration file for a specific event. You can
+create this with::
+
+    ramp setup init-event --name iris_test
+
+
+The above creates a ``events/iris_test`` directory inside the deployment directory,
+and populates it with a ``config.yml`` with the configuration specific to the event.
 
 This config file should look like::
 
@@ -31,9 +38,16 @@ This config file should look like::
         worker_type: conda
         conda_env: ramp-iris
 
-You can easily deploy the event by calling from the deployment directory::
+Finally, you can easily deploy the event (adding both problem and event to the
+database) by calling from the deployment directory::
 
-    ramp-utils deploy-ramp-event --event-config events/iris/config.yml
+    ramp setup deploy-event --event-config events/iris_test/config.yml --no-cloning
+
+Without passing ``--no-cloning``, it will try to clone the starting kit and
+data from the https://github.com/ramp-kits/ github organization. If the
+starting kit is located there, you can skip the first step of above of manually
+cloning the kit and data and preparing the data, and let ``ramp setup deploy-event``
+do that for you.
 
 Launch the dispatcher to train and evaluate submissions
 -------------------------------------------------------
@@ -41,4 +55,4 @@ Launch the dispatcher to train and evaluate submissions
 At this stage, you can launch the RAMP dispatcher which will be in charge of
 training, evaluating submissions, and updating the database::
 
-    ramp-launch dispatcher --event-config events/iris/config.yml --hunger-policy sleep -vv
+    ramp launch dispatcher --event-config events/iris/config.yml --hunger-policy sleep -vv

@@ -62,7 +62,7 @@ setup(
     entry_points={
         'console_scripts': [
             'ramp = ramp_utils.ramp_cli:main',
-            'ramp-utils = ramp_utils.cli:start'
+            'ramp-setup = ramp_utils.cli:start',
         ]
     }
 )

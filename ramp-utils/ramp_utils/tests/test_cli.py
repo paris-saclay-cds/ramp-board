@@ -1,3 +1,4 @@
+import os
 import shutil
 
 from click.testing import CliRunner
@@ -20,13 +21,34 @@ def teardown_function(function):
     Model.metadata.drop_all(db)
 
 
+def test_setup_init():
+    ramp_config = read_config(ramp_config_template())
+    deployment_dir = ramp_config['ramp']['deployment_dir']
+    os.mkdir(deployment_dir)
+    runner = CliRunner()
+    result = runner.invoke(main, ['init',
+                                  '--deployment-dir', deployment_dir])
+    assert result.exit_code == 0, result.output
+
+
+def test_setup_init_event():
+    ramp_config = read_config(ramp_config_template())
+    deployment_dir = ramp_config['ramp']['deployment_dir']
+    os.mkdir(deployment_dir)
+    runner = CliRunner()
+    result = runner.invoke(main, ['init-event',
+                                  '--name', 'iris_test',
+                                  '--deployment-dir', deployment_dir])
+    assert result.exit_code == 0, result.output
+
+
 def test_deploy_ramp_event():
     runner = CliRunner()
-    result = runner.invoke(main, ['deploy-ramp-event',
+    result = runner.invoke(main, ['deploy-event',
                                   '--config', database_config_template(),
                                   '--event-config', ramp_config_template()])
     assert result.exit_code == 0, result.output
-    result = runner.invoke(main, ['deploy-ramp-event',
+    result = runner.invoke(main, ['deploy-event',
                                   '--config', database_config_template(),
                                   '--event-config', ramp_config_template(),
                                   '--force'])
