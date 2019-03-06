@@ -39,7 +39,7 @@ EXTRAS_REQUIRE = {
     'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc']
 }
 PACKAGE_DATA = {
-    'ramp_utils': [
+    'ramp_database': [
         os.path.join('tests', 'data', 'ramp_config_iris.yml'),
         os.path.join('tests', 'data', 'ramp_config_boston_housing.yml')
     ]
