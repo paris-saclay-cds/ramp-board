@@ -11,6 +11,25 @@ class AWSWorker(BaseWorker):
     """
     Run RAMP submissions on Amazon.
 
+    Parameters
+    ----------
+    config : dict
+        Configuration dictionary to set the worker. The required parameters
+        are listed in the user guide.
+    submission : str
+        Name of the RAMP submission to be handle by the worker.
+
+    Attributes
+    ----------
+    status : str
+        The status of the worker. It should be one of the following state:
+
+            * 'initialized': the worker has been instanciated.
+            * 'setup': the worker has been set up.
+            * 'running': the worker is training the submission.
+            * 'finished': the worker finished to train the submission.
+            * 'collected': the results of the training have been collected.
+
     """
 
     def __init__(self, config, submission):

@@ -1,6 +1,6 @@
+from .aws import AWSWorker
 from .dispatcher import Dispatcher
 from .local import CondaEnvWorker
-from .aws import AWSWorker
 
 from ._version import __version__
 
