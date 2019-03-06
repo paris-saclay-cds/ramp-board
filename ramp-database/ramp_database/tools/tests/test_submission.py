@@ -267,7 +267,7 @@ def test_submit_starting_kits(base_db):
     ramp_config = generate_ramp_config(config)
 
     submit_starting_kits(session, event_name, username,
-                         os.path.join(ramp_config['ramp_kits_dir'],
+                         os.path.join(ramp_config['ramp_kit_dir'],
                                       config['ramp']['submissions_dir']))
 
     submissions = get_submissions(session, event_name, None)

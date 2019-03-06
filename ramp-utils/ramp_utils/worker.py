@@ -29,7 +29,7 @@ def generate_worker_config(config):
     # define the directory of the ramp-kit for the event
     worker_config['kit_dir'] = os.path.join(
         ramp_config['deployment_dir'],
-        ramp_config['kits_dir']
+        ramp_config['kit_dir']
     )
     # define the directory of the ramp-data for the event
     worker_config['data_dir'] = os.path.join(

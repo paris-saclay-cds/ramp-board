@@ -74,15 +74,15 @@ def sign_up_team(config, event, team):
               help='Configuration file YAML format containing the database '
               'information')
 @click.option('--problem', help='Name of the problem')
-@click.option('--kits-dir', help='Path to the RAMP kits')
+@click.option('--kit-dir', help='Path to the RAMP kit')
 @click.option('--data-dir', help='Path to the RAMP data')
 @click.option('--force', default=False, show_default=True,
               help='Whether or not to overwrite the problem if it exists')
-def add_problem(config, problem, kits_dir, data_dir, force):
+def add_problem(config, problem, kit_dir, data_dir, force):
     """Add a RAMP problem in the database."""
     config = read_config(config)
     with session_scope(config['sqlalchemy']) as session:
-        event_module.add_problem(session, problem, kits_dir, data_dir, force)
+        event_module.add_problem(session, problem, kit_dir, data_dir, force)
 
 
 @main.command()

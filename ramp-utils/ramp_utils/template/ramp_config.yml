@@ -5,7 +5,7 @@ ramp:
     event_is_public: true
     deployment_dir: /tmp/databoard_test
     data_dir: ramp-data/iris
-    kits_dir: ramp-kits/iris
+    kit_dir: ramp-kits/iris
     submissions_dir: submissions
     predictions_dir: preds
     logs_dir: log

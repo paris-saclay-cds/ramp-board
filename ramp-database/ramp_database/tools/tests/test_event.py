@@ -27,7 +27,7 @@ from ramp_database.testing import create_test_db
 from ramp_database.testing import create_toy_db
 from ramp_database.testing import ramp_config_boston_housing
 from ramp_database.testing import ramp_config_iris
-from ramp_database.testing import setup_ramp_kits_ramp_data
+from ramp_database.testing import setup_ramp_kit_ramp_data
 
 from ramp_database.tools.event import add_event
 from ramp_database.tools.event import add_keyword
@@ -85,10 +85,10 @@ def test_check_problem(session_scope_function):
         'boston_housing': read_config(ramp_config_boston_housing())
     }
     for problem_name, ramp_config in ramp_configs.items():
-        setup_ramp_kits_ramp_data(ramp_config, problem_name)
+        setup_ramp_kit_ramp_data(ramp_config, problem_name)
         internal_ramp_config = generate_ramp_config(ramp_config)
         add_problem(session_scope_function, problem_name,
-                    internal_ramp_config['ramp_kits_dir'],
+                    internal_ramp_config['ramp_kit_dir'],
                     internal_ramp_config['ramp_data_dir'])
 
     problem_name = 'iris'
@@ -105,7 +105,7 @@ def test_check_problem(session_scope_function):
     with pytest.raises(ValueError, match=err_msg):
         add_problem(
             session_scope_function, problem_name,
-            internal_ramp_config['ramp_kits_dir'],
+            internal_ramp_config['ramp_kit_dir'],
             internal_ramp_config['ramp_data_dir'],
             force=False
         )
@@ -113,7 +113,7 @@ def test_check_problem(session_scope_function):
     # Force add the problem
     add_problem(
         session_scope_function, problem_name,
-        internal_ramp_config['ramp_kits_dir'],
+        internal_ramp_config['ramp_kit_dir'],
         internal_ramp_config['ramp_data_dir'],
             force=True
     )
@@ -202,10 +202,10 @@ def test_check_event(session_scope_function):
         'boston_housing': read_config(ramp_config_boston_housing())
     }
     for problem_name, ramp_config in ramp_configs.items():
-        setup_ramp_kits_ramp_data(ramp_config, problem_name)
+        setup_ramp_kit_ramp_data(ramp_config, problem_name)
         internal_ramp_config = generate_ramp_config(ramp_config)
         add_problem(session_scope_function, problem_name,
-                    internal_ramp_config['ramp_kits_dir'],
+                    internal_ramp_config['ramp_kit_dir'],
                     internal_ramp_config['ramp_data_dir'])
 
     for problem_name, ramp_config in ramp_configs.items():

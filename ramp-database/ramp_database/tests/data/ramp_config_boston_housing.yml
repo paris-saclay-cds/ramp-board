@@ -5,7 +5,7 @@ ramp:
     event_is_public: true
     deployment_dir: /tmp/databoard_test
     data_dir: ramp-data/boston_housing
-    kits_dir: ramp-kits/boston_housing
+    kit_dir: ramp-kits/boston_housing
     submissions_dir: submissions
     predictions_dir: preds
     logs_dir: log

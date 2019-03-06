@@ -111,7 +111,7 @@ def problem(problem_name):
                 problem=current_problem
             )
         description_f_name = os.path.join(
-            current_problem.path_ramp_kits,
+            current_problem.path_ramp_kit,
             '{}_starting_kit.html'.format(current_problem.name)
         )
         with codecs.open(description_f_name, 'r', 'utf-8') as description_file:
@@ -147,7 +147,7 @@ def user_event(event_name):
         add_user_interaction(db.session, interaction='looking at event',
                              event=event, user=flask_login.current_user)
         description_f_name = os.path.join(
-            event.problem.path_ramp_kits,
+            event.problem.path_ramp_kit,
             '{}_starting_kit.html'.format(event.problem.name)
         )
         with codecs.open(description_f_name, 'r', 'utf-8') as description_file:

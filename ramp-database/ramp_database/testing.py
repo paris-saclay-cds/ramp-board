@@ -104,8 +104,8 @@ def _delete_line_from_file(f_name, line_to_delete):
         f.truncate()
 
 
-def setup_ramp_kits_ramp_data(ramp_config, problem_name, force=False):
-    """Clone ramp-kits and ramp-data repository and setup it up.
+def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False):
+    """Clone ramp-kit and ramp-data repository and setup it up.
 
     Parameters
     ----------
@@ -118,16 +118,16 @@ def setup_ramp_kits_ramp_data(ramp_config, problem_name, force=False):
         already exists.
     """
     ramp_config = generate_ramp_config(ramp_config)
-    problem_kits_path = ramp_config['ramp_kits_dir']
-    if os.path.exists(problem_kits_path):
+    problem_kit_path = ramp_config['ramp_kit_dir']
+    if os.path.exists(problem_kit_path):
         if not force:
             raise ValueError(
                 'The RAMP kit repository was previously cloned. To replace '
                 'it, you need to set "force=True".'
             )
-        shutil.rmtree(problem_kits_path, ignore_errors=True)
-    ramp_kits_url = 'https://github.com/ramp-kits/{}.git'.format(problem_name)
-    Repo.clone_from(ramp_kits_url, problem_kits_path)
+        shutil.rmtree(problem_kit_path, ignore_errors=True)
+    ramp_kit_url = 'https://github.com/ramp-kits/{}.git'.format(problem_name)
+    Repo.clone_from(ramp_kit_url, problem_kit_path)
 
     problem_data_path = ramp_config['ramp_data_dir']
     if os.path.exists(problem_data_path):
@@ -143,7 +143,7 @@ def setup_ramp_kits_ramp_data(ramp_config, problem_name, force=False):
     current_directory = os.getcwd()
     os.chdir(problem_data_path)
     subprocess.check_output(["python", "prepare_data.py"])
-    os.chdir(problem_kits_path)
+    os.chdir(problem_kit_path)
     subprocess.check_output(["jupyter", "nbconvert", "--to", "html",
                              "{}_starting_kit.ipynb".format(problem_name)])
     # delete this line since it trigger in the front-end
@@ -225,7 +225,7 @@ def add_problems(session):
         'boston_housing': read_config(ramp_config_boston_housing())
     }
     for problem_name, ramp_config in ramp_configs.items():
-        setup_ramp_kits_ramp_data(ramp_config, problem_name)
+        setup_ramp_kit_ramp_data(ramp_config, problem_name)
         internal_ramp_config = generate_ramp_config(ramp_config)
         add_problem(session, problem_name,
                     internal_ramp_config['ramp_kits_dir'],
