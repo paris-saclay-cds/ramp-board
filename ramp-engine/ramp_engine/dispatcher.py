@@ -112,7 +112,13 @@ class Dispatcher(object):
                 self._awaiting_worker_queue.get()
             logger.info('Starting worker: {}'.format(worker))
             worker.setup()
+            if worker.status == 'error':
+                set_submission_state(session, submission_id, 'checking_error')
+                continue
             worker.launch_submission()
+            if worker.status == 'error':
+                set_submission_state(session, submission_id, 'checking_error')
+                continue
             set_submission_state(session, submission_id, 'training')
             self._processing_worker_queue.put_nowait(
                 (worker, (submission_id, submission_name)))

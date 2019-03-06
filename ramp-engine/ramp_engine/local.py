@@ -38,6 +38,7 @@ class CondaEnvWorker(BaseWorker):
 
             * 'initialized': the worker has been instanciated.
             * 'setup': the worker has been set up.
+            * 'error': setup failed / training couldn't be started
             * 'running': the worker is training the submission.
             * 'finished': the worker finished to train the submission.
             * 'collected': the results of the training have been collected.
@@ -85,7 +86,7 @@ class CondaEnvWorker(BaseWorker):
                 raise ValueError('The specified conda environment {} does not '
                                  'exist. You need to create it.'
                                  .format(env_name))
-            super(CondaEnvWorker, self).setup()
+        super(CondaEnvWorker, self).setup()
 
     def teardown(self):
         """Remove the predictions stores within the submission."""

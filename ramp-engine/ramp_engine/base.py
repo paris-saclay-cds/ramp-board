@@ -22,6 +22,7 @@ class BaseWorker(six.with_metaclass(ABCMeta)):
 
             * 'initialized': the worker has been instanciated.
             * 'setup': the worker has been set up.
+            * 'error': setup failed / training couldn't be started
             * 'running': the worker is training the submission.
             * 'finished': the worker finished to train the submission.
             * 'collected': the results of the training have been collected.
