@@ -58,7 +58,7 @@ def test_add_problem():
     result = runner.invoke(main, ['add-problem',
                                   '--config', database_config_template(),
                                   '--problem', 'iris',
-                                  '--kits-dir', ramp_config['ramp_kits_dir'],
+                                  '--kit-dir', ramp_config['ramp_kit_dir'],
                                   '--data-dir', ramp_config['ramp_data_dir'],
                                   '--force', True],
                            catch_exceptions=False)

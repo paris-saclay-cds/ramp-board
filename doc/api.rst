@@ -296,7 +296,7 @@ Frontend-related database tools
    testing.create_test_db
    testing.create_toy_db
    testing.setup_toy_db
-   testing.setup_ramp_kits_ramp_data
+   testing.setup_ramp_kit_ramp_data
    testing.setup_files_extension_type
    testing.sign_up_teams_to_events
    testing.submit_all_starting_kits

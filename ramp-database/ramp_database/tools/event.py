@@ -160,7 +160,7 @@ def add_workflow(session, workflow_object):
     session.commit()
 
 
-def add_problem(session, problem_name, kits_dir, data_dir, force=False):
+def add_problem(session, problem_name, kit_dir, data_dir, force=False):
     """Add a RAMP problem to the database.
 
     Parameters
@@ -169,9 +169,9 @@ def add_problem(session, problem_name, kits_dir, data_dir, force=False):
         The session to directly perform the operation on the database.
     problem_name : str
         The name of the problem to register in the database.
-    kits_dir : str
-        The directory where the RAMP kits are located. It will corresponds to
-        the key `ramp_kits_dir` of the dictionary created with
+    kit_dir : str
+        The directory where the RAMP kit are located. It will corresponds to
+        the key `ramp_kit_dir` of the dictionary created with
         :func:`ramp_utils.generate_ramp_config`.
     data_dir : str
         The directory where the RAMP data are located. It will corresponds to
@@ -182,7 +182,7 @@ def add_problem(session, problem_name, kits_dir, data_dir, force=False):
         raised if the problem was already in the database.
     """
     problem = select_problem_by_name(session, problem_name)
-    problem_kits_path = kits_dir
+    problem_kit_path = kit_dir
     if problem is not None:
         if not force:
             raise ValueError('Attempting to overwrite a problem and '
@@ -193,9 +193,9 @@ def add_problem(session, problem_name, kits_dir, data_dir, force=False):
 
     # load the module to get the type of workflow used for the problem
     problem_module = import_module_from_source(
-        os.path.join(problem_kits_path, 'problem.py'), 'problem')
+        os.path.join(problem_kit_path, 'problem.py'), 'problem')
     add_workflow(session, problem_module.workflow)
-    problem = Problem(name=problem_name, path_ramp_kits=kits_dir,
+    problem = Problem(name=problem_name, path_ramp_kit=kit_dir,
                       path_ramp_data=data_dir, session=session)
     logger.info('Adding {}'.format(problem))
     session.add(problem)

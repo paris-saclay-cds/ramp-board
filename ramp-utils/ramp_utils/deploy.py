@@ -2,7 +2,7 @@ import os
 import shutil
 
 from ramp_database.testing import setup_files_extension_type
-from ramp_database.testing import setup_ramp_kits_ramp_data
+from ramp_database.testing import setup_ramp_kit_ramp_data
 from ramp_database.tools.event import add_event
 from ramp_database.tools.event import add_problem
 from ramp_database.tools.event import get_problem
@@ -37,17 +37,17 @@ def deploy_ramp_event(config, event_config, setup_ramp_repo=True, force=False):
     with session_scope(database_config) as session:
         setup_files_extension_type(session)
         if setup_ramp_repo:
-            setup_ramp_kits_ramp_data(
+            setup_ramp_kit_ramp_data(
                 event_config, ramp_config['event'], force
             )
         # check if the repository exists
         problem = get_problem(session, ramp_config['event'])
         if problem is None:
             add_problem(session, ramp_config['event'],
-                        ramp_config['ramp_kits_dir'],
+                        ramp_config['ramp_kit_dir'],
                         ramp_config['ramp_data_dir'])
         else:
-            if ((ramp_config['ramp_kits_dir'] != problem.path_ramp_kits or
+            if ((ramp_config['ramp_kit_dir'] != problem.path_ramp_kit or
                  ramp_config['ramp_data_dir'] != problem.path_ramp_data) and
                     not force):
                 raise ValueError(
@@ -56,11 +56,11 @@ def deploy_ramp_event(config, event_config, setup_ramp_repo=True, force=False):
                     ' "force=True" if you want to overwrite these parameters.'
                 )
             if setup_ramp_repo:
-                setup_ramp_kits_ramp_data(
+                setup_ramp_kit_ramp_data(
                     event_config, ramp_config['event'], force
                 )
             add_problem(session, ramp_config['event'],
-                        ramp_config['ramp_kits_dir'],
+                        ramp_config['ramp_kit_dir'],
                         ramp_config['ramp_data_dir'],
                         force)
 

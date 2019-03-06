@@ -23,7 +23,7 @@ def test_generate_ramp_config(config):
         'event_is_public': True,
         'sandbox_name': 'starting_kit',
         'deployment_dir': '/tmp/databoard_test',
-        'ramp_kits_dir': os.path.join(
+        'ramp_kit_dir': os.path.join(
             '/tmp/databoard_test', 'ramp-kits', 'iris'
         ),
         'ramp_data_dir': os.path.join(
