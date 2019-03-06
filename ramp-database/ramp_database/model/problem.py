@@ -31,9 +31,9 @@ class Problem(Model):
     ----------
     name : str
         The name of the problem.
-    path_ramp_kits : str
-        The path where the kits are located. It will corresponds to
-        the key `ramp_kits_dir` of the dictionary created with
+    path_ramp_kit : str
+        The path where the kit is located. It will corresponds to
+        the key `ramp_kit_dir` of the dictionary created with
         :func:`ramp_utils.generate_ramp_config`.
     path_ramp_data : str
         The path where the data are located. It will corresponds to
@@ -52,8 +52,8 @@ class Problem(Model):
         The ID of the associated workflow.
     workflow : :class:`ramp_database.model.Worflow`
         The workflow instance.
-    path_ramp_kits : str
-        The path where the kits are located.
+    path_ramp_kit : str
+        The path where the kit are located.
     path_ramp_data : str
         The path where the data are located.
     events : list of :class:`ramp_database.model.Event`
@@ -70,12 +70,12 @@ class Problem(Model):
     workflow = relationship('Workflow', backref=backref('problems'))
 
     # XXX: big change in the database
-    path_ramp_kits = Column(String, nullable=False, unique=False)
+    path_ramp_kit = Column(String, nullable=False, unique=False)
     path_ramp_data = Column(String, nullable=False, unique=False)
 
-    def __init__(self, name, path_ramp_kits, path_ramp_data, session=None):
+    def __init__(self, name, path_ramp_kit, path_ramp_data, session=None):
         self.name = name
-        self.path_ramp_kits = path_ramp_kits
+        self.path_ramp_kit = path_ramp_kit
         self.path_ramp_data = path_ramp_data
         self.reset(session)
 
@@ -101,7 +101,7 @@ class Problem(Model):
     def module(self):
         """module: Get the problem module."""
         return import_module_from_source(
-            os.path.join(self.path_ramp_kits, self.name, 'problem.py'),
+            os.path.join(self.path_ramp_kit, 'problem.py'),
             'problem'
         )
 
@@ -118,13 +118,11 @@ class Problem(Model):
 
     def get_train_data(self):
         """The training data."""
-        path = os.path.join(self.path_ramp_data, self.name)
-        return self.module.get_train_data(path=path)
+        return self.module.get_train_data(path=self.path_ramp_data)
 
     def get_test_data(self):
         """The testing data."""
-        path = os.path.join(self.path_ramp_data, self.name)
-        return self.module.get_test_data(path=path)
+        return self.module.get_test_data(path=self.path_ramp_data)
 
     def ground_truths_train(self):
         """Predictions: the true labels for the training."""

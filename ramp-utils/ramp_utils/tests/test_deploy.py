@@ -52,7 +52,7 @@ def test_deploy_ramp_event_options(session_scope_function):
     with pytest.raises(ValueError, match=msg_err):
         with session_scope(database_config['sqlalchemy']) as session:
             problem = get_problem(session, 'iris')
-            problem.path_ramp_kits = problem.path_ramp_kits + '_xxx'
+            problem.path_ramp_kit = problem.path_ramp_kit + '_xxx'
             session.commit()
             deploy_ramp_event(
                 database_config_template(), ramp_config_template(),
@@ -60,7 +60,7 @@ def test_deploy_ramp_event_options(session_scope_function):
             )
 
             problem = get_problem(session, 'iris')
-            problem.path_ramp_kits = ramp_config['ramp_kits_dir']
+            problem.path_ramp_kit = ramp_config['ramp_kit_dir']
             problem.path_ramp_data = problem.path_ramp_data + '_xxx'
             session.commit()
             deploy_ramp_event(

@@ -108,8 +108,8 @@ class Event(Model):
         The public leaderboard of the competition in HTML.
     private_competition_leaderboard_html : str
         The private leaderboard of the competition in HTML.
-    path_ramp_kits : str
-        The path where the kits are located.
+    path_ramp_kit : str
+        The path where the kit are located.
     ramp_sandbox_name : str
         Name of the submission which will be considered the sandbox.
     path_ramp_submissions : str

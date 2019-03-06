@@ -62,8 +62,7 @@ def sign_up_team(session, event_name, team_name):
     """
     event, team, event_team = ask_sign_up_team(session, event_name, team_name)
     # setup the sandbox
-    path_sandbox_submission = os.path.join(event.problem.path_ramp_kits,
-                                           event.problem.name,
+    path_sandbox_submission = os.path.join(event.problem.path_ramp_kit,
                                            'submissions',
                                            event.ramp_sandbox_name)
     submission_name = event.ramp_sandbox_name
