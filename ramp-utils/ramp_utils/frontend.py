@@ -27,9 +27,10 @@ def generate_flask_config(config):
     if isinstance(config, six.string_types):
         config = read_config(config, filter_section=['flask', 'sqlalchemy'])
 
+    flask_config = DEFAULT_CONFIG.copy()
     user_flask_config = {
         key.upper(): value for key, value in config['flask'].items()}
-    flask_config = DEFAULT_CONFIG.update(user_flask_config)
+    flask_config.update(user_flask_config)
 
     database_config = config['sqlalchemy']
     flask_config['SQLALCHEMY_DATABASE_URI'] = \
