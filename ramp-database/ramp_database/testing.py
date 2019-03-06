@@ -3,7 +3,6 @@ The :mod:`ramp_database.testing` module create facility functions to test the
 tools and model of ``ramp-database``.
 """
 
-from difflib import SequenceMatcher
 import logging
 import os
 import shutil
@@ -61,13 +60,9 @@ def create_test_db(database_config, ramp_config):
 
     # FIXME: we are recreating the deployment directory but it should be
     # replaced by an temporary creation of folder.
-    match = SequenceMatcher(
-        None, ramp_config['ramp_kit_dir'], ramp_config['ramp_submissions_dir']
-    ).find_longest_match(
-        0, len(ramp_config['ramp_kit_dir']),
-        0, len(ramp_config['ramp_submissions_dir'])
+    deployment_dir = os.path.commonpath(
+        [ramp_config['ramp_kit_dir'], ramp_config['ramp_data_dir']]
     )
-    deployment_dir = ramp_config['ramp_kit_dir'][match.a:match.a + match.size]
 
     shutil.rmtree(deployment_dir, ignore_errors=True)
     os.makedirs(ramp_config['ramp_submissions_dir'])
