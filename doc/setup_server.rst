@@ -77,7 +77,7 @@ Create an admin user
 
 To operate the event, it is useful to first create an admin user::
 
-    ramp-database add-user --login admin_user --password password --firstname firstname --lastname lastname --email admin@email.com --access-level admin
+    ramp database add-user --login admin_user --password password --firstname firstname --lastname lastname --email admin@email.com --access-level admin
 
 Launching a test instance of the  RAMP website
 ----------------------------------------------
