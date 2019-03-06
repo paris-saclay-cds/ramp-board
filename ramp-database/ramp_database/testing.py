@@ -228,7 +228,7 @@ def add_problems(session):
         setup_ramp_kit_ramp_data(ramp_config, problem_name)
         internal_ramp_config = generate_ramp_config(ramp_config)
         add_problem(session, problem_name,
-                    internal_ramp_config['ramp_kits_dir'],
+                    internal_ramp_config['ramp_kit_dir'],
                     internal_ramp_config['ramp_data_dir'])
         add_keyword(session, problem_name, 'data_domain',
                     category='scientific data')
@@ -301,7 +301,7 @@ def submit_all_starting_kits(session):
     for problem_name, ramp_config in ramp_configs.items():
         ramp_config_problem = generate_ramp_config(ramp_config)
         path_submissions = os.path.join(
-            ramp_config_problem['ramp_kits_dir'], 'submissions'
+            ramp_config_problem['ramp_kit_dir'], 'submissions'
         )
         submit_starting_kits(
             session, ramp_config_problem['event_name'], 'test_user',
