@@ -24,6 +24,7 @@ def main():
               help='Whether or not to potentially overwrite the '
               'repositories, problem and event in the database.')
 def init(deployment_dir, force):
+    """Initialize the deployment directory with a template config.yml"""
     template = os.path.join(HERE, 'template', 'database_config_template.yml')
     destination = os.path.join(deployment_dir, 'config.yml')
     if os.path.isfile(destination) and not force:
@@ -31,6 +32,45 @@ def init(deployment_dir, force):
             "Config file already exists. Specify --force to overwrite it.")
         return
     shutil.copy(template, destination)
+    click.echo("Created {}".format(destination))
+    click.echo("You still need to modify it to fill correct parameters.")
+
+
+@main.command()
+@click.option("--name", help='The name of the event.', required=True)
+@click.option("--deployment-dir", default='.', show_default=True,
+              help='The directory where to create a config file.')
+@click.option('--force', is_flag=True,
+              help='Whether or not to potentially overwrite the '
+              'repositories, problem and event in the database.')
+def init_event(name, deployment_dir, force):
+    """Initialize the event directory with a template config.yml"""
+
+    # create directories
+    events_dir = os.path.join(deployment_dir, 'events')
+    if not os.path.isdir(events_dir):
+        os.mkdir(events_dir)
+
+    event_dir = os.path.join(events_dir, name)
+    if os.path.isdir(event_dir):
+        if force:
+            shutil.rmtree(event_dir)
+        else:
+            click.echo(
+                "{} already exists. Specify --force to overwrite it.".format(
+                    event_dir))
+            return
+    os.mkdir(event_dir)
+
+    # copy + edit config template
+    template = os.path.join(HERE, 'template', 'ramp_config_template.yml')
+    destination = os.path.join(event_dir, 'config.yml')
+    with open(destination, 'w') as dest:
+        with open(template, 'r') as src:
+            content = src.read()
+            content = content.replace('<name>', name)
+            dest.write(content)
+
     click.echo("Created {}".format(destination))
     click.echo("You still need to modify it to fill correct parameters.")
 
