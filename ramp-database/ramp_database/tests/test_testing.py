@@ -24,6 +24,8 @@ from ramp_database.testing import create_test_db
 from ramp_database.testing import add_events
 from ramp_database.testing import add_users
 from ramp_database.testing import add_problems
+from ramp_database.testing import ramp_config_boston_housing
+from ramp_database.testing import ramp_config_iris
 from ramp_database.testing import setup_ramp_kits_ramp_data
 from ramp_database.testing import sign_up_teams_to_events
 from ramp_database.testing import submit_all_starting_kits
@@ -61,7 +63,7 @@ def test_ramp_kits_ramp_data(session_scope_function, ramp_config):
 
     # retrieve the path to the ramp kit to remove it
     internal_ramp_config = generate_ramp_config(ramp_config)
-    shutil.rmtree(os.path.join(internal_ramp_config['ramp_kits_dir'], 'iris'))
+    shutil.rmtree(internal_ramp_config['ramp_kits_dir'])
     msg_err = 'The RAMP data repository was previously cloned.'
     with pytest.raises(ValueError, match=msg_err):
         setup_ramp_kits_ramp_data(ramp_config, 'iris')
@@ -78,8 +80,8 @@ def test_add_users(session_scope_function):
         add_users(session_scope_function)
 
 
-def test_add_problems(session_scope_function, ramp_config):
-    add_problems(session_scope_function, ramp_config)
+def test_add_problems(session_scope_function):
+    add_problems(session_scope_function)
     problems = get_problem(session_scope_function, None)
     for problem in problems:
         assert problem.name in ('iris', 'boston_housing')
@@ -87,26 +89,38 @@ def test_add_problems(session_scope_function, ramp_config):
     # repositories already exist.
     msg_err = 'The RAMP kit repository was previously cloned.'
     with pytest.raises(ValueError, match=msg_err):
-        add_problems(session_scope_function, ramp_config)
+        add_problems(session_scope_function)
 
 
-def test_add_events(session_scope_function, ramp_config):
-    add_problems(session_scope_function, ramp_config)
-    add_events(session_scope_function, ramp_config)
+def test_add_events(session_scope_function):
+    add_problems(session_scope_function)
+    add_events(session_scope_function)
     with pytest.raises(ValueError):
-        add_events(session_scope_function, ramp_config)
+        add_events(session_scope_function)
 
 
-def test_sign_up_team_to_events(session_scope_function, ramp_config):
+def test_sign_up_team_to_events(session_scope_function):
     add_users(session_scope_function)
-    add_problems(session_scope_function, ramp_config)
-    add_events(session_scope_function, ramp_config)
+    add_problems(session_scope_function)
+    add_events(session_scope_function)
     sign_up_teams_to_events(session_scope_function)
 
 
-def test_submit_all_starting_kits(session_scope_function, ramp_config):
+def test_submit_all_starting_kits(session_scope_function):
     add_users(session_scope_function)
-    add_problems(session_scope_function, ramp_config)
-    add_events(session_scope_function, ramp_config)
+    add_problems(session_scope_function)
+    add_events(session_scope_function)
     sign_up_teams_to_events(session_scope_function)
-    submit_all_starting_kits(session_scope_function, ramp_config)
+    submit_all_starting_kits(session_scope_function)
+
+
+def test_ramp_config_iris():
+    filename = ramp_config_iris()
+    assert os.path.join('tests', 'data', 'ramp_config_iris.yml') in filename
+
+
+def test_ramp_config_boston_housing():
+    filename = ramp_config_boston_housing()
+    expected_path = os.path.join('tests', 'data',
+                                 'ramp_config_boston_housing.yml')
+    assert expected_path in filename

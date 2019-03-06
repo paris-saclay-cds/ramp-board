@@ -25,6 +25,8 @@ from ramp_database.utils import session_scope
 
 from ramp_database.testing import create_test_db
 from ramp_database.testing import create_toy_db
+from ramp_database.testing import ramp_config_boston_housing
+from ramp_database.testing import ramp_config_iris
 from ramp_database.testing import setup_ramp_kits_ramp_data
 
 from ramp_database.tools.event import add_event
@@ -78,38 +80,49 @@ def session_toy_db():
 
 
 def test_check_problem(session_scope_function):
-    config = read_config(ramp_config_template())
-    problem_names = ['iris', 'boston_housing']
-    for problem_name in problem_names:
-        setup_ramp_kits_ramp_data(config, problem_name)
-        ramp_config = generate_ramp_config(config)
+    ramp_configs = {
+        'iris': read_config(ramp_config_iris()),
+        'boston_housing': read_config(ramp_config_boston_housing())
+    }
+    for problem_name, ramp_config in ramp_configs.items():
+        setup_ramp_kits_ramp_data(ramp_config, problem_name)
+        internal_ramp_config = generate_ramp_config(ramp_config)
         add_problem(session_scope_function, problem_name,
-                    ramp_config['ramp_kits_dir'],
-                    ramp_config['ramp_data_dir'])
-    problem = get_problem(session_scope_function, problem_names[0])
-    assert problem.name == problem_names[0]
+                    internal_ramp_config['ramp_kits_dir'],
+                    internal_ramp_config['ramp_data_dir'])
+
+    problem_name = 'iris'
+    problem = get_problem(session_scope_function, problem_name)
+    assert problem.name == problem_name
     assert isinstance(problem, Problem)
     problem = get_problem(session_scope_function, None)
     assert len(problem) == 2
     assert isinstance(problem, list)
 
     # Without forcing, we cannot write the same problem twice
+    internal_ramp_config = generate_ramp_config(ramp_configs[problem_name])
     err_msg = 'Attempting to overwrite a problem and delete all linked events'
     with pytest.raises(ValueError, match=err_msg):
-        add_problem(session_scope_function, problem_names[0],
-                    ramp_config['ramp_kits_dir'], ramp_config['ramp_data_dir'],
-                    force=False)
+        add_problem(
+            session_scope_function, problem_name,
+            internal_ramp_config['ramp_kits_dir'],
+            internal_ramp_config['ramp_data_dir'],
+            force=False
+        )
 
     # Force add the problem
-    add_problem(session_scope_function, problem_names[0],
-                ramp_config['ramp_kits_dir'], ramp_config['ramp_data_dir'],
-                force=True)
-    problem = get_problem(session_scope_function, problem_names[0])
-    assert problem.name == problem_names[0]
+    add_problem(
+        session_scope_function, problem_name,
+        internal_ramp_config['ramp_kits_dir'],
+        internal_ramp_config['ramp_data_dir'],
+            force=True
+    )
+    problem = get_problem(session_scope_function, problem_name)
+    assert problem.name == problem_name
     assert isinstance(problem, Problem)
 
-    delete_problem(session_scope_function, problem_names[0])
-    problem = get_problem(session_scope_function, problem_names[0])
+    delete_problem(session_scope_function, problem_name)
+    problem = get_problem(session_scope_function, problem_name)
     assert problem is None
     problem = get_problem(session_scope_function, None)
     assert len(problem) == 1
@@ -184,50 +197,72 @@ def _check_event(session, event, event_name, event_title, event_is_public,
 
 
 def test_check_event(session_scope_function):
-    config = read_config(ramp_config_template())
-    # addition of event require some problem
-    problem_names = ['iris', 'boston_housing']
-    for problem_name in problem_names:
-        setup_ramp_kits_ramp_data(config, problem_name)
-        ramp_config = generate_ramp_config(config)
+    ramp_configs = {
+        'iris': read_config(ramp_config_iris()),
+        'boston_housing': read_config(ramp_config_boston_housing())
+    }
+    for problem_name, ramp_config in ramp_configs.items():
+        setup_ramp_kits_ramp_data(ramp_config, problem_name)
+        internal_ramp_config = generate_ramp_config(ramp_config)
         add_problem(session_scope_function, problem_name,
-                    ramp_config['ramp_kits_dir'],
-                    ramp_config['ramp_data_dir'])
+                    internal_ramp_config['ramp_kits_dir'],
+                    internal_ramp_config['ramp_data_dir'])
 
-    for problem_name in problem_names:
-        event_name = '{}_test'.format(problem_name)
-        event_title = 'event title'
-        add_event(session_scope_function, problem_name, event_name,
-                  event_title, ramp_config['sandbox_name'],
-                  ramp_config['ramp_submissions_dir'],
+    for problem_name, ramp_config in ramp_configs.items():
+        internal_ramp_config = generate_ramp_config(ramp_config)
+        add_event(session_scope_function, problem_name,
+                  internal_ramp_config['event_name'],
+                  internal_ramp_config['event_title'],
+                  internal_ramp_config['sandbox_name'],
+                  internal_ramp_config['ramp_submissions_dir'],
                   is_public=True, force=False)
 
     event = get_event(session_scope_function, None)
     assert len(event) == 2
     assert isinstance(event, list)
 
-    event = get_event(session_scope_function, 'iris_test')
+    problem_name = 'iris'
+    internal_ramp_config = generate_ramp_config(ramp_configs[problem_name])
+    event = get_event(
+        session_scope_function, internal_ramp_config['event_name']
+    )
     scores_iris = ('acc', 'error', 'nll', 'f1_70')
-    _check_event(session_scope_function, event, 'iris_test', 'event title',
-                 True, scores_iris)
+    _check_event(
+        session_scope_function, event, internal_ramp_config['event_name'],
+        internal_ramp_config['event_title'], True, scores_iris
+    )
 
     # add event for second time without forcing should raise an error
     err_msg = 'Attempting to overwrite existing event.'
     with pytest.raises(ValueError, match=err_msg):
-        add_event(session_scope_function, 'iris', 'iris_test', event_title,
-                  ramp_config['sandbox_name'],
-                  ramp_config['ramp_submissions_dir'], is_public=True,
-                  force=False)
+        add_event(
+            session_scope_function, problem_name,
+            internal_ramp_config['event_name'],
+            internal_ramp_config['event_title'],
+            internal_ramp_config['sandbox_name'],
+            internal_ramp_config['ramp_submissions_dir'],
+            is_public=True,
+            force=False
+        )
 
     # add event by force
-    add_event(session_scope_function, 'iris', 'iris_test', event_title,
-              ramp_config['sandbox_name'], ramp_config['ramp_submissions_dir'],
-              is_public=True, force=True)
-    event = get_event(session_scope_function, 'iris_test')
-    _check_event(session_scope_function, event, 'iris_test', 'event title',
-                 True, scores_iris)
+    add_event(
+        session_scope_function, problem_name,
+        internal_ramp_config['event_name'],
+        internal_ramp_config['event_title'],
+        internal_ramp_config['sandbox_name'],
+        internal_ramp_config['ramp_submissions_dir'],
+        is_public=True, force=True
+    )
+    event = get_event(
+        session_scope_function, internal_ramp_config['event_name']
+    )
+    _check_event(
+        session_scope_function, event, internal_ramp_config['event_name'],
+        internal_ramp_config['event_title'], True, scores_iris
+    )
 
-    delete_event(session_scope_function, 'iris_test')
+    delete_event(session_scope_function, internal_ramp_config['event_name'])
     event = get_event(session_scope_function, None)
     assert len(event) == 1
 

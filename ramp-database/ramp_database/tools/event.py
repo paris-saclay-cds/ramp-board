@@ -182,7 +182,7 @@ def add_problem(session, problem_name, kits_dir, data_dir, force=False):
         raised if the problem was already in the database.
     """
     problem = select_problem_by_name(session, problem_name)
-    problem_kits_path = os.path.join(kits_dir, problem_name)
+    problem_kits_path = kits_dir
     if problem is not None:
         if not force:
             raise ValueError('Attempting to overwrite a problem and '
@@ -426,7 +426,8 @@ def get_event(session, event_name):
 
     Returns
     -------
-    even : :class:`ramp_database.model.Event` or list of :class:`ramp_database.model.Event`
+    even : :class:`ramp_database.model.Event` or \
+list of :class:`ramp_database.model.Event`
         The queried problem.
     """
     return select_event_by_name(session, event_name)

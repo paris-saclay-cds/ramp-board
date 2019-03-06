@@ -38,14 +38,12 @@ def generate_ramp_config(config):
     )
     ramp_config['ramp_kit_submissions_dir'] = os.path.join(
         ramp_config['ramp_kits_dir'],
-        ramp_config['event'],
         'submissions'
     )
     ramp_config['ramp_submissions_dir'] = os.path.join(
         config['deployment_dir'], config['submissions_dir']
     )
     ramp_config['ramp_sandbox_dir'] = os.path.join(
-        ramp_config['ramp_kits_dir'], ramp_config['event'],
-        'submissions', config['sandbox_dir']
+        ramp_config['ramp_kits_dir'], 'submissions', config['sandbox_dir']
     )
     return ramp_config
