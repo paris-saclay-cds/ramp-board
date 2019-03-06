@@ -38,19 +38,20 @@ and submissions::
     mkdir ramp_deployment
     cd ramp_deployment
 
-FIXME: we should not copy the configuration file. You need to copy the
-``database_config.yml`` file located in ``ramp-utils/ramp_utils/template`` and
-rename it ``config.yml``.
+Next, you need to create a ``config.yml`` file in the directory, which holds
+the configuration for the database and the flask server. A generic template
+can be created using::
+
+    ramp init
+
+which will create a ``config.yml`` file inside the deployment directory. Now,
+you can edit this file filling in the correct database name, user name and
+password, and filling in a flask secret key.
 
 This config file should look like::
 
     flask:
         secret_key: abcdefghijkl
-        wtf_csrf_enabled: true
-        log_filename: None
-        max_content_length: 1073741824
-        debug: true
-        testing: false
         mail_server: smtp.gmail.com
         mail_port: 587
         mail_default_sender: ['RAMP admin', 'rampmailer@gmail.com']
@@ -60,7 +61,6 @@ This config file should look like::
         mail_use_tls: false
         mail_use_ssl: true
         mail_debug: false
-        sqlalchemy_track_modifications: true
     sqlalchemy:
         drivername: postgresql
         username: <db_user>
