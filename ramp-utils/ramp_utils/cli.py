@@ -88,7 +88,7 @@ def init_event(name, deployment_dir, force):
 @click.option('--force', is_flag=True,
               help='Whether or not to potentially overwrite the '
               'repositories, problem and event in the database.')
-def deploy_ramp_event(config, event_config, cloning, force):
+def deploy_event(config, event_config, cloning, force):
     deploy.deploy_ramp_event(config, event_config, cloning, force)
 
 
