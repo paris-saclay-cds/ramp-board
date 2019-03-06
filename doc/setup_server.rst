@@ -79,10 +79,13 @@ To operate the event, it is useful to first create an admin user::
 
     ramp-database add-user --login admin_user --password password --firstname firstname --lastname lastname --email admin@email.com --access-level admin
 
-Launching the RAMP website
---------------------------
+Launching a test instance of the  RAMP website
+----------------------------------------------
 
-FIXME: we need to update this stage
 At this stage, you will be able to launch the RAMP website::
 
-    ramp-frontend launch
+    ramp frontend test-launch
+
+This uses the built-in server of Flask suitable for testing. To deploy it
+in a production setting, see http://flask.pocoo.org/docs/1.0/deploying/#deployment
+for some options.
