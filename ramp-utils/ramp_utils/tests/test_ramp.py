@@ -17,7 +17,7 @@ from ramp_utils import generate_ramp_config
 def test_generate_ramp_config(config):
     ramp_config = generate_ramp_config(config)
     expected_config = {
-        'event': 'iris',
+        'problem_name': 'iris',
         'event_name': 'iris_test',
         'event_title': 'Iris event',
         'event_is_public': True,
