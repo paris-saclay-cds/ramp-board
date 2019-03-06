@@ -25,6 +25,7 @@ class BaseWorker(six.with_metaclass(ABCMeta)):
             * 'running': the worker is training the submission.
             * 'finished': the worker finished to train the submission.
             * 'collected': the results of the training have been collected.
+            * 'killed'
     """
     def __init__(self, config, submission):
         self.config = config
@@ -36,6 +37,14 @@ class BaseWorker(six.with_metaclass(ABCMeta)):
         a submission."""
         self.status = 'setup'
         logger.info(repr(self))
+
+    @staticmethod
+    def _check_config_name(config, param):
+        if param not in config.keys():
+            raise ValueError("The worker required the parameter '{}' in the "
+                             "configuration given at instantiation. Only {}"
+                             "parameters were given."
+                             .format(param, config.keys()))
 
     def teardown(self):
         """Clean up (i.e., removing path, etc.) before killing the worker."""
@@ -53,7 +62,7 @@ class BaseWorker(six.with_metaclass(ABCMeta)):
         if status == 'running':
             if self._is_submission_finished():
                 self._status = 'finished'
-        return status
+        return self._status
 
     @status.setter
     def status(self, status):

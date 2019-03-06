@@ -46,14 +46,6 @@ class CondaEnvWorker(BaseWorker):
         super(CondaEnvWorker, self).__init__(config=config,
                                              submission=submission)
 
-    @staticmethod
-    def _check_config_name(config, param):
-        if param not in config.keys():
-            raise ValueError("The worker required the parameter '{}' in the "
-                             "configuration given at instantiation. Only {}"
-                             "parameters were given."
-                             .format(param, config.keys()))
-
     def setup(self):
         """Set up the worker.
 
@@ -156,6 +148,7 @@ class CondaEnvWorker(BaseWorker):
                 os.makedirs(log_dir)
             with open(os.path.join(log_dir, 'log'), 'wb+') as f:
                 f.write(self._proc_log)
+                f.write(stderr)
             # copy the predictions into the disk
             # no need to create the directory, it will be handle by copytree
             pred_dir = os.path.join(self.config['predictions_dir'],

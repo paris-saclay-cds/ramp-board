@@ -4,7 +4,8 @@ import sys
 import logging
 import argparse
 
-from ramp_engine.aws.api import train_loop
+from .aws_train import train_loop
+
 from ramp_engine.aws.api import validate_config
 from ramp_engine.config import read_backend_config
 

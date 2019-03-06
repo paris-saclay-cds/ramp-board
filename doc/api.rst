@@ -345,6 +345,7 @@ RAMP Workers
 
    base.BaseWorker
    local.CondaEnvWorker
+   aws.AWSWorker
 
 RAMP frontend
 =============

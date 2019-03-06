@@ -1,6 +1,7 @@
 backports.tempfile  # to be removed when dropping Python 2
 bcrypt
 bokeh
+boto3
 click
 flake8
 Flask
