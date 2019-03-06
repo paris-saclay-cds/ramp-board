@@ -112,8 +112,8 @@ def session_scope_module():
 def _setup_sign_up(session, config):
     # asking to sign up required a user, a problem, and an event.
     add_users(session)
-    add_problems(session, config)
-    add_events(session, config)
+    add_problems(session)
+    add_events(session)
     sign_up_teams_to_events(session)
     return config['ramp']['event_name'], 'test_user'
 
@@ -268,7 +268,6 @@ def test_submit_starting_kits(base_db):
 
     submit_starting_kits(session, event_name, username,
                          os.path.join(ramp_config['ramp_kits_dir'],
-                                      ramp_config['event'],
                                       config['ramp']['submissions_dir']))
 
     submissions = get_submissions(session, event_name, None)

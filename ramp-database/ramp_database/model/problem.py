@@ -101,7 +101,7 @@ class Problem(Model):
     def module(self):
         """module: Get the problem module."""
         return import_module_from_source(
-            os.path.join(self.path_ramp_kits, self.name, 'problem.py'),
+            os.path.join(self.path_ramp_kits, 'problem.py'),
             'problem'
         )
 
@@ -118,13 +118,11 @@ class Problem(Model):
 
     def get_train_data(self):
         """The training data."""
-        path = os.path.join(self.path_ramp_data, self.name)
-        return self.module.get_train_data(path=path)
+        return self.module.get_train_data(path=self.path_ramp_data)
 
     def get_test_data(self):
         """The testing data."""
-        path = os.path.join(self.path_ramp_data, self.name)
-        return self.module.get_test_data(path=path)
+        return self.module.get_test_data(path=self.path_ramp_data)
 
     def ground_truths_train(self):
         """Predictions: the true labels for the training."""

@@ -10,6 +10,7 @@ import subprocess
 
 from git import Repo
 
+from ramp_utils import read_config
 from ramp_utils import generate_ramp_config
 
 from .utils import setup_db
@@ -31,6 +32,8 @@ from .tools.submission import submit_starting_kits
 
 logger = logging.getLogger('RAMP-DATABASE')
 
+HERE = os.path.dirname(__file__)
+
 
 def create_test_db(database_config, ramp_config):
     """Create an empty test database and the setup the files for RAMP.
@@ -50,8 +53,6 @@ def create_test_db(database_config, ramp_config):
     # tests.
     ramp_config = generate_ramp_config(ramp_config)
     shutil.rmtree(ramp_config['deployment_dir'], ignore_errors=True)
-    os.makedirs(ramp_config['ramp_kits_dir'])
-    os.makedirs(ramp_config['ramp_data_dir'])
     os.makedirs(ramp_config['ramp_submissions_dir'])
     db, _ = setup_db(database_config)
     Model.metadata.drop_all(db)
@@ -72,11 +73,11 @@ def create_toy_db(database_config, ramp_config):
     """
     create_test_db(database_config, ramp_config)
     with session_scope(database_config['sqlalchemy']) as session:
-        setup_toy_db(session, ramp_config)
+        setup_toy_db(session)
 
 
 # Setup functions: functions used to setup the database initially
-def setup_toy_db(session, ramp_config):
+def setup_toy_db(session):
     """Only setup the database by adding some data.
 
     Parameters
@@ -87,10 +88,10 @@ def setup_toy_db(session, ramp_config):
         The configuration file containing the information about a RAMP event.
     """
     add_users(session)
-    add_problems(session, ramp_config)
-    add_events(session, ramp_config)
+    add_problems(session)
+    add_events(session)
     sign_up_teams_to_events(session)
-    submit_all_starting_kits(session, ramp_config)
+    submit_all_starting_kits(session)
 
 
 def _delete_line_from_file(f_name, line_to_delete):
@@ -117,10 +118,7 @@ def setup_ramp_kits_ramp_data(ramp_config, problem_name, force=False):
         already exists.
     """
     ramp_config = generate_ramp_config(ramp_config)
-    problem_kits_path = os.path.join(ramp_config['ramp_kits_dir'],
-                                     problem_name)
-    if not os.path.exists(ramp_config['ramp_kits_dir']):
-        os.makedirs(ramp_config['ramp_kits_dir'])
+    problem_kits_path = ramp_config['ramp_kits_dir']
     if os.path.exists(problem_kits_path):
         if not force:
             raise ValueError(
@@ -131,10 +129,7 @@ def setup_ramp_kits_ramp_data(ramp_config, problem_name, force=False):
     ramp_kits_url = 'https://github.com/ramp-kits/{}.git'.format(problem_name)
     Repo.clone_from(ramp_kits_url, problem_kits_path)
 
-    problem_data_path = os.path.join(ramp_config['ramp_data_dir'],
-                                     problem_name)
-    if not os.path.exists(ramp_config['ramp_data_dir']):
-        os.makedirs(ramp_config['ramp_data_dir'])
+    problem_data_path = ramp_config['ramp_data_dir']
     if os.path.exists(problem_data_path):
         if not force:
             raise ValueError(
@@ -216,7 +211,7 @@ def add_users(session):
         email='iris.admin@gmail.com', access_level='admin')
 
 
-def add_problems(session, ramp_config):
+def add_problems(session):
     """Add dummy problems into the database. In addition, we add couple of
     keyword.
 
@@ -224,11 +219,12 @@ def add_problems(session, ramp_config):
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
-    ramp_config : dict
-        The configuration file containing the information about a RAMP event.
     """
-    problems = ['iris', 'boston_housing']
-    for problem_name in problems:
+    ramp_configs = {
+        'iris': read_config(ramp_config_iris()),
+        'boston_housing': read_config(ramp_config_boston_housing())
+    }
+    for problem_name, ramp_config in ramp_configs.items():
         setup_ramp_kits_ramp_data(ramp_config, problem_name)
         internal_ramp_config = generate_ramp_config(ramp_config)
         add_problem(session, problem_name,
@@ -244,30 +240,32 @@ def add_problems(session, ramp_config):
                             keyword_name=problem_name + '_theme')
 
 
-def add_events(session, ramp_config):
+def add_events(session):
     """Add events in the database.
 
     Parameters
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
-    ramp_config : dict
-        The configuration file containing the information about a RAMP event.
 
     Notes
     -----
     Be aware that :func:`add_problems` needs to be called before.
     """
-    ramp_config = generate_ramp_config(ramp_config)
-    problems = ['iris', 'boston_housing']
-    for problem_name in problems:
-        event_name = '{}_test'.format(problem_name)
-        event_title = 'test event'
-        add_event(session, problem_name=problem_name, event_name=event_name,
-                  event_title=event_title,
-                  ramp_sandbox_name=ramp_config['sandbox_name'],
-                  ramp_submissions_path=ramp_config['ramp_submissions_dir'],
-                  is_public=True, force=False)
+    ramp_configs = {
+        'iris': read_config(ramp_config_iris()),
+        'boston_housing': read_config(ramp_config_boston_housing())
+    }
+    for problem_name, ramp_config in ramp_configs.items():
+        ramp_config_problem = generate_ramp_config(ramp_config)
+        add_event(
+            session, problem_name=problem_name,
+            event_name=ramp_config_problem['event_name'],
+            event_title=ramp_config_problem['event_title'],
+            ramp_sandbox_name=ramp_config_problem['sandbox_name'],
+            ramp_submissions_path=ramp_config_problem['ramp_submissions_dir'],
+            is_public=True, force=False
+        )
 
 
 def sign_up_teams_to_events(session):
@@ -288,23 +286,52 @@ def sign_up_teams_to_events(session):
         sign_up_team(session, event_name, 'test_user_2')
 
 
-def submit_all_starting_kits(session, ramp_config):
+def submit_all_starting_kits(session):
     """Submit all starting kits.
 
     Parameters
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
-    ramp_config : dict
-        The configuration file containing the information about a RAMP event.
     """
-    ramp_config = generate_ramp_config(ramp_config)
-    for event, event_name in zip(['iris', 'boston_housing'],
-                                 ['iris_test', 'boston_housing_test']):
+    ramp_configs = {
+        'iris': read_config(ramp_config_iris()),
+        'boston_housing': read_config(ramp_config_boston_housing())
+    }
+    for problem_name, ramp_config in ramp_configs.items():
+        ramp_config_problem = generate_ramp_config(ramp_config)
         path_submissions = os.path.join(
-            ramp_config['ramp_kits_dir'], event, 'submissions'
+            ramp_config_problem['ramp_kits_dir'], 'submissions'
         )
-        submit_starting_kits(session, event_name, 'test_user',
-                             path_submissions)
-        submit_starting_kits(session, event_name, 'test_user_2',
-                             path_submissions)
+        submit_starting_kits(
+            session, ramp_config_problem['event_name'], 'test_user',
+            path_submissions
+        )
+        submit_starting_kits(
+            session, ramp_config_problem['event_name'], 'test_user_2',
+            path_submissions
+        )
+
+
+def ramp_config_iris():
+    """Return the path to a RAMP configuration file for the iris kit.
+
+    Returns
+    -------
+    filename : str
+        The RAMP configuration filename for the iris kit.
+    """
+    return os.path.join(HERE, 'tests', 'data', 'ramp_config_iris.yml')
+
+
+def ramp_config_boston_housing():
+    """Return the path to a RAMP configuration file for the boston housing kit.
+
+    Returns
+    -------
+    filename : str
+        The RAMP configuration filename for the boston housing kit.
+    """
+    return os.path.join(
+        HERE, 'tests', 'data', 'ramp_config_boston_housing.yml'
+    )

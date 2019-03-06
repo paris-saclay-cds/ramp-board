@@ -34,8 +34,8 @@ def session_scope_function():
         create_test_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
             add_users(session)
-            add_problems(session, ramp_config['ramp'])
-            add_events(session, ramp_config['ramp'])
+            add_problems(session)
+            add_events(session)
             yield session
     finally:
         shutil.rmtree(
