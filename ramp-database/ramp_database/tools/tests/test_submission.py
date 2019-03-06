@@ -77,7 +77,7 @@ def base_db():
         with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        # shutil.rmtree(deployment_dir, ignore_errors=True)
+        shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
