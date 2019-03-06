@@ -20,7 +20,7 @@ def main():
               help='The port where to launch the website')
 @click.option("--host", default='127.0.0.1', show_default=True,
               help='The IP address where to launch the website')
-def launch(config, port, host):
+def test_launch(config, port, host):
     config = read_config(config)
     flask_config = generate_flask_config(config)
     app = create_app(flask_config)

@@ -1,0 +1,15 @@
+ramp:
+    event: <problem name>
+    event_name: <name>
+    event_title: "Human readable event name to display on website"
+    event_is_public: true
+    deployment_dir: /tmp/databoard_test
+    data_dir: ramp-data/<problem name>
+    kit_dir: ramp-kits/<problem name>
+    submissions_dir: submissions
+    predictions_dir: preds
+    logs_dir: log
+    sandbox_dir: starting_kit
+worker:
+    worker_type: <conda or aws>
+    ...

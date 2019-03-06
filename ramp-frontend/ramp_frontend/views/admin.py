@@ -23,6 +23,7 @@ from ramp_database.tools.event import get_event
 from ramp_database.tools.frontend import is_admin
 from ramp_database.tools.frontend import is_accessible_event
 from ramp_database.tools.user import approve_user
+from ramp_database.tools.user import select_user_by_name
 from ramp_database.tools.user import get_user_interactions_by_name
 from ramp_database.tools.team import sign_up_team
 
@@ -63,13 +64,14 @@ def approve_users():
         message = "Approved users:\n"
         for asked_user in users_to_be_approved:
             approve_user(db.session, asked_user)
+            user = select_user_by_name(db.session, asked_user)
 
             subject = 'Your RAMP account have been approved'
-            body = ('{}, you account have been approved. You can now sign-up '
+            body = ('{}, your account have been approved. You can now sign-up '
                     'for any opened RAMP event.'
-                    .format(flask_login.current_user.name))
+                    .format(user.name))
             send_mail(
-                to=flask_login.current_user.email, subject=subject, body=body
+                to=user.email, subject=subject, body=body
             )
 
             message += "{}\n".format(asked_user)
