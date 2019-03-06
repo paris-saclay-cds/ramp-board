@@ -1,3 +1,4 @@
+from difflib import SequenceMatcher
 import shutil
 
 from click.testing import CliRunner
@@ -15,7 +16,19 @@ from ramp_utils.cli import main
 def teardown_function(function):
     database_config = read_config(database_config_template())
     ramp_config = read_config(ramp_config_template())
-    # shutil.rmtree(ramp_config['ramp']['deployment_dir'], ignore_errors=True)
+    # FIXME: we are recreating the deployment directory but it should be
+    # replaced by an temporary creation of folder.
+    match = SequenceMatcher(
+        None,
+        ramp_config['ramp']['kit_dir'],
+        ramp_config['ramp']['submissions_dir']
+    ).find_longest_match(
+        0, len(ramp_config['ramp']['kit_dir']),
+        0, len(ramp_config['ramp']['submissions_dir'])
+    )
+    deployment_dir = ramp_config['ramp']['kit_dir'][match.a:
+                                                    match.a + match.size]
+    shutil.rmtree(deployment_dir, ignore_errors=True)
     db, _ = setup_db(database_config['sqlalchemy'])
     Model.metadata.drop_all(db)
 

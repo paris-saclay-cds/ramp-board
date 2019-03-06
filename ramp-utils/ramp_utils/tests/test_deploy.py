@@ -34,14 +34,16 @@ def session_scope_function():
         # FIXME: we are recreating the deployment directory but it should be
         # replaced by an temporary creation of folder.
         match = SequenceMatcher(
-            None, ramp_config['ramp_kit_dir'],
-            ramp_config['ramp_submissions_dir']
+            None,
+            ramp_config['ramp']['kit_dir'],
+            ramp_config['ramp']['submissions_dir']
         ).find_longest_match(
-            0, len(ramp_config['ramp_kit_dir']),
-            0, len(ramp_config['ramp_submissions_dir'])
+            0, len(ramp_config['ramp']['kit_dir']),
+            0, len(ramp_config['ramp']['submissions_dir'])
         )
-        deployment_dir = ramp_config['ramp_kit_dir'][match.a:
-                                                     match.a + match.size]
+        deployment_dir = ramp_config['ramp']['kit_dir'][match.a:
+                                                        match.a + match.size]
+        print(deployment_dir)
         shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
