@@ -28,6 +28,7 @@ class CondaEnvWorker(BaseWorker):
           submission will be stored;
         * `predictions_dir`: path to the directory where the
           predictions of the submission will be stored.
+        - `force`: overwrite results from previous runs
     submission : str
         Name of the RAMP submission to be handle by the worker.
 
@@ -163,6 +164,8 @@ class CondaEnvWorker(BaseWorker):
             output_training_dir = os.path.join(
                 self.config['submissions_dir'], self.submission,
                 'training_output')
+            if os.path.exists(pred_dir) and self.config['force']:
+                shutil.rmtree(pred_dir)
             shutil.copytree(output_training_dir, pred_dir)
             self.status = 'collected'
             logger.info(repr(self))

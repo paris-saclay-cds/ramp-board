@@ -61,7 +61,9 @@ def dispatcher(config, event_config, n_worker, hunger_policy, verbose):
               help='Configuration file in YAML format')
 @click.option('--submission', help='The submission name')
 @click.option('-v', '--verbose', is_flag=True)
-def worker(config, submission, verbose):
+@click.option('--force', is_flag=True,
+              help="Overwrite exisiting predictions for this submission")
+def worker(config, submission, verbose, force):
     """Launch a standalone RAMP worker.
 
     The RAMP worker is in charger of processing a single submission by
@@ -79,6 +81,7 @@ def worker(config, submission, verbose):
     config = read_config(config)
     worker_params = generate_worker_config(config)
     worker_type = available_workers[worker_params['worker_type']]
+    worker_params['force'] = force
     worker = worker_type(worker_params, submission)
     worker.launch()
 
