@@ -42,7 +42,7 @@ Next, you need to create a ``config.yml`` file in the directory, which holds
 the configuration for the database and the flask server. A generic template
 can be created using::
 
-    ramp init
+    ramp setup init
 
 which will create a ``config.yml`` file inside the deployment directory. Now,
 you can edit this file filling in the correct database name, user name and
