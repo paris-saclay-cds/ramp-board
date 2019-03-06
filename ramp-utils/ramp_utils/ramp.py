@@ -24,7 +24,7 @@ def generate_ramp_config(config):
         if 'ramp' in config.keys():
             config = config['ramp']
     ramp_config = {}
-    ramp_config['event'] = config['event']
+    ramp_config['problem_name'] = config['problem_name']
     ramp_config['event_name'] = config['event_name']
     ramp_config['event_title'] = config['event_title']
     ramp_config['event_is_public'] = config['event_is_public']

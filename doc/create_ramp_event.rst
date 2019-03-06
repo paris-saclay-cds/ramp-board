@@ -14,6 +14,7 @@ First, you need to get the starting kit and the data::
     mkdir ramp-kits
     mkdir ramp-data
     git clone https://github.com/ramp-kits/iris ramp-kits/iris
+    git clone https://github.com/ramp-data/iris ramp-data/iris
     cd ramp-data/iris
     python prepare_data.py
     cd ../..
@@ -30,7 +31,7 @@ and populates it with a ``config.yml`` with the configuration specific to the ev
 This config file should look like::
 
     ramp:
-        event: iris
+        problem_name: iris
         event_name: iris_test
         event_title: "Iris event"
         event_is_public: true

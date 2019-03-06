@@ -1,5 +1,5 @@
 ramp:
-    event: <problem name>
+    problem_name: <problem name>
     event_name: <name>
     event_title: "Human readable event name to display on website"
     event_is_public: true

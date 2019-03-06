@@ -1,5 +1,5 @@
 ramp:
-    event: boston_housing
+    problem_name: boston_housing
     event_name: boston_housing_test
     event_title: "Boston housing event"
     event_is_public: true

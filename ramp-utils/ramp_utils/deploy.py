@@ -1,6 +1,8 @@
 import os
 import shutil
+import subprocess
 
+from ramp_database.testing import _delete_line_from_file
 from ramp_database.testing import setup_files_extension_type
 from ramp_database.testing import setup_ramp_kit_ramp_data
 from ramp_database.tools.event import add_event
@@ -38,12 +40,28 @@ def deploy_ramp_event(config, event_config, setup_ramp_repo=True, force=False):
         setup_files_extension_type(session)
         if setup_ramp_repo:
             setup_ramp_kit_ramp_data(
-                event_config, ramp_config['event'], force
+                event_config, ramp_config['problem_name'], force
             )
+        else:
+            # we do not clone the repository but we need to convert the
+            # notebook to html
+            current_directory = os.getcwd()
+            problem_kit_path = ramp_config['ramp_kit_dir']
+            os.chdir(problem_kit_path)
+            subprocess.check_output(["jupyter", "nbconvert", "--to", "html",
+                                     "{}_starting_kit.ipynb"
+                                     .format(ramp_config['problem_name'])])
+            # delete this line since it trigger in the front-end
+            # (try to open execute "custom.css".)
+            _delete_line_from_file(
+                "{}_starting_kit.html".format(ramp_config['problem_name']),
+                '<link rel="stylesheet" href="custom.css">\n'
+            )
+            os.chdir(current_directory)
         # check if the repository exists
-        problem = get_problem(session, ramp_config['event'])
+        problem = get_problem(session, ramp_config['problem_name'])
         if problem is None:
-            add_problem(session, ramp_config['event'],
+            add_problem(session, ramp_config['problem_name'],
                         ramp_config['ramp_kit_dir'],
                         ramp_config['ramp_data_dir'])
         else:
@@ -57,16 +75,16 @@ def deploy_ramp_event(config, event_config, setup_ramp_repo=True, force=False):
                 )
             if setup_ramp_repo:
                 setup_ramp_kit_ramp_data(
-                    event_config, ramp_config['event'], force
+                    event_config, ramp_config['problem_name'], force
                 )
-            add_problem(session, ramp_config['event'],
+            add_problem(session, ramp_config['problem_name'],
                         ramp_config['ramp_kit_dir'],
                         ramp_config['ramp_data_dir'],
                         force)
 
         if not os.path.exists(ramp_config['ramp_submissions_dir']):
             os.makedirs(ramp_config['ramp_submissions_dir'])
-        add_event(session, ramp_config['event'],
+        add_event(session, ramp_config['problem_name'],
                   ramp_config['event_name'],
                   ramp_config['event_title'],
                   ramp_config['sandbox_name'],
