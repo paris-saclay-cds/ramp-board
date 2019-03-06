@@ -1,4 +1,6 @@
+from itertools import takewhile
 import importlib
+import os
 import sys
 
 import bcrypt
@@ -80,3 +82,14 @@ def encode_string(text):
     if six.PY3:
         return bytes(text, 'utf-8') if isinstance(text, str) else text
     return text.encode('utf8')
+
+
+def commonpath(paths, sep='/'):
+    if six.PY2:
+        def allnamesequal(name):
+            return all(n == name[0] for n in name[1:])
+        bydirectorylevels = zip(*[p.split(sep) for p in paths])
+        return sep.join(
+            x[0] for x in takewhile(allnamesequal, bydirectorylevels)
+        )
+    return os.path.commonpath(paths)

@@ -12,6 +12,7 @@ from git import Repo
 
 from ramp_utils import read_config
 from ramp_utils import generate_ramp_config
+from ramp_utils.utils import commonpath
 
 from .utils import setup_db
 from .utils import session_scope
@@ -60,7 +61,7 @@ def create_test_db(database_config, ramp_config):
 
     # FIXME: we are recreating the deployment directory but it should be
     # replaced by an temporary creation of folder.
-    deployment_dir = os.path.commonpath(
+    deployment_dir = commonpath(
         [ramp_config['ramp_kit_dir'], ramp_config['ramp_data_dir']]
     )
 
