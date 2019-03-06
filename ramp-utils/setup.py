@@ -60,6 +60,9 @@ setup(
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
     entry_points={
-        'console_scripts': ['ramp-utils = ramp_utils.cli:start']
+        'console_scripts': [
+            'ramp = ramp_utils.ramp_cli:main',
+            'ramp-utils = ramp_utils.cli:start'
+        ]
     }
 )
