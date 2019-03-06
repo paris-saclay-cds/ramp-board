@@ -1,3 +1,4 @@
+from difflib import SequenceMatcher
 import shutil
 
 import pytest
@@ -30,9 +31,18 @@ def session_scope_function():
     try:
         yield
     finally:
-        shutil.rmtree(
-            ramp_config['ramp']['deployment_dir'], ignore_errors=True
+        # FIXME: we are recreating the deployment directory but it should be
+        # replaced by an temporary creation of folder.
+        match = SequenceMatcher(
+            None, ramp_config['ramp_kit_dir'],
+            ramp_config['ramp_submissions_dir']
+        ).find_longest_match(
+            0, len(ramp_config['ramp_kit_dir']),
+            0, len(ramp_config['ramp_submissions_dir'])
         )
+        deployment_dir = ramp_config['ramp_kit_dir'][match.a:
+                                                     match.a + match.size]
+        shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 

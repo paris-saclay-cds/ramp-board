@@ -15,7 +15,7 @@ from ramp_utils.cli import main
 def teardown_function(function):
     database_config = read_config(database_config_template())
     ramp_config = read_config(ramp_config_template())
-    shutil.rmtree(ramp_config['ramp']['deployment_dir'], ignore_errors=True)
+    # shutil.rmtree(ramp_config['ramp']['deployment_dir'], ignore_errors=True)
     db, _ = setup_db(database_config['sqlalchemy'])
     Model.metadata.drop_all(db)
 

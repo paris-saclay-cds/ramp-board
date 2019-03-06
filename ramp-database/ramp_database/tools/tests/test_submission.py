@@ -71,13 +71,11 @@ def base_db():
     database_config = read_config(database_config_template())
     ramp_config = read_config(ramp_config_template())
     try:
-        create_test_db(database_config, ramp_config)
+        deployment_dir = create_test_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(
-            ramp_config['ramp']['deployment_dir'], ignore_errors=True
-        )
+        shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
@@ -97,14 +95,12 @@ def session_scope_module():
     database_config = read_config(database_config_template())
     ramp_config = read_config(ramp_config_template())
     try:
-        create_toy_db(database_config, ramp_config)
+        deployment_dir = create_toy_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
             _change_state_db(session)
             yield session
     finally:
-        shutil.rmtree(
-            ramp_config['ramp']['deployment_dir'], ignore_errors=True
-        )
+        shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 

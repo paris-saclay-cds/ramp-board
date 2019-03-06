@@ -27,7 +27,7 @@ def client_session():
     database_config = read_config(database_config_template())
     ramp_config = read_config(ramp_config_template())
     try:
-        create_toy_db(database_config, ramp_config)
+        deployment_dir = create_toy_db(database_config, ramp_config)
         flask_config = generate_flask_config(database_config)
         app = create_app(flask_config)
         app.config['TESTING'] = True
@@ -35,9 +35,7 @@ def client_session():
         with session_scope(database_config['sqlalchemy']) as session:
             yield app.test_client(), session
     finally:
-        shutil.rmtree(
-            ramp_config['ramp']['deployment_dir'], ignore_errors=True
-        )
+        shutil.rmtree(deployment_dir, ignore_errors=True)
         try:
             # In case of failure we should close the global flask engine
             from ramp_frontend import db as db_flask

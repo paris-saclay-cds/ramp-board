@@ -8,7 +8,6 @@ import logging
 import os
 import shutil
 import subprocess
-from tempfile import mkdtemp
 
 from git import Repo
 
@@ -60,16 +59,24 @@ def create_test_db(database_config, ramp_config):
     # tests.
     ramp_config = generate_ramp_config(ramp_config)
 
-    # FIXME: for tests purpose only, we will overwrite the deployment directory
-    match = SequenceMatcher(None, ramp_config['ramp_kit'])
+    # FIXME: we are recreating the deployment directory but it should be
+    # replaced by an temporary creation of folder.
+    match = SequenceMatcher(
+        None, ramp_config['ramp_kit_dir'], ramp_config['ramp_submissions_dir']
+    ).find_longest_match(
+        0, len(ramp_config['ramp_kit_dir']),
+        0, len(ramp_config['ramp_submissions_dir'])
+    )
+    deployment_dir = ramp_config['ramp_kit_dir'][match.a:match.a + match.size]
 
-    shutil.rmtree(ramp_config['deployment_dir'], ignore_errors=True)
+    shutil.rmtree(deployment_dir, ignore_errors=True)
     os.makedirs(ramp_config['ramp_submissions_dir'])
     db, _ = setup_db(database_config)
     Model.metadata.drop_all(db)
     Model.metadata.create_all(db)
     with session_scope(database_config) as session:
         setup_files_extension_type(session)
+    return deployment_dir
 
 
 def create_toy_db(database_config, ramp_config):
@@ -81,10 +88,16 @@ def create_toy_db(database_config, ramp_config):
         The configuration file containing the database information.
     ramp_config : dict
         The configuration file containing the information about a RAMP event.
+
+    Returns
+    -------
+    deployment_dir : str
+        The deployment directory for the RAMP components (kits, data, etc.).
     """
-    create_test_db(database_config, ramp_config)
+    deployment_dir = create_test_db(database_config, ramp_config)
     with session_scope(database_config['sqlalchemy']) as session:
         setup_toy_db(session)
+    return deployment_dir
 
 
 # Setup functions: functions used to setup the database initially

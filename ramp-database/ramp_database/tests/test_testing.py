@@ -44,13 +44,11 @@ def ramp_config():
 @pytest.fixture
 def session_scope_function(database_config, ramp_config):
     try:
-        create_test_db(database_config, ramp_config)
+        deployment_dir = create_test_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(
-            ramp_config['ramp']['deployment_dir'], ignore_errors=True
-        )
+        shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 

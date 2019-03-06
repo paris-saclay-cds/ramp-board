@@ -3,12 +3,11 @@ ramp:
     event_name: iris_test
     event_title: "Iris event"
     event_is_public: true
-    deployment_dir: /tmp/databoard_test
-    data_dir: ramp-data/iris
-    kit_dir: ramp-kits/iris
-    submissions_dir: submissions
-    predictions_dir: preds
-    logs_dir: log
+    data_dir: /tmp/databoard_test/ramp-data/iris
+    kit_dir: /tmp/databoard_test/ramp-kits/iris
+    submissions_dir: /tmp/databoard_test/submissions
+    predictions_dir: /tmp/databoard_test/preds
+    logs_dir: /tmp/databoard_test/log
     sandbox_dir: starting_kit
 worker:
     worker_type: conda
