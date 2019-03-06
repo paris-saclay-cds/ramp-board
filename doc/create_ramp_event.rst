@@ -41,7 +41,13 @@ This config file should look like::
 Finally, you can easily deploy the event (adding both problem and event to the
 database) by calling from the deployment directory::
 
-    ramp setup deploy-event --event-config events/iris_test/config.yml
+    ramp setup deploy-event --event-config events/iris_test/config.yml --no-cloning
+
+Without passing ``--no-cloning``, it will try to clone the starting kit and
+data from the https://github.com/ramp-kits/ github organization. If the
+starting kit is located there, you can skip the first step of above of manually
+cloning the kit and data and preparing the data, and let ``ramp setup deploy-event``
+do that for you.
 
 Launch the dispatcher to train and evaluate submissions
 -------------------------------------------------------
@@ -49,4 +55,4 @@ Launch the dispatcher to train and evaluate submissions
 At this stage, you can launch the RAMP dispatcher which will be in charge of
 training, evaluating submissions, and updating the database::
 
-    ramp-launch dispatcher --event-config events/iris/config.yml --hunger-policy sleep -vv
+    ramp launch dispatcher --event-config events/iris/config.yml --hunger-policy sleep -vv

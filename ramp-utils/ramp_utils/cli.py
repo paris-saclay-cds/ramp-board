@@ -89,6 +89,9 @@ def init_event(name, deployment_dir, force):
               help='Whether or not to potentially overwrite the '
               'repositories, problem and event in the database.')
 def deploy_event(config, event_config, cloning, force):
+    """Deploy event (add problem and event to the database, optionally clone
+    kit and data)
+    """
     deploy.deploy_ramp_event(config, event_config, cloning, force)
 
 
