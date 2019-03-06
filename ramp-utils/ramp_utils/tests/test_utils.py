@@ -1,3 +1,5 @@
+import os
+
 import six
 
 from ramp_utils.utils import check_password
