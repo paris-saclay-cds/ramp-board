@@ -40,7 +40,7 @@ to launch instances to run submissions.
 A very short how-to for creating such an AMI manually:
 
 - launch an Amazon instance
-- connect to it 
+- connect to it
 - prepare the instance:
 
   - Install miniconda::
@@ -50,7 +50,7 @@ A very short how-to for creating such an AMI manually:
         bash ~/miniconda.sh -b
         echo '. ${HOME}/miniconda3/etc/profile.d/conda.sh' >> ~/.profile
         echo 'conda activate base' >> ~/.profile
-        source .profile 
+        source .profile
         conda info
         conda update --yes --quiet conda pip
 
@@ -63,9 +63,9 @@ A very short how-to for creating such an AMI manually:
         git clone $kit_url $kit_dir
 
   - Update the base conda environment for the needs of the challenge::
-    
+
         ami_environment="$kit_dir/ami_environment.yml"
-        conda env update --name base --file $ami_environment 
+        conda env update --name base --file $ami_environment
         conda list
 
   - Get the data::
@@ -74,7 +74,7 @@ A very short how-to for creating such an AMI manually:
         rm -rf $data_dir && mkdir $data_dir
         git clone https://github.com/ramp-data/iris ramp-data/iris
         cd ramp-data/iris/
-        python prepare_data.py 
+        python prepare_data.py
         cd ..
 
     TODO: figure out this data (in ramp-kits/data or in ramp-data?)
@@ -83,7 +83,7 @@ A very short how-to for creating such an AMI manually:
 
         cd ramp-kits/iris
         ramp-test
-  
+
 - Save the instance as an AMI: from the instance -> Actions -> Image -> Create image
 
 - Create an event config.yml, which should look something like::
@@ -102,7 +102,7 @@ A very short how-to for creating such an AMI manually:
           ami_image_name: <name of the AMI set up for this event>
           ami_user_name : ubuntu
           instance_type : t2.micro
-          key_name: <user that can ssh connect with the created AWS instance> 
+          key_name: <user that can ssh connect with the created AWS instance>
           security_group : launch-wizard-103
           key_path: <path to pem file corresponding to user name>
           remote_ramp_kit_folder : /home/ubuntu/ramp-kits/iris
