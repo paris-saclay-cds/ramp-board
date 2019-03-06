@@ -127,10 +127,9 @@ def setup_ramp_kits_ramp_data(ramp_config, problem_name, force=False):
                 'The RAMP kit repository was previously cloned. To replace '
                 'it, you need to set "force=True".'
             )
-        pass
-        #shutil.rmtree(problem_kits_path, ignore_errors=True)
-    #ramp_kits_url = 'https://github.com/ramp-kits/{}.git'.format(problem_name)
-    #Repo.clone_from(ramp_kits_url, problem_kits_path)
+        shutil.rmtree(problem_kits_path, ignore_errors=True)
+    ramp_kits_url = 'https://github.com/ramp-kits/{}.git'.format(problem_name)
+    Repo.clone_from(ramp_kits_url, problem_kits_path)
 
     problem_data_path = os.path.join(ramp_config['ramp_data_dir'],
                                      problem_name)
@@ -142,16 +141,13 @@ def setup_ramp_kits_ramp_data(ramp_config, problem_name, force=False):
                 'The RAMP data repository was previously cloned. To replace '
                 'it, you need to set "force=True".'
             )
-        pass
-        #shutil.rmtree(problem_data_path, ignore_errors=True)
-    #ramp_data_url = 'https://github.com/ramp-data/{}.git'.format(problem_name)
-    #Repo.clone_from(ramp_data_url, problem_data_path)
+        shutil.rmtree(problem_data_path, ignore_errors=True)
+    ramp_data_url = 'https://github.com/ramp-data/{}.git'.format(problem_name)
+    Repo.clone_from(ramp_data_url, problem_data_path)
 
     current_directory = os.getcwd()
     os.chdir(problem_data_path)
-    print(problem_data_path)
-    print('Skipping python prepare_data.py')
-    #subprocess.check_output(["python", "prepare_data.py"])
+    subprocess.check_output(["python", "prepare_data.py"])
     os.chdir(problem_kits_path)
     subprocess.check_output(["jupyter", "nbconvert", "--to", "html",
                              "{}_starting_kit.ipynb".format(problem_name)])
