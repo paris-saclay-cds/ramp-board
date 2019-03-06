@@ -1,8 +1,5 @@
 flask:
     secret_key: abcdefghijkl
-    wtf_csrf_enabled: true
-    log_filename: None
-    max_content_length: 1073741824
     debug: true
     testing: false
     # we are using the python sever to send email
@@ -19,7 +16,6 @@ flask:
     # mail_use_tls: false
     # mail_use_ssl: false
     # mail_debug: false
-    sqlalchemy_track_modifications: true
 sqlalchemy:
     drivername: postgresql
     username: mrramp
