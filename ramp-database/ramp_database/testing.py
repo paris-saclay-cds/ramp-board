@@ -3,10 +3,12 @@ The :mod:`ramp_database.testing` module create facility functions to test the
 tools and model of ``ramp-database``.
 """
 
+from difflib import SequenceMatcher
 import logging
 import os
 import shutil
 import subprocess
+from tempfile import mkdtemp
 
 from git import Repo
 
@@ -47,11 +49,20 @@ def create_test_db(database_config, ramp_config):
         The configuration file containing the database information.
     ramp_config : dict
         The configuration file containing the information about a RAMP event.
+
+    Returns
+    -------
+    deployment_dir : str
+        The deployment directory for the RAMP components (kits, data, etc.).
     """
     database_config = database_config['sqlalchemy']
     # we can automatically setup the database from the config file used for the
     # tests.
     ramp_config = generate_ramp_config(ramp_config)
+
+    # FIXME: for tests purpose only, we will overwrite the deployment directory
+    match = SequenceMatcher(None, ramp_config['ramp_kit'])
+
     shutil.rmtree(ramp_config['deployment_dir'], ignore_errors=True)
     os.makedirs(ramp_config['ramp_submissions_dir'])
     db, _ = setup_db(database_config)
