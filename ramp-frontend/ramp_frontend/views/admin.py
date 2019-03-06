@@ -67,7 +67,7 @@ def approve_users():
             user = select_user_by_name(db.session, asked_user)
 
             subject = 'Your RAMP account have been approved'
-            body = ('{}, you account have been approved. You can now sign-up '
+            body = ('{}, your account have been approved. You can now sign-up '
                     'for any opened RAMP event.'
                     .format(user.name))
             send_mail(
