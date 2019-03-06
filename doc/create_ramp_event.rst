@@ -14,6 +14,7 @@ First, you need to get the starting kit and the data::
     mkdir ramp-kits
     mkdir ramp-data
     git clone https://github.com/ramp-kits/iris ramp-kits/iris
+    git clone https://github.com/ramp-data/iris ramp-data/iris
     cd ramp-data/iris
     python prepare_data.py
     cd ../..
