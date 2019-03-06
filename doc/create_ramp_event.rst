@@ -31,7 +31,7 @@ and populates it with a ``config.yml`` with the configuration specific to the ev
 This config file should look like::
 
     ramp:
-        event: iris
+        problem_name: iris
         event_name: iris_test
         event_title: "Iris event"
         event_is_public: true

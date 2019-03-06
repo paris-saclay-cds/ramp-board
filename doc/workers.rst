@@ -89,7 +89,7 @@ A very short how-to for creating such an AMI manually:
 - Create an event config.yml, which should look something like::
 
       ramp:
-          event: iris
+          problem_name: iris
           event_name: iris_ramp_aws_test
           event_title: iris_ramp_aws_test
           event_is_public: true

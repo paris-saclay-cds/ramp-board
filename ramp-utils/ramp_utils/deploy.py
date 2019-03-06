@@ -38,12 +38,12 @@ def deploy_ramp_event(config, event_config, setup_ramp_repo=True, force=False):
         setup_files_extension_type(session)
         if setup_ramp_repo:
             setup_ramp_kit_ramp_data(
-                event_config, ramp_config['event'], force
+                event_config, ramp_config['problem_name'], force
             )
         # check if the repository exists
-        problem = get_problem(session, ramp_config['event'])
+        problem = get_problem(session, ramp_config['problem_name'])
         if problem is None:
-            add_problem(session, ramp_config['event'],
+            add_problem(session, ramp_config['problem_name'],
                         ramp_config['ramp_kit_dir'],
                         ramp_config['ramp_data_dir'])
         else:
@@ -57,16 +57,16 @@ def deploy_ramp_event(config, event_config, setup_ramp_repo=True, force=False):
                 )
             if setup_ramp_repo:
                 setup_ramp_kit_ramp_data(
-                    event_config, ramp_config['event'], force
+                    event_config, ramp_config['problem_name'], force
                 )
-            add_problem(session, ramp_config['event'],
+            add_problem(session, ramp_config['problem_name'],
                         ramp_config['ramp_kit_dir'],
                         ramp_config['ramp_data_dir'],
                         force)
 
         if not os.path.exists(ramp_config['ramp_submissions_dir']):
             os.makedirs(ramp_config['ramp_submissions_dir'])
-        add_event(session, ramp_config['event'],
+        add_event(session, ramp_config['problem_name'],
                   ramp_config['event_name'],
                   ramp_config['event_title'],
                   ramp_config['sandbox_name'],
