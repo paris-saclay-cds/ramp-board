@@ -41,7 +41,7 @@ EXTRAS_REQUIRE = {
 }
 PACKAGE_DATA = {
     'ramp_frontend': [
-        os.path.join('template', '*'),
+        os.path.join('templates', '*'),
         os.path.join('static', 'css', 'style.css'),
         os.path.join('static', 'css', 'themes', 'flat-blue.css'),
         os.path.join('static', 'img', '*'),
