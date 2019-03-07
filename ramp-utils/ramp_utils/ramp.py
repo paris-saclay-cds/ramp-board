@@ -14,15 +14,15 @@ def _create_default_path(config, key, path_config):
             path_config, 'ramp-data', config['problem_name']
         ),
         'submissions_dir': os.path.join(
-            path_config, 'submissions'
+            path_config, 'events', config['problem_name'], 'submissions'
         ),
-        'sandbox_dir': 'starting_kit',
         'predictions_dir': os.path.join(
-            path_config, 'predictions'
+            path_config, 'events', config['problem_name'], 'predictions'
         ),
         'logs_dir': os.path.join(
-            path_config, 'logs'
-        )
+            path_config, 'events', config['problem_name'], 'logs'
+        ),
+        'sandbox_dir': 'starting_kit'
     }
     if key not in config:
         return default_mapping[key]
