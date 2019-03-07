@@ -29,7 +29,7 @@ from ramp_database.tools.user import set_user_by_instance
 @pytest.fixture
 def session_scope_function():
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     try:
         deployment_dir = create_test_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:

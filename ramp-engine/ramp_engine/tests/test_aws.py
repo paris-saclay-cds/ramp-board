@@ -69,7 +69,7 @@ def test_aws_dispatcher(session_toy):  # noqa
         pytest.skip("Only for local tests for now")
 
     config = read_config(database_config_template())
-    event_config = read_config(ramp_config_template())
+    event_config = ramp_config_template()
 
     # patch the event_config to match local config.yml for AWS
     aws_event_config = read_config(os.path.join(HERE, 'config.yml'))

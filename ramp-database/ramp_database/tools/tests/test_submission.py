@@ -71,7 +71,7 @@ HERE = os.path.dirname(__file__)
 @pytest.fixture
 def base_db():
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     try:
         deployment_dir = create_test_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
@@ -95,7 +95,7 @@ def _change_state_db(session):
 @pytest.fixture(scope='module')
 def session_scope_module():
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     try:
         deployment_dir = create_toy_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
@@ -120,7 +120,7 @@ def test_add_submission_create_new_submission(base_db):
     # check that we can make a new submission to the database
     # it will require to have already a team and an event
     session = base_db
-    config = read_config(ramp_config_template())
+    config = ramp_config_template()
     event_name, username = _setup_sign_up(session)
     ramp_config = generate_ramp_config(config)
 
@@ -149,7 +149,7 @@ def test_add_submission_too_early_submission(base_db):
     # check that we raise an error when the elapsed time was not large enough
     # between the new submission and the previous submission
     session = base_db
-    config = read_config(ramp_config_template())
+    config = ramp_config_template()
     event_name, username = _setup_sign_up(session)
     ramp_config = generate_ramp_config(config)
 
@@ -179,7 +179,7 @@ def test_make_submission_resubmission(base_db):
     # check that resubmitting the a submission with the same name will raise
     # an error
     session = base_db
-    config = read_config(ramp_config_template())
+    config = ramp_config_template()
     event_name, username = _setup_sign_up(session)
     ramp_config = generate_ramp_config(config)
 
@@ -225,7 +225,7 @@ def test_add_submission_wrong_submission_files(base_db):
     # check that we raise an error if the file required by the workflow is not
     # present in the submission or that it has the wrong extension
     session = base_db
-    config = read_config(ramp_config_template())
+    config = ramp_config_template()
     event_name, username = _setup_sign_up(session)
     ramp_config = generate_ramp_config(config)
 
@@ -260,7 +260,7 @@ def test_add_submission_wrong_submission_files(base_db):
 
 def test_submit_starting_kits(base_db):
     session = base_db
-    config = read_config(ramp_config_iris())
+    config = ramp_config_iris()
     event_name, username = _setup_sign_up(session)
     ramp_config = generate_ramp_config(config)
 

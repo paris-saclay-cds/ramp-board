@@ -8,14 +8,8 @@ from ramp_utils import read_config
 from ramp_utils import generate_ramp_config
 
 
-@pytest.mark.parametrize(
-    "config",
-    [ramp_config_template(),
-     read_config(ramp_config_template()),
-     read_config(ramp_config_template(), filter_section='ramp')]
-)
-def test_generate_ramp_config(config):
-    ramp_config = generate_ramp_config(config)
+def test_generate_ramp_config():
+    ramp_config = generate_ramp_config(ramp_config_template())
     expected_config = {
         'problem_name': 'iris',
         'event_name': 'iris_test',

@@ -9,7 +9,7 @@ from ramp_utils import generate_worker_config
 
 
 @pytest.mark.parametrize(
-    "config", [ramp_config_template(), read_config(ramp_config_template())]
+    "config", [ramp_config_template(), ramp_config_template()]
 )
 def test_generate_worker_config(config):
     worker_config = generate_worker_config(config)

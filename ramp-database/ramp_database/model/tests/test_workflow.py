@@ -25,7 +25,7 @@ from ramp_database.tools.event import get_workflow
 @pytest.fixture(scope='module')
 def session_scope_module():
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     try:
         deployment_dir = create_toy_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:

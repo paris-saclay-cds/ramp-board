@@ -33,7 +33,6 @@ def deploy_ramp_event(config, event_config, setup_ramp_repo=True, force=False):
         event in the database.
     """
     database_config = read_config(config, filter_section='sqlalchemy')
-    event_config = read_config(event_config)
     ramp_config = generate_ramp_config(event_config)
 
     with session_scope(database_config) as session:

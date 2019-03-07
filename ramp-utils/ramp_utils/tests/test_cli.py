@@ -18,14 +18,14 @@ from ramp_utils.cli import main
 
 @pytest.fixture
 def deployment_dir():
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     return commonpath(
         [ramp_config['ramp']['kit_dir'], ramp_config['ramp']['data_dir']]
     )
 
 
 def setup_function(function):
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     function.deployment_dir = commonpath(
         [ramp_config['ramp']['kit_dir'], ramp_config['ramp']['data_dir']]
     )
@@ -33,7 +33,7 @@ def setup_function(function):
 
 def teardown_function(function):
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     # FIXME: we are recreating the deployment directory but it should be
     # replaced by an temporary creation of folder.
     shutil.rmtree(function.deployment_dir, ignore_errors=True)

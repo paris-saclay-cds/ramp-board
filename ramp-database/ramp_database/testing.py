@@ -46,7 +46,7 @@ def create_test_db(database_config, ramp_config):
     ----------
     database_config : dict
         The configuration file containing the database information.
-    ramp_config : dict
+    ramp_config : str
         The configuration file containing the information about a RAMP event.
 
     Returns
@@ -82,7 +82,7 @@ def create_toy_db(database_config, ramp_config):
     ----------
     database_config : dict
         The configuration file containing the database information.
-    ramp_config : dict
+    ramp_config : str
         The configuration file containing the information about a RAMP event.
 
     Returns
@@ -241,8 +241,8 @@ def add_problems(session):
         The session to directly perform the operation on the database.
     """
     ramp_configs = {
-        'iris': read_config(ramp_config_iris()),
-        'boston_housing': read_config(ramp_config_boston_housing())
+        'iris': ramp_config_iris(),
+        'boston_housing': ramp_config_boston_housing()
     }
     for problem_name, ramp_config in ramp_configs.items():
         setup_ramp_kit_ramp_data(ramp_config, problem_name)
@@ -273,8 +273,8 @@ def add_events(session):
     Be aware that :func:`add_problems` needs to be called before.
     """
     ramp_configs = {
-        'iris': read_config(ramp_config_iris()),
-        'boston_housing': read_config(ramp_config_boston_housing())
+        'iris': ramp_config_iris(),
+        'boston_housing': ramp_config_boston_housing()
     }
     for problem_name, ramp_config in ramp_configs.items():
         ramp_config_problem = generate_ramp_config(ramp_config)
@@ -315,8 +315,8 @@ def submit_all_starting_kits(session):
         The session to directly perform the operation on the database.
     """
     ramp_configs = {
-        'iris': read_config(ramp_config_iris()),
-        'boston_housing': read_config(ramp_config_boston_housing())
+        'iris': ramp_config_iris(),
+        'boston_housing': ramp_config_boston_housing()
     }
     for problem_name, ramp_config in ramp_configs.items():
         ramp_config_problem = generate_ramp_config(ramp_config)

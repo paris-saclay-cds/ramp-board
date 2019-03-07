@@ -29,7 +29,7 @@ from ramp_database.tools.leaderboard import update_user_leaderboards
 @pytest.fixture(scope='module')
 def session_toy_db():
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     try:
         deployment_dir = create_toy_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
@@ -43,7 +43,7 @@ def session_toy_db():
 @pytest.fixture
 def session_toy_function():
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     try:
         deployment_dir = create_toy_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
