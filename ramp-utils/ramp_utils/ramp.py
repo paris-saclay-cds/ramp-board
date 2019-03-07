@@ -14,13 +14,13 @@ def _create_default_path(config, key, path_config):
             path_config, 'ramp-data', config['problem_name']
         ),
         'submissions_dir': os.path.join(
-            path_config, 'events', config['problem_name'], 'submissions'
+            path_config, 'events', config['event_name'], 'submissions'
         ),
         'predictions_dir': os.path.join(
-            path_config, 'events', config['problem_name'], 'predictions'
+            path_config, 'events', config['event_name'], 'predictions'
         ),
         'logs_dir': os.path.join(
-            path_config, 'events', config['problem_name'], 'logs'
+            path_config, 'events', config['event_name'], 'logs'
         ),
         'sandbox_dir': 'starting_kit'
     }
