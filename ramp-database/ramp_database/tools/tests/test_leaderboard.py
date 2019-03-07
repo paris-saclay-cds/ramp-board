@@ -90,7 +90,7 @@ def test_update_leaderboard_functions(session_toy_function):
 
     # run the dispatcher to process the different submissions
     config = read_config(database_config_template())
-    event_config = ramp_config_template()
+    event_config = read_config(ramp_config_template())
     dispatcher = Dispatcher(
         config, event_config, n_worker=-1, hunger_policy='exit'
     )
@@ -154,7 +154,7 @@ def test_get_leaderboard(session_toy_db):
 
     # run the dispatcher to process the different submissions
     config = read_config(database_config_template())
-    event_config = ramp_config_template()
+    event_config = read_config(ramp_config_template())
     dispatcher = Dispatcher(
         config, event_config, n_worker=-1, hunger_policy='exit'
     )
