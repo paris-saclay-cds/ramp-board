@@ -72,12 +72,8 @@ def test_aws_dispatcher(session_toy):  # noqa
     event_config = read_config(ramp_config_template())
 
     # patch the event_config to match local config.yml for AWS
-    worker_config = generate_worker_config(event_config)
     aws_event_config = read_config(os.path.join(HERE, 'config.yml'))
     event_config['worker'] = aws_event_config['worker']
-    # event_config['worker']['local_predictions_folder'] = \
-    #     worker_config['predictions_dir']
-    # event_config['worker']['local_log_folder'] = worker_config['logs_dir']
 
     dispatcher = Dispatcher(
         config=config, event_config=event_config, worker=AWSWorker,
