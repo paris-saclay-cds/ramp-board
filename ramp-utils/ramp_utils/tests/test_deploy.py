@@ -28,7 +28,7 @@ from ramp_utils.deploy import deploy_ramp_event
 @pytest.fixture
 def session_scope_function():
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     try:
         yield
     finally:
@@ -44,8 +44,7 @@ def session_scope_function():
 
 def test_deploy_ramp_event_options(session_scope_function):
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
-    ramp_config = generate_ramp_config(ramp_config)
+    ramp_config = generate_ramp_config(ramp_config_template())
     deploy_ramp_event(database_config_template(), ramp_config_template())
     # deploy again by forcing the deployment
     deploy_ramp_event(
@@ -76,8 +75,9 @@ def test_deploy_ramp_event_options(session_scope_function):
 
 def test_deploy_ramp_event(session_scope_function):
     database_config = read_config(database_config_template())
-    event_config = read_config(ramp_config_template())
-    ramp_config = generate_ramp_config(event_config)
+    event_config_filename = ramp_config_template()
+    event_config = ramp_config_template()
+    ramp_config = generate_ramp_config(event_config_filename)
     deploy_ramp_event(database_config_template(), ramp_config_template())
 
     # simulate that we add users and sign-up for the event and that they

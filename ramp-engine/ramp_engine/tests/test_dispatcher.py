@@ -21,7 +21,7 @@ from ramp_engine.dispatcher import Dispatcher
 @pytest.fixture
 def session_toy():
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     try:
         deployment_dir = create_toy_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
@@ -34,7 +34,7 @@ def session_toy():
 
 def test_integration_dispatcher(session_toy):
     config = read_config(database_config_template())
-    event_config = read_config(ramp_config_template())
+    event_config = ramp_config_template()
     dispatcher = Dispatcher(
         config=config, event_config=event_config, worker=CondaEnvWorker,
         n_worker=-1, hunger_policy='exit'
@@ -52,7 +52,7 @@ def test_unit_test_dispatcher(session_toy):
     # make sure that the size of the list is bigger than the number of
     # submissions
     config = read_config(database_config_template())
-    event_config = read_config(ramp_config_template())
+    event_config = ramp_config_template()
     dispatcher = Dispatcher(config=config,
                             event_config=event_config,
                             worker=CondaEnvWorker, n_worker=100,

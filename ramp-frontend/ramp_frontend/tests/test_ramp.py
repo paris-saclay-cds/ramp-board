@@ -25,7 +25,7 @@ from ramp_frontend.testing import login_scope
 @pytest.fixture(scope='module')
 def client_session():
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     try:
         deployment_dir = create_toy_db(database_config, ramp_config)
         flask_config = generate_flask_config(database_config)

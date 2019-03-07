@@ -17,7 +17,7 @@ from ramp_database.utils import session_scope
 @pytest.fixture
 def database():
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     try:
         deployment_dir = create_test_db(database_config, ramp_config)
         yield
