@@ -12,6 +12,7 @@ from git import Repo
 
 from ramp_utils import read_config
 from ramp_utils import generate_ramp_config
+from ramp_utils.utils import commonpath
 
 from .utils import setup_db
 from .utils import session_scope
@@ -47,18 +48,31 @@ def create_test_db(database_config, ramp_config):
         The configuration file containing the database information.
     ramp_config : dict
         The configuration file containing the information about a RAMP event.
+
+    Returns
+    -------
+    deployment_dir : str
+        The deployment directory for the RAMP components (kits, data, etc.).
     """
     database_config = database_config['sqlalchemy']
     # we can automatically setup the database from the config file used for the
     # tests.
     ramp_config = generate_ramp_config(ramp_config)
-    shutil.rmtree(ramp_config['deployment_dir'], ignore_errors=True)
+
+    # FIXME: we are recreating the deployment directory but it should be
+    # replaced by an temporary creation of folder.
+    deployment_dir = commonpath(
+        [ramp_config['ramp_kit_dir'], ramp_config['ramp_data_dir']]
+    )
+
+    shutil.rmtree(deployment_dir, ignore_errors=True)
     os.makedirs(ramp_config['ramp_submissions_dir'])
     db, _ = setup_db(database_config)
     Model.metadata.drop_all(db)
     Model.metadata.create_all(db)
     with session_scope(database_config) as session:
         setup_files_extension_type(session)
+    return deployment_dir
 
 
 def create_toy_db(database_config, ramp_config):
@@ -70,10 +84,16 @@ def create_toy_db(database_config, ramp_config):
         The configuration file containing the database information.
     ramp_config : dict
         The configuration file containing the information about a RAMP event.
+
+    Returns
+    -------
+    deployment_dir : str
+        The deployment directory for the RAMP components (kits, data, etc.).
     """
-    create_test_db(database_config, ramp_config)
+    deployment_dir = create_test_db(database_config, ramp_config)
     with session_scope(database_config['sqlalchemy']) as session:
         setup_toy_db(session)
+    return deployment_dir
 
 
 # Setup functions: functions used to setup the database initially

@@ -6,7 +6,7 @@ REQUIRED_KEYS = {
     'sqlalchemy': {'drivername', 'username', 'password', 'host', 'port',
                    'database'},
     'ramp': {'problem_name', 'event_name', 'event_title', 'event_is_public',
-             'deployment_dir', 'data_dir', 'kit_dir', 'submissions_dir',
+             'data_dir', 'kit_dir', 'submissions_dir',
              'predictions_dir', 'logs_dir', 'sandbox_dir'}
 }
 

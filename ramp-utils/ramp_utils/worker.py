@@ -1,5 +1,3 @@
-import os
-
 import six
 
 from .config_parser import read_config
@@ -27,29 +25,14 @@ def generate_worker_config(config):
     # copy the specific information for the given worker configuration
     worker_config = config['worker'].copy()
     # define the directory of the ramp-kit for the event
-    worker_config['kit_dir'] = os.path.join(
-        ramp_config['deployment_dir'],
-        ramp_config['kit_dir']
-    )
+    worker_config['kit_dir'] = ramp_config['kit_dir']
     # define the directory of the ramp-data for the event
-    worker_config['data_dir'] = os.path.join(
-        ramp_config['deployment_dir'],
-        ramp_config['data_dir']
-    )
+    worker_config['data_dir'] = ramp_config['data_dir']
     # define the directory of the submissions
-    worker_config['submissions_dir'] = os.path.join(
-        ramp_config['deployment_dir'],
-        ramp_config['submissions_dir']
-    )
+    worker_config['submissions_dir'] = ramp_config['submissions_dir']
     # define the directory of the predictions
-    worker_config['predictions_dir'] = os.path.join(
-        ramp_config['deployment_dir'],
-        ramp_config['predictions_dir']
-    )
+    worker_config['predictions_dir'] = ramp_config['predictions_dir']
     # define the directory of the logs
-    worker_config['logs_dir'] = os.path.join(
-        ramp_config['deployment_dir'],
-        ramp_config['logs_dir']
-    )
+    worker_config['logs_dir'] = ramp_config['logs_dir']
 
     return worker_config

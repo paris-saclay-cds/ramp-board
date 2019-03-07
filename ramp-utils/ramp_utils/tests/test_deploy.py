@@ -1,3 +1,4 @@
+import os
 import shutil
 
 import pytest
@@ -17,6 +18,7 @@ from ramp_engine.dispatcher import Dispatcher
 
 from ramp_utils import generate_ramp_config
 from ramp_utils import read_config
+from ramp_utils.utils import commonpath
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
 
@@ -30,9 +32,12 @@ def session_scope_function():
     try:
         yield
     finally:
-        shutil.rmtree(
-            ramp_config['ramp']['deployment_dir'], ignore_errors=True
+        # FIXME: we are recreating the deployment directory but it should be
+        # replaced by an temporary creation of folder.
+        deployment_dir = commonpath(
+            [ramp_config['ramp']['kit_dir'], ramp_config['ramp']['data_dir']]
         )
+        shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
