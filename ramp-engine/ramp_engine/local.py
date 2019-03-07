@@ -163,6 +163,8 @@ class CondaEnvWorker(BaseWorker):
             output_training_dir = os.path.join(
                 self.config['submissions_dir'], self.submission,
                 'training_output')
+            if os.path.exists(pred_dir):
+                shutil.rmtree(pred_dir)
             shutil.copytree(output_training_dir, pred_dir)
             self.status = 'collected'
             logger.info(repr(self))
