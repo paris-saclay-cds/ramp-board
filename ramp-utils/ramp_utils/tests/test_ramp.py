@@ -3,19 +3,39 @@ import os
 import pytest
 
 from ramp_utils.testing import ramp_config_template
+from ramp_utils.testing import database_config_template
 
 from ramp_utils import read_config
 from ramp_utils import generate_ramp_config
 
+HERE = os.path.dirname(__file__)
+
+def _get_event_config(version):
+    return os.path.join(
+        HERE, 'data', 'ramp_config_{}.yml'.format(version)
+    )
+
 
 @pytest.mark.parametrize(
-    "config",
-    [ramp_config_template(),
-     read_config(ramp_config_template()),
-     read_config(ramp_config_template(), filter_section='ramp')]
+    "event_config, database_config, err_msg",
+    [(_get_event_config('absolute'), None,
+      "you need to provide the filename of the database as well"),
+     (read_config(_get_event_config('missing')), None,
+      "you need to provide all following keys")]
 )
-def test_generate_ramp_config(config):
-    ramp_config = generate_ramp_config(config)
+def test_generate_ramp_config_error(event_config, database_config, err_msg):
+    with pytest.raises(ValueError, match=err_msg):
+        generate_ramp_config(event_config, database_config)
+
+
+@pytest.mark.parametrize(
+    "event_config, database_config",
+    [(ramp_config_template(), database_config_template()),
+     (read_config(ramp_config_template()), None),
+     (read_config(ramp_config_template(), filter_section='ramp'), None)]
+)
+def test_generate_ramp_config(event_config, database_config):
+    ramp_config = generate_ramp_config(event_config, database_config)
     expected_config = {
         'problem_name': 'iris',
         'event_name': 'iris_test',

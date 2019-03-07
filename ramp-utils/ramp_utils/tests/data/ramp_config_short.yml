@@ -1,0 +1,8 @@
+ramp:
+    problem_name: iris
+    event_name: iris_test
+    event_title: "Iris event"
+    event_is_public: true
+worker:
+    worker_type: conda
+    conda_env: ramp-iris
