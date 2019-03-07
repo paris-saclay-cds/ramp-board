@@ -7,6 +7,7 @@ from ramp_utils.testing import ramp_config_template
 from ramp_utils import read_config
 from ramp_utils import generate_ramp_config
 
+
 @pytest.mark.parametrize(
     "config",
     [ramp_config_template(),
