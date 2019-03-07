@@ -13,10 +13,16 @@ def _create_default_path(config, key, path_config):
         'data_dir': os.path.join(
             path_config, 'ramp-data', config['problem_name']
         ),
-        'submission_dir': os.path.join(
+        'submissions_dir': os.path.join(
             path_config, 'submissions'
         ),
-        'sandbox_name': 'starting_kit'
+        'sandbox_dir': 'starting_kit',
+        'predictions_dir': os.path.join(
+            path_config, 'predictions'
+        ),
+        'logs_dir': os.path.join(
+            path_config, 'logs'
+        )
     }
     if key not in config:
         return default_mapping[key]
@@ -36,8 +42,12 @@ def generate_ramp_config(config):
     ramp_config : dict
         The configuration for the RAMP worker.
     """
-    path_config = os.path.dirname(os.path.abspath(config))
-    config = read_config(config, filter_section='ramp')
+    if isinstance(config, six.string_types):
+        config = read_config(config, filter_section='ramp')
+    else:
+        if 'ramp' in config.keys():
+            config = config['ramp']
+    path_config = os.getcwd()
 
     ramp_config = {}
     # mandatory parameters
@@ -58,6 +68,12 @@ def generate_ramp_config(config):
     )
     ramp_config['sandbox_name'] = _create_default_path(
         config, 'sandbox_dir', ''
+    )
+    ramp_config['ramp_predictions_dir'] = _create_default_path(
+        config, 'predictions_dir', path_config
+    )
+    ramp_config['ramp_logs_dir'] = _create_default_path(
+        config, 'logs_dir', path_config
     )
 
     # parameters built on the top of the previous one

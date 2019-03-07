@@ -76,7 +76,6 @@ def worker(config, submission, verbose):
             format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
             level=level, datefmt='%Y:%m:%d %H:%M:%S'
         )
-    config = read_config(config)
     worker_params = generate_worker_config(config)
     worker_type = available_workers[worker_params['worker_type']]
     worker = worker_type(worker_params, submission)
