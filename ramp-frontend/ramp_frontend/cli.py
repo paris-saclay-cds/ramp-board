@@ -25,7 +25,7 @@ def test_launch(config, port, host):
     flask_config = generate_flask_config(config)
     app = create_app(flask_config)
     app.run(port=port, use_reloader=False,
-            host=host, processes=1000, threaded=False)
+            host=host, processes=1, threaded=False)
 
 
 def start():
