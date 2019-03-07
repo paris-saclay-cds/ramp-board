@@ -45,11 +45,11 @@ KEY_PATH_FIELD = 'key_path'
 KEY_NAME_FIELD = 'key_name'
 SECURITY_GROUP_FIELD = 'security_group'
 REMOTE_RAMP_KIT_FOLDER_FIELD = 'remote_ramp_kit_folder'
-LOCAL_PREDICTIONS_FOLDER_FIELD = 'local_predictions_folder'
+LOCAL_PREDICTIONS_FOLDER_FIELD = 'predictions_dir'
 CHECK_STATUS_INTERVAL_SECS_FIELD = 'check_status_interval_secs'
 CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD = (
     'check_finished_training_interval_secs')
-LOCAL_LOG_FOLDER_FIELD = 'local_log_folder'
+LOCAL_LOG_FOLDER_FIELD = 'logs_dir'
 TRAIN_LOOP_INTERVAL_SECS_FIELD = 'train_loop_interval_secs'
 MEMORY_PROFILING_FIELD = 'memory_profiling'
 

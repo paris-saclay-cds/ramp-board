@@ -106,6 +106,4 @@ A very short how-to for creating such an AMI manually:
           security_group : launch-wizard-103
           key_path: <path to pem file corresponding to user name>
           remote_ramp_kit_folder : /home/ubuntu/ramp-kits/iris
-          local_predictions_folder : <...>
-          local_log_folder : <...>
           memory_profiling : false
