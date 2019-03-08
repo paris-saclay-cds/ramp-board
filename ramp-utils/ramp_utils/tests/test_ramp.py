@@ -66,3 +66,34 @@ def test_generate_ramp_config(event_config, database_config):
         )
     }
     assert ramp_config == expected_config
+
+
+def test_generate_ramp_config_short():
+    ramp_config = generate_ramp_config(
+        _get_event_config('short'), database_config_template()
+    )
+    expected_config = {
+        'problem_name': 'iris',
+        'event_name': 'iris_test',
+        'event_title': 'Iris event',
+        'ramp_kit_dir': os.path.join('template', 'ramp-kits', 'iris'),
+        'ramp_data_dir': os.path.join('template', 'ramp-data', 'iris'),
+        'ramp_submissions_dir': os.path.join(
+            'template', 'events', 'iris_test', 'submissions'
+        ),
+        'sandbox_name': 'starting-kit',
+        'ramp_predictions_dir': os.path.join(
+            'template', 'events', 'iris_test', 'predictions'
+        ),
+        'ramp_logs_dir': os.path.join(
+            'template', 'events', 'iris_test', 'logs'
+        ),
+        'ramp_sandbox_dir': os.path.join(
+            'template', 'ramp-kits', 'iris', 'submissions', 'starting-kit'
+        ),
+        'ramp_kit_submissions_dir': os.path.join(
+            'template', 'ramp-kits', 'iris', 'submissions'
+        )
+    }
+    for key in expected_config:
+        assert expected_config[key] in ramp_config[key]
