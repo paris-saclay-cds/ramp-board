@@ -81,7 +81,7 @@ def test_generate_ramp_config_short():
         'ramp_submissions_dir': os.path.join(
             'template', 'events', 'iris_test', 'submissions'
         ),
-        'sandbox_name': 'starting-kit',
+        'sandbox_name': 'starting_kit',
         'ramp_predictions_dir': os.path.join(
             'template', 'events', 'iris_test', 'predictions'
         ),
@@ -89,7 +89,7 @@ def test_generate_ramp_config_short():
             'template', 'events', 'iris_test', 'logs'
         ),
         'ramp_sandbox_dir': os.path.join(
-            'template', 'ramp-kits', 'iris', 'submissions', 'starting-kit'
+            'template', 'ramp-kits', 'iris', 'submissions', 'starting_kit'
         ),
         'ramp_kit_submissions_dir': os.path.join(
             'template', 'ramp-kits', 'iris', 'submissions'
