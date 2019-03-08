@@ -10,6 +10,7 @@ from ramp_utils import generate_ramp_config
 
 HERE = os.path.dirname(__file__)
 
+
 def _get_event_config(version):
     return os.path.join(
         HERE, 'data', 'ramp_config_{}.yml'.format(version)
