@@ -3,12 +3,10 @@ The :mod:`ramp_database.testing` module create facility functions to test the
 tools and model of ``ramp-database``.
 """
 
-from difflib import SequenceMatcher
 import logging
 import os
 import shutil
 import subprocess
-from tempfile import mkdtemp
 
 from git import Repo
 
