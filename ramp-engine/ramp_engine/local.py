@@ -145,14 +145,13 @@ class CondaEnvWorker(BaseWorker):
             # (see https://github.com/paris-saclay-cds/ramp-board/issues/179)
             # and extracting the error message from combined log
             log_output = stdout + b'\n\n' + stderr
-            log_output = log_output.decode('utf-8')
-            error_msg = _get_traceback(log_output)
+            error_msg = _get_traceback(log_output.decode('utf-8'))
             # write the log into the disk
             log_dir = os.path.join(self.config['logs_dir'],
                                    self.submission)
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
-            with open(os.path.join(log_dir, 'log'), 'w') as f:
+            with open(os.path.join(log_dir, 'log'), 'wb+') as f:
                 f.write(log_output)
             # copy the predictions into the disk
             # no need to create the directory, it will be handle by copytree
