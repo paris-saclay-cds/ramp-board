@@ -13,6 +13,7 @@ from ramp_database.testing import create_toy_db
 
 from ramp_database.tools.event import get_event
 from ramp_database.tools.submission import get_submissions
+from ramp_database.tools.submission import get_submission_by_id
 
 from ramp_engine.local import CondaEnvWorker
 from ramp_engine.dispatcher import Dispatcher
@@ -42,10 +43,12 @@ def test_integration_dispatcher(session_toy):
     dispatcher.launch()
 
     # the iris kit contain a submission which should fail for each user
-    submission = get_submissions(
+    submissions = get_submissions(
         session_toy, event_config['ramp']['event_name'], 'training_error'
     )
-    assert len(submission) == 2
+    assert len(submissions) == 2
+    submission = get_submission_by_id(session_toy, submissions[0][0])
+    assert 'SyntaxError' in submission.error_msg
 
 
 def test_unit_test_dispatcher(session_toy):
