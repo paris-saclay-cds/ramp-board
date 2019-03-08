@@ -38,7 +38,7 @@ def database_config():
 
 @pytest.fixture(scope='module')
 def ramp_config():
-    return ramp_config_template()
+    return read_config(ramp_config_template())
 
 
 @pytest.fixture
