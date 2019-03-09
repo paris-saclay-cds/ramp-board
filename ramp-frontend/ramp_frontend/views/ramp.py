@@ -428,6 +428,8 @@ def sandbox(event_name):
                         src=os.path.join(sandbox_submission.path, filename),
                         dst=os.path.join(new_submission.path, filename)
                     )
+                # we delayed the state of the submission until that we copy the file
+                new_submission.set_state('new')
             except DuplicateSubmissionError:
                 return redirect_to_sandbox(
                     event,

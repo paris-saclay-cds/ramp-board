@@ -92,6 +92,8 @@ def add_submission(session, event_name, team_name, submission_name,
         submission = Submission(
             name=submission_name, event_team=event_team, session=session
         )
+        # quick hotfix to delay the training of the submission
+        submission.set_state('check')
         for cv_fold in event.cv_folds:
             submission_on_cv_fold = SubmissionOnCVFold(submission=submission,
                                                        cv_fold=cv_fold)
