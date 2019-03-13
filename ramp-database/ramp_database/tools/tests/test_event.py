@@ -77,8 +77,8 @@ def session_toy_db():
 
 def test_check_problem(session_scope_function):
     ramp_configs = {
-        'iris': ramp_config_iris(),
-        'boston_housing': ramp_config_boston_housing()
+        'iris': read_config(ramp_config_iris()),
+        'boston_housing': read_config(ramp_config_boston_housing())
     }
     for problem_name, ramp_config in ramp_configs.items():
         setup_ramp_kit_ramp_data(ramp_config, problem_name)
@@ -194,8 +194,8 @@ def _check_event(session, event, event_name, event_title, event_is_public,
 
 def test_check_event(session_scope_function):
     ramp_configs = {
-        'iris': ramp_config_iris(),
-        'boston_housing': ramp_config_boston_housing()
+        'iris': read_config(ramp_config_iris()),
+        'boston_housing': read_config(ramp_config_boston_housing())
     }
     for problem_name, ramp_config in ramp_configs.items():
         setup_ramp_kit_ramp_data(ramp_config, problem_name)

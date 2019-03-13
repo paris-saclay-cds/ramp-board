@@ -122,7 +122,7 @@ def test_add_submission_create_new_submission(base_db):
     session = base_db
     config = ramp_config_template()
     event_name, username = _setup_sign_up(session)
-    ramp_config = generate_ramp_config(config)
+    ramp_config = generate_ramp_config(read_config(config))
 
     submission_name = 'random_forest_10_10'
     path_submission = os.path.join(
@@ -151,7 +151,7 @@ def test_add_submission_too_early_submission(base_db):
     session = base_db
     config = ramp_config_template()
     event_name, username = _setup_sign_up(session)
-    ramp_config = generate_ramp_config(config)
+    ramp_config = generate_ramp_config(read_config(config))
 
     # check that we have an awaiting time for the event
     event = (session.query(Event)
@@ -181,7 +181,7 @@ def test_make_submission_resubmission(base_db):
     session = base_db
     config = ramp_config_template()
     event_name, username = _setup_sign_up(session)
-    ramp_config = generate_ramp_config(config)
+    ramp_config = generate_ramp_config(read_config(config))
 
     # submitting the starting_kit which is used as the default submission for
     # the sandbox should raise an error
@@ -227,7 +227,7 @@ def test_add_submission_wrong_submission_files(base_db):
     session = base_db
     config = ramp_config_template()
     event_name, username = _setup_sign_up(session)
-    ramp_config = generate_ramp_config(config)
+    ramp_config = generate_ramp_config(read_config(config))
 
     submission_name = 'corrupted_submission'
     path_submission = os.path.join(
@@ -262,7 +262,7 @@ def test_submit_starting_kits(base_db):
     session = base_db
     config = ramp_config_iris()
     event_name, username = _setup_sign_up(session)
-    ramp_config = generate_ramp_config(config)
+    ramp_config = generate_ramp_config(read_config(config))
 
     submit_starting_kits(session, event_name, username,
                          ramp_config['ramp_kit_submissions_dir'])
