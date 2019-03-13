@@ -39,7 +39,7 @@ def deploy_ramp_event(config, event_config, setup_ramp_repo=True, force=False):
         setup_files_extension_type(session)
         if setup_ramp_repo:
             setup_ramp_kit_ramp_data(
-                ramp_config, ramp_config['problem_name'], force
+                read_config(event_config), ramp_config['problem_name'], force
             )
         else:
             # we do not clone the repository but we need to convert the
@@ -74,7 +74,7 @@ def deploy_ramp_event(config, event_config, setup_ramp_repo=True, force=False):
                 )
             if setup_ramp_repo:
                 setup_ramp_kit_ramp_data(
-                    ramp_config, ramp_config['problem_name'], force
+                    read_config(event_config), ramp_config['problem_name'], force
                 )
             add_problem(session, ramp_config['problem_name'],
                         ramp_config['ramp_kit_dir'],
