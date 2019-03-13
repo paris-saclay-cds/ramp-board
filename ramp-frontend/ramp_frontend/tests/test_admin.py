@@ -29,6 +29,7 @@ from ramp_frontend.testing import login_scope
 def client_session():
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
+    print('XXXXXXXXXXXXXXXXXXXX')
     try:
         deployment_dir = create_toy_db(database_config, ramp_config)
         flask_config = generate_flask_config(database_config)
@@ -36,6 +37,7 @@ def client_session():
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False
         with session_scope(database_config['sqlalchemy']) as session:
+            print('CREATE SESSION')
             yield app.test_client(), session
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)

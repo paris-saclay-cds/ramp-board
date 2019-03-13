@@ -1,2 +1,2 @@
 flake8 ramp-utils/
-pytest -rvsl ramp-utils/ramp_utils --cov=ramp-utils --cov-report=term-missing
+pytest -vsl ramp-utils/ramp_utils --cov=ramp-utils --cov-report=term-missing
