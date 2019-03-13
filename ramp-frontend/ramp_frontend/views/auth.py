@@ -54,7 +54,7 @@ def load_user(id):
 @mod.route("/login", methods=['GET', 'POST'])
 def login():
     """Login request."""
-    add_user_interaction(db.session, interaction='landing')
+    # add_user_interaction(db.session, interaction='landing')
 
     if flask_login.current_user.is_authenticated:
         logger.info('User already logged-in')
@@ -82,9 +82,9 @@ def login():
         db.session.commit()
         logger.info(u'User "{}" is logged in'
                     .format(flask_login.current_user.name))
-        add_user_interaction(
-            db.session, interaction='login', user=flask_login.current_user
-        )
+        # add_user_interaction(
+        #     db.session, interaction='login', user=flask_login.current_user
+        # )
         next_ = request.args.get('next')
         if next_ is None:
             next_ = url_for('ramp.problems')
@@ -98,7 +98,7 @@ def login():
 def logout():
     """Logout request."""
     user = flask_login.current_user
-    add_user_interaction(db.session, interaction='logout', user=user)
+    # add_user_interaction(db.session, interaction='logout', user=user)
     session['logged_in'] = False
     user.is_authenticated = False
     db.session.commit()

@@ -239,13 +239,13 @@ def test_update_event(client_session):
         assert event.min_duration_between_submissions == 0
 
 
-def test_user_interactions(client_session):
-    client, _ = client_session
+# def test_user_interactions(client_session):
+#     client, _ = client_session
 
-    with login_scope(client, 'test_iris_admin', 'test') as client:
-        rv = client.get('/user_interactions')
-        assert rv.status_code == 200
-        assert b'landing' in rv.data
+#     with login_scope(client, 'test_iris_admin', 'test') as client:
+#         rv = client.get('/user_interactions')
+#         assert rv.status_code == 200
+#         assert b'landing' in rv.data
 
 
 # TODO: To be tested when we implemented properly the leaderboard

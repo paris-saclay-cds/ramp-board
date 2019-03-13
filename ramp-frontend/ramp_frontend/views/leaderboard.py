@@ -42,10 +42,10 @@ def my_submissions(event_name):
             u'{}: no event named "{}"'
             .format(flask_login.current_user.firstname, event_name)
         )
-    add_user_interaction(
-        db.session, interaction='looking at my_submissions',
-        user=flask_login.current_user, event=event
-    )
+    # add_user_interaction(
+    #     db.session, interaction='looking at my_submissions',
+    #     user=flask_login.current_user, event=event
+    # )
     if not is_accessible_code(db.session, event_name,
                               flask_login.current_user.name):
         error_str = ('No access to my submissions for event {}. If you have '
@@ -91,12 +91,12 @@ def leaderboard(event_name):
         return redirect_to_user(
             u'{}: no event named "{}"'
             .format(flask_login.current_user.firstname, event_name))
-    add_user_interaction(
-        db.session,
-        interaction='looking at leaderboard',
-        user=flask_login.current_user,
-        event=event
-    )
+    # add_user_interaction(
+    #     db.session,
+    #     interaction='looking at leaderboard',
+    #     user=flask_login.current_user,
+    #     event=event
+    # )
 
     if is_accessible_leaderboard(db.session, event_name,
                                  flask_login.current_user.name):
@@ -151,12 +151,12 @@ def competition_leaderboard(event_name):
             u'{}: no event named "{}"'
             .format(flask_login.current_user.firstname, event_name)
         )
-    add_user_interaction(
-        db.session,
-        interaction='looking at leaderboard',
-        user=flask_login.current_user,
-        event=event
-    )
+    # add_user_interaction(
+    #     db.session,
+    #     interaction='looking at leaderboard',
+    #     user=flask_login.current_user,
+    #     event=event
+    # )
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     leaderboard_html = event.public_competition_leaderboard_html
     leaderboard_kwargs = dict(
@@ -195,12 +195,12 @@ def private_leaderboard(event_name):
              event.closing_timestamp > datetime.datetime.utcnow())):
         return redirect(url_for('ramp.problems'))
 
-    add_user_interaction(
-        db.session,
-        interaction='looking at private leaderboard',
-        user=flask_login.current_user,
-        event=event
-    )
+    # add_user_interaction(
+    #     db.session,
+    #     interaction='looking at private leaderboard',
+    #     user=flask_login.current_user,
+    #     event=event
+    # )
     leaderboard_html = event.private_leaderboard_html
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     if event.official_score_type.is_lower_the_better:
@@ -246,12 +246,12 @@ def private_competition_leaderboard(event_name):
              event.closing_timestamp > datetime.datetime.utcnow())):
         return redirect(url_for('ramp.problems'))
 
-    add_user_interaction(
-        db.session,
-        interaction='looking at private leaderboard',
-        user=flask_login.current_user,
-        event=event
-    )
+    # add_user_interaction(
+    #     db.session,
+    #     interaction='looking at private leaderboard',
+    #     user=flask_login.current_user,
+    #     event=event
+    # )
 
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     leaderboard_html = event.private_competition_leaderboard_html
