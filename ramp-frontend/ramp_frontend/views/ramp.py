@@ -420,14 +420,6 @@ def sandbox(event_name):
                                                 event_team.team.name,
                                                 new_submission_name,
                                                 sandbox_submission.path)
-                if os.path.exists(new_submission.path):
-                    shutil.rmtree(new_submission.path)
-                os.makedirs(new_submission.path)
-                for filename in new_submission.f_names:
-                    shutil.copy2(
-                        src=os.path.join(sandbox_submission.path, filename),
-                        dst=os.path.join(new_submission.path, filename)
-                    )
             except DuplicateSubmissionError:
                 return redirect_to_sandbox(
                     event,
