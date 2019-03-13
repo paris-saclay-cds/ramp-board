@@ -151,7 +151,7 @@ def test_add_submission_too_early_submission(base_db):
     session = base_db
     config = ramp_config_template()
     event_name, username = _setup_sign_up(session)
-    ramp_config = generate_ramp_config(config)
+    ramp_config = generate_ramp_config(read_config(config))
 
     # check that we have an awaiting time for the event
     event = (session.query(Event)
