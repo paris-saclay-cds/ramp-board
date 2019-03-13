@@ -131,6 +131,11 @@ def test_add_submission_create_new_submission(base_db):
     add_submission(session, event_name, username, submission_name,
                    path_submission)
     all_submissions = get_submissions(session, event_name, None)
+    # check that the submissions have been copied
+    for sub_id, _, _ in all_submissions:
+        sub = get_submission_by_id(session, sub_id)
+        assert os.path.exists(sub.path)
+        assert os.path.exists(os.path.join(sub.path, 'classifier.py'))
 
     # `sign_up_team` make a submission (sandbox) by user. This submission will
     # be the third submission.

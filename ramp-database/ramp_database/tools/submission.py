@@ -176,6 +176,14 @@ def add_submission(session, event_name, team_name, submission_name,
             )
             session.add(submission_file)
 
+    # copy the submission file in the submission folder
+    if os.path.exists(submission.path):
+        shutil.rmtree(submission.path)
+    os.makedirs(submission.path)
+    for filename in submission.f_names:
+        shutil.copy2(src=os.path.join(submission_path, filename),
+                     dst=os.path.join(submission.path, filename))
+
     # for remembering it in the sandbox view
     event_team.last_submission_name = submission_name
     session.commit()
@@ -830,13 +838,6 @@ def submit_starting_kits(session, event_name, team_name, path_submission):
                            else submission_name + '_test')
         submission = add_submission(session, event_name, team_name,
                                     submission_name, from_submission_path)
-        # copy the files
-        if os.path.exists(submission.path):
-            shutil.rmtree(submission.path)
-        os.makedirs(submission.path)
-        for filename in submission.f_names:
-            shutil.copy2(src=os.path.join(from_submission_path, filename),
-                         dst=os.path.join(submission.path, filename))
         logger.info('Copying the submission files into the deployment folder')
         logger.info('Adding {}'.format(submission))
     # revert the minimum duration between two submissions
