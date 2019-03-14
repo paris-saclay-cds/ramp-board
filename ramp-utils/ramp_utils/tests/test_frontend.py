@@ -14,7 +14,6 @@ from ramp_utils import generate_flask_config
 def test_generate_flask_config(config):
     flask_config = generate_flask_config(config)
     expected_config = {
-        'SECRET_KEY': 'abcdefghijkl',
         'WTF_CSRF_ENABLED': True,
         'LOG_FILENAME': 'None',
         'MAX_CONTENT_LENGTH': 1073741824,
