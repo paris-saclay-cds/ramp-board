@@ -3,6 +3,7 @@ import logging
 import click
 
 from ramp_utils import read_config
+from ramp_utils import generate_ramp_config
 from ramp_utils import generate_worker_config
 
 from ramp_engine.dispatcher import Dispatcher
@@ -46,9 +47,10 @@ def dispatcher(config, event_config, n_worker, hunger_policy, verbose):
             format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
             level=level, datefmt='%Y:%m:%d %H:%M:%S'
         )
-    config = read_config(config)
-    event_config = read_config(event_config)
-    worker_type = available_workers[event_config['worker']['worker_type']]
+    internal_event_config = read_config(event_config)
+    worker_type = available_workers[
+        internal_event_config['worker']['worker_type']
+    ]
     disp = Dispatcher(
         config=config, event_config=event_config, worker=worker_type,
         n_worker=n_worker, hunger_policy=hunger_policy

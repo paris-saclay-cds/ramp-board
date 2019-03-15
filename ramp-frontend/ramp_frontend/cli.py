@@ -28,6 +28,10 @@ def test_launch(config, port, host):
             host=host, processes=1, threaded=False)
 
 
+def launch_gunicorn(config):
+    pass
+
+
 def start():
     main()
 

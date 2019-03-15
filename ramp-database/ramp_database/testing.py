@@ -137,7 +137,7 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False):
         Whether or not to overwrite the RAMP kit and data repositories if they
         already exists.
     """
-    ramp_config = generate_ramp_config(ramp_config)
+    # ramp_config = generate_ramp_config(ramp_config)
     problem_kit_path = ramp_config['ramp_kit_dir']
     if os.path.exists(problem_kit_path):
         if not force:
