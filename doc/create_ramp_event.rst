@@ -56,4 +56,4 @@ Launch the dispatcher to train and evaluate submissions
 At this stage, you can launch the RAMP dispatcher which will be in charge of
 training, evaluating submissions, and updating the database::
 
-    ramp launch dispatcher --event-config events/iris/config.yml --hunger-policy sleep -vv
+    ramp launch dispatcher --event-config events/iris_test/config.yml --hunger-policy sleep -vv
