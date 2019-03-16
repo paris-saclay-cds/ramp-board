@@ -52,8 +52,9 @@ You can use ``conda`` instead of ``pip`` using the ``environment.yml`` file::
 
     conda env update --file environment.yml
 
-The above command updates the base environment. If you want to keep the
-code to run ramp in a separate environment, you can also do::
+The above command updates the base environment or the environment in which you
+ran the command. If you want to keep the code to run ramp in a separate
+environment, you can also do::
 
     conda env create -f environment.yml
 
@@ -87,7 +88,9 @@ can use::
 Test
 ====
 
-You can run the test using ``pytest`` from the root direcory::
+If you are developing for the RAMP package, you will be interested about
+testing your new feature. You can run the test using ``pytest`` from the root
+direcory::
 
     pytest -vsl .
 
