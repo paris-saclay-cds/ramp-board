@@ -131,13 +131,14 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False):
     ----------
     ramp_config : dict
         The configuration file containing the information about a RAMP event.
+        It corresponds to the configuration generated with
+        :func:`ramp_utils.generate_ramp_config`.
     problem_name : str
         The name of the problem.
     force : bool, default is False
         Whether or not to overwrite the RAMP kit and data repositories if they
         already exists.
     """
-    # ramp_config = generate_ramp_config(ramp_config)
     problem_kit_path = ramp_config['ramp_kit_dir']
     if os.path.exists(problem_kit_path):
         if not force:
@@ -245,8 +246,8 @@ def add_problems(session):
         'boston_housing': read_config(ramp_config_boston_housing())
     }
     for problem_name, ramp_config in ramp_configs.items():
-        setup_ramp_kit_ramp_data(ramp_config, problem_name)
         internal_ramp_config = generate_ramp_config(ramp_config)
+        setup_ramp_kit_ramp_data(internal_ramp_config, problem_name)
         add_problem(session, problem_name,
                     internal_ramp_config['ramp_kit_dir'],
                     internal_ramp_config['ramp_data_dir'])

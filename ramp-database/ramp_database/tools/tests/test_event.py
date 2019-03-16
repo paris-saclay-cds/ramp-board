@@ -81,8 +81,8 @@ def test_check_problem(session_scope_function):
         'boston_housing': read_config(ramp_config_boston_housing())
     }
     for problem_name, ramp_config in ramp_configs.items():
-        setup_ramp_kit_ramp_data(ramp_config, problem_name)
         internal_ramp_config = generate_ramp_config(ramp_config)
+        setup_ramp_kit_ramp_data(internal_ramp_config, problem_name)
         add_problem(session_scope_function, problem_name,
                     internal_ramp_config['ramp_kit_dir'],
                     internal_ramp_config['ramp_data_dir'])
@@ -198,8 +198,8 @@ def test_check_event(session_scope_function):
         'boston_housing': read_config(ramp_config_boston_housing())
     }
     for problem_name, ramp_config in ramp_configs.items():
-        setup_ramp_kit_ramp_data(ramp_config, problem_name)
         internal_ramp_config = generate_ramp_config(ramp_config)
+        setup_ramp_kit_ramp_data(internal_ramp_config, problem_name)
         add_problem(session_scope_function, problem_name,
                     internal_ramp_config['ramp_kit_dir'],
                     internal_ramp_config['ramp_data_dir'])
