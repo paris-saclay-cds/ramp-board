@@ -140,6 +140,9 @@ def test_add_submission_create_new_submission(base_db):
     # `sign_up_team` make a submission (sandbox) by user. This submission will
     # be the third submission.
     assert len(all_submissions) == 3
+    # check that the number of submissions for an event was updated
+    event = session.query(Event).filter(Event.name == event_name).one_or_none()
+    assert event.n_submissions == 1
     submission = get_submission_by_name(session, event_name, username,
                                         submission_name)
     assert submission.name == submission_name

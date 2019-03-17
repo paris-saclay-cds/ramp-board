@@ -175,6 +175,7 @@ def add_submission(session, event_name, team_name, submission_name,
                 submission_file_type_extension=type_extension
             )
             session.add(submission_file)
+            event.set_n_submissions()
 
     # copy the submission file in the submission folder
     if os.path.exists(submission.path):
