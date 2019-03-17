@@ -26,3 +26,4 @@ dependencies:
     - backports.tempfile  # remove when dropping Python 2 support
     - git+https://github.com/paris-saclay-cds/ramp-workflow
     - Flask-Mail
+    - sphinx-click

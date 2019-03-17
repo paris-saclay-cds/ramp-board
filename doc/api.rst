@@ -1,6 +1,6 @@
-###############
-RAMP bundle API
-###############
+########
+RAMP API
+########
 
 This is the full API documentation of the different RAMP packages.
 
@@ -8,7 +8,7 @@ RAMP database
 =============
 
 :mod:`ramp_database.model`: the database model
----------------------------------------
+----------------------------------------------
 
 .. automodule:: ramp_database.model
     :no-members:
@@ -86,7 +86,7 @@ Relationship tables
    model.WorkflowElementType
 
 :mod:`ramp_database.tools`: the tools to communicate with the database
----------------------------------------------------------------
+----------------------------------------------------------------------
 
 .. automodule:: ramp_database.tools
     :no-members:
@@ -257,7 +257,7 @@ Frontend-related database tools
    tools.frontend.is_user_signed_up
 
 :mod:`ramp_database.exceptions`: type of errors raise by the database
---------------------------------------------------------------
+---------------------------------------------------------------------
 
 .. automodule:: ramp_database.exceptions
     :no-members:
@@ -278,7 +278,7 @@ Frontend-related database tools
    exceptions.UnknownStateError
 
 :mod:`ramp_database.testing`: functionalities to test database model and tools
------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 .. automodule:: ramp_database.testing
     :no-members:
@@ -302,7 +302,7 @@ Frontend-related database tools
    testing.submit_all_starting_kits
 
 :mod:`ramp_database.utils`: setup and connect RAMP database
-----------------------------------------------------
+-----------------------------------------------------------
 
 .. automodule:: ramp_database.utils
     :no-members:
@@ -361,7 +361,7 @@ The RAMP frontend is the development of the website. It uses extensively Flask.
    create_app
 
 :mod:`ramp_frontend.views`: views used on the frontend to interact with the user
----------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 .. automodule:: ramp_frontend.views
     :no-members:
@@ -463,7 +463,7 @@ Utilities
    visualization.score_plot
 
 :mod:`ramp_frontend.forms`: forms used in the website
-------------------------------------------------
+-----------------------------------------------------
 
 .. automodule:: ramp_frontend.forms
     :no-members:
@@ -488,7 +488,7 @@ Utilities
    forms.AskForEventForm
 
 :mod:`ramp_frontend.testing`: functionalities to test the frontend
--------------------------------------------------------------
+------------------------------------------------------------------
 
 .. automodule:: ramp_frontend.testing
     :no-members:
@@ -505,7 +505,7 @@ Utilities
    testing.login_scope
 
 :mod:`ramp_frontend.utils`: Utilities to ease sending email
-------------------------------------------------------
+-----------------------------------------------------------
 
 .. automodule:: ramp_frontend.utils
     :no-members:

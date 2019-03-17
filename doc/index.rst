@@ -21,6 +21,7 @@ Welcome to RAMP documentation!
 
    user_guide
    api
+   cli
 
 ..
    .. toctree::
