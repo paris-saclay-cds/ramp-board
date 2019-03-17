@@ -1,6 +1,6 @@
 """
-The :mod:`ramp_database.exceptions` module include all custom warnings and errors
-used in ``ramp-database``.
+The :mod:`ramp_database.exceptions` module include all custom warnings and
+errors used in ``ramp-database``.
 """
 
 __all__ = [
