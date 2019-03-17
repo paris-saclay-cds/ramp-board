@@ -139,6 +139,7 @@ def sign_up():
             )
         except NameClashError as e:
             flash(str(e))
+            logger.info(str(e))
             return render_template('index.html')
         admin_users = User.query.filter_by(access_level='admin')
         for admin in admin_users:
