@@ -4,8 +4,8 @@ Useful tips when running a RAMP
 
 When running a RAMP challenge, you might need one of the following tips.
 
-1. How to restart a failed submission manually
-----------------------------------------------
+How to restart a failed submission manually
+-------------------------------------------
 
 If for some reason, one of the submission failed and you would like to restart
 re-evaluate this submission, you should change the state of this submission.
