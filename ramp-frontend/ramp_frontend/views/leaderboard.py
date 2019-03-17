@@ -14,6 +14,7 @@ from ramp_database.tools.frontend import is_admin
 from ramp_database.tools.frontend import is_accessible_code
 from ramp_database.tools.frontend import is_accessible_event
 from ramp_database.tools.frontend import is_accessible_leaderboard
+from ramp_database.tools.frontend import is_user_signed_up
 from ramp_database.tools.user import add_user_interaction
 from ramp_database.tools.team import get_event_team_by_name
 
@@ -158,6 +159,10 @@ def competition_leaderboard(event_name):
         event=event
     )
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
+    approved = is_user_signed_up(
+        db.session, event_name, flask_login.current_user.name
+    )
+    asked = approved
     leaderboard_html = event.public_competition_leaderboard_html
     leaderboard_kwargs = dict(
         leaderboard=leaderboard_html,
@@ -165,7 +170,9 @@ def competition_leaderboard(event_name):
         sorting_column_index=0,
         sorting_direction='asc',
         event=event,
-        admin=admin
+        admin=admin,
+        asked=asked,
+        approved=approved
     )
 
     return render_template('leaderboard.html', **leaderboard_kwargs)
@@ -208,6 +215,10 @@ def private_leaderboard(event_name):
     else:
         sorting_direction = 'desc'
 
+    approved = is_user_signed_up(
+        db.session, event_name, flask_login.current_user.name
+    )
+    asked = approved
     template = render_template(
         'leaderboard.html',
         leaderboard_title='Leaderboard',
@@ -216,7 +227,9 @@ def private_leaderboard(event_name):
         sorting_direction=sorting_direction,
         event=event,
         private=True,
-        admin=admin
+        admin=admin,
+        asked=asked,
+        approved=approved
     )
 
     return template
@@ -254,6 +267,10 @@ def private_competition_leaderboard(event_name):
     )
 
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
+    approved = is_user_signed_up(
+        db.session, event_name, flask_login.current_user.name
+    )
+    asked = approved
     leaderboard_html = event.private_competition_leaderboard_html
 
     leaderboard_kwargs = dict(
@@ -262,7 +279,9 @@ def private_competition_leaderboard(event_name):
         sorting_column_index=0,
         sorting_direction='asc',
         event=event,
-        admin=admin
+        admin=admin,
+        asked=asked,
+        approved=approved
     )
 
     return render_template('leaderboard.html', **leaderboard_kwargs)
