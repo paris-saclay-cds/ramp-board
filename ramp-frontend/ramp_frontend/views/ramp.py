@@ -99,6 +99,8 @@ def problem(problem_name):
         The name of a problem.
     """
     current_problem = get_problem(db.session, problem_name)
+    user = (flask_login.current_user
+            if flask_login.current_user.is_authenticated else None)
     admin = user.access_level == 'admin'
     if current_problem:
         if flask_login.current_user.is_authenticated:
