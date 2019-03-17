@@ -62,7 +62,9 @@ def generate_ramp_config(event_config, database_config=None):
                 'database as well, by assigning "database_config".'
             )
         config = read_config(event_config, filter_section='ramp')
-        path_config = os.path.dirname(database_config)
+        path_config = os.path.dirname(
+            os.path.abspath(database_config)
+        )
     else:
         if 'ramp' in event_config.keys():
             config = event_config['ramp']

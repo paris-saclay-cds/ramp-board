@@ -5,6 +5,8 @@ import os
 import sys
 import time
 
+import six
+
 PYTHON_MAJOR_VERSION = sys.version_info[0]
 if PYTHON_MAJOR_VERSION >= 3:
     from queue import Queue
@@ -29,7 +31,9 @@ from ramp_database.tools.leaderboard import update_leaderboards
 
 from ramp_database.utils import session_scope
 
+from ramp_utils import generate_ramp_config
 from ramp_utils import generate_worker_config
+from ramp_utils import read_config
 
 from .local import CondaEnvWorker
 
@@ -46,9 +50,9 @@ class Dispatcher(object):
 
     Parameters
     ----------
-    config : dict
+    config : dict or str
         A configuration YAML file containing the inforation about the database.
-    event_config : dict,
+    event_config : dict or str
         A RAMP configuration YAML file with information regarding the worker
         and the ramp event.
     worker : Worker, default=CondaEnvWorker
@@ -79,9 +83,15 @@ class Dispatcher(object):
         self._processing_worker_queue = LifoQueue(maxsize=self.n_worker)
         self._processed_submission_queue = Queue()
         # split the different configuration required
-        self._database_config = config['sqlalchemy']
-        self._ramp_config = event_config['ramp']
-        self._worker_config = generate_worker_config(event_config)
+        if (isinstance(config, six.string_types) and
+                isinstance(event_config, six.string_types)):
+            self._database_config = read_config(config,
+                                                filter_section='sqlalchemy')
+            self._ramp_config = generate_ramp_config(event_config, config)
+        else:
+            self._database_config = config['sqlalchemy']
+            self._ramp_config = event_config['ramp']
+        self._worker_config = generate_worker_config(event_config, config)
 
     def fetch_from_db(self, session):
         """Fetch the submission from the database and create the workers."""

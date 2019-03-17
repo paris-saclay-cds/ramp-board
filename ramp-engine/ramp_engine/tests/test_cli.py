@@ -39,5 +39,6 @@ def test_worker():
     runner = CliRunner()
     result = runner.invoke(main, ["worker",
                                   "--config", ramp_config_template(),
+                                  "--event-config", ramp_config_template(),
                                   "--submission", "starting_kit"])
     assert result.exit_code == 0, result.output
