@@ -23,6 +23,8 @@ from ramp_database.tools.user import set_user_by_instance
 
 from ramp_database.model import User
 
+from ramp_database.exceptions import NameClashError
+
 from ramp_frontend import db
 from ramp_frontend import login_manager
 
@@ -117,23 +119,27 @@ def sign_up():
 
     form = UserCreateProfileForm()
     if form.validate_on_submit():
-        user = add_user(
-            session=db.session,
-            name=form.user_name.data,
-            password=form.password.data,
-            lastname=form.lastname.data,
-            firstname=form.firstname.data,
-            email=form.email.data,
-            linkedin_url=form.linkedin_url.data,
-            twitter_url=form.twitter_url.data,
-            facebook_url=form.facebook_url.data,
-            google_url=form.google_url.data,
-            github_url=form.github_url.data,
-            website_url=form.website_url.data,
-            bio=form.bio.data,
-            is_want_news=form.is_want_news.data,
-            access_level='asked'
-        )
+        try:
+            user = add_user(
+                session=db.session,
+                name=form.user_name.data,
+                password=form.password.data,
+                lastname=form.lastname.data,
+                firstname=form.firstname.data,
+                email=form.email.data,
+                linkedin_url=form.linkedin_url.data,
+                twitter_url=form.twitter_url.data,
+                facebook_url=form.facebook_url.data,
+                google_url=form.google_url.data,
+                github_url=form.github_url.data,
+                website_url=form.website_url.data,
+                bio=form.bio.data,
+                is_want_news=form.is_want_news.data,
+                access_level='asked'
+            )
+        except NameClashError as e:
+            flash(str(e))
+            return render_template('index.html')
         admin_users = User.query.filter_by(access_level='admin')
         for admin in admin_users:
             subject = 'Approve registration of {}'.format(
