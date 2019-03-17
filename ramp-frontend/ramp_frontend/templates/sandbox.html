@@ -79,12 +79,12 @@
     <div class="card-header">
       <div class="card-title">
           <div class="title">
-              Edit and save your code!
+              Edit your submission
           </div>
       </div>
     </div>
     <div class="card-body">
-      <form class="ui form" method="post" action="" name="save">
+      <form class="ui form" method="post" action="" name="save" id="save">
             {{ code_form.hidden_tag() }}
             <div>
                 {% for name_code in code_form.names_codes %}
@@ -94,7 +94,7 @@
                     </div>
                 {% endfor %}
 				&nbsp; <br>
-                <center><p><font color="#F17670"><strong>Don't forget to save the files!</strong></font></p></center>
+                <center><p>Save your submission for later</p></center>
                 <center><input type="submit" value="Save" class="ui submit button"></center>
             </div>
       </form>
@@ -180,9 +180,11 @@
 	    }
 	{% endfor %}
 	if (modif == 1) {
-	     return	confirm('You certainly forgot to save your files! \n- If you do not want to save them, click on OK. \n- If you forgot to save them, click on Cancel, save your files and submit again!');
- } 
-  });  
+    $('#save').submit();
+    $('#formSubmit').submit()
+	     // return	confirm('You certainly forgot to save your files! \n- If you do not want to save them, click on OK. \n- If you forgot to save them, click on Cancel, save your files and submit again!');
+ }
+  });
 </script>
 <script>
 $(function () {

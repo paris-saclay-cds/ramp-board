@@ -411,7 +411,6 @@ def sandbox(event_name):
                 new_submission_name.encode('ascii')
             except Exception as e:
                 return redirect_to_sandbox(event, u'Error: {}'.format(e))
-
             try:
                 new_submission = add_submission(db.session, event_name,
                                                 event_team.team.name,
@@ -448,11 +447,6 @@ def sandbox(event_name):
                                flask_login.current_user.name,
                                new_submission.name, new_submission.path)
                     send_mail(admin, subject, body)
-            flash(u'{} submitted {} for {}.'
-                  .format(flask_login.current_user.firstname,
-                          new_submission.name,
-                          event_team),
-                  category='Submission')
 
             add_user_interaction(
                 db.session,
@@ -462,7 +456,13 @@ def sandbox(event_name):
                 submission=new_submission
             )
 
-            return redirect(u'/credit/{}'.format(new_submission.hash_))
+            return redirect_to_sandbox(
+                event,
+                u'{} submitted {} for {}'
+                .format(flask_login.current_user.firstname,
+                        new_submission.name, event_team),
+                is_error=False, category='Submission'
+            )
 
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     return render_template(
