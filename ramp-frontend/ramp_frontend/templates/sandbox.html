@@ -94,7 +94,7 @@
                     </div>
                 {% endfor %}
 				&nbsp; <br>
-                <center><p>Save your submission for later</p></center>
+                <center><p><strong>Save your submission for later</strong></p></center>
                 <center><input type="submit" value="Save" class="ui submit button"></center>
             </div>
       </form>
@@ -174,7 +174,7 @@
   $('#formSubmit').submit(function() {
 	var modif = 0;
 	{% for name_code in code_form.names_codes %}
-	    var origin_code = document.getElementById(id="{{ name_code[0] }}").innerHTML; 
+	    var origin_code = document.getElementById(id="{{ name_code[0] }}").innerHTML;
             if (editor_{{ name_code[0] }}.getValue() != origin_code) {
                 modif = 1;
 	    }
@@ -182,8 +182,7 @@
 	if (modif == 1) {
     $('#save').submit();
     $('#formSubmit').submit()
-	     // return	confirm('You certainly forgot to save your files! \n- If you do not want to save them, click on OK. \n- If you forgot to save them, click on Cancel, save your files and submit again!');
- }
+  }
   });
 </script>
 <script>

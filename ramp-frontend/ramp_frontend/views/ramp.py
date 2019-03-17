@@ -78,13 +78,15 @@ def problems():
     """Landing page showing all the RAMP problems."""
     user = (flask_login.current_user
             if flask_login.current_user.is_authenticated else None)
+    admin = user.access_level == 'admin'
     add_user_interaction(
         db.session, interaction='looking at problems', user=user
     )
 
     # problems = Problem.query.order_by(Problem.id.desc())
     return render_template('problems.html',
-                           problems=get_problem(db.session, None))
+                           problems=get_problem(db.session, None),
+                           admin=admin)
 
 
 @mod.route("/problems/<problem_name>")
@@ -97,6 +99,7 @@ def problem(problem_name):
         The name of a problem.
     """
     current_problem = get_problem(db.session, problem_name)
+    admin = user.access_level == 'admin'
     if current_problem:
         if flask_login.current_user.is_authenticated:
             add_user_interaction(
@@ -117,7 +120,7 @@ def problem(problem_name):
         with codecs.open(description_f_name, 'r', 'utf-8') as description_file:
             description = description_file.read()
         return render_template('problem.html', problem=current_problem,
-                               description=description)
+                               description=description, admin=admin)
     else:
         return redirect_to_user(u'Problem {} does not exist'
                                 .format(problem_name), is_error=True)
