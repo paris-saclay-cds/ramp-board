@@ -318,14 +318,11 @@ def sandbox(event_name):
                         )
             except Exception as e:
                 return redirect_to_sandbox(event, u'Error: {}'.format(e))
-            return render_template(
-                'sandbox.html',
-                submission_names=sandbox_submission.f_names,
-                code_form=code_form,
-                submit_form=submit_form,
-                upload_form=upload_form,
-                event=event,
-                admin=admin
+            return redirect_to_sandbox(
+                event,
+                'You submission has been saved. You can safely comeback to '
+                'your sandbox later.',
+                is_error=False, category='File saved'
             )
 
         elif request.files:
