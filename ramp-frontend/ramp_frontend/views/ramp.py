@@ -78,7 +78,7 @@ def problems():
     """Landing page showing all the RAMP problems."""
     user = (flask_login.current_user
             if flask_login.current_user.is_authenticated else None)
-    admin = user.access_level == 'admin'
+    admin = user.access_level == 'admin' if user is not None else False
     add_user_interaction(
         db.session, interaction='looking at problems', user=user
     )
@@ -101,7 +101,7 @@ def problem(problem_name):
     current_problem = get_problem(db.session, problem_name)
     user = (flask_login.current_user
             if flask_login.current_user.is_authenticated else None)
-    admin = user.access_level == 'admin'
+    admin = user.access_level == 'admin' if user is not None else False
     if current_problem:
         if flask_login.current_user.is_authenticated:
             add_user_interaction(
