@@ -1,3 +1,4 @@
+set -e
 cd $HOME
 mkdir ramp_deployment
 cd ramp_deployment
@@ -31,5 +32,7 @@ worker:
     worker_type: conda
     conda_env: ramp-iris" > events/iris_test/config.yml
 ramp setup deploy-event --event-config events/iris_test/config.yml
+ramp-database approve-user --login admin_user
+ramp-database sign-up-team --event iris_test --team admin_user
 ramp database add-submission --event iris_test --team admin_user --submission my_submission --path "$HOME/ramp_deployment/ramp-kits/iris/submissions/random_forest_10_10"
 ramp launch dispatcher --event-config events/iris_test/config.yml -vv
