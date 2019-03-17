@@ -12,8 +12,8 @@ conda update --yes --quiet conda
 # create the environment
 conda env create --file environment.yml
 source activate testenv
-conda install --yes sphinx sphinx_rtd_theme numpydoc graphviz sphinx-click
-pip install eralchemy
+conda install --yes sphinx sphinx_rtd_theme numpydoc graphviz
+pip install eralchemy sphinx-click
 
 # Build and install scikit-learn in dev mode
 make inplace
