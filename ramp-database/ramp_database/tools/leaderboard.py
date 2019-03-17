@@ -331,7 +331,7 @@ def get_leaderboard(session, leaderboard_type, event_name, user_name=None,
     return df_html
 
 
-def update_leaderboards(session, event_name):
+def update_leaderboards(session, event_name, pending_only=False):
     """Update the leaderboards for a given event.
 
     Parameters
@@ -340,33 +340,39 @@ def update_leaderboards(session, event_name):
         The session to directly perform the operation on the database.
     event_name : str
         The event name.
+    pending_only : bool, default is False
+        Whether or not to update the whole leaderboards or only the pending
+        submissions. You can turn this option to True when adding a new
+        submission in the database.
     """
     event = session.query(Event).filter_by(name=event_name).one()
-    event.private_leaderboard_html = get_leaderboard(
-        session, 'private', event_name
-    )
-    event.public_leaderboard_html_with_links = get_leaderboard(
-        session, 'public', event_name
-    )
-    event.public_leaderboard_html_no_links = get_leaderboard(
-        session, 'public', event_name, with_links=False
-    )
-    event.failed_leaderboard_html = get_leaderboard(
-        session, 'failed', event_name
-    )
+    if not pending_only:
+        event.private_leaderboard_html = get_leaderboard(
+            session, 'private', event_name
+        )
+        event.public_leaderboard_html_with_links = get_leaderboard(
+            session, 'public', event_name
+        )
+        event.public_leaderboard_html_no_links = get_leaderboard(
+            session, 'public', event_name, with_links=False
+        )
+        event.failed_leaderboard_html = get_leaderboard(
+            session, 'failed', event_name
+        )
+        event.public_competition_leaderboard_html = get_leaderboard(
+            session, 'public competition', event_name
+        )
+        event.private_competition_leaderboard_html = get_leaderboard(
+            session, 'private competition', event_name
+        )
     event.new_leaderboard_html = get_leaderboard(
         session, 'new', event_name
-    )
-    event.public_competition_leaderboard_html = get_leaderboard(
-        session, 'public competition', event_name
-    )
-    event.private_competition_leaderboard_html = get_leaderboard(
-        session, 'private competition', event_name
     )
     session.commit()
 
 
-def update_user_leaderboards(session, event_name, user_name):
+def update_user_leaderboards(session, event_name, user_name,
+                             pending_only=False):
     """Update the of a user leaderboards for a given event.
 
     Parameters
@@ -377,21 +383,26 @@ def update_user_leaderboards(session, event_name, user_name):
         The event name.
     user_name : str
         The user name. If None, scores from all users will be queried.
+    pending_only : bool, default is False
+        Whether or not to update the whole leaderboards or only the pending
+        submissions. You can turn this option to True when adding a new
+        submission in the database.
     """
     event_team = get_event_team_by_name(session, event_name, user_name)
-    event_team.leaderboard_html = get_leaderboard(
-        session, 'public', event_name, user_name
-    )
-    event_team.failed_leaderboard_html = get_leaderboard(
-        session, 'failed', event_name, user_name
-    )
+    if not pending_only:
+        event_team.leaderboard_html = get_leaderboard(
+            session, 'public', event_name, user_name
+        )
+        event_team.failed_leaderboard_html = get_leaderboard(
+            session, 'failed', event_name, user_name
+        )
     event_team.new_leaderboard_html = get_leaderboard(
         session, 'new', event_name, user_name
     )
     session.commit()
 
 
-def update_all_user_leaderboards(session, event_name):
+def update_all_user_leaderboards(session, event_name, pending_only=False):
     """Update the leaderboards for all users for a given event.
 
     Parameters
@@ -400,17 +411,22 @@ def update_all_user_leaderboards(session, event_name):
         The session to directly perform the operation on the database.
     event_name : str
         The event name.
+    pending_only : bool, default is False
+        Whether or not to update the whole leaderboards or only the pending
+        submissions. You can turn this option to True when adding a new
+        submission in the database.
     """
     event = session.query(Event).filter_by(name=event_name).one()
     event_teams = session.query(EventTeam).filter_by(event=event).all()
     for event_team in event_teams:
         user_name = event_team.team.name
-        event_team.leaderboard_html = get_leaderboard(
-            session, 'public', event_name, user_name
-        )
-        event_team.failed_leaderboard_html = get_leaderboard(
-            session, 'failed', event_name, user_name
-        )
+        if not pending_only:
+            event_team.leaderboard_html = get_leaderboard(
+                session, 'public', event_name, user_name
+            )
+            event_team.failed_leaderboard_html = get_leaderboard(
+                session, 'failed', event_name, user_name
+            )
         event_team.new_leaderboard_html = get_leaderboard(
             session, 'new', event_name, user_name
         )
