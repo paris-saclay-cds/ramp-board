@@ -78,13 +78,15 @@ def problems():
     """Landing page showing all the RAMP problems."""
     user = (flask_login.current_user
             if flask_login.current_user.is_authenticated else None)
+    admin = user.access_level == 'admin' if user is not None else False
     add_user_interaction(
         db.session, interaction='looking at problems', user=user
     )
 
     # problems = Problem.query.order_by(Problem.id.desc())
     return render_template('problems.html',
-                           problems=get_problem(db.session, None))
+                           problems=get_problem(db.session, None),
+                           admin=admin)
 
 
 @mod.route("/problems/<problem_name>")
@@ -97,6 +99,9 @@ def problem(problem_name):
         The name of a problem.
     """
     current_problem = get_problem(db.session, problem_name)
+    user = (flask_login.current_user
+            if flask_login.current_user.is_authenticated else None)
+    admin = user.access_level == 'admin' if user is not None else False
     if current_problem:
         if flask_login.current_user.is_authenticated:
             add_user_interaction(
@@ -117,7 +122,7 @@ def problem(problem_name):
         with codecs.open(description_f_name, 'r', 'utf-8') as description_file:
             description = description_file.read()
         return render_template('problem.html', problem=current_problem,
-                               description=description)
+                               description=description, admin=admin)
     else:
         return redirect_to_user(u'Problem {} does not exist'
                                 .format(problem_name), is_error=True)
@@ -411,7 +416,6 @@ def sandbox(event_name):
                 new_submission_name.encode('ascii')
             except Exception as e:
                 return redirect_to_sandbox(event, u'Error: {}'.format(e))
-
             try:
                 new_submission = add_submission(db.session, event_name,
                                                 event_team.team.name,
@@ -448,11 +452,6 @@ def sandbox(event_name):
                                flask_login.current_user.name,
                                new_submission.name, new_submission.path)
                     send_mail(admin, subject, body)
-            flash(u'{} submitted {} for {}.'
-                  .format(flask_login.current_user.firstname,
-                          new_submission.name,
-                          event_team),
-                  category='Submission')
 
             add_user_interaction(
                 db.session,
@@ -462,7 +461,13 @@ def sandbox(event_name):
                 submission=new_submission
             )
 
-            return redirect(u'/credit/{}'.format(new_submission.hash_))
+            return redirect_to_sandbox(
+                event,
+                u'{} submitted {} for {}'
+                .format(flask_login.current_user.firstname,
+                        new_submission.name, event_team),
+                is_error=False, category='Submission'
+            )
 
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     return render_template(
