@@ -154,7 +154,7 @@ def user_event(event_name):
     if event:
         if app.config['TRACK_USER_INTERACTION']:
             add_user_interaction(db.session, interaction='looking at event',
-                                event=event, user=flask_login.current_user)
+                                 event=event, user=flask_login.current_user)
         description_f_name = os.path.join(
             event.problem.path_ramp_kit,
             '{}_starting_kit.html'.format(event.problem.name)
@@ -194,7 +194,7 @@ def sign_up_for_event(event_name):
                                         event_name))
     if app.config['TRACK_USER_INTERACTION']:
         add_user_interaction(db.session, interaction='signing up at event',
-                            user=flask_login.current_user, event=event)
+                             user=flask_login.current_user, event=event)
 
     ask_sign_up_team(db.session, event.name, flask_login.current_user.name)
     if event.is_controled_signup:
