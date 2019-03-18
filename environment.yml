@@ -11,8 +11,7 @@ dependencies:
   - Flask-SQLAlchemy
   - Flask-Wtf
   - gitpython
-  - ipykernel
-  - jupyter
+  - nbconvert
   - numpy
   - pandas
   - pyyaml

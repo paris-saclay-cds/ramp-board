@@ -1,3 +1,5 @@
+.. _all_workers:
+
 Notes regarding the RAMP workers
 ================================
 
@@ -25,9 +27,33 @@ Available workers:
   ``worker_type: aws``, and for more details on the setup and configuration,
   see below.
 
+.. _conda_env_worker:
 
-Running a submissions on Amazon Web Services (AWS)
---------------------------------------------------
+Running submissions with a worker using Conda environment
+---------------------------------------------------------
+
+As previously mentioned, the :class:`ramp_engine.local.CondaEnvWorker` workers
+rely on Conda environment to execute the submission.
+
+For instance, if you would like to run the `Iris challenge
+<https://github.com/ramp-kits/iris>`_, the starting kit requires numpy, pandas,
+and scikit-learn. Thus, the environment used to run the initial submission
+should have these libraries installed.
+
+Subsequently, you can create such environment and use it in the event
+configuration::
+
+      conda create --name ramp-iris numpy pandas scikit-learn
+
+If you are using a ramp-kit from the `Paris-Saclay CDS
+<https://github.com/ramp-kits>`_, each kit will provide either an
+``environment.yml`` or ``ami_environment.yml`` file which you can use to create
+the environment::
+
+      conda create --name ramp-iris --file environment.yml
+
+Running submissions on Amazon Web Services (AWS)
+------------------------------------------------
 
 The AWS worker will train and evaluate the submissions on an AWS instance,
 which can be useful if the server itself has not much resources or if you need
@@ -107,3 +133,101 @@ A very short how-to for creating such an AMI manually:
           key_path: <path to pem file corresponding to user name>
           remote_ramp_kit_folder : /home/ubuntu/ramp-kits/iris
           memory_profiling : false
+
+Create your own worker
+----------------------
+
+Currently, the choice of workers in RAMP is quite limited. You might want to
+create your own worker for your platform (Openstack, Azure, etc.). This section
+illustrates how to implement your own worker.
+
+Your new worker should subclass :class:`ramp_engine.base.BaseWorker`. This
+class implement some basic functionalities which you should use.
+
+The ``setup`` and ``teardown`` functions
+........................................
+
+The ``setup`` function will initialize the worker before it can be used, e.g.
+activate the right conda environment. Your worker should implement this class
+and call ``super`` at the end of it. Indeed, the base class is in charge of
+updating the status of the worker and logging some information. Thus, your
+function should look like::
+
+      def setup(self):
+            # implement some initialization for instance launch an
+            # Openstack instance
+            assert True
+            # call the base class to update the status and log
+            super().setup(self)
+
+Similarly, you might need to make some operation to release the worker. Then,
+the function ``teardown`` is in charge of this. It should be called similarly
+to the ``setup`` function::
+
+      def teardown(self):
+            # clean some jobs done by the worker
+            # ...
+            # call the base class to update the status and log
+            super().teardown(self)
+
+The ``launch_submission`` and ``collect_results`` functions
+...........................................................
+
+The actual job of the worker should be implemented in ``launch_submission`` in
+charge of running a submission and ``collect_results`` in charge of collecting
+and paste them in the location indicated by the dispatcher. As for the other
+previous functions, you should call ``super`` at the end of the processing to
+update the status of the worker::
+
+      def launch_submission(self):
+            # launch ramp test --submission <sub> --save-output on the Openstack
+            # instance
+            ...
+            # call the base class to update the status and log
+            super().launch_submission(self)
+
+Once a submission is trained, the ``ramp test`` command line would store the
+results and you should upload those in the directory indicated by the
+dispatcher::
+
+      def collect_results(self):
+            # the base class will be in charge of checking that the state of
+            # the worker is fine
+            super().collect_results(self)
+            # write the prediction and logs at the location indicated by the
+            # dispatcher (given by the config file)
+            log_output = stdout + b'\n\n' + stderr
+            log_dir = os.path.join(self.config['logs_dir'],
+                                   self.submission)
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir)
+            with open(os.path.join(log_dir, 'log'), 'wb+') as f:
+                f.write(log_output)
+            pred_dir = os.path.join(self.config['predictions_dir'],
+                                    self.submission)
+            output_training_dir = os.path.join(
+                self.config['submissions_dir'], self.submission,
+                'training_output')
+            if os.path.exists(pred_dir):
+                shutil.rmtree(pred_dir)
+            shutil.copytree(output_training_dir, pred_dir)
+            self.status = 'collected'
+            logger.info(repr(self))
+            return (self._proc.returncode, error_msg)
+
+
+The ``_is_submission_finished`` function
+........................................
+
+You need to implement the ``_is_submission_finished`` function to indicate the
+worker that he can call the ``collect_results`` function. This function will
+be dependent of the platform that you are using. For instance, for a conda
+worker, it would look like::
+
+      def _is_submission_finished(self):
+        """Status of the submission.
+
+        The submission was launched in a subprocess. Calling ``poll()`` will
+        indicate the status of this subprocess.
+        """
+        return False if self._proc.poll() is None else True

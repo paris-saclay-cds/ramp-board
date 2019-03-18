@@ -102,7 +102,7 @@ class CondaEnvWorker(BaseWorker):
         """Status of the submission.
 
         The submission was launched in a subprocess. Calling ``poll()`` will
-        indicate the status of this subproces.
+        indicate the status of this subprocess.
         """
         return False if self._proc.poll() is None else True
 

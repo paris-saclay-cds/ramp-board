@@ -36,5 +36,8 @@ if "%1" == "test"(
 )
 
 if "%1" == "clean"(
-    %PYTHON% setup.py clean
+    cd ramp-frontend && %PYTHON% setup.py clean && cd ..
+	cd ramp-database && %PYTHON% setup.py clean && cd ..
+	cd ramp-engine && %PYTHON% setup.py clean && cd ..
+	cd ramp-utils && %PYTHON% setup.py clean && cd ..
 )
