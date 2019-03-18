@@ -43,7 +43,7 @@ should have these libraries installed.
 Subsequently, you can create such environment and use it in the event
 configuration::
 
-      conda create --name ramp-iris numpy pandas scikit-learn
+      conda create --name ramp-iris pip numpy pandas scikit-learn
       conda activate ramp-iris
       pip install git+https://github.com/paris-saclay-cds/ramp-workflow
 
