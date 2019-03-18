@@ -11,6 +11,7 @@ from bokeh.embed import components
 import flask_login
 
 from flask import Blueprint
+from flask import current_app as app
 from flask import flash
 from flask import redirect
 from flask import render_template
@@ -79,9 +80,10 @@ def problems():
     user = (flask_login.current_user
             if flask_login.current_user.is_authenticated else None)
     admin = user.access_level == 'admin' if user is not None else False
-    add_user_interaction(
-        db.session, interaction='looking at problems', user=user
-    )
+    if app.config['TRACK_USER_INTERACTION']:
+        add_user_interaction(
+            db.session, interaction='looking at problems', user=user
+        )
 
     # problems = Problem.query.order_by(Problem.id.desc())
     return render_template('problems.html',
@@ -103,18 +105,19 @@ def problem(problem_name):
             if flask_login.current_user.is_authenticated else None)
     admin = user.access_level == 'admin' if user is not None else False
     if current_problem:
-        if flask_login.current_user.is_authenticated:
-            add_user_interaction(
-                db.session,
-                interaction='looking at problem',
-                user=flask_login.current_user,
-                problem=current_problem
-            )
-        else:
-            add_user_interaction(
-                db.session, interaction='looking at problem',
-                problem=current_problem
-            )
+        if app.config['TRACK_USER_INTERACTION']:
+            if flask_login.current_user.is_authenticated:
+                add_user_interaction(
+                    db.session,
+                    interaction='looking at problem',
+                    user=flask_login.current_user,
+                    problem=current_problem
+                )
+            else:
+                add_user_interaction(
+                    db.session, interaction='looking at problem',
+                    problem=current_problem
+                )
         description_f_name = os.path.join(
             current_problem.path_ramp_kit,
             '{}_starting_kit.html'.format(current_problem.name)
@@ -149,8 +152,9 @@ def user_event(event_name):
                                         event_name))
     event = get_event(db.session, event_name)
     if event:
-        add_user_interaction(db.session, interaction='looking at event',
-                             event=event, user=flask_login.current_user)
+        if app.config['TRACK_USER_INTERACTION']:
+            add_user_interaction(db.session, interaction='looking at event',
+                                 event=event, user=flask_login.current_user)
         description_f_name = os.path.join(
             event.problem.path_ramp_kit,
             '{}_starting_kit.html'.format(event.problem.name)
@@ -188,8 +192,9 @@ def sign_up_for_event(event_name):
         return redirect_to_user(u'{}: no event named "{}"'
                                 .format(flask_login.current_user.firstname,
                                         event_name))
-    add_user_interaction(db.session, interaction='signing up at event',
-                         user=flask_login.current_user, event=event)
+    if app.config['TRACK_USER_INTERACTION']:
+        add_user_interaction(db.session, interaction='signing up at event',
+                             user=flask_login.current_user, event=event)
 
     ask_sign_up_team(db.session, event.name, flask_login.current_user.name)
     if event.is_controled_signup:
@@ -313,14 +318,15 @@ def sandbox(event_name):
                             old_code.splitlines(), new_code.splitlines()))
                         similarity = difflib.SequenceMatcher(
                             a=old_code, b=new_code).ratio()
-                        add_user_interaction(
-                            db.session,
-                            interaction='save',
-                            user=flask_login.current_user,
-                            event=event,
-                            submission_file=submission_file,
-                            diff=diff, similarity=similarity
-                        )
+                        if app.config['TRACK_USER_INTERACTION']:
+                            add_user_interaction(
+                                db.session,
+                                interaction='save',
+                                user=flask_login.current_user,
+                                event=event,
+                                submission_file=submission_file,
+                                diff=diff, similarity=similarity
+                            )
             except Exception as e:
                 return redirect_to_sandbox(event, u'Error: {}'.format(e))
             return redirect_to_sandbox(
@@ -380,23 +386,25 @@ def sandbox(event_name):
                     old_code.splitlines(), new_code.splitlines()))
                 similarity = difflib.SequenceMatcher(
                     a=old_code, b=new_code).ratio()
-                add_user_interaction(
-                    db.session,
-                    interaction='upload',
-                    user=flask_login.current_user,
-                    event=event,
-                    submission_file=submission_file,
-                    diff=diff,
-                    similarity=similarity
-                )
+                if app.config['TRACK_USER_INTERACTION']:
+                    add_user_interaction(
+                        db.session,
+                        interaction='upload',
+                        user=flask_login.current_user,
+                        event=event,
+                        submission_file=submission_file,
+                        diff=diff,
+                        similarity=similarity
+                    )
             else:
-                add_user_interaction(
-                    db.session,
-                    interaction='upload',
-                    user=flask_login.current_user,
-                    event=event,
-                    submission_file=submission_file
-                )
+                if app.config['TRACK_USER_INTERACTION']:
+                    add_user_interaction(
+                        db.session,
+                        interaction='upload',
+                        user=flask_login.current_user,
+                        event=event,
+                        submission_file=submission_file
+                    )
 
             return redirect(request.referrer)
             # TODO: handle different extensions for the same workflow element
@@ -452,14 +460,14 @@ def sandbox(event_name):
                                flask_login.current_user.name,
                                new_submission.name, new_submission.path)
                     send_mail(admin, subject, body)
-
-            add_user_interaction(
-                db.session,
-                interaction='submit',
-                user=flask_login.current_user,
-                event=event,
-                submission=new_submission
-            )
+            if app.config['TRACK_USER_INTERACTION']:
+                add_user_interaction(
+                    db.session,
+                    interaction='submit',
+                    user=flask_login.current_user,
+                    event=event,
+                    submission=new_submission
+                )
 
             return redirect_to_sandbox(
                 event,
@@ -629,13 +637,14 @@ def credit(submission_hash):
                     timestamp=datetime.datetime.utcnow()
                 )
 
-        add_user_interaction(
-            db.session,
-            interaction='giving credit',
-            user=flask_login.current_user,
-            event=event,
-            submission=submission
-        )
+        if app.config['TRACK_USER_INTERACTION']:
+            add_user_interaction(
+                db.session,
+                interaction='giving credit',
+                user=flask_login.current_user,
+                event=event,
+                submission=submission
+            )
 
         return redirect(u'/events/{}/sandbox'.format(event.name))
 
@@ -734,14 +743,15 @@ def view_model(submission_hash, f_name):
                              event, team, submission, f_name))
         return redirect_to_user(error_str)
 
-    add_user_interaction(
-        db.session,
-        interaction='looking at submission',
-        user=flask_login.current_user,
-        event=event,
-        submission=submission,
-        submission_file=submission_file
-    )
+    if app.config['TRACK_USER_INTERACTION']:
+        add_user_interaction(
+            db.session,
+            interaction='looking at submission',
+            user=flask_login.current_user,
+            event=event,
+            submission=submission,
+            submission_file=submission_file
+        )
 
     logger.info(u'{} is looking at {}/{}/{}/{}'
                 .format(flask_login.current_user.name, event, team, submission,
@@ -753,14 +763,15 @@ def view_model(submission_hash, f_name):
         # with changedir(submission_abspath):
         #    with ZipFile(archive_filename, 'w') as archive:
         #        archive.write(f_name)
-        add_user_interaction(
-            db.session,
-            interaction='download',
-            user=flask_login.current_user,
-            event=event,
-            submission=submission,
-            submission_file=submission_file
-        )
+        if app.config['TRACK_USER_INTERACTION']:
+            add_user_interaction(
+                db.session,
+                interaction='download',
+                user=flask_login.current_user,
+                event=event,
+                submission=submission,
+                submission_file=submission_file
+            )
 
         return send_from_directory(
             submission_abspath, f_name, as_attachment=True,
@@ -795,14 +806,15 @@ def view_model(submission_hash, f_name):
             submission_file = SubmissionFile.query.filter_by(
                 submission=submission,
                 workflow_element=workflow_element).one()
-            add_user_interaction(
-                db.session,
-                interaction='copy',
-                user=flask_login.current_user,
-                event=event,
-                submission=submission,
-                submission_file=submission_file
-            )
+            if app.config['TRACK_USER_INTERACTION']:
+                add_user_interaction(
+                    db.session,
+                    interaction='copy',
+                    user=flask_login.current_user,
+                    event=event,
+                    submission=submission,
+                    submission_file=submission_file
+                )
 
         return redirect(u'/events/{}/sandbox'.format(event.name))
 
@@ -845,13 +857,14 @@ def view_submission_error(submission_hash):
     team = submission.event_team.team
     # TODO: check if event == submission.event_team.event
 
-    add_user_interaction(
-        db.session,
-        interaction='looking at error',
-        user=flask_login.current_user,
-        event=event,
-        submission=submission
-    )
+    if app.config['TRACK_USER_INTERACTION']:
+        add_user_interaction(
+            db.session,
+            interaction='looking at error',
+            user=flask_login.current_user,
+            event=event,
+            submission=submission
+        )
 
     return render_template(
         'submission_error.html', submission=submission, team=team, event=event
