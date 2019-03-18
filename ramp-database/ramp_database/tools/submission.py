@@ -191,8 +191,8 @@ def add_submission(session, event_name, team_name, submission_name,
 
     from .leaderboard import update_leaderboards
     from .leaderboard import update_user_leaderboards
-    update_leaderboards(session, event_name, pending_only=True)
-    update_user_leaderboards(session, event_name, team.name, pending_only=True)
+    update_leaderboards(session, event_name, new_only=True)
+    update_user_leaderboards(session, event_name, team.name, new_only=True)
     return submission
 
 
