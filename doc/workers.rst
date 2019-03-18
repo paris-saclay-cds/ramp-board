@@ -29,16 +29,16 @@ Available workers:
 
 .. _conda_env_worker:
 
-Running submissions with a worker using Conda environment
----------------------------------------------------------
+Running submissions in a Conda environment
+------------------------------------------
 
 As previously mentioned, the :class:`ramp_engine.local.CondaEnvWorker` workers
-rely on Conda environment to execute the submission.
+rely on a Conda environment to execute the submission.
 
 For instance, if you would like to run the `Iris challenge
 <https://github.com/ramp-kits/iris>`_, the starting kit requires numpy, pandas,
 and scikit-learn. Thus, the environment used to run the initial submission
-should have these libraries installed.
+should have these libraries installed, in addition to ramp-workflow.
 
 Subsequently, you can create such environment and use it in the event
 configuration::
@@ -144,7 +144,7 @@ create your own worker for your platform (Openstack, Azure, etc.). This section
 illustrates how to implement your own worker.
 
 Your new worker should subclass :class:`ramp_engine.base.BaseWorker`. This
-class implement some basic functionalities which you should use.
+class implements some basic functionalities which you should use.
 
 The ``setup`` and ``teardown`` functions
 ........................................

@@ -10,7 +10,7 @@ RAMP comes with a set of command-lines allowing to:
 * launch the dispatcher and workers.
 
 .. note::
-    In the following sections, we are documented the ``ramp-*`` subcommands.
+    In the following sections, we are documenting the ``ramp-*`` subcommands.
     Be aware that you can access those subcommands using ``ramp *`` without a
     dash. As an example::
 
@@ -21,6 +21,7 @@ RAMP comes with a set of command-lines allowing to:
         ramp database -h
 
     You can find the documentation using::
+
         ramp -h
 
     We advise you to use the ``ramp`` commands since it will aggregate the
