@@ -331,7 +331,7 @@ def get_leaderboard(session, leaderboard_type, event_name, user_name=None,
     return df_html
 
 
-def update_leaderboards(session, event_name, pending_only=False):
+def update_leaderboards(session, event_name, new_only=False):
     """Update the leaderboards for a given event.
 
     Parameters
@@ -340,13 +340,13 @@ def update_leaderboards(session, event_name, pending_only=False):
         The session to directly perform the operation on the database.
     event_name : str
         The event name.
-    pending_only : bool, default is False
+    new_only : bool, default is False
         Whether or not to update the whole leaderboards or only the pending
         submissions. You can turn this option to True when adding a new
         submission in the database.
     """
     event = session.query(Event).filter_by(name=event_name).one()
-    if not pending_only:
+    if not new_only:
         event.private_leaderboard_html = get_leaderboard(
             session, 'private', event_name
         )
@@ -372,7 +372,7 @@ def update_leaderboards(session, event_name, pending_only=False):
 
 
 def update_user_leaderboards(session, event_name, user_name,
-                             pending_only=False):
+                             new_only=False):
     """Update the of a user leaderboards for a given event.
 
     Parameters
@@ -383,13 +383,13 @@ def update_user_leaderboards(session, event_name, user_name,
         The event name.
     user_name : str
         The user name. If None, scores from all users will be queried.
-    pending_only : bool, default is False
+    new_only : bool, default is False
         Whether or not to update the whole leaderboards or only the pending
         submissions. You can turn this option to True when adding a new
         submission in the database.
     """
     event_team = get_event_team_by_name(session, event_name, user_name)
-    if not pending_only:
+    if not new_only:
         event_team.leaderboard_html = get_leaderboard(
             session, 'public', event_name, user_name
         )
@@ -402,7 +402,7 @@ def update_user_leaderboards(session, event_name, user_name,
     session.commit()
 
 
-def update_all_user_leaderboards(session, event_name, pending_only=False):
+def update_all_user_leaderboards(session, event_name, new_only=False):
     """Update the leaderboards for all users for a given event.
 
     Parameters
@@ -411,7 +411,7 @@ def update_all_user_leaderboards(session, event_name, pending_only=False):
         The session to directly perform the operation on the database.
     event_name : str
         The event name.
-    pending_only : bool, default is False
+    new_only : bool, default is False
         Whether or not to update the whole leaderboards or only the pending
         submissions. You can turn this option to True when adding a new
         submission in the database.
@@ -420,7 +420,7 @@ def update_all_user_leaderboards(session, event_name, pending_only=False):
     event_teams = session.query(EventTeam).filter_by(event=event).all()
     for event_team in event_teams:
         user_name = event_team.team.name
-        if not pending_only:
+        if not new_only:
             event_team.leaderboard_html = get_leaderboard(
                 session, 'public', event_name, user_name
             )
