@@ -1,27 +1,13 @@
 <!-- Instructions For Filing a Bug: https://github.com/paris-saclay-cds/ramp-board/blob/master/CONTRIBUTING.md#filing-bugs -->
 
 #### Description
-<!-- Example: Joblib Error thrown when calling fit on LatentDirichletAllocation with evaluate_every > 0-->
+<!-- Example: RAMP frontend crash when launching the test command > 0-->
 
 #### Steps/Code to Reproduce
 <!--
 Example:
 ```
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.decomposition import LatentDirichletAllocation
-
-docs = ["Help I have a bug" for i in range(1000)]
-
-vectorizer = CountVectorizer(input=docs, analyzer='word')
-lda_features = vectorizer.fit_transform(docs)
-
-lda_model = LatentDirichletAllocation(
-    n_topics=10,
-    learning_method='online',
-    evaluate_every=10,
-    n_jobs=4,
-)
-model = lda_model.fit(lda_features)
+ramp launch frontend test-launch
 ```
 If the code is too long, feel free to put it in a public gist and link
 it in the issue: https://gist.github.com
