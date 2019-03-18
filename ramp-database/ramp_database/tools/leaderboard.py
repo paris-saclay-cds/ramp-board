@@ -341,7 +341,7 @@ def update_leaderboards(session, event_name, new_only=False):
     event_name : str
         The event name.
     new_only : bool, default is False
-        Whether or not to update the whole leaderboards or only the pending
+        Whether or not to update the whole leaderboards or only the new
         submissions. You can turn this option to True when adding a new
         submission in the database.
     """
@@ -384,7 +384,7 @@ def update_user_leaderboards(session, event_name, user_name,
     user_name : str
         The user name. If None, scores from all users will be queried.
     new_only : bool, default is False
-        Whether or not to update the whole leaderboards or only the pending
+        Whether or not to update the whole leaderboards or only the new
         submissions. You can turn this option to True when adding a new
         submission in the database.
     """
@@ -412,7 +412,7 @@ def update_all_user_leaderboards(session, event_name, new_only=False):
     event_name : str
         The event name.
     new_only : bool, default is False
-        Whether or not to update the whole leaderboards or only the pending
+        Whether or not to update the whole leaderboards or only the new
         submissions. You can turn this option to True when adding a new
         submission in the database.
     """
