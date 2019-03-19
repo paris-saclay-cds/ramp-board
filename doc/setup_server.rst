@@ -85,10 +85,28 @@ To operate the event, it is useful to first create an admin user::
 Launching a test instance of the  RAMP website
 ----------------------------------------------
 
-At this stage, you will be able to launch the RAMP website::
+At this stage, you will be able to test the RAMP website::
 
     ramp frontend test-launch
 
 This uses the built-in server of Flask suitable for testing. To deploy it
-in a production setting, see http://flask.pocoo.org/docs/1.0/deploying/#deployment
-for some options.
+in a production setting, you can refer to the following sections or to the
+Flask documentation (http://flask.pocoo.org/docs/1.0/deploying/#deployment).
+
+Using Gunicorn
+..............
+
+If you are using a UNIX server, you can use Gunicorn as a webserver. You can
+install directly from ``conda``::
+
+    conda install gunicorn
+
+To launch the RAMP website, you can execute::
+
+    gunicorn -w 8 --bind 0.0.0.0:8080 --access-logfile ./frontend.log 'ramp_frontend.wsgi:make_app("config.yml")'
+
+where ``config.yml`` is the path to the configuration fle created in the
+``ramp_deployment`` directory. To have more information about the Gunicorn
+options, refer to::
+
+    gunicorn -h
