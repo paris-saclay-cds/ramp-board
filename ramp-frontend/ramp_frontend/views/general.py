@@ -49,5 +49,5 @@ def keywords(keyword_name):
     keyword = Keyword.query.filter_by(name=keyword_name).one_or_none()
     if keyword:
         return render_template('keyword.html', keyword=keyword)
-    return redirect_to_user(u'Keyword {} does not exist.'
+    return redirect_to_user('Keyword {} does not exist.'
                             .format(keyword_name), is_error=True)

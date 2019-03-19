@@ -43,7 +43,7 @@ class CondaEnvWorker(BaseWorker):
             * 'collected': the results of the training have been collected.
     """
     def __init__(self, config, submission):
-        super().__init__(self, config=config, submission=submission)
+        super().__init__(config=config, submission=submission)
 
     def setup(self):
         """Set up the worker.
@@ -84,7 +84,7 @@ class CondaEnvWorker(BaseWorker):
                 raise ValueError('The specified conda environment {} does not '
                                  'exist. You need to create it.'
                                  .format(env_name))
-            super().setup(self)
+            super().setup()
 
     def teardown(self):
         """Remove the predictions stores within the submission."""
@@ -95,7 +95,7 @@ class CondaEnvWorker(BaseWorker):
                                            'training_output')
         if os.path.exists(output_training_dir):
             shutil.rmtree(output_training_dir)
-        super().teardown(self)
+        super().teardown()
 
     def _is_submission_finished(self):
         """Status of the submission.
@@ -126,7 +126,7 @@ class CondaEnvWorker(BaseWorker):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
-        super().launch_submission(self)
+        super().launch_submission()
 
     def collect_results(self):
         """Collect the results after that the submission is completed.
@@ -136,7 +136,7 @@ class CondaEnvWorker(BaseWorker):
         to be processed. Use ``worker.status`` to know the status of the worker
         beforehand.
         """
-        super().collect_results(self)
+        super().collect_results()
         if self.status == 'finished' or self.status == 'running':
             # communicate() will wait for the process to be completed
             stdout, stderr = self._proc.communicate()

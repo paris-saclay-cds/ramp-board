@@ -33,7 +33,7 @@ class AWSWorker(BaseWorker):
     """
 
     def __init__(self, config, submission):
-        super().__init__(self, config, submission)
+        super().__init__(config, submission)
         self.submissions_path = self.config['submissions_dir']
 
     def setup(self):
@@ -93,7 +93,7 @@ class AWSWorker(BaseWorker):
             self.config, self.instance.id, self.submission)
 
     def collect_results(self):
-        super().collect_results(self)
+        super().collect_results()
         if self.status == 'running':
             aws._wait_until_train_finished(
                 self.config, self.instance.id, self.submission)
@@ -122,4 +122,4 @@ class AWSWorker(BaseWorker):
     def teardown(self):
         """Terminate the Amazon instance"""
         aws.terminate_ec2_instance(self.config, self.instance.id)
-        super().teardown(self)
+        super().teardown()

@@ -41,7 +41,7 @@ def my_submissions(event_name):
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
         return redirect_to_user(
-            u'{}: no event named "{}"'
+            '{}: no event named "{}"'
             .format(flask_login.current_user.firstname, event_name)
         )
     if app.config['TRACK_USER_INTERACTION']:
@@ -92,7 +92,7 @@ def leaderboard(event_name):
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
         return redirect_to_user(
-            u'{}: no event named "{}"'
+            '{}: no event named "{}"'
             .format(flask_login.current_user.firstname, event_name))
     if app.config['TRACK_USER_INTERACTION']:
         add_user_interaction(
@@ -152,7 +152,7 @@ def competition_leaderboard(event_name):
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
         return redirect_to_user(
-            u'{}: no event named "{}"'
+            '{}: no event named "{}"'
             .format(flask_login.current_user.firstname, event_name)
         )
     if app.config['TRACK_USER_INTERACTION']:
@@ -198,7 +198,7 @@ def private_leaderboard(event_name):
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
         return redirect_to_user(
-            u'{}: no event named "{}"'
+            '{}: no event named "{}"'
             .format(flask_login.current_user.firstname, event_name)
         )
     if (not is_admin(db.session, event_name, flask_login.current_user.name) and
@@ -256,7 +256,7 @@ def private_competition_leaderboard(event_name):
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
         return redirect_to_user(
-            u'{}: no event named "{}"'
+            '{}: no event named "{}"'
             .format(flask_login.current_user.firstname, event_name)
         )
     if (not is_admin(db.session, event_name, flask_login.current_user.name) and

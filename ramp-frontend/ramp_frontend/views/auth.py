@@ -69,7 +69,7 @@ def login():
         try:
             user = get_user_by_name(db.session, name=form.user_name.data)
         except NoResultFound:
-            msg = u'User "{}" does not exist'.format(form.user_name.data)
+            msg = 'User "{}" does not exist'.format(form.user_name.data)
             flash(msg)
             logger.info(msg)
             return redirect(url_for('auth.login'))
@@ -83,7 +83,7 @@ def login():
         session['logged_in'] = True
         user.is_authenticated = True
         db.session.commit()
-        logger.info(u'User "{}" is logged in'
+        logger.info('User "{}" is logged in'
                     .format(flask_login.current_user.name))
         if app.config['TRACK_USER_INTERACTION']:
             add_user_interaction(
@@ -107,7 +107,7 @@ def logout():
     session['logged_in'] = False
     user.is_authenticated = False
     db.session.commit()
-    logger.info(u'{} is logged out'.format(user))
+    logger.info('{} is logged out'.format(user))
     flask_login.logout_user()
 
     return redirect(url_for('auth.login'))
