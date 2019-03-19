@@ -17,8 +17,6 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from ramp_utils.utils import encode_string
-
 from .base import Model
 from .event import EventScoreType
 from .datatype import NumpyType
@@ -183,9 +181,9 @@ class Submission(Model):
         self.event_team = event_team
         self.session = inspect(event_team).session
         sha_hasher = hashlib.sha1()
-        sha_hasher.update(encode_string(self.event.name))
-        sha_hasher.update(encode_string(self.team.name))
-        sha_hasher.update(encode_string(self.name))
+        sha_hasher.update(self.event.name)
+        sha_hasher.update(self.team.name)
+        sha_hasher.update(self.name)
         # We considered using the id, but then it will be given away in the
         # url which is maybe not a good idea.
         self.hash_ = '{}'.format(sha_hasher.hexdigest())
@@ -211,9 +209,7 @@ class Submission(Model):
     def __repr__(self):
         return ('Submission(event_name={}, team_name={}, name={}, files={}, '
                 'state={}, train_time={})'
-                .format(encode_string(self.event.name),
-                        encode_string(self.team.name),
-                        encode_string(self.name),
+                .format(self.event.name, self.team.name, self.name,
                         self.files, self.state, self.train_time_cv_mean))
 
     @hybrid_property
@@ -1116,7 +1112,7 @@ class SubmissionOnCVFold(Model):
                 self.test_y_pred = detached_submission_on_cv_fold.test_y_pred
 
 
-class DetachedSubmissionOnCVFold(object):
+class DetachedSubmissionOnCVFold:
     """Copy of SubmissionOnCVFold, all the fields we need in train and test.
 
     It's because SQLAlchemy objects don't persist through

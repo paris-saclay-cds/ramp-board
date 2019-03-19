@@ -10,7 +10,6 @@ from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
 from ramp_utils.utils import import_module_from_source
-from ramp_utils.utils import encode_string
 
 from .base import Model
 from .workflow import Workflow
@@ -80,8 +79,7 @@ class Problem(Model):
         self.reset(session)
 
     def __repr__(self):
-        return 'Problem({})\n{}'.format(encode_string(self.name),
-                                        self.workflow)
+        return 'Problem({})\n{}'.format(self.name, self.workflow)
 
     def reset(self, session):
         """Reset the workflow."""

@@ -1,6 +1,6 @@
 """
-The :mod:`ramp_database.model` defines the database structure which is used for the
-RAMP events.
+The :mod:`ramp_database.model` defines the database structure which is used for
+the RAMP events.
 """
 
 from .base import *  # noqa

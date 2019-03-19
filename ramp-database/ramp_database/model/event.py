@@ -213,13 +213,14 @@ class Event(Model):
 
     @property
     def workflow(self):
-        """:class:`ramp_database.model.Workflow`: The workflow used for the event."""
+        """:class:`ramp_database.model.Workflow`: The workflow used for the
+        event."""
         return self.problem.workflow
 
     @property
     def official_score_type(self):
-        """:class:`ramp_database.model.EventScoreType`: The score type for the current
-        event."""
+        """:class:`ramp_database.model.EventScoreType`: The score type for the
+        current event."""
         return (EventScoreType.query
                               .filter_by(event=self,
                                          name=self.official_score_name)
@@ -418,7 +419,6 @@ class EventAdmin(Model):
         The event instance.
     admin : :class:`ramp_database.model.User`
         The user instance.
-
 
     Attributes
     ----------

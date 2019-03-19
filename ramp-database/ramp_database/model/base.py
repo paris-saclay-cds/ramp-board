@@ -9,10 +9,8 @@ __all__ = [
     'set_query_property',
 ]
 
-PYTHON3 = sys.version_info[0] == 3
 
-
-class Pagination(object):
+class Pagination:
     """Class returned by `Query.paginate`. You can also construct
     it from any other SQLAlchemy query object if you are working
     with other libraries. Additionally it is possible to pass
@@ -90,7 +88,7 @@ class BaseQuery(orm.Query):
         return Pagination(self, page, per_page, total, items)
 
 
-class QueryProperty(object):
+class QueryProperty:
     """Query property accessor which gives a model access to query capabilities
     via `ModelBase.query` which is equivalent to ``session.query(Model)``.
     """
@@ -109,7 +107,7 @@ class QueryProperty(object):
             return query_property
 
 
-class ModelBase(object):
+class ModelBase:
     """Baseclass for custom user models."""
     #: the query class used. The `query` attribute is an instance
     #: of this class. By default a `BaseQuery` is used.

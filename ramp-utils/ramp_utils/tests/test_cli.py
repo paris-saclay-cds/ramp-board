@@ -9,7 +9,6 @@ from ramp_database.utils import setup_db
 from ramp_database.model import Model
 
 from ramp_utils import read_config
-from ramp_utils.utils import commonpath
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
 
@@ -19,14 +18,14 @@ from ramp_utils.cli import main
 @pytest.fixture
 def deployment_dir():
     ramp_config = read_config(ramp_config_template())
-    return commonpath(
+    return os.path.commonpath(
         [ramp_config['ramp']['kit_dir'], ramp_config['ramp']['data_dir']]
     )
 
 
 def setup_function(function):
     ramp_config = read_config(ramp_config_template())
-    function.deployment_dir = commonpath(
+    function.deployment_dir = os.path.commonpath(
         [ramp_config['ramp']['kit_dir'], ramp_config['ramp']['data_dir']]
     )
 

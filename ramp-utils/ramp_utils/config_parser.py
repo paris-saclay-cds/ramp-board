@@ -1,6 +1,5 @@
 import os
 import yaml
-import six
 
 REQUIRED_KEYS = {
     'sqlalchemy': {'drivername', 'username', 'password', 'host', 'port',
@@ -38,7 +37,7 @@ def read_config(config_file, filter_section=None, check_requirements=True):
     # of the dictionary
     unpack = False
     if filter_section is not None:
-        if isinstance(filter_section, six.string_types):
+        if isinstance(filter_section, str):
             filter_section = [filter_section]
             unpack = True
         for sec in filter_section:

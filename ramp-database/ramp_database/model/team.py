@@ -8,8 +8,6 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
-from ramp_utils.utils import encode_string
-
 from .base import Model
 
 __all__ = ['Team']
@@ -79,10 +77,9 @@ class Team(Model):
         self.creation_timestamp = datetime.datetime.utcnow()
 
     def __str__(self):
-        return 'Team({})'.format(encode_string(self.name))
+        return 'Team({})'.format(self.name)
 
     def __repr__(self):
         return ('Team(name={}, admin_name={}, initiator={}, acceptor={})'
-                .format(encode_string(self.name),
-                        encode_string(self.admin.name),
+                .format(self.name, self.admin.name,
                         self.initiator, self.acceptor))

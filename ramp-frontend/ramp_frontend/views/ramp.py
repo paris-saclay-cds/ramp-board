@@ -23,8 +23,6 @@ from wtforms.widgets import TextArea
 
 from werkzeug.utils import secure_filename
 
-from ramp_utils.utils import encode_string
-
 from ramp_database.model import Problem
 from ramp_database.model import Submission
 from ramp_database.model import SubmissionFile
@@ -205,8 +203,7 @@ def sign_up_for_event(event_name):
             body = body_formatter_user(flask_login.current_user)
             url_approve = ('https://www.ramp.studio/events/{}/sign_up/{}'
                            .format(
-                               event.name,
-                               encode_string(flask_login.current_user.name)
+                               event.name, flask_login.current_user.name
                            ))
             body += ('Click on this link to approve the sign-up request: {}'
                      .format(url_approve))

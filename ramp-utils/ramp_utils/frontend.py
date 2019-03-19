@@ -1,5 +1,3 @@
-import six
-
 from .config_parser import read_config
 
 
@@ -25,7 +23,7 @@ def generate_flask_config(config):
     flask_config : dict
         The configuration for the RAMP worker.
     """
-    if isinstance(config, six.string_types):
+    if isinstance(config, str):
         config = read_config(config, filter_section=['flask', 'sqlalchemy'])
 
     flask_config = DEFAULT_CONFIG.copy()

@@ -1,8 +1,6 @@
 import os
 import datetime
 
-import six
-
 from sqlalchemy import Enum
 from sqlalchemy import Float
 from sqlalchemy import Column
@@ -13,8 +11,6 @@ from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
-
-from ramp_utils.utils import encode_string
 
 from .base import Model
 from .event import EventTeam
@@ -166,17 +162,16 @@ class User(Model):
 
     def get_id(self):
         """str: Return the user ID."""
-        return six.text_type(self.id)
+        return str(self.id)
 
     def __str__(self):
-        return 'User({})'.format(encode_string(self.name))
+        return 'User({})'.format(self.name)
 
     def __repr__(self):
         return ("User(name={}, lastname={}, firstname={}, email={}, "
                 "admined_teams={})"
-                .format(encode_string(self.name), encode_string(self.lastname),
-                        encode_string(self.firstname),
-                        encode_string(self.email), self.admined_teams))
+                .format(self.name, self.lastname, self.firstname,
+                        self.email, self.admined_teams))
 
 
 user_interaction_type = Enum(

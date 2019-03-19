@@ -1,7 +1,5 @@
 import bcrypt
 
-from .string_encoding import encode_string
-
 
 def hash_password(password):
     """Hash a password.
@@ -16,7 +14,7 @@ def hash_password(password):
     hashed_password : bytes
         The hashed password.
     """
-    return bcrypt.hashpw(encode_string(password), bcrypt.gensalt())
+    return bcrypt.hashpw(password, bcrypt.gensalt())
 
 
 def check_password(password, hashed_password):
@@ -34,5 +32,5 @@ def check_password(password, hashed_password):
     is_same_password : bool
         Return True if the two passwords are identical.
     """
-    return bcrypt.checkpw(encode_string(password),
-                          encode_string(hashed_password))
+    return bcrypt.checkpw(password, hashed_password)
+

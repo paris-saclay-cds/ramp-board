@@ -2,7 +2,6 @@ import shutil
 
 import pandas as pd
 import pytest
-import six
 
 from ramp_utils import read_config
 from ramp_utils.utils import check_password
@@ -137,7 +136,7 @@ def test_approve_user(session_scope_function):
 @pytest.mark.parametrize(
     "output_format, expected_format",
     [('dataframe', pd.DataFrame),
-     ('html', six.string_types)]
+     ('html', str)]
 )
 def test_check_user_interactions(session_scope_function, output_format,
                                  expected_format):

@@ -5,8 +5,6 @@ website.
 
 from flask_wtf import FlaskForm
 
-import six
-
 from wtforms import BooleanField
 from wtforms import DateField
 from wtforms import DateTimeField
@@ -28,10 +26,7 @@ def _space_check(form, field):
 
 def _ascii_check(form, field):
     try:
-        if six.PY3:
-            field.data.encode('ascii')
-        else:
-            field.data.decode('ascii')
+        field.data.encode('ascii')
     except Exception:
         raise ValidationError('Field cannot contain non-ascii characters.')
 

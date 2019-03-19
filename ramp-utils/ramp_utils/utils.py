@@ -4,7 +4,6 @@ import os
 import sys
 
 import bcrypt
-import six
 
 
 def import_module_from_source(source, name):
@@ -21,10 +20,6 @@ def import_module_from_source(source, name):
     module : Python module
         Return the Python module which has been loaded.
     """
-    if sys.version_info[0] < 3:
-        import imp
-        module = imp.load_source(name, source)
-        return module
     spec = importlib.util.spec_from_file_location(name, source)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -44,7 +39,7 @@ def hash_password(password):
     hashed_password : bytes
         The hashed password.
     """
-    return bcrypt.hashpw(encode_string(password), bcrypt.gensalt())
+    return bcrypt.hashpw(password, bcrypt.gensalt())
 
 
 def check_password(password, hashed_password):
@@ -62,34 +57,4 @@ def check_password(password, hashed_password):
     is_same_password : bool
         Return True if the two passwords are identical.
     """
-    return bcrypt.checkpw(encode_string(password),
-                          encode_string(hashed_password))
-
-
-def encode_string(text):
-    """Encode text into an array of bytes in both Python 2 and 3 with UTF-8.
-
-    Parameters
-    ----------
-    text : str or bytes
-        The text to be encoded
-
-    Returns
-    -------
-    encoded_text : bytes
-        The encoded text.
-    """
-    if six.PY3:
-        return bytes(text, 'utf-8') if isinstance(text, str) else text
-    return text.encode('utf8')
-
-
-def commonpath(paths, sep='/'):
-    if six.PY2:
-        def allnamesequal(name):
-            return all(n == name[0] for n in name[1:])
-        bydirectorylevels = zip(*[p.split(sep) for p in paths])
-        return sep.join(
-            x[0] for x in takewhile(allnamesequal, bydirectorylevels)
-        )
-    return os.path.commonpath(paths)
+    return bcrypt.checkpw(password, hashed_password)

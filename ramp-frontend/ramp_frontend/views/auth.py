@@ -15,7 +15,6 @@ from flask import url_for
 from sqlalchemy.orm.exc import NoResultFound
 
 from ramp_utils.password import check_password
-from ramp_utils.utils import encode_string
 
 from ramp_database.tools.user import add_user
 from ramp_database.tools.user import add_user_interaction
@@ -148,11 +147,11 @@ def sign_up():
         admin_users = User.query.filter_by(access_level='admin')
         for admin in admin_users:
             subject = 'Approve registration of {}'.format(
-                encode_string(user.name)
+                user.name
             )
             body = body_formatter_user(user)
             url_approve = ('http://www.ramp.studio/sign_up/{}'
-                           .format(encode_string(user.name)))
+                           .format(user.name))
             body += 'Click on the link to approve the registration '
             body += 'of this user: {}'.format(url_approve)
             send_mail(admin.email, subject, body)
