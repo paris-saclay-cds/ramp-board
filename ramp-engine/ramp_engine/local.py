@@ -73,6 +73,7 @@ class CondaEnvWorker(BaseWorker):
         else:
             envs_path = conda_info['envs'][1:]
             if not envs_path:
+                self.status = 'error'
                 raise ValueError('Only the conda base environment exist. You '
                                  'need to create the "{}" conda environment '
                                  'to use it.'.format(env_name))
@@ -83,6 +84,7 @@ class CondaEnvWorker(BaseWorker):
                     self._python_bin_path = os.path.join(env, 'bin')
                     break
             if not is_env_found:
+                self.status = 'error'
                 raise ValueError('The specified conda environment {} does not '
                                  'exist. You need to create it.'
                                  .format(env_name))

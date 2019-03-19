@@ -108,7 +108,7 @@ def test_conda_worker(submission, get_conda_worker):
 
 def test_conda_worker_without_conda_env_specified(get_conda_worker):
     worker = get_conda_worker('starting_kit')
-    # remove the conva_env parameter from the configuration
+    # remove the conda_env parameter from the configuration
     del worker.config['conda_env']
     # if the conda environment is not given in the configuration, we should
     # fall back on the base environment of conda
@@ -133,6 +133,7 @@ def test_conda_worker_error_unknown_env(get_conda_worker):
     msg_err = "The specified conda environment xxx does not exist."
     with pytest.raises(ValueError, match=msg_err):
         worker.setup()
+        assert worker.status == 'error'
 
 
 def test_conda_worker_error_multiple_launching(get_conda_worker):
