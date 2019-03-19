@@ -3,6 +3,7 @@ import logging
 import click
 
 from ramp_utils import read_config
+from ramp_utils import generate_ramp_config
 from ramp_utils import generate_worker_config
 
 from ramp_engine.dispatcher import Dispatcher
@@ -46,9 +47,10 @@ def dispatcher(config, event_config, n_worker, hunger_policy, verbose):
             format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
             level=level, datefmt='%Y:%m:%d %H:%M:%S'
         )
-    config = read_config(config)
-    event_config = read_config(event_config)
-    worker_type = available_workers[event_config['worker']['worker_type']]
+    internal_event_config = read_config(event_config)
+    worker_type = available_workers[
+        internal_event_config['worker']['worker_type']
+    ]
     disp = Dispatcher(
         config=config, event_config=event_config, worker=worker_type,
         n_worker=n_worker, hunger_policy=hunger_policy
@@ -59,9 +61,12 @@ def dispatcher(config, event_config, n_worker, hunger_policy, verbose):
 @main.command()
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file in YAML format')
+@click.option("--event-config", show_default=True,
+              help='Configuration file in YAML format containing the RAMP '
+              'event information.')
 @click.option('--submission', help='The submission name')
 @click.option('-v', '--verbose', is_flag=True)
-def worker(config, submission, verbose):
+def worker(config, event_config, submission, verbose):
     """Launch a standalone RAMP worker.
 
     The RAMP worker is in charger of processing a single submission by
@@ -76,7 +81,7 @@ def worker(config, submission, verbose):
             format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
             level=level, datefmt='%Y:%m:%d %H:%M:%S'
         )
-    worker_params = generate_worker_config(config)
+    worker_params = generate_worker_config(event_config, config)
     worker_type = available_workers[worker_params['worker_type']]
     worker = worker_type(worker_params, submission)
     worker.launch()

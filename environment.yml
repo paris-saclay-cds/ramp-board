@@ -11,8 +11,7 @@ dependencies:
   - Flask-SQLAlchemy
   - Flask-Wtf
   - gitpython
-  - ipykernel
-  - jupyter
+  - nbconvert
   - numpy
   - pandas
   - pyyaml
@@ -21,6 +20,7 @@ dependencies:
   - psycopg2
   - six
   - sqlalchemy
+  - tornado==5.1.1  # downgrade tornado for nbconvert and should be fix
   - pip:
     - backports.tempfile  # remove when dropping Python 2 support
     - git+https://github.com/paris-saclay-cds/ramp-workflow

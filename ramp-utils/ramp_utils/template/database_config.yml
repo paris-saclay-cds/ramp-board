@@ -16,6 +16,7 @@ flask:
     # mail_use_tls: false
     # mail_use_ssl: false
     # mail_debug: false
+    track_user_interaction: True
 sqlalchemy:
     drivername: postgresql
     username: mrramp

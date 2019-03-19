@@ -140,7 +140,8 @@ def test_sign_up_already_logged_in(client_session, request_function):
         rv = getattr(client, request_function)('/sign_up')
         assert rv.status_code == 302
         assert rv.location == 'http://localhost/problems'
-        rv = getattr(client, request_function)('/sign_up', follow_redirects=True)
+        rv = getattr(client, request_function)('/sign_up',
+                                               follow_redirects=True)
         assert rv.status_code == 200
 
 
@@ -163,6 +164,18 @@ def test_sign_up(client_session):
     user_profile = {'user_name': 'yy', 'password': 'yy', 'firstname': 'yy',
                     'lastname': 'yy', 'email': 'yy'}
     rv = client.post('/sign_up', data=user_profile, follow_redirects=True)
+    assert rv.status_code == 200
+
+    # check that we catch a flash error if we try to sign-up with an identical
+    # username or email
+    user_profile = {'user_name': 'test_user', 'password': 'xx',
+                    'firstname': 'xx', 'lastname': 'xx',
+                    'email': 'test_user@gmail.com'}
+    rv = client.post('/sign_up', data=user_profile)
+    with client.session_transaction() as cs:
+        flash_message = dict(cs['_flashes'])
+    assert (flash_message['message'] ==
+            'username is already in use and email is already in use')
     assert rv.status_code == 200
 
 

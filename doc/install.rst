@@ -12,8 +12,7 @@ The dependencies required by the RAMP bundle are the following:
 1. ``ramp-database``:
     * click
     * gitpython
-    * ipykernel
-    * jupyter
+    * nbconvert
     * numpy
     * pandas
     * psycopg2
@@ -50,9 +49,9 @@ repository::
 
 You can use ``conda`` instead of ``pip`` using the ``environment.yml`` file::
 
-    conda env update --file environment.yml
+    conda env update --file environment.yml --name <your_env>
 
-The above command updates the base environment. If you want to keep the
+The above command updates the <your_env> environment. If you want to keep the
 code to run ramp in a separate environment, you can also do::
 
     conda env create -f environment.yml
@@ -87,7 +86,9 @@ can use::
 Test
 ====
 
-You can run the test using ``pytest`` from the root direcory::
+If you are developing for the RAMP package, you will be interested about
+testing your new feature. You can run the test using ``pytest`` from the root
+direcory::
 
     pytest -vsl .
 

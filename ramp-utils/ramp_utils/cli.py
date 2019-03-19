@@ -14,6 +14,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 def main():
+    """Command-lines for setting and deploying RAMP server and events.
+
+    These command-lines are used to create the configuration file for your
+    RAMP server and events. In addition, it will allow you to deploy easily
+    RAMP events.
+    """
     pass
 
 

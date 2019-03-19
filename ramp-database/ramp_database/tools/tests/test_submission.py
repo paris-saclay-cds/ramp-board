@@ -122,7 +122,7 @@ def test_add_submission_create_new_submission(base_db):
     session = base_db
     config = ramp_config_template()
     event_name, username = _setup_sign_up(session)
-    ramp_config = generate_ramp_config(config)
+    ramp_config = generate_ramp_config(read_config(config))
 
     submission_name = 'random_forest_10_10'
     path_submission = os.path.join(
@@ -131,10 +131,18 @@ def test_add_submission_create_new_submission(base_db):
     add_submission(session, event_name, username, submission_name,
                    path_submission)
     all_submissions = get_submissions(session, event_name, None)
+    # check that the submissions have been copied
+    for sub_id, _, _ in all_submissions:
+        sub = get_submission_by_id(session, sub_id)
+        assert os.path.exists(sub.path)
+        assert os.path.exists(os.path.join(sub.path, 'classifier.py'))
 
     # `sign_up_team` make a submission (sandbox) by user. This submission will
     # be the third submission.
     assert len(all_submissions) == 3
+    # check that the number of submissions for an event was updated
+    event = session.query(Event).filter(Event.name == event_name).one_or_none()
+    assert event.n_submissions == 1
     submission = get_submission_by_name(session, event_name, username,
                                         submission_name)
     assert submission.name == submission_name
@@ -151,7 +159,7 @@ def test_add_submission_too_early_submission(base_db):
     session = base_db
     config = ramp_config_template()
     event_name, username = _setup_sign_up(session)
-    ramp_config = generate_ramp_config(config)
+    ramp_config = generate_ramp_config(read_config(config))
 
     # check that we have an awaiting time for the event
     event = (session.query(Event)
@@ -181,7 +189,7 @@ def test_make_submission_resubmission(base_db):
     session = base_db
     config = ramp_config_template()
     event_name, username = _setup_sign_up(session)
-    ramp_config = generate_ramp_config(config)
+    ramp_config = generate_ramp_config(read_config(config))
 
     # submitting the starting_kit which is used as the default submission for
     # the sandbox should raise an error
@@ -227,7 +235,7 @@ def test_add_submission_wrong_submission_files(base_db):
     session = base_db
     config = ramp_config_template()
     event_name, username = _setup_sign_up(session)
-    ramp_config = generate_ramp_config(config)
+    ramp_config = generate_ramp_config(read_config(config))
 
     submission_name = 'corrupted_submission'
     path_submission = os.path.join(
@@ -262,7 +270,7 @@ def test_submit_starting_kits(base_db):
     session = base_db
     config = ramp_config_iris()
     event_name, username = _setup_sign_up(session)
-    ramp_config = generate_ramp_config(config)
+    ramp_config = generate_ramp_config(read_config(config))
 
     submit_starting_kits(session, event_name, username,
                          ramp_config['ramp_kit_submissions_dir'])

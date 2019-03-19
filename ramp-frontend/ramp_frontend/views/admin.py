@@ -22,6 +22,7 @@ from ramp_database.exceptions import NameClashError
 from ramp_database.tools.event import get_event
 from ramp_database.tools.frontend import is_admin
 from ramp_database.tools.frontend import is_accessible_event
+from ramp_database.tools.frontend import is_user_signed_up
 from ramp_database.tools.user import approve_user
 from ramp_database.tools.user import select_user_by_name
 from ramp_database.tools.user import get_user_interactions_by_name
@@ -245,11 +246,17 @@ def update_event(event_name):
 
         return redirect(url_for('ramp.problems'))
 
+    approved = is_user_signed_up(
+        db.session, event_name, flask_login.current_user.name
+    )
+    asked = approved
     return render_template(
         'update_event.html',
         form=form,
         event=event,
         admin=admin,
+        asked=asked,
+        approved=approved
     )
 
 
@@ -303,7 +310,7 @@ def dashboard_submissions(event_name):
         sub.submission_timestamp.strftime('%Y-%m-%d %H:%M:%S')
         for sub in submissions]
     name_submissions = [sub.name for sub in submissions]
-    cumulated_submissions = range(1, 1 + len(submissions))
+    cumulated_submissions = list(range(1, 1 + len(submissions)))
     training_sec = [
         (sub.training_timestamp - sub.submission_timestamp).seconds / 60.
         if sub.training_timestamp is not None else 0
@@ -316,9 +323,15 @@ def dashboard_submissions(event_name):
                         'name_submissions': name_submissions}
     failed_leaderboard_html = event.failed_leaderboard_html
     new_leaderboard_html = event.new_leaderboard_html
+    approved = is_user_signed_up(
+        db.session, event_name, flask_login.current_user.name
+    )
+    asked = approved
     return render_template(
         'dashboard_submissions.html',
         failed_leaderboard=failed_leaderboard_html,
         new_leaderboard=new_leaderboard_html,
         admin=True,
+        approved=approved,
+        asked=asked,
         **dashboard_kwargs)

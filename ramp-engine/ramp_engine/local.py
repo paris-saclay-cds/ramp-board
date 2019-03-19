@@ -4,7 +4,7 @@ import os
 import shutil
 import subprocess
 
-from .base import BaseWorker
+from .base import BaseWorker, _get_traceback
 
 logger = logging.getLogger('RAMP-WORKER')
 
@@ -102,7 +102,7 @@ class CondaEnvWorker(BaseWorker):
         """Status of the submission.
 
         The submission was launched in a subprocess. Calling ``poll()`` will
-        indicate the status of this subproces.
+        indicate the status of this subprocess.
         """
         return False if self._proc.poll() is None else True
 
@@ -140,15 +140,19 @@ class CondaEnvWorker(BaseWorker):
         super(CondaEnvWorker, self).collect_results()
         if self.status == 'finished' or self.status == 'running':
             # communicate() will wait for the process to be completed
-            self._proc_log, stderr = self._proc.communicate()
+            stdout, stderr = self._proc.communicate()
+            # combining stderr and stdout as errors might be piped to either
+            # (see https://github.com/paris-saclay-cds/ramp-board/issues/179)
+            # and extracting the error message from combined log
+            log_output = stdout + b'\n\n' + stderr
+            error_msg = _get_traceback(log_output.decode('utf-8'))
             # write the log into the disk
             log_dir = os.path.join(self.config['logs_dir'],
                                    self.submission)
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
             with open(os.path.join(log_dir, 'log'), 'wb+') as f:
-                f.write(self._proc_log)
-                f.write(stderr)
+                f.write(log_output)
             # copy the predictions into the disk
             # no need to create the directory, it will be handle by copytree
             pred_dir = os.path.join(self.config['predictions_dir'],
@@ -161,4 +165,4 @@ class CondaEnvWorker(BaseWorker):
             shutil.copytree(output_training_dir, pred_dir)
             self.status = 'collected'
             logger.info(repr(self))
-            return (self._proc.returncode, stderr.decode('utf-8'))
+            return (self._proc.returncode, error_msg)

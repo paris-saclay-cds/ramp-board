@@ -25,6 +25,7 @@ script:
     - bash ci_tools/travis/test_ramp_engine.sh
     - bash ci_tools/travis/test_ramp_database.sh
     - bash ci_tools/travis/test_ramp_utils.sh
+    - bash ci_tools/travis/integration_test.sh
 after_success:
     - make code-analysis
 notifications:
