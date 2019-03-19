@@ -68,12 +68,6 @@ def sign_up_team(session, event_name, team_name):
     submission_name = event.ramp_sandbox_name
     submission = add_submission(session, event_name, team_name,
                                 submission_name, path_sandbox_submission)
-    if os.path.exists(submission.path):
-        shutil.rmtree(submission.path)
-    os.makedirs(submission.path)
-    for filename in submission.f_names:
-        shutil.copy2(src=os.path.join(path_sandbox_submission, filename),
-                     dst=os.path.join(submission.path, filename))
     logger.info('Copying the submission files into the deployment folder')
     logger.info('Adding {}'.format(submission))
     event_team.approved = True

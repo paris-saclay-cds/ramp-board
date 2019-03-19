@@ -3,13 +3,12 @@ ramp:
     event_name: <name>
     event_title: "Human readable event name to display on website"
     event_is_public: true
-    deployment_dir: /tmp/databoard_test
-    data_dir: ramp-data/<problem name>
-    kit_dir: ramp-kits/<problem name>
-    submissions_dir: submissions
-    predictions_dir: preds
-    logs_dir: log
-    sandbox_dir: starting_kit
+    # data_dir: (absolute path to data dir. Default: <deployment_dir>/ramp-data/<problem name>)
+    # kit_dir: (absolute path to kit dir. Default: <deployment_dir>/ramp-kits/<problem name>)
+    # submissions_dir: (absolute path where to store submissions. Default: <deployment_dir>/events/<event_name>/submissions)
+    # predictions_dir: (absolute path where to store predictions. Default: <deployment_dir>/events/event_name>/predictions)
+    # logs_dir: (absolute path where to store logs. Default: <deployment_dir>/events/<event_name>/logs)
+    # sandbox_dir: (name of the default submissions. Default: starting_kit)
 worker:
     worker_type: <conda or aws>
     ...

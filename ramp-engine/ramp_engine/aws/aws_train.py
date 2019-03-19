@@ -19,7 +19,9 @@ from rampdb.tools import score_submission
 from rampdb.tools import set_submission_error_msg
 from rampdb.tools import get_event_nb_folds
 
-from rampbkd.aws.api import (
+from ..base import _get_traceback
+
+from .api import (
     AWS_CONFIG_SECTION,
     TRAIN_LOOP_INTERVAL_SECS_FIELD,
     HOOKS_SECTION,
@@ -32,8 +34,7 @@ from rampbkd.aws.api import (
     upload_submission, launch_train, download_log,
     _training_finished, _training_successful,
     _get_submission_max_ram, download_mprof_data, download_predictions,
-    _get_log_content, _get_traceback,
-    _wait_until_train_finished)
+    _get_log_content, _wait_until_train_finished)
 
 
 logger = logging.getLogger('ramp_aws')

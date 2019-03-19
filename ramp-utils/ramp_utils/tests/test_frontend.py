@@ -25,6 +25,7 @@ def test_generate_flask_config(config):
         'MAIL_DEFAULT_SENDER': ['RAMP admin', 'rampmailer@localhost.com'],
         'SQLALCHEMY_TRACK_MODIFICATIONS': False,
         'SQLALCHEMY_DATABASE_URI': ('postgresql://mrramp:mrramp@localhost:5432'
-                                    '/databoard_test')
+                                    '/databoard_test'),
+        'TRACK_USER_INTERACTION': True
         }
     assert flask_config == expected_config

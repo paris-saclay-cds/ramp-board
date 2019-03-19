@@ -17,14 +17,13 @@ from ramp_database.cli import main
 
 def setup_module(module):
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
-    create_toy_db(database_config, ramp_config)
+    ramp_config = ramp_config_template()
+    module.deployment_dir = create_toy_db(database_config, ramp_config)
 
 
 def teardown_module(module):
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
-    shutil.rmtree(ramp_config['ramp']['deployment_dir'], ignore_errors=True)
+    shutil.rmtree(module.deployment_dir, ignore_errors=True)
     db, _ = setup_db(database_config['sqlalchemy'])
     Model.metadata.drop_all(db)
 
@@ -54,7 +53,7 @@ def test_approve_user():
 
 def test_add_problem():
     runner = CliRunner()
-    ramp_config = generate_ramp_config(ramp_config_template())
+    ramp_config = generate_ramp_config(read_config(ramp_config_template()))
     result = runner.invoke(main, ['add-problem',
                                   '--config', database_config_template(),
                                   '--problem', 'iris',
@@ -67,7 +66,7 @@ def test_add_problem():
 
 def test_add_event():
     runner = CliRunner()
-    ramp_config = generate_ramp_config(ramp_config_template())
+    ramp_config = generate_ramp_config(read_config(ramp_config_template()))
     result = runner.invoke(main, ['add-event',
                                   '--config', database_config_template(),
                                   '--problem', 'iris',
@@ -104,7 +103,7 @@ def test_add_event_admin():
 
 
 def test_add_submission():
-    ramp_config = generate_ramp_config(ramp_config_template())
+    ramp_config = generate_ramp_config(read_config(ramp_config_template()))
     submission_name = 'new_submission'
     submission_path = os.path.join(ramp_config['ramp_kit_submissions_dir'],
                                    submission_name)

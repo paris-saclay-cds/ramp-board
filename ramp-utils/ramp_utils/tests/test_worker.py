@@ -3,16 +3,15 @@ import os
 import pytest
 
 from ramp_utils.testing import ramp_config_template
+from ramp_utils.testing import database_config_template
 
-from ramp_utils import read_config
 from ramp_utils import generate_worker_config
 
 
-@pytest.mark.parametrize(
-    "config", [ramp_config_template(), read_config(ramp_config_template())]
-)
-def test_generate_worker_config(config):
-    worker_config = generate_worker_config(config)
+def test_generate_worker_config():
+    worker_config = generate_worker_config(
+        ramp_config_template(), database_config_template()
+    )
     expected_config = {
         'worker_type': 'conda',
         'conda_env': 'ramp-iris',

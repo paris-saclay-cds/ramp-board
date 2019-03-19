@@ -110,3 +110,31 @@ class BaseWorker(six.with_metaclass(ABCMeta)):
 
     def __repr__(self):
         return self.__str__()
+
+
+def _get_traceback(content):
+    """
+    Get the traceback part from the content containing the standard
+    error/output of a python process. It is used to get the traceback
+    of `ramp_test_submission` when there is an error.
+
+    Parameters
+    ----------
+    content : str
+
+    Returns
+    -------
+    str with the traceback
+
+    """
+    if not content:
+        return ''
+    # cut_exception_text = content.rfind('--->')
+    # was like commented line above in ramp-board
+    # but there is no ---> in logs when we use
+    # ramp_test_submission, so we just search for the
+    # first occurence of 'Traceback'.
+    cut_exception_text = content.find('Traceback')
+    if cut_exception_text > 0:
+        content = content[cut_exception_text:]
+    return content

@@ -23,9 +23,9 @@ from ramp_frontend.testing import logout
 @pytest.fixture(scope='module')
 def client_session():
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     try:
-        create_toy_db(database_config, ramp_config)
+        deployment_dir = create_toy_db(database_config, ramp_config)
         flask_config = generate_flask_config(database_config)
         app = create_app(flask_config)
         app.config['TESTING'] = True
@@ -33,9 +33,7 @@ def client_session():
         with session_scope(database_config['sqlalchemy']) as session:
             yield app.test_client(), session
     finally:
-        shutil.rmtree(
-            ramp_config['ramp']['deployment_dir'], ignore_errors=True
-        )
+        shutil.rmtree(deployment_dir, ignore_errors=True)
         try:
             # In case of failure we should close the global flask engine
             from ramp_frontend import db as db_flask
@@ -142,7 +140,8 @@ def test_sign_up_already_logged_in(client_session, request_function):
         rv = getattr(client, request_function)('/sign_up')
         assert rv.status_code == 302
         assert rv.location == 'http://localhost/problems'
-        rv = getattr(client, request_function)('/sign_up', follow_redirects=True)
+        rv = getattr(client, request_function)('/sign_up',
+                                               follow_redirects=True)
         assert rv.status_code == 200
 
 
@@ -165,6 +164,18 @@ def test_sign_up(client_session):
     user_profile = {'user_name': 'yy', 'password': 'yy', 'firstname': 'yy',
                     'lastname': 'yy', 'email': 'yy'}
     rv = client.post('/sign_up', data=user_profile, follow_redirects=True)
+    assert rv.status_code == 200
+
+    # check that we catch a flash error if we try to sign-up with an identical
+    # username or email
+    user_profile = {'user_name': 'test_user', 'password': 'xx',
+                    'firstname': 'xx', 'lastname': 'xx',
+                    'email': 'test_user@gmail.com'}
+    rv = client.post('/sign_up', data=user_profile)
+    with client.session_transaction() as cs:
+        flash_message = dict(cs['_flashes'])
+    assert (flash_message['message'] ==
+            'username is already in use and email is already in use')
     assert rv.status_code == 200
 
 

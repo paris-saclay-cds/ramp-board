@@ -32,7 +32,7 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Programming Language :: Python :: 2.7',
                'Programming Language :: Python :: 3.6',
                'Programming Language :: Python :: 3.7']
-INSTALL_REQUIRES = ['click', 'gitpython', 'ipykernel', 'jupyter', 'numpy',
+INSTALL_REQUIRES = ['click', 'gitpython', 'nbconvert', 'numpy',
                     'pandas', 'psycopg2', 'six', 'sqlalchemy']
 EXTRAS_REQUIRE = {
     'tests': ['pytest', 'pytest-cov'],

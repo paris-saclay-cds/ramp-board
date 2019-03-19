@@ -50,15 +50,13 @@ HERE = os.path.dirname(__file__)
 @pytest.fixture
 def session_scope_function():
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     try:
-        create_test_db(database_config, ramp_config)
+        deployment_dir = create_test_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(
-            ramp_config['ramp']['deployment_dir'], ignore_errors=True
-        )
+        shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
@@ -66,15 +64,13 @@ def session_scope_function():
 @pytest.fixture(scope='module')
 def session_toy_db():
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     try:
-        create_toy_db(database_config, ramp_config)
+        deployment_dir = create_toy_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(
-            ramp_config['ramp']['deployment_dir'], ignore_errors=True
-        )
+        shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
@@ -85,8 +81,8 @@ def test_check_problem(session_scope_function):
         'boston_housing': read_config(ramp_config_boston_housing())
     }
     for problem_name, ramp_config in ramp_configs.items():
-        setup_ramp_kit_ramp_data(ramp_config, problem_name)
         internal_ramp_config = generate_ramp_config(ramp_config)
+        setup_ramp_kit_ramp_data(internal_ramp_config, problem_name)
         add_problem(session_scope_function, problem_name,
                     internal_ramp_config['ramp_kit_dir'],
                     internal_ramp_config['ramp_data_dir'])
@@ -202,8 +198,8 @@ def test_check_event(session_scope_function):
         'boston_housing': read_config(ramp_config_boston_housing())
     }
     for problem_name, ramp_config in ramp_configs.items():
-        setup_ramp_kit_ramp_data(ramp_config, problem_name)
         internal_ramp_config = generate_ramp_config(ramp_config)
+        setup_ramp_kit_ramp_data(internal_ramp_config, problem_name)
         add_problem(session_scope_function, problem_name,
                     internal_ramp_config['ramp_kit_dir'],
                     internal_ramp_config['ramp_data_dir'])

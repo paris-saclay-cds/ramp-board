@@ -1,16 +1,13 @@
 PYTHON ?= python
-NOSETESTS ?= nosetests
-CTAGS ?= ctags
+PYTEST ?= pytest
 
 all: clean inplace test
 
-clean-ctags:
-	rm -f tags
-
-clean: clean-ctags
-	rm -rf .pytest_cache
-	find . -type f -name '*.pyc' | xargs rm -f
-	find . -type d -name '__pycache__' | xargs rm -f
+clean:
+	cd ramp-frontend && $(PYTHON) setup.py clean && cd ..
+	cd ramp-database && $(PYTHON) setup.py clean && cd ..
+	cd ramp-engine && $(PYTHON) setup.py clean && cd ..
+	cd ramp-utils && $(PYTHON) setup.py clean && cd ..
 
 install:
 	cd ramp-frontend && pip install . && cd ..
@@ -18,6 +15,7 @@ install:
 	cd ramp-engine && pip install . && cd ..
 	cd ramp-utils && pip install . && cd ..
 
+in: inplace # just a shortcut
 inplace:
 	cd ramp-frontend && pip install -e . && cd ..
 	cd ramp-database && pip install -e . && cd ..
@@ -25,26 +23,18 @@ inplace:
 	cd ramp-utils && pip install -e . && cd ..
 
 test-all:
-	pytest -vsl
+	$(PYTEST) -vsl .
 
 test: test-all
 
 test-db:
-	pytest -vsl ramp-database/
+	$(PYTEST) -vsl ramp-database/
 
 test-engine:
-	pytest -vsl ramp-engine/
+	$(PYTEST) -vsl ramp-engine/
 
 test-frontend:
-	pytest -vsl ramp-frontend/
-
-trailing-spaces:
-	find . -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
-
-ctags:
-	# make tags for symbol based navigation in emacs and vim
-	# Install with: sudo apt-get install exuberant-ctags
-	$(CTAGS) --python-kinds=-i -R databoard
+	$(PYTEST) -vsl ramp-frontend/
 
 code-analysis:
 	flake8 . --ignore=E501,E211,E265 | grep -v __init__ | grep -v external

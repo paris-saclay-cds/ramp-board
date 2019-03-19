@@ -1,6 +1,6 @@
 import logging
 
-from ..base import BaseWorker
+from ..base import BaseWorker, _get_traceback
 from . import api as aws
 
 
@@ -116,7 +116,7 @@ class AWSWorker(BaseWorker):
             self.status = 'collected'
             exit_status, error_msg = 0, ''
         else:
-            error_msg = aws._get_traceback(
+            error_msg = _get_traceback(
                 aws._get_log_content(self.config, self.submission))
             self.status = 'collected'
             exit_status = 1

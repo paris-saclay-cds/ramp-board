@@ -45,11 +45,11 @@ KEY_PATH_FIELD = 'key_path'
 KEY_NAME_FIELD = 'key_name'
 SECURITY_GROUP_FIELD = 'security_group'
 REMOTE_RAMP_KIT_FOLDER_FIELD = 'remote_ramp_kit_folder'
-LOCAL_PREDICTIONS_FOLDER_FIELD = 'local_predictions_folder'
+LOCAL_PREDICTIONS_FOLDER_FIELD = 'predictions_dir'
 CHECK_STATUS_INTERVAL_SECS_FIELD = 'check_status_interval_secs'
 CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD = (
     'check_finished_training_interval_secs')
-LOCAL_LOG_FOLDER_FIELD = 'local_log_folder'
+LOCAL_LOG_FOLDER_FIELD = 'logs_dir'
 TRAIN_LOOP_INTERVAL_SECS_FIELD = 'train_loop_interval_secs'
 MEMORY_PROFILING_FIELD = 'memory_profiling'
 
@@ -338,31 +338,6 @@ def _get_log_content(config, submission_name):
         logger.error('Could not open log file of "{}" when trying to get '
                      'log content'.format(submission_name))
         return ''
-
-
-def _get_traceback(content):
-    """
-    get the traceback part from the content where content
-    is a str containing the standard error/output of
-    a python process. It is used to get the traceback
-    of `ramp_test_submission` when there is an error.
-
-    Returns
-    -------
-
-    str with the traceback
-    """
-    if not content:
-        return ''
-    # cut_exception_text = content.rfind('--->')
-    # was like commented line above in ramp-board
-    # but there is no ---> in logs when we use
-    # ramp_test_submission, so we just search for the
-    # first occurence of 'Traceback'.
-    cut_exception_text = content.find('Traceback')
-    if cut_exception_text > 0:
-        content = content[cut_exception_text:]
-    return content
 
 
 def _filter_colors(content):

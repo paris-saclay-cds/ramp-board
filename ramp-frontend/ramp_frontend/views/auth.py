@@ -4,6 +4,7 @@ import logging
 import flask_login
 
 from flask import Blueprint
+from flask import current_app as app
 from flask import flash
 from flask import redirect
 from flask import request
@@ -22,6 +23,8 @@ from ramp_database.tools.user import get_user_by_name
 from ramp_database.tools.user import set_user_by_instance
 
 from ramp_database.model import User
+
+from ramp_database.exceptions import NameClashError
 
 from ramp_frontend import db
 from ramp_frontend import login_manager
@@ -54,7 +57,8 @@ def load_user(id):
 @mod.route("/login", methods=['GET', 'POST'])
 def login():
     """Login request."""
-    add_user_interaction(db.session, interaction='landing')
+    if app.config['TRACK_USER_INTERACTION']:
+        add_user_interaction(db.session, interaction='landing')
 
     if flask_login.current_user.is_authenticated:
         logger.info('User already logged-in')
@@ -82,9 +86,10 @@ def login():
         db.session.commit()
         logger.info(u'User "{}" is logged in'
                     .format(flask_login.current_user.name))
-        add_user_interaction(
-            db.session, interaction='login', user=flask_login.current_user
-        )
+        if app.config['TRACK_USER_INTERACTION']:
+            add_user_interaction(
+                db.session, interaction='login', user=flask_login.current_user
+            )
         next_ = request.args.get('next')
         if next_ is None:
             next_ = url_for('ramp.problems')
@@ -98,7 +103,8 @@ def login():
 def logout():
     """Logout request."""
     user = flask_login.current_user
-    add_user_interaction(db.session, interaction='logout', user=user)
+    if app.config['TRACK_USER_INTERACTION']:
+        add_user_interaction(db.session, interaction='logout', user=user)
     session['logged_in'] = False
     user.is_authenticated = False
     db.session.commit()
@@ -117,23 +123,28 @@ def sign_up():
 
     form = UserCreateProfileForm()
     if form.validate_on_submit():
-        user = add_user(
-            session=db.session,
-            name=form.user_name.data,
-            password=form.password.data,
-            lastname=form.lastname.data,
-            firstname=form.firstname.data,
-            email=form.email.data,
-            linkedin_url=form.linkedin_url.data,
-            twitter_url=form.twitter_url.data,
-            facebook_url=form.facebook_url.data,
-            google_url=form.google_url.data,
-            github_url=form.github_url.data,
-            website_url=form.website_url.data,
-            bio=form.bio.data,
-            is_want_news=form.is_want_news.data,
-            access_level='asked'
-        )
+        try:
+            user = add_user(
+                session=db.session,
+                name=form.user_name.data,
+                password=form.password.data,
+                lastname=form.lastname.data,
+                firstname=form.firstname.data,
+                email=form.email.data,
+                linkedin_url=form.linkedin_url.data,
+                twitter_url=form.twitter_url.data,
+                facebook_url=form.facebook_url.data,
+                google_url=form.google_url.data,
+                github_url=form.github_url.data,
+                website_url=form.website_url.data,
+                bio=form.bio.data,
+                is_want_news=form.is_want_news.data,
+                access_level='asked'
+            )
+        except NameClashError as e:
+            flash(str(e))
+            logger.info(str(e))
+            return render_template('index.html')
         admin_users = User.query.filter_by(access_level='admin')
         for admin in admin_users:
             subject = 'Approve registration of {}'.format(

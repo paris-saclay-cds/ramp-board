@@ -29,6 +29,8 @@ from ramp_database.testing import add_problems
 from ramp_database.testing import add_users
 from ramp_database.testing import create_toy_db
 from ramp_database.testing import create_test_db
+from ramp_database.testing import ramp_config_boston_housing
+from ramp_database.testing import ramp_config_iris
 from ramp_database.testing import sign_up_teams_to_events
 from ramp_database.utils import setup_db
 from ramp_database.utils import session_scope
@@ -69,15 +71,13 @@ HERE = os.path.dirname(__file__)
 @pytest.fixture
 def base_db():
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     try:
-        create_test_db(database_config, ramp_config)
+        deployment_dir = create_test_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(
-            ramp_config['ramp']['deployment_dir'], ignore_errors=True
-        )
+        shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
@@ -95,36 +95,34 @@ def _change_state_db(session):
 @pytest.fixture(scope='module')
 def session_scope_module():
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
+    ramp_config = ramp_config_template()
     try:
-        create_toy_db(database_config, ramp_config)
+        deployment_dir = create_toy_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
             _change_state_db(session)
             yield session
     finally:
-        shutil.rmtree(
-            ramp_config['ramp']['deployment_dir'], ignore_errors=True
-        )
+        shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
-def _setup_sign_up(session, config):
+def _setup_sign_up(session):
     # asking to sign up required a user, a problem, and an event.
     add_users(session)
     add_problems(session)
     add_events(session)
     sign_up_teams_to_events(session)
-    return config['ramp']['event_name'], 'test_user'
+    return 'iris_test', 'test_user'
 
 
 def test_add_submission_create_new_submission(base_db):
     # check that we can make a new submission to the database
     # it will require to have already a team and an event
     session = base_db
-    config = read_config(ramp_config_template())
-    event_name, username = _setup_sign_up(session, config)
-    ramp_config = generate_ramp_config(config)
+    config = ramp_config_template()
+    event_name, username = _setup_sign_up(session)
+    ramp_config = generate_ramp_config(read_config(config))
 
     submission_name = 'random_forest_10_10'
     path_submission = os.path.join(
@@ -133,10 +131,18 @@ def test_add_submission_create_new_submission(base_db):
     add_submission(session, event_name, username, submission_name,
                    path_submission)
     all_submissions = get_submissions(session, event_name, None)
+    # check that the submissions have been copied
+    for sub_id, _, _ in all_submissions:
+        sub = get_submission_by_id(session, sub_id)
+        assert os.path.exists(sub.path)
+        assert os.path.exists(os.path.join(sub.path, 'classifier.py'))
 
     # `sign_up_team` make a submission (sandbox) by user. This submission will
     # be the third submission.
     assert len(all_submissions) == 3
+    # check that the number of submissions for an event was updated
+    event = session.query(Event).filter(Event.name == event_name).one_or_none()
+    assert event.n_submissions == 1
     submission = get_submission_by_name(session, event_name, username,
                                         submission_name)
     assert submission.name == submission_name
@@ -151,9 +157,9 @@ def test_add_submission_too_early_submission(base_db):
     # check that we raise an error when the elapsed time was not large enough
     # between the new submission and the previous submission
     session = base_db
-    config = read_config(ramp_config_template())
-    event_name, username = _setup_sign_up(session, config)
-    ramp_config = generate_ramp_config(config)
+    config = ramp_config_template()
+    event_name, username = _setup_sign_up(session)
+    ramp_config = generate_ramp_config(read_config(config))
 
     # check that we have an awaiting time for the event
     event = (session.query(Event)
@@ -181,9 +187,9 @@ def test_make_submission_resubmission(base_db):
     # check that resubmitting the a submission with the same name will raise
     # an error
     session = base_db
-    config = read_config(ramp_config_template())
-    event_name, username = _setup_sign_up(session, config)
-    ramp_config = generate_ramp_config(config)
+    config = ramp_config_template()
+    event_name, username = _setup_sign_up(session)
+    ramp_config = generate_ramp_config(read_config(config))
 
     # submitting the starting_kit which is used as the default submission for
     # the sandbox should raise an error
@@ -227,9 +233,9 @@ def test_add_submission_wrong_submission_files(base_db):
     # check that we raise an error if the file required by the workflow is not
     # present in the submission or that it has the wrong extension
     session = base_db
-    config = read_config(ramp_config_template())
-    event_name, username = _setup_sign_up(session, config)
-    ramp_config = generate_ramp_config(config)
+    config = ramp_config_template()
+    event_name, username = _setup_sign_up(session)
+    ramp_config = generate_ramp_config(read_config(config))
 
     submission_name = 'corrupted_submission'
     path_submission = os.path.join(
@@ -262,13 +268,12 @@ def test_add_submission_wrong_submission_files(base_db):
 
 def test_submit_starting_kits(base_db):
     session = base_db
-    config = read_config(ramp_config_template())
-    event_name, username = _setup_sign_up(session, config)
-    ramp_config = generate_ramp_config(config)
+    config = ramp_config_iris()
+    event_name, username = _setup_sign_up(session)
+    ramp_config = generate_ramp_config(read_config(config))
 
     submit_starting_kits(session, event_name, username,
-                         os.path.join(ramp_config['ramp_kit_dir'],
-                                      config['ramp']['submissions_dir']))
+                         ramp_config['ramp_kit_submissions_dir'])
 
     submissions = get_submissions(session, event_name, None)
     submissions_id = [sub[0] for sub in submissions]

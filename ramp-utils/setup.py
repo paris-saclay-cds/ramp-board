@@ -38,9 +38,13 @@ EXTRAS_REQUIRE = {
     'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc']
 }
 PACKAGE_DATA = {
-    'ramp_utils': [os.path.join('tests', 'data', 'config.yml'),
+    'ramp_utils': [os.path.join('tests', 'data', 'ramp_config_absolute.yml'),
+                   os.path.join('tests', 'data', 'ramp_config_missing.yml'),
+                   os.path.join('tests', 'data', 'ramp_config_short.yml'),
                    os.path.join('template', 'database_config.yml'),
-                   os.path.join('template', 'ramp_config.yml')]
+                   os.path.join('template', 'ramp_config.yml'),
+                   os.path.join('template', 'ramp_config_template.yml'),
+                   os.path.join('template', 'database_config_template.yml')]
 }
 
 setup(

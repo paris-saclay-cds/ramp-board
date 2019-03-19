@@ -38,36 +38,34 @@ def database_config():
 
 @pytest.fixture(scope='module')
 def ramp_config():
-    return read_config(ramp_config_template())
+    return ramp_config_template()
 
 
 @pytest.fixture
 def session_scope_function(database_config, ramp_config):
     try:
-        create_test_db(database_config, ramp_config)
+        deployment_dir = create_test_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
-        shutil.rmtree(
-            ramp_config['ramp']['deployment_dir'], ignore_errors=True
-        )
+        shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
 def test_ramp_kit_ramp_data(session_scope_function, ramp_config):
-    setup_ramp_kit_ramp_data(ramp_config, 'iris')
+    internal_ramp_config = generate_ramp_config(read_config(ramp_config))
+    setup_ramp_kit_ramp_data(internal_ramp_config, 'iris')
     msg_err = 'The RAMP kit repository was previously cloned.'
     with pytest.raises(ValueError, match=msg_err):
-        setup_ramp_kit_ramp_data(ramp_config, 'iris')
+        setup_ramp_kit_ramp_data(internal_ramp_config, 'iris')
 
     # retrieve the path to the ramp kit to remove it
-    internal_ramp_config = generate_ramp_config(ramp_config)
     shutil.rmtree(internal_ramp_config['ramp_kit_dir'])
     msg_err = 'The RAMP data repository was previously cloned.'
     with pytest.raises(ValueError, match=msg_err):
-        setup_ramp_kit_ramp_data(ramp_config, 'iris')
-    setup_ramp_kit_ramp_data(ramp_config, 'iris', force=True)
+        setup_ramp_kit_ramp_data(internal_ramp_config, 'iris')
+    setup_ramp_kit_ramp_data(internal_ramp_config, 'iris', force=True)
 
 
 def test_add_users(session_scope_function):

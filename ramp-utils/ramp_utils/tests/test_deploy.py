@@ -1,3 +1,4 @@
+import os
 import shutil
 
 import pytest
@@ -17,6 +18,7 @@ from ramp_engine.dispatcher import Dispatcher
 
 from ramp_utils import generate_ramp_config
 from ramp_utils import read_config
+from ramp_utils.utils import commonpath
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
 
@@ -30,17 +32,19 @@ def session_scope_function():
     try:
         yield
     finally:
-        shutil.rmtree(
-            ramp_config['ramp']['deployment_dir'], ignore_errors=True
+        # FIXME: we are recreating the deployment directory but it should be
+        # replaced by an temporary creation of folder.
+        deployment_dir = commonpath(
+            [ramp_config['ramp']['kit_dir'], ramp_config['ramp']['data_dir']]
         )
+        shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
 
 
 def test_deploy_ramp_event_options(session_scope_function):
     database_config = read_config(database_config_template())
-    ramp_config = read_config(ramp_config_template())
-    ramp_config = generate_ramp_config(ramp_config)
+    ramp_config = generate_ramp_config(read_config(ramp_config_template()))
     deploy_ramp_event(database_config_template(), ramp_config_template())
     # deploy again by forcing the deployment
     deploy_ramp_event(
@@ -71,7 +75,8 @@ def test_deploy_ramp_event_options(session_scope_function):
 
 def test_deploy_ramp_event(session_scope_function):
     database_config = read_config(database_config_template())
-    event_config = read_config(ramp_config_template())
+    event_config_filename = ramp_config_template()
+    event_config = read_config(event_config_filename)
     ramp_config = generate_ramp_config(event_config)
     deploy_ramp_event(database_config_template(), ramp_config_template())
 
@@ -86,7 +91,8 @@ def test_deploy_ramp_event(session_scope_function):
     # run the dispatcher on the event which are in the dataset
     dispatcher = Dispatcher(config=database_config,
                             event_config=event_config,
-                            worker=CondaEnvWorker, n_worker=-1,
+                            worker=CondaEnvWorker,
+                            n_worker=-1,
                             hunger_policy='exit')
     dispatcher.launch()
 

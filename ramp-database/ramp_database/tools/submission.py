@@ -175,6 +175,15 @@ def add_submission(session, event_name, team_name, submission_name,
                 submission_file_type_extension=type_extension
             )
             session.add(submission_file)
+            event.set_n_submissions()
+
+    # copy the submission file in the submission folder
+    if os.path.exists(submission.path):
+        shutil.rmtree(submission.path)
+    os.makedirs(submission.path)
+    for filename in submission.f_names:
+        shutil.copy2(src=os.path.join(submission_path, filename),
+                     dst=os.path.join(submission.path, filename))
 
     # for remembering it in the sandbox view
     event_team.last_submission_name = submission_name
@@ -182,8 +191,8 @@ def add_submission(session, event_name, team_name, submission_name,
 
     from .leaderboard import update_leaderboards
     from .leaderboard import update_user_leaderboards
-    update_leaderboards(session, event_name)
-    update_user_leaderboards(session, event_name, team.name)
+    update_leaderboards(session, event_name, new_only=True)
+    update_user_leaderboards(session, event_name, team.name, new_only=True)
     return submission
 
 
@@ -421,10 +430,12 @@ def get_scores(session, submission_id):
     scores : pd.DataFrame
         A pandas dataframe containing the scores of each fold.
     """
-    submission = select_submission_by_id(session, submission_id)
     results = defaultdict(list)
     index = []
-    for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+    all_cv_folds = (session.query(SubmissionOnCVFold)
+                           .filter_by(submission_id=submission_id)
+                           .all())
+    for fold_id, cv_fold in enumerate(all_cv_folds):
         for step in ('train', 'valid', 'test'):
             index.append((fold_id, step))
             for score in cv_fold.scores:
@@ -830,13 +841,6 @@ def submit_starting_kits(session, event_name, team_name, path_submission):
                            else submission_name + '_test')
         submission = add_submission(session, event_name, team_name,
                                     submission_name, from_submission_path)
-        # copy the files
-        if os.path.exists(submission.path):
-            shutil.rmtree(submission.path)
-        os.makedirs(submission.path)
-        for filename in submission.f_names:
-            shutil.copy2(src=os.path.join(from_submission_path, filename),
-                         dst=os.path.join(submission.path, filename))
         logger.info('Copying the submission files into the deployment folder')
         logger.info('Adding {}'.format(submission))
     # revert the minimum duration between two submissions

@@ -12,6 +12,7 @@ from git import Repo
 
 from ramp_utils import read_config
 from ramp_utils import generate_ramp_config
+from ramp_utils.utils import commonpath
 
 from .utils import setup_db
 from .utils import session_scope
@@ -45,20 +46,33 @@ def create_test_db(database_config, ramp_config):
     ----------
     database_config : dict
         The configuration file containing the database information.
-    ramp_config : dict
+    ramp_config : str
         The configuration file containing the information about a RAMP event.
+
+    Returns
+    -------
+    deployment_dir : str
+        The deployment directory for the RAMP components (kits, data, etc.).
     """
     database_config = database_config['sqlalchemy']
     # we can automatically setup the database from the config file used for the
     # tests.
-    ramp_config = generate_ramp_config(ramp_config)
-    shutil.rmtree(ramp_config['deployment_dir'], ignore_errors=True)
+    ramp_config = generate_ramp_config(read_config(ramp_config))
+
+    # FIXME: we are recreating the deployment directory but it should be
+    # replaced by an temporary creation of folder.
+    deployment_dir = commonpath(
+        [ramp_config['ramp_kit_dir'], ramp_config['ramp_data_dir']]
+    )
+
+    shutil.rmtree(deployment_dir, ignore_errors=True)
     os.makedirs(ramp_config['ramp_submissions_dir'])
     db, _ = setup_db(database_config)
     Model.metadata.drop_all(db)
     Model.metadata.create_all(db)
     with session_scope(database_config) as session:
         setup_files_extension_type(session)
+    return deployment_dir
 
 
 def create_toy_db(database_config, ramp_config):
@@ -68,12 +82,18 @@ def create_toy_db(database_config, ramp_config):
     ----------
     database_config : dict
         The configuration file containing the database information.
-    ramp_config : dict
+    ramp_config : str
         The configuration file containing the information about a RAMP event.
+
+    Returns
+    -------
+    deployment_dir : str
+        The deployment directory for the RAMP components (kits, data, etc.).
     """
-    create_test_db(database_config, ramp_config)
+    deployment_dir = create_test_db(database_config, ramp_config)
     with session_scope(database_config['sqlalchemy']) as session:
         setup_toy_db(session)
+    return deployment_dir
 
 
 # Setup functions: functions used to setup the database initially
@@ -111,13 +131,14 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False):
     ----------
     ramp_config : dict
         The configuration file containing the information about a RAMP event.
+        It corresponds to the configuration generated with
+        :func:`ramp_utils.generate_ramp_config`.
     problem_name : str
         The name of the problem.
     force : bool, default is False
         Whether or not to overwrite the RAMP kit and data repositories if they
         already exists.
     """
-    ramp_config = generate_ramp_config(ramp_config)
     problem_kit_path = ramp_config['ramp_kit_dir']
     if os.path.exists(problem_kit_path):
         if not force:
@@ -225,8 +246,8 @@ def add_problems(session):
         'boston_housing': read_config(ramp_config_boston_housing())
     }
     for problem_name, ramp_config in ramp_configs.items():
-        setup_ramp_kit_ramp_data(ramp_config, problem_name)
         internal_ramp_config = generate_ramp_config(ramp_config)
+        setup_ramp_kit_ramp_data(internal_ramp_config, problem_name)
         add_problem(session, problem_name,
                     internal_ramp_config['ramp_kit_dir'],
                     internal_ramp_config['ramp_data_dir'])

@@ -15,10 +15,13 @@ advise you to install it using the following command::
 
     conda install postgresql
 
-FIXME: I think that we can automatized this part.
 Once ``PostgreSQL`` is installed, we initialize a Postgres database cluster::
 
     initdb postgres_dbs
+
+To start the database, you need to execute the following command::
+
+    pg_ctl -D postgres_dbs -l logfile start
 
 Once the cluster has been initialized, we need to create an admin user and
 create the database which will be used for RAMP::
