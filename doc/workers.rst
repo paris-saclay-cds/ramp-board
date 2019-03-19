@@ -160,7 +160,7 @@ function should look like::
             # Openstack instance
             assert True
             # call the base class to update the status and log
-            super().setup(self)
+            super().setup()
 
 Similarly, you might need to make some operation to release the worker. Then,
 the function ``teardown`` is in charge of this. It should be called similarly
@@ -170,7 +170,7 @@ to the ``setup`` function::
             # clean some jobs done by the worker
             # ...
             # call the base class to update the status and log
-            super().teardown(self)
+            super().teardown()
 
 The ``launch_submission`` and ``collect_results`` functions
 ...........................................................
@@ -186,7 +186,7 @@ update the status of the worker::
             # instance
             ...
             # call the base class to update the status and log
-            super().launch_submission(self)
+            super().launch_submission()
 
 Once a submission is trained, the ``ramp test`` command line would store the
 results and you should upload those in the directory indicated by the
@@ -195,7 +195,7 @@ dispatcher::
       def collect_results(self):
             # the base class will be in charge of checking that the state of
             # the worker is fine
-            super().collect_results(self)
+            super().collect_results()
             # write the prediction and logs at the location indicated by the
             # dispatcher (given by the config file)
             log_output = stdout + b'\n\n' + stderr
