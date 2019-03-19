@@ -564,5 +564,5 @@ RAMP shared utilities
    :template: function.rst
 
    import_module_from_source
-   password.check_password
-   password.hash_password
+   utils.check_password
+   utils.hash_password

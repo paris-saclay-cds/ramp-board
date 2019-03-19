@@ -52,6 +52,9 @@ submission_states = Enum(
 
 submission_types = Enum('live', 'test', name='submission_types')
 
+def _encode_string(text):
+    return bytes(text, 'utf-8') if isinstance(text, str) else text
+
 
 class Submission(Model):
     """Submission table.
@@ -181,9 +184,9 @@ class Submission(Model):
         self.event_team = event_team
         self.session = inspect(event_team).session
         sha_hasher = hashlib.sha1()
-        sha_hasher.update(self.event.name)
-        sha_hasher.update(self.team.name)
-        sha_hasher.update(self.name)
+        sha_hasher.update(_encode_string(self.event.name))
+        sha_hasher.update(_encode_string(self.team.name))
+        sha_hasher.update(_encode_string(self.name))
         # We considered using the id, but then it will be given away in the
         # url which is maybe not a good idea.
         self.hash_ = '{}'.format(sha_hasher.hexdigest())

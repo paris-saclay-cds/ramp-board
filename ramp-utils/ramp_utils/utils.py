@@ -26,6 +26,10 @@ def import_module_from_source(source, name):
     return module
 
 
+def _encode_string(text):
+    return bytes(text, 'utf-8') if isinstance(text, str) else text
+
+
 def hash_password(password):
     """Hash a password.
 
@@ -39,7 +43,7 @@ def hash_password(password):
     hashed_password : bytes
         The hashed password.
     """
-    return bcrypt.hashpw(password, bcrypt.gensalt())
+    return bcrypt.hashpw(_encode_string(password), bcrypt.gensalt())
 
 
 def check_password(password, hashed_password):
@@ -57,4 +61,6 @@ def check_password(password, hashed_password):
     is_same_password : bool
         Return True if the two passwords are identical.
     """
-    return bcrypt.checkpw(password, hashed_password)
+    return bcrypt.checkpw(
+        _encode_string(password), _encode_string(hashed_password)
+    )
