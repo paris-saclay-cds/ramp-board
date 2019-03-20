@@ -1,6 +1,8 @@
 # RAMP bundle
 
 [![Build Status](https://travis-ci.com/paris-saclay-cds/ramp-board.svg?branch=master)](https://travis-ci.com/paris-saclay-cds/ramp-board)
+[![codecov](https://codecov.io/gh/paris-saclay-cds/ramp-board/branch/master/graph/badge.svg)](https://codecov.io/gh/paris-saclay-cds/ramp-board)
+[![CircleCI](https://circleci.com/gh/paris-saclay-cds/ramp-board.svg?style=svg)](https://circleci.com/gh/paris-saclay-cds/ramp-board)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 
