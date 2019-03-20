@@ -2,6 +2,7 @@ bcrypt
 bokeh
 boto3
 click
+codecov
 flake8
 Flask
 Flask-Login

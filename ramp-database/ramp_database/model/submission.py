@@ -144,7 +144,7 @@ class Submission(Model):
                               backref=backref('submissions',
                                               cascade='all, delete-orphan'))
 
-    name = Column(String(20, convert_unicode=True), nullable=False)
+    name = Column(String(20), nullable=False)
     hash_ = Column(String, nullable=False, index=True, unique=True)
     submission_timestamp = Column(DateTime, nullable=False)
     sent_to_training_timestamp = Column(DateTime)
