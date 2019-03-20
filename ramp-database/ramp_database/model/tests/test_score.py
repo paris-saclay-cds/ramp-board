@@ -39,7 +39,8 @@ def test_score_type_model(session_scope_module):
     'backref, expected_type',
     [('events', EventScoreType)]
 )
-def test_score_type_model_backref(session_scope_module, backref, expected_type):
+def test_score_type_model_backref(session_scope_module, backref,
+                                  expected_type):
     score_type = session_scope_module.query(ScoreType).first()
     backref_attr = getattr(score_type, backref)
     assert isinstance(backref_attr, list)

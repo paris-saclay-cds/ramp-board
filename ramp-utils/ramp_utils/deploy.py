@@ -1,5 +1,4 @@
 import os
-import shutil
 import subprocess
 
 from ramp_database.testing import _delete_line_from_file

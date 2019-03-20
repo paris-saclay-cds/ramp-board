@@ -3,7 +3,6 @@ import logging
 import click
 
 from ramp_utils import read_config
-from ramp_utils import generate_ramp_config
 from ramp_utils import generate_worker_config
 
 from ramp_engine.dispatcher import Dispatcher

@@ -23,7 +23,7 @@ def _is_conda_env_installed():
         if not envs_path or not any(['ramp-iris' in env for env in envs_path]):
             return True
         return False
-    except:
+    except:  # noqa
         # conda is not installed
         return True
 

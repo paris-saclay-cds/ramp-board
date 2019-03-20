@@ -87,7 +87,7 @@ class Problem(Model):
             self.workflow = \
                 (session.query(Workflow)
                         .filter(Workflow.name ==
-                                type(self.module.workflow).__name__)
+                                type(self.module.workflow).__name__)  # noqa
                         .one())
         else:
             self.workflow = \

@@ -64,7 +64,8 @@ class AWSWorker(BaseWorker):
             logger.error(
                 'Cannot upload submission "{}"'
                 ', an error occured'.format(self.submission))
-            # TODO do something with this status (no launching needs to be done)
+            # TODO do something with this status (no launching needs to be
+            # done)
         else:
             logger.info("Uploaded submission '{}'".format(self.submission))
             self.status = 'setup'

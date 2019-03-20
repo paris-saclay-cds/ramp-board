@@ -21,7 +21,6 @@ def setup_module(module):
 
 def teardown_module(module):
     database_config = read_config(database_config_template())
-    ramp_config = ramp_config_template()
     shutil.rmtree(module.deployment_dir, ignore_errors=True)
     db, _ = setup_db(database_config['sqlalchemy'])
     Model.metadata.drop_all(db)

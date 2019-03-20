@@ -194,7 +194,8 @@ def test_event_team_model(session_scope_module):
     'backref, expected_type',
     [('submissions', Submission)]
 )
-def test_event_team_model_backref(session_scope_module, backref, expected_type):
+def test_event_team_model_backref(session_scope_module, backref,
+                                  expected_type):
     event = get_event(session_scope_module, 'iris_test')
     team = get_team_by_name(session_scope_module, 'test_user')
     event_team = (session_scope_module.query(EventTeam)

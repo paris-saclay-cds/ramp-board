@@ -1,4 +1,3 @@
-import os
 import datetime
 
 from sqlalchemy import Enum
@@ -99,7 +98,8 @@ class User(Model):
         Whether or not the user logged-in.
     admined_events : list of :class:`ramp_database.model.EventAdmin`
         A back-reference to the events administrated by the user.
-    submission_similaritys : list of :class:`ramp_database.model.SubmissionSimilarity`
+    submission_similaritys : list of \
+:class:`ramp_database.model.SubmissionSimilarity`
         A back-reference to the submission similarity.
     admined_teams : list of :class:`ramp_database.model.Team`
         A back-reference to the teams administrated by the user.
@@ -219,10 +219,11 @@ class UserInteraction(Model):
         The ip address from the server.
     note : None or str, default is None
         Some notes.
-    submission : None or :class:`ramp_database.model.Submission`, default is None
+    submission : None or :class:`ramp_database.model.Submission`, \
+default is None
         The submission instance.
-    submission_file : None or :class:`ramp_database.model.SubmissionFile`, default \
-is None
+    submission_file : None or :class:`ramp_database.model.SubmissionFile`, \
+default is None
         The submission file instance.
     diff : None or str, default is None
         The difference between two submissions.

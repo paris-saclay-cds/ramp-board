@@ -111,7 +111,7 @@ def test_check_problem(session_scope_function):
         session_scope_function, problem_name,
         internal_ramp_config['ramp_kit_dir'],
         internal_ramp_config['ramp_data_dir'],
-            force=True
+        force=True
     )
     problem = get_problem(session_scope_function, problem_name)
     assert problem.name == problem_name

@@ -277,7 +277,7 @@ def test_submission_score_on_cv_fold_model_property(session_scope_module):
                 EventScoreType.id)
         .filter(SubmissionScore.submission_id == 5)
         .filter(EventScoreType.name == 'acc')
-        .first())
+        .first())  # noqa
     assert cv_fold_score.name == 'acc'
     assert isinstance(cv_fold_score.event_score_type, EventScoreType)
     assert callable(cv_fold_score.score_function)

@@ -1,6 +1,6 @@
 """
-The :mod:`ramp_database.utils` module provides tools to setup and connect to the
-RAMP database.
+The :mod:`ramp_database.utils` module provides tools to setup and connect to
+the RAMP database.
 """
 
 from contextlib import contextmanager
@@ -62,7 +62,7 @@ def session_scope(config):
         try:
             yield session
             session.commit()
-        except:
+        except:  # noqa
             session.rollback()
             raise
         finally:

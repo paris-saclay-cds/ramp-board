@@ -33,7 +33,8 @@ def main():
     try:
         event_name = config['ramp']['event_name']
     except KeyError:
-        print('Cannot find event_name in section ramp of the {}'.format(args.config))
+        print('Cannot find event_name in section ramp of the {}'
+              .format(args.config))
         sys.exit(1)
     train_loop(config, event_name)
 

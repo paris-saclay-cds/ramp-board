@@ -2,7 +2,6 @@ import os
 import hashlib
 import datetime
 
-import numpy as np
 from sqlalchemy import Enum
 from sqlalchemy import Float
 from sqlalchemy import Column
@@ -51,6 +50,7 @@ submission_states = Enum(
     name='submission_states')
 
 submission_types = Enum('live', 'test', name='submission_types')
+
 
 def _encode_string(text):
     return bytes(text, 'utf-8') if isinstance(text, str) else text
@@ -340,8 +340,8 @@ class Submission(Model):
 
         Ordered according to ``score_names``. Called by
         :func:`ramp_database.tools.leaderboard.get_public_leaderboard` and
-        :func:`ramp_database.tools.get_private_leaderboard`, making sure scores are
-        listed in the correct column.
+        :func:`ramp_database.tools.get_private_leaderboard`, making sure scores
+        are listed in the correct column.
 
         Parameters
         ----------
@@ -350,7 +350,8 @@ class Submission(Model):
 
         Returns
         -------
-        scores : generator of :class:`ramp_database.model.submission.SubmissionScore``
+        scores : generator of \
+:class:`ramp_database.model.submission.SubmissionScore``
             Generate a scoring instance.
         """
         score_dict = {score.score_name: score for score in self.scores}
@@ -746,7 +747,8 @@ class SubmissionFileType(Model):
         Whether or not this type of file is editable.
     max_size : int
         The maximum size of this file type.
-    workflow_element_types : list of :class:`ramp_database.model.WorkflowElementType`
+    workflow_element_types : list of \
+:class:`ramp_database.model.WorkflowElementType`
         A back-reference to the workflow element type for this submission file
         type.
     """

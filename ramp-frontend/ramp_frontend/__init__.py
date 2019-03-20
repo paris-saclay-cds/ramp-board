@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 from ramp_database.model import Model
 
-from ._version import __version__
+from ._version import __version__  # noqa
 
 all = [
     '__version__'

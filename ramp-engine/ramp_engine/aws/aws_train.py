@@ -4,20 +4,18 @@ from subprocess import call
 import time
 
 import botocore  # amazon api
-import boto3  # amazon api
 
-from rampdb.tools import select_submissions_by_id
-from rampdb.tools import set_predictions
-from rampdb.tools import set_time
-from rampdb.tools import set_scores
-from rampdb.tools import set_submission_state
-from rampdb.tools import get_submissions
-from rampdb.tools import get_submission_state
-from rampdb.tools import get_submission_by_id
-from rampdb.tools import set_submission_max_ram
-from rampdb.tools import score_submission
-from rampdb.tools import set_submission_error_msg
-from rampdb.tools import get_event_nb_folds
+from ramp_database.tools import set_predictions
+from ramp_database.tools import set_time
+from ramp_database.tools import set_scores
+from ramp_database.tools import set_submission_state
+from ramp_database.tools import get_submissions
+from ramp_database.tools import get_submission_state
+from ramp_database.tools import get_submission_by_id
+from ramp_database.tools import set_submission_max_ram
+from ramp_database.tools import score_submission
+from ramp_database.tools import set_submission_error_msg
+from ramp_database.tools import get_event_nb_folds
 
 from ..base import _get_traceback
 
@@ -65,7 +63,8 @@ def train_loop(config, event_name):
             try:
                 instance, = launch_ec2_instances(conf_aws, nb=1)
             except botocore.exceptions.ClientError as ex:
-                logger.info('Exception when launching a new instance : "{}"'.format(ex))
+                logger.info('Exception when launching a new instance : "{}"'
+                            .format(ex))
                 logger.info('Skipping...')
                 continue
             nb_trials = 0
@@ -138,21 +137,33 @@ def train_loop(config, event_name):
                         'Training of "{}" finished, checking '
                         'if successful or not...'.format(label))
                     submission = get_submission_by_id(config, submission_id)
-                    actual_nb_folds = get_event_nb_folds(config, submission.event.name)
+                    actual_nb_folds = get_event_nb_folds(
+                        config, submission.event.name
+                    )
                     if _training_successful(
                             conf_aws,
                             instance_id,
                             submission_name,
                             actual_nb_folds):
-                        logger.info('Training of "{}" was successful'.format(label))
+                        logger.info('Training of "{}" was successful'
+                                    .format(label))
                         if conf_aws.get(MEMORY_PROFILING_FIELD):
-                            logger.info('Download max ram usage info of "{}"'.format(label))
-                            download_mprof_data(conf_aws, instance_id, submission_name)
-                            max_ram = _get_submission_max_ram(conf_aws, submission_name)
-                            logger.info('Max ram usage of "{}": {}MB'.format(label, max_ram))
-                            set_submission_max_ram(config, submission_id, max_ram)
+                            logger.info('Download max ram usage info of "{}"'
+                                        .format(label))
+                            download_mprof_data(
+                                conf_aws, instance_id, submission_name
+                            )
+                            max_ram = _get_submission_max_ram(
+                                conf_aws, submission_name
+                            )
+                            logger.info('Max ram usage of "{}": {}MB'
+                                        .format(label, max_ram))
+                            set_submission_max_ram(
+                                config, submission_id, max_ram
+                            )
 
-                        logger.info('Downloading the predictions of "{}"'.format(label))
+                        logger.info('Downloading the predictions of "{}"'
+                                    .format(label))
                         path = download_predictions(
                             conf_aws, instance_id, submission_name)
                         set_predictions(config, submission_id, path)

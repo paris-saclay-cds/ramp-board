@@ -12,7 +12,6 @@ import flask_login
 
 from flask import Blueprint
 from flask import current_app as app
-from flask import flash
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -34,7 +33,6 @@ from ramp_database.exceptions import DuplicateSubmissionError
 from ramp_database.exceptions import MissingExtensionError
 from ramp_database.exceptions import TooEarlySubmissionError
 
-from ramp_database.tools.event import add_event
 from ramp_database.tools.event import get_event
 from ramp_database.tools.event import get_problem
 from ramp_database.tools.frontend import is_admin
@@ -432,7 +430,7 @@ def sandbox(event_name):
                     'Submission {} already exists. Please change the name.'
                     .format(new_submission_name)
                 )
-            except MissingExtensionError as e:
+            except MissingExtensionError:
                 return redirect_to_sandbox(
                     event, 'Missing extension'
                 )
@@ -588,7 +586,9 @@ def credit(submission_hash):
             # find the last credit (in case crediter changes her mind)
             submission_similaritys.sort(
                 key=lambda x: x.timestamp, reverse=True)
-            submission_credit = int(round(100 * submission_similaritys[0].similarity))
+            submission_credit = int(
+                round(100 * submission_similaritys[0].similarity)
+            )
             sum_credit += submission_credit
         credit_form.name_credits.append(
             (s_field, str(submission_credit), source_submission.link)

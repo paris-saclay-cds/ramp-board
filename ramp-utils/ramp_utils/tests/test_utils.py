@@ -19,4 +19,3 @@ def test_check_password():
     hashed_password = hash_password(password)
     assert check_password(password, hashed_password)
     assert not check_password("hjst3789ep;ocikaqji", hashed_password)
-
