@@ -6,8 +6,6 @@ import logging
 
 from flask_mail import Message
 
-from ramp_utils.utils import encode_string
-
 from ramp_frontend import mail
 
 logger = logging.getLogger('RAMP-FRONTEND')
@@ -37,10 +35,10 @@ def body_formatter_user(user):
     notes = {}
     bio = {}
 
-    """.format(encode_string(user.name), encode_string(user.firstname),
-               encode_string(user.lastname), user.email, user.linkedin_url,
+    """.format(user.name, user.firstname,
+               user.lastname, user.email, user.linkedin_url,
                user.twitter_url, user.facebook_url, user.github_url,
-               encode_string(user.hidden_notes), encode_string(user.bio))
+               user.hidden_notes, user.bio)
 
     return body
 

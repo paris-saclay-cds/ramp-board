@@ -91,7 +91,6 @@ def test_sign_up_team():
     assert result.exit_code == 0, result.output
 
 
-
 def test_add_event_admin():
     runner = CliRunner()
     result = runner.invoke(main, ['add-event-admin',

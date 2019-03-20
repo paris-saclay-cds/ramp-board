@@ -33,7 +33,7 @@ class AWSWorker(BaseWorker):
     """
 
     def __init__(self, config, submission):
-        super(AWSWorker, self).__init__(config, submission)
+        super().__init__(config, submission)
         self.submissions_path = self.config['submissions_dir']
 
     def setup(self):
@@ -64,7 +64,8 @@ class AWSWorker(BaseWorker):
             logger.error(
                 'Cannot upload submission "{}"'
                 ', an error occured'.format(self.submission))
-            # TODO do something with this status (no launching needs to be done)
+            # TODO do something with this status (no launching needs to be
+            # done)
         else:
             logger.info("Uploaded submission '{}'".format(self.submission))
             self.status = 'setup'
@@ -93,7 +94,7 @@ class AWSWorker(BaseWorker):
             self.config, self.instance.id, self.submission)
 
     def collect_results(self):
-        super(AWSWorker, self).collect_results()
+        super().collect_results()
         if self.status == 'running':
             aws._wait_until_train_finished(
                 self.config, self.instance.id, self.submission)
@@ -122,4 +123,4 @@ class AWSWorker(BaseWorker):
     def teardown(self):
         """Terminate the Amazon instance"""
         aws.terminate_ec2_instance(self.config, self.instance.id)
-        super(AWSWorker, self).teardown()
+        super().teardown()

@@ -2,7 +2,6 @@ language: python
 dist: trusty
 env:
   matrix:
-    - PYTHON_VERSION=2.7
     - PYTHON_VERSION=3.6
     - PYTHON_VERSION=3.7
 before_install:
@@ -27,6 +26,7 @@ script:
     - bash ci_tools/travis/test_ramp_utils.sh
     - bash ci_tools/travis/integration_test.sh
 after_success:
-    - make code-analysis
+    - cp .coverage $TRAVIS_BUILD_DIR
+    - codecov --root $TRAVIS_BUILD_DIR || echo "codecov upload failed"
 notifications:
   email: true

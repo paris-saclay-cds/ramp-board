@@ -1,7 +1,4 @@
-import os
 import datetime
-
-import six
 
 from sqlalchemy import Enum
 from sqlalchemy import Float
@@ -13,8 +10,6 @@ from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
-
-from ramp_utils.utils import encode_string
 
 from .base import Model
 from .event import EventTeam
@@ -103,7 +98,8 @@ class User(Model):
         Whether or not the user logged-in.
     admined_events : list of :class:`ramp_database.model.EventAdmin`
         A back-reference to the events administrated by the user.
-    submission_similaritys : list of :class:`ramp_database.model.SubmissionSimilarity`
+    submission_similaritys : list of \
+:class:`ramp_database.model.SubmissionSimilarity`
         A back-reference to the submission similarity.
     admined_teams : list of :class:`ramp_database.model.Team`
         A back-reference to the teams administrated by the user.
@@ -166,17 +162,16 @@ class User(Model):
 
     def get_id(self):
         """str: Return the user ID."""
-        return six.text_type(self.id)
+        return str(self.id)
 
     def __str__(self):
-        return 'User({})'.format(encode_string(self.name))
+        return 'User({})'.format(self.name)
 
     def __repr__(self):
         return ("User(name={}, lastname={}, firstname={}, email={}, "
                 "admined_teams={})"
-                .format(encode_string(self.name), encode_string(self.lastname),
-                        encode_string(self.firstname),
-                        encode_string(self.email), self.admined_teams))
+                .format(self.name, self.lastname, self.firstname,
+                        self.email, self.admined_teams))
 
 
 user_interaction_type = Enum(
@@ -224,10 +219,11 @@ class UserInteraction(Model):
         The ip address from the server.
     note : None or str, default is None
         Some notes.
-    submission : None or :class:`ramp_database.model.Submission`, default is None
+    submission : None or :class:`ramp_database.model.Submission`, \
+default is None
         The submission instance.
-    submission_file : None or :class:`ramp_database.model.SubmissionFile`, default \
-is None
+    submission_file : None or :class:`ramp_database.model.SubmissionFile`, \
+default is None
         The submission file instance.
     diff : None or str, default is None
         The difference between two submissions.

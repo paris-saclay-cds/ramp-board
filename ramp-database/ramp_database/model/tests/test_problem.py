@@ -2,7 +2,6 @@ import shutil
 
 import pytest
 
-from ramp_utils.utils import encode_string
 from ramp_utils import read_config
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
@@ -40,7 +39,7 @@ def test_problem_model(session_scope_module):
 
     assert (repr(problem) ==
             "Problem({})\nWorkflow(Classifier)\n\tWorkflow(Classifier): "
-            "WorkflowElement(classifier)".format(encode_string('iris')))
+            "WorkflowElement(classifier)".format('iris'))
 
     # check that we can access the problem module and that we have one of the
     # expected function there.

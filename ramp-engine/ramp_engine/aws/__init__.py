@@ -1,1 +1,1 @@
-from .worker import AWSWorker
+from .worker import AWSWorker  # noqa

@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 cd $HOME
 mkdir ramp_deployment

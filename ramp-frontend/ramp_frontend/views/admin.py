@@ -45,7 +45,7 @@ def approve_users():
     """Approve new user to log-in and sign-up to events."""
     if not flask_login.current_user.access_level == 'admin':
         return redirect_to_user(
-            u'Sorry {}, you do not have admin rights'
+            'Sorry {}, you do not have admin rights'
             .format(flask_login.current_user.firstname),
             is_error=True
         )
@@ -103,18 +103,18 @@ def approve_single_user(user_name):
     email."""
     if not flask_login.current_user.access_level == 'admin':
         return redirect_to_user(
-            u'Sorry {}, you do not have admin rights'
+            'Sorry {}, you do not have admin rights'
             .format(flask_login.current_user.firstname),
             is_error=True
         )
     user = User.query.filter_by(name=user_name).one_or_none()
     if not user:
         return redirect_to_user(
-            u'No user {}'.format(user_name), is_error=True
+            'No user {}'.format(user_name), is_error=True
         )
     approve_user(db.session, user.name)
     return redirect_to_user(
-        u'{} is signed up'.format(user), is_error=False,
+        '{} is signed up'.format(user), is_error=False,
         category='Successful sign-up'
     )
 
@@ -137,11 +137,11 @@ def approve_sign_up_for_event(event_name, user_name):
     event = get_event(db.session, event_name)
     user = User.query.filter_by(name=user_name).one_or_none()
     if not is_admin(db.session, event_name, flask_login.current_user.name):
-        return redirect_to_user(u'Sorry {}, you do not have admin rights'
+        return redirect_to_user('Sorry {}, you do not have admin rights'
                                 .format(flask_login.current_user.firstname),
                                 is_error=True)
     if not event or not user:
-        return redirect_to_user(u'No event {} or no user {}'
+        return redirect_to_user('No event {} or no user {}'
                                 .format(event_name, user_name), is_error=True)
     sign_up_team(db.session, event.name, user.name)
 
@@ -155,7 +155,7 @@ def approve_sign_up_for_event(event_name, user_name):
         to=flask_login.current_user.email, subject=subject, body=body
     )
 
-    return redirect_to_user(u'{} is signed up for {}.'.format(user, event),
+    return redirect_to_user('{} is signed up for {}.'.format(user, event),
                             is_error=False, category='Successful sign-up')
 
 
@@ -171,7 +171,7 @@ def update_event(event_name):
     """
     if not is_admin(db.session, event_name, flask_login.current_user.name):
         return redirect_to_user(
-            u'Sorry {}, you do not have admin rights'
+            'Sorry {}, you do not have admin rights'
             .format(flask_login.current_user.firstname),
             is_error=True
         )
@@ -179,10 +179,10 @@ def update_event(event_name):
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
         return redirect_to_user(
-            u'{}: no event named "{}"'
+            '{}: no event named "{}"'
             .format(flask_login.current_user.firstname, event_name)
         )
-    logger.info(u'{} is updating event {}'
+    logger.info('{} is updating event {}'
                 .format(flask_login.current_user.name, event.name))
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     # We assume here that event name has the syntax <problem_name>_<suffix>
@@ -241,7 +241,7 @@ def update_event(event_name):
             #     pass
             if message:
                 e = NameClashError(message)
-            flash(u'{}'.format(e), category='Update event error')
+            flash('{}'.format(e), category='Update event error')
             return redirect(url_for('update_event', event_name=event.name))
 
         return redirect(url_for('ramp.problems'))
@@ -266,7 +266,7 @@ def user_interactions():
     """Show the user interactions recorded on the website."""
     if flask_login.current_user.access_level != 'admin':
         return redirect_to_user(
-            u'Sorry {}, you do not have admin rights'
+            'Sorry {}, you do not have admin rights'
             .format(flask_login.current_user.firstname),
             is_error=True
         )
@@ -292,7 +292,7 @@ def dashboard_submissions(event_name):
     """
     if not is_admin(db.session, event_name, flask_login.current_user.name):
         return redirect_to_user(
-            u'Sorry {}, you do not have admin rights'
+            'Sorry {}, you do not have admin rights'
             .format(flask_login.current_user.firstname),
             is_error=True
         )

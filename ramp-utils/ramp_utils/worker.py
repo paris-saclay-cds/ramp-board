@@ -1,5 +1,3 @@
-import six
-
 from .config_parser import read_config
 from .ramp import generate_ramp_config
 
@@ -23,7 +21,7 @@ def generate_worker_config(event_config, database_config=None):
     worker_config : dict
         The configuration for the RAMP worker.
     """
-    if isinstance(event_config, six.string_types):
+    if isinstance(event_config, str):
         ramp_config = generate_ramp_config(event_config, database_config)
         event_config = read_config(
             event_config, filter_section=['ramp', 'worker'])

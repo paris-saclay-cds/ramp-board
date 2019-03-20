@@ -146,8 +146,8 @@ def get_submission_file_type_extension(session, type_name, extension_name):
 
     Returns
     -------
-    extension : :class:`ramp_database.model.SubmissionFileTypeExtension` or list of \
-:class:`ramp_database.model.SubmissionFileTypeExtension`
+    extension : :class:`ramp_database.model.SubmissionFileTypeExtension` or \
+list of :class:`ramp_database.model.SubmissionFileTypeExtension`
         The queried submission file type.
     """
     return select_submission_type_extension_by_name(

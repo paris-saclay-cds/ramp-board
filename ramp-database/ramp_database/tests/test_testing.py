@@ -2,7 +2,6 @@ import os
 import shutil
 
 import pytest
-from git.exc import GitCommandError
 
 from ramp_utils import read_config
 from ramp_utils import generate_ramp_config

@@ -260,8 +260,8 @@ def get_submissions(session, event_name, state='new'):
 
     See also
     --------
-    ramp_database.tools.get_submission_by_id : Get a single submission using an id.
-    ramp_database.tools.get_submission_by_name : Get a single submission using names.
+    ramp_database.tools.get_submission_by_id : Get a submission using an id.
+    ramp_database.tools.get_submission_by_name : Get a submission using names.
     """
     if state is not None and state not in STATES:
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
@@ -296,7 +296,7 @@ def get_submission_by_id(session, submission_id):
     See also
     --------
     ramp_database.tools.get_submissions : Get submissions information.
-    ramp_database.tools.get_submission_by_name : Get a single submission using names.
+    ramp_database.tools.get_submission_by_name : Get a submission using names.
     """
     submission = select_submission_by_id(session, submission_id)
     submission.event.name
@@ -326,7 +326,7 @@ def get_submission_by_name(session, event_name, team_name, name):
     See also
     --------
     ramp_database.tools.get_submissions : Get submissions information.
-    ramp_database.tools.get_submission_by_id : Get a single submission using an id.
+    ramp_database.tools.get_submission_by_id : Get a submission using an id.
     """
     submission = select_submission_by_name(session, event_name, team_name,
                                            name)

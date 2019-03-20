@@ -18,7 +18,7 @@ MAINTAINER_EMAIL = 'boucaud.alexandre@gmail.com, guillaume.lemaitre@inria.fr'
 URL = 'https://github.com/paris-saclay-cds/ramp-board'
 LICENSE = 'BSD (3-clause)'
 DOWNLOAD_URL = 'https://github.com/paris-saclay-cds/ramp-board'
-VERSION = __version__
+VERSION = __version__  # noqa
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
                'License :: OSI Approved',
@@ -29,12 +29,10 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Operating System :: POSIX',
                'Operating System :: Unix',
                'Operating System :: MacOS',
-               'Programming Language :: Python :: 2.7',
                'Programming Language :: Python :: 3.6',
                'Programming Language :: Python :: 3.7']
 INSTALL_REQUIRES = ['bokeh', 'click', 'Flask', 'Flask-Login', 'Flask-Mail',
-                    'Flask-SQLAlchemy', 'Flask-WTF', 'numpy', 'pandas',
-                    'six']
+                    'Flask-SQLAlchemy', 'Flask-WTF', 'numpy', 'pandas']
 EXTRAS_REQUIRE = {
     'tests': ['pytest', 'pytest-cov'],
     'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc']

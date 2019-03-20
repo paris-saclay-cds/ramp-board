@@ -12,7 +12,6 @@ import flask_login
 
 from flask import Blueprint
 from flask import current_app as app
-from flask import flash
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -22,8 +21,6 @@ from wtforms import StringField
 from wtforms.widgets import TextArea
 
 from werkzeug.utils import secure_filename
-
-from ramp_utils.utils import encode_string
 
 from ramp_database.model import Problem
 from ramp_database.model import Submission
@@ -36,7 +33,6 @@ from ramp_database.exceptions import DuplicateSubmissionError
 from ramp_database.exceptions import MissingExtensionError
 from ramp_database.exceptions import TooEarlySubmissionError
 
-from ramp_database.tools.event import add_event
 from ramp_database.tools.event import get_event
 from ramp_database.tools.event import get_problem
 from ramp_database.tools.frontend import is_admin
@@ -127,7 +123,7 @@ def problem(problem_name):
         return render_template('problem.html', problem=current_problem,
                                description=description, admin=admin)
     else:
-        return redirect_to_user(u'Problem {} does not exist'
+        return redirect_to_user('Problem {} does not exist'
                                 .format(problem_name), is_error=True)
 
 
@@ -147,7 +143,7 @@ def user_event(event_name):
         return redirect_to_user(msg)
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
-        return redirect_to_user(u'{}: no event named "{}"'
+        return redirect_to_user('{}: no event named "{}"'
                                 .format(flask_login.current_user.firstname,
                                         event_name))
     event = get_event(db.session, event_name)
@@ -172,7 +168,7 @@ def user_event(event_name):
                                admin=admin,
                                approved=approved,
                                asked=asked)
-    return redirect_to_user(u'Event {} does not exist.'
+    return redirect_to_user('Event {} does not exist.'
                             .format(event_name), is_error=True)
 
 
@@ -189,7 +185,7 @@ def sign_up_for_event(event_name):
     event = get_event(db.session, event_name)
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
-        return redirect_to_user(u'{}: no event named "{}"'
+        return redirect_to_user('{}: no event named "{}"'
                                 .format(flask_login.current_user.firstname,
                                         event_name))
     if app.config['TRACK_USER_INTERACTION']:
@@ -205,8 +201,7 @@ def sign_up_for_event(event_name):
             body = body_formatter_user(flask_login.current_user)
             url_approve = ('https://www.ramp.studio/events/{}/sign_up/{}'
                            .format(
-                               event.name,
-                               encode_string(flask_login.current_user.name)
+                               event.name, flask_login.current_user.name
                            ))
             body += ('Click on this link to approve the sign-up request: {}'
                      .format(url_approve))
@@ -216,7 +211,7 @@ def sign_up_for_event(event_name):
     sign_up_team(db.session, event.name, flask_login.current_user.name)
     return redirect_to_sandbox(
         event,
-        u'{} is signed up for {}.'
+        '{} is signed up for {}.'
         .format(flask_login.current_user.firstname, event),
         is_error=False,
         category='Successful sign-up'
@@ -237,7 +232,7 @@ def sandbox(event_name):
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
         return redirect_to_user(
-            u'{}: no event named "{}"'
+            '{}: no event named "{}"'
             .format(flask_login.current_user.firstname, event_name)
         )
     if not is_accessible_code(db.session, event_name,
@@ -275,7 +270,7 @@ def sandbox(event_name):
         if submission_file.is_editable:
             f_field = submission_file.name
             setattr(CodeForm,
-                    f_field, StringField(u'Text', widget=TextArea()))
+                    f_field, StringField('Text', widget=TextArea()))
             code_form_kwargs[f_field] = submission_file.get_code()
     code_form_kwargs['prefix'] = 'code'
     code_form = CodeForm(**code_form_kwargs)
@@ -328,7 +323,7 @@ def sandbox(event_name):
                                 diff=diff, similarity=similarity
                             )
             except Exception as e:
-                return redirect_to_sandbox(event, u'Error: {}'.format(e))
+                return redirect_to_sandbox(event, 'Error: {}'.format(e))
             return redirect_to_sandbox(
                 event,
                 'You submission has been saved. You can safely comeback to '
@@ -345,7 +340,7 @@ def sandbox(event_name):
                 name=upload_name, workflow=event.workflow).one_or_none()
             if upload_workflow_element is None:
                 return redirect_to_sandbox(event,
-                                           u'{} is not in the file list.'
+                                           '{} is not in the file list.'
                                            .format(upload_f_name))
 
             # TODO: create a get_function
@@ -362,7 +357,7 @@ def sandbox(event_name):
                     file_length > upload_workflow_element.max_size):
                 return redirect_to_sandbox(
                     event,
-                    u'File is too big: {} exceeds max size {}'
+                    'File is too big: {} exceeds max size {}'
                     .format(file_length, upload_workflow_element.max_size)
                 )
             if submission_file.is_editable:
@@ -371,12 +366,12 @@ def sandbox(event_name):
                         code = f.read()
                         submission_file.set_code(code)
                 except Exception as e:
-                    return redirect_to_sandbox(event, u'Error: {}'.format(e))
+                    return redirect_to_sandbox(event, 'Error: {}'.format(e))
             else:
                 # non-editable files are not verified for now
                 dst = os.path.join(sandbox_submission.path, upload_f_name)
                 shutil.copy2(tmp_f_name, dst)
-            logger.info(u'{} uploaded {} in {}'
+            logger.info('{} uploaded {} in {}'
                         .format(flask_login.current_user.name, upload_f_name,
                                 event))
 
@@ -423,7 +418,7 @@ def sandbox(event_name):
             try:
                 new_submission_name.encode('ascii')
             except Exception as e:
-                return redirect_to_sandbox(event, u'Error: {}'.format(e))
+                return redirect_to_sandbox(event, 'Error: {}'.format(e))
             try:
                 new_submission = add_submission(db.session, event_name,
                                                 event_team.team.name,
@@ -432,17 +427,17 @@ def sandbox(event_name):
             except DuplicateSubmissionError:
                 return redirect_to_sandbox(
                     event,
-                    u'Submission {} already exists. Please change the name.'
+                    'Submission {} already exists. Please change the name.'
                     .format(new_submission_name)
                 )
-            except MissingExtensionError as e:
+            except MissingExtensionError:
                 return redirect_to_sandbox(
                     event, 'Missing extension'
                 )
             except TooEarlySubmissionError as e:
                 return redirect_to_sandbox(event, str(e))
 
-            logger.info(u'{} submitted {} for {}.'
+            logger.info('{} submitted {} for {}.'
                         .format(flask_login.current_user.name,
                                 new_submission.name, event_team))
             if event.is_send_submitted_mails:
@@ -471,7 +466,7 @@ def sandbox(event_name):
 
             return redirect_to_sandbox(
                 event,
-                u'{} submitted {} for {}'
+                '{} submitted {} for {}'
                 .format(flask_login.current_user.firstname,
                         new_submission.name, event_team),
                 is_error=False, category='Submission'
@@ -494,10 +489,10 @@ def ask_for_event(problem_name):
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
     if problem is None:
         return redirect_to_user(
-            u'{}: no problem named "{}"'
+            '{}: no problem named "{}"'
             .format(flask_login.current_user.firstname, problem_name)
         )
-    logger.info(u'{} is asking for event on {}'
+    logger.info('{} is asking for event on {}'
                 .format(flask_login.current_user.name, problem.name))
     # We assume here that event name has the syntax <problem_name>_<suffix>
     form = AskForEventForm(
@@ -553,14 +548,14 @@ def credit(submission_hash):
         flask_login.current_user.name, submission.name
     )
     if submission is None or not access_code:
-        error_str = u'Missing submission: {}'.format(submission_hash)
+        error_str = 'Missing submission: {}'.format(submission_hash)
         return redirect_to_user(error_str)
     event_team = submission.event_team
     event = event_team.event
     source_submissions = get_source_submissions(db.session, submission.id)
 
     def get_s_field(source_submission):
-        return u'{}/{}/{}'.format(
+        return '{}/{}/{}'.format(
             source_submission.event_team.event.name,
             source_submission.event_team.team.name,
             source_submission.name)
@@ -570,7 +565,7 @@ def credit(submission_hash):
     credit_form_kwargs = {}
     for source_submission in source_submissions:
         s_field = get_s_field(source_submission)
-        setattr(CreditForm, s_field, StringField(u'Text'))
+        setattr(CreditForm, s_field, StringField('Text'))
     credit_form = CreditForm(**credit_form_kwargs)
     sum_credit = 0
     # new = True
@@ -591,7 +586,9 @@ def credit(submission_hash):
             # find the last credit (in case crediter changes her mind)
             submission_similaritys.sort(
                 key=lambda x: x.timestamp, reverse=True)
-            submission_credit = int(round(100 * submission_similaritys[0].similarity))
+            submission_credit = int(
+                round(100 * submission_similaritys[0].similarity)
+            )
             sum_credit += submission_credit
         credit_form.name_credits.append(
             (s_field, str(submission_credit), source_submission.link)
@@ -612,7 +609,7 @@ def credit(submission_hash):
                     'Error: The total credit should add up to 100'
                 )
         except Exception as e:
-            return redirect_to_credit(submission_hash, u'Error: {}'.format(e))
+            return redirect_to_credit(submission_hash, 'Error: {}'.format(e))
         for source_submission in source_submissions:
             s_field = get_s_field(source_submission)
             similarity = int(getattr(credit_form, s_field).data) / 100.
@@ -646,7 +643,7 @@ def credit(submission_hash):
                 submission=submission
             )
 
-        return redirect(u'/events/{}/sandbox'.format(event.name))
+        return redirect('/events/{}/sandbox'.format(event.name))
 
     admin = is_admin(db.session, event.name, flask_login.current_user.name)
     return render_template(
@@ -669,7 +666,7 @@ def event_plots(event_name):
     event = get_event(db.session, event_name)
     if not is_accessible_event(db.session, event_name,
                                flask_login.current_user.name):
-        return redirect_to_user(u'{}: no event named "{}"'
+        return redirect_to_user('{}: no event named "{}"'
                                 .format(flask_login.current_user.firstname,
                                         event_name))
     if event:
@@ -679,7 +676,7 @@ def event_plots(event_name):
                                script=script,
                                div=div,
                                event=event)
-    return redirect_to_user(u'Event {} does not exist.'
+    return redirect_to_user('Event {} does not exist.'
                             .format(event_name),
                             is_error=True)
 
@@ -708,7 +705,7 @@ def view_model(submission_hash, f_name):
             not is_accessible_code(db.session, submission.event.name,
                                    flask_login.current_user.name,
                                    submission.name)):
-        error_str = u'Missing submission: {}'.format(submission_hash)
+        error_str = 'Missing submission: {}'.format(submission_hash)
         return redirect_to_user(error_str)
     event = submission.event_team.event
     team = submission.event_team.team
@@ -718,17 +715,17 @@ def view_model(submission_hash, f_name):
                                          workflow=event.workflow)
                               .one_or_none())
     if workflow_element is None:
-        error_str = (u'{} is not a valid workflow element by {} '
+        error_str = ('{} is not a valid workflow element by {} '
                      .format(workflow_element_name,
                              flask_login.current_user.name))
-        error_str += u'in {}/{}/{}/{}'.format(event, team, submission, f_name)
+        error_str += 'in {}/{}/{}/{}'.format(event, team, submission, f_name)
         return redirect_to_user(error_str)
     submission_file = \
         (SubmissionFile.query.filter_by(submission=submission,
                                         workflow_element=workflow_element)
                              .one_or_none())
     if submission_file is None:
-        error_str = (u'No submission file by {} in {}/{}/{}/{}'
+        error_str = ('No submission file by {} in {}/{}/{}/{}'
                      .format(flask_login.current_user.name,
                              event, team, submission, f_name))
         return redirect_to_user(error_str)
@@ -738,7 +735,7 @@ def view_model(submission_hash, f_name):
 
     submission_abspath = os.path.abspath(submission.path)
     if not os.path.exists(submission_abspath):
-        error_str = (u'{} does not exist by {} in {}/{}/{}/{}'
+        error_str = ('{} does not exist by {} in {}/{}/{}/{}'
                      .format(submission_abspath, flask_login.current_user.name,
                              event, team, submission, f_name))
         return redirect_to_user(error_str)
@@ -753,7 +750,7 @@ def view_model(submission_hash, f_name):
             submission_file=submission_file
         )
 
-    logger.info(u'{} is looking at {}/{}/{}/{}'
+    logger.info('{} is looking at {}/{}/{}/{}'
                 .format(flask_login.current_user.name, event, team, submission,
                         f_name))
 
@@ -775,7 +772,7 @@ def view_model(submission_hash, f_name):
 
         return send_from_directory(
             submission_abspath, f_name, as_attachment=True,
-            attachment_filename=u'{}_{}'.format(submission.hash_[:6], f_name),
+            attachment_filename='{}_{}'.format(submission.hash_[:6], f_name),
             mimetype='application/octet-stream'
         )
 
@@ -790,7 +787,7 @@ def view_model(submission_hash, f_name):
         )
         for filename in import_form.selected_f_names.data:
             logger.info(
-                u'{} is importing {}/{}/{}/{}'
+                '{} is importing {}/{}/{}/{}'
                 .format(flask_login.current_user.name, event, team,
                         submission, filename)
             )
@@ -799,7 +796,7 @@ def view_model(submission_hash, f_name):
             src = os.path.join(submission.path, filename)
             dst = os.path.join(sandbox_submission.path, filename)
             shutil.copy2(src, dst)  # copying also metadata
-            logger.info(u'Copying {} to {}'.format(src, dst))
+            logger.info('Copying {} to {}'.format(src, dst))
 
             workflow_element = WorkflowElement.query.filter_by(
                 name=filename.split('.')[0], workflow=event.workflow).one()
@@ -816,7 +813,7 @@ def view_model(submission_hash, f_name):
                     submission_file=submission_file
                 )
 
-        return redirect(u'/events/{}/sandbox'.format(event.name))
+        return redirect('/events/{}/sandbox'.format(event.name))
 
     with open(os.path.join(submission.path, f_name)) as f:
         code = f.read()
@@ -850,7 +847,7 @@ def view_submission_error(submission_hash):
     submission = (Submission.query.filter_by(hash_=submission_hash)
                                   .one_or_none())
     if submission is None:
-        error_str = (u'Missing submission {}: {}'
+        error_str = ('Missing submission {}: {}'
                      .format(flask_login.current_user.name, submission_hash))
         return redirect_to_user(error_str)
     event = submission.event_team.event

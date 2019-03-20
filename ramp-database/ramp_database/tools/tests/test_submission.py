@@ -29,7 +29,6 @@ from ramp_database.testing import add_problems
 from ramp_database.testing import add_users
 from ramp_database.testing import create_toy_db
 from ramp_database.testing import create_test_db
-from ramp_database.testing import ramp_config_boston_housing
 from ramp_database.testing import ramp_config_iris
 from ramp_database.testing import sign_up_teams_to_events
 from ramp_database.utils import setup_db
@@ -280,8 +279,8 @@ def test_submit_starting_kits(base_db):
     assert len(submissions) == 5
     expected_submission_name = {'starting_kit', 'starting_kit_test',
                                 'random_forest_10_10', 'error'}
-    submission_name = set(get_submission_by_id(session, sub_id).name
-                          for sub_id in submissions_id)
+    submission_name = {get_submission_by_id(session, sub_id).name
+                       for sub_id in submissions_id}
     assert submission_name == expected_submission_name
 
 
@@ -298,8 +297,8 @@ def test_get_submissions(session_scope_module, state, expected_id):
     assert len(submissions) == len(expected_id)
     for submission_id, sub_name, sub_path in submissions:
         assert submission_id in expected_id
-        assert 'submission_{0:09d}'.format(submission_id) == sub_name
-        path_file = os.path.join('submission_{0:09d}'.format(submission_id),
+        assert 'submission_{:09d}'.format(submission_id) == sub_name
+        path_file = os.path.join('submission_{:09d}'.format(submission_id),
                                  'classifier.py')
         assert path_file in sub_path[0]
 
@@ -394,7 +393,8 @@ def test_check_bagged_scores(session_scope_module):
         {'acc': [0.70833333333, 0.70833333333, 0.65, 0.6486486486486],
          'error': [0.29166666667, 0.29166666667, 0.35, 0.35135135135],
          'nll': [0.80029268745, 0.66183018275, 0.52166532641, 0.58510855181],
-         'f1_70': [0.66666666667, 0.33333333333, 0.33333333333, 0.33333333333]},
+         'f1_70': [0.66666666667, 0.33333333333, 0.33333333333,
+                   0.33333333333]},
         index=multi_index
     )
     expected_df.columns = expected_df.columns.rename('scores')

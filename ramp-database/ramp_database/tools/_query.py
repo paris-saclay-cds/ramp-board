@@ -321,8 +321,8 @@ def select_submission_file_type_by_name(session, type_name):
 
     Returns
     -------
-    submission_file_type : :class:`ramp_database.model.SubmissionFileType` or list \
-of :class:`ramp_database.model.SubmissionFileType`
+    submission_file_type : :class:`ramp_database.model.SubmissionFileType` or \
+ list of :class:`ramp_database.model.SubmissionFileType`
         The queried submission file type.
     """
     if type_name is None:

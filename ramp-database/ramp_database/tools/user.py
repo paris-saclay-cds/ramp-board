@@ -134,10 +134,11 @@ def add_user_interaction(session, interaction=None, user=None, problem=None,
         The ip address from the server.
     note : None or str, default is None
         Some notes.
-    submission : None or :class:`ramp_database.model.Submission`, default is None
+    submission : None or :class:`ramp_database.model.Submission`, \
+default is None
         The submission instance.
-    submission_file : None or :class:`ramp_database.model.SubmissionFile`, default \
-is None
+    submission_file : None or :class:`ramp_database.model.SubmissionFile`, \
+default is None
         The submission file instance.
     diff : None or str, default is None
         The difference between two submissions.
@@ -182,7 +183,8 @@ def get_user_by_name(session, name):
 
     Returns
     -------
-    user : :class:`ramp_database.model.User` or list of :class:`ramp_database.model.User`
+    user : :class:`ramp_database.model.User` or list of \
+:class:`ramp_database.model.User`
         The queried user.
     """
     return select_user_by_name(session, name)
@@ -200,7 +202,8 @@ def get_team_by_name(session, name):
 
     Returns
     -------
-    team : :class:`ramp_database.model.Team` or list of :class:`ramp_database.model.Team`
+    team : :class:`ramp_database.model.Team` or list of \
+:class:`ramp_database.model.Team`
         The queried team.
     """
     return select_team_by_name(session, name)

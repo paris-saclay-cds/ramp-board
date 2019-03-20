@@ -67,4 +67,4 @@ def redirect_to_credit(submission_hash, message_str, is_error=True,
         logger.error(message_str)
     else:
         logger.info(message_str)
-    return redirect(u'/credit/{}'.format(submission_hash))
+    return redirect('/credit/{}'.format(submission_hash))

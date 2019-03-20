@@ -1,7 +1,5 @@
 import os
 
-import six
-
 from .config_parser import read_config
 
 MANDATORY_DICT_PARAMS = ('kit_dir', 'data_dir', 'submissions_dir',
@@ -53,9 +51,9 @@ def generate_ramp_config(event_config, database_config=None):
     ramp_config : dict
         The configuration for the RAMP worker.
     """
-    if isinstance(event_config, six.string_types):
+    if isinstance(event_config, str):
         if (database_config is None or
-                not isinstance(database_config, six.string_types)):
+                not isinstance(database_config, str)):
             raise ValueError(
                 'When "event_config" corresponds to the filename of the '
                 'configuration, you need to provide the filename of the '

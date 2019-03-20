@@ -14,8 +14,7 @@ from flask import url_for
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from ramp_utils.password import check_password
-from ramp_utils.utils import encode_string
+from ramp_utils.utils import check_password
 
 from ramp_database.tools.user import add_user
 from ramp_database.tools.user import add_user_interaction
@@ -70,7 +69,7 @@ def login():
         try:
             user = get_user_by_name(db.session, name=form.user_name.data)
         except NoResultFound:
-            msg = u'User "{}" does not exist'.format(form.user_name.data)
+            msg = 'User "{}" does not exist'.format(form.user_name.data)
             flash(msg)
             logger.info(msg)
             return redirect(url_for('auth.login'))
@@ -84,7 +83,7 @@ def login():
         session['logged_in'] = True
         user.is_authenticated = True
         db.session.commit()
-        logger.info(u'User "{}" is logged in'
+        logger.info('User "{}" is logged in'
                     .format(flask_login.current_user.name))
         if app.config['TRACK_USER_INTERACTION']:
             add_user_interaction(
@@ -108,7 +107,7 @@ def logout():
     session['logged_in'] = False
     user.is_authenticated = False
     db.session.commit()
-    logger.info(u'{} is logged out'.format(user))
+    logger.info('{} is logged out'.format(user))
     flask_login.logout_user()
 
     return redirect(url_for('auth.login'))
@@ -148,11 +147,11 @@ def sign_up():
         admin_users = User.query.filter_by(access_level='admin')
         for admin in admin_users:
             subject = 'Approve registration of {}'.format(
-                encode_string(user.name)
+                user.name
             )
             body = body_formatter_user(user)
             url_approve = ('http://www.ramp.studio/sign_up/{}'
-                           .format(encode_string(user.name)))
+                           .format(user.name))
             body += 'Click on the link to approve the registration '
             body += 'of this user: {}'.format(url_approve)
             send_mail(admin.email, subject, body)

@@ -1,8 +1,8 @@
-backports.tempfile  # to be removed when dropping Python 2
 bcrypt
 bokeh
 boto3
 click
+codecov
 flake8
 Flask
 Flask-Login
@@ -19,5 +19,4 @@ pytest-cov
 pyyaml
 psycopg2
 sqlalchemy
-six
 git+https://github.com/paris-saclay-cds/ramp-workflow

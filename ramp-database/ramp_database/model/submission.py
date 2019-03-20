@@ -2,7 +2,6 @@ import os
 import hashlib
 import datetime
 
-import numpy as np
 from sqlalchemy import Enum
 from sqlalchemy import Float
 from sqlalchemy import Column
@@ -16,8 +15,6 @@ from sqlalchemy import inspect
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
-
-from ramp_utils.utils import encode_string
 
 from .base import Model
 from .event import EventScoreType
@@ -53,6 +50,10 @@ submission_states = Enum(
     name='submission_states')
 
 submission_types = Enum('live', 'test', name='submission_types')
+
+
+def _encode_string(text):
+    return bytes(text, 'utf-8') if isinstance(text, str) else text
 
 
 class Submission(Model):
@@ -143,7 +144,7 @@ class Submission(Model):
                               backref=backref('submissions',
                                               cascade='all, delete-orphan'))
 
-    name = Column(String(20, convert_unicode=True), nullable=False)
+    name = Column(String(20), nullable=False)
     hash_ = Column(String, nullable=False, index=True, unique=True)
     submission_timestamp = Column(DateTime, nullable=False)
     sent_to_training_timestamp = Column(DateTime)
@@ -183,9 +184,9 @@ class Submission(Model):
         self.event_team = event_team
         self.session = inspect(event_team).session
         sha_hasher = hashlib.sha1()
-        sha_hasher.update(encode_string(self.event.name))
-        sha_hasher.update(encode_string(self.team.name))
-        sha_hasher.update(encode_string(self.name))
+        sha_hasher.update(_encode_string(self.event.name))
+        sha_hasher.update(_encode_string(self.team.name))
+        sha_hasher.update(_encode_string(self.name))
         # We considered using the id, but then it will be given away in the
         # url which is maybe not a good idea.
         self.hash_ = '{}'.format(sha_hasher.hexdigest())
@@ -211,9 +212,7 @@ class Submission(Model):
     def __repr__(self):
         return ('Submission(event_name={}, team_name={}, name={}, files={}, '
                 'state={}, train_time={})'
-                .format(encode_string(self.event.name),
-                        encode_string(self.team.name),
-                        encode_string(self.name),
+                .format(self.event.name, self.team.name, self.name,
                         self.files, self.state, self.train_time_cv_mean))
 
     @hybrid_property
@@ -292,7 +291,7 @@ class Submission(Model):
     @property
     def basename(self):
         """str: The base name of the submission."""
-        return 'submission_' + '{0:09d}'.format(self.id)
+        return 'submission_' + '{:09d}'.format(self.id)
 
     @property
     def module(self):
@@ -341,8 +340,8 @@ class Submission(Model):
 
         Ordered according to ``score_names``. Called by
         :func:`ramp_database.tools.leaderboard.get_public_leaderboard` and
-        :func:`ramp_database.tools.get_private_leaderboard`, making sure scores are
-        listed in the correct column.
+        :func:`ramp_database.tools.get_private_leaderboard`, making sure scores
+        are listed in the correct column.
 
         Parameters
         ----------
@@ -351,7 +350,8 @@ class Submission(Model):
 
         Returns
         -------
-        scores : generator of :class:`ramp_database.model.submission.SubmissionScore``
+        scores : generator of \
+:class:`ramp_database.model.submission.SubmissionScore``
             Generate a scoring instance.
         """
         score_dict = {score.score_name: score for score in self.scores}
@@ -747,7 +747,8 @@ class SubmissionFileType(Model):
         Whether or not this type of file is editable.
     max_size : int
         The maximum size of this file type.
-    workflow_element_types : list of :class:`ramp_database.model.WorkflowElementType`
+    workflow_element_types : list of \
+:class:`ramp_database.model.WorkflowElementType`
         A back-reference to the workflow element type for this submission file
         type.
     """
@@ -1109,7 +1110,7 @@ class SubmissionOnCVFold(Model):
                 self.test_y_pred = detached_submission_on_cv_fold.test_y_pred
 
 
-class DetachedSubmissionOnCVFold(object):
+class DetachedSubmissionOnCVFold:
     """Copy of SubmissionOnCVFold, all the fields we need in train and test.
 
     It's because SQLAlchemy objects don't persist through

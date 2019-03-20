@@ -16,14 +16,12 @@ The dependencies required by the RAMP bundle are the following:
     * numpy
     * pandas
     * psycopg2
-    * six
     * sqlalchemy
 2. ``ramp-engine``:
     * click
     * numpy
     * psycopg2
     * sqlalchemy
-    * six
 3. ``ramp-frontend``:
     * bokeh
     * click
@@ -34,12 +32,10 @@ The dependencies required by the RAMP bundle are the following:
     * Flask-WTF
     * numpy
     * pandas
-    * six
 4. ``ramp-utils``:
     * bcrypt
     * click
     * pyyaml
-    * six
 
 You can install those requirements through ``pip``, using the
 ``requirements.txt`` file present in the root folder of the ``ramp-board``

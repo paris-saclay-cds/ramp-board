@@ -1,6 +1,5 @@
 import logging
 import os
-import shutil
 
 from ..model import EventTeam
 

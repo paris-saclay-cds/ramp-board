@@ -19,19 +19,21 @@ Train a submission on AWS.
 Two ways of specifying the submission are available.
 Either we give the submission id or name.
 
-Use ramp_aws_train config.yml --id=<submission id> if you want to 
+Use ramp_aws_train config.yml --id=<submission id> if you want to
 specify submission by id.
 
-Use ramp_aws_train config.yml --event=<event name> --team=<team name> --name=<submission name> 
+Use ramp_aws_train config.yml --event=<event name> --team=<team name>
+--name=<submission name>
 if you want to specify submission by name.
 
-By default a new ec2 instance will be created then training will be done there, 
+By default a new ec2 instance will be created then training will be done there,
 then the instance will be killed after training.
 
 If you want to train on an existing instance just add the option
 --instance-id. Example:
 
-ramp_aws_train config.yml --event=<event name> --team=<team name> --name=<submission name>  --instance-id=<instance id>
+ramp_aws_train config.yml --event=<event name> --team=<team name>
+--name=<submission name>  --instance-id=<instance id>
 
 To find the instance id, you have to check the AWS EC2 console
 or use the cli `aws` provided by amazon.
@@ -46,7 +48,7 @@ def init_parser():
         description=desc,
         formatter_class=RawTextHelpFormatter)
     parser.add_argument('config', type=str,
-                        help='Backend configuration file with database') 
+                        help='Backend configuration file with database')
     parser.add_argument('--id', type=int,
                         help='Submission ID')
     parser.add_argument('--event', type=str,
@@ -68,7 +70,7 @@ def main():
     logger = logging.getLogger('ramp_aws')
     logger.setLevel(args.log_level)
     config = read_backend_config(args.config)
-    validate_config(config) 
+    validate_config(config)
     if args.id:
         submission_id = args.id
     elif args.name and args.event and args.team:
@@ -85,8 +87,9 @@ def main():
             sys.exit(1)
         submission_id = submission.id
     else:
-        print('Please specify either submission id, or alternatively submission'
-              'event/team/name. Use ramp_aws_train --help for help.')
+        print('Please specify either submission id, or alternatively '
+              'submission event/team/name. Use ramp_aws_train --help for '
+              'help.')
         sys.exit(1)
     if args.instance_id:
         train_on_existing_ec2_instance(config, args.instance_id, submission_id)

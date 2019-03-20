@@ -1,19 +1,10 @@
-
 import logging
 import multiprocessing
 import os
-import sys
 import time
 
-import six
-
-PYTHON_MAJOR_VERSION = sys.version_info[0]
-if PYTHON_MAJOR_VERSION >= 3:
-    from queue import Queue
-    from queue import LifoQueue
-else:
-    from Queue import Queue
-    from Queue import LifoQueue
+from queue import Queue
+from queue import LifoQueue
 
 from ramp_database.tools.submission import get_submissions
 from ramp_database.tools.submission import get_submission_by_id
@@ -40,7 +31,7 @@ from .local import CondaEnvWorker
 logger = logging.getLogger('RAMP-DISPATCHER')
 
 
-class Dispatcher(object):
+class Dispatcher:
     """Dispatcher which schedule workers and communicate with the database.
 
     The dispatcher uses two queues: a queue containing containing the workers
@@ -83,8 +74,8 @@ class Dispatcher(object):
         self._processing_worker_queue = LifoQueue(maxsize=self.n_worker)
         self._processed_submission_queue = Queue()
         # split the different configuration required
-        if (isinstance(config, six.string_types) and
-                isinstance(event_config, six.string_types)):
+        if (isinstance(config, str) and
+                isinstance(event_config, str)):
             self._database_config = read_config(config,
                                                 filter_section='sqlalchemy')
             self._ramp_config = generate_ramp_config(event_config, config)

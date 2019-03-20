@@ -1,4 +1,3 @@
-import datetime
 import shutil
 
 import pytest
@@ -122,7 +121,6 @@ def test_update_leaderboard_functions(session_toy_function):
         assert et.leaderboard_html
         assert et.failed_leaderboard_html
         assert et.new_leaderboard_html is None
-
 
 
 @pytest.mark.parametrize(

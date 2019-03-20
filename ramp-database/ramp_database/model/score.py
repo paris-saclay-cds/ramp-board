@@ -4,8 +4,6 @@ from sqlalchemy import String
 from sqlalchemy import Integer
 from sqlalchemy import Boolean
 
-from ramp_utils.utils import encode_string
-
 from .base import Model
 
 __all__ = ['ScoreType']
@@ -56,4 +54,4 @@ class ScoreType(Model):
         self.maximum = maximum
 
     def __repr__(self):
-        return 'ScoreType(name={})'.format(encode_string(self.name))
+        return 'ScoreType(name={})'.format(self.name)
