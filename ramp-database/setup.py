@@ -29,11 +29,10 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Operating System :: POSIX',
                'Operating System :: Unix',
                'Operating System :: MacOS',
-               'Programming Language :: Python :: 2.7',
                'Programming Language :: Python :: 3.6',
                'Programming Language :: Python :: 3.7']
 INSTALL_REQUIRES = ['click', 'gitpython', 'nbconvert', 'numpy',
-                    'pandas', 'psycopg2', 'six', 'sqlalchemy']
+                    'pandas', 'psycopg2', 'sqlalchemy']
 EXTRAS_REQUIRE = {
     'tests': ['pytest', 'pytest-cov'],
     'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc']
