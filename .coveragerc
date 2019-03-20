@@ -1,0 +1,5 @@
+# Configuration for coverage.py
+
+[run]
+omit =
+    ramp-engine/ramp_engine/aws/*
