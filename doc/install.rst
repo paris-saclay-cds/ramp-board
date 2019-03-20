@@ -10,6 +10,7 @@ Prerequisites
 The dependencies required by the RAMP bundle are the following:
 
 1. ``ramp-database``:
+    * bcrypt
     * click
     * gitpython
     * nbconvert
@@ -33,7 +34,6 @@ The dependencies required by the RAMP bundle are the following:
     * numpy
     * pandas
 4. ``ramp-utils``:
-    * bcrypt
     * click
     * pyyaml
 
