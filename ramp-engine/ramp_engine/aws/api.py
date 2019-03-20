@@ -84,7 +84,7 @@ ALL_FIELDS = [
     HOOKS_SECTION,
 ]
 ALL_FIELDS = set(ALL_FIELDS)
-REQUIRED_FIELDS = ALL_FIELDS - set([HOOKS_SECTION])
+REQUIRED_FIELDS = ALL_FIELDS - {HOOKS_SECTION}
 
 # constants
 RAMP_AWS_BACKEND_TAG = 'ramp_aws_backend_instance'
@@ -793,13 +793,13 @@ def validate_config(config):
     for k in conf.keys():
         if k not in ALL_FIELDS:
             raise ValueError('Invalid field : "{}"'.format(k))
-    required_fields_ = REQUIRED_FIELDS - set([
+    required_fields_ = REQUIRED_FIELDS - {
         AMI_IMAGE_NAME_FIELD,
         AMI_IMAGE_ID_FIELD,
         PROFILE_NAME_FIELD,
         ACCESS_KEY_ID_FIELD,
         SECRET_ACCESS_KEY_FIELD,
-    ])
+    }
     for k in required_fields_:
         if k not in conf:
             raise ValueError(

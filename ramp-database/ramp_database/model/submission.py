@@ -291,7 +291,7 @@ class Submission(Model):
     @property
     def basename(self):
         """str: The base name of the submission."""
-        return 'submission_' + '{0:09d}'.format(self.id)
+        return 'submission_' + '{:09d}'.format(self.id)
 
     @property
     def module(self):

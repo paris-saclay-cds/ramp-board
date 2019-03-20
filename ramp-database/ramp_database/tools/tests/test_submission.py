@@ -280,8 +280,8 @@ def test_submit_starting_kits(base_db):
     assert len(submissions) == 5
     expected_submission_name = {'starting_kit', 'starting_kit_test',
                                 'random_forest_10_10', 'error'}
-    submission_name = set(get_submission_by_id(session, sub_id).name
-                          for sub_id in submissions_id)
+    submission_name = {get_submission_by_id(session, sub_id).name
+                          for sub_id in submissions_id}
     assert submission_name == expected_submission_name
 
 
@@ -298,8 +298,8 @@ def test_get_submissions(session_scope_module, state, expected_id):
     assert len(submissions) == len(expected_id)
     for submission_id, sub_name, sub_path in submissions:
         assert submission_id in expected_id
-        assert 'submission_{0:09d}'.format(submission_id) == sub_name
-        path_file = os.path.join('submission_{0:09d}'.format(submission_id),
+        assert 'submission_{:09d}'.format(submission_id) == sub_name
+        path_file = os.path.join('submission_{:09d}'.format(submission_id),
                                  'classifier.py')
         assert path_file in sub_path[0]
 

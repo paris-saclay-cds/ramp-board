@@ -221,7 +221,7 @@ def _compute_competition_leaderboard(session, submissions, leaderboard_type,
     leaderboard_df['move'] = \
         leaderboard_df['public rank'] - leaderboard_df['private rank']
     leaderboard_df['move'] = [
-        '{0:+d}'.format(m) if m != 0 else '-' for m in leaderboard_df['move']]
+        '{:+d}'.format(m) if m != 0 else '-' for m in leaderboard_df['move']]
 
     col_selected = [
         leaderboard_type + ' rank', 'team', 'submission',
