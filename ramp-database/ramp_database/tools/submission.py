@@ -103,9 +103,12 @@ def add_submission(session, event_name, team_name, submission_name,
         # We allow resubmit for new or failing submissions
         if (submission.is_not_sandbox and
                 (submission.state == 'new' or submission.is_error)):
-            submission.set_state('new')
+            submission.set_state('new', session)
             submission.submission_timestamp = datetime.datetime.utcnow()
-            for submission_on_cv_fold in submission.on_cv_folds:
+            all_cv_folds = (session.query(SubmissionOnCVFold)
+                                   .filter_by(submission_id=submission.id)
+                                   .all())
+            for submission_on_cv_fold in all_cv_folds:
                 submission_on_cv_fold.reset()
         else:
             error_msg = ('Submission "{}" of team "{}" at event "{}" exists '
@@ -382,9 +385,11 @@ def get_predictions(session, submission_id):
     predictions : pd.DataFrame
         A pandas dataframe containing the predictions on each fold.
     """
-    submission = select_submission_by_id(session, submission_id)
     results = defaultdict(list)
-    for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+    all_cv_folds = (session.query(SubmissionOnCVFold)
+                           .filter_by(submission_id=submission_id)
+                           .all())
+    for fold_id, cv_fold in enumerate(all_cv_folds):
         results['fold'].append(fold_id)
         results['y_pred_train'].append(cv_fold.full_train_y_pred)
         results['y_pred_test'].append(cv_fold.test_y_pred)
@@ -406,9 +411,11 @@ def get_time(session, submission_id):
     computation_time : pd.DataFrame
         A pandas dataframe containing the computation time of each fold.
     """
-    submission = select_submission_by_id(session, submission_id)
     results = defaultdict(list)
-    for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+    all_cv_folds = (session.query(SubmissionOnCVFold)
+                           .filter_by(submission_id=submission_id)
+                           .all())
+    for fold_id, cv_fold in enumerate(all_cv_folds):
         results['fold'].append(fold_id)
         for step in ('train', 'valid', 'test'):
             results[step].append(getattr(cv_fold, '{}_time'.format(step)))
@@ -601,7 +608,7 @@ def set_submission_state(session, submission_id, state):
         raise UnknownStateError("Unrecognized state : '{}'".format(state))
 
     submission = select_submission_by_id(session, submission_id)
-    submission.set_state(state)
+    submission.set_state(state, session)
     session.commit()
 
 
@@ -619,8 +626,10 @@ def set_predictions(session, submission_id, path_predictions):
     path_predictions : str
         The path where the results files are located.
     """
-    submission = select_submission_by_id(session, submission_id)
-    for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+    all_cv_folds = (session.query(SubmissionOnCVFold)
+                           .filter_by(submission_id=submission_id)
+                           .all())
+    for fold_id, cv_fold in enumerate(all_cv_folds):
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
         cv_fold.full_train_y_pred = np.load(
@@ -642,8 +651,10 @@ def set_time(session, submission_id, path_predictions):
     path_predictions : str
         The path where the results files are located.
     """
-    submission = select_submission_by_id(session, submission_id)
-    for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+    all_cv_folds = (session.query(SubmissionOnCVFold)
+                           .filter_by(submission_id=submission_id)
+                           .all())
+    for fold_id, cv_fold in enumerate(all_cv_folds):
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
         results = {}
@@ -668,8 +679,10 @@ def set_scores(session, submission_id, path_predictions):
     path_predictions : str
         The path where the results files are located.
     """
-    submission = select_submission_by_id(session, submission_id)
-    for fold_id, cv_fold in enumerate(submission.on_cv_folds):
+    all_cv_folds = (session.query(SubmissionOnCVFold)
+                           .filter_by(submission_id=submission_id)
+                           .all())
+    for fold_id, cv_fold in enumerate(all_cv_folds):
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
         scores_update = pd.read_csv(
@@ -776,7 +789,10 @@ def score_submission(session, submission_id):
     # only score if all stages (train, test, validation)
     # were completed. submission_on_cv_fold compute scores can be called
     # manually if needed for submission in various error states.
-    for submission_on_cv_fold in submission.on_cv_folds:
+    all_cv_folds = (session.query(SubmissionOnCVFold)
+                           .filter_by(submission_id=submission_id)
+                           .all())
+    for submission_on_cv_fold in all_cv_folds:
         submission_on_cv_fold.session = session
         submission_on_cv_fold.compute_train_scores()
         submission_on_cv_fold.compute_valid_scores()
@@ -793,17 +809,17 @@ def score_submission(session, submission_id):
     # corresponding columns (which are now redundant) can be deleted in
     # Submission and this computation can also be deleted.
     submission.train_time_cv_mean = np.mean(
-        [ts.train_time for ts in submission.on_cv_folds])
+        [ts.train_time for ts in all_cv_folds])
     submission.valid_time_cv_mean = np.mean(
-        [ts.valid_time for ts in submission.on_cv_folds])
+        [ts.valid_time for ts in all_cv_folds])
     submission.test_time_cv_mean = np.mean(
-        [ts.test_time for ts in submission.on_cv_folds])
+        [ts.test_time for ts in all_cv_folds])
     submission.train_time_cv_std = np.std(
-        [ts.train_time for ts in submission.on_cv_folds])
+        [ts.train_time for ts in all_cv_folds])
     submission.valid_time_cv_std = np.std(
-        [ts.valid_time for ts in submission.on_cv_folds])
+        [ts.valid_time for ts in all_cv_folds])
     submission.test_time_cv_std = np.std(
-        [ts.test_time for ts in submission.on_cv_folds])
+        [ts.test_time for ts in all_cv_folds])
     submission.state = 'scored'
     session.commit()
 
