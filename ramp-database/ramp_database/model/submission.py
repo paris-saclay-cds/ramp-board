@@ -396,14 +396,14 @@ class Submission(Model):
             The state of the new submission.
         """
         self.state = state
-        if session is not None:
+        if session is None:
             all_cv_folds = self.on_cv_folds
         else:
             all_cv_folds = (session.query(SubmissionOnCVFold)
                                    .filter_by(submission_id=self.id)
                                    .all())
         for submission_on_cv_fold in all_cv_folds:
-                submission_on_cv_fold.state = state
+            submission_on_cv_fold.state = state
 
     def reset(self):
         """Reset the submission to an initial stage.
@@ -437,7 +437,7 @@ class Submission(Model):
         self.reset()
         self.state = error
         self.error_msg = error_msg
-        if session is not None:
+        if session is None:
             all_cv_folds = self.on_cv_folds
         else:
             all_cv_folds = (session.query(SubmissionOnCVFold)
@@ -458,7 +458,7 @@ class Submission(Model):
         self.contributivity = 0.0
         if self.is_public_leaderboard:
             # we share a unit of 1. among folds
-            if session is not None:
+            if session is None:
                 all_cv_folds = self.on_cv_folds
             else:
                 all_cv_folds = (session.query(SubmissionOnCVFold)
@@ -474,7 +474,7 @@ class Submission(Model):
         after training.
         """
         self.training_timestamp = datetime.datetime.utcnow()
-        if session is not None:
+        if session is None:
             all_cv_folds = self.on_cv_folds
         else:
             all_cv_folds = (session.query(SubmissionOnCVFold)
