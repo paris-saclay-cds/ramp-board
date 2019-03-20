@@ -314,6 +314,8 @@ Frontend-related database tools
    :toctree: generated/
    :template: function.rst
 
+   utils.check_password
+   utils.hash_password
    utils.setup_db
    utils.session_scope
 
@@ -564,5 +566,4 @@ RAMP shared utilities
    :template: function.rst
 
    import_module_from_source
-   utils.check_password
-   utils.hash_password
+

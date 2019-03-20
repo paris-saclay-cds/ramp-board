@@ -14,7 +14,7 @@ from flask import url_for
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from ramp_utils.utils import check_password
+from ramp_database.utils import check_password
 
 from ramp_database.tools.user import add_user
 from ramp_database.tools.user import add_user_interaction

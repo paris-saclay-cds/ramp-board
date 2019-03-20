@@ -6,7 +6,7 @@ import pandas as pd
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
-from ramp_utils.utils import hash_password
+from .utils import hash_password
 
 from ..exceptions import NameClashError
 from ..model import Team
