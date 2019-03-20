@@ -206,29 +206,6 @@ def test_submission_score_model_property(session_scope_module):
 
 
 @pytest.mark.parametrize(
-    "step_score", ['train_score', 'valid_score', 'test_score']
-)
-def test_submission_score_model_scoring(session_scope_module, step_score):
-    # get the submission associated with the 5th submission (iris)
-    # we get only the information linked to the accuracy score which the first
-    # score
-    submission_score = \
-        (session_scope_module.query(SubmissionScore)
-                             .filter(SubmissionScore.submission_id == 5)
-                             .first())
-    # we set the score on the different fold to check the mean and std
-    # computation on those folds.
-    for cv_fold, fold_score in zip(submission_score.on_cv_folds,
-                                   [0.2, 0.8]):
-        setattr(cv_fold, step_score, fold_score)
-
-    assert (getattr(submission_score, '{}_cv_mean'.format(step_score)) ==
-            pytest.approx(0.5))
-    assert (getattr(submission_score, '{}_cv_std'.format(step_score)) ==
-            pytest.approx(0.3))
-
-
-@pytest.mark.parametrize(
     'backref, expected_type',
     [('on_cv_folds', SubmissionScoreOnCVFold)]
 )

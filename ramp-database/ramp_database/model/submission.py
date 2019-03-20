@@ -386,7 +386,7 @@ class Submission(Model):
     # def test_time_cv_std(self):
     #     return np.std([ts.test_time for ts in self.on_cv_folds])
 
-    def set_state(self, state):
+    def set_state(self, state, session=None):
         """Set the state of the submission and of each CV fold.
 
         Parameters
@@ -395,7 +395,13 @@ class Submission(Model):
             The state of the new submission.
         """
         self.state = state
-        for submission_on_cv_fold in self.on_cv_folds:
+        if session is None:
+            all_cv_folds = self.on_cv_folds
+        else:
+            all_cv_folds = (session.query(SubmissionOnCVFold)
+                                   .filter_by(submission_id=self.id)
+                                   .all())
+        for submission_on_cv_fold in all_cv_folds:
             submission_on_cv_fold.state = state
 
     def reset(self):
@@ -413,7 +419,7 @@ class Submission(Model):
             score.valid_score_cv_bags = None
             score.test_score_cv_bags = None
 
-    def set_error(self, error, error_msg):
+    def set_error(self, error, error_msg, session=None):
         """Fail the submission as well as the CV folds.
 
         Parameters
@@ -430,11 +436,17 @@ class Submission(Model):
         self.reset()
         self.state = error
         self.error_msg = error_msg
-        for submission_on_cv_fold in self.on_cv_folds:
+        if session is None:
+            all_cv_folds = self.on_cv_folds
+        else:
+            all_cv_folds = (session.query(SubmissionOnCVFold)
+                                   .filter_by(submission_id=self.id)
+                                   .all())
+        for submission_on_cv_fold in all_cv_folds:
             submission_on_cv_fold.set_error(error, error_msg)
 
     # contributivity could be a property but then we could not query on it
-    def set_contributivity(self):
+    def set_contributivity(self, session=None):
         """Compute the contributivity of a submission.
 
         Notes
@@ -445,18 +457,30 @@ class Submission(Model):
         self.contributivity = 0.0
         if self.is_public_leaderboard:
             # we share a unit of 1. among folds
-            unit_contributivity = 1. / len(self.on_cv_folds)
-            for submission_on_cv_fold in self.on_cv_folds:
+            if session is None:
+                all_cv_folds = self.on_cv_folds
+            else:
+                all_cv_folds = (session.query(SubmissionOnCVFold)
+                                       .filter_by(submission_id=self.id)
+                                       .all())
+            unit_contributivity = 1. / len(all_cv_folds)
+            for submission_on_cv_fold in all_cv_folds:
                 self.contributivity += (unit_contributivity *
                                         submission_on_cv_fold.contributivity)
 
-    def set_state_after_training(self):
+    def set_state_after_training(self, session=None):
         """Set the state of a submission depending of the state of the fold
         after training.
         """
         self.training_timestamp = datetime.datetime.utcnow()
+        if session is None:
+            all_cv_folds = self.on_cv_folds
+        else:
+            all_cv_folds = (session.query(SubmissionOnCVFold)
+                                   .filter_by(submission_id=self.id)
+                                   .all())
         states = [submission_on_cv_fold.state
-                  for submission_on_cv_fold in self.on_cv_folds]
+                  for submission_on_cv_fold in all_cv_folds]
         if all(state == 'tested' for state in states):
             self.state = 'tested'
         elif all(state in ['tested', 'validated'] for state in states):
@@ -467,15 +491,15 @@ class Submission(Model):
         elif any(state == 'training_error' for state in states):
             self.state = 'training_error'
             i = states.index('training_error')
-            self.error_msg = self.on_cv_folds[i].error_msg
+            self.error_msg = all_cv_folds[i].error_msg
         elif any(state == 'validating_error' for state in states):
             self.state = 'validating_error'
             i = states.index('validating_error')
-            self.error_msg = self.on_cv_folds[i].error_msg
+            self.error_msg = all_cv_folds[i].error_msg
         elif any(state == 'testing_error' for state in states):
             self.state = 'testing_error'
             i = states.index('testing_error')
-            self.error_msg = self.on_cv_folds[i].error_msg
+            self.error_msg = all_cv_folds[i].error_msg
         if 'error' not in self.state:
             self.error_msg = ''
 
@@ -544,37 +568,6 @@ class SubmissionScore(Model):
     def precision(self):
         """int: The numerical precision of the associated score."""
         return self.event_score_type.precision
-
-    @property
-    def train_score_cv_mean(self):
-        """float: The mean score on the CV folds for the training set."""
-        return np.mean([ts.train_score for ts in self.on_cv_folds])
-
-    @property
-    def valid_score_cv_mean(self):
-        """float: The mean score on the CV folds for the validation set."""
-        return np.mean([ts.valid_score for ts in self.on_cv_folds])
-
-    @property
-    def test_score_cv_mean(self):
-        """float: The mean score on the CV folds for the testing set."""
-        return np.mean([ts.test_score for ts in self.on_cv_folds])
-
-    @property
-    def train_score_cv_std(self):
-        """float: The std. dev. score on the CV folds for the training set."""
-        return np.std([ts.train_score for ts in self.on_cv_folds])
-
-    @property
-    def valid_score_cv_std(self):
-        """float: The std. dev. score on the CV folds for the validation
-        set."""
-        return np.std([ts.valid_score for ts in self.on_cv_folds])
-
-    @property
-    def test_score_cv_std(self):
-        """float: The std. dev. score on the CV folds for the testing set."""
-        return np.std([ts.test_score for ts in self.on_cv_folds])
 
 
 # TODO: we should have a SubmissionWorkflowElementType table, describing the
