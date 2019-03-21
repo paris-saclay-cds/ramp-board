@@ -6,12 +6,11 @@ import pandas as pd
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
-from ramp_utils.utils import hash_password
-
 from ..exceptions import NameClashError
 from ..model import Team
 from ..model import User
 from ..model import UserInteraction
+from ..utils import hash_password
 
 from ._query import select_team_by_name
 from ._query import select_user_by_email

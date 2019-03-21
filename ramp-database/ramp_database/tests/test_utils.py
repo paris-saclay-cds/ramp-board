@@ -11,6 +11,8 @@ from ramp_database.testing import create_test_db
 from ramp_database.model import Model
 from ramp_database.model import SubmissionFileType
 
+from ramp_database.utils import check_password
+from ramp_database.utils import hash_password
 from ramp_database.utils import setup_db
 from ramp_database.utils import session_scope
 
@@ -46,3 +48,10 @@ def test_session_scope(database):
     with session_scope(database_config) as session:
         file_type = session.query(SubmissionFileType).all()
         assert len(file_type) > 0
+
+
+def test_check_password():
+    password = "hjst3789ep;ocikaqjw"
+    hashed_password = hash_password(password)
+    assert check_password(password, hashed_password)
+    assert not check_password("hjst3789ep;ocikaqji", hashed_password)

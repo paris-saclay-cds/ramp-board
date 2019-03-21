@@ -31,7 +31,7 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Operating System :: MacOS',
                'Programming Language :: Python :: 3.6',
                'Programming Language :: Python :: 3.7']
-INSTALL_REQUIRES = ['click', 'gitpython', 'nbconvert', 'numpy',
+INSTALL_REQUIRES = ['bcrypt', 'click', 'gitpython', 'nbconvert', 'numpy',
                     'pandas', 'psycopg2', 'sqlalchemy']
 EXTRAS_REQUIRE = {
     'tests': ['pytest', 'pytest-cov'],
