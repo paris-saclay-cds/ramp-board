@@ -3,8 +3,6 @@ import os
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from ramp_utils.utils import import_module_from_source
-
 from ._query import select_event_admin_by_instance
 from ._query import select_event_by_name
 from ._query import select_extension_by_name
@@ -29,6 +27,8 @@ from ..model import ProblemKeyword
 from ..model import Workflow
 from ..model import WorkflowElement
 from ..model import WorkflowElementType
+
+from ..utils import import_module_from_source
 
 logger = logging.getLogger('RAMP-DATABASE')
 

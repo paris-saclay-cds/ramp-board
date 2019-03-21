@@ -9,7 +9,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
-from ramp_utils.utils import import_module_from_source
+from ..utils import import_module_from_source
 
 from .base import Model
 from .workflow import Workflow

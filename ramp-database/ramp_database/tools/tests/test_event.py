@@ -7,7 +7,6 @@ from numpy.testing import assert_array_equal
 
 from ramp_utils import read_config
 from ramp_utils import generate_ramp_config
-from ramp_utils.utils import import_module_from_source
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
 
@@ -43,6 +42,8 @@ from ramp_database.tools.event import get_keyword_by_name
 from ramp_database.tools.event import get_problem
 from ramp_database.tools.event import get_problem_keyword_by_name
 from ramp_database.tools.event import get_workflow
+
+from ramp_database.utils import import_module_from_source
 
 HERE = os.path.dirname(__file__)
 

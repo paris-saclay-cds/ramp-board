@@ -317,6 +317,7 @@ Frontend-related database tools
 
    utils.check_password
    utils.hash_password
+   utils.import_module_from_source
    utils.setup_db
    utils.session_scope
 
@@ -556,15 +557,3 @@ Deployment utilities
    :template: function.rst
 
    deploy.deploy_ramp_event
-
-RAMP shared utilities
----------------------
-
-.. currentmodule:: ramp_utils
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   import_module_from_source
-

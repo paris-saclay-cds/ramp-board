@@ -1,4 +1,5 @@
 import shutil
+import os
 
 import pytest
 
@@ -13,6 +14,7 @@ from ramp_database.model import SubmissionFileType
 
 from ramp_database.utils import check_password
 from ramp_database.utils import hash_password
+from ramp_database.utils import import_module_from_source
 from ramp_database.utils import setup_db
 from ramp_database.utils import session_scope
 
@@ -55,3 +57,12 @@ def test_check_password():
     hashed_password = hash_password(password)
     assert check_password(password, hashed_password)
     assert not check_password("hjst3789ep;ocikaqji", hashed_password)
+
+
+def test_import_module_from_source():
+    module_path = os.path.dirname(__file__)
+    # import the local_module.py which consist of a single function.
+    mod = import_module_from_source(
+        os.path.join(module_path, 'local_module.py'), 'mod'
+    )
+    assert hasattr(mod, 'func_local_module')
