@@ -3,15 +3,12 @@ import subprocess
 import time
 
 from ramp_utils import read_config
-from ramp_utils import generate_ramp_config
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
 
 from ramp_database.utils import setup_db
 from ramp_database.model import Model
 from ramp_database.testing import create_toy_db
-
-from ramp_frontend.cli import main
 
 
 def setup_module(module):
