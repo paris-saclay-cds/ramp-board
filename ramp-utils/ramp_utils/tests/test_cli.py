@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 
 import pytest
 
@@ -46,6 +47,9 @@ def test_setup_init(deployment_dir):
         result = runner.invoke(main, ['init',
                                       '--deployment-dir', deployment_dir])
         assert result.exit_code == 0, result.output
+        result = runner.invoke(main, ['init',
+                                      '--deployment-dir', deployment_dir])
+        assert result.exit_code == 0, result.output
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)
 
@@ -57,6 +61,15 @@ def test_setup_init_event(deployment_dir):
         result = runner.invoke(main, ['init-event',
                                       '--name', 'iris_test',
                                       '--deployment-dir', deployment_dir])
+        assert result.exit_code == 0, result.output
+        result = runner.invoke(main, ['init-event',
+                                      '--name', 'iris_test',
+                                      '--deployment-dir', deployment_dir])
+        assert result.exit_code == 0, result.output
+        result = runner.invoke(main, ['init-event',
+                                      '--name', 'iris_test',
+                                      '--deployment-dir', deployment_dir,
+                                      '--force'])
         assert result.exit_code == 0, result.output
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)
@@ -73,3 +86,14 @@ def test_deploy_ramp_event():
                                   '--event-config', ramp_config_template(),
                                   '--force'])
     assert result.exit_code == 0, result.output
+
+
+@pytest.mark.parametrize(
+    'subcommand', [None, 'database', 'frontend', 'launch', 'setup']
+)
+def test_ramp_cli(subcommand):
+    cmd = ['ramp']
+    if subcommand is not None:
+        cmd += [subcommand]
+    cmd += ['-h']
+    subprocess.check_output(cmd)
