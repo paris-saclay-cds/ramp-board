@@ -659,9 +659,9 @@ def set_time(session, submission_id, path_predictions):
                                     'fold_{}'.format(fold_id))
         results = {}
         for step in ('train', 'valid', 'test'):
-            results[step + '_time'] = np.asscalar(
-                np.loadtxt(os.path.join(path_results, step + '_time'))
-            )
+            results[step + '_time'] = np.loadtxt(
+                os.path.join(path_results, step + '_time')
+            ).item()
         for key, value in results.items():
             setattr(cv_fold, key, value)
     session.commit()

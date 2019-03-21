@@ -1,5 +1,7 @@
 import shutil
 
+import pytest
+
 from click.testing import CliRunner
 
 from ramp_utils import read_config
@@ -26,18 +28,30 @@ def teardown_module(module):
     Model.metadata.drop_all(db)
 
 
-def test_dispatcher():
+@pytest.mark.parametrize(
+    "verbose_params", [None, "--verbose", "-vv"]
+)
+def test_dispatcher(verbose_params):
     runner = CliRunner()
-    result = runner.invoke(main, ["dispatcher",
-                                  "--config", database_config_template(),
-                                  "--event-config", ramp_config_template()])
+    cmd = ["dispatcher",
+           "--config", database_config_template(),
+           "--event-config", ramp_config_template()]
+    if verbose_params is not None:
+        cmd += [verbose_params]
+    result = runner.invoke(main, cmd)
     assert result.exit_code == 0, result.output
 
 
-def test_worker():
+@pytest.mark.parametrize(
+    "verbose_params", [None, "--verbose", "-vv"]
+)
+def test_worker(verbose_params):
     runner = CliRunner()
-    result = runner.invoke(main, ["worker",
-                                  "--config", ramp_config_template(),
-                                  "--event-config", ramp_config_template(),
-                                  "--submission", "starting_kit"])
+    cmd = ["worker",
+           "--config", ramp_config_template(),
+           "--event-config", ramp_config_template(),
+           "--submission", "starting_kit"]
+    if verbose_params is not None:
+        cmd += [verbose_params]
+    result = runner.invoke(main, cmd)
     assert result.exit_code == 0, result.output
