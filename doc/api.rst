@@ -68,6 +68,7 @@ Submission-related tables
    model.SubmissionFile
    model.SubmissionFileType
    model.SubmissionOnCVFold
+   model.SubmissionScoreOnCVFold
    model.SubmissionSimilarity
 
 Relationship tables
