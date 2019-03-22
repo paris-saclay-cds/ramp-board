@@ -1,5 +1,6 @@
 # Configuration for coverage.py
 
 [run]
+parallel = true
 omit =
     ramp-engine/ramp_engine/aws/*
