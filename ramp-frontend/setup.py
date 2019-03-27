@@ -47,10 +47,10 @@ PACKAGE_DATA = {
         os.path.join('static', 'img', 'partners', '*'),
         os.path.join('static', 'img', 'powered_by', '*'),
         os.path.join('static', 'js', '*'),
-        os.path.join('static', 'lib', 'css' '*'),
-        os.path.join('static', 'lib', 'fonts' '*'),
-        os.path.join('static', 'lib', 'img' '*'),
-        os.path.join('static', 'lib', 'js' '*'),
+        os.path.join('static', 'lib', 'css', '*'),
+        os.path.join('static', 'lib', 'fonts', '*'),
+        os.path.join('static', 'lib', 'img', '*'),
+        os.path.join('static', 'lib', 'js', '*'),
     ]
 }
 
