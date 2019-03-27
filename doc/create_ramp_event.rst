@@ -9,21 +9,22 @@ Deploy a specific RAMP event
 Now we will want to deploy a specific problem and event. We will take an
 example by deploying an ``iris`` event.
 
-First, you need to get the starting kit and the data::
+First, you need to get the starting kit and the data within the
+``ramp_deployment`` directory::
 
-    mkdir ramp-kits
-    mkdir ramp-data
-    git clone https://github.com/ramp-kits/iris ramp-kits/iris
-    git clone https://github.com/ramp-data/iris ramp-data/iris
-    cd ramp-data/iris
-    python prepare_data.py
-    cd ../..
+    ~/ramp_deployment $ mkdir ramp-kits
+    ~/ramp_deployment $ mkdir ramp-data
+    ~/ramp_deployment $ git clone https://github.com/ramp-kits/iris ramp-kits/iris
+    ~/ramp_deployment $ git clone https://github.com/ramp-data/iris ramp-data/iris
+    ~/ramp_deployment $ cd ramp-data/iris
+    ~/ramp_deployment/ramp-kits/iris $ python prepare_data.py
+    ~/ramp_deployment/ramp-kits/iris $ cd ../..
 
 Next, you need to create a configuration file for a specific event. You can
-create this with::
+create this configuration file by executing the following command line from
+the ``ramp_deployment`` folder::
 
-    ramp setup init-event --name iris_test
-
+    ~/ramp_deployment $ ramp setup init-event --name iris_test
 
 The above creates a ``events/iris_test`` directory inside the deployment
 directory, and populates it with a ``config.yml`` with the configuration
@@ -60,7 +61,13 @@ deploy-event`` do that for you.
 Launch the dispatcher to train and evaluate submissions
 -------------------------------------------------------
 
-At this stage, you can launch the RAMP dispatcher which will be in charge of
-training, evaluating submissions, and updating the database::
+At this stage, you can launch the RAMP dispatcher from the ``ramp_deployment``
+directory, which will be in charge of training, evaluating submissions, and
+updating the database::
 
-    ramp launch dispatcher --event-config events/iris_test/config.yml --hunger-policy sleep -vv
+    ~/ramp_deployment $ ramp launch dispatcher --event-config events/iris_test/config.yml --hunger-policy sleep -vv
+
+If you are running the dispatcher on a remote server, you want to launch it
+within a terminal multiplexer as ``screen`` or ``tmux``. It will allow you
+to detach the process and let it run. Refer to the documentation of ``screen``
+or ``tmux`` to use them.
