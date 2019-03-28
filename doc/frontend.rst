@@ -52,6 +52,7 @@ On the left-hand side you can find a panel with two options:
 
 Problems & events
 .................
+
 By clicking this menu you will be redirected to the list of all the events. 
 You can click on the name of the event and view the information 
 
@@ -70,20 +71,26 @@ up to any challenge.
 
 Otherwise you will be able to see the page with the event information on which 
 you will see 'Sign up' button.
-
-'' button will appear:
  
  .. image:: _static/img/sign_up.png
 
  Your request will be send to the administrator for further approval. 
- Once your profile is approved, in the Ramp left-hand side menu you can find new
- option:
+
+Challenge menu
+..............
+
+ Once your profile is approved for the challenge,  in the Ramp left-hand side 
+ menu you will be able find new options:
 
  .. image:: _static/img/new_menu.png
 
- from which you can easily navigate to the challenge information and 
- leaderboards. Here, you can uplad your sumissions by selecting 'sandbox'
- option. To do that you will have to either edit and save existing sample code
-or upload the files in the right column. 
+Now, you can easily view: 
 
-
+*  "description": information on the challenge;
+*  "starting kit": code related to the challenge on github;
+*  "leaderboard";
+*  "competition leaderboard";
+*  "sandbox": where you can upload your sumissions. To do that you will have to 
+either edit and save existing sample code or upload the files in the column on 
+the right-hand side;
+*  "my_submissions": you can view all your submissions for this challenge.
