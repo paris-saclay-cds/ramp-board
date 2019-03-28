@@ -1,0 +1,89 @@
+##################################
+Interactions with the RAMP website
+##################################
+
+Interactions as an administrator
+--------------------------------
+
+Approve users' access
+.....................
+
+As an administrator, you will be able to authorize user to access the RAMP
+website and to participate to private event. Once logged in, you will find on
+the right-hand side panel, an "Approve users" menu.
+
+.. image:: _static/img/approve_users_menu.png
+
+Once you clicked on the menu, you will be able to approve several users to
+access the RAMP website or a particular RAMP event.
+
+Event menu
+..........
+
+When you are an administrator, you will have access to additional information
+regarding the event:
+
+* "dashboard admin": the admin dashboard will give you a big picture regarding
+  the submissions done by the participants (new, failed, or scored);
+* "private leaderboard": the private leaderboard will contain all information
+  about all the submissions of all users. It will display all the different
+  scores used for the event, on the public data (via cross-validation) and on
+  the private data;
+* "private competition leaderboard": the private competition leaderboard is
+  similar to the private leaderboard. However, it contains only a single
+  submission per user, graded on the official score used for the challenge. The
+  score is only computed on the private set and should be used as a final
+  challenge classification;
+* "update event": you can change some settings linked with an event (e.g. time
+  between two submissions, name of events, etc.).
+
+Interactions as a user
+----------------------
+
+In order to be able to use Ramp you need to be logged in. After signing up 
+you can directly log in using your newly created username and password, however 
+you will not be able to sign up for RAMP evens until your account is approved 
+by an administrator.
+
+On the left-hand side you can find a panel with two options: 
+'Problems & events' and 'What is a RAMP?'. 
+
+.. image:: _static/img/user_menu.png
+
+Problems & events
+.................
+By clicking this menu you will be redirected to the list of all the events. 
+You can click on the name of the event and view the information 
+
+.. image:: _static/img/list_of_challenges.png
+
+You can select a challenge you would like to sign up to by clicking on one of 
+the challenges listed below the name of the event you wish to participate in.
+
+If you see message saying that you 'Your account has not been approved yet 
+by the administrator' 
+
+.. image:: _static/img/message.png
+
+means that you still have to wait until your account is approved before signing
+up to any challenge.
+
+Otherwise you will be able to see the page with the event information on which 
+you will see 'Sign up' button.
+
+'' button will appear:
+ 
+ .. image:: _static/img/sign_up.png
+
+ Your request will be send to the administrator for further approval. 
+ Once your profile is approved, in the Ramp left-hand side menu you can find new
+ option:
+
+ .. image:: _static/img/new_menu.png
+
+ from which you can easily navigate to the challenge information and 
+ leaderboards. Here, you can uplad your sumissions by selecting 'sandbox'
+ option. To do that you will have to either edit and save existing sample code
+or upload the files in the right column. 
+
+
