@@ -96,4 +96,4 @@ def test_ramp_cli(subcommand):
     if subcommand is not None:
         cmd += [subcommand]
     cmd += ['-h']
-    subprocess.check_output(cmd)
+    subprocess.check_output(cmd, env=os.environ.copy())
