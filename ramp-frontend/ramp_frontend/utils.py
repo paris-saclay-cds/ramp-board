@@ -59,6 +59,7 @@ def send_mail(to, subject, body):
         msg = Message(subject)
         msg.body = body
         msg.add_recipient(to)
+        print(msg)
         mail.send(msg)
     except Exception as e:
         logger.error('Mailing error: {}'.format(e))

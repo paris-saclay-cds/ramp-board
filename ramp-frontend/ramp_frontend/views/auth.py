@@ -3,6 +3,7 @@ import logging
 
 import flask_login
 
+from flask import abort
 from flask import Blueprint
 from flask import current_app as app
 from flask import flash
@@ -12,9 +13,12 @@ from flask import render_template
 from flask import session
 from flask import url_for
 
+from itsdangerous import URLSafeTimedSerializer
+
 from sqlalchemy.orm.exc import NoResultFound
 
 from ramp_database.utils import check_password
+from ramp_database.utils import hash_password
 
 from ramp_database.tools.user import add_user
 from ramp_database.tools.user import add_user_interaction
@@ -28,7 +32,9 @@ from ramp_database.exceptions import NameClashError
 from ramp_frontend import db
 from ramp_frontend import login_manager
 
+from ..forms import EmailForm
 from ..forms import LoginForm
+from ..forms import PasswordForm
 from ..forms import UserCreateProfileForm
 from ..forms import UserUpdateProfileForm
 
@@ -37,6 +43,7 @@ from ..utils import send_mail
 
 logger = logging.getLogger('RAMP-FRONTEND')
 mod = Blueprint('auth', __name__)
+ts = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 
 
 @login_manager.user_loader
@@ -194,3 +201,54 @@ def update_profile():
     form.bio.data = flask_login.current_user.bio
     form.is_want_news.data = flask_login.current_user.is_want_news
     return render_template('update_profile.html', form=form)
+
+
+@mod.route('/reset_password', methods=["GET", "POST"])
+def reset_password():
+    form = EmailForm()
+    error = ''
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and user.access_level != 'asked':
+            token = ts.dumps(user.email)
+            recover_url = url_for(
+                'auth.reset_with_token', token=token, _external=True
+            )
+
+            subject = "Password reset requested - RAMP website"
+            body = ('Hi {}, \n\nclick on the link to reset your password:\n'
+                    .format(user.firstname))
+            body += recover_url
+            body += '\n\nSee you on the RAMP website!'
+            send_mail(user.email, subject, body)
+            logger.info(
+                'Password reset requested for user {}'.format(user.name)
+            )
+            logger.info(recover_url)
+            flash('An email has to reset your password has been sent')
+            return redirect(url_for('auth.login'))
+        error = ('Your account has not been yet approved. You cannot '
+                 'change the password already.')
+    return render_template('reset_password.html', form=form, error=error)
+
+
+@mod.route('/reset/<token>', methods=["GET", "POST"])
+def reset_with_token(token):
+    try:
+        email = ts.loads(token, max_age=86400)
+    except Exception as e:
+        logger.error(str(e))
+        abort(404)
+
+    form = PasswordForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=email).one_or_none()
+        if user is None:
+            logger.error('The error was deleted before resetting his/her '
+                         'password')
+            abort(404)
+        user.hashed_password = hash_password(form.password.data).decode()
+        db.session.commit()
+        return redirect(url_for('auth.login'))
+
+    return render_template('reset_with_token.html', form=form, token=token)
