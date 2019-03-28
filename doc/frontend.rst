@@ -10,7 +10,7 @@ Approve users' access
 
 As an administrator, you will be able to authorize user to access the RAMP
 website and to participate to private event. Once logged in, you will find on
-the right-hand side panel, an "Approve users" menu.
+the left-hand side panel, an "Approve users" menu.
 
 .. image:: _static/img/approve_users_menu.png
 
