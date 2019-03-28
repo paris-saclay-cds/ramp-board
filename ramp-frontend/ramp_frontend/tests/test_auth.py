@@ -1,3 +1,4 @@
+import re
 import shutil
 
 import pytest
@@ -11,6 +12,7 @@ from ramp_database.model import Model
 from ramp_database.testing import create_toy_db
 from ramp_database.utils import setup_db
 from ramp_database.utils import session_scope
+from ramp_database.utils import check_password
 
 from ramp_database.tools.user import get_user_by_name
 
@@ -18,6 +20,7 @@ from ramp_frontend import create_app
 from ramp_frontend.testing import login_scope
 from ramp_frontend.testing import login
 from ramp_frontend.testing import logout
+from ramp_frontend import mail
 
 
 @pytest.fixture(scope='module')
@@ -212,3 +215,101 @@ def test_update_profile(client_session):
         rv = client.post('/update_profile', data=user_profile,
                          follow_redirects=True)
         assert rv.status_code == 200
+
+
+def test_reset_password(client_session):
+    client, session = client_session
+
+    # GET method
+    rv = client.get('/reset_password')
+    assert rv.status_code == 200
+    assert b'If you are a registered user, we are going to send' in rv.data
+
+    # POST method
+    # check that we raise an error if the email does not exist
+    rv = client.post('/reset_password', data={'email': 'random@mail.com'})
+    assert rv.status_code == 200
+    assert b'You can sign-up instead.' in rv.data
+
+    # set a user to "asked" access level
+    user = get_user_by_name(session, 'test_user')
+    user.access_level = 'asked'
+    session.commit()
+    rv = client.post('/reset_password', data={'email': user.email})
+    assert rv.status_code == 200
+    assert b'Your account has not been yet approved.' in rv.data
+
+    # set back the account to 'user' access level
+    user.access_level = 'user'
+    session.commit()
+    rv = client.post('/reset_password', data={'email': user.email})
+    with client.session_transaction() as cs:
+        flash_message = dict(cs['_flashes'])
+    assert flash_message['message'] == ('An email to reset your password has '
+                                        'been sent')
+    assert rv.status_code == 302
+    assert rv.location == 'http://localhost/login'
+
+    with client.application.app_context():
+        with mail.record_messages() as outbox:
+            rv = client.post('/reset_password', data={'email': user.email})
+            assert len(outbox) == 1
+            assert 'click on the link to reset your password' in outbox[0].body
+            # get the link to reset the password
+            reg_exp = re.search(
+                "http://localhost/reset/.*", outbox[0].body
+            )
+            reset_password_link = reg_exp.group()
+            # remove the part with 'localhost' for the next query
+            reset_password_link = reset_password_link[
+                reset_password_link.find('/reset'):
+            ]
+
+    # check that we can reset the password using the previous link
+    # GET method
+    rv = client.get(reset_password_link)
+    assert rv.status_code == 200
+    assert b'Change my password' in rv.data
+
+    # POST method
+    new_password = 'new_password'
+    rv = client.post(reset_password_link, data={'password': new_password})
+    assert rv.status_code == 302
+    assert rv.location == 'http://localhost/login'
+    # make a commit to be sure that the update has been done
+    session.commit()
+    user = get_user_by_name(session, 'test_user')
+    assert check_password(new_password, user.hashed_password)
+
+
+def test_reset_token_error(client_session):
+    client, session = client_session
+
+    # POST method
+    new_password = 'new_password'
+    rv = client.post('/reset/xxx', data={'password': new_password})
+    assert rv.status_code == 404
+
+    # Get get the link to a real token but remove the user in between
+    user = get_user_by_name(session, 'test_user')
+    with client.application.app_context():
+        with mail.record_messages() as outbox:
+            rv = client.post('/reset_password', data={'email': user.email})
+            assert len(outbox) == 1
+            assert 'click on the link to reset your password' in outbox[0].body
+            # get the link to reset the password
+            reg_exp = re.search(
+                "http://localhost/reset/.*", outbox[0].body
+            )
+            reset_password_link = reg_exp.group()
+            # remove the part with 'localhost' for the next query
+            reset_password_link = reset_password_link[
+                reset_password_link.find('/reset'):
+            ]
+
+    user = get_user_by_name(session, 'test_user')
+    session.delete(user)
+    session.commit()
+    new_password = 'new_password'
+    rv = client.post(reset_password_link, data={'password': new_password})
+    assert rv.status_code == 404

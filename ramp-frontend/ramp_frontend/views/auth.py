@@ -208,7 +208,7 @@ def reset_password():
     form = EmailForm()
     error = ''
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        user = User.query.filter_by(email=form.email.data).one_or_none()
         if user and user.access_level != 'asked':
             token = ts.dumps(user.email)
             recover_url = url_for(
@@ -225,10 +225,14 @@ def reset_password():
                 'Password reset requested for user {}'.format(user.name)
             )
             logger.info(recover_url)
-            flash('An email has to reset your password has been sent')
+            flash('An email to reset your password has been sent')
             return redirect(url_for('auth.login'))
-        error = ('Your account has not been yet approved. You cannot '
-                 'change the password already.')
+        elif user is None:
+            error = ('The email address is not linked to any user. You can '
+                     'sign-up instead.')
+        else:
+            error = ('Your account has not been yet approved. You cannot '
+                     'change the password already.')
     return render_template('reset_password.html', form=form, error=error)
 
 
@@ -247,7 +251,10 @@ def reset_with_token(token):
             logger.error('The error was deleted before resetting his/her '
                          'password')
             abort(404)
-        user.hashed_password = hash_password(form.password.data).decode()
+        (User.query.filter_by(email=email)
+                   .update({
+                       "hashed_password":
+                       hash_password(form.password.data).decode()}))
         db.session.commit()
         return redirect(url_for('auth.login'))
 
