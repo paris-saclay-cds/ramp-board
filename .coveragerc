@@ -4,3 +4,4 @@
 parallel = true
 omit =
     ramp-engine/ramp_engine/aws/*
+    ramp-utils/ramp_utils/tests/local_module.py
