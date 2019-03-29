@@ -54,7 +54,7 @@ Problems & events
 .................
 
 By clicking this menu you will be redirected to the list of all the events. 
-You can click on the name of the event and view the information 
+You can click on the name of the event and view additional information related to the event.
 
 .. image:: _static/img/list_of_challenges.png
 
