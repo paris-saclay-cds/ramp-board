@@ -68,8 +68,9 @@ def add_user(session, name, password, lastname, firstname, email,
     # decode the hashed password (=bytes) because database columns is
     # String
     hashed_password = hash_password(password).decode()
+    lower_case_email = email.lower()
     user = User(name=name, hashed_password=hashed_password,
-                lastname=lastname, firstname=firstname, email=email,
+                lastname=lastname, firstname=firstname, email=lower_case_email,
                 access_level=access_level, hidden_notes=hidden_notes,
                 linkedin_url=linkedin_url, twitter_url=twitter_url,
                 facebook_url=facebook_url, google_url=google_url,
@@ -97,7 +98,7 @@ def add_user(session, name, password, lastname, firstname, email,
             except NoResultFound:
                 pass
         try:
-            select_user_by_email(session, email)
+            select_user_by_email(session, lower_case_email)
             if message:
                 message += ' and '
             message += 'email is already in use'
@@ -308,6 +309,8 @@ def set_user_by_instance(session, user, lastname, firstname, email,
                   'facebook_url', 'google_url', 'github_url', 'website_url',
                   'bio', 'email', 'is_want_news'):
         local_attr = locals()[field]
+        if field == 'email':
+            local_attr = local_attr.lower()
         if getattr(user, field) != local_attr:
             logger.info('Update the "{}" field from {} to {}'
                         .format(field, getattr(user, field), local_attr))
