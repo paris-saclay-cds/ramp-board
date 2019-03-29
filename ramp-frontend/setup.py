@@ -32,7 +32,8 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Programming Language :: Python :: 3.6',
                'Programming Language :: Python :: 3.7']
 INSTALL_REQUIRES = ['bokeh', 'click', 'Flask', 'Flask-Login', 'Flask-Mail',
-                    'Flask-SQLAlchemy', 'Flask-WTF', 'numpy', 'pandas']
+                    'Flask-SQLAlchemy', 'Flask-WTF', 'itsdangerous', 'numpy',
+                    'pandas']
 EXTRAS_REQUIRE = {
     'tests': ['pytest', 'pytest-cov'],
     'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc']

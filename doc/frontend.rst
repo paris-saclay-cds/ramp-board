@@ -23,6 +23,8 @@ Event menu
 When you are an administrator, you will have access to additional information
 regarding the event:
 
+.. image:: _static/img/admin_event_menu.png
+
 * "dashboard admin": the admin dashboard will give you a big picture regarding
   the submissions done by the participants (new, failed, or scored);
 * "private leaderboard": the private leaderboard will contain all information
