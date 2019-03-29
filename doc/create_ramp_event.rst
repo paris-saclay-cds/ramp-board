@@ -17,8 +17,8 @@ First, you need to get the starting kit and the data within the
     ~/ramp_deployment $ git clone https://github.com/ramp-kits/iris ramp-kits/iris
     ~/ramp_deployment $ git clone https://github.com/ramp-data/iris ramp-data/iris
     ~/ramp_deployment $ cd ramp-data/iris
-    ~/ramp_deployment/ramp-kits/iris $ python prepare_data.py
-    ~/ramp_deployment/ramp-kits/iris $ cd ../..
+    ~/ramp_deployment/ramp-data/iris $ python prepare_data.py
+    ~/ramp_deployment/ramp-data/iris $ cd ../..
 
 Next, you need to create a configuration file for a specific event. You can
 create this configuration file by executing the following command line from

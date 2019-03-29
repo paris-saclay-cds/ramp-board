@@ -42,62 +42,63 @@ regarding the event:
 Interactions as a user
 ----------------------
 
-In order to be able to use RAMP you need to be logged in. After signing-up 
-you can directly log-in using your newly created username and password, however 
-you will not be able to sign up for any RAMP event until your account is 
-approved by an administrator.
+In order to be able to use RAMP you need to be logged in. After signing-up you
+can directly log-in using your newly created username and password, however you
+will not be able to sign up for any RAMP event until your account is approved
+by an administrator.
 
-On the left-hand side you can find a panel with two options: 
-'Problems & events' and 'What is a RAMP?'. 
+On the left-hand side you can find a panel with two options: 'Problems &
+events' and 'What is a RAMP?'.
 
 .. image:: _static/img/user_menu.png
 
 Problems & events
 .................
 
-By clicking this menu you will be redirected to the list of all the events. 
-You can click on the name of the event and view additional information related 
-to the event.
+By clicking this menu you will be redirected to the list of all the events. You
+can click on the name of the event and view additional information related to
+the event.
 
 .. image:: _static/img/list_of_challenges.png
 
-You can select a challenge to which you would like to sign-up by clicking on one 
-of the challenges listed below the name of the event you wish to participate in.
+You can select a challenge to which you would like to sign-up by clicking on
+one of the challenges listed below the name of the event you wish to
+participate in.
 
-If you see message saying that you 'Your account has not been approved yet 
-by the administrator' 
+If you see message saying that you 'Your account has not been approved yet by
+the administrator.
 
 .. image:: _static/img/message.png
 
-it means that you still have to wait until your account is approved before 
+it means that you still have to wait until your account is approved before
 signing-up to any challenge.
 
-Otherwise you will be able to see the page with the event information on which 
+Otherwise you will be able to see the page with the event information on which
 you will see 'Sign up' button.
- 
+
  .. image:: _static/img/sign_up.png
 
- Your request will be send to the administrator for further approval. 
+ Your request will be send to the administrator for further approval.
 
 Challenge menu
 ..............
 
- Once your profile is approved for the challenge, in the RAMP left-hand side 
+ Once your profile is approved for the challenge, in the RAMP left-hand side
  menu you will be able find new options:
 
  .. image:: _static/img/new_menu.png
 
-Now, you can easily view: 
+Now, you can easily view:
 
-*  "description": information on the challenge;
-*  "starting kit": code related to the challenge on github;
-*  "leaderboard": will contain the different scores used for the particular 
-event. All reported scores are limited to the public dataset only;
-*  "competition leaderboard": is similar to the leaderboard. However, only 
-the official score is reported for a single submission which is selected by each
- user. This score is computed on the public dataset only and can differ from the
-  final ranking which is done on the private set;
-*  "sandbox": where you can upload your sumissions. To do that you will have to 
-either edit and save existing sample code or upload the files in the column on 
-the right-hand side;
+* "description": information on the challenge;
+* "starting kit": code related to the challenge on github;
+* "leaderboard": will contain the different scores used for the particular
+  event. All reported scores are limited to the public dataset only;
+* "competition leaderboard": is similar to the leaderboard. However, only
+  the official score is reported for a single submission which is selected by
+  each user. This score is computed on the public dataset only and can differ
+  from the final ranking which is done on the private set;
+* "sandbox": where you can upload your submissions. To do that you will have
+  to either edit and save existing sample code or upload the files in the
+  column on the right-hand side;
 *  "my_submissions": you can view all your submissions for this challenge.
