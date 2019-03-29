@@ -47,8 +47,8 @@ Here, you will need to define:
 
 *  what type of problem the user will face during the challenge 
    (e.g. classification `pollenating insects problem 
-   <https://github.com/ramp-kits/pollenating_insects_3_simplified/blob/master/problem.py>`_)
-   or regression (e.g. `boston housing problem 
+   <https://github.com/ramp-kits/pollenating_insects_3_simplified/blob/master/problem.py>`_
+   or regression `boston housing problem 
    <https://github.com/ramp-kits/boston_housing/blob/master/problem.py>`_);
 *  which RAMP workflow you want to use;
 *  the score which will be used for evaluation
@@ -191,7 +191,7 @@ for the sake of the users it is recommended that you introduce the problem and
 explain what are the requirements. It is also advisable to get the users started
 by showing them how to access the data and samples of the code.
 
-example RAMP kits
+examplar RAMP kits
 -----------------
 
 For other examples of code of existing challenges feel free to visit RAMP kits 
