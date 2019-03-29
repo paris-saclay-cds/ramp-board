@@ -17,6 +17,12 @@ This directory tree should be of the following structure:
 
 .. image:: _static/img/dir_structure.png
 
+With:
+
+*  requirements.txt file
+*  problem.py file
+*  submissions directory with example submission(s)
+
 Where:
 
 requirements.txt file
@@ -94,12 +100,23 @@ but you can also add new ones:
 
 Finally you should create few functions which should include:
 
-* get_cv() with input X (the training data) and y (test data)
+* get_cv() with input X (the training data) and y (test data). This function
+should define how the public dataset is to be split for crossvalidation
 
     def get_cv(X, y):
         cv = StratifiedShuffleSplit(n_splits=2, test_size=0.2, random_state=57)
         return cv.split(X, y)
 
+* get_train_data() and get_test_data() should return the correct sets of the 
+data:
+
+    def get_train_data(path='.'):
+        f_name = 'train.csv'
+        return _read_data(path, f_name)
+
+    def get_test_data(path='.'):
+        f_name = 'test.csv'
+        return _read_data(path, f_name)
 
     def _read_data(path, f_name):
         data = pd.read_csv(os.path.join(path, 'data', f_name))
@@ -107,28 +124,53 @@ Finally you should create few functions which should include:
         X_array = data.drop([_target_column_name], axis=1).values
         return X_array, y_array
 
-
-    def get_train_data(path='.'):
-        f_name = 'train.csv'
-        return _read_data(path, f_name)
-
-
-    def get_test_data(path='.'):
-        f_name = 'test.csv'
-        return _read_data(path, f_name)
-
-
-
-
-
-Submission directory
+submission directory
 --------------------
+All the submissions will be expected to be stored in the submission directory. 
+The user might select any name for their submission. At least one sample 
+submission is always given to the users. In the 
 
-Starting_kit directory and its content
+.. `Iris`: https://github.com/ramp-kits/iris
+
+example three submissions are given: error, random_forest_10_10 and 
+starting_kit. 
+
+example submission directory and its content
 ......................................
+In Iris example, each of the submission directories include python file called 
+classifier.py letting the user know that their submission should also include
+classifier.py file. The name of the file expected for the submission and its 
+structure will depend on the workflow you chose to use. 
+
+For example, Iris uses forkflow Classifier() (defined in problem.py) and 
+therefore the file in the submission has to be classifier.py. Sample of this 
+file is given to the users as part of Iris challenge. It includes the sample 
+functions which classifier.py submitted by the user will also need to include,
+in Iris example it is:
+
+    from sklearn.base import BaseEstimator
+    from sklearn.ensemble import RandomForestClassifier
+
+
+    class Classifier(BaseEstimator):
+        def __init__(self):
+            pass
+
+        def fit(self, X, y):
+            self.clf = RandomForestClassifier(
+                n_estimators=1, max_leaf_nodes=2, random_state=61)
+            self.clf.fit(X, y)
+
+        def predict(self, X):
+            return self.clf.predict(X)
+
+        def predict_proba(self, X):
+            return self.clf.predict_proba(X)
 
 Data directory
 --------------
+
+
 
 your_challenge_starting_kit.ipynb Jupiter notebook file
 -------------------------------------------------------
