@@ -72,8 +72,14 @@ class User(Model):
         The user's first name.
     email : str
         The user's email
-    access_level : {'admin', 'user', 'asked'}
-        The user's admin level.
+    access_level : {'admin', 'user', 'asked', 'not_confirmed'}
+        The user's admin level. The possible access level are:
+
+        * 'admin' : RAMP administrator;
+        * 'user': RAMP user;
+        * 'asked': asked to be a RAMP user and confirmed via emails;
+        * 'not_confirmed': signed-up through the frontend but did not confirm
+          yet by email.
     hidden_notes : str
         Some hidden notes.
     signup_timestamp : datetime
@@ -121,9 +127,10 @@ class User(Model):
     hidden_notes = Column(String, default=None)
     bio = Column(String(1024), default=None)
     is_want_news = Column(Boolean, default=True)
-    access_level = Column(Enum(
-        'admin', 'user', 'asked', name='access_level'), default='asked')
-    # 'asked' needs approval
+    access_level = Column(
+        Enum('admin', 'user', 'asked', 'not_confirmed', name='access_level'),
+        default='asked'
+    )
     signup_timestamp = Column(DateTime, nullable=False)
 
     # Flask-Login fields

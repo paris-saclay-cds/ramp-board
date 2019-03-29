@@ -145,24 +145,34 @@ def sign_up():
                 website_url=form.website_url.data,
                 bio=form.bio.data,
                 is_want_news=form.is_want_news.data,
-                access_level='asked'
+                access_level='not_confirmed'
             )
         except NameClashError as e:
             flash(str(e))
             logger.info(str(e))
             return render_template('index.html')
-        admin_users = User.query.filter_by(access_level='admin')
-        for admin in admin_users:
-            subject = 'Approve registration of {}'.format(
-                user.name
-            )
-            body = body_formatter_user(user)
-            url_approve = ('http://www.ramp.studio/sign_up/{}'
-                           .format(user.name))
-            body += 'Click on the link to approve the registration '
-            body += 'of this user: {}'.format(url_approve)
-            send_mail(admin.email, subject, body)
-        return redirect(url_for('auth.login'))
+        # send an email to the participant such that he can confirm his email
+        token = ts.dumps(user.email)
+        recover_url = url_for(
+            'auth.user_confirm_email', token=token, _external=True
+        )
+        subject = "Confirm your email for signing-up to RAMP"
+        body = ('Hi {}, \n\n click on the following link to confirm your email'
+                'address and finalize your sign-up to RAMP.\n\n Note that'
+                'your account still needs to be approved by a RAMP '
+                'administrator.\n\n'
+                .format(user.firstname))
+        body += recover_url
+        body += '\n\nSee you on the RAMP website!'
+        send_mail(user.email, subject, body)
+        logger.info(
+            '{} has signed-up to RAMP'.format(user.name)
+        )
+        flash(
+            "We sent a confirmation email. Go read your email and click on "
+            "the confirmation link"
+        )
+        print(body)
     return render_template('sign_up.html', form=form)
 
 
@@ -259,3 +269,51 @@ def reset_with_token(token):
         return redirect(url_for('auth.login'))
 
     return render_template('reset_with_token.html', form=form, token=token)
+
+
+@mod.route('/confirm_email/<token>', methods=["GET", "POST"])
+def user_confirm_email(token):
+    try:
+        email = ts.loads(token, max_age=86400)
+    except Exception as e:
+        logger.error(str(e))
+        abort(404)
+
+    user = User.query.filter_by(email=email).one_or_none()
+    if user is None:
+        flash(
+            'You did not sign-up yet to RAMP. Please sign-up first.',
+            category='error'
+        )
+        return redirect(url_for('auth.sign_up'))
+    elif user.access_level in ('user', 'admin'):
+        flash(
+            "Your account is already approved. You don't need to confirm your "
+            "email address", category='error'
+        )
+        return redirect(url_for('auth.login'))
+    elif user.access_level == 'asked':
+        flash(
+            "Your email address already has been confirmed. You need to wait "
+            "for an approval from a RAMP administrator"
+        )
+        return redirect(url_for('general.index'))
+    else:
+        User.query.filter_by(email=email).update({'access_level': 'asked'})
+        db.session.commit()
+        admin_users = User.query.filter_by(access_level='admin')
+        for admin in admin_users:
+            subject = 'Approve registration of {}'.format(
+                user.name
+            )
+            body = body_formatter_user(user)
+            url_approve = ('http://www.ramp.studio/sign_up/{}'
+                           .format(user.name))
+            body += 'Click on the link to approve the registration '
+            body += 'of this user: {}'.format(url_approve)
+            send_mail(admin.email, subject, body)
+        flash(
+            "An email has been sent to the RAMP administrator(s) which will "
+            "approve your account"
+        )
+        return redirect(url_for('auth.login'))
