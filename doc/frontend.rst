@@ -88,7 +88,7 @@ Now, you can easily view:
 
 *  "description": information on the challenge;
 *  "starting kit": code related to the challenge on github;
-*  "leaderboard";
+*  "leaderboard": will contain the different scores used for the particular event. All reported scores are limited to the public dataset only;
 *  "competition leaderboard";
 *  "sandbox": where you can upload your sumissions. To do that you will have to 
 either edit and save existing sample code or upload the files in the column on 
