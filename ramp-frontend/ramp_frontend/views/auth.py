@@ -322,7 +322,7 @@ def user_confirm_email(token):
         )
         body = body_formatter_user(user)
         url_approve = ('http://www.ramp.studio/sign_up/{}'
-                        .format(user.name))
+                       .format(user.name))
         body += 'Click on the link to approve the registration '
         body += 'of this user: {}'.format(url_approve)
         send_mail(admin.email, subject, body)
