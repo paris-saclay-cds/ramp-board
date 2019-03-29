@@ -66,7 +66,7 @@ by the administrator'
 
 .. image:: _static/img/message.png
 
-means that you still have to wait until your account is approved before signing
+it means that you still have to wait until your account is approved before signing-up
 up to any challenge.
 
 Otherwise you will be able to see the page with the event information on which 
