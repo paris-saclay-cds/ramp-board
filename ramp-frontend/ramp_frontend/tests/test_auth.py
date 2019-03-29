@@ -160,8 +160,7 @@ def test_sign_up(client_session):
     user_profile = {'user_name': 'xx', 'password': 'xx', 'firstname': 'xx',
                     'lastname': 'xx', 'email': 'xx'}
     rv = client.post('/sign_up', data=user_profile)
-    assert rv.status_code == 302
-    assert rv.location == 'http://localhost/login'
+    assert rv.status_code == 200
     user = get_user_by_name(session, 'xx')
     assert user.name == 'xx'
     user_profile = {'user_name': 'yy', 'password': 'yy', 'firstname': 'yy',
@@ -180,6 +179,94 @@ def test_sign_up(client_session):
     assert (flash_message['message'] ==
             'username is already in use and email is already in use')
     assert rv.status_code == 200
+
+
+def test_sign_up_with_approval(client_session):
+    # check the sign-up and email confirmation framework
+    client, session = client_session
+
+    with client.application.app_context():
+        with mail.record_messages() as outbox:
+            user_profile = {
+                'user_name': 'new_user_1', 'password': 'xx', 'firstname': 'xx',
+                'lastname': 'xx', 'email': 'new_user_1@mail.com'
+            }
+            rv = client.post('/sign_up', data=user_profile)
+            # check the flash box to inform the user about the mail
+            with client.session_transaction() as cs:
+                flash_message = dict(cs['_flashes'])
+            assert 'We sent a confirmation email.'in flash_message['message']
+            # check that the email has been sent
+            assert len(outbox) == 1
+            assert ('click on the following link to confirm your email'
+                    in outbox[0].body)
+            # get the link to reset the password
+            reg_exp = re.search(
+                "http://localhost/confirm_email/.*", outbox[0].body
+            )
+            confirm_email_link = reg_exp.group()
+            # remove the part with 'localhost' for the next query
+            confirm_email_link = confirm_email_link[
+                confirm_email_link.find('/confirm_email'):
+            ]
+            # check the redirection
+            assert rv.status_code == 200
+            user = get_user_by_name(session, 'new_user_1')
+            assert user is not None
+            assert user.access_level == 'not_confirmed'
+
+    # POST method of the email confirmation
+    with client.application.app_context():
+        with mail.record_messages() as outbox:
+            rv = client.post(confirm_email_link)
+            # check the flash box to inform the user to wait for admin's
+            # approval
+            with client.session_transaction() as cs:
+                flash_message = dict(cs['_flashes'])
+            assert ('An email has been sent to the RAMP administrator' in
+                    flash_message['message'])
+            # check that we send an email to the administrator
+            assert len(outbox) == 1
+            assert "Approve registration of new_user_1" in outbox[0].subject
+            # ensure that we have the last changes
+            session.commit()
+            user = get_user_by_name(session, 'new_user_1')
+            assert user.access_level == 'asked'
+            assert rv.status_code == 302
+            assert rv.location == 'http://localhost/login'
+
+    # POST to check that we raise the right errors
+    # resend the confirmation for a user which already confirmed
+    rv = client.post(confirm_email_link)
+    with client.session_transaction() as cs:
+        flash_message = dict(cs['_flashes'])
+    assert ('Your email address already has been confirmed'
+            in flash_message['error'])
+    assert rv.status_code == 302
+    assert rv.location == 'http://localhost/'
+    # check when the user was already approved
+    for status in ('user', 'admin'):
+        user = get_user_by_name(session, 'new_user_1')
+        user.access_level = status
+        session.commit()
+        rv = client.post(confirm_email_link)
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert 'Your account is already approved.' in flash_message['error']
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/login'
+    # delete the user in the middle
+    session.delete(user)
+    session.commit()
+    rv = client.post(confirm_email_link)
+    with client.session_transaction() as cs:
+        flash_message = dict(cs['_flashes'])
+    assert 'You did not sign-up yet to RAMP.' in flash_message['error']
+    assert rv.status_code == 302
+    assert rv.location == 'http://localhost/sign_up'
+    # access a token which does not exist
+    rv = client.post('/confirm_email/xxx')
+    assert rv.status_code == 404
 
 
 def test_update_profile(client_session):

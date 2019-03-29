@@ -172,7 +172,7 @@ def sign_up():
             "We sent a confirmation email. Go read your email and click on "
             "the confirmation link"
         )
-        print(body)
+        return render_template('index.html')
     return render_template('sign_up.html', form=form)
 
 
@@ -215,6 +215,7 @@ def update_profile():
 
 @mod.route('/reset_password', methods=["GET", "POST"])
 def reset_password():
+    """Reset password of a RAMP user."""
     form = EmailForm()
     error = ''
     if form.validate_on_submit():
@@ -248,6 +249,13 @@ def reset_password():
 
 @mod.route('/reset/<token>', methods=["GET", "POST"])
 def reset_with_token(token):
+    """Reset password by passing a token (email).
+
+    Parameters
+    ----------
+    token : str
+        The token associated with an email address.
+    """
     try:
         email = ts.loads(token, max_age=86400)
     except Exception as e:
@@ -273,6 +281,13 @@ def reset_with_token(token):
 
 @mod.route('/confirm_email/<token>', methods=["GET", "POST"])
 def user_confirm_email(token):
+    """Confirm a user account using his email address and a token to approve.
+
+    Parameters
+    ----------
+    token : str
+        The token associated with an email address.
+    """
     try:
         email = ts.loads(token, max_age=86400)
     except Exception as e:
@@ -295,25 +310,24 @@ def user_confirm_email(token):
     elif user.access_level == 'asked':
         flash(
             "Your email address already has been confirmed. You need to wait "
-            "for an approval from a RAMP administrator"
+            "for an approval from a RAMP administrator", category='error'
         )
         return redirect(url_for('general.index'))
-    else:
-        User.query.filter_by(email=email).update({'access_level': 'asked'})
-        db.session.commit()
-        admin_users = User.query.filter_by(access_level='admin')
-        for admin in admin_users:
-            subject = 'Approve registration of {}'.format(
-                user.name
-            )
-            body = body_formatter_user(user)
-            url_approve = ('http://www.ramp.studio/sign_up/{}'
-                           .format(user.name))
-            body += 'Click on the link to approve the registration '
-            body += 'of this user: {}'.format(url_approve)
-            send_mail(admin.email, subject, body)
-        flash(
-            "An email has been sent to the RAMP administrator(s) which will "
-            "approve your account"
+    User.query.filter_by(email=email).update({'access_level': 'asked'})
+    db.session.commit()
+    admin_users = User.query.filter_by(access_level='admin')
+    for admin in admin_users:
+        subject = 'Approve registration of {}'.format(
+            user.name
         )
-        return redirect(url_for('auth.login'))
+        body = body_formatter_user(user)
+        url_approve = ('http://www.ramp.studio/sign_up/{}'
+                        .format(user.name))
+        body += 'Click on the link to approve the registration '
+        body += 'of this user: {}'.format(url_approve)
+        send_mail(admin.email, subject, body)
+    flash(
+        "An email has been sent to the RAMP administrator(s) which will "
+        "approve your account"
+    )
+    return redirect(url_for('auth.login'))
