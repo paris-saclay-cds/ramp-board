@@ -58,7 +58,7 @@ You can click on the name of the event and view additional information related t
 
 .. image:: _static/img/list_of_challenges.png
 
-You can select a challenge you would like to sign up to by clicking on one of 
+You can select a challenge to which you would like to sign-up by clicking on one of 
 the challenges listed below the name of the event you wish to participate in.
 
 If you see message saying that you 'Your account has not been approved yet 
