@@ -7,13 +7,13 @@ data needed to run your challenge. RAMP kit will need to include two types of
 datasets: 
 
 *  public dataset which is given to all of the competing users. This dataset
-will be split for cross-validation (train and test) and can be used for 
-self-evaluation during the duration of the challenge
+   will be split for cross-validation (train and test) and can be used for 
+   self-evaluation during the duration of the challenge;
 *  private dataset which is never given to the competing users and which is used 
-to evaluate the score of the users after the challenge deadline has passed.
+   to evaluate the score of the users after the challenge deadline has passed.
 
 To write you own challenge for RAMP you need to create directory with the name 
-of your challenge in the ramp-kits directory of your RAMP:
+of your challenge in the ramp-kits directory of your RAMP::
 
         ramp_deployment/ramp_kits/your_challenge
 
@@ -27,12 +27,12 @@ With:
 *  problem.py file
 *  submissions directory with example submission(s)
 *  directory with the public data, and
-*  Jupiter notebook introductin the challenge
+*  Jupiter notebook introduction the challenge
 
 requirements.txt file
 ----------------------
 This file should include all the libraries required to run your challenge
-Its content might, for example, look as follows:
+Its content might, for example, look as follows::
 
     numpy
     scikit-learn
@@ -46,14 +46,13 @@ problem.py Python file
 Here, you will need to define:
 
 *  what type of problem the user will face during the challenge 
-(e.g. classification 
-.. `pollenating insects problem`: https://github.com/ramp-kits/pollenating_insects_3_simplified/blob/master/problem.py)
-or regression (e.g.
-.. `boston housing problem`: https://github.com/ramp-kits/boston_housing/blob/master/problem.py
-problem;)
+   (e.g. classification `pollenating insects problem <
+   https://github.com/ramp-kits/pollenating_insects_3_simplified/blob/master/problem.py
+   >`_) or regression (e.g. `boston housing problem 
+   <https://github.com/ramp-kits/boston_housing/blob/master/problem.py>`);
 *  which RAMP workflow you want to use;
 *  the score which will be used for evaluation
-and include three functions: get_cv(), get_train_data() and get_test_data().
+   and include three functions: get_cv(), get_train_data() and get_test_data().
 
 The basic Iris 
 .. `problem.py`: https://github.com/ramp-kits/iris/blob/master/problem.py
