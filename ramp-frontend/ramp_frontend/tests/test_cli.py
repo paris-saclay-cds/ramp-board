@@ -1,5 +1,8 @@
+import os
 import shutil
+import signal
 import subprocess
+import sys
 import time
 
 from ramp_utils import read_config
@@ -25,12 +28,15 @@ def teardown_module(module):
 
 
 def test_test_launch():
-    try:
-        proc = subprocess.Popen(["ramp", "frontend", "test-launch",
-                                "--config", database_config_template()],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    finally:
-        # wait couple of seconds for the serve to start
-        time.sleep(5)
-        proc.terminate()
-        assert b'Serving Flask app "ramp-frontend"' in proc.stdout.read()
+    # pass environment to subprocess
+    cmd = ['python', '-m']
+    cmd += ["ramp_frontend.cli", "test-launch",
+            "--config", database_config_template()]
+    proc = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        env=os.environ.copy())
+    # wait for 5 seconds before to terminate the server
+    time.sleep(5)
+    proc.send_signal(signal.SIGINT)
+    stdout, _ = proc.communicate()
+    assert b'Serving Flask "ramp-frontend"' in stdout
