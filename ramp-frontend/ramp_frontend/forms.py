@@ -311,3 +311,15 @@ class AskForEventForm(FlaskForm):
     closing_date = DateField(
         'closing_date', [validators.DataRequired()], format='%Y-%m-%d'
     )
+
+
+class EmailForm(FlaskForm):
+    email = StringField(
+        'Email', validators=[validators.DataRequired(), validators.Email()]
+    )
+
+
+class PasswordForm(FlaskForm):
+    password = PasswordField(
+        'Password', validators=[validators.DataRequired()]
+    )

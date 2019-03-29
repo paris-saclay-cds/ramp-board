@@ -13,4 +13,5 @@ User Guide
    create_ramp_event.rst
    create_new_challenge.rst
    workers.rst
+   frontend.rst
    running_challenge.rst
