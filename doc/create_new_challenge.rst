@@ -65,7 +65,7 @@ First you need to import all the required libraries::
     import rampwf as rw
     from sklearn.model_selection import StratifiedShuffleSplit
 
-Next, define name of the problem::
+Next, define the name of the problem::
 
     problem_title = 'Iris classification'
 
@@ -78,8 +78,8 @@ Specify possible labels::
     _prediction_label_names = ['setosa', 'versicolor', 'virginica']
 
 Choose which prediction class will be used. You can choose from `existing 
-prediction classes <
-https://github.com/paris-saclay-cds/ramp-workflow/tree/master/rampwf/prediction_types>`_
+prediction classes 
+<https://github.com/paris-saclay-cds/ramp-workflow/tree/master/rampwf/prediction_types>`_
 or create your own::
 
     # A type (class) which will be used to create wrapper objects for y_pred
@@ -88,7 +88,7 @@ or create your own::
 
 Specify which RAMP workflow will be used. You can use one of the `existing 
 workflows 
-<https://github.com/paris-saclay-cds/ramp-workflow/tree/master/rampwf/workflows>'_
+<https://github.com/paris-saclay-cds/ramp-workflow/tree/master/rampwf/workflows>`_
 or you can create your own::
 
     # An object implementing the workflow
@@ -108,15 +108,16 @@ but if none of those matches your needs, you can also add new one(s)::
 
 Finally you should create few functions which should include:
 
-*  get_cv() with input X (the training data) and y (test data). This function
-    should define how the public dataset is to be split for cross-validation::
+*  get_cv() 
+   with input X (the training data) and y (test data). This function
+   should define how the public dataset is to be split for cross-validation::
 
     def get_cv(X, y):
         cv = StratifiedShuffleSplit(n_splits=2, test_size=0.2, random_state=57)
         return cv.split(X, y)
 
-*  get_train_data() and get_test_data() should return the correct sets of the 
-   data::
+*  get_train_data() and get_test_data() 
+   should return the correct sets of the data::
 
     def get_train_data(path='.'):
         f_name = 'train.csv'
