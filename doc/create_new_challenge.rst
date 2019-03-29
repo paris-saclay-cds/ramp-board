@@ -46,55 +46,58 @@ problem.py Python file
 Here, you will need to define:
 
 *  what type of problem the user will face during the challenge 
-   (e.g. classification `pollenating insects problem <
-   https://github.com/ramp-kits/pollenating_insects_3_simplified/blob/master/problem.py
-   >`_) or regression (e.g. `boston housing problem 
-   <https://github.com/ramp-kits/boston_housing/blob/master/problem.py>`);
+   (e.g. classification `pollenating insects problem 
+   <https://github.com/ramp-kits/pollenating_insects_3_simplified/blob/master/problem.py>`_)
+   or regression (e.g. `boston housing problem 
+   <https://github.com/ramp-kits/boston_housing/blob/master/problem.py>`_);
 *  which RAMP workflow you want to use;
 *  the score which will be used for evaluation
    and include three functions: get_cv(), get_train_data() and get_test_data().
 
-The basic Iris 
-.. `problem.py`: https://github.com/ramp-kits/iris/blob/master/problem.py
-(which is a classification problem) looks like that:
+The basic Iris `problem.py 
+<https://github.com/ramp-kits/iris/blob/master/problem.py>`_ (which is a 
+classification problem) looks like that:
 
-First you need to import all the required libraries:
+First you need to import all the required libraries::
 
     import os
     import pandas as pd
     import rampwf as rw
     from sklearn.model_selection import StratifiedShuffleSplit
 
-Next, define name of the problem:
+Next, define name of the problem::
 
     problem_title = 'Iris classification'
 
-Define which column in your .csv file is to be classified:
+Define which column in your .csv file is to be classified::
+
     _target_column_name = 'species'
 
-Specify possible labels:
+Specify possible labels::
 
     _prediction_label_names = ['setosa', 'versicolor', 'virginica']
 
-Choose which prediction class will be used. You can choose from 
-.. `existing prediction classes`: https://github.com/paris-saclay-cds/ramp-workflow/tree/master/rampwf/prediction_types
-or create your own
+Choose which prediction class will be used. You can choose from `existing 
+prediction classes <
+https://github.com/paris-saclay-cds/ramp-workflow/tree/master/rampwf/prediction_types>`_
+or create your own::
 
     # A type (class) which will be used to create wrapper objects for y_pred
     Predictions = rw.prediction_types.make_multiclass(
         label_names=_prediction_label_names)
 
-Specify which RAMP workflow will be used. You can use one of the 
-.. `existing workflows`: https://github.com/paris-saclay-cds/ramp-workflow/tree/master/rampwf/workflows
-or you can create your own
+Specify which RAMP workflow will be used. You can use one of the `existing 
+workflows 
+<https://github.com/paris-saclay-cds/ramp-workflow/tree/master/rampwf/workflows>'_
+or you can create your own::
 
     # An object implementing the workflow
     workflow = rw.workflows.Classifier()
 
 Next, define which score types will be calculated. Score types defined in 
-RAMP can be found 
-.. `here`: https://github.com/paris-saclay-cds/ramp-workflow/tree/master/rampwf/score_types
-but if none of those matches your needs, you can also add new one(s)
+RAMP can be found `here 
+<https://github.com/paris-saclay-cds/ramp-workflow/tree/master/rampwf/score_types>`_
+but if none of those matches your needs, you can also add new one(s)::
 
     score_types = [
         rw.score_types.Accuracy(name='acc'),
@@ -105,15 +108,15 @@ but if none of those matches your needs, you can also add new one(s)
 
 Finally you should create few functions which should include:
 
-* get_cv() with input X (the training data) and y (test data). This function
-should define how the public dataset is to be split for cross-validation
+*  get_cv() with input X (the training data) and y (test data). This function
+    should define how the public dataset is to be split for cross-validation::
 
     def get_cv(X, y):
         cv = StratifiedShuffleSplit(n_splits=2, test_size=0.2, random_state=57)
         return cv.split(X, y)
 
-* get_train_data() and get_test_data() should return the correct sets of the 
-data
+*  get_train_data() and get_test_data() should return the correct sets of the 
+   data::
 
     def get_train_data(path='.'):
         f_name = 'train.csv'
@@ -131,12 +134,12 @@ data
 
 submission directory
 --------------------
+
 All the submissions will be expected to be stored in the submission directory. 
 The user might select any name for their submission. At least one sample 
-submission is always given to the users. In the 
-.. `Iris`: https://github.com/ramp-kits/iris
-example three submissions are provided: error, random_forest_10_10 and 
-starting_kit. 
+submission is always given to the users. In the `Iris 
+<https://github.com/ramp-kits/iris>`_ example three submissions are provided: 
+error, random_forest_10_10 and starting_kit. 
 
 example submission directory and its content
 ......................................
@@ -150,11 +153,10 @@ For example, Iris uses workflow Classifier() (defined in problem.py) and
 therefore the file in the submission has to be classifier.py. Sample of this 
 file is given to the users as part of Iris challenge. It includes the sample 
 functions which classifier.py submitted by the user will also need to include,
-in Iris example in the starting_kit it looks like this:
+in Iris example in the starting_kit it looks like this::
 
     from sklearn.base import BaseEstimator
     from sklearn.ensemble import RandomForestClassifier
-
 
     class Classifier(BaseEstimator):
         def __init__(self):
@@ -192,6 +194,4 @@ example RAMP kits
 -----------------
 
 For other examples of code of existing challenges feel free to visit RAMP kits 
-github account:
-
-.. _https://github.com/ramp-kits/: https://github.com/ramp-kits/
+github account: `https://github.com/ramp-kits/ <https://github.com/ramp-kits/>`_.
