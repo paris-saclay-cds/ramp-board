@@ -397,8 +397,11 @@ Authentication views
    auth.load_user
    auth.login
    auth.logout
+   auth.reset_password
+   auth.reset_with_token
    auth.sign_up
    auth.update_profile
+   auth.user_confirm_email
 
 Admin views
 ...........
