@@ -42,7 +42,7 @@ Interactions as a user
 
 In order to be able to use RAMP you need to be logged in. After signing-up 
 you can directly log-in using your newly created username and password, however 
-you will not be able to sign up for RAMP evens until your account is approved 
+you will not be able to sign up for any RAMP event until your account is approved 
 by an administrator.
 
 On the left-hand side you can find a panel with two options: 
