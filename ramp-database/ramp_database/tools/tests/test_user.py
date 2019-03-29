@@ -11,6 +11,8 @@ from ramp_database.utils import check_password
 from ramp_database.utils import setup_db
 from ramp_database.utils import session_scope
 
+from ramp_database.exceptions import NameClashError
+
 from ramp_database.model import Model
 from ramp_database.model import User
 from ramp_database.model import Team
@@ -60,6 +62,25 @@ def test_add_user(session_scope_function):
     team = get_team_by_name(session_scope_function, name)
     assert team.name == name
     assert team.admin_id == user.id
+    # check that we get an error if we try to add the same user
+    with pytest.raises(NameClashError, match='email is already in use'):
+        add_user(session_scope_function, name=name, password=password,
+                 lastname=lastname, firstname=firstname, email=email,
+                 access_level=access_level)
+    # check that the checking is case insensitive
+    with pytest.raises(NameClashError, match='email is already in use'):
+        add_user(session_scope_function, name=name, password=password,
+                 lastname=lastname, firstname=firstname,
+                 email=email.capitalize(), access_level=access_level)
+    # add a user email with some capital letters and check that only lower case
+    # are stored in the database
+    name = 'new_user_name'
+    email = 'MixCase@mail.com'
+    add_user(session_scope_function, name=name, password=password,
+             lastname=lastname, firstname=firstname, email=email,
+             access_level=access_level)
+    user = get_user_by_name(session_scope_function, name)
+    assert user.email == 'mixcase@mail.com'
 
 
 @pytest.mark.parametrize(
