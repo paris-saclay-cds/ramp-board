@@ -79,7 +79,7 @@ you will see 'Sign up' button.
 Challenge menu
 ..............
 
- Once your profile is approved for the challenge,  in the Ramp left-hand side 
+ Once your profile is approved for the challenge, in the RAMP left-hand side 
  menu you will be able find new options:
 
  .. image:: _static/img/new_menu.png
