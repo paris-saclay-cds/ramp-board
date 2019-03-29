@@ -167,15 +167,26 @@ in Iris example it is:
         def predict_proba(self, X):
             return self.clf.predict_proba(X)
 
-Data directory
+data directory
 --------------
 
-
+This directory should include all the public datasets (train and test) used in 
+the challenge. 
 
 your_challenge_starting_kit.ipynb Jupiter notebook file
 -------------------------------------------------------
 
+Finally you need to create a notebook informing the users about the challenge.
+This notbeook will be visible to all logged-in users, no matter if they 
+decided to take part in the challenge or not. You can structure this file
+completely freely as the RAMP will not rely on it during the challenge. However, 
+for the sake of the users it is recommended that you introduce the problem and 
+explain what are the requirements. It is also advisable to get the users started
+by showing them samples of the data and of the code.
 
-For examples of code of existing challenges feel free to visit RAMP kits github account:
+example RAMP kits
+-----------------
+For other examples of code of existing challenges feel free to visit RAMP kits 
+github account:
 
 .. _https://github.com/ramp-kits/: https://github.com/ramp-kits/
