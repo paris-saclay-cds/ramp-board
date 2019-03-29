@@ -1,9 +1,13 @@
 ####################
 Create New Challenge
 ####################
-RAMP challenges should include two types of datasets: 
+
+Before you start creating your RAMP challenge, make sure that you have the 
+data needed to run your challenge. RAMP kit will need to include two types of 
+datasets: 
+
 *  public dataset which is given to all of the competing users. This dataset
-will be split for crossvalidation (train and test) and can be used for 
+will be split for cross-validation (train and test) and can be used for 
 self-evaluation during the duration of the challenge
 *  private dataset which is never given to the competing users and which is used 
 to evaluate the score of the users after the challenge deadline has passed.
@@ -22,8 +26,8 @@ With:
 *  requirements.txt file
 *  problem.py file
 *  submissions directory with example submission(s)
-
-Where:
+*  directory with the public data, and
+*  Jupiter notebook introductin the challenge
 
 requirements.txt file
 ----------------------
@@ -41,11 +45,12 @@ problem.py Python file
 ----------------------
 Here, you will need to define:
 
-*  if the challenge is classification (e.g. 
+*  what type of problem the user will face during the challenge 
+(e.g. classification 
 .. `pollenating insects problem`: https://github.com/ramp-kits/pollenating_insects_3_simplified/blob/master/problem.py)
 or regression (e.g.
-.. `boston housing problem`: https://github.com/ramp-kits/boston_housing/blob/master/problem.py)
-problem;
+.. `boston housing problem`: https://github.com/ramp-kits/boston_housing/blob/master/problem.py
+problem;)
 *  which RAMP workflow you want to use;
 *  the score which will be used for evaluation
 and include three functions: get_cv(), get_train_data() and get_test_data().
@@ -74,22 +79,23 @@ Specify possible labels:
 
 Choose which prediction class will be used. You can choose from 
 .. `existing prediction classes`: https://github.com/paris-saclay-cds/ramp-workflow/tree/master/rampwf/prediction_types
-or create your own:
+or create your own
+
     # A type (class) which will be used to create wrapper objects for y_pred
     Predictions = rw.prediction_types.make_multiclass(
         label_names=_prediction_label_names)
 
 Specify which RAMP workflow will be used. You can use one of the 
 .. `existing workflows`: https://github.com/paris-saclay-cds/ramp-workflow/tree/master/rampwf/workflows
-or you can create your own:
+or you can create your own
 
     # An object implementing the workflow
     workflow = rw.workflows.Classifier()
 
-Then, define which score types will be calculated. Score types defined in 
+Next, define which score types will be calculated. Score types defined in 
 RAMP can be found 
 .. `here`: https://github.com/paris-saclay-cds/ramp-workflow/tree/master/rampwf/score_types
-but you can also add new ones:
+but if none of those matches your needs, you can also add new one(s)
 
     score_types = [
         rw.score_types.Accuracy(name='acc'),
@@ -101,14 +107,14 @@ but you can also add new ones:
 Finally you should create few functions which should include:
 
 * get_cv() with input X (the training data) and y (test data). This function
-should define how the public dataset is to be split for crossvalidation
+should define how the public dataset is to be split for cross-validation
 
     def get_cv(X, y):
         cv = StratifiedShuffleSplit(n_splits=2, test_size=0.2, random_state=57)
         return cv.split(X, y)
 
 * get_train_data() and get_test_data() should return the correct sets of the 
-data:
+data
 
     def get_train_data(path='.'):
         f_name = 'train.csv'
@@ -129,24 +135,23 @@ submission directory
 All the submissions will be expected to be stored in the submission directory. 
 The user might select any name for their submission. At least one sample 
 submission is always given to the users. In the 
-
 .. `Iris`: https://github.com/ramp-kits/iris
-
-example three submissions are given: error, random_forest_10_10 and 
+example three submissions are provided: error, random_forest_10_10 and 
 starting_kit. 
 
 example submission directory and its content
 ......................................
+
 In Iris example, each of the submission directories include python file called 
 classifier.py letting the user know that their submission should also include
 classifier.py file. The name of the file expected for the submission and its 
 structure will depend on the workflow you chose to use. 
 
-For example, Iris uses forkflow Classifier() (defined in problem.py) and 
+For example, Iris uses workflow Classifier() (defined in problem.py) and 
 therefore the file in the submission has to be classifier.py. Sample of this 
 file is given to the users as part of Iris challenge. It includes the sample 
 functions which classifier.py submitted by the user will also need to include,
-in Iris example it is:
+in Iris example in the starting_kit it looks like this:
 
     from sklearn.base import BaseEstimator
     from sklearn.ensemble import RandomForestClassifier
@@ -176,16 +181,17 @@ the challenge.
 your_challenge_starting_kit.ipynb Jupiter notebook file
 -------------------------------------------------------
 
-Finally you need to create a notebook informing the users about the challenge.
-This notbeook will be visible to all logged-in users, no matter if they 
+Finally, you need to create a notebook informing the users about the challenge.
+This notebook will be visible to all logged-in users, no matter if they 
 decided to take part in the challenge or not. You can structure this file
 completely freely as the RAMP will not rely on it during the challenge. However, 
 for the sake of the users it is recommended that you introduce the problem and 
 explain what are the requirements. It is also advisable to get the users started
-by showing them samples of the data and of the code.
+by showing them how to access the data and samples of the code.
 
 example RAMP kits
 -----------------
+
 For other examples of code of existing challenges feel free to visit RAMP kits 
 github account:
 
