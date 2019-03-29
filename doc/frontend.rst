@@ -42,9 +42,9 @@ regarding the event:
 Interactions as a user
 ----------------------
 
-In order to be able to use Ramp you need to be logged in. After signing up 
-you can directly log in using your newly created username and password, however 
-you will not be able to sign up for RAMP evens until your account is approved 
+In order to be able to use RAMP you need to be logged in. After signing-up 
+you can directly log-in using your newly created username and password, however 
+you will not be able to sign up for any RAMP event until your account is approved 
 by an administrator.
 
 On the left-hand side you can find a panel with two options: 
@@ -56,11 +56,11 @@ Problems & events
 .................
 
 By clicking this menu you will be redirected to the list of all the events. 
-You can click on the name of the event and view the information 
+You can click on the name of the event and view additional information related to the event.
 
 .. image:: _static/img/list_of_challenges.png
 
-You can select a challenge you would like to sign up to by clicking on one of 
+You can select a challenge to which you would like to sign-up by clicking on one of 
 the challenges listed below the name of the event you wish to participate in.
 
 If you see message saying that you 'Your account has not been approved yet 
@@ -68,8 +68,8 @@ by the administrator'
 
 .. image:: _static/img/message.png
 
-means that you still have to wait until your account is approved before signing
-up to any challenge.
+it means that you still have to wait until your account is approved before signing-up
+to any challenge.
 
 Otherwise you will be able to see the page with the event information on which 
 you will see 'Sign up' button.
@@ -81,7 +81,7 @@ you will see 'Sign up' button.
 Challenge menu
 ..............
 
- Once your profile is approved for the challenge,  in the Ramp left-hand side 
+ Once your profile is approved for the challenge, in the RAMP left-hand side 
  menu you will be able find new options:
 
  .. image:: _static/img/new_menu.png
@@ -90,8 +90,8 @@ Now, you can easily view:
 
 *  "description": information on the challenge;
 *  "starting kit": code related to the challenge on github;
-*  "leaderboard";
-*  "competition leaderboard";
+*  "leaderboard": will contain the different scores used for the particular event. All reported scores are limited to the public dataset only;
+*  "competition leaderboard": is similar to the leaderboard. However, only the official score is reported for a single submission which is selected by each user. This score is computed on the public dataset only and can differ from the final ranking which is done on the private set;
 *  "sandbox": where you can upload your sumissions. To do that you will have to 
 either edit and save existing sample code or upload the files in the column on 
 the right-hand side;
