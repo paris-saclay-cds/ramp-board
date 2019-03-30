@@ -15,7 +15,7 @@ install:
     - conda env update -n testenv -f environment.yml
     - conda env create -f ci_tools/environment_iris_kit.yml
     - source activate testenv
-    - make install
+    - make inplace
 script:
     - psql -U postgres -c "CREATE USER mrramp WITH PASSWORD 'mrramp';ALTER USER mrramp WITH SUPERUSER;"
     - createdb --owner=mrramp databoard_test
