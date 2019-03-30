@@ -199,9 +199,10 @@ def sign_up_for_event(event_name):
             subject = ('Request to sign-up {} to RAMP event {}'
                        .format(event.name, flask_login.current_user.name))
             body = body_formatter_user(flask_login.current_user)
-            url_approve = ('https://www.ramp.studio/events/{}/sign_up/{}'
+            url_approve = ('https://{}/events/{}/sign_up/{}'
                            .format(
-                               event.name, flask_login.current_user.name
+                               app.config['DOMAIN_NAME'], event.name,
+                               flask_login.current_user.name
                            ))
             body += ('Click on this link to approve the sign-up request: {}'
                      .format(url_approve))

@@ -14,6 +14,8 @@ flask:
     # mail_use_tls: false
     # mail_use_ssl: false
     # mail_debug: false
+    # This the name of the server. By default, the name is 'localhost'
+    # domain_name : 'ramp.studio'
 sqlalchemy:
     drivername: postgresql
     username: <db_user>
