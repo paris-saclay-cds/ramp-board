@@ -27,7 +27,7 @@ def main():
               'event information.')
 @click.option('--n-workers', default=-1, show_default=True,
               help='Number of worker to start in parallel.')
-@click.option('--n-threads', default=None, show_default=None,
+@click.option('--n-threads', default=None, show_default=None, type=int,
               help='Number of threads used by each worker.')
 @click.option('--hunger-policy', default='exit', show_default=True,
               help='Policy to apply in case that there is no anymore workers'
