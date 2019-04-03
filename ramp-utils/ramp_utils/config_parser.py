@@ -4,7 +4,8 @@ import yaml
 REQUIRED_KEYS = {
     'sqlalchemy': {'drivername', 'username', 'password', 'host', 'port',
                    'database'},
-    'ramp': {'problem_name', 'event_name', 'event_title', 'event_is_public'}
+    'ramp': {'problem_name', 'event_name', 'event_title', 'event_is_public'},
+    'worker': {'worker_type'}
 }
 
 
