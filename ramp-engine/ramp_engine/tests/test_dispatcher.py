@@ -1,4 +1,5 @@
 import shutil
+import os
 
 import pytest
 
@@ -38,7 +39,7 @@ def test_integration_dispatcher(session_toy):
     event_config = read_config(ramp_config_template())
     dispatcher = Dispatcher(
         config=config, event_config=event_config, worker=CondaEnvWorker,
-        n_worker=-1, hunger_policy='exit'
+        n_workers=-1, hunger_policy='exit'
     )
     dispatcher.launch()
 
@@ -58,7 +59,7 @@ def test_unit_test_dispatcher(session_toy):
     event_config = read_config(ramp_config_template())
     dispatcher = Dispatcher(config=config,
                             event_config=event_config,
-                            worker=CondaEnvWorker, n_worker=100,
+                            worker=CondaEnvWorker, n_workers=100,
                             hunger_policy='exit')
 
     # check that all the queue are empty
@@ -96,3 +97,41 @@ def test_unit_test_dispatcher(session_toy):
     assert event.new_leaderboard_html is None
     assert event.public_competition_leaderboard_html
     assert event.private_competition_leaderboard_html
+
+
+@pytest.mark.parametrize(
+    "n_threads", [None, 4]
+)
+def test_dispatcher_num_threads(n_threads):
+    libraries = ('OMP', 'MKL', 'OPENBLAS')
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_config_template())
+
+    # check that by default we don't set the environment by default
+    dispatcher = Dispatcher(config=config,
+                            event_config=event_config,
+                            worker=CondaEnvWorker, n_workers=100,
+                            n_threads=n_threads,
+                            hunger_policy='exit')
+    if n_threads is None:
+        assert dispatcher.n_threads is n_threads
+        for lib in libraries:
+            assert getattr(os.environ, lib + "_NUM_THREADS", None) is None
+    else:
+        assert dispatcher.n_threads == n_threads
+        for lib in libraries:
+            assert os.environ[lib + "_NUM_THREADS"] == str(n_threads)
+
+
+def test_dispatcher_error():
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_config_template())
+
+    # check that passing a not a number will raise a TypeError
+    err_msg = "The parameter 'n_threads' should be a positive integer"
+    with pytest.raises(TypeError, match=err_msg):
+        Dispatcher(config=config,
+                   event_config=event_config,
+                   worker=CondaEnvWorker, n_workers=100,
+                   n_threads='whatever',
+                   hunger_policy='exit')

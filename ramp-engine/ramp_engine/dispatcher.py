@@ -1,5 +1,6 @@
 import logging
 import multiprocessing
+import numbers
 import os
 import time
 
@@ -51,6 +52,9 @@ class Dispatcher:
         uses ``conda``.
     n_workers : int, default=1
         Maximum number of workers which can run submissions simultaneously.
+    n_threads : None or int
+        The number of threads that each worker can use. By default, there is no
+        limit imposed.
     hunger_policy : {None, 'sleep', 'exit'}
         Policy to apply in case that there is no anymore workers to be
         processed:
@@ -61,17 +65,17 @@ class Dispatcher:
         * if 'exit': the dispatcher will stop after collecting the results of
           the last submissions.
     """
-    def __init__(self, config, event_config, worker=None, n_worker=1,
-                 hunger_policy=None):
+    def __init__(self, config, event_config, worker=None, n_workers=1,
+                 n_threads=None, hunger_policy=None):
         self.worker = CondaEnvWorker if worker is None else worker
-        self.n_worker = (max(multiprocessing.cpu_count() + 1 + n_worker, 1)
-                         if n_worker < 0 else n_worker)
+        self.n_workers = (max(multiprocessing.cpu_count() + 1 + n_workers, 1)
+                          if n_workers < 0 else n_workers)
         self.hunger_policy = hunger_policy
         # init the poison pill to kill the dispatcher
         self._poison_pill = False
         # create the different dispatcher queues
         self._awaiting_worker_queue = Queue()
-        self._processing_worker_queue = LifoQueue(maxsize=self.n_worker)
+        self._processing_worker_queue = LifoQueue(maxsize=self.n_workers)
         self._processed_submission_queue = Queue()
         # split the different configuration required
         if (isinstance(config, str) and
@@ -83,6 +87,16 @@ class Dispatcher:
             self._database_config = config['sqlalchemy']
             self._ramp_config = event_config['ramp']
         self._worker_config = generate_worker_config(event_config, config)
+        # set the number of threads for openmp, openblas, and mkl
+        self.n_threads = n_threads
+        if self.n_threads is not None:
+            if not isinstance(self.n_threads, numbers.Integral):
+                raise TypeError(
+                    "The parameter 'n_threads' should be a positive integer. "
+                    "Got {} instead.".format(repr(self.n_threads))
+                    )
+            for lib in ('OMP', 'MKL', 'OPENBLAS'):
+                os.environ[lib + '_NUM_THREADS'] = str(self.n_threads)
 
     def fetch_from_db(self, session):
         """Fetch the submission from the database and create the workers."""
