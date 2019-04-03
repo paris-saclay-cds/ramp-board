@@ -1,4 +1,5 @@
 from collections import defaultdict
+from collections.abc import Iterable
 
 import click
 import pandas as pd
@@ -106,6 +107,29 @@ def add_event(config, problem, event, title, sandbox, submissions_dir,
     with session_scope(config['sqlalchemy']) as session:
         event_module.add_event(session, problem, event, title, sandbox,
                                submissions_dir, is_public, force)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
+@click.option("--event", default=None, show_default=True,
+              help='Name of the event')
+def get_event(config, event):
+    """Get an event from the database."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        event = event_module.get_event(session, event)
+        if not isinstance(event, Iterable):
+            event = [event]
+        data = defaultdict(list)
+        for e in event:
+            data['ID'] = e.id
+            data['Problem ID'] = e.problem_id
+            data['Problem name'] = e.problem_name
+            data['# submissions'] = e.n_submissions
+            data['Public event'] = e.is_public
+        click.echo(pd.DataFrame(data).set_index('ID'))
 
 
 @main.command()
