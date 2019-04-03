@@ -91,7 +91,7 @@ def test_deploy_ramp_event(session_scope_function):
     dispatcher = Dispatcher(config=database_config,
                             event_config=event_config,
                             worker=CondaEnvWorker,
-                            n_worker=-1,
+                            n_workers=-1,
                             hunger_policy='exit')
     dispatcher.launch()
 

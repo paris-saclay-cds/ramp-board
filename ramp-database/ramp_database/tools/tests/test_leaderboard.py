@@ -91,7 +91,7 @@ def test_update_leaderboard_functions(session_toy_function):
     config = read_config(database_config_template())
     event_config = read_config(ramp_config_template())
     dispatcher = Dispatcher(
-        config, event_config, n_worker=-1, hunger_policy='exit'
+        config, event_config, n_workers=-1, hunger_policy='exit'
     )
     dispatcher.launch()
     session_toy_function.commit()
@@ -154,7 +154,7 @@ def test_get_leaderboard(session_toy_db):
     config = read_config(database_config_template())
     event_config = read_config(ramp_config_template())
     dispatcher = Dispatcher(
-        config, event_config, n_worker=-1, hunger_policy='exit'
+        config, event_config, n_workers=-1, hunger_policy='exit'
     )
     dispatcher.launch()
     session_toy_db.commit()

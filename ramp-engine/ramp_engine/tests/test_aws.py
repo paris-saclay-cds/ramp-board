@@ -77,7 +77,7 @@ def test_aws_dispatcher(session_toy):  # noqa
 
     dispatcher = Dispatcher(
         config=config, event_config=event_config, worker=AWSWorker,
-        n_worker=-1, hunger_policy='exit'
+        n_workers=-1, hunger_policy='exit'
     )
     dispatcher.launch()
 
