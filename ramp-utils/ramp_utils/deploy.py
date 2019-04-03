@@ -75,10 +75,11 @@ def deploy_ramp_event(config, event_config, setup_ramp_repo=True, force=False):
                 setup_ramp_kit_ramp_data(
                     ramp_config, ramp_config['problem_name'], force
                 )
-            add_problem(session, ramp_config['problem_name'],
-                        ramp_config['ramp_kit_dir'],
-                        ramp_config['ramp_data_dir'],
-                        force)
+            if force:
+                add_problem(session, ramp_config['problem_name'],
+                            ramp_config['ramp_kit_dir'],
+                            ramp_config['ramp_data_dir'],
+                            force)
 
         if not os.path.exists(ramp_config['ramp_submissions_dir']):
             os.makedirs(ramp_config['ramp_submissions_dir'])

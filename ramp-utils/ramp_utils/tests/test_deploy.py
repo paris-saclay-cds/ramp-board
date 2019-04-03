@@ -54,6 +54,7 @@ def test_deploy_ramp_event_options(session_scope_function):
     msg_err = 'The RAMP problem already exists in the database.'
     with pytest.raises(ValueError, match=msg_err):
         with session_scope(database_config['sqlalchemy']) as session:
+            # if one of the ramp-kit or ramp-data folders changed
             problem = get_problem(session, 'iris')
             problem.path_ramp_kit = problem.path_ramp_kit + '_xxx'
             session.commit()
@@ -65,6 +66,19 @@ def test_deploy_ramp_event_options(session_scope_function):
             problem = get_problem(session, 'iris')
             problem.path_ramp_kit = ramp_config['ramp_kit_dir']
             problem.path_ramp_data = problem.path_ramp_data + '_xxx'
+            session.commit()
+            deploy_ramp_event(
+                database_config_template(), ramp_config_template(),
+                setup_ramp_repo=False, force=False
+            )
+
+    msg_err = 'Attempting to overwrite existing event'
+    with pytest.raises(ValueError, match=msg_err):
+        with session_scope(database_config['sqlalchemy']) as session:
+            # if the problem is the same, then the event should be overwritten
+            problem = get_problem(session, 'iris')
+            problem.path_ramp_kit = ramp_config['ramp_kit_dir']
+            problem.path_ramp_data = ramp_config['ramp_data_dir']
             session.commit()
             deploy_ramp_event(
                 database_config_template(), ramp_config_template(),
