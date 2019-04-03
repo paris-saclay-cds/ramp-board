@@ -25,7 +25,7 @@ def main():
 @click.option("--event-config", show_default=True,
               help='Configuration file in YAML format containing the RAMP '
               'event information.')
-@click.option('--n-worker', default=-1, show_default=True,
+@click.option('--n-workers', default=-1, show_default=True,
               help='Number of worker to start in parallel.')
 @click.option('--n-threads', default=None, show_default=None,
               help='Number of threads used by each worker.')
