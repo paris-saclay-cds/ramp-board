@@ -202,6 +202,6 @@ class Dispatcher:
                 for submission_id, _, _ in submissions:
                     submission_state = get_submission_state(session,
                                                             submission_id)
-                    if submission_state == 'training':
+                    if submission_state in ('training', 'send_to_training'):
                         set_submission_state(session, submission_id, 'new')
             logger.info('Dispatcher killed by the poison pill')
