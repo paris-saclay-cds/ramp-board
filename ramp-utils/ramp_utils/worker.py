@@ -1,6 +1,14 @@
 from .config_parser import read_config
 from .ramp import generate_ramp_config
 
+REQUIRED_KEYS = {
+    'conda': {'conda_env'},
+    'aws': {'access_key_id', 'secret_access_key', 'region_name',
+            'ami_image_name', 'ami_user_name', 'instance_type',
+            'key_name', 'security_group', 'key_path', 'remote_ramp_kit_folder',
+            'memory_profiling'}
+}
+
 
 def generate_worker_config(event_config, database_config=None):
     """Generate the configuration for RAMP worker from a configuration
@@ -40,5 +48,14 @@ def generate_worker_config(event_config, database_config=None):
     worker_config['predictions_dir'] = ramp_config['ramp_predictions_dir']
     # define the directory of the logs
     worker_config['logs_dir'] = ramp_config['ramp_logs_dir']
+
+    if worker_config['worker_type'] in REQUIRED_KEYS.keys():
+        required_fields = REQUIRED_KEYS[worker_config['worker_type']]
+        missing_parameters = required_fields.difference(worker_config)
+        if missing_parameters:
+            raise ValueError(
+                'The {} worker is missing the parameter(s): {}'
+                .format(worker_config['worker_type'], missing_parameters)
+            )
 
     return worker_config
