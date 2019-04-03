@@ -26,6 +26,7 @@ def test_generate_flask_config(config):
         'SQLALCHEMY_TRACK_MODIFICATIONS': False,
         'SQLALCHEMY_DATABASE_URI': ('postgresql://mrramp:mrramp@localhost:5432'
                                     '/databoard_test'),
-        'TRACK_USER_INTERACTION': True
+        'TRACK_USER_INTERACTION': True,
+        'DOMAIN_NAME': 'localhost'
         }
     assert flask_config == expected_config
