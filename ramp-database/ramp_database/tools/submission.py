@@ -469,7 +469,7 @@ def get_bagged_scores(session, submission_id):
     """
     submission = select_submission_by_id(session, submission_id)
     bagged_scores = {}
-    for step in ('valid', 'test'):
+    for step in ('test', 'valid'):
         score_dict = {}
         for score in submission.scores:
             score_all_bags = getattr(score, '{}_score_cv_bags'.format(step))
