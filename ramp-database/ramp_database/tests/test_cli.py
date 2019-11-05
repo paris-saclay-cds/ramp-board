@@ -185,4 +185,3 @@ def test_compute_contributivity():
                                   '--event', 'iris_test'],
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output
-
