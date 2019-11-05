@@ -4,7 +4,6 @@ import numpy as np
 from rampwf.utils import get_score_cv_bags
 
 from ..model import CVFold
-from ..model import SubmissionOnCVFold
 from ..model import SubmissionSimilarity
 
 from ._query import select_event_by_name

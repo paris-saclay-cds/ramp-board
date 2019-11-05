@@ -186,4 +186,3 @@ def test_compute_contributivity():
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output
 
-
