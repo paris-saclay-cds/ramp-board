@@ -336,4 +336,3 @@ def get_next_best_single_fold(session, event, predictions_list, ground_truths,
         return np.append(best_index_list, best_index), best_score
     else:
         return best_index_list, best_score
-
