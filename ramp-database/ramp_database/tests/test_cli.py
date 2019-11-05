@@ -176,3 +176,14 @@ def test_update_all_user_leaderboards():
                                   '--event', 'iris_test'],
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output
+
+
+def test_compute_contributivity():
+    runner = CliRunner()
+    result = runner.invoke(main, ['compute-contributivity',
+                                  '--config', database_config_template(),
+                                  '--event', 'iris_test'],
+                           catch_exceptions=False)
+    assert result.exit_code == 0, result.output
+
+
