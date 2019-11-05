@@ -467,7 +467,7 @@ def sandbox(event_name):
 
             return redirect_to_credit(
                 submission_hash=new_submission.hash_,
-                message_str='Please provide credits',
+                message_str='Successful submission, please provide credits.',
                 is_error=False)
 
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
