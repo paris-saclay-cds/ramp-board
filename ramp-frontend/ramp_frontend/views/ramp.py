@@ -465,13 +465,10 @@ def sandbox(event_name):
                     submission=new_submission
                 )
 
-            return redirect_to_sandbox(
-                event,
-                '{} submitted {} for {}'
-                .format(flask_login.current_user.firstname,
-                        new_submission.name, event_team),
-                is_error=False, category='Submission'
-            )
+            return redirect_to_credit(
+                submission_hash=new_submission.hash_,
+                message_str='Please provide credits',
+                is_error=False)
 
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     return render_template(
