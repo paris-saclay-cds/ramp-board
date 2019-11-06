@@ -467,7 +467,8 @@ def sandbox(event_name):
             if app.config['TRACK_CREDITS']:
                 return redirect_to_credit(
                     submission_hash=new_submission.hash_,
-                    message_str='Successful submission, please provide credits.',
+                    message_str='{}'.format(
+                        'Successful submission, please provide credits.'),
                     is_error=False)
             else:
                 return redirect_to_sandbox(
