@@ -65,7 +65,8 @@ from ramp_database.tools.submission import score_submission
 from ramp_database.tools.submission import submit_starting_kits
 
 from ramp_database.tools.contributivity import compute_contributivity
-from ramp_database.tools.contributivity import compute_historical_contributivity
+from ramp_database.tools.contributivity import (
+    compute_historical_contributivity)
 
 HERE = os.path.dirname(__file__)
 
