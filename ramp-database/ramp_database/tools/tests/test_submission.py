@@ -515,4 +515,9 @@ def test_add_submission_similarity(session_scope_module):
 
 def test_compute_contributivity(session_scope_module):
     compute_contributivity(session_scope_module, 'iris_test')
+    submissions = get_submissions(session_scope_module, 'iris_test', 'scored')
+    s = get_submission_by_id(session_scope_module, submissions[0][0])
+    assert s.contributivity == pytest.approx(1.0)
+    for s_on_cv_fold in s.on_cv_folds:
+        s_on_cv_fold.contributivity == pytest.approx(1.0)
     compute_historical_contributivity(session_scope_module, 'iris_test')
