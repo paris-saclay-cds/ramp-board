@@ -83,7 +83,17 @@ Test
 ====
 
 If you are developing for the RAMP package, you will be interested about
-testing your new feature. You can run the test using ``pytest`` from the root
+testing your new feature. First you need to `set up the database <https://paris-saclay-cds.github.io/ramp-docs/stable/setup_server.html#set-up-the-ramp-database>`_ and create the test database::
+
+    createdb --owner=<the owner you specified> databoard_test
+
+Then `set up the ramp-iris environment <https://paris-saclay-cds.github.io/ramp-docs/stable/workers.html#running-submissions-in-a-conda-environment>`_::
+
+    conda create --name ramp-iris pip numpy pandas scikit-learn
+    conda activate ramp-iris
+    pip install git+https://github.com/paris-saclay-cds/ramp-workflow
+
+You can now run the test using ``pytest`` from the root
 direcory::
 
     pytest -vsl .
