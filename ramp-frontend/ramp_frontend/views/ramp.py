@@ -464,11 +464,18 @@ def sandbox(event_name):
                     event=event,
                     submission=new_submission
                 )
-
-            return redirect_to_credit(
-                submission_hash=new_submission.hash_,
-                message_str='Successful submission, please provide credits.',
-                is_error=False)
+            if app.config['TRACK_CREDITS']:
+                return redirect_to_credit(
+                    submission_hash=new_submission.hash_,
+                    message_str='Successful submission, please provide credits.',
+                    is_error=False)
+            else:
+                return redirect_to_sandbox(
+                    event,
+                    '{} submitted {} for {}'
+                    .format(flask_login.current_user.firstname,
+                            new_submission.name, event_team),
+                    is_error=False, category='Submission')
 
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     return render_template(
@@ -738,7 +745,7 @@ def view_model(submission_hash, f_name):
                              event, team, submission, f_name))
         return redirect_to_user(error_str)
 
-    if app.config['TRACK_USER_INTERACTION']:
+    if app.config['TRACK_USER_INTERACTION'] or app.config['TRACK_CREDITS']:
         add_user_interaction(
             db.session,
             interaction='looking at submission',
