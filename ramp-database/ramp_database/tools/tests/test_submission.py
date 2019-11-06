@@ -65,6 +65,7 @@ from ramp_database.tools.submission import score_submission
 from ramp_database.tools.submission import submit_starting_kits
 
 from ramp_database.tools.contributivity import compute_contributivity
+from ramp_database.tools.contributivity import compute_historical_contributivity
 
 HERE = os.path.dirname(__file__)
 
@@ -507,8 +508,9 @@ def test_add_submission_similarity(session_scope_module):
     assert similarity.source_submission == source_submission
     assert similarity.target_submission == target_submission
     assert similarity.similarity == pytest.approx(0.5)
-    assert isinstance(similarity.timestamp, datetime.datetimea)
+    assert isinstance(similarity.timestamp, datetime.datetime)
 
 
 def test_compute_contributivity(session_scope_module):
     compute_contributivity(session_scope_module, 'iris_test')
+    compute_historical_contributivity(session_scope_module, 'iris_test')
