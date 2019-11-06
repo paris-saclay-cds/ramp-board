@@ -26,27 +26,25 @@ def compute_historical_contributivity(session, event_name):
     submissions = select_submissions_by_state(
         session, event_name, state='scored')
     submissions.sort(key=lambda x: x.submission_timestamp, reverse=True)
-    for submission in submissions:
-        submission.historical_contributivity = 0.0
-    for submission in submissions:
-        submission.historical_contributivity += submission.contributivity
-        submission_similaritys = session.query(SubmissionSimilarity).filter_by(
-            type='target_credit', target_submission=submission).all()
-        if submission_similaritys:
+    for s in submissions:
+        s.historical_contributivity = 0.0
+    for s in submissions:
+        s.historical_contributivity += s.contributivity
+        similarities = session.query(SubmissionSimilarity).filter_by(
+            type='target_credit', target_submission=s).all()
+        if similarities:
             # if a target team enters several credits to a source submission
             # we only take the latest
-            submission_similaritys.sort(
-                key=lambda x: x.timestamp, reverse=True)
+            similarities.sort(key=lambda x: x.timestamp, reverse=True)
             processed_submissions = []
-            historical_contributivity = submission.historical_contributivity
-            for submission_similarity in submission_similaritys:
-                source_submission = submission_similarity.source_submission
+            historical_contributivity = s.historical_contributivity
+            for ss in similarities:
+                source_submission = ss.source_submission
                 if source_submission not in processed_submissions:
-                    partial_credit = historical_contributivity *\
-                        submission_similarity.similarity
+                    partial_credit = historical_contributivity * ss.similarity
                     source_submission.historical_contributivity +=\
                         partial_credit
-                    submission.historical_contributivity -= partial_credit
+                    s.historical_contributivity -= partial_credit
                     processed_submissions.append(source_submission)
     session.commit()
 
@@ -149,37 +147,44 @@ def _compute_contributivity_on_fold(session, cv_fold, ground_truths_valid,
                                     force_ensemble=False, min_improvement=0.0):
     """Construct the best model combination on a single fold.
 
-    Using greedy forward selection with replacement. See
+    We blend models on a fold using greedy forward selection with replacement,
+    see reference below. We return the predictions of both the best model and
+    combined (blended) model, for both the validation set and the test set.  
+    We set foldwise contributivity based on the integer weight in the enseble. 
+
+    Reference
+    ---------
+    `Greedy forward selection <
     http://www.cs.cornell.edu/~caruana/ctp/ct.papers/
-    caruana.icml04.icdm06long.pdf.
-    Then sets foldwise contributivity.
+    caruana.icml04.icdm06long.pdf>`_
 
     Parameters
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
-    cv_fold : typically pair of integer arrays
-        the cv fold indices
-    ground_truths_valid : Prediction
-        validation ground truths
-    start_time_stamp : datetime
-        starting time stamp for submission selection
-    end_time_stamp : datetime
-        ending time stamp for submission selection
-    force_ensemble : boolean
-        To force include deleted models
-    min_improvement : float
-        The mimimum improvement needed to continue the greedy loop
+    cv_fold : pair of integer arrays
+        The cv fold indices.
+    ground_truths_valid : :class:`rampwf.prediction_types.BasePrediction`
+        The validation ground truths.
+    start_time_stamp : datetime or None, default is None
+        Starting time stamp for submission selection.
+    end_time_stamp : datetime or None, default is None
+        Ending time stamp for submission selection.
+    force_ensemble : bool, default is False
+        To force include deleted models.
+    min_improvement : float, default is 0.0
+        The minimum improvement needed to continue the greedy loop.
     Returns
     -------
-    combined_predictions : Prediction
-        combined (by ensembling) combined (by cv bagging) training predictions
-    best_predictions : Prediction
-        best (on each fold) combined (by cv bagging) training predictions
-    combined_test_predictions : Prediction
-        combined (by ensembling) combined (by cv bagging) test predictions
-    best_test_predictions : Prediction
-        best (on each fold) combined (by cv bagging) test predictions
+    combined_predictions : :class:`rampwf.prediction_types.BasePrediction`
+        combined (blended) validation predictions
+    best_predictions : :class:`rampwf.prediction_types.BasePrediction`
+        validation predictions of the best model
+    combined_test_predictions : \
+        :class:`rampwf.prediction_types.BasePrediction`
+        combined (blended) test predictions
+    best_test_predictions : :class:`rampwf.prediction_types.BasePrediction`
+        test predictions of the best model
     """
     # The submissions must have is_to_ensemble set to True. It is for
     # fogetting models. Users can also delete models in which case
@@ -272,7 +277,7 @@ def _compute_contributivity_on_fold(session, cv_fold, ground_truths_valid,
 
 def get_next_best_single_fold(session, event, predictions_list, ground_truths,
                               best_index_list, min_improvement=0.0):
-    """.
+    """Find the next best model on a single fold.
 
     Find the model that minimizes the score if added to
     predictions_list[best_index_list] using event.official_score_function.
@@ -290,15 +295,15 @@ def get_next_best_single_fold(session, event, predictions_list, ground_truths,
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
-    predictions_list : list of instances of Predictions
+    predictions_list : list of :class:`rampwf.prediction_types.BasePrediction`
         Each element of the list is an instance of Predictions of a model
         on the same (cross-validation valid) data points.
-    ground_truths : instance of Predictions
+    ground_truths : :class:`rampwf.prediction_types.BasePrediction`
         The ground truth.
     best_index_list : list of integers
         Indices of the current best model.
     min_improvement : float
-        The mimimum improvement needed to continue the greedy loop
+        The mimimum improvement needed to continue the greedy loop.
 
     Returns
     -------
