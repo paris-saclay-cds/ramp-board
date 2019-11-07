@@ -83,7 +83,7 @@ def compute_contributivity(session, event_name):
             cv_fold.test_is)
         combined_predictions, best_predictions,\
             combined_test_predictions, best_test_predictions =\
-            _compute_contributivity_on_fold(
+            compute_contributivity_on_fold(
                 session, cv_fold, ground_truths_valid)
         if combined_predictions is None:
             logger.info('No submissions to combine')
@@ -142,15 +142,15 @@ def compute_contributivity(session, event_name):
     session.commit()
 
 
-def _compute_contributivity_on_fold(session, cv_fold, ground_truths_valid,
-                                    start_time_stamp=None, end_time_stamp=None,
-                                    force_ensemble=False, min_improvement=0.0):
+def compute_contributivity_on_fold(session, cv_fold, ground_truths_valid,
+                                   start_time_stamp=None, end_time_stamp=None,
+                                   force_ensemble=False, min_improvement=0.0):
     """Construct the best model combination on a single fold.
 
     We blend models on a fold using greedy forward selection with replacement,
     see reference below. We return the predictions of both the best model and
-    combined (blended) model, for both the validation set and the test set.  
-    We set foldwise contributivity based on the integer weight in the enseble. 
+    combined (blended) model, for both the validation set and the test set. 
+    We set foldwise contributivity based on the integer weight in the enseble.
 
     Reference
     ---------
