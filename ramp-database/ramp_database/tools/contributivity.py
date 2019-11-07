@@ -149,7 +149,7 @@ def compute_contributivity_on_fold(session, cv_fold, ground_truths_valid,
 
     We blend models on a fold using greedy forward selection with replacement,
     see reference below. We return the predictions of both the best model and
-    combined (blended) model, for both the validation set and the test set. 
+    combined (blended) model, for both the validation set and the test set.
     We set foldwise contributivity based on the integer weight in the enseble.
 
     Reference
