@@ -105,7 +105,8 @@ def test_login(client_session):
     rv = client.post('/login', data=login_info)
     assert rv.status_code == 302
     assert rv.location == 'http://localhost/problems'
-    user = get_user_by_name_or_email(session, login_info['test.user@gmail.com'])
+    user = get_user_by_name_or_email(session,
+                                     login_info['test.user@gmail.com'])
     assert user.is_authenticated
     logout(client)
     rv = client.post('/login', data=login_info, follow_redirects=True)

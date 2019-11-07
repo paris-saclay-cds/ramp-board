@@ -191,7 +191,7 @@ def get_user_by_name(session, name):
 
 
 def get_user_by_name_or_email(session, name):
-    """Get a user by his/her name or email. It will return true if either 
+    """Get a user by his/her name or email. It will return true if either
     is correct
 
     Parameters

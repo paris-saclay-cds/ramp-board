@@ -74,8 +74,8 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         try:
-            user = get_user_by_name_or_email(db.session, 
-                              name=form.user_name.data)
+            user = get_user_by_name_or_email(db.session,
+                                             name=form.user_name.data)
         except NoResultFound:
             msg = 'User "{}" does not exist'.format(form.user_name.data)
             flash(msg)
