@@ -206,7 +206,7 @@ def sign_up_for_event(event_name):
                            ))
             body += ('Click on this link to approve the sign-up request: {}'
                      .format(url_approve))
-            send_mail(admin, subject, body)
+            send_mail(admin.email, subject, body)
         return redirect_to_user("Sign-up request is sent to event admins.",
                                 is_error=False, category='Request sent')
     sign_up_team(db.session, event.name, flask_login.current_user.name)
@@ -447,7 +447,7 @@ def sandbox(event_name):
                     subject = 'Submission {} sent for training'.format(
                         new_submission.name
                     )
-                    body = """A new submission have been submitted:
+                    body = """A new submission has been submitted:
                     event: {}
                     user: {}
                     submission: {}
@@ -455,7 +455,7 @@ def sandbox(event_name):
                     """.format(event_team.event.name,
                                flask_login.current_user.name,
                                new_submission.name, new_submission.path)
-                    send_mail(admin, subject, body)
+                    send_mail(admin.email, subject, body)
             if app.config['TRACK_USER_INTERACTION']:
                 add_user_interaction(
                     db.session,
@@ -528,7 +528,7 @@ def ask_for_event(problem_name):
                 form.opening_date.data,
                 form.closing_date.data
             )
-            send_mail(admin, subject, body)
+            send_mail(admin.email, subject, body)
         return redirect_to_user(
             'Thank you. Your request has been sent to RAMP administrators.',
             category='Event request', is_error=False
