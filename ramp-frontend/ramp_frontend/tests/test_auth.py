@@ -101,12 +101,13 @@ def test_login(client_session):
     logout(client)
 
     # POST with a right email as login and password
-    login_info = {'user_name': 'test_user', 'password': 'test'}
+    login_info = {'user_name': 'test_user', 'password': 'test',
+                  'email': 'test.user@gmail.com'}
     rv = client.post('/login', data=login_info)
     assert rv.status_code == 302
     assert rv.location == 'http://localhost/problems'
     user = get_user_by_name_or_email(session,
-                                     login_info['test.user@gmail.com'])
+                                     login_info['email'])
     assert user.is_authenticated
     logout(client)
     rv = client.post('/login', data=login_info, follow_redirects=True)
