@@ -10,6 +10,7 @@ from .utils import session_scope
 from .tools import event as event_module
 from .tools import leaderboard as leaderboard_module
 from .tools import submission as submission_module
+from .tools import contributivity as contributivity_module
 from .tools import team as team_module
 from .tools import user as user_module
 
@@ -211,6 +212,21 @@ def update_all_users_leaderboards(config, event):
     """Update the leaderboards of all users for a given event."""
     config = read_config(config)
     with session_scope(config['sqlalchemy']) as session:
+        leaderboard_module.update_all_user_leaderboards(session, event)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
+@click.option("--event", help='The event name')
+def compute_contributivity(config, event):
+    """Blend submissions, compute combined score and contributivities."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        contributivity_module.compute_contributivity(session, event)
+        contributivity_module.compute_historical_contributivity(session, event)
+        leaderboard_module.update_leaderboards(session, event)
         leaderboard_module.update_all_user_leaderboards(session, event)
 
 
