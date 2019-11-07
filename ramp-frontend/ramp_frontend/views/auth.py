@@ -327,7 +327,7 @@ def user_confirm_email(token):
         body += 'of this user: {}'.format(url_approve)
         send_mail(admin.email, subject, body)
     flash(
-        "An email has been sent to the RAMP administrator(s) which will "
+        "An email has been sent to the RAMP administrator(s) who will "
         "approve your account"
     )
     return redirect(url_for('auth.login'))
