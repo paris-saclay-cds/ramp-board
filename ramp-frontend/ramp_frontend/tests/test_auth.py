@@ -15,6 +15,7 @@ from ramp_database.utils import session_scope
 from ramp_database.utils import check_password
 
 from ramp_database.tools.user import get_user_by_name
+from ramp_database.tools.user import get_user_by_name_or_email
 
 from ramp_frontend import create_app
 from ramp_frontend.testing import login_scope
@@ -92,7 +93,19 @@ def test_login(client_session):
     rv = client.post('/login', data=login_info)
     assert rv.status_code == 302
     assert rv.location == 'http://localhost/problems'
-    user = get_user_by_name(session, login_info['user_name'])
+    user = get_user_by_name_or_email(session, login_info['user_name'])
+    assert user.is_authenticated
+    logout(client)
+    rv = client.post('/login', data=login_info, follow_redirects=True)
+    assert rv.status_code == 200
+    logout(client)
+
+    # POST with a right email as login and password
+    login_info = {'user_name': 'test_user', 'password': 'test'}
+    rv = client.post('/login', data=login_info)
+    assert rv.status_code == 302
+    assert rv.location == 'http://localhost/problems'
+    user = get_user_by_name_or_email(session, login_info['test.user@gmail.com'])
     assert user.is_authenticated
     logout(client)
     rv = client.post('/login', data=login_info, follow_redirects=True)
