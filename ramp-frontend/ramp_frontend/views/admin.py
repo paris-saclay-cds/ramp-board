@@ -67,9 +67,9 @@ def approve_users():
             approve_user(db.session, asked_user)
             user = select_user_by_name(db.session, asked_user)
 
-            subject = 'Your RAMP account have been approved'
-            body = ('{}, your account have been approved. You can now sign-up '
-                    'for any opened RAMP event.'
+            subject = 'Your RAMP account has been approved'
+            body = ('{}, your account has been approved. You can now sign-up '
+                    'for any open RAMP event.'
                     .format(user.name))
             send_mail(
                 to=user.email, subject=subject, body=body
@@ -148,7 +148,7 @@ def approve_sign_up_for_event(event_name, user_name):
     subject = ('Signed up for the RAMP event {}'
                .format(event.name))
     body = ('{}, you have been registered to the RAMP event {}. '
-            'You can now proceed to your sandbox and make submission.'
+            'You can now proceed to your sandbox and make submissions.'
             '\nHave fun!!!'.format(flask_login.current_user.name,
                                    event.name))
     send_mail(
