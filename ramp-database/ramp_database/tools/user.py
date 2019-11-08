@@ -165,7 +165,9 @@ def approve_user(session, name):
         The name of the user.
     """
     user = select_user_by_name(session, name)
-    if user.access_level == 'asked':
+    print(user.access_level)
+    if user.access_level in ['asked', 'not_confirmed']:
+        # can approve user even if he did not validate email
         user.access_level = 'user'
     user.is_authenticated = True
     session.commit()

@@ -61,7 +61,7 @@ class CondaEnvWorker(BaseWorker):
         proc = subprocess.Popen(
             ["conda", "info", "--envs", "--json"],
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
+            stderr=None
         )
         stdout, _ = proc.communicate()
         conda_info = json.loads(stdout)

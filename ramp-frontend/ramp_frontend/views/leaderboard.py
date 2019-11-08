@@ -79,7 +79,7 @@ def my_submissions(event_name):
 
 
 @mod.route("/events/<event_name>/leaderboard")
-@flask_login.login_required
+# @flask_login.login_required
 def leaderboard(event_name):
     """Landing page showing all user's submissions information.
 
@@ -89,21 +89,22 @@ def leaderboard(event_name):
         The name of the event.
     """
     event = get_event(db.session, event_name)
-    if not is_accessible_event(db.session, event_name,
-                               flask_login.current_user.name):
-        return redirect_to_user(
-            '{}: no event named "{}"'
-            .format(flask_login.current_user.firstname, event_name))
-    if app.config['TRACK_USER_INTERACTION']:
-        add_user_interaction(
-            db.session,
-            interaction='looking at leaderboard',
-            user=flask_login.current_user,
-            event=event
-        )
+    # if not is_accessible_event(db.session, event_name,
+    #                            flask_login.current_user.name):
+    #     return redirect_to_user(
+    #         '{}: no event named "{}"'
+    #         .format(flask_login.current_user.firstname, event_name))
+    # if app.config['TRACK_USER_INTERACTION']:
+    #     add_user_interaction(
+    #         db.session,
+    #         interaction='looking at leaderboard',
+    #         user=flask_login.current_user,
+    #         event=event
+    #     )
 
-    if is_accessible_leaderboard(db.session, event_name,
-                                 flask_login.current_user.name):
+    if hasattr(flask_login.current_user, 'name') and \
+            is_accessible_leaderboard(db.session, event_name,
+                                      flask_login.current_user.name):
         leaderboard_html = event.public_leaderboard_html_with_links
     else:
         leaderboard_html = event.public_leaderboard_html_no_links
@@ -120,7 +121,8 @@ def leaderboard(event_name):
         event=event
     )
 
-    if is_admin(db.session, event_name, flask_login.current_user.name):
+    if hasattr(flask_login.current_user, 'name') and \
+            is_admin(db.session, event_name, flask_login.current_user.name):
         failed_leaderboard_html = event.failed_leaderboard_html
         new_leaderboard_html = event.new_leaderboard_html
         template = render_template(
