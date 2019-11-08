@@ -55,7 +55,7 @@ def test_make_admin():
     runner = CliRunner()
     result = runner.invoke(main, ['make-admin',
                                   '--config', database_config_template(),
-                                  '--name', 'glemaitre'],
+                                  '--user', 'glemaitre'],
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output
 
