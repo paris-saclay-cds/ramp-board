@@ -24,6 +24,7 @@ from ramp_database.tools.user import approve_user
 from ramp_database.tools.user import get_team_by_name
 from ramp_database.tools.user import get_user_by_name
 from ramp_database.tools.user import get_user_interactions_by_name
+from ramp_database.tools.user import make_admin
 from ramp_database.tools.user import set_user_by_instance
 
 
@@ -151,6 +152,19 @@ def test_approve_user(session_scope_function):
     approve_user(session_scope_function, 'test_user')
     user = get_user_by_name(session_scope_function, 'test_user')
     assert user.access_level == 'user'
+    assert user.is_authenticated is True
+
+
+def test_make_admin(session_scope_function):
+    add_user(session_scope_function, name='test_user_admin', password='test',
+             lastname='Test', firstname='Admin', email='test.admin@gmail.com',
+             access_level='asked')
+    user = get_user_by_name(session_scope_function, 'test_user_admin')
+    assert user.access_level == 'asked'
+    assert user.is_authenticated is False
+    make_admin(session_scope_function, 'test_user_admin')
+    user = get_user_by_name(session_scope_function, 'test_user_admin')
+    assert user.access_level == 'admin'
     assert user.is_authenticated is True
 
 

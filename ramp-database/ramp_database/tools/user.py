@@ -171,6 +171,22 @@ def approve_user(session, name):
     session.commit()
 
 
+def make_admin(session, name):
+    """Make a user site admin.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    name : str
+        The name of the user.
+    """
+    user = select_user_by_name(session, name)
+    user.access_level = 'admin'
+    user.is_authenticated = True
+    session.commit()
+
+
 def get_user_by_name(session, name):
     """Get a user by his/her name.
 

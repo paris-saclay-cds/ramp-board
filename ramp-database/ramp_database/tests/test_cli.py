@@ -51,6 +51,15 @@ def test_approve_user():
     assert result.exit_code == 0, result.output
 
 
+def test_make_admin():
+    runner = CliRunner()
+    result = runner.invoke(main, ['make-admin',
+                                  '--config', database_config_template(),
+                                  '--name', 'glemaitre'],
+                           catch_exceptions=False)
+    assert result.exit_code == 0, result.output
+
+
 def test_add_problem():
     runner = CliRunner()
     ramp_config = generate_ramp_config(read_config(ramp_config_template()))
