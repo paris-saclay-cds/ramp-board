@@ -440,11 +440,7 @@ def get_scores(session, submission_id):
     results = defaultdict(list)
     index = []
     sub = get_submission_by_id(session, submission_id)
-    all_cv_folds = sub.on_cv_folds
-    #all_cv_folds = (session.query(SubmissionOnCVFold)
-    #                       .filter_by(submission_id=submission_id)
-    #                       .all())
-    for fold_id, cv_fold in enumerate(all_cv_folds):
+    for fold_id, cv_fold in enumerate(sub.on_cv_folds):
         for step in ('train', 'valid', 'test'):
             index.append((fold_id, step))
             for score in cv_fold.scores:
