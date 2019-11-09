@@ -59,6 +59,7 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
         df_time = df_time.stack().to_frame()
         df_time.index = df_time.index.set_names(['fold', 'step'])
         df_time = df_time.rename(columns={0: 'time'})
+        df_time = df_time.astype('int')
 
         df = pd.concat([df_scores, df_time], axis=1)
         df_mean = df.groupby('step').mean()
