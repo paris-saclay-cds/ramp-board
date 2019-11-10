@@ -17,7 +17,9 @@ from ..model.submission import submission_states
 from ..model import Submission
 from ..model import SubmissionFile
 from ..model import SubmissionFileTypeExtension
+from ..model import SubmissionScore
 from ..model import SubmissionOnCVFold
+from ..model import SubmissionScoreOnCVFold
 from ..model import SubmissionSimilarity
 from ..model import UserInteraction
 
@@ -409,13 +411,27 @@ def get_time(session, submission_id):
     computation_time : pd.DataFrame
         A pandas dataframe containing the computation time of each fold.
     """
+    # The code produces identical results to the commented code below
+    # but without loading the predictions in SubmissionOnCVFold
     results = defaultdict(list)
-    sub = get_submission_by_id(session, submission_id)
-    for fold_id, cv_fold in enumerate(sub.on_cv_folds):
-        results['fold'].append(fold_id)
-        for step in ('train', 'valid', 'test'):
-            results[step].append(getattr(cv_fold, '{}_time'.format(step)))
-    return pd.DataFrame(results).set_index('fold')
+    for step in ('train', 'valid', 'test'):
+        times_per_fold = session.query(
+            getattr(SubmissionOnCVFold, '{}_time'.format(step))).filter(
+            SubmissionOnCVFold.submission_id == submission_id).all()
+        for fold_id, times in enumerate(times_per_fold):
+            if step == 'train':  # only append once
+                results['fold'].append(fold_id)
+            results[step].append(times[0])
+    return pd.DataFrame(results).set_index('fold')    
+
+#     results = defaultdict(list)
+#     sub = get_submission_by_id(session, submission_id)
+#     for fold_id, cv_fold in enumerate(sub.on_cv_folds):
+#         results['fold'].append(fold_id)
+#         for step in ('train', 'valid', 'test'):
+#             results[step].append(getattr(
+#                 cv_fold, '{}_time'.format(step)))
+#     return pd.DataFrame(results).set_index('fold')
 
 
 def get_scores(session, submission_id):
@@ -433,18 +449,40 @@ def get_scores(session, submission_id):
     scores : pd.DataFrame
         A pandas dataframe containing the scores of each fold.
     """
+    # The code produces identical results to the commented code below
+    # but without loading the predictions in SubmissionOnCVFold
     results = defaultdict(list)
-    index = []
     sub = get_submission_by_id(session, submission_id)
-    for fold_id, cv_fold in enumerate(sub.on_cv_folds):
-        for step in ('train', 'valid', 'test'):
-            index.append((fold_id, step))
-            for score in cv_fold.scores:
-                results[score.name].append(getattr(score, step + '_score'))
-    multi_index = pd.MultiIndex.from_tuples(index, names=['fold', 'step'])
+    score_names = [sub_sc.score_name for sub_sc in sub.scores]
+    for step in ('train', 'valid', 'test'):
+        scores_per_fold = session.query(
+            getattr(SubmissionScoreOnCVFold, '{}_score'.format(step))).filter(
+            SubmissionScoreOnCVFold.submission_on_cv_fold_id ==
+            SubmissionOnCVFold.id).filter(
+            SubmissionOnCVFold.submission_id == submission_id).all()
+        n_folds = len(scores_per_fold) // len(score_names)
+        score_names_rep = score_names * n_folds
+        for score_name, score in zip(score_names_rep, scores_per_fold):
+            results[score_name].append(score[0])
+    index = [(step, fold_id) for step in ('train', 'valid', 'test')
+             for fold_id in range(n_folds)]
+    multi_index = pd.MultiIndex.from_tuples(index, names=['step', 'fold'])
     scores = pd.DataFrame(results, index=multi_index)
+    scores = scores.swaplevel().reset_index()
+    scores = scores.sort_values('fold').set_index(['fold', 'step'])
     return scores
 
+#     results = defaultdict(list)
+#     index = []
+#     sub = get_submission_by_id(session, submission_id)
+#     for fold_id, cv_fold in enumerate(sub.on_cv_folds):
+#         for step in ('train', 'valid', 'test'):
+#             index.append((fold_id, step))
+#             for score in cv_fold.scores:
+#                 results[score.name].append(getattr(score, step + '_score'))
+#     multi_index = pd.MultiIndex.from_tuples(index, names=['fold', 'step'])
+#     scores = pd.DataFrame(results, index=multi_index)
+#     return scores
 
 def get_bagged_scores(session, submission_id):
     """Get the bagged scores for each fold of a submission.
