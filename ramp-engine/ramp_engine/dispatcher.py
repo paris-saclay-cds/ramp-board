@@ -172,13 +172,12 @@ class Dispatcher:
 
     def update_database_results(self, session):
         """Update the database with the results of ramp_test_submission."""
+        is_update_leaderboards = False
         while not self._processed_submission_queue.empty():
+            is_update_leaderboards = True
             submission_id, submission_name = \
                 self._processed_submission_queue.get_nowait()
             if 'error' in get_submission_state(session, submission_id):
-                update_leaderboards(session, self._ramp_config['event_name'])
-                update_all_user_leaderboards(session,
-                                             self._ramp_config['event_name'])
                 logger.info('Skip update for {} due to failure during the '
                             'processing'.format(submission_name))
                 continue
@@ -187,14 +186,22 @@ class Dispatcher:
             path_predictions = os.path.join(
                 self._worker_config['predictions_dir'], submission_name
             )
+            logger.info('Setting predictions')
             set_predictions(session, submission_id, path_predictions)
-            set_time(session, submission_id, path_predictions)
+            logger.info('Setting scores')
             set_scores(session, submission_id, path_predictions)
+            logger.info('Setting timing information')
+            set_time(session, submission_id, path_predictions)
             set_bagged_scores(session, submission_id, path_predictions)
             set_submission_state(session, submission_id, 'scored')
+        # We only update leaderboards once, in case there are multiple
+        # submissions processed
+        if is_update_leaderboards:
+            logger.info('Updating leaderboards')
             update_leaderboards(session, self._ramp_config['event_name'])
-            update_all_user_leaderboards(session,
-                                         self._ramp_config['event_name'])
+            logger.info('Updating user leaderboards')
+            update_all_user_leaderboards(
+                session,self._ramp_config['event_name'])
 
     def launch(self):
         """Launch the dispatcher."""
