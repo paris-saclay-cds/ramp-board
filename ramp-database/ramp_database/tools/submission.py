@@ -17,7 +17,6 @@ from ..model.submission import submission_states
 from ..model import Submission
 from ..model import SubmissionFile
 from ..model import SubmissionFileTypeExtension
-from ..model import SubmissionScore
 from ..model import SubmissionOnCVFold
 from ..model import SubmissionScoreOnCVFold
 from ..model import SubmissionSimilarity
@@ -422,7 +421,7 @@ def get_time(session, submission_id):
             if step == 'train':  # only append once
                 results['fold'].append(fold_id)
             results[step].append(times[0])
-    return pd.DataFrame(results).set_index('fold')    
+    return pd.DataFrame(results).set_index('fold')
 
 #     results = defaultdict(list)
 #     sub = get_submission_by_id(session, submission_id)
@@ -483,6 +482,7 @@ def get_scores(session, submission_id):
 #     multi_index = pd.MultiIndex.from_tuples(index, names=['fold', 'step'])
 #     scores = pd.DataFrame(results, index=multi_index)
 #     return scores
+
 
 def get_bagged_scores(session, submission_id):
     """Get the bagged scores for each fold of a submission.
