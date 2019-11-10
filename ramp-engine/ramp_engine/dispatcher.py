@@ -201,7 +201,7 @@ class Dispatcher:
             update_leaderboards(session, self._ramp_config['event_name'])
             logger.info('Updating user leaderboards')
             update_all_user_leaderboards(
-                session,self._ramp_config['event_name'])
+                session, self._ramp_config['event_name'])
 
     def launch(self):
         """Launch the dispatcher."""

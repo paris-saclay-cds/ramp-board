@@ -628,7 +628,6 @@ def set_predictions(session, submission_id, path_predictions):
             os.path.join(path_results, 'y_pred_train.npz'))['y_pred']
         cv_fold.test_y_pred = np.load(
             os.path.join(path_results, 'y_pred_test.npz'))['y_pred']
-    
     session.commit()
 
 
