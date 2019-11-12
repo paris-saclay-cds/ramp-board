@@ -24,7 +24,7 @@ from ramp_frontend import mail
 
 
 @pytest.fixture(scope='module')
-def client_session():
+def client_session(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:
@@ -181,7 +181,7 @@ def test_sign_up(client_session):
     assert rv.status_code == 200
 
 
-def test_sign_up_with_approval(client_session, smtp_server):
+def test_sign_up_with_approval(client_session, smtp_server_connect):
     # check the sign-up and email confirmation framework
     client, session = client_session
 
@@ -369,7 +369,7 @@ def test_reset_password(client_session):
     assert check_password(new_password, user.hashed_password)
 
 
-def test_reset_token_error(client_session, smtp_server):
+def test_reset_token_error(client_session, smtp_server_connect):
     client, session = client_session
 
     # POST method
