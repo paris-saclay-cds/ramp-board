@@ -190,6 +190,27 @@ def get_user_by_name(session, name):
     return select_user_by_name(session, name)
 
 
+def get_user_by_name_or_email(session, name):
+    """Get a user by his/her name or email. It will return true if either
+    is correct
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    name : str or None
+        The name of the user. If None, all users will be queried.
+
+    Returns
+    -------
+    user : :class:`ramp_database.model.User` or list of \
+:class:`ramp_database.model.User`
+        The queried user.
+    """
+    return (select_user_by_email(session, name) or
+            select_user_by_name(session, name))
+
+
 def get_team_by_name(session, name):
     """Get a team by its name.
 
