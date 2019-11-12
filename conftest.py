@@ -57,7 +57,7 @@ def smtp_server_connect():
     Creates the smtp server
     '''
     server = SMTPServerThread()
-    #server.run() #creates neverending loop
+    # server.run() #creates neverending loop
 
     yield server
     server.close()
