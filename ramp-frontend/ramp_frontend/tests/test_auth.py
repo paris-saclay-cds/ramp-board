@@ -198,7 +198,7 @@ def test_sign_up_with_approval(client_session):
             assert 'We sent a confirmation email.'in flash_message['message']
             # check that the email has been sent
             assert len(outbox) == 1
-            assert ('click on the following link to confirm your email'
+            assert ('Click on the following link to confirm your email'
                     in outbox[0].body)
             # get the link to reset the password
             reg_exp = re.search(
