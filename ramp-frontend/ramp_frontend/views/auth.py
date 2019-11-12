@@ -157,8 +157,8 @@ def sign_up():
             'auth.user_confirm_email', token=token, _external=True
         )
         subject = "Confirm your email for signing-up to RAMP"
-        body = ('Hi {}, \n\n click on the following link to confirm your email'
-                'address and finalize your sign-up to RAMP.\n\n Note that'
+        body = ('Hi {}, \n\nClick on the following link to confirm your email '
+                'address and finalize your sign-up to RAMP.\n\nNote that '
                 'your account still needs to be approved by a RAMP '
                 'administrator.\n\n'
                 .format(user.firstname))
