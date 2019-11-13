@@ -14,8 +14,10 @@ def database_connection():
     and drop it when the tests are done.
     '''
     #os.system('pg_ctl -D postgres_dbs -l logfile start')
-
-    engine = create_engine('postgresql://postgres:@/postgres',
+    #os.system('pg_ctl -D postgres -U postgres -l logfile start')
+    #engine = create_engine('postgresql://mtelencz:@localhost/postgres', 
+    #                       isolation_level='AUTOCOMMIT')
+    engine = create_engine('postgresql://postgres:@localhost/postgres',
                            isolation_level='AUTOCOMMIT')
     connection = engine.connect()
 
@@ -40,6 +42,7 @@ def database_connection():
 
 
 class SMTPServerThread(Thread):
+    #python -m smtpd -n -c DebuggingServer localhost:8025 &
     def __init__(self):
         super().__init__()
 
