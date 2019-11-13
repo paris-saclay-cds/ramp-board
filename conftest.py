@@ -39,29 +39,4 @@ def database_connection():
                         WHERE datname = 'databoard_test';""")
     connection.execute('DROP DATABASE databoard_test')
     print("deleted database 'databoard_test'")
-
-
-class SMTPServerThread(Thread):
-    #python -m smtpd -n -c DebuggingServer localhost:8025 &
-    def __init__(self):
-        super().__init__()
-
-    def run(self):
-        self.smtp = smtpd.DebuggingServer(('localhost', 8025), None)
-        asyncore.loop(timeout=0.1)
-
-    def close(self):
-        self.smtp.close()
-
-
-@pytest.fixture(scope='session')
-def smtp_server_connect():
-    '''
-    Creates the smtp server
-    '''
-    server = SMTPServerThread()
-    # server.run() #creates neverending loop
-
-    yield server
-    server.close()
-    server.join(1)
+    
