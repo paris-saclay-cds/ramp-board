@@ -13,9 +13,9 @@ def database_connection():
     Create a Postgres database for the tests,
     and drop it when the tests are done.
     '''
-    os.system('pg_ctl -D postgres_dbs -l logfile start')
+    #os.system('pg_ctl -D postgres_dbs -l logfile start')
 
-    engine = create_engine('postgresql:///postgres@localhost',
+    engine = create_engine('postgresql://postgres@/postgres',
                            isolation_level='AUTOCOMMIT')
     connection = engine.connect()
 
