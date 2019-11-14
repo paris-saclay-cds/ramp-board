@@ -38,5 +38,6 @@ def database_connection():
                         FROM pg_stat_activity
                         WHERE datname = 'databoard_test';""")
     connection.execute('DROP DATABASE databoard_test')
-    print("deleted database 'databoard_test'")
+    connection.execute('DROP USER mrramp')
+    print("deleted database 'databoard_test' and removed user 'mrramp'")
     
