@@ -1,10 +1,11 @@
-import asyncore
 import contextlib
 import os
 import pytest
 import smtpd
 from sqlalchemy import create_engine, exc
 from threading import Thread
+
+from yaml import safe_load
 
 
 @pytest.fixture(scope='session')
@@ -13,12 +14,17 @@ def database_connection():
     Create a Postgres database for the tests,
     and drop it when the tests are done.
     '''
-    #os.system('pg_ctl -D postgres_dbs -l logfile start')
     #os.system('pg_ctl -D postgres -U postgres -l logfile start')
-    #engine = create_engine('postgresql://mtelencz:@localhost/postgres', 
+
+    #engine = create_engine('postgresql://<local_user>:@localhost/<engine_name>', 
     #                       isolation_level='AUTOCOMMIT')
-    engine = create_engine('postgresql://postgres:@localhost/postgres',
+    config = safe_load(open("db_engine.yml"))
+    dbowner = config.get('db_owner')
+    dbcluster = config.get('db_cluster_name')
+    engine = create_engine(f'postgresql://{dbowner}:@localhost/{dbcluster}', 
                            isolation_level='AUTOCOMMIT')
+    #engine = create_engine('postgresql://postgres:@localhost/import argparse',
+    #                       isolation_level='AUTOCOMMIT')
     connection = engine.connect()
 
     try:
