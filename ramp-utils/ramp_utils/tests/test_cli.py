@@ -17,7 +17,7 @@ from ramp_utils.cli import main
 
 
 @pytest.fixture
-def deployment_dir():
+def deployment_dir(database_connection):
     ramp_config = read_config(ramp_config_template())
     return os.path.commonpath(
         [ramp_config['ramp']['kit_dir'], ramp_config['ramp']['data_dir']]
