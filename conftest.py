@@ -4,46 +4,48 @@ import pytest
 import smtpd
 from sqlalchemy import create_engine, exc
 from threading import Thread
-
+from ramp_utils.testing import database_config_template
 from yaml import safe_load
+
+from ramp_utils import read_config
 
 
 @pytest.fixture(scope='session')
 def database_connection():
-    '''
+    """
     Create a Postgres database for the tests,
     and drop it when the tests are done.
-    '''
-    #os.system('pg_ctl -D postgres -U postgres -l logfile start')
-
-    #engine = create_engine('postgresql://<local_user>:@localhost/<engine_name>', 
-    #                       isolation_level='AUTOCOMMIT')
+    """
     config = safe_load(open("db_engine.yml"))
     dbowner = config.get('db_owner')
     dbcluster = config.get('db_cluster_name')
     engine = create_engine(f'postgresql://{dbowner}:@localhost/{dbcluster}', 
                            isolation_level='AUTOCOMMIT')
-    #engine = create_engine('postgresql://postgres:@localhost/import argparse',
-    #                       isolation_level='AUTOCOMMIT')
+
     connection = engine.connect()
 
+    database_config = read_config(database_config_template())
+    username = database_config['sqlalchemy']['username']
+    database_name = database_config['sqlalchemy']['database']
     try:
-        connection.execute("""CREATE USER mrramp WITH PASSWORD 'mrramp';
-                              ALTER USER mrramp WITH SUPERUSER""")
+        connection.execute(f"""CREATE USER {username} WITH PASSWORD '{username}';
+                              ALTER USER {username} WITH SUPERUSER""")
     except exc.ProgrammingError:
-        print('mrramp already exists. Working with existing mrramp')
+        print(f'user {username} already exists')
+        raise
 
     try:
-        connection.execute('CREATE DATABASE databoard_test OWNER mrramp')
+        connection.execute(f'CREATE DATABASE {database_name} OWNER {username}')
     except exc.ProgrammingError:
-        print('database exists. Reusing existing database')
+        print(f'{database_name} database used for testing already exists')
+        raise
 
     # close the connection and remove the database in the end
     yield
     connection.execute("""SELECT pg_terminate_backend(pid)
                         FROM pg_stat_activity
                         WHERE datname = 'databoard_test';""")
-    connection.execute('DROP DATABASE databoard_test')
-    connection.execute('DROP USER mrramp')
-    print("deleted database 'databoard_test' and removed user 'mrramp'")
+    connection.execute(f'DROP DATABASE {database_name}')
+    connection.execute(f'DROP USER {username}')
+    print(f"deleted database 'databoard_test' and removed user '{username}'")
     
