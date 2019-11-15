@@ -54,12 +54,13 @@ commands as above your ``Postgres database cluster`` name is ``postgres_dbs``).
 Test
 ----
 Each time before running the tests make sure your Postgres database cluster is 
-started. You can restart it using the command::
+started. You can always start it using the command::
 
     ~ $ pg_ctl -D postgres_dbs -l logfile start
 
+
 You are now ready to run the tests. You can do so using ``pytest`` from the root
- (``ramp-board``) directory::
+ ``ramp-board`` directory::
 
     ~ $ pytest -vsl .
 
@@ -72,41 +73,41 @@ In the other case, you can test the individual packages with::
 How to contribute
 -----------------
 
-This guide is adapted from scikit-learn_ contribution guide.
+This guide is adapted from `scikit-learn contribution guide`_.
 
-.. _scikit-learn: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
+.. _scikit-learn contribution guide: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
 
 
 Forking RAMP
 ============
 
-The preferred way to contribute to RAMP is to fork the
-:ref:`main repository <main_>` on GitHub::
+The preferred way to contribute to RAMP is to fork the `ramp-board repository`_
+ on GitHub::
 
-.. _main: https://github.com/paris-saclay-cds/ramp-board
+.. _ramp-board repository: https://github.com/paris-saclay-cds/ramp-board
 
-1) Fork the :ref:`project repository <main_>`
+1) Fork the `ramp-board repository`_:
    click on the 'Fork' button near the top of the page. This creates
    a copy of the code under your account on the GitHub server.
 
-2) Clone this copy to your local disk:
+2) Clone this copy to your local disk::
 
         $ git clone git@github.com:YourLogin/ramp-board.git
         $ cd ramp-board
 
-3) Create a branch to hold your changes:
+3) Create a branch to hold your changes::
 
         $ git checkout -b my-feature
 
    and start making changes. Never work in the ``master`` branch!
 
 4) Work on this copy on your computer using Git to do the version
-   control. When you're done editing, do:
+   control. When you're done editing, do::
 
         $ git add modified_files
         $ git commit
 
-   to record your changes in Git, then push them to GitHub with:
+   to record your changes in Git, then push them to GitHub with::
 
         $ git push -u origin my-feature
 
@@ -114,10 +115,10 @@ Finally, go to the web page of your fork of the ramp-board repo,
 and click 'Pull request' to send your changes to the maintainers for
 review. This will send an email to the committers.
 
-(If any of the above seems like magic to you, then look up `Git documentation`_ 
-on the web.)
+If any of the above seems like magic to you, then look up `Git documentation`_ 
+on the web.
 
-.. Git documentation: https://git-scm.com/documentation
+.. _Git documentation: https://git-scm.com/documentation
 
 
 Contributing Pull Requests
@@ -196,8 +197,8 @@ following rules before submitting:
 -  Verify that your issue is not being currently addressed by other
    issues_ or `pull requests`_.
 
-.. issues: https://github.com/paris-saclay-cds/ramp-board/issues
-.. pull requests: https://github.com/paris-saclay-cds/ramp-board/pulls
+.. _issues: https://github.com/paris-saclay-cds/ramp-board/issues
+.. _pull requests: https://github.com/paris-saclay-cds/ramp-board/pulls
 
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.
@@ -223,8 +224,8 @@ following rules before submitting:
    or link to a gist_. If an exception is raised,
    please provide the traceback.
 
-.. reproducible: https://stackoverflow.com/help/mcve
-.. gist: https://gist.github.com
+.. _reproducible: https://stackoverflow.com/help/mcve
+.. _gist: https://gist.github.com
 
 Documentation
 =============
@@ -246,9 +247,9 @@ For building the documentation, you will need
 - matplotlib_, and
 - pillow_.
 
-.. sphinx: http://sphinx-doc.org
-.. matplotlib: https://matplotlib.org
-.. pillow: https://pillow.readthedocs.io
+.. _sphinx: http://sphinx-doc.org
+.. _matplotlib: https://matplotlib.org
+.. _pillow: https://pillow.readthedocs.io
 
 When you are writing documentation, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
