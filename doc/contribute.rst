@@ -4,7 +4,7 @@
 Develop and contribute
 ########################
 
-Thanks for joining us. We are always happy to welcome new RAMP developers.
+Welcome in the RAMP team. We are always happy to have new RAMP developers.
 You can contribute to this code through ``Pull Request`` on GitHub_. Please, make
 sure that your code is coming with unit tests to ensure full coverage and
 continuous integration in the API.
@@ -59,8 +59,8 @@ started. You can always start it using the command::
 
     ~ $ pg_ctl -D postgres_dbs -l logfile start
 
-You are now ready to run the tests. You can do so using ``pytest`` from the root
- ``ramp-board`` directory::
+
+You are now ready to run the tests. You can do so using ``pytest`` from the root ``ramp-board`` directory::
 
     ~ $ pytest -vsl .
 
@@ -81,12 +81,11 @@ This guide is adapted from `scikit-learn contribution guide`_.
 Forking RAMP
 ============
 
-The preferred way to contribute to RAMP is to fork the `ramp-board repository`_
- on GitHub::
+The preferred way to contribute to RAMP is to fork the `ramp-board repository`_ on GitHub::
 
 .. _ramp-board repository: https://github.com/paris-saclay-cds/ramp-board
 
-1) Fork the `ramp-board repository`_:
+1) To fork the `ramp-board repository`_:
    click on the 'Fork' button near the top of the page. This creates
    a copy of the code under your account on the GitHub server.
 
@@ -99,7 +98,10 @@ The preferred way to contribute to RAMP is to fork the `ramp-board repository`_
 
         $ git checkout -b my-feature
 
-   and start making changes. Never work in the ``master`` branch!
+   and start making changes. 
+
+.. note::
+    Never work in the ``master`` branch!
 
 4) Work on this copy on your computer using Git to do the version
    control. When you're done editing, do::
@@ -128,7 +130,6 @@ It is recommended to check that your contribution complies with the
 following rules before submitting a pull request:
 
 -  Follow the coding-guidelines_ as for scikit-learn.
-
 .. _coding-guidelines: http://scikit-learn.org/dev/developers/contributing.html#coding-guidelines
 
 -  When applicable, use the validation tools and other code in the
@@ -148,7 +149,6 @@ following rules before submitting a pull request:
    to: indicate you are working on something to avoid duplicated work,
    request broad review of functionality or API, or seek collaborators.
    WIPs often benefit from the inclusion of a `task list`_ in the PR description.
-
 .. _task list: https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments
 
 -  All other tests pass when everything is rebuilt from scratch. On
@@ -210,12 +210,12 @@ following rules before submitting:
    as your Python, scikit-learn, numpy, and scipy versions. This information
    can be found by runnning the following code snippet::
 
-   python
-   import platform; print(platform.platform())
-   import sys; print("Python", sys.version)
-   import numpy; print("NumPy", numpy.__version__)
-   import scipy; print("SciPy", scipy.__version__)
-   import sklearn; print("Scikit-Learn", sklearn.__version__)
+    python
+    import platform; print(platform.platform())
+    import sys; print("Python", sys.version)
+    import numpy; print("NumPy", numpy.__version__)
+    import scipy; print("SciPy", scipy.__version__)
+    import sklearn; print("Scikit-Learn", sklearn.__version__)
    
 -  Please be specific about what estimators and/or functions are involved
    and the shape of the data, as appropriate; please include a
@@ -241,11 +241,11 @@ documentation without the example gallery. The resulting HTML files will
 be placed in _build/html/ and are viewable in a web browser. See the
 README file in the doc/ directory for more information.
 
-For building the documentation, you will need::
+For building the documentation, you will need 
 
-- sphinx_,
-- matplotlib_, and
-- pillow_.
+    - sphinx_, 
+    - matplotlib_, and
+    - pillow_.
 
 .. _sphinx: http://sphinx-doc.org
 .. _matplotlib: https://matplotlib.org
