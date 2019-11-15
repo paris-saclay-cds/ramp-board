@@ -17,8 +17,6 @@ install:
     - source activate testenv
     - make inplace
 script:
-    - psql -l
-    - psql --help
     - python -m smtpd -n -c DebuggingServer localhost:8025 &
     - bash ci_tools/travis/test_ramp_frontend.sh
     - bash ci_tools/travis/test_ramp_engine.sh

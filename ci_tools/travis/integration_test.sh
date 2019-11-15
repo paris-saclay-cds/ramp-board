@@ -3,8 +3,8 @@ set -e
 cd $HOME
 mkdir ramp_deployment
 cd ramp_deployment
-ramp setup init
 psql -U postgres -c "CREATE USER mrramp WITH PASSWORD 'mrramp';ALTER USER mrramp WITH SUPERUSER;"
+ramp setup init
 createdb --owner=mrramp databoard_test
 
 echo "flask:
