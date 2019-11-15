@@ -19,7 +19,7 @@ def database_connection():
     config = safe_load(open("db_engine.yml"))
     dbowner = config.get('db_owner')
     dbcluster = config.get('db_cluster_name')
-    engine = create_engine(f'postgresql://{dbowner}:@localhost/{dbcluster}', 
+    engine = create_engine(f'postgresql://{dbowner}:@localhost/{dbcluster}',
                            isolation_level='AUTOCOMMIT')
 
     connection = engine.connect()
@@ -48,4 +48,3 @@ def database_connection():
     connection.execute(f'DROP DATABASE {database_name}')
     connection.execute(f'DROP USER {username}')
     print(f"deleted database 'databoard_test' and removed user '{username}'")
-    
