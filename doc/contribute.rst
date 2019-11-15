@@ -172,12 +172,7 @@ tools:
         $ pip install pytest pytest-cov
         $ pytest -vsl .
 
--  No pyflakes warnings, check with::
-
-        $ pip install pyflakes
-        $ pyflakes path/to/module.py
-
--  No flake8 warnings, check with::
+-  No flake8 warnings (which includes pep8 and pyflakes), check with::
 
         $ pip install flake8
         $ flake8 path/to/module.py
