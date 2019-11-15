@@ -81,11 +81,11 @@ Forking RAMP
 ============
 
 The preferred way to contribute to RAMP is to fork the
-:ref:`main repository <main>` on GitHub::
+:ref:`main repository <main_>` on GitHub::
 
-.. _main (https://github.com/paris-saclay-cds/ramp-board)
+.. _main: https://github.com/paris-saclay-cds/ramp-board
 
-1) Fork the :ref:`project repository <main>`
+1) Fork the :ref:`project repository <main_>`
    click on the 'Fork' button near the top of the page. This creates
    a copy of the code under your account on the GitHub server.
 
@@ -114,8 +114,11 @@ Finally, go to the web page of your fork of the ramp-board repo,
 and click 'Pull request' to send your changes to the maintainers for
 review. This will send an email to the committers.
 
-(If any of the above seems like magic to you, then look up the
-[Git documentation](https://git-scm.com/documentation) on the web.)
+(If any of the above seems like magic to you, then look up `Git documentation`_ 
+on the web.)
+
+.. Git documentation: https://git-scm.com/documentation
+
 
 Contributing Pull Requests
 ==========================
@@ -123,9 +126,9 @@ Contributing Pull Requests
 It is recommended to check that your contribution complies with the
 following rules before submitting a pull request:
 
--  Follow the
-   [coding-guidelines](http://scikit-learn.org/dev/developers/contributing.html#coding-guidelines)
-   as for scikit-learn.
+-  Follow the coding-guidelines_ as for scikit-learn.
+
+.. coding-guidelines: http://scikit-learn.org/dev/developers/contributing.html#coding-guidelines
 
 -  When applicable, use the validation tools and other code in the
    `ramp_utils` subpackage.
@@ -143,9 +146,9 @@ following rules before submitting a pull request:
    in progress (and changed to `[MRG]` when it matures). WIPs may be useful
    to: indicate you are working on something to avoid duplicated work,
    request broad review of functionality or API, or seek collaborators.
-   WIPs often benefit from the inclusion of a
-   [task list](https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments)
-   in the PR description.
+   WIPs often benefit from the inclusion of a `task list`_ in the PR description.
+
+.. task list: https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments
 
 -  All other tests pass when everything is rebuilt from scratch. On
    Unix-like systems, check with (from the toplevel source folder):
@@ -191,12 +194,16 @@ It is recommended to check that your issue complies with the
 following rules before submitting:
 
 -  Verify that your issue is not being currently addressed by other
-   [issues](https://github.com/paris-saclay-cds/ramp-board/issues)
-   or [pull requests](https://github.com/paris-saclay-cds/ramp-board/pulls).
+   issues_ or `pull requests`_.
+
+.. issues: https://github.com/paris-saclay-cds/ramp-board/issues
+.. pull requests: https://github.com/paris-saclay-cds/ramp-board/pulls
 
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.
-   See [Creating and highlighting code blocks](https://help.github.com/articles/creating-and-highlighting-code-blocks).
+   See `Creating and highlighting code blocks`_.
+
+.. Creating and highlighting code blocks: https://help.github.com/articles/creating-and-highlighting-code-blocks
 
 -  Please include your operating system type and version number, as well
    as your Python, scikit-learn, numpy, and scipy versions. This information
@@ -212,9 +219,12 @@ following rules before submitting:
 
 -  Please be specific about what estimators and/or functions are involved
    and the shape of the data, as appropriate; please include a
-   [reproducible](https://stackoverflow.com/help/mcve) code snippet
-   or link to a [gist](https://gist.github.com). If an exception is raised,
+   reproducible_ code snippet
+   or link to a gist_. If an exception is raised,
    please provide the traceback.
+
+.. reproducible: https://stackoverflow.com/help/mcve
+.. gist: https://gist.github.com
 
 Documentation
 =============
@@ -232,9 +242,13 @@ be placed in _build/html/ and are viewable in a web browser. See the
 README file in the doc/ directory for more information.
 
 For building the documentation, you will need
-[sphinx](http://sphinx-doc.org),
-[matplotlib](https://matplotlib.org), and
-[pillow](https://pillow.readthedocs.io).
+- sphinx_,
+- matplotlib_, and
+- pillow_.
+
+.. sphinx: http://sphinx-doc.org
+.. matplotlib: https://matplotlib.org
+.. pillow: https://pillow.readthedocs.io
 
 When you are writing documentation, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
