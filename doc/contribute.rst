@@ -1,79 +1,10 @@
 .. _contribute:
 
 ########################
-Contribute
+Develop and contribute
 ########################
 
 Thanks for joining us. We are always happy to welcome new RAMP developers.
-
-
-Install
-=======
-
-To install RAMP please fallow <TODO> guide making sure that you are using::
-
-    make inplace
-
-Next, create the database, follow the steps as described here:
-
-<1.1. Set up the RAMP database>
-
-You will also need to create the database 
-
-
-Prepare database engine
-=======================
-
-For local tests you will need the database engine which you created with 
-the command
-
-    ~ $ initdb postgres_dbs
-
-and then started (make sure you have your database starte before you run the
-tests)
-
-    ~ $ pg_ctl -D postgres_dbs -l logfile start
-
-However, RAMP tests do not know which database engine you are using for 
-your ramp development and therefore you need to let them know about it.
-To do it, open db_engine.yml file located in the ramp-board directory. It should
-look as follows:
-
-    db_owner: postgres
-    db_cluster_name: postgres
-
-The above settings are used by travis. 
-The <db_owner> is the owner of your database. If you don't know who is the owner
-of your database you can find it out by typing in your terminal: 
-    
-    ~ $ psql -l
-
-This command will list all your databases along with their owners. 
-
-<db_cluster_name> is the name of your Postgres database cluster (if you used
-commands as above you should change it to postgres_dbs).
-
-Test
-====
-
-If you are developing for the RAMP package, you will be interested about
-testing your new feature. 
-
-Before running the tests make sure you started the database.
-
-You can run the test using ``pytest`` from the root
-direcory::
-
-    pytest -vsl .
-
-The above will only work when the packages were installed in development mode.
-In the other case, you can test the individual packages with::
-
-    pytest -vsl --pyargs ramp_utils ramp_database ramp_frontend ramp_engine
-
-Contribute
-==========
-
 You can contribute to this code through Pull Request on GitHub_. Please, make
 sure that your code is coming with unit tests to ensure full coverage and
 continuous integration in the API.
@@ -81,10 +12,69 @@ continuous integration in the API.
 .. _GitHub: https://github.com/paris-saclay-cds/ramp-board/pulls
 
 
+Install for development
+-----------------------
+
+To install RAMP please fallow :ref:`install guideline <install>`
+ guide making sure that you are using: make inplace .
+
+Prepare database engine
+-----------------------
+Next, create the database, followowing the steps as described here:
+
+:ref:`create database <setup_server>`
+
+
+You created the Postgres database cluster using the command::
+
+    ~ $ initdb postgres_dbs
+
+and then started it (make sure you have your database started before you run the
+tests)
+
+    ~ $ pg_ctl -D postgres_dbs -l logfile start
+
+However, RAMP tests do not know which database engine you are using for 
+your ramp development and therefore you need to let them know about it.
+To do it, open ``db_engine.yml`` file located in the ``ramp-board`` directory. 
+It should look as follows::
+
+    db_owner: postgres
+    db_cluster_name: postgres
+
+The above settings are used by travis (test engine used in github). You need
+to change them for your local tests.
+The ``db_owner`` is the owner of your database. If you don't know who is 
+the owner of your database you can find it out by typing in your terminal: 
+    
+    ~ $ psql -l
+
+This command will list all your databases along with their owners. 
+
+``db_cluster_name`` is the name of your Postgres database cluster (if you used
+commands as above you should change it to ``postgres_dbs``).
+
+Test
+----
+
+Before running the tests make sure you started you Postgres database cluster
+
+You can run the test using ``pytest`` from the root (ramp-board)
+direcory::
+
+    ~ $ pytest -vsl .
+
+The above will only work when the packages were installed in development mode.
+In the other case, you can test the individual packages with::
+
+    ~ $ pytest -vsl --pyargs ramp_utils ramp_database ramp_frontend ramp_engine
+
+
 Contributing code
 =================
 
-This guide is adapted from [scikit-learn](https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md).
+This guide is adapted from 
+[scikit-learn](https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md).
 
 How to contribute
 -----------------
