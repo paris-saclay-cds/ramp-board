@@ -149,10 +149,10 @@ following rules before submitting a pull request:
    request broad review of functionality or API, or seek collaborators.
    WIPs often benefit from the inclusion of a `task list`_ in the PR description.
 
-.. task list: https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments
+.. _task list: https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments
 
 -  All other tests pass when everything is rebuilt from scratch. On
-   Unix-like systems, check with (from the toplevel source folder):
+   Unix-like systems, check with (from the toplevel source folder)::
 
         $ make
 
@@ -166,7 +166,7 @@ following rules before submitting a pull request:
 You can also check for common programming errors with the following
 tools:
 
--  Code with good unittest coverage (at least 80%), check with:
+-  Code with good unittest coverage (at least 80%), check with::
 
         $ pip install pytest pytest-cov
         $ pytest -vsl .
@@ -176,12 +176,12 @@ tools:
         $ pip install pyflakes
         $ pyflakes path/to/module.py
 
--  No PEP8 warnings, check with:
+-  No PEP8 warnings, check with::
 
         $ pip install pep8
         $ pep8 path/to/module.py
 
--  AutoPEP8 can help you fix some of the easy redundant errors:
+-  AutoPEP8 can help you fix some of the easy redundant errors::
 
         $ pip install autopep8
         $ autopep8 path/to/pep8.py
