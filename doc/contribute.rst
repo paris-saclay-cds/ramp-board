@@ -4,7 +4,7 @@
 Develop and contribute
 ########################
 
-Welcome in the RAMP team. We are always happy to have new RAMP developers.
+Welcome to the RAMP team. We are always happy to have new RAMP developers.
 You can contribute to this code through ``Pull Request`` on GitHub_. Please, make
 sure that your code is coming with unit tests to ensure full coverage and
 continuous integration in the API.
@@ -50,7 +50,7 @@ the owner of your database you can find it out by typing in your terminal::
 This command will list all your databases along with their owners. 
 
 ``db_cluster_name`` is the name of your Postgres database cluster (if you used
-commands as above your ``Postgres database cluster`` name is ``postgres_dbs``).
+commands as above your ``Postgres database cluster`` name is postgres_dbs).
 
 Test
 ----
@@ -81,7 +81,7 @@ This guide is adapted from `scikit-learn contribution guide`_.
 Forking RAMP
 ============
 
-The preferred way to contribute to RAMP is to fork the `ramp-board repository`_ on GitHub::
+The preferred way to contribute to RAMP is to fork the `ramp-board repository`_ on GitHub:
 
 .. _ramp-board repository: https://github.com/paris-saclay-cds/ramp-board
 
@@ -130,7 +130,6 @@ It is recommended to check that your contribution complies with the
 following rules before submitting a pull request:
 
 -  Follow the coding-guidelines_ as for scikit-learn.
-.. _coding-guidelines: http://scikit-learn.org/dev/developers/contributing.html#coding-guidelines
 
 -  When applicable, use the validation tools and other code in the
    `ramp_utils` subpackage.
@@ -149,7 +148,6 @@ following rules before submitting a pull request:
    to: indicate you are working on something to avoid duplicated work,
    request broad review of functionality or API, or seek collaborators.
    WIPs often benefit from the inclusion of a `task list`_ in the PR description.
-.. _task list: https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments
 
 -  All other tests pass when everything is rebuilt from scratch. On
    Unix-like systems, check with (from the toplevel source folder)::
@@ -162,6 +160,9 @@ following rules before submitting a pull request:
 -  At least one paragraph of narrative documentation with links to
    references in the literature (with PDF links when possible) and
    the example.
+
+.. _coding-guidelines: http://scikit-learn.org/dev/developers/contributing.html#coding-guidelines
+.. _task list: https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments
 
 You can also check for common programming errors with the following
 tools:
@@ -197,14 +198,9 @@ following rules before submitting:
 -  Verify that your issue is not being currently addressed by other
    issues_ or `pull requests`_.
 
-.. _issues: https://github.com/paris-saclay-cds/ramp-board/issues
-.. _pull requests: https://github.com/paris-saclay-cds/ramp-board/pulls
-
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.
    See `Creating and highlighting code blocks`_.
-
-.. _Creating and highlighting code blocks: https://help.github.com/articles/creating-and-highlighting-code-blocks
 
 -  Please include your operating system type and version number, as well
    as your Python, scikit-learn, numpy, and scipy versions. This information
@@ -223,6 +219,9 @@ following rules before submitting:
    or link to a gist_. If an exception is raised,
    please provide the traceback.
 
+.. _Creating and highlighting code blocks: https://help.github.com/articles/creating-and-highlighting-code-blocks
+.. _issues: https://github.com/paris-saclay-cds/ramp-board/issues
+.. _pull requests: https://github.com/paris-saclay-cds/ramp-board/pulls
 .. _reproducible: https://stackoverflow.com/help/mcve
 .. _gist: https://gist.github.com
 
