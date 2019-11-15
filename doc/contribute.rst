@@ -85,9 +85,9 @@ The preferred way to contribute to RAMP is to fork the `ramp-board repository`_ 
 
 .. _ramp-board repository: https://github.com/paris-saclay-cds/ramp-board
 
-1) To fork the `ramp-board repository`_:
-   click on the 'Fork' button near the top of the page. This creates
-   a copy of the code under your account on the GitHub server.
+1) To fork the `ramp-board repository`_ click on the 'Fork' button near the 
+   top of the page. This creates a copy of the code under your account 
+   on the GitHub server.
 
 2) Clone this copy to your local disk::
 
@@ -177,15 +177,10 @@ tools:
         $ pip install pyflakes
         $ pyflakes path/to/module.py
 
--  No PEP8 warnings, check with::
+-  No flake8 warnings, check with::
 
-        $ pip install pep8
-        $ pep8 path/to/module.py
-
--  AutoPEP8 can help you fix some of the easy redundant errors::
-
-        $ pip install autopep8
-        $ autopep8 path/to/pep8.py
+        $ pip install flake8
+        $ flake8 path/to/module.py
 
 Filing bugs
 ===========
