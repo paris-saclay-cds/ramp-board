@@ -5,7 +5,7 @@ Develop and contribute
 ########################
 
 Thanks for joining us. We are always happy to welcome new RAMP developers.
-You can contribute to this code through Pull Request on GitHub_. Please, make
+You can contribute to this code through ``Pull Request`` on GitHub_. Please, make
 sure that your code is coming with unit tests to ensure full coverage and
 continuous integration in the API.
 
@@ -14,23 +14,19 @@ continuous integration in the API.
 
 Install for development
 -----------------------
-
-To install RAMP please fallow :ref:`install guideline <install>`
- guide making sure that you are using: make inplace .
+To install RAMP please fallow :ref:`install guideline <install>` making sure 
+that you are using: ``make inplace``.
 
 Prepare database engine
 -----------------------
-Next, create the database, followowing the steps as described here:
-
+Next, create the database, following the steps as described here:
 :ref:`create database <setup_server>`
 
-
-You created the Postgres database cluster using the command::
+You created the ``Postgres database cluster`` using the command::
 
     ~ $ initdb postgres_dbs
 
-and then started it (make sure you have your database started before you run the
-tests)
+and then started it with::
 
     ~ $ pg_ctl -D postgres_dbs -l logfile start
 
@@ -42,25 +38,29 @@ It should look as follows::
     db_owner: postgres
     db_cluster_name: postgres
 
-The above settings are used by travis (test engine used in github). You need
-to change them for your local tests.
-The ``db_owner`` is the owner of your database. If you don't know who is 
-the owner of your database you can find it out by typing in your terminal: 
+The above settings are used by Travis Cl which is a continuous integreation
+service hosted at ``GitHub``. Therefore, you need to change it to your local
+settings.
+
+``db_owner`` is the owner of your database. If you don't know who is 
+the owner of your database you can find it out by typing in your terminal::
     
     ~ $ psql -l
 
 This command will list all your databases along with their owners. 
 
 ``db_cluster_name`` is the name of your Postgres database cluster (if you used
-commands as above you should change it to ``postgres_dbs``).
+commands as above your database cluster name is postgres_dbs).
 
 Test
 ----
+Each time before running the tests make sure your Postgres database cluster is 
+started. You can reatarted each time using the command::
 
-Before running the tests make sure you started you Postgres database cluster
+    ~ $ pg_ctl -D postgres_dbs -l logfile start
 
-You can run the test using ``pytest`` from the root (ramp-board)
-direcory::
+You are now ready to run the tests. You can do so using ``pytest`` from the root
+ (``ramp-board``) directory::
 
     ~ $ pytest -vsl .
 
@@ -71,13 +71,15 @@ In the other case, you can test the individual packages with::
 
 
 Contributing code
-=================
+-----------------
 
-This guide is adapted from 
-[scikit-learn](https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md).
+This guide is adapted from scikit-learn_ contributing guide.
+
+.. _scikit-learn: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
+
 
 How to contribute
------------------
+=================
 
 The preferred way to contribute to RAMP is to fork the
 [main repository](https://github.com/paris-saclay-cds/ramp-board) on
@@ -116,7 +118,7 @@ review. This will send an email to the committers.
 [Git documentation](https://git-scm.com/documentation) on the web.)
 
 Contributing Pull Requests
---------------------------
+==========================
 
 It is recommended to check that your contribution complies with the
 following rules before submitting a pull request:
@@ -181,7 +183,7 @@ tools:
         $ autopep8 path/to/pep8.py
 
 Filing bugs
------------
+===========
 We use Github issues to track all bugs and feature requests; feel free to
 open an issue if you have found a bug or wish to see a feature implemented.
 
@@ -215,7 +217,7 @@ following rules before submitting:
    please provide the traceback.
 
 Documentation
--------------
+=============
 
 We are glad to accept any sort of documentation: function docstrings,
 reStructuredText documents (like this one), tutorials, etc.
