@@ -20,6 +20,10 @@ Next, create the database, follow the steps as described here:
 
 You will also need to create the database 
 
+
+Prepare database engine
+=======================
+
 For local tests you will need the database engine which you created with 
 the command
 
@@ -40,8 +44,7 @@ look as follows:
 
 The above settings are used by travis. 
 The <db_owner> is the owner of your database. If you don't know who is the owner
-of your database you can find it out by typing in your terminal:
-To find out 
+of your database you can find it out by typing in your terminal: 
     
     ~ $ psql -l
 
@@ -49,7 +52,6 @@ This command will list all your databases along with their owners.
 
 <db_cluster_name> is the name of your Postgres database cluster (if you used
 commands as above you should change it to postgres_dbs).
-
 
 Test
 ====
@@ -77,9 +79,6 @@ sure that your code is coming with unit tests to ensure full coverage and
 continuous integration in the API.
 
 .. _GitHub: https://github.com/paris-saclay-cds/ramp-board/pulls
-
-
-
 
 
 Contributing code
