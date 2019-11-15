@@ -46,6 +46,7 @@ settings.
 the owner of your database you can find it out by typing in your terminal::
     
     ~ $ psql -l
+
 This command will list all your databases along with their owners. 
 
 ``db_cluster_name`` is the name of your Postgres database cluster (if you used
@@ -57,7 +58,6 @@ Each time before running the tests make sure your Postgres database cluster is
 started. You can always start it using the command::
 
     ~ $ pg_ctl -D postgres_dbs -l logfile start
-
 
 You are now ready to run the tests. You can do so using ``pytest`` from the root
  ``ramp-board`` directory::
@@ -129,7 +129,7 @@ following rules before submitting a pull request:
 
 -  Follow the coding-guidelines_ as for scikit-learn.
 
-.. coding-guidelines: http://scikit-learn.org/dev/developers/contributing.html#coding-guidelines
+.. _coding-guidelines: http://scikit-learn.org/dev/developers/contributing.html#coding-guidelines
 
 -  When applicable, use the validation tools and other code in the
    `ramp_utils` subpackage.
@@ -171,7 +171,7 @@ tools:
         $ pip install pytest pytest-cov
         $ pytest -vsl .
 
--  No pyflakes warnings, check with:
+-  No pyflakes warnings, check with::
 
         $ pip install pyflakes
         $ pyflakes path/to/module.py
@@ -204,20 +204,19 @@ following rules before submitting:
    appropriate code blocks.
    See `Creating and highlighting code blocks`_.
 
-.. Creating and highlighting code blocks: https://help.github.com/articles/creating-and-highlighting-code-blocks
+.. _Creating and highlighting code blocks: https://help.github.com/articles/creating-and-highlighting-code-blocks
 
 -  Please include your operating system type and version number, as well
    as your Python, scikit-learn, numpy, and scipy versions. This information
-   can be found by runnning the following code snippet:
+   can be found by runnning the following code snippet::
 
-   ```python
+   python
    import platform; print(platform.platform())
    import sys; print("Python", sys.version)
    import numpy; print("NumPy", numpy.__version__)
    import scipy; print("SciPy", scipy.__version__)
    import sklearn; print("Scikit-Learn", sklearn.__version__)
-   ```
-
+   
 -  Please be specific about what estimators and/or functions are involved
    and the shape of the data, as appropriate; please include a
    reproducible_ code snippet
@@ -242,7 +241,8 @@ documentation without the example gallery. The resulting HTML files will
 be placed in _build/html/ and are viewable in a web browser. See the
 README file in the doc/ directory for more information.
 
-For building the documentation, you will need
+For building the documentation, you will need::
+
 - sphinx_,
 - matplotlib_, and
 - pillow_.
