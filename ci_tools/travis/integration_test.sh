@@ -4,8 +4,8 @@ cd $HOME
 mkdir ramp_deployment
 cd ramp_deployment
 psql -U postgres -c "CREATE USER mrramp WITH PASSWORD 'mrramp';ALTER USER mrramp WITH SUPERUSER;"
-ramp setup init
 createdb --owner=mrramp databoard_test
+ramp setup init
 
 echo "flask:
     secret_key: abcdefghijkl
