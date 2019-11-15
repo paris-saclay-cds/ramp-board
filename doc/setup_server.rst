@@ -6,6 +6,7 @@ Refer to :ref:`install guideline <install>`.
 
 Once the packages install, proceed to the following steps.
 
+.. _set_database:
 Set up the RAMP database
 ------------------------
 

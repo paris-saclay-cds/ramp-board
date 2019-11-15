@@ -15,12 +15,12 @@ continuous integration in the API.
 Install for development
 -----------------------
 To install RAMP please fallow :ref:`install guideline <install>` making sure 
-that you are using: ``make inplace``.
+that you are using ``make inplace`` option.
 
 Prepare database engine
 -----------------------
 Next, create the database, following the steps as described here:
-:ref:`create database <setup_server>`
+:ref:`create database <set_database>`
 
 You created the ``Postgres database cluster`` using the command::
 
@@ -38,24 +38,23 @@ It should look as follows::
     db_owner: postgres
     db_cluster_name: postgres
 
-The above settings are used by Travis Cl which is a continuous integreation
-service hosted at ``GitHub``. Therefore, you need to change it to your local
+The above settings are used by ``Travis Cl`` which is a continuous integration
+service hosted at ``GitHub``. Therefore, you need to change them to your local
 settings.
 
 ``db_owner`` is the owner of your database. If you don't know who is 
 the owner of your database you can find it out by typing in your terminal::
     
     ~ $ psql -l
-
 This command will list all your databases along with their owners. 
 
 ``db_cluster_name`` is the name of your Postgres database cluster (if you used
-commands as above your database cluster name is postgres_dbs).
+commands as above your ``Postgres database cluster`` name is ``postgres_dbs``).
 
 Test
 ----
 Each time before running the tests make sure your Postgres database cluster is 
-started. You can reatarted each time using the command::
+started. You can restart it using the command::
 
     ~ $ pg_ctl -D postgres_dbs -l logfile start
 
@@ -70,37 +69,38 @@ In the other case, you can test the individual packages with::
     ~ $ pytest -vsl --pyargs ramp_utils ramp_database ramp_frontend ramp_engine
 
 
-Contributing code
+How to contribute
 -----------------
 
-This guide is adapted from scikit-learn_ contributing guide.
+This guide is adapted from scikit-learn_ contribution guide.
 
 .. _scikit-learn: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
 
 
-How to contribute
-=================
+Forking RAMP
+============
 
 The preferred way to contribute to RAMP is to fork the
-[main repository](https://github.com/paris-saclay-cds/ramp-board) on
-GitHub:
+:ref:`main repository <main>` on GitHub::
 
-1. Fork the [project repository](https://github.com/paris-saclay-cds/ramp-board):
+.. _main (https://github.com/paris-saclay-cds/ramp-board)
+
+1) Fork the :ref:`project repository <main>`
    click on the 'Fork' button near the top of the page. This creates
    a copy of the code under your account on the GitHub server.
 
-2. Clone this copy to your local disk:
+2) Clone this copy to your local disk:
 
         $ git clone git@github.com:YourLogin/ramp-board.git
         $ cd ramp-board
 
-3. Create a branch to hold your changes:
+3) Create a branch to hold your changes:
 
         $ git checkout -b my-feature
 
    and start making changes. Never work in the ``master`` branch!
 
-4. Work on this copy on your computer using Git to do the version
+4) Work on this copy on your computer using Git to do the version
    control. When you're done editing, do:
 
         $ git add modified_files
