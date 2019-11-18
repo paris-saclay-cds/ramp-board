@@ -21,7 +21,7 @@ from ramp_engine.dispatcher import Dispatcher
 
 
 @pytest.fixture
-def session_toy():
+def session_toy(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:
