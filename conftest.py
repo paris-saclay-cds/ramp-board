@@ -28,7 +28,7 @@ def database_connection():
     username = database_config['sqlalchemy']['username']
     database_name = database_config['sqlalchemy']['database']
     try:
-        connection.execute(f"""CREATE USER {username} 
+        connection.execute(f"""CREATE USER {username}
                               WITH PASSWORD '{username}';
                               ALTER USER {username} WITH SUPERUSER""")
     except exc.ProgrammingError:
