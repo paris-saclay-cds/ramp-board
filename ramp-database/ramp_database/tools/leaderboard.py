@@ -42,8 +42,6 @@ def _compute_public_leaderboard(session, submissions,
     leaderboard_df = pd.DataFrame()
     for sub in submissions:
         row = pd.Series()
-        row['team'] = 'team'
-        row['submission'] = 'submission'
         row['team'] = sub.team.name
         row['submission'] = sub.name_with_link if with_links else sub.name
 
@@ -116,8 +114,6 @@ def _compute_private_leaderboard(session, submissions,
     leaderboard_df = pd.DataFrame()
     for sub in submissions:
         row = pd.Series()
-        row['team'] = 'team'
-        row['submission'] = 'submission'
         row['team'] = sub.team.name
         row['submission'] = sub.name_with_link if with_links else sub.name
 
