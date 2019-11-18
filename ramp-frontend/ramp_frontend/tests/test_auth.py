@@ -181,6 +181,8 @@ def test_sign_up(client_session):
     assert rv.status_code == 200
 
 
+@pytest.mark.skipif(raises=ConnectionRefusedError, reason="no possibility to \
+                                                  set up the connection")
 def test_sign_up_with_approval(client_session):
     # check the sign-up and email confirmation framework
     client, session = client_session
@@ -304,6 +306,8 @@ def test_update_profile(client_session):
         assert rv.status_code == 200
 
 
+@pytest.mark.skipif(raises=ConnectionRefusedError, reason="no possibility to \
+                                                  set up the connection")
 def test_reset_password(client_session):
     client, session = client_session
 
@@ -369,6 +373,8 @@ def test_reset_password(client_session):
     assert check_password(new_password, user.hashed_password)
 
 
+@pytest.mark.skipif(raises=ConnectionRefusedError, reason="no possibility to \
+                                                  set up the connection")
 def test_reset_token_error(client_session):
     client, session = client_session
 
