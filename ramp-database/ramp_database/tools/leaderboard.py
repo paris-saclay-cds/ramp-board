@@ -50,7 +50,6 @@ def _compute_public_leaderboard(session, submissions,
         n_bag = df_scores_bag.index.get_level_values('n_bag').max()
         df_scores_bag = df_scores_bag.loc[(slice(None), n_bag), :]
         df_scores_bag.index = df_scores_bag.index.droplevel('n_bag')
-        df_scores_bag = df_scores_bag.round(map_score_precision)
         for col in df_scores_bag.columns:
             precision = map_score_precision[col]
             row[col] = round(df_scores_bag[col].loc['valid'], precision)
