@@ -1,5 +1,3 @@
-from itertools import product
-
 import numpy as np
 import pandas as pd
 
@@ -18,9 +16,9 @@ from .submission import get_time
 pd.set_option('display.max_colwidth', -1)
 
 
-def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
-                         with_links=True):
-    """Format the leaderboard.
+def _compute_public_leaderboard(session, submissions,
+                                event_name, with_links=True):
+    """Format the public leaderboard.
 
     Parameters
     ----------
@@ -28,8 +26,6 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
         The session to directly perform the operation on the database.
     submissions : list of :class:`ramp_database.model.Submission`
         The submission to report in the leaderboard.
-    leaderboard_type : {'public', 'private'}
-        The type of leaderboard to built.
     event_name : str
         The name of the event.
     with_links : bool
@@ -40,104 +36,145 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
     leaderboard : dataframe
         The leaderboard in a dataframe format.
     """
-    record_score = []
     event = session.query(Event).filter_by(name=event_name).one()
     map_score_precision = {score_type.name: score_type.precision
                            for score_type in event.score_types}
+    leaderboard_df = pd.DataFrame()
     for sub in submissions:
-        # take only max n bag
+        row = pd.Series()
+        row['team'] = 'team'
+        row['submission'] = 'submission'
+        row['team'] = sub.team.name
+        row['submission'] = sub.name_with_link if with_links else sub.name
+
+        # bagging returns "learning curves", here we only need the last bag
         df_scores_bag = get_bagged_scores(session, sub.id)
-        highest_level = df_scores_bag.index.get_level_values('n_bag').max()
-        df_scores_bag = df_scores_bag.loc[(slice(None), highest_level), :]
+        n_bag = df_scores_bag.index.get_level_values('n_bag').max()
+        df_scores_bag = df_scores_bag.loc[(slice(None), n_bag), :]
         df_scores_bag.index = df_scores_bag.index.droplevel('n_bag')
         df_scores_bag = df_scores_bag.round(map_score_precision)
+        for col in df_scores_bag.columns:
+            precision = map_score_precision[col]
+            row[col] = round(df_scores_bag[col].loc['valid'], precision)
 
-        df_scores = get_scores(session, sub.id)
-        df_scores = df_scores.round(map_score_precision)
+        row['contributivity'] = int(round(100 * sub.contributivity))
+        row['historical contributivity'] = int(round(
+            100 * sub.historical_contributivity))
 
         df_time = get_time(session, sub.id)
         df_time = df_time.stack().to_frame()
         df_time.index = df_time.index.set_names(['fold', 'step'])
         df_time = df_time.rename(columns={0: 'time'})
-        df_time = df_time.astype('int')
+        df_time_mean = df_time.groupby('step').mean()
 
-        df = pd.concat([df_scores, df_time], axis=1)
-        df_mean = df.groupby('step').mean()
-        df_std = df.groupby('step').std()
+        row['train time [s]'] = df_time_mean['time'].loc['train'].round()
+        row['valid time [s]'] = df_time_mean['time'].loc['valid'].round()
+        row['max RAM [MB]'] = round(get_submission_max_ram(session, sub.id))
+        row['submitted at (UTC)'] = pd.Timestamp(sub.submission_timestamp)
+        leaderboard_df = leaderboard_df.append(row, ignore_index=True)
+        leaderboard_df = leaderboard_df[row.index]  # reordering columns
 
-        # select only the validation and testing steps and rename them to
-        # public and private
-        map_renaming = {'valid': 'public', 'test': 'private'}
-        df_mean = (df_mean.loc[list(map_renaming.keys())]
-                          .rename(index=map_renaming)
-                          .stack().to_frame().T)
-        df_std = (df_std.loc[list(map_renaming.keys())]
-                        .rename(index=map_renaming)
-                        .stack().to_frame().T)
-        df_scores_bag = (df_scores_bag.rename(index=map_renaming)
-                                      .stack().to_frame().T)
+    # Formatting time and integer columns
+    timestamp_cols = ['submitted at (UTC)']
+    leaderboard_df[timestamp_cols] = leaderboard_df[timestamp_cols].astype(
+        'datetime64[s]')
+    int_cols = ['train time [s]', 'valid time [s]', 'max RAM [MB]',
+                'contributivity', 'historical contributivity']
+    leaderboard_df[int_cols] = leaderboard_df[int_cols].astype(int)
 
-        df = pd.concat([df_scores_bag, df_mean, df_std], axis=1,
-                       keys=['bag', 'mean', 'std'])
-
-        df.columns = df.columns.set_names(['stat', 'set', 'score'])
-
-        # change the multi-index into a stacked index
-        df.columns = df.columns.map(lambda x: " ".join(x))
-
-        df['team'] = sub.team.name
-        df['submission'] = sub.name_with_link if with_links else sub.name
-        df['contributivity'] = int(round(100 * sub.contributivity))
-        df['historical contributivity'] = int(round(
-            100 * sub.historical_contributivity))
-        df['max RAM [MB]'] = get_submission_max_ram(session, sub.id)
-        df['submitted at (UTC)'] = pd.Timestamp(sub.submission_timestamp)
-        record_score.append(df)
-
-    # stack all the records
-    df = pd.concat(record_score, axis=0, ignore_index=True, sort=False)
-
-    # keep only second precision for the time stamp
-    df['submitted at (UTC)'] = df['submitted at (UTC)'].astype('datetime64[s]')
-    # rename the column of the time
-    df = df.rename(columns={'mean public time': 'train time [s]',
-                            'std public time': 'train time std [s]',
-                            'mean private time': 'test time [s]',
-                            'std private time': 'test time std [s]'})
-
-    # reordered the column
-    stats_order = (['bag', 'mean', 'std'] if leaderboard_type == 'private'
-                   else ['bag'])
-    dataset_order = (['public', 'private'] if leaderboard_type == 'private'
-                     else ['public'])
-    score_order = ([event.official_score_name] +
-                   [score_type.name for score_type in event.score_types
-                    if score_type.name != event.official_score_name])
-    score_list = [
-        '{} {} {}'.format(stat, dataset, score)
-        for stat, dataset, score in product(stats_order, dataset_order,
-                                            score_order)
-    ]
-    col_ordered = (
-        ['team', 'submission'] +
-        score_list +
-        ['contributivity', 'historical contributivity',
-         'train time [s]', 'test time [s]',
-         'max RAM [MB]', 'submitted at (UTC)']
-    )
-    df = df[col_ordered]
-
-    df = df.sort_values(
-        "bag {} {}".format(leaderboard_type, event.official_score_name),
+    # Sorting according to the official score, best on the top
+    leaderboard_df = leaderboard_df.sort_values(
+        event.official_score_name,
         ascending=event.get_official_score_type(session).is_lower_the_better
     )
+    return leaderboard_df
 
-    # rename the column name for the public leaderboard
-    if leaderboard_type == 'public':
-        df = df.rename(columns={
-            key: value for key, value in zip(score_list, score_order)
-        })
-    return df
+
+def _compute_private_leaderboard(session, submissions,
+                                 event_name, with_links=True):
+    """Format the private leaderboard.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    submissions : list of :class:`ramp_database.model.Submission`
+        The submission to report in the leaderboard.
+    event_name : str
+        The name of the event.
+    with_links : bool
+        Whether or not the submission name should be clickable.
+
+    Returns
+    -------
+    leaderboard : dataframe
+        The leaderboard in a dataframe format.
+    """
+    event = session.query(Event).filter_by(name=event_name).one()
+    map_score_precision = {score_type.name: score_type.precision
+                           for score_type in event.score_types}
+    leaderboard_df = pd.DataFrame()
+    for sub in submissions:
+        row = pd.Series()
+        row['team'] = 'team'
+        row['submission'] = 'submission'
+        row['team'] = sub.team.name
+        row['submission'] = sub.name_with_link if with_links else sub.name
+
+        # bagging returns "learning curves", here we only need the last bag
+        df_scores_bag = get_bagged_scores(session, sub.id)
+        n_bag = df_scores_bag.index.get_level_values('n_bag').max()
+        df_scores_bag = df_scores_bag.loc[(slice(None), n_bag), :]
+        df_scores_bag.index = df_scores_bag.index.droplevel('n_bag')
+        df_scores = get_scores(session, sub.id)
+        df_scores_mean = df_scores.groupby('step').mean()
+        df_scores_std = df_scores.groupby('step').std()
+        for col in df_scores_bag.columns:
+            precision = map_score_precision[col]
+            row['bagged test ' + col] = round(
+                df_scores_bag[col].loc['test'], precision)
+            row['mean test ' + col] = round(
+                df_scores_mean[col].loc['test'], precision)
+            row['std test ' + col] = round(
+                df_scores_std[col].loc['test'], precision + 1)
+            row['bagged valid ' + col] = round(
+                df_scores_bag[col].loc['valid'], precision)
+            row['mean valid ' + col] = round(
+                df_scores_mean[col].loc['valid'], precision)
+            row['std valid ' + col] = round(
+                df_scores_std[col].loc['valid'], precision + 1)
+        row['contributivity'] = int(round(100 * sub.contributivity))
+        row['historical contributivity'] = int(round(
+            100 * sub.historical_contributivity))
+
+        df_time = get_time(session, sub.id)
+        df_time = df_time.stack().to_frame()
+        df_time.index = df_time.index.set_names(['fold', 'step'])
+        df_time = df_time.rename(columns={0: 'time'})
+        df_time_mean = df_time.groupby('step').mean()
+
+        row['train time [s]'] = df_time_mean['time'].loc['train'].round()
+        row['valid time [s]'] = df_time_mean['time'].loc['valid'].round()
+        row['test time [s]'] = df_time_mean['time'].loc['test'].round()
+        row['max RAM [MB]'] = get_submission_max_ram(session, sub.id)
+        row['submitted at (UTC)'] = pd.Timestamp(sub.submission_timestamp)
+        leaderboard_df = leaderboard_df.append(row, ignore_index=True)
+        leaderboard_df = leaderboard_df[row.index]  # reordering columns
+
+    # Formatting time and integer columns
+    timestamp_cols = ['submitted at (UTC)']
+    leaderboard_df[timestamp_cols] = leaderboard_df[timestamp_cols].astype(
+        'datetime64[s]')
+    int_cols = ['train time [s]', 'valid time [s]', 'test time [s]',
+                'max RAM [MB]', 'contributivity', 'historical contributivity']
+    leaderboard_df[int_cols] = leaderboard_df[int_cols].astype(int)
+
+    # Sorting according to the official score, best on the top
+    leaderboard_df = leaderboard_df.sort_values(
+        'bagged test {}'.format(event.official_score_name),
+        ascending=event.get_official_score_type(session).is_lower_the_better
+    )
+    return leaderboard_df
 
 
 def _compute_competition_leaderboard(session, submissions, leaderboard_type,
@@ -164,18 +201,18 @@ def _compute_competition_leaderboard(session, submissions, leaderboard_type,
     score_type = event.get_official_score_type(session)
     score_name = event.official_score_name
 
-    private_leaderboard = _compute_leaderboard(session, submissions, 'private',
-                                               event_name, with_links=False)
+    private_leaderboard = _compute_private_leaderboard(
+        session, submissions, event_name, with_links=False)
 
     col_selected_private = (['team', 'submission'] +
-                            ['bag private ' + score_name,
-                             'bag public ' + score_name] +
-                            ['train time [s]', 'test time [s]',
+                            ['bagged test ' + score_name,
+                             'bagged valid ' + score_name] +
+                            ['train time [s]', 'valid time [s]',
                              'submitted at (UTC)'])
     leaderboard_df = private_leaderboard[col_selected_private]
     leaderboard_df = leaderboard_df.rename(
-        columns={'bag private ' + score_name: 'private ' + score_name,
-                 'bag public ' + score_name: 'public ' + score_name}
+        columns={'bagged test ' + score_name: 'private ' + score_name,
+                 'bagged valid ' + score_name: 'public ' + score_name}
     )
 
     # select best submission for each team
@@ -226,8 +263,8 @@ def _compute_competition_leaderboard(session, submissions, leaderboard_type,
 
     col_selected = [
         leaderboard_type + ' rank', 'team', 'submission',
-        leaderboard_type + ' ' + score_name, 'train time [s]', 'test time [s]',
-        'submitted at (UTC)'
+        leaderboard_type + ' ' + score_name, 'train time [s]',
+        'valid time [s]', 'submitted at (UTC)'
     ]
     if leaderboard_type == 'private':
         col_selected.insert(1, 'move')
@@ -288,11 +325,12 @@ def get_leaderboard(session, leaderboard_type, event_name, user_name=None,
     if not submissions:
         return None
 
-    if leaderboard_type in ['public', 'private']:
-        df = _compute_leaderboard(
-            session, submissions, leaderboard_type, event_name,
-            with_links=with_links
-        )
+    if leaderboard_type == 'public':
+        df = _compute_public_leaderboard(
+            session, submissions, event_name, with_links=with_links)
+    elif leaderboard_type == 'private':
+        df = _compute_private_leaderboard(
+            session, submissions, event_name, with_links=with_links)
     elif leaderboard_type in ['new', 'failed']:
         columns = ['team',
                    'submission',

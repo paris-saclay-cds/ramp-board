@@ -72,7 +72,7 @@ def my_submissions(event_name):
                            leaderboard=leaderboard_html,
                            failed_leaderboard=failed_leaderboard_html,
                            new_leaderboard=new_leaderboard_html,
-                           sorting_column_index=4,
+                           sorting_column_index=2,
                            sorting_direction=sorting_direction,
                            event=event,
                            admin=admin)
@@ -115,7 +115,7 @@ def leaderboard(event_name):
     leaderboard_kwargs = dict(
         leaderboard=leaderboard_html,
         leaderboard_title='Leaderboard',
-        sorting_column_index=4,
+        sorting_column_index=2,
         sorting_direction=sorting_direction,
         event=event
     )
@@ -228,7 +228,7 @@ def private_leaderboard(event_name):
         'leaderboard.html',
         leaderboard_title='Leaderboard',
         leaderboard=leaderboard_html,
-        sorting_column_index=5,
+        sorting_column_index=2,
         sorting_direction=sorting_direction,
         event=event,
         private=True,

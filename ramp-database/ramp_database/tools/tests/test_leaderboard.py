@@ -191,40 +191,41 @@ def test_get_leaderboard(session_toy_db):
 
     # check the difference between the public and private leaderboard
     assert leaderboard_private.count('<td>') > leaderboard_public.count('<td>')
-    for private_term in ['bag', 'mean', 'std', 'private']:
+    for private_term in ['bagged', 'mean', 'std', 'test time']:
         assert private_term not in leaderboard_public
         assert private_term in leaderboard_private
 
     # check the column name in each leaderboard
     assert """<th>team</th>
       <th>submission</th>
-      <th>bag public acc</th>
-      <th>bag public error</th>
-      <th>bag public nll</th>
-      <th>bag public f1_70</th>
-      <th>bag private acc</th>
-      <th>bag private error</th>
-      <th>bag private nll</th>
-      <th>bag private f1_70</th>
-      <th>mean public acc</th>
-      <th>mean public error</th>
-      <th>mean public nll</th>
-      <th>mean public f1_70</th>
-      <th>mean private acc</th>
-      <th>mean private error</th>
-      <th>mean private nll</th>
-      <th>mean private f1_70</th>
-      <th>std public acc</th>
-      <th>std public error</th>
-      <th>std public nll</th>
-      <th>std public f1_70</th>
-      <th>std private acc</th>
-      <th>std private error</th>
-      <th>std private nll</th>
-      <th>std private f1_70</th>
+      <th>bagged test acc</th>
+      <th>mean test acc</th>
+      <th>std test acc</th>
+      <th>bagged valid acc</th>
+      <th>mean valid acc</th>
+      <th>std valid acc</th>
+      <th>bagged test error</th>
+      <th>mean test error</th>
+      <th>std test error</th>
+      <th>bagged valid error</th>
+      <th>mean valid error</th>
+      <th>std valid error</th>
+      <th>bagged test nll</th>
+      <th>mean test nll</th>
+      <th>std test nll</th>
+      <th>bagged valid nll</th>
+      <th>mean valid nll</th>
+      <th>std valid nll</th>
+      <th>bagged test f1_70</th>
+      <th>mean test f1_70</th>
+      <th>std test f1_70</th>
+      <th>bagged valid f1_70</th>
+      <th>mean valid f1_70</th>
+      <th>std valid f1_70</th>
       <th>contributivity</th>
       <th>historical contributivity</th>
       <th>train time [s]</th>
+      <th>valid time [s]</th>
       <th>test time [s]</th>
       <th>max RAM [MB]</th>
       <th>submitted at (UTC)</th>""" in leaderboard_private
@@ -237,7 +238,7 @@ def test_get_leaderboard(session_toy_db):
       <th>contributivity</th>
       <th>historical contributivity</th>
       <th>train time [s]</th>
-      <th>test time [s]</th>
+      <th>valid time [s]</th>
       <th>max RAM [MB]</th>
       <th>submitted at (UTC)</th>""" in leaderboard_public
     assert """<th>team</th>
@@ -251,7 +252,7 @@ def test_get_leaderboard(session_toy_db):
       <th>submission</th>
       <th>acc</th>
       <th>train time [s]</th>
-      <th>test time [s]</th>
+      <th>valid time [s]</th>
       <th>submitted at (UTC)</th>""" in competition_public
     assert """<th>rank</th>
       <th>move</th>
@@ -259,5 +260,5 @@ def test_get_leaderboard(session_toy_db):
       <th>submission</th>
       <th>acc</th>
       <th>train time [s]</th>
-      <th>test time [s]</th>
+      <th>valid time [s]</th>
       <th>submitted at (UTC)</th>""" in competition_private
