@@ -63,6 +63,9 @@ started. You can always start it using the command::
 
     ~ $ pg_ctl -D postgres_dbs -l logfile start
 
+You will also need SMTP server, to run it type::
+
+    ~ $ python -m smtpd -n -c DebuggingServer localhost:8025 &
 
 You are now ready to run the tests. You can do so using ``pytest`` from the root ``ramp-board`` directory::
 
