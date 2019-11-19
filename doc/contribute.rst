@@ -14,7 +14,7 @@ continuous integration in the API.
 
 Install for development
 -----------------------
-To install RAMP please fallow :ref:`install guideline <install>` making sure 
+To install RAMP please follow :ref:`install guideline <install>` making sure 
 that you are using ``make inplace`` option.
 
 Prepare database engine
