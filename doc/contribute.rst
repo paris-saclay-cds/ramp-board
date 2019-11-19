@@ -51,7 +51,7 @@ the owner of your database you can find it out by typing in your terminal::
     
     ~ $ psql -l
 
-This command will list all your databases along with their owners. 
+This command will list all of your databases along with their owners. 
 
 ``db_cluster_name`` is the name of your Postgres database cluster (if you used
 commands as above your ``Postgres database cluster`` name is postgres_dbs).
