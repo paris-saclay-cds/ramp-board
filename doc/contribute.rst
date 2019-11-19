@@ -207,11 +207,8 @@ following rules before submitting:
     import scipy; print("SciPy", scipy.__version__)
     import sklearn; print("Scikit-Learn", sklearn.__version__)
    
--  Please be specific about what estimators and/or functions are involved
-   and the shape of the data, as appropriate; please include a
-   reproducible_ code snippet
-   or link to a gist_. If an exception is raised,
-   please provide the traceback.
+-  Please include a reproducible_ code snippet or link to a gist_. 
+   If an exception is raised, please provide the traceback.
 
 .. _Creating and highlighting code blocks: https://help.github.com/articles/creating-and-highlighting-code-blocks
 .. _issues: https://github.com/paris-saclay-cds/ramp-board/issues
