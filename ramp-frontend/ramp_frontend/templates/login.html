@@ -39,8 +39,8 @@
                  {{ form.hidden_tag() }}
                  <div class="one field">
                      <div class="required field">
-                         <label>Username</label>
-                         {{ form.user_name(placeholder="username") }}
+                         <label>Username or e-mail</label>
+                         {{ form.user_name(placeholder="username or e-mail") }}
                          {% for error in form.user_name.errors %}
                              <span style="color: red;">[{{ error }}]</span>
                          {% endfor %}

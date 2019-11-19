@@ -26,7 +26,7 @@ from ramp_database.tools.leaderboard import update_user_leaderboards
 
 
 @pytest.fixture(scope='module')
-def session_toy_db():
+def session_toy_db(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:

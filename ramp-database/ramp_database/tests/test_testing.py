@@ -41,7 +41,7 @@ def ramp_config():
 
 
 @pytest.fixture
-def session_scope_function(database_config, ramp_config):
+def session_scope_function(database_config, ramp_config, database_connection):
     try:
         deployment_dir = create_test_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
