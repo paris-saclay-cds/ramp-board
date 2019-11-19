@@ -113,7 +113,7 @@ The preferred way to contribute to RAMP is to fork the `ramp-board repository`_ 
 4) Work on this copy on your computer using Git to do the version
    control. When you're done editing, do::
 
-        $ git add modified_files
+        $ git add <modified_files>
         $ git commit
 
    to record your changes in Git, then push them to GitHub with::
