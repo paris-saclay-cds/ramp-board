@@ -36,7 +36,7 @@ and then you started it with::
 
 However, RAMP tests do not know which database engine you are using for 
 your ramp development and therefore you need to inform RAMP tests about this
-To do it, open ``db_engine.yml`` file located in the ``ramp-board`` directory. 
+To do this, open the ``db_engine.yml`` file located in the ``ramp-board`` directory. 
 It should look as follows::
 
     db_owner: postgres
