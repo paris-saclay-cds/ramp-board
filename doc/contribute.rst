@@ -35,7 +35,7 @@ and then you started it with::
     ~ $ pg_ctl -D postgres_dbs -l logfile start
 
 However, RAMP tests do not know which database engine you are using for 
-your ramp development and therefore you need to let them know about it.
+your ramp development and therefore you need to inform RAMP tests about this
 To do it, open ``db_engine.yml`` file located in the ``ramp-board`` directory. 
 It should look as follows::
 
