@@ -101,7 +101,7 @@ The preferred way to contribute to RAMP is to fork the `ramp-board repository`_ 
         $ git clone git@github.com:YourLogin/ramp-board.git
         $ cd ramp-board
 
-3) Create a branch to hold your changes::
+3) Create a branch (called 'my-feature' below) to hold your changes::
 
         $ git checkout -b my-feature
 
