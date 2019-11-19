@@ -5,9 +5,10 @@ Develop and contribute
 ########################
 
 Welcome to the RAMP team. We are always happy to have new RAMP developers.
-You can contribute to this code through ``Pull Request`` on GitHub_. Please, make
-sure that your code is coming with unit tests to ensure full coverage and
-continuous integration in the API.
+You can contribute to this code by making a `Pull Request 
+<https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_ 
+on Github_. Please, make sure that your code is coming with unit tests to 
+ensure full coverage and continuous integration in the API.
 
 .. _GitHub: https://github.com/paris-saclay-cds/ramp-board/pulls
 
@@ -15,7 +16,7 @@ continuous integration in the API.
 Install for development
 -----------------------
 To install RAMP please fallow :ref:`install guideline <install>` making sure 
-that you are using ``make inplace`` option.
+that you use the ``make inplace`` option.
 
 Prepare database engine
 -----------------------
