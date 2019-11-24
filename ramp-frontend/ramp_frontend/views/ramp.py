@@ -39,6 +39,7 @@ from ramp_database.tools.frontend import is_admin
 from ramp_database.tools.frontend import is_accessible_code
 from ramp_database.tools.frontend import is_accessible_event
 from ramp_database.tools.frontend import is_user_signed_up
+from ramp_database.tools.leaderboard import update_leaderboards
 from ramp_database.tools.submission import add_submission
 from ramp_database.tools.submission import add_submission_similarity
 from ramp_database.tools.submission import get_source_submissions
@@ -535,6 +536,32 @@ def ask_for_event(problem_name):
         )
 
     return render_template('ask_for_event.html', form=form, problem=problem)
+
+
+@mod.route("/toggle_competition/<submission_hash>")
+@flask_login.login_required
+def toggle_competition(submission_hash):
+    """Pulling out or putting a submission back into competition.
+
+    Parameters
+    ----------
+    submission_hash : str
+        The submission hash of the current submission.
+    """
+    submission = (Submission.query.filter_by(hash_=submission_hash)
+                                  .one_or_none())
+    access_code = is_accessible_code(
+        db.session, submission.event_team.event.name,
+        flask_login.current_user.name, submission.name
+    )
+    if submission is None or not access_code:
+        error_str = 'Missing submission: {}'.format(submission_hash)
+        return redirect_to_user(error_str)
+    submission.is_in_competition = not submission.is_in_competition
+    db.session.commit()
+    update_leaderboards(db.session, submission.event_team.event.name)
+    return redirect(
+        u'/{}/{}'.format(submission_hash, submission.files[0].f_name))
 
 
 @mod.route("/credit/<submission_hash>", methods=['GET', 'POST'])
