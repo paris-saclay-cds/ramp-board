@@ -192,6 +192,7 @@ def test_compute_contributivity():
     ramp_config = generate_ramp_config(read_config(ramp_config_template()))
     result = runner.invoke(
         main, ['compute-contributivity',
+               '--config', database_config_template(),
                '--event', 'iris_test',
                '--ramp-kit-dir', ramp_config['ramp_kit_dir'],
                '--ramp-data-dir', ramp_config['ramp_data_dir']],
