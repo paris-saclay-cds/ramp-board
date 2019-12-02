@@ -1,13 +1,9 @@
 import os
 import logging
-import numpy as np
 import pandas as pd
 
-from rampwf.utils import get_score_cv_bags
 from rampwf.utils import blend_submissions
-from ramp_utils import read_config
 
-from ..model import CVFold
 from ..model import SubmissionSimilarity
 
 from ._query import select_event_by_name
@@ -81,6 +77,10 @@ def compute_contributivity(session, event_name, ramp_kit_dir,
 
     submissions = select_submissions_by_state(
         session, event_name, state='scored')
+    if len(submissions) == 0:
+        logger.info('No submissions to blend.')
+        return
+    
     blend_submissions(
             submissions=[sub.basename for sub in submissions],
             ramp_kit_dir=ramp_kit_dir,
@@ -94,9 +94,10 @@ def compute_contributivity(session, event_name, ramp_kit_dir,
     bsc_df = pd.read_csv(
         os.path.join(ramp_submission_dir, 'training_output', bsc_f_name))
     n_folds = len(bsc_df) // 2
-    
+
     row = (bsc_df['step'] == 'valid') & (bsc_df['n_bag'] == n_folds - 1)
-    event.combined_combined_valid_score = bsc_df[row][score_type.name].values[0]
+    event.combined_combined_valid_score =\
+        bsc_df[row][score_type.name].values[0]
     row = (bsc_df['step'] == 'test') & (bsc_df['n_bag'] == n_folds - 1)
     event.combined_combined_test_score = bsc_df[row][score_type.name].values[0]
 
@@ -104,15 +105,17 @@ def compute_contributivity(session, event_name, ramp_kit_dir,
     bsfb_df = pd.read_csv(
         os.path.join(ramp_submission_dir, 'training_output', bsfb_f_name))
     row = (bsfb_df['step'] == 'valid') & (bsfb_df['n_bag'] == n_folds - 1)
-    event.combined_foldwise_valid_score = bsfb_df[row][score_type.name].values[0]
+    event.combined_foldwise_valid_score =\
+        bsfb_df[row][score_type.name].values[0]
     row = (bsfb_df['step'] == 'test') & (bsfb_df['n_bag'] == n_folds - 1)
-    event.combined_foldwise_test_score = bsfb_df[row][score_type.name].values[0]
-    
+    event.combined_foldwise_test_score =\
+        bsfb_df[row][score_type.name].values[0]
+
     c_f_name = 'contributivities.csv'
     contributivities_df = pd.read_csv(
         os.path.join(ramp_submission_dir, 'training_output', c_f_name))
-    
-    print(contributivities_df)
+
+    logger.info(contributivities_df)
     for index, row in contributivities_df.iterrows():
         sub_id = int(row['submission'][-9:])
         submission = select_submission_by_id(session, sub_id)

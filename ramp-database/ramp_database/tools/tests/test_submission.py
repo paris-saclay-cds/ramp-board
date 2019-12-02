@@ -73,6 +73,7 @@ from rampwf.utils import assert_submission
 
 HERE = os.path.dirname(__file__)
 
+
 @pytest.fixture
 def base_db():
     database_config = read_config(database_config_template())

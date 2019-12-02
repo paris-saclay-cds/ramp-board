@@ -237,7 +237,8 @@ def update_all_users_leaderboards(config, event):
 @click.option('--ramp-data-dir', default='.', show_default=True,
               help='Directory containing the data. This directory should '
               'contain a "data" folder.')
-@click.option("--min-improvement", help='The minimum score improvement '
+@click.option("--min-improvement", default='0.0',
+              help='The minimum score improvement '
               'to continue building the ensemble')
 def compute_contributivity(config, event, ramp_kit_dir, ramp_data_dir,
                            min_improvement):
