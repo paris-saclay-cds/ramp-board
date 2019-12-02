@@ -92,7 +92,8 @@ def test_user_signed_up(session_toy_db, event_name, user_name, is_accessible):
 
 
 def test_did_user_signed_up(session_toy_db):
-    assert did_user_signed_up(session_toy_db, 'iris_test', 'test_user') == False
+    assert not did_user_signed_up(session_toy_db,
+                              'iris_test', 'test_user')
 
 
 def test_is_accessible_code(session_toy_db):
