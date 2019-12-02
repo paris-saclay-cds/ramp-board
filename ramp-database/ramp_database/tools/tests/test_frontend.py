@@ -24,6 +24,7 @@ from ramp_database.tools.frontend import is_accessible_code
 from ramp_database.tools.frontend import is_accessible_event
 from ramp_database.tools.frontend import is_accessible_leaderboard
 from ramp_database.tools.frontend import is_user_signed_up
+from ramp_database.tools.frontend import did_user_signed_up
 
 
 @pytest.fixture(scope='module')
@@ -88,6 +89,10 @@ def test_is_accessible_event(session_toy_db, event_name, user_name,
 def test_user_signed_up(session_toy_db, event_name, user_name, is_accessible):
     assert is_user_signed_up(session_toy_db, event_name,
                              user_name) is is_accessible
+
+
+def test_did_user_signed_up(session_toy_db):
+    assert did_user_signed_up(session_toy_db, 'iris_test', 'test_user') == False
 
 
 def test_is_accessible_code(session_toy_db):

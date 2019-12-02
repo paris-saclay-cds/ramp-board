@@ -140,3 +140,28 @@ def is_user_signed_up(session, event_name, user_name):
             (event_team.is_active and event_team.approved)):
         return True
     return False
+
+
+def did_user_signed_up(session, event_name, user_name):
+    """Whether or not user signed up to an event.
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The RAMP event name.
+    team_name : str
+        The name of the team.
+    Returns
+    -------
+    asked : bool
+        Whether or not the user had asked to join event or not.
+    """
+    event_team = select_event_team_by_name(session, event_name, user_name)
+    print(event_team)
+    print(event_team.approved)
+    print(user_name)
+    if (event_team is not None and
+            (event_team.is_active and not event_team.approved)):
+        return True
+    return False

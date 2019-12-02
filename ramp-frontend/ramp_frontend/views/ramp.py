@@ -39,6 +39,7 @@ from ramp_database.tools.frontend import is_admin
 from ramp_database.tools.frontend import is_accessible_code
 from ramp_database.tools.frontend import is_accessible_event
 from ramp_database.tools.frontend import is_user_signed_up
+from ramp_database.tools.frontend import did_user_signed_up
 from ramp_database.tools.submission import add_submission
 from ramp_database.tools.submission import add_submission_similarity
 from ramp_database.tools.submission import get_source_submissions
@@ -161,7 +162,9 @@ def user_event(event_name):
         approved = is_user_signed_up(
             db.session, event_name, flask_login.current_user.name
         )
-        asked = approved
+        asked = did_user_signed_up(
+            db.session, event_name, flask_login.current_user.name
+        )
         return render_template('event.html',
                                description=description,
                                event=event,
@@ -704,7 +707,7 @@ def view_model(submission_hash, f_name):
                                   .one_or_none())
     if (submission is None or
             not is_accessible_code(db.session, submission.event.name,
-                                   flask_login.current_user.name,
+                                   submission.event_team.team.name,
                                    submission.name)):
         error_str = 'Missing submission: {}'.format(submission_hash)
         return redirect_to_user(error_str)
