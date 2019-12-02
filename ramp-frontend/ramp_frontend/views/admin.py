@@ -329,7 +329,6 @@ def dashboard_submissions(event_name):
     approved = is_user_signed_up(
         db.session, event_name, flask_login.current_user.name
     )
-    asked = approved
     asked = did_user_signed_up(
         db.session, event_name, flask_login.current_user.name
     )
