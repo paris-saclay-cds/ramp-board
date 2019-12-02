@@ -69,8 +69,9 @@ from ramp_database.tools.contributivity import (
     compute_historical_contributivity,
 )
 
-HERE = os.path.dirname(__file__)
+from rampwf.utils import assert_submission
 
+HERE = os.path.dirname(__file__)
 
 @pytest.fixture
 def base_db():
@@ -514,7 +515,21 @@ def test_add_submission_similarity(session_scope_module):
 
 
 def test_compute_contributivity(session_scope_module):
-    compute_contributivity(session_scope_module, 'iris_test')
+    ramp_kit_dir = os.path.join(HERE, 'data', 'iris_kit')
+    ramp_data_dir = ramp_kit_dir
+    deployment_dir = os.path.join('/', 'tmp', 'databoard_test')
+    ramp_submission_dir = os.path.join(deployment_dir, 'submissions')
+    # for testing blending, we need to train a submission
+    # ouputting predictions into the submission directory
+    assert_submission(
+        ramp_kit_dir=ramp_kit_dir,
+        ramp_data_dir=ramp_data_dir,
+        ramp_submission_dir=ramp_submission_dir,
+        submission='submission_000000009',
+        save_output=True)
+    compute_contributivity(
+        session_scope_module, 'iris_test',
+        ramp_kit_dir, ramp_data_dir)
     submissions = get_submissions(session_scope_module, 'iris_test', 'scored')
     s = get_submission_by_id(session_scope_module, submissions[0][0])
     assert s.contributivity == pytest.approx(1.0)

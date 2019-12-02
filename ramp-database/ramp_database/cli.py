@@ -232,11 +232,21 @@ def update_all_users_leaderboards(config, event):
               help='Configuration file YAML format containing the database '
               'information')
 @click.option("--event", help='The event name')
-def compute_contributivity(config, event):
+@click.option('--ramp-kit-dir', default='.', show_default=True,
+              help='Root directory of the ramp-kit to test.')
+@click.option('--ramp-data-dir', default='.', show_default=True,
+              help='Directory containing the data. This directory should '
+              'contain a "data" folder.')
+@click.option("--min-improvement", help='The minimum score improvement '
+              'to continue building the ensemble')
+def compute_contributivity(config, event, ramp_kit_dir, ramp_data_dir,
+                           min_improvement):
     """Blend submissions, compute combined score and contributivities."""
     config = read_config(config)
     with session_scope(config['sqlalchemy']) as session:
-        contributivity_module.compute_contributivity(session, event)
+        contributivity_module.compute_contributivity(
+            session, event, ramp_kit_dir, ramp_data_dir,
+            float(min_improvement))
         contributivity_module.compute_historical_contributivity(session, event)
         leaderboard_module.update_leaderboards(session, event)
         leaderboard_module.update_all_user_leaderboards(session, event)
