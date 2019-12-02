@@ -80,7 +80,7 @@ def compute_contributivity(session, event_name, ramp_kit_dir,
     if len(submissions) == 0:
         logger.info('No submissions to blend.')
         return
-    
+
     blend_submissions(
             submissions=[sub.basename for sub in submissions],
             ramp_kit_dir=ramp_kit_dir,
