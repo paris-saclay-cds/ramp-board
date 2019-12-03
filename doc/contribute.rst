@@ -62,7 +62,11 @@ has been started. You can always start it using the command::
     ~ $ pg_ctl -D postgres_dbs -l logfile start
 
 where `postgres_dbs` is the database cluster you created in the previous steps.
-You will also need SMTP server, to run it type::
+
+In addition, you might want to start an SMTP server to run all the tests.
+If you don't run the server, some of the tests will fail because they cannot 
+be run. To launch the server, execute the following 
+command::
 
     ~ $ python -m smtpd -n -c DebuggingServer localhost:8025 &
 
