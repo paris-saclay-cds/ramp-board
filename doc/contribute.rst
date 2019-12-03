@@ -23,7 +23,7 @@ that you use the ``make inplace`` option to install RAMP in developer mode.
 
 Prepare database engine
 -----------------------
-Next, create the database, following the steps as described here:
+Testing RAMP require a database, you need to create a database similarly to
 :ref:`create database <set_database>`
 
 You created the ``Postgres database cluster`` using the command::
