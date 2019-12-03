@@ -42,9 +42,7 @@ It should look as follows::
     db_owner: postgres
     db_cluster_name: postgres
 
-The above settings are used by ``Travis Cl`` which is a continuous integration
-service hosted at ``GitHub``. Therefore, you need to change them to your local
-settings.
+You need to change <postgres> to your local settings.
 
 ``db_owner`` is the owner of your database. If you don't know who is 
 the owner of your database you can find it out by typing in your terminal::
