@@ -56,11 +56,12 @@ commands as above your ``Postgres database cluster`` name is `'postgres_dbs'`).
 
 Test
 ----
-Each time before running the tests make sure your ``Postgres database cluster`` has been
-started. You can always start it using the command::
+Each time before running the tests make sure your ``Postgres database cluster`` 
+has been started. You can always start it using the command::
 
     ~ $ pg_ctl -D postgres_dbs -l logfile start
 
+where `postgres_dbs` is the database cluster you created in the previous steps.
 You will also need SMTP server, to run it type::
 
     ~ $ python -m smtpd -n -c DebuggingServer localhost:8025 &
