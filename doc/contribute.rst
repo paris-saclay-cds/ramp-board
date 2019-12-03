@@ -235,12 +235,20 @@ README file in the doc/ directory for more information.
 For building the documentation, you will need 
 
     - sphinx_, 
-    - matplotlib_, and
-    - pillow_.
+    - sphinx_rtd_theme_,
+    - numpydoc_,
+    - graphviz_,
+    - eralchemy_,
+    - sphinx-click_,
+    - matplotlib_.
 
 .. _sphinx: http://sphinx-doc.org
 .. _matplotlib: https://matplotlib.org
-.. _pillow: https://pillow.readthedocs.io
+.. _sphinx_rtd_theme: https://sphinx-rtd-theme.readthedocs.io/en/stable/
+.. _numpydoc: https://numpydoc.readthedocs.io/en/latest/format.html
+.. _graphviz: https://www.graphviz.org/
+.. _eralchemy: https://pypi.org/project/ERAlchemy/
+.. _sphinx-click: https://sphinx-click.readthedocs.io/en/latest/
 
 When you are writing documentation, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
