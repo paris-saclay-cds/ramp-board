@@ -18,19 +18,19 @@ ensure full coverage and continuous integration in the API.
 Install for development
 -----------------------
 To install RAMP please fallow :ref:`install guideline <install>` making sure 
-that you use the ``make inplace`` option.
+that you use the ``make inplace`` option to install RAMP in developer mode.
 
 
 Prepare database engine
 -----------------------
-Next, create the database, following the steps as described here:
+Testing RAMP require a database, you need to create a database similarly to
 :ref:`create database <set_database>`
 
-You created the ``Postgres database cluster`` using the command::
+In short, create the ``Postgres database cluster`` using the command::
 
     ~ $ initdb postgres_dbs
 
-and then you started it with::
+and then start it with::
 
     ~ $ pg_ctl -D postgres_dbs -l logfile start
 
