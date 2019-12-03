@@ -1,5 +1,6 @@
 from flask import Blueprint
 from flask import render_template
+import os as os
 
 from ramp_database.model import Keyword
 
@@ -11,7 +12,10 @@ mod = Blueprint('general', __name__)
 @mod.route('/')
 def index():
     """Default landing page."""
-    return render_template('index.html')
+    print('HERE I AM:')
+    print(os.getcwd())
+    images = os.listdir('ramp-frontend/ramp_frontend/static/img/powered_by/')
+    return render_template('index.html', images=images)
 
 
 @mod.route("/description")
@@ -51,3 +55,11 @@ def keywords(keyword_name):
         return render_template('keyword.html', keyword=keyword)
     return redirect_to_user('Keyword {} does not exist.'
                             .format(keyword_name), is_error=True)
+
+
+@mod.route("/")
+def get_logos():
+    images = os.listdir('../static/img/powered_by/')
+    print('images:')
+    print(images)
+    return render_template('index.html', images=images)

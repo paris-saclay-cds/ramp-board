@@ -312,6 +312,7 @@
            </div>
         </div>
     </div>
+    <!--
     <div class="container-fluid app-content-a" id="powered_by">
         <div class="container">
             <div class="row">
@@ -324,6 +325,19 @@
                     </center>
                 </div>
            </div>
+        </div>
+    </div>
+    -->
+    <div class="container-fluid app-content-a" id="powered_by">
+        <div class="container">
+            <div class="row">
+                <h2 class="text-center app-content-header">Powered by</h2>
+                {% for image in images %}
+                <div class="col-md-4 col-sm-6" style="background-color: green;">
+                    <a href="{{ url_for('static', filename='../static/img/powered_by/' + image) }}">{{ image }}</a>
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
     <!-- /END THE FEATURETTES -->
