@@ -333,8 +333,8 @@
             <div class="row">
                 <h2 class="text-center app-content-header">Powered by</h2>
                 {% for image in images %}
-                <div class="col-md-4 col-sm-6" style="background-color: green;">
-                    <a href="{{ url_for('static', filename='../static/img/powered_by/' + image) }}">{{ image }}</a>
+                <div class="col-md-4 col-sm-6">
+                    <img src="{{ url_for('static', filename='../static/img/powered_by/' + image) }}" class="img" height="60">{{ image }}
                 </div>
                 {% endfor %}
             </div>
