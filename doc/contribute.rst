@@ -18,7 +18,7 @@ ensure full coverage and continuous integration in the API.
 Install for development
 -----------------------
 To install RAMP please fallow :ref:`install guideline <install>` making sure 
-that you use the ``make inplace`` option.
+that you use the ``make inplace`` option to install RAMP in developer mode.
 
 
 Prepare database engine
