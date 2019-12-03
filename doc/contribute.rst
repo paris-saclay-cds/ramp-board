@@ -30,7 +30,7 @@ In short, create the ``Postgres database cluster`` using the command::
 
     ~ $ initdb postgres_dbs
 
-and then you started it with::
+and then start it with::
 
     ~ $ pg_ctl -D postgres_dbs -l logfile start
 
