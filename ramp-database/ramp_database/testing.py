@@ -123,7 +123,8 @@ def _delete_line_from_file(f_name, line_to_delete):
         f.truncate()
 
 
-def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False):
+def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False,
+                             depth=None):
     """Clone ramp-kit and ramp-data repository and setup it up.
 
     Parameters
@@ -137,6 +138,9 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False):
     force : bool, default is False
         Whether or not to overwrite the RAMP kit and data repositories if they
         already exists.
+    depth : int, default=None
+        the depth parameter to pass to git clone. Use ``depth=1`` for a shallow
+        clone (faster).
     """
     problem_kit_path = ramp_config['ramp_kit_dir']
     if os.path.exists(problem_kit_path):
@@ -147,7 +151,10 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False):
             )
         shutil.rmtree(problem_kit_path, ignore_errors=True)
     ramp_kit_url = 'https://github.com/ramp-kits/{}.git'.format(problem_name)
-    Repo.clone_from(ramp_kit_url, problem_kit_path)
+    kwargs = {}
+    if depth is not None:
+        kwargs['depth'] = depth
+    Repo.clone_from(ramp_kit_url, problem_kit_path, **kwargs)
 
     problem_data_path = ramp_config['ramp_data_dir']
     if os.path.exists(problem_data_path):
@@ -158,7 +165,7 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False):
             )
         shutil.rmtree(problem_data_path, ignore_errors=True)
     ramp_data_url = 'https://github.com/ramp-data/{}.git'.format(problem_name)
-    Repo.clone_from(ramp_data_url, problem_data_path)
+    Repo.clone_from(ramp_data_url, problem_data_path, **kwargs)
 
     current_directory = os.getcwd()
     os.chdir(problem_data_path)
@@ -246,7 +253,7 @@ def add_problems(session):
     }
     for problem_name, ramp_config in ramp_configs.items():
         internal_ramp_config = generate_ramp_config(ramp_config)
-        setup_ramp_kit_ramp_data(internal_ramp_config, problem_name)
+        setup_ramp_kit_ramp_data(internal_ramp_config, problem_name, depth=1)
         add_problem(session, problem_name,
                     internal_ramp_config['ramp_kit_dir'],
                     internal_ramp_config['ramp_data_dir'])
