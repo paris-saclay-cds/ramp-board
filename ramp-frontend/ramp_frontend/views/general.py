@@ -55,11 +55,3 @@ def keywords(keyword_name):
         return render_template('keyword.html', keyword=keyword)
     return redirect_to_user('Keyword {} does not exist.'
                             .format(keyword_name), is_error=True)
-
-
-@mod.route("/")
-def get_logos():
-    images = os.listdir('../static/img/powered_by/')
-    print('images:')
-    print(images)
-    return render_template('index.html', images=images)
