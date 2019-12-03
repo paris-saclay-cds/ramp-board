@@ -56,7 +56,7 @@ commands as above your ``Postgres database cluster`` name is `'postgres_dbs'`).
 
 Test
 ----
-Each time before running the tests make sure your Postgres database cluster has been
+Each time before running the tests make sure your ``Postgres database cluster`` has been
 started. You can always start it using the command::
 
     ~ $ pg_ctl -D postgres_dbs -l logfile start
