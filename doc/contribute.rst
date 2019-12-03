@@ -26,7 +26,7 @@ Prepare database engine
 Testing RAMP require a database, you need to create a database similarly to
 :ref:`create database <set_database>`
 
-You created the ``Postgres database cluster`` using the command::
+In short, create the ``Postgres database cluster`` using the command::
 
     ~ $ initdb postgres_dbs
 
