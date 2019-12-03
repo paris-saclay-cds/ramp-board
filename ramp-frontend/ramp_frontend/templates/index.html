@@ -334,7 +334,7 @@
                 <h2 class="text-center app-content-header">Powered by</h2>
                 {% for image in images %}
                 <div class="col-md-4 col-sm-6">
-                    <img src="{{ url_for('static', filename='../static/img/powered_by/' + image) }}" class="img" height="60">{{ image }}
+                    <img src="{{ url_for('static', filename='../static/img/powered_by/' + image) }}" class="img" alt='' height="60">
                 </div>
                 {% endfor %}
             </div>
