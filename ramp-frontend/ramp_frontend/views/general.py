@@ -12,7 +12,11 @@ mod = Blueprint('general', __name__)
 @mod.route('/')
 def index():
     """Default landing page."""
-    images = os.listdir('ramp-frontend/ramp_frontend/static/img/powered_by/')
+    img_ext = ('.png', '.jpg', '.jpeg', '.png', '.gif', '.svg')
+    images = [f for f in os.listdir(
+              'ramp-frontend/ramp_frontend/static/img/powered_by/') 
+              if f.endswith(img_ext)]
+    print(images)
     return render_template('index.html', images=images)
 
 
