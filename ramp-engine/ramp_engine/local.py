@@ -30,7 +30,7 @@ class CondaEnvWorker(BaseWorker):
         * `predictions_dir`: path to the directory where the
           predictions of the submission will be stored.
         * 'timeout': timeout after a given number of seconds when
-          running the worker. If not provided or None, a default of 7200
+          running the worker. If not provided, a default of 7200
           is used.
     submission : str
         Name of the RAMP submission to be handle by the worker.

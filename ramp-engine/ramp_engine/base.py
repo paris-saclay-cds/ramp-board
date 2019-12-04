@@ -67,7 +67,7 @@ class BaseWorker(metaclass=ABCMeta):
     def status(self, status):
         self._status = status
 
-    def check_timeout_reached(self):
+    def check_timeout(self):
         """Check a submission for timeout."""
         pass
 
