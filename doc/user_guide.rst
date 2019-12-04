@@ -10,6 +10,7 @@ User Guide
    :numbered:
 
    setup_server.rst
+   personalize.rst
    create_ramp_event.rst
    workers.rst
    frontend.rst
