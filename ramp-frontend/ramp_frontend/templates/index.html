@@ -315,12 +315,14 @@
     <div class="container-fluid app-content-a" id="powered_by">
         <div class="container">
             <div class="row">
-                <h2 class="text-center app-content-header">Powered by</h2>
-                {% for image in images %}
-                <div class="col-md-4 col-sm-6">
-                    <img src="{{ url_for('static', filename='../static/img/powered_by/' + image) }}" class="img" alt='' height="60">
-                </div>
-                {% endfor %}
+                {% if images|length > 0 %}
+                    <h2 class="text-center app-content-header">Powered by</h2>
+                    {% for image in images %}
+                    <div class="col-md-4 col-sm-6">
+                        <img src="{{ url_for('static', filename='../static/img/powered_by/' + image) }}" class="img" alt='' height="60">
+                    </div>
+                    {% endfor %}
+                {% endif %}
             </div>
         </div>
     </div>
