@@ -9,6 +9,11 @@ body {
 
 * {
   outline: none; }
+       
+.fas {
+    font-family: FontAwesome;
+}
+  
 
 .row > [class*="col-"] {
   margin-bottom: 25px; }
@@ -1108,7 +1113,7 @@ body.login-page {
         -webkit-transition: all 0.25s linear;
         transition: all 0.25s linear;
         opacity: 0.75; }
-
+ 
 @media only screen and (max-width: 768px) {
   .landing-page .navbar .navbar-header .navbar-brand {
     padding-left: 15px; } }

@@ -82,20 +82,13 @@ def problems():
         )
     problems = get_problem(db.session, None)
     
-    #import pdb; pdb.set_trace()
     for problem in problems:
         for event in problem.events:
-            print(event.name)
             if get_event_team_by_name(
         db.session, event.name, flask_login.current_user.name):
                 event.signed_up = True
             else:
                 event.signed_up = False
-            print(event.signed_up)
-    #signed_up = [get_event_team_by_name(
-    #    db.session, 'event_name', flask_login.current_user.name
-    #) for event_name in problems]
-    #problems.signed_up = signed_up
 
     # problems = Problem.query.order_by(Problem.id.desc())
     return render_template('problems.html',
