@@ -80,10 +80,16 @@ def problems():
         add_user_interaction(
             db.session, interaction='looking at problems', user=user
         )
+    problems = get_problem(db.session, None)
+     
+    signed_up = [get_event_team_by_name(
+        db.session, event_name, flask_login.current_user.name
+    ) for event_name in problems]
+    problems.signed_up = event_name
 
     # problems = Problem.query.order_by(Problem.id.desc())
     return render_template('problems.html',
-                           problems=get_problem(db.session, None),
+                           problems=problems,
                            admin=admin)
 
 
