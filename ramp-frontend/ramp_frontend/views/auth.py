@@ -15,8 +15,6 @@ from flask import url_for
 
 from itsdangerous import URLSafeTimedSerializer
 
-from sqlalchemy.orm.exc import NoResultFound
-
 from ramp_database.utils import check_password
 from ramp_database.utils import hash_password
 
@@ -73,10 +71,9 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
-        try:
-            user = get_user_by_name_or_email(db.session,
-                                             name=form.user_name.data)
-        except NoResultFound:
+        user = get_user_by_name_or_email(db.session,
+                                         name=form.user_name.data)
+        if user is None:
             msg = 'User "{}" does not exist'.format(form.user_name.data)
             flash(msg)
             logger.info(msg)

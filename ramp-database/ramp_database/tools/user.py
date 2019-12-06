@@ -4,7 +4,6 @@ import logging
 import pandas as pd
 
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import NoResultFound
 
 from ..exceptions import NameClashError
 from ..model import Team
@@ -87,23 +86,15 @@ def add_user(session, name, password, lastname, firstname, email,
     except IntegrityError as e:
         session.rollback()
         message = ''
-        try:
-            select_user_by_name(session, name)
+        if select_user_by_name(session, name) is not None:
             message += 'username is already in use'
-        except NoResultFound:
+        elif select_team_by_name(session, name) is not None:
             # We only check for team names if username is not in db
-            try:
-                select_team_by_name(session, name)
-                message += 'username is already in use as a team name'
-            except NoResultFound:
-                pass
-        try:
-            select_user_by_email(session, lower_case_email)
+            message += 'username is already in use as a team name'
+        if select_user_by_email(session, lower_case_email) is not None:
             if message:
                 message += ' and '
             message += 'email is already in use'
-        except NoResultFound:
-            pass
         if message:
             raise NameClashError(message)
         else:
@@ -340,13 +331,9 @@ def set_user_by_instance(session, user, lastname, firstname, email,
         session.commit()
     except IntegrityError as e:
         session.rollback()
-        message = ''
-        try:
-            select_user_by_email(session, user.email)
-            message += 'email is already in use'
-        except NoResultFound:
-            pass
-        if len(message) > 0:
+        if select_user_by_email(session, user.email) is not None:
+            message = 'email is already in use'
+
             logger.error(message)
             raise NameClashError(message)
         else:
