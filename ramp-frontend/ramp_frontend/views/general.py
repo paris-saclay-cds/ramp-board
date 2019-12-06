@@ -1,7 +1,6 @@
 from flask import Blueprint
 from flask import render_template
 import os as os
-import sys as sys
 
 from ramp_database.model import Keyword
 
