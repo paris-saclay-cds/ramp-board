@@ -81,11 +81,12 @@ def problems():
             db.session, interaction='looking at problems', user=user
         )
     problems = get_problem(db.session, None)
-    
+
     for problem in problems:
         for event in problem.events:
             if get_event_team_by_name(
-        db.session, event.name, flask_login.current_user.name):
+                                      db.session, event.name,
+                                      flask_login.current_user.name):
                 event.signed_up = True
             else:
                 event.signed_up = False
