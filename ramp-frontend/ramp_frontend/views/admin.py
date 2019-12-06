@@ -312,7 +312,9 @@ def dashboard_submissions(event_name):
     name_submissions = [sub.name for sub in submissions]
     cumulated_submissions = list(range(1, 1 + len(submissions)))
     training_sec = [
-        (sub.training_timestamp - sub.submission_timestamp).seconds / 60.
+        (
+            sub.training_timestamp - sub.submission_timestamp
+        ).total_seconds() / 60.
         if sub.training_timestamp is not None else 0
         for sub in submissions
     ]
