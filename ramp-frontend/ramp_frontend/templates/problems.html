@@ -34,14 +34,18 @@
     {% for event in problem.events %}event_name
         {% if event.is_public %}
             {% if event.signed_up %}
-                <li> <a href="/events/{{ event.name }}">{{ event.title }}</a>,
+                <li> signed up <a href="/events/{{ event.name }}">{{ event.title }}</a>,
                 number of participants = <strong><font color=darkgreen>{{ event.n_participants }}</font></strong>,
                 number of submissions = <strong><font color=darkblue>{{ event.n_submissions }}</font></strong>,
                 combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong>,
                 <a href="/event_plots/{{ event.name }}">click here for score vs time plot</a>
             {% else %}
-
-            
+            <li> not signed up <a href="/events/{{ event.name }}">{{ event.title }}</a>,
+                number of participants = <strong><font color=darkgreen>{{ event.n_participants }}</font></strong>,
+                number of submissions = <strong><font color=darkblue>{{ event.n_submissions }}</font></strong>,
+                combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong>,
+                <a href="/event_plots/{{ event.name }}">click here for score vs time plot</a>
+                
             {% endif %}
         {% endif %}
     {% endfor %}
