@@ -158,7 +158,7 @@ def select_user_by_name(session, user_name):
     """
     if user_name is None:
         return session.query(User).all()
-    return session.query(User).filter(User.name == user_name).one()
+    return session.query(User).filter(User.name == user_name).one_or_none()
 
 
 def select_user_by_email(session, email):
