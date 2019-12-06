@@ -46,6 +46,7 @@ from ramp_database.tools.submission import get_submission_by_name
 from ramp_database.tools.user import add_user_interaction
 from ramp_database.tools.team import ask_sign_up_team
 from ramp_database.tools.team import get_event_team_by_name
+from ramp_database.tools.team import select_event_team_by_name
 from ramp_database.tools.team import sign_up_team
 
 from ramp_frontend import db
@@ -81,11 +82,19 @@ def problems():
             db.session, interaction='looking at problems', user=user
         )
     problems = get_problem(db.session, None)
-     
-    signed_up = [get_event_team_by_name(
-        db.session, event_name, flask_login.current_user.name
-    ) for event_name in problems]
-    problems.signed_up = event_name
+    
+    #import pdb; pdb.set_trace()
+    for problem in problems:
+        for event in problem.events:
+            print(event.name)
+            event.sign_up = select_event_team_by_name(
+        db.session, event.name, flask_login.current_user.name)
+            import pdb; pdb.set_trace()
+            print(event.sign_up)
+    #signed_up = [get_event_team_by_name(
+    #    db.session, 'event_name', flask_login.current_user.name
+    #) for event_name in problems]
+    #problems.signed_up = signed_up
 
     # problems = Problem.query.order_by(Problem.id.desc())
     return render_template('problems.html',
