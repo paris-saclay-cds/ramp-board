@@ -13,10 +13,10 @@ mod = Blueprint('general', __name__)
 def index():
     """Default landing page."""
     img_ext = ('.png', '.jpg', '.jpeg', '.gif', '.svg')
-    images = [f for f in os.listdir(
-              'ramp-frontend/ramp_frontend/static/img/powered_by/')
+    current_dir = os.path.dirname(__file__)
+    img_folder = os.path.join(current_dir, "../static/img/powered_by")
+    images = [f for f in os.listdir(img_folder)
               if f.endswith(img_ext)]
-    print(images)
     return render_template('index.html', images=images)
 
 
