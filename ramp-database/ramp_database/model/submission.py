@@ -396,6 +396,12 @@ class Submission(Model):
             The state of the new submission.
         """
         self.state = state
+
+        if state == "sent_to_training":
+            self.sent_to_training_timestamp = datetime.datetime.utcnow()
+        elif state == "training":
+            self.training_timestamp = datetime.datetime.utcnow()
+
         if session is None:
             all_cv_folds = self.on_cv_folds
         else:
