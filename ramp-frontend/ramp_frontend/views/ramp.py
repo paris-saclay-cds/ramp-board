@@ -101,13 +101,12 @@ def problems():
                                     flask_login.current_user.name):
                 if is_user_signed_up(db.session, event.name,
                                     flask_login.current_user.name):
-                    event.state = 'signed'
-
+                    event.state = 'open_signed'
                 else: 
                     event.state = 'waiting'
             else:
-                event.state = 'close'
-    
+                event.state = 'open_not_signed'
+                
     # problems = Problem.query.order_by(Problem.id.desc())
     return render_template('problems.html',
                            problems=problems,

@@ -33,10 +33,16 @@
     <ul class="fa-ul">
     {% for event in problem.events %}
         {% if event.is_public %}
-            {% if event.signed_up %}
-                <li class="fas fa-check-square" participants">
-            {% else %}
-                <li class="fas fa-square"> 
+            {% if event.state == 'waiting' %}
+                <li class="fas fa-clock-o"></i>
+            {% elif event.state == 'open_not_signed' %}
+                <li class="fas fa-circle-o"></i> 
+            {% elif event.state == 'open_signed' %}
+                <li class="fas fa-check-circle-o"></i>
+            {% elif event.state == 'close_not_signed' %}
+                <li class="fas fa-circle"></i>
+            {% elif event.state == 'close_signed' %}
+                <li class="fas fa-check-circle"></i>
             {% endif %}
             <a href="/events/{{ event.name }}">{{ event.title }}</a>,
                 number of participants = <strong><font color=darkgreen>{{ event.n_participants }}</font></strong>,
