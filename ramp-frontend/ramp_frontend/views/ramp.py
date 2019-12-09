@@ -93,15 +93,19 @@ def problems():
             if now > start and now < end:
                 opened = True
 
-            signed = get_event_team_by_name(
+            if user:
+                signed = get_event_team_by_name(
                                     db.session, event.name,
                                     flask_login.current_user.name)
-            if user and signed:
-                if not signed.approved:
+                if not signed and opened:
+                    event.state = 'open_not_signed'
+                elif not signed and not opened:
+                    event.state = 'close_not_signed'
+                elif signed.approved:
                     event.state = 'waiting'
-                elif opened:
+                elif signed and opened:
                     event.state = 'open_signed'
-                else:
+                elif signed and not opened:
                     event.state = 'close_signed'
             else:
                 if opened:
