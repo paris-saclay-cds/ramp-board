@@ -92,7 +92,7 @@ def problems():
             opened = False
             if now > start and now < end:
                 opened = True
-            
+
             signed = get_event_team_by_name(
                                     db.session, event.name,
                                     flask_login.current_user.name)
