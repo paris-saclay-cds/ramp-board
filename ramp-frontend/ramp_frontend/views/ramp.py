@@ -84,16 +84,15 @@ def problems():
 
     for problem in problems:
         for event in problem.events:
-            # is event opened for submissions
-            now = datetime.datetime.now()
-            start = event.opening_timestamp
-            end = event.closing_timestamp
-
-            opened = False
-            if now > start and now < end:
-                opened = True
-
             if user:
+                now = datetime.datetime.now()
+                start = event.opening_timestamp
+                end = event.closing_timestamp
+
+                opened = False
+                if now > start and now < end:
+                    opened = True
+
                 signed = get_event_team_by_name(
                                     db.session, event.name,
                                     flask_login.current_user.name)
