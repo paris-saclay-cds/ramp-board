@@ -81,23 +81,10 @@ def problems():
             db.session, interaction='looking at problems', user=user
         )
     problems = get_problem(db.session, None)
-    
-    # icons to use:
-    # waiting for approval: <i class="far fa-clock"></i>
-    # competition open not signed up: <i class="far fa-circle"></i>
-    # competition closed not signed up: <i class="fas fa-circle"></i> or <i class="fad fa-circle"></i>
-    # competition open signed up: <i class="far fa-check-circle"></i>
-    # competition close signed up:<i class="fas fa-check-circle"></i> or <i class="fad fa-check-circle"></i>
 
-    # check if 
-    # pending for approval
-    # open/close
-    # possible states: 
-    # waiting, open_signed, close_signed, open_not_signed, close_not_signed
     for problem in problems:
         for event in problem.events:
-            # check if event is open for submissions
-
+            # is event opened for submissions
             now = datetime.datetime.now()
             start = event.opening_timestamp
             end = event.closing_timestamp
@@ -106,17 +93,16 @@ def problems():
             if now > start and now < end:
                 opened = True
             
-            if user and get_event_team_by_name(
+            signed = get_event_team_by_name(
                                     db.session, event.name,
-                                    flask_login.current_user.name):
-                if is_user_signed_up(db.session, event.name,
-                                    flask_login.current_user.name):
-                    if opened:
-                        event.state = 'open_signed'
-                    else:
-                        event.state = 'close_signed'
-                else: 
+                                    flask_login.current_user.name)
+            if user and signed:
+                if not signed.approved:
                     event.state = 'waiting'
+                elif opened:
+                    event.state = 'open_signed'
+                else:
+                    event.state = 'close_signed'
             else:
                 if opened:
                     event.state = 'open_not_signed'
