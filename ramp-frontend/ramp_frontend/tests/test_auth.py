@@ -183,17 +183,30 @@ def test_sign_up(client_session):
     rv = client.post('/sign_up', data=user_profile, follow_redirects=True)
     assert rv.status_code == 200
 
+    def _assert_flash(url, data, status_code=200,
+                      message='username is already in use'):
+        rv = client.post('/sign_up', data=data)
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert (flash_message['message'] == message)
+        assert rv.status_code == status_code
+
     # check that we catch a flash error if we try to sign-up with an identical
-    # username or email
-    user_profile = {'user_name': 'test_user', 'password': 'xx',
+    # username
+    user_profile = {'user_name': 'xx', 'password': 'xx',
                     'firstname': 'xx', 'lastname': 'xx',
                     'email': 'test_user@gmail.com'}
-    rv = client.post('/sign_up', data=user_profile)
-    with client.session_transaction() as cs:
-        flash_message = dict(cs['_flashes'])
-    assert (flash_message['message'] ==
-            'username is already in use and email is already in use')
-    assert rv.status_code == 200
+    _assert_flash('/sign_up', data=user_profile,
+                  message='username is already in use')
+
+    user_profile.update(user_name='new', email="yy")
+    _assert_flash('/sign_up', data=user_profile,
+                  message='email is already in use')
+
+    user_profile.update(user_name='yy', email="yy")
+    _assert_flash('/sign_up', data=user_profile,
+                  message=("username is already in use "
+                           "and email is already in use"))
 
 
 def test_sign_up_with_approval(client_session):
