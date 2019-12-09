@@ -28,15 +28,15 @@
 {% endwith %}
 
 {% if problems|length > 0 %}
-<class="badge"></class>
-<ul>
-    <li class="fas fa-clock-o"> waiting</li> 
-    <li class="fas fa-circle-o"> challenge is opened</li> 
+
+<ul class="fa-ul">
+    <li class="fas fa-clock-o"> waiting for approval</li> 
+    <li class="fas fa-circle-o"> challenge is opened, you can sign up</li> 
     <li class="fas fa-check-circle-o"> challenge is opened, you are signed up</li>
     <li class="fas fa-circle"> challenge is closed</li>
     <li class="fas fa-check-circle"> challenge is closed, you are signed up</li>
-    </ul>
-</class>
+</ul>
+
 {% endif %}
 <ul>
 {% for problem in problems %}
