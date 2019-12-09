@@ -82,14 +82,31 @@ def problems():
         )
     problems = get_problem(db.session, None)
     
+    # icons to use:
+    # waiting for approval: <i class="far fa-clock"></i>
+    # competition open not signed up: <i class="far fa-circle"></i>
+    # competition closed not signed up: <i class="fas fa-circle"></i> or <i class="fad fa-circle"></i>
+    # competition open signed up: <i class="far fa-check-circle"></i>
+    # competition close signed up:<i class="fas fa-check-circle"></i> or <i class="fad fa-check-circle"></i>
+
+    # check if 
+    # pending for approval
+    # open/close
+    # possible states: 
+    # waiting, open_signed, close_signed, open_not_signed, close_not_signed
     for problem in problems:
         for event in problem.events:
             if user and get_event_team_by_name(
                                     db.session, event.name,
                                     flask_login.current_user.name):
-                event.signed_up = True
+                if is_user_signed_up(db.session, event.name,
+                                    flask_login.current_user.name):
+                    event.state = 'signed'
+
+                else: 
+                    event.state = 'waiting'
             else:
-                event.signed_up = False
+                event.state = 'close'
     
     # problems = Problem.query.order_by(Problem.id.desc())
     return render_template('problems.html',
