@@ -27,6 +27,17 @@
 {% endif %}
 {% endwith %}
 
+{% if problems|length > 0 %}
+<class="badge"></class>
+<ul>
+    <li class="fas fa-clock-o"> waiting</li> 
+    <li class="fas fa-circle-o"> challenge is opened</li> 
+    <li class="fas fa-check-circle-o"> challenge is opened, you are signed up</li>
+    <li class="fas fa-circle"> challenge is closed</li>
+    <li class="fas fa-check-circle"> challenge is closed, you are signed up</li>
+    </ul>
+</class>
+{% endif %}
 <ul>
 {% for problem in problems %}
 <li> <a href="/problems/{{ problem.name }}"><strong><font size="+1">{{ problem.title }}</font></strong></a><br>
@@ -34,15 +45,15 @@
     {% for event in problem.events %}
         {% if event.is_public %}
             {% if event.state == 'waiting' %}
-                <li class="fas fa-clock-o"></i>
+                <li class="fas fa-clock-o">
             {% elif event.state == 'open_not_signed' %}
-                <li class="fas fa-circle-o"></i> 
+                <li class="fas fa-circle-o"> 
             {% elif event.state == 'open_signed' %}
-                <li class="fas fa-check-circle-o"></i>
+                <li class="fas fa-check-circle-o">
             {% elif event.state == 'close_not_signed' %}
-                <li class="fas fa-circle"></i>
+                <li class="fas fa-circle">
             {% elif event.state == 'close_signed' %}
-                <li class="fas fa-check-circle"></i>
+                <li class="fas fa-check-circle">
             {% endif %}
             <a href="/events/{{ event.name }}">{{ event.title }}</a>,
                 number of participants = <strong><font color=darkgreen>{{ event.n_participants }}</font></strong>,
