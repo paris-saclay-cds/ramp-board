@@ -96,17 +96,33 @@ def problems():
     # waiting, open_signed, close_signed, open_not_signed, close_not_signed
     for problem in problems:
         for event in problem.events:
+            # check if event is open for submissions
+
+            now = datetime.datetime.now()
+            start = event.opening_timestamp
+            end = event.closing_timestamp
+
+            opened = False
+            if now > start and now < end:
+                opened = True
+            
             if user and get_event_team_by_name(
                                     db.session, event.name,
                                     flask_login.current_user.name):
                 if is_user_signed_up(db.session, event.name,
                                     flask_login.current_user.name):
-                    event.state = 'open_signed'
+                    if opened:
+                        event.state = 'open_signed'
+                    else:
+                        event.state = 'close_signed'
                 else: 
                     event.state = 'waiting'
             else:
-                event.state = 'open_not_signed'
-                
+                if opened:
+                    event.state = 'open_not_signed'
+                else:
+                    event.state = 'close_not_signed'
+
     # problems = Problem.query.order_by(Problem.id.desc())
     return render_template('problems.html',
                            problems=problems,
