@@ -1,0 +1,263 @@
+.. _contribute:
+
+########################
+Develop and contribute
+########################
+
+Welcome to the RAMP team. We are always happy to have new RAMP developers.
+
+You can contribute to this code by making a `Pull Request 
+<https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_ 
+on Github_. Please, make sure that your code is coming with unit tests to 
+ensure full coverage and continuous integration in the API.
+
+
+.. _GitHub: https://github.com/paris-saclay-cds/ramp-board/pulls
+
+
+Install for development
+-----------------------
+To install RAMP please fallow :ref:`install guideline <install>` making sure 
+that you use the ``make inplace`` option to install RAMP in developer mode.
+
+
+Prepare database engine
+-----------------------
+Testing RAMP require a database, you need to create a database similarly to
+:ref:`create database <set_database>`
+
+In short, create the ``Postgres database cluster`` using the command::
+
+    ~ $ initdb postgres_dbs
+
+and then start it with::
+
+    ~ $ pg_ctl -D postgres_dbs -l logfile start
+
+However, RAMP tests do not know which database engine you are using for 
+your ramp development and therefore you need to inform RAMP tests about this
+To do this, open the ``db_engine.yml`` file located in the ``ramp-board`` directory. 
+It should look as follows::
+
+    db_owner: postgres
+    db_cluster_name: postgres
+
+You need to change <postgres> to your local settings.
+
+``db_owner`` is the owner of your database. If you don't know who is 
+the owner of your database you can find it out by typing in your terminal::
+    
+    ~ $ psql -l
+
+This command will list all of your databases along with their owners. 
+
+``db_cluster_name`` is the name of your Postgres database cluster (if you used
+commands as above your ``Postgres database cluster`` name is `'postgres_dbs'`).
+
+Test
+----
+Each time before running the tests make sure your ``Postgres database cluster`` 
+has been started. You can always start it using the command::
+
+    ~ $ pg_ctl -D postgres_dbs -l logfile start
+
+where `postgres_dbs` is the database cluster you created in the previous steps.
+
+In addition, you might want to start an SMTP server to run all the tests.
+If you don't run the server, some of the tests will fail because they cannot 
+be run. To launch the server, execute the following 
+command::
+
+    ~ $ python -m smtpd -n -c DebuggingServer localhost:8025 &
+
+You are now ready to run the tests. You can do so using ``pytest`` from the root ``ramp-board`` directory::
+
+    ~ $ pytest -vsl .
+
+The above will only work when the packages were installed in development mode.
+In the other case, you can test the individual packages with::
+
+    ~ $ pytest -vsl --pyargs ramp_utils ramp_database ramp_frontend ramp_engine
+
+
+How to contribute
+-----------------
+
+This guide is adapted from `scikit-learn contribution guide`_.
+
+.. _scikit-learn contribution guide: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
+
+
+Forking RAMP
+============
+
+The preferred way to contribute to RAMP is to fork the `ramp-board repository`_ on GitHub:
+
+.. _ramp-board repository: https://github.com/paris-saclay-cds/ramp-board
+
+1) To fork the `ramp-board repository`_ click on the 'Fork' button near the 
+   top of the page. This creates a copy of the code under your account 
+   on the GitHub server.
+
+2) Clone this copy to your local disk::
+
+        $ git clone git@github.com:YourLogin/ramp-board.git
+        $ cd ramp-board
+
+3) Create a branch (called 'my-feature' below) to hold your changes::
+
+        $ git checkout -b my-feature
+
+   and start making changes. 
+
+.. note::
+    Never work in the ``master`` branch!
+
+4) Work on this copy on your computer using Git to do the version
+   control. When you're done editing, do::
+
+        $ git add <modified_files>
+        $ git commit
+
+   to record your changes in Git, then push them to GitHub with::
+
+        $ git push -u origin my-feature
+
+Finally, go to the web page of your fork of the ramp-board repo,
+and click 'Pull request' to send your changes to the maintainers for
+review. This will send an email to the committers.
+
+If any of the above seems like magic to you, then look up `Git documentation`_ 
+on the web.
+
+.. _Git documentation: https://git-scm.com/documentation
+
+
+Contributing Pull Requests
+==========================
+
+It is recommended to check that your contribution complies with the
+following rules before submitting a pull request:
+
+-  Follow the coding-guidelines_ as for scikit-learn.
+
+-  When applicable, use the validation tools and other code in the
+   `ramp_utils` subpackage.
+
+-  If your pull request addresses an issue, please use the title to describe
+   the issue and mention the issue number in the pull request description to
+   ensure a link is created to the original issue.
+
+-  All public methods should have informative docstrings with sample
+   usage presented as doctests when appropriate.
+
+-  Please prefix the title of your pull request with `[MRG]` if the
+   contribution is complete and should be subjected to a detailed review.
+   Incomplete contributions should be prefixed `[WIP]` to indicate a work
+   in progress (and changed to `[MRG]` when it matures). WIPs may be useful
+   to: indicate you are working on something to avoid duplicated work,
+   request broad review of functionality or API, or seek collaborators.
+   WIPs often benefit from the inclusion of a `task list`_ in the PR description.
+
+-  All other tests pass when everything is rebuilt from scratch. On
+   Unix-like systems, check with (from the toplevel source folder)::
+
+        $ make
+
+-  Documentation and high-coverage tests are necessary for enhancements
+   to be accepted.
+
+-  At least one paragraph of narrative documentation with links to
+   references in the literature (with PDF links when possible) and
+   the example.
+
+.. _coding-guidelines: http://scikit-learn.org/dev/developers/contributing.html#coding-guidelines
+.. _task list: https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments
+
+You can also check for common programming errors with the following
+tools:
+
+-  Code with good unittest coverage (at least 80%), check with::
+
+        $ pip install pytest pytest-cov
+        $ pytest -vsl .
+
+-  No flake8 warnings (which includes pep8 and pyflakes), check with::
+
+        $ pip install flake8
+        $ flake8 path/to/module.py
+
+Filing bugs
+===========
+We use Github issues to track all bugs and feature requests; feel free to
+open an issue if you have found a bug or wish to see a feature implemented.
+
+It is recommended to check that your issue complies with the
+following rules before submitting:
+
+-  Verify that your issue is not being currently addressed by other
+   issues_ or `pull requests`_.
+
+-  Please ensure all code snippets and error messages are formatted in
+   appropriate code blocks.
+   See `Creating and highlighting code blocks`_.
+
+-  Please include your operating system type and version number, as well
+   as your Python, scikit-learn, numpy, and scipy versions. This information
+   can be found by runnning the following code snippet::
+
+    python
+    import platform; print(platform.platform())
+    import sys; print("Python", sys.version)
+    import numpy; print("NumPy", numpy.__version__)
+    import scipy; print("SciPy", scipy.__version__)
+    import sklearn; print("Scikit-Learn", sklearn.__version__)
+   
+-  Please include a reproducible_ code snippet or link to a gist_. 
+   If an exception is raised, please provide the traceback.
+
+.. _Creating and highlighting code blocks: https://help.github.com/articles/creating-and-highlighting-code-blocks
+.. _issues: https://github.com/paris-saclay-cds/ramp-board/issues
+.. _pull requests: https://github.com/paris-saclay-cds/ramp-board/pulls
+.. _reproducible: https://stackoverflow.com/help/mcve
+.. _gist: https://gist.github.com
+
+Documentation
+=============
+
+We are glad to accept any sort of documentation: function docstrings,
+reStructuredText documents (like this one), tutorials, etc.
+reStructuredText documents live in the source code repository under the
+doc/ directory.
+
+You can edit the documentation using any text editor and then generate
+the HTML output by typing ``make html`` from the doc/ directory.
+Alternatively, ``make`` can be used to quickly generate the
+documentation without the example gallery. The resulting HTML files will
+be placed in _build/html/ and are viewable in a web browser. See the
+README file in the doc/ directory for more information.
+
+For building the documentation, you will need 
+
+    - sphinx_, 
+    - sphinx_rtd_theme_,
+    - numpydoc_,
+    - graphviz_,
+    - eralchemy_,
+    - sphinx-click_,
+    - matplotlib_.
+
+.. _sphinx: http://sphinx-doc.org
+.. _matplotlib: https://matplotlib.org
+.. _sphinx_rtd_theme: https://sphinx-rtd-theme.readthedocs.io/en/stable/
+.. _numpydoc: https://numpydoc.readthedocs.io/en/latest/format.html
+.. _graphviz: https://www.graphviz.org/
+.. _eralchemy: https://pypi.org/project/ERAlchemy/
+.. _sphinx-click: https://sphinx-click.readthedocs.io/en/latest/
+
+When you are writing documentation, it is important to keep a good
+compromise between mathematical and algorithmic details, and give
+intuition to the reader on what the algorithm does. It is best to always
+start with a small paragraph with a hand-waving explanation of what the
+method does to the data and a figure (coming from an example)
+illustrating it.
