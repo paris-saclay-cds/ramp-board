@@ -28,15 +28,23 @@
 {% endwith %}
 
 {% if problems|length > 0 %}
-
-<ul class="fa-ul">
-    <li class="fas fa-clock-o"> waiting for approval</li> 
-    <li class="fas fa-circle-o"> challenge is opened, you can sign up</li> 
-    <li class="fas fa-check-circle-o"> challenge is opened, you are signed up</li>
-    <li class="fas fa-circle"> challenge is closed</li>
-    <li class="fas fa-check-circle"> challenge is closed, you are signed up</li>
-</ul>
-
+<div style="display: flex">
+        <div>
+            <ul class="fa-ul">
+                <li class="fas fa-check-circle-o"> signed up</li>
+                <li class="fas fa-clock-o"> waiting for approval</li> 
+                <li class="fas fa-circle-o"> not signed up </li> 
+                
+            </ul>
+        </div>
+        <div>
+            <ul class="fa-ul">
+                <li class="fas fa-lock"> closed</li> 
+                <li class="fas fa-circle-o"> competetive phase</li> 
+                <li class="fas fa-check-circle-o"> collaborative phase</li>
+            </ul>
+        </div>
+</div>
 {% endif %}
 <ul>
 {% for problem in problems %}
@@ -44,22 +52,28 @@
     <ul class="fa-ul">
     {% for event in problem.events %}
         {% if event.is_public %}
-            {% if event.state == 'waiting' %}
+            {% if event.state_user == 'waiting' %}
                 <li class="fas fa-clock-o">
-            {% elif event.state == 'open_not_signed' %}
-                <li class="fas fa-circle-o"> 
-            {% elif event.state == 'open_signed' %}
+            {% elif event.state_user == 'signed' %}
                 <li class="fas fa-check-circle-o">
-            {% elif event.state == 'close_not_signed' %}
-                <li class="fas fa-circle">
-            {% elif event.state == 'close_signed' %}
-                <li class="fas fa-check-circle">
+            {% elif event.state_user == 'not_signed' %}
+                <li class="fas fa-circle-o">
+            {% endif %}
+           
+            {% if event.state == 'close' %}
+                <i class="fas fa-lock"></i>
+            {% elif event.state == 'collab' %}
+                <i class="fas fa-lock"></i>
+                <i class="fa fa-handshake-o aria-hidden="true"></i>
+            {% elif event.state_user == 'competetive' %}
+                <i class="fas fa-lock"></i>
+                <i class="fa fa-hand-o-right"></i>
             {% endif %}
             <a href="/events/{{ event.name }}">{{ event.title }}</a>,
-                number of participants = <strong><font color=darkgreen>{{ event.n_participants }}</font></strong>,
-                number of submissions = <strong><font color=darkblue>{{ event.n_submissions }}</font></strong>,
+                participants = <strong><font color=darkgreen>{{ event.n_participants }}</font></strong>,
+                submissions = <strong><font color=darkblue>{{ event.n_submissions }}</font></strong>,
                 combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong>,
-                <a href="/event_plots/{{ event.name }}">click here for score vs time plot</a></li>
+                <a href="/event_plots/{{ event.name }}">score vs time plot</a></li>
         {% endif %}
     {% endfor %}
     </ul>

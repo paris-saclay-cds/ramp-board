@@ -84,33 +84,31 @@ def problems():
 
     for problem in problems:
         for event in problem.events:
+            # check the state of the event
+            now = datetime.datetime.now()
+            start = event.opening_timestamp
+            start_collab = event.public_opening_timestamp
+            end = event.closing_timestamp
+
+            if now < start or now >= end:
+                event.state = 'close'
+            elif now >= start and now < start_collab:
+                event.state = 'competetive'
+            elif now >= start and now >= start_collab and now < end:
+                event.state = 'collab'
+
             if user:
-                now = datetime.datetime.now()
-                start = event.opening_timestamp
-                end = event.closing_timestamp
-
-                opened = False
-                if now > start and now < end:
-                    opened = True
-
                 signed = get_event_team_by_name(
                                     db.session, event.name,
                                     flask_login.current_user.name)
-                if not signed and opened:
-                    event.state = 'open_not_signed'
-                elif not signed and not opened:
-                    event.state = 'close_not_signed'
+                if not signed:
+                    event.state_user = 'not_signed'
                 elif signed.approved:
-                    event.state = 'waiting'
-                elif signed and opened:
-                    event.state = 'open_signed'
-                elif signed and not opened:
-                    event.state = 'close_signed'
+                    event.state_user = 'waiting'
+                elif signed:
+                    event.state_user = 'signed'
             else:
-                if opened:
-                    event.state = 'open_not_signed'
-                else:
-                    event.state = 'close_not_signed'
+                event.state_user = 'not_signed'
 
     # problems = Problem.query.order_by(Problem.id.desc())
     return render_template('problems.html',
