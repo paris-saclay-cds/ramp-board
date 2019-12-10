@@ -123,7 +123,8 @@ def _delete_line_from_file(f_name, line_to_delete):
         f.truncate()
 
 
-def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False):
+def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False,
+                            check_notebook=False):
     """Clone ramp-kit and ramp-data repository and setup it up.
 
     Parameters
@@ -137,6 +138,7 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False):
     force : bool, default is False
         Whether or not to overwrite the RAMP kit and data repositories if they
         already exists.
+    check_notebook : it will only run jupyter notebook if set to True
     """
     problem_kit_path = ramp_config['ramp_kit_dir']
     if os.path.exists(problem_kit_path):
@@ -164,11 +166,12 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False):
     os.chdir(problem_data_path)
     subprocess.check_output(["python", "prepare_data.py"])
     os.chdir(problem_kit_path)
-    subprocess.check_output(["jupyter", "nbconvert", "--to", "html",
+    if check_notebook:
+        subprocess.check_output(["jupyter", "nbconvert", "--to", "html",
                              "{}_starting_kit.ipynb".format(problem_name)])
-    # delete this line since it trigger in the front-end
-    # (try to open execute "custom.css".)
-    _delete_line_from_file("{}_starting_kit.html".format(problem_name),
+        # delete this line since it trigger in the front-end
+        # (try to open execute "custom.css".)
+        _delete_line_from_file("{}_starting_kit.html".format(problem_name),
                            '<link rel="stylesheet" href="custom.css">\n')
     os.chdir(current_directory)
 
