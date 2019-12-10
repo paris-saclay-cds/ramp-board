@@ -89,14 +89,12 @@ def problems():
             start = event.opening_timestamp
             start_collab = event.public_opening_timestamp
             end = event.closing_timestamp
-
             if now < start or now >= end:
                 event.state = 'close'
             elif now >= start and now < start_collab:
                 event.state = 'competetive'
             elif now >= start and now >= start_collab and now < end:
                 event.state = 'collab'
-
             if user:
                 signed = get_event_team_by_name(
                                     db.session, event.name,
