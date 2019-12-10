@@ -12,6 +12,7 @@ User Guide
    setup_server.rst
    personalize.rst
    create_ramp_event.rst
+   create_new_challenge.rst
    workers.rst
    frontend.rst
    running_challenge.rst
