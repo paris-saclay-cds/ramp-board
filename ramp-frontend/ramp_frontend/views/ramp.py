@@ -92,7 +92,7 @@ def problems():
             if now < start or now >= end:
                 event.state = 'close'
             elif now >= start and now < start_collab:
-                event.state = 'competetive'
+                event.state = 'competitive'
             elif now >= start and now >= start_collab and now < end:
                 event.state = 'collab'
             if user:

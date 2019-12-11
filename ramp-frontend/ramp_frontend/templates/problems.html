@@ -40,7 +40,7 @@
         <div>
             <ul class="fa-ul">
                 <li class="fas fa-lock"> closed</li> 
-                <li class="fas fa-hand-o-right"> competetive phase</li> 
+                <li class="fas fa-hand-o-right"> competitive phase</li> 
                 <li class="fas fa-handshake-o" aria-hidden="true"> collaborative phase</li>
             </ul>
         </div>
@@ -64,7 +64,7 @@
                 <i class="fas fa-lock"></i>
             {% elif event.state == 'collab' %}
                 <i class="fas fa-handshake-o" aria-hidden="true"></i>
-            {% elif event.state == 'competetive' %}
+            {% elif event.state == 'competitive' %}
                 <i class="fa fa-hand-o-right" aria-hidden="true"></i>
             {% endif %}
             <a href="/events/{{ event.name }}">{{ event.title }}</a>,
