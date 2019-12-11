@@ -23,10 +23,11 @@ that you use the ``make inplace`` option to install RAMP in developer mode.
 
 Prepare database engine
 -----------------------
-Testing RAMP require a database, you need to create a database similarly to
-:ref:`create database <set_database>`
+Testing RAMP requires a database cluster, you need to create it similarly as 
+described in :ref:`create database <set_database>` section. 
 
-In short, create the ``Postgres database cluster`` using the command::
+If you haven't done so already create the ``Postgres database cluster`` 
+using the command::
 
     ~ $ initdb postgres_dbs
 
@@ -34,25 +35,24 @@ and then start it with::
 
     ~ $ pg_ctl -D postgres_dbs -l logfile start
 
-However, RAMP tests do not know which database engine you are using for 
-your ramp development and therefore you need to inform RAMP tests about this
-To do this, open the ``db_engine.yml`` file located in the ``ramp-board`` directory. 
+Within your database cluster `postgres` database is created automatically.
+`pytest` will use it to make and then drop the test engine. But it needs
+to know who is the owner of your `postgres` database and therefore you 
+need to inform RAMP tests about this.
+To do this, open the ``db_engine.yml`` file located in the ``ramp-board`` 
+directory. 
 It should look as follows::
 
     db_owner: postgres
-    db_cluster_name: postgres
 
-You need to change <postgres> to your local settings.
+You need to change <postgres> to the owner of the `postgres` database. 
 
-``db_owner`` is the owner of your database. If you don't know who is 
-the owner of your database you can find it out by typing in your terminal::
+If you don't know who is the owner of your `postgres` database you can 
+find it out by typing in your terminal::
     
     ~ $ psql -l
 
 This command will list all of your databases along with their owners. 
-
-``db_cluster_name`` is the name of your Postgres database cluster (if you used
-commands as above your ``Postgres database cluster`` name is `'postgres_dbs'`).
 
 Test
 ----
