@@ -92,7 +92,7 @@ def test_problems(client_session):
     rv = client.get('/problems')
     assert rv.status_code == 200
     assert b'Hi User!' not in rv.data
-    assert b'number of participants =' in rv.data
+    assert b'participants =' in rv.data
     assert b'Iris classification' in rv.data
     assert b'Boston housing price regression' in rv.data
 
@@ -101,7 +101,7 @@ def test_problems(client_session):
         rv = client.get('/problems')
         assert rv.status_code == 200
         assert b'Hi User!' in rv.data
-        assert b'number of participants =' in rv.data
+        assert b'participants =' in rv.data
         assert b'Iris classification' in rv.data
         assert b'Boston housing price regression' in rv.data
 
