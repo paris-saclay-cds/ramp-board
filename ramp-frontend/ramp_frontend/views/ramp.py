@@ -102,9 +102,9 @@ def problems():
                 if not signed:
                     event.state_user = 'not_signed'
                 elif signed.approved:
-                    event.state_user = 'waiting'
-                elif signed:
                     event.state_user = 'signed'
+                elif signed:
+                    event.state_user = 'waiting'
             else:
                 event.state_user = 'not_signed'
 
