@@ -14,10 +14,6 @@ body {
     font-family: FontAwesome;
 }
 
-.fa {
-  font-family: FontAwesome;
-}
-
 .row > [class*="col-"] {
   margin-bottom: 25px; }
 
