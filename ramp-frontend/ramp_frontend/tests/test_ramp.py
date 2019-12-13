@@ -53,11 +53,10 @@ def client_session(database_connection):
 
 @pytest.fixture(scope='function')
 def makedrop_event(client_session):
-    client, session = client_session
+    _, session = client_session
     add_event(session, 'iris', 'test_4event', 'test_4event', 'starting_kit',
               '/tmp/databoard_test/submissions', is_public=True)
-
-    yield 
+    yield
     delete_event(session, 'test_4event')
 
 
@@ -177,20 +176,22 @@ def test_user_event_status(client_session):
 
 NOW = datetime.datetime.now()
 testtimestamps = [
-    (NOW.replace(year=NOW.year+1), NOW.replace(year=NOW.year+2), 
+    (NOW.replace(year=NOW.year+1), NOW.replace(year=NOW.year+2),
      NOW.replace(year=NOW.year+3), b'event-close'),
-    (NOW.replace(year=NOW.year-1), NOW.replace(year=NOW.year+1), 
+    (NOW.replace(year=NOW.year-1), NOW.replace(year=NOW.year+1),
      NOW.replace(year=NOW.year+2), b'event-comp'),
-    (NOW.replace(year=NOW.year-2), NOW.replace(year=NOW.year-1), 
+    (NOW.replace(year=NOW.year-2), NOW.replace(year=NOW.year-1),
      NOW.replace(year=NOW.year+1), b'event-collab'),
-    (NOW.replace(year=NOW.year-3), NOW.replace(year=NOW.year-2), 
+    (NOW.replace(year=NOW.year-3), NOW.replace(year=NOW.year-2),
      NOW.replace(year=NOW.year-1), b'event-close'),
 ]
+
+
 @pytest.mark.parametrize(
     "opening_date,public_date,closing_date,expected", testtimestamps
 )
 def test_event_status(client_session, makedrop_event,
-                      opening_date, public_date, 
+                      opening_date, public_date,
                       closing_date, expected):
     # checks if the event status is displayed correctly
     client, session = client_session
