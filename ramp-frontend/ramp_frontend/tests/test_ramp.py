@@ -57,7 +57,8 @@ def makedrop_event(client_session):
     add_event(session, 'iris', 'test_4event', 'test_4event', 'starting_kit',
               '/tmp/databoard_test/submissions', is_public=True)
 
-    yield delete_event(session, 'test4event')
+    yield 
+    delete_event(session, 'test_4event')
 
 
 @pytest.mark.parametrize(
@@ -173,10 +174,11 @@ def test_user_event_status(client_session):
         assert b'user-signed' in rv.data
         assert b'user-waiting' not in rv.data
 
+
 NOW = datetime.datetime.now()
 testtimestamps = [
     (NOW.replace(year=NOW.year+1), NOW.replace(year=NOW.year+2), 
-     NOW.replace(year=NOW.year+3), b'event-close1'),
+     NOW.replace(year=NOW.year+3), b'event-close'),
     (NOW.replace(year=NOW.year-1), NOW.replace(year=NOW.year+1), 
      NOW.replace(year=NOW.year+2), b'event-comp'),
     (NOW.replace(year=NOW.year-2), NOW.replace(year=NOW.year-1), 
@@ -184,44 +186,37 @@ testtimestamps = [
     (NOW.replace(year=NOW.year-3), NOW.replace(year=NOW.year-2), 
      NOW.replace(year=NOW.year-1), b'event-close'),
 ]
-
-
 @pytest.mark.parametrize(
     "opening_date,public_date,closing_date,expected", testtimestamps
 )
 def test_event_status(client_session, makedrop_event,
                       opening_date, public_date, 
                       closing_date, expected):
-    # checks if the event status is displayed correctly for 
+    # checks if the event status is displayed correctly
     client, session = client_session
 
+    # change the datetime stamps for the event
     event = get_event(session, 'test_4event')
     event.opening_timestamp = opening_date
     event.public_opening_timestamp = public_date
     event.closing_timestamp = closing_date
     session.commit()
 
-    client, _ = client_session
     # GET: access the problems page without login
     rv = client.get('/problems')
     assert rv.status_code == 200
-
-    # check if event4status event has a correct status
     event_idx = rv.data.index(b'test_4event')
     event_class_idx = rv.data[:event_idx].rfind(b'<i class')
     assert expected in rv.data[event_class_idx:event_idx]
-
-    client, _ = client_session
 
     # GET: access the problems when logged-in
     with login_scope(client, 'test_user', 'test') as client:
         rv = client.get('/problems')
         assert rv.status_code == 200
-        # check if event4status event has a correct status
         event_idx = rv.data.index(b'test_4event')
         event_class_idx = rv.data[:event_idx].rfind(b'<i class')
         assert expected in rv.data[event_class_idx:event_idx]
-        
+
 
 def test_user_event(client_session):
     client, session = client_session
