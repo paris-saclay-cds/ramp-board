@@ -1,2 +1,2 @@
 db_owner: postgres # to find out your db_owner type psql -l in the terminal
-db_cluster_name: postgres # name of the engine database you have created
+                   # and check who is the owner of your postgres database 

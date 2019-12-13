@@ -18,8 +18,8 @@ def database_connection():
     """
     config = safe_load(open("db_engine.yml"))
     dbowner = config.get('db_owner')
-    dbcluster = config.get('db_cluster_name')
-    engine = create_engine(f'postgresql://{dbowner}:@localhost/{dbcluster}',
+
+    engine = create_engine(f'postgresql://{dbowner}:@localhost/postgres',
                            isolation_level='AUTOCOMMIT')
 
     connection = engine.connect()
