@@ -17,6 +17,9 @@ from ramp_database.tools.event import get_event
 from ramp_database.tools.user import add_user
 from ramp_database.tools.submission import get_submission_by_name
 from ramp_database.tools.team import get_event_team_by_name
+from ramp_database.tools.event import add_event
+from ramp_database.tools.team import sign_up_team
+from ramp_database.tools.team import ask_sign_up_team
 
 from ramp_frontend import create_app
 from ramp_frontend.testing import login_scope
@@ -135,41 +138,29 @@ def test_problem(client_session):
         assert b'Keywords' in rv.data
 
 
-#@pytest.mark.parametrize(
-#    "event",
-#    ["/events/xxx",
-#     "/events/xxx/sign_up",
-#     "/events/xxx/sandbox",
-#     "/event_plots/xxx"]
-#)
-def test_event_user_status(client_session):
-    from ramp_database.tools.event import add_event
-    from ramp_database.tools.team import sign_up_team
-    from ramp_database.tools.team  import ask_sign_up_team
-
-    from ramp_database.tools.event import delete_event
+def test_user_event_status(client_session):
     client, session = client_session
 
-    # behavior when a user is not approved yet
-    add_user(session, 'xx', 'xx', 'xx', 'xx', 'xx', access_level='user')
-    
+    add_user(session, 'new_user', 'new_user', 'new_user', 
+             'new_user', 'new_user', access_level='user')
     add_event(session, 'iris', 'new_event', 'new_event', 'starting_kit',
               '/tmp/databoard_test/submissions', is_public=True)
-    ask_sign_up_team(session, 'new_event', 'xx')
+
     # user signed up, not approved for the event
-    with login_scope(client, 'xx', 'xx') as client:
+    ask_sign_up_team(session, 'new_event', 'new_user')
+    with login_scope(client, 'new_user', 'new_user') as client:
         rv = client.get('/problems')
-        assert rv.status_code == 200      
+        assert rv.status_code == 200
         assert b'user-waiting' in rv.data
         assert b'user-signed' not in rv.data
 
     # user signed up and approved for the event
-    sign_up_team(session, 'new_event', 'xx') # with submission
-    with login_scope(client, 'xx', 'xx') as client:
-        
+    sign_up_team(session, 'new_event', 'new_user')
+    with login_scope(client, 'new_user', 'new_user') as client:
         rv = client.get('/problems')
         assert b'user-signed' in rv.data
         assert b'user-waiting' not in rv.data
+
 
 def test_user_event(client_session):
     client, session = client_session
@@ -201,6 +192,7 @@ def test_user_event(client_session):
         assert b'Iris classification' in rv.data
         assert b'Rules' in rv.data
         assert b'RAMP on iris' in rv.data
+
 
 def test_sign_up_for_event(client_session):
     client, session = client_session
