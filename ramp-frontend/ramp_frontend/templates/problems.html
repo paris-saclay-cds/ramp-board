@@ -47,7 +47,7 @@
 <ul>
 {% for problem in problems %}
 <li> <a href="/problems/{{ problem.name }}"><strong><font size="+1">{{ problem.title }}</font></strong></a><br>
-    <ul class="fa-ul">
+    <ul class="fas-ul">
     {% for event in problem.events %}
         {% if event.is_public %}
             {% if event.state_user == 'waiting' %}
