@@ -142,30 +142,34 @@ def test_problem(client_session):
 #     "/events/xxx/sandbox",
 #     "/event_plots/xxx"]
 #)
-def test_event_status(client_session):
+def test_event_user_status(client_session):
     from ramp_database.tools.event import add_event
     from ramp_database.tools.team import sign_up_team
+    from ramp_database.tools.team  import ask_sign_up_team
 
     from ramp_database.tools.event import delete_event
     client, session = client_session
 
     # behavior when a user is not approved yet
     add_user(session, 'xx', 'xx', 'xx', 'xx', 'xx', access_level='user')
+    
     add_event(session, 'iris', 'new_event', 'new_event', 'starting_kit',
               '/tmp/databoard_test/submissions', is_public=True)
-    sign_up_team(session, 'new_event', 'xx')
-
+    ask_sign_up_team(session, 'new_event', 'xx')
+    # user signed up, not approved for the event
     with login_scope(client, 'xx', 'xx') as client:
         rv = client.get('/problems')
-        assert rv.status_code == 200
-        #assert rv.location == 'http://localhost/problems'
-        #with client.session_transaction() as cs:
-        #    flash_message = dict(cs['_flashes'])
-        import pdb; pdb.set_trace()
-        assert b'waiting' in rv.data
-        #assert (flash_message['message'] ==
-        #        "Your account has not been approved yet by the administrator")
-    delete_event
+        assert rv.status_code == 200      
+        assert b'user-waiting' in rv.data
+        assert b'user-signed' not in rv.data
+
+    # user signed up and approved for the event
+    sign_up_team(session, 'new_event', 'xx') # with submission
+    with login_scope(client, 'xx', 'xx') as client:
+        
+        rv = client.get('/problems')
+        assert b'user-signed' in rv.data
+        assert b'user-waiting' not in rv.data
 
 def test_user_event(client_session):
     client, session = client_session
