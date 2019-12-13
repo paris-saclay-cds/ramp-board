@@ -53,19 +53,19 @@
     {% for event in problem.events %}
         {% if event.is_public %}
             {% if event.state_user == 'waiting' %}
-                <li class="fas fa-clock-o">
+                <li class="fas fa-clock-o user-waiting">
             {% elif event.state_user == 'signed' %}
-                <li class="fas fa-check-circle-o">
+                <li class="fas fa-check-circle-o user-signed">
             {% elif event.state_user == 'not_signed' %}
-                <li class="fas fa-circle-o">
+                <li class="fas fa-circle-o user-not-signed">
             {% endif %}
            
             {% if event.state == 'close' %}
-                <i class="fas fa-lock"></i>
+                <i class="fas fa-lock event-close"></i>
             {% elif event.state == 'collab' %}
-                <i class="fas fa-handshake-o" aria-hidden="true"></i>
+                <i class="fas fa-handshake-o event-collab" aria-hidden="true"></i>
             {% elif event.state == 'competitive' %}
-                <i class="fa fa-hand-o-right" aria-hidden="true"></i>
+                <i class="fa fa-hand-o-right event-comp" aria-hidden="true"></i>
             {% endif %}
             <a href="/events/{{ event.name }}">{{ event.title }}</a>,
                 participants = <strong><font color=darkgreen>{{ event.n_participants }}</font></strong>,
