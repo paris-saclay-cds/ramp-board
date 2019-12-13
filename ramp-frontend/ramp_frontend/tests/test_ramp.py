@@ -141,7 +141,7 @@ def test_problem(client_session):
 def test_user_event_status(client_session):
     client, session = client_session
 
-    add_user(session, 'new_user', 'new_user', 'new_user', 
+    add_user(session, 'new_user', 'new_user', 'new_user',
              'new_user', 'new_user', access_level='user')
     add_event(session, 'iris', 'new_event', 'new_event', 'starting_kit',
               '/tmp/databoard_test/submissions', is_public=True)
