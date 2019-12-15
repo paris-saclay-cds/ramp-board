@@ -44,4 +44,7 @@ class NumpyType(TypeDecorator):
         array : ndarray
             The NumPy array which has been loaded.
         """
-        return pickle.loads(zlib.decompress(value))
+        print('loading numpy array')
+        xx = pickle.loads(zlib.decompress(value))
+        print(xx)
+        return xx

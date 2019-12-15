@@ -1,6 +1,7 @@
 from collections import defaultdict
 from itertools import product
 import datetime
+import glob
 import logging
 import os
 import shutil
@@ -445,28 +446,43 @@ def get_scores(session, submission_id):
     """
     results = defaultdict(list)
     sub = get_submission_by_id(session, submission_id)
+
     score_names = [score.score_name for score in sub.scores]
-    index = []
     steps = ('train', 'valid', 'test')
-    for step in steps:
-        scores_per_fold = (
-            session.query(getattr(SubmissionScoreOnCVFold,
-                                  '{}_score'.format(step)))
-                   .filter(SubmissionScoreOnCVFold.submission_on_cv_fold_id ==
-                           SubmissionOnCVFold.id)
-                   .filter(SubmissionOnCVFold.submission_id == submission_id)
-                   .all()
-        )
-        n_folds = len(scores_per_fold) // len(score_names)
-        for idx, (fold_id, score_name) in enumerate(product(range(n_folds),
-                                                            score_names)):
-            if not idx % len(score_names):
-                # store the step and fold id only once for all available scores
-                index.append((fold_id, step))
-            results[score_name].append(scores_per_fold[idx][0])
-    multi_index = pd.MultiIndex.from_tuples(index, names=['fold', 'step'])
-    scores = pd.DataFrame(results, index=multi_index)
+
+    # access the scores in the database
+    scores_per_fold = (
+        session.query(SubmissionScoreOnCVFold)
+               .filter(SubmissionScoreOnCVFold.submission_on_cv_fold_id ==
+                       SubmissionOnCVFold.id)
+               .filter(SubmissionOnCVFold.submission_id == submission_id)
+               .all()
+    )
+    scores_per_fold = sorted(
+        scores_per_fold, key=lambda x: x.submission_on_cv_fold_id
+    )
+
+    # get the fold id and create a dictionary containing all information.
+    fold = list({x.submission_on_cv_fold_id for x in scores_per_fold})
+    fold.sort()
+    fold = {key: value for value, key in enumerate(fold)}
+    for score in scores_per_fold:
+        for step in steps:
+            results['fold'].append(fold[score.submission_on_cv_fold_id])
+            results['step'].append(step)
+            results['score'].append(score.name)
+            results['value'].append(getattr(score, "{}_score".format(step)))
+    scores = pd.DataFrame(results)
+    scores = pd.pivot_table(
+        scores, index=['fold', 'step'], values=['value'], columns=['score']
+    )
+    # drop the name level "value"
+    scores = scores.droplevel(level=0, axis=1)
+    # remove the name "score"
+    scores.columns.name = None
+    # resort the rows and columns
     scores = scores.sort_index(level=0).reindex(steps, level=1)
+    scores = scores.loc[:, score_names]
     return scores
 
 
@@ -694,16 +710,38 @@ def set_scores(session, submission_id, path_predictions):
         The path where the results files are located.
     """
     sub = get_submission_by_id(session, submission_id)
-    for fold_id, cv_fold in enumerate(sub.on_cv_folds):
+    n_fold = len(glob.glob(os.path.join(path_predictions, 'fold_*')))
+
+    # access the scores in the database
+    scores_per_fold = (
+        session.query(SubmissionScoreOnCVFold)
+               .filter(SubmissionScoreOnCVFold.submission_on_cv_fold_id ==
+                       SubmissionOnCVFold.id)
+               .filter(SubmissionOnCVFold.submission_id == submission_id)
+               .all()
+    )
+    scores_per_fold = sorted(
+        scores_per_fold, key=lambda x: x.submission_on_cv_fold_id
+    )
+
+    for fold_id in range(n_fold):
+        # load the scores from the disk
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
         scores_update = pd.read_csv(
             os.path.join(path_results, 'scores.csv'), index_col=0
         )
-        for score in cv_fold.scores:
+        n_scores = len(scores_update.columns)
+
+        # update each individual score for the current fold
+        for score in scores_per_fold[fold_id * n_scores:
+                                     fold_id * n_scores + n_scores]:
             for step in scores_update.index:
-                value = scores_update.loc[step, score.name]
-                setattr(score, step + '_score', value)
+                setattr(
+                    score, "{}_score".format(step),
+                    scores_update.loc[step, score.name]
+                )
+
     session.commit()
 
 

@@ -365,7 +365,10 @@ def test_check_scores(session_scope_module):
     # check both set_scores and get_scores
     submission_id = 1
     path_results = os.path.join(HERE, 'data', 'iris_predictions')
+    set_predictions(session_scope_module, submission_id, path_results)
+    print('YYYYYYYYYYYYYYYYYYYYYYYYYY')
     set_scores(session_scope_module, submission_id, path_results)
+    print('XXXXXXXXXXXXXXXXXXXXXXXXXX')
     scores = get_scores(session_scope_module, submission_id)
     multi_index = pd.MultiIndex.from_product(
         [[0, 1], ['train', 'valid', 'test']], names=['fold', 'step']
@@ -377,6 +380,8 @@ def test_check_scores(session_scope_module):
          'f1_70': [0.333333, 0.33333, 0.666667, 0.33333, 0.33333, 0.666667]},
         index=multi_index
     )
+    print(scores)
+    print(expected_df)
     assert_frame_equal(scores, expected_df, check_less_precise=True)
 
 
