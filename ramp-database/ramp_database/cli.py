@@ -60,6 +60,18 @@ def approve_user(config, login):
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
+@click.option('--login', help="User's login to be made admin")
+def make_user_admin(config, login):
+    """Make a user a RAMP admin."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        user_module.make_user_admin(session, login)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
 @click.option('--event', help='Name of the event')
 @click.option('--team', help='Name of the team')
 def sign_up_team(config, event, team):
