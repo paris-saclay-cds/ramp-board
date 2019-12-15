@@ -10,6 +10,10 @@ body {
 * {
   outline: none; }
 
+.fas {
+    font-family: FontAwesome;
+}
+
 .row > [class*="col-"] {
   margin-bottom: 25px; }
 

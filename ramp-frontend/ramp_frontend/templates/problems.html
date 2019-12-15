@@ -5,7 +5,6 @@
 {% with messages = get_flashed_messages(with_categories=true) %}
 
 {% if messages %}
-
     <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     {% for category, message in messages %}
         <div class="modal-dialog">
@@ -27,17 +26,49 @@
 {% endif %}
 {% endwith %}
 
+{% if problems|length > 0 %}
+<div style="display: flex">
+        <div>
+            <ul class="fas-ul">
+                <li class="fas fa-check-circle-o"> signed up</li>
+                <li class="fas fa-clock-o"> waiting for approval</li> 
+                <li class="fas fa-circle-o"> not signed up </li> 
+            </ul>
+        </div>
+        <div>
+            <ul class="fas-ul">
+                <li class="fas fa-lock"> closed</li> 
+                <li class="fas fa-hand-o-right"> competitive phase</li> 
+                <li class="fas fa-handshake-o" aria-hidden="true"> collaborative phase</li>
+            </ul>
+        </div>
+</div>
+{% endif %}
 <ul>
 {% for problem in problems %}
 <li> <a href="/problems/{{ problem.name }}"><strong><font size="+1">{{ problem.title }}</font></strong></a><br>
-    <ul>
+    <ul class="fas-ul">
     {% for event in problem.events %}
         {% if event.is_public %}
-            <li> <a href="/events/{{ event.name }}">{{ event.title }}</a>,
-            number of participants = <strong><font color=darkgreen>{{ event.n_participants }}</font></strong>,
-            number of submissions = <strong><font color=darkblue>{{ event.n_submissions }}</font></strong>,
-            combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong>,
-            <a href="/event_plots/{{ event.name }}">click here for score vs time plot</a>
+            {% if event.state_user == 'waiting' %}
+                <li class="fas fa-clock-o user-waiting">
+            {% elif event.state_user == 'signed' %}
+                <li class="fas fa-check-circle-o user-signed">
+            {% elif event.state_user == 'not_signed' %}
+                <li class="fas fa-circle-o user-not-signed">
+            {% endif %}
+            {% if event.state == 'close' %}
+                <i class="fas fa-lock event-close"></i>
+            {% elif event.state == 'collab' %}
+                <i class="fas fa-handshake-o event-collab" aria-hidden="true"></i>
+            {% elif event.state == 'competitive' %}
+                <i class="fas fa-hand-o-right event-comp" aria-hidden="true"></i>
+            {% endif %}
+            <a href="/events/{{ event.name }}">{{ event.title }}</a>,
+                participants = <strong><font color=darkgreen>{{ event.n_participants }}</font></strong>,
+                submissions = <strong><font color=darkblue>{{ event.n_submissions }}</font></strong>,
+                combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong>,
+                <a href="/event_plots/{{ event.name }}">score vs time plot</a></li>
         {% endif %}
     {% endfor %}
     </ul>

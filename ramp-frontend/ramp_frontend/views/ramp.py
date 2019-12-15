@@ -80,10 +80,37 @@ def problems():
         add_user_interaction(
             db.session, interaction='looking at problems', user=user
         )
+    problems = get_problem(db.session, None)
+
+    for problem in problems:
+        for event in problem.events:
+            # check the state of the event
+            now = datetime.datetime.now()
+            start = event.opening_timestamp
+            start_collab = event.public_opening_timestamp
+            end = event.closing_timestamp
+            if now < start or now >= end:
+                event.state = 'close'
+            elif now >= start and now < start_collab:
+                event.state = 'competitive'
+            elif now >= start and now >= start_collab and now < end:
+                event.state = 'collab'
+            if user:
+                signed = get_event_team_by_name(
+                                    db.session, event.name,
+                                    flask_login.current_user.name)
+                if not signed:
+                    event.state_user = 'not_signed'
+                elif signed.approved:
+                    event.state_user = 'signed'
+                elif signed:
+                    event.state_user = 'waiting'
+            else:
+                event.state_user = 'not_signed'
 
     # problems = Problem.query.order_by(Problem.id.desc())
     return render_template('problems.html',
-                           problems=get_problem(db.session, None),
+                           problems=problems,
                            admin=admin)
 
 
