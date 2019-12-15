@@ -13,8 +13,8 @@ from ramp_utils import read_config
 @pytest.fixture(scope='session')
 def database_connection():
     """
-    Create a Postgres database for the tests,
-    and drop it when the tests are done.
+    Create a Postgres database for the tests, and drop it when the tests are
+    done.
     """
     config = safe_load(open("db_engine.yml"))
     dbowner = config.get('db_owner')
@@ -28,7 +28,7 @@ def database_connection():
     username = database_config['sqlalchemy']['username']
     database_name = database_config['sqlalchemy']['database']
     try:
-        connection.execute(f"""CREATE USER {username} 
+        connection.execute(f"""CREATE USER {username}
                               WITH PASSWORD '{username}';
                               ALTER USER {username} WITH SUPERUSER""")
     except exc.ProgrammingError:
