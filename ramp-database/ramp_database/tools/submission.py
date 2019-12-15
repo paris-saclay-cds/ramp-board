@@ -1,4 +1,5 @@
 from collections import defaultdict
+from itertools import product
 import datetime
 import logging
 import os
@@ -18,6 +19,7 @@ from ..model import Submission
 from ..model import SubmissionFile
 from ..model import SubmissionFileTypeExtension
 from ..model import SubmissionOnCVFold
+from ..model import SubmissionScoreOnCVFold
 from ..model import SubmissionSimilarity
 from ..model import UserInteraction
 
@@ -412,13 +414,19 @@ def get_time(session, submission_id):
         A pandas dataframe containing the computation time of each fold.
     """
     results = defaultdict(list)
-    all_cv_folds = (session.query(SubmissionOnCVFold)
-                           .filter_by(submission_id=submission_id)
-                           .all())
-    for fold_id, cv_fold in enumerate(all_cv_folds):
-        results['fold'].append(fold_id)
-        for step in ('train', 'valid', 'test'):
-            results[step].append(getattr(cv_fold, '{}_time'.format(step)))
+    for step_id, step in enumerate(['train', 'valid', 'test']):
+        times_per_fold = (
+            session.query(getattr(SubmissionOnCVFold, '{}_time'.format(step)))
+                   .filter(SubmissionOnCVFold.submission_id ==
+                           submission_id)
+                   .all()
+        )
+        for fold_id, times in enumerate(times_per_fold):
+            if not step_id:
+                # only append the fold indices once for the different set.
+                results['fold'].append(fold_id)
+            results[step].append(times[0])
+
     return pd.DataFrame(results).set_index('fold')
 
 
@@ -438,17 +446,29 @@ def get_scores(session, submission_id):
         A pandas dataframe containing the scores of each fold.
     """
     results = defaultdict(list)
+    sub = get_submission_by_id(session, submission_id)
+    score_names = [score.score_name for score in sub.scores]
     index = []
-    all_cv_folds = (session.query(SubmissionOnCVFold)
-                           .filter_by(submission_id=submission_id)
-                           .all())
-    for fold_id, cv_fold in enumerate(all_cv_folds):
-        for step in ('train', 'valid', 'test'):
-            index.append((fold_id, step))
-            for score in cv_fold.scores:
-                results[score.name].append(getattr(score, step + '_score'))
+    steps = ('train', 'valid', 'test')
+    for step in steps:
+        scores_per_fold = (
+            session.query(getattr(SubmissionScoreOnCVFold,
+                                  '{}_score'.format(step)))
+                   .filter(SubmissionScoreOnCVFold.submission_on_cv_fold_id ==
+                           SubmissionOnCVFold.id)
+                   .filter(SubmissionOnCVFold.submission_id == submission_id)
+                   .all()
+        )
+        n_folds = len(scores_per_fold) // len(score_names)
+        for idx, (fold_id, score_name) in enumerate(product(range(n_folds),
+                                                            score_names)):
+            if not idx % len(score_names):
+                # store the step and fold id only once for all available scores
+                index.append((fold_id, step))
+            results[score_name].append(scores_per_fold[idx][0])
     multi_index = pd.MultiIndex.from_tuples(index, names=['fold', 'step'])
     scores = pd.DataFrame(results, index=multi_index)
+    scores = scores.sort_index(level=0).reindex(steps, level=1)
     return scores
 
 

@@ -377,6 +377,7 @@ def test_check_scores(session_scope_module):
          'f1_70': [0.333333, 0.33333, 0.666667, 0.33333, 0.33333, 0.666667]},
         index=multi_index
     )
+    print(expected_df)
     assert_frame_equal(scores, expected_df, check_less_precise=True)
 
 
