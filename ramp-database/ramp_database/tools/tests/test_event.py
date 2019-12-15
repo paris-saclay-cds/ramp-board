@@ -199,7 +199,7 @@ def test_check_event(session_scope_function):
     }
     for problem_name, ramp_config in ramp_configs.items():
         internal_ramp_config = generate_ramp_config(ramp_config)
-        setup_ramp_kit_ramp_data(internal_ramp_config, problem_name)
+        setup_ramp_kit_ramp_data(internal_ramp_config, problem_name, depth=1)
         add_problem(session_scope_function, problem_name,
                     internal_ramp_config['ramp_kit_dir'],
                     internal_ramp_config['ramp_data_dir'])
