@@ -22,6 +22,7 @@ from ramp_frontend.testing import login_scope
 from ramp_frontend.testing import login
 from ramp_frontend.testing import logout
 from ramp_frontend import mail
+from ramp_frontend.testing import _fail_no_smtp_server
 
 
 @pytest.fixture(scope='module')
@@ -209,6 +210,7 @@ def test_sign_up(client_session):
                            "and email is already in use"))
 
 
+@_fail_no_smtp_server
 def test_sign_up_with_approval(client_session):
     # check the sign-up and email confirmation framework
     client, session = client_session
@@ -332,6 +334,7 @@ def test_update_profile(client_session):
         assert rv.status_code == 200
 
 
+@_fail_no_smtp_server
 def test_reset_password(client_session):
     client, session = client_session
 
@@ -397,6 +400,7 @@ def test_reset_password(client_session):
     assert check_password(new_password, user.hashed_password)
 
 
+@_fail_no_smtp_server
 def test_reset_token_error(client_session):
     client, session = client_session
 
