@@ -24,6 +24,7 @@ from ramp_database.tools.user import approve_user
 from ramp_database.tools.user import get_team_by_name
 from ramp_database.tools.user import get_user_by_name
 from ramp_database.tools.user import get_user_interactions_by_name
+from ramp_database.tools.user import make_user_admin
 from ramp_database.tools.user import set_user_by_instance
 
 
@@ -81,6 +82,20 @@ def test_add_user(session_scope_function):
              access_level=access_level)
     user = get_user_by_name(session_scope_function, name)
     assert user.email == 'mixcase@mail.com'
+
+
+def test_make_user_admin(session_scope_function):
+    username = 'test_user'
+    user = add_user(
+        session_scope_function, name=username, password='password',
+        lastname='lastname', firstname='firstname',
+        email='test_user@email.com', access_level='asked')
+    assert user.access_level == 'asked'
+    assert user.is_authenticated is False
+    make_user_admin(session_scope_function, username)
+    user = get_user_by_name(session_scope_function, username)
+    assert user.access_level == 'admin'
+    assert user.is_authenticated is True
 
 
 @pytest.mark.parametrize(

@@ -104,6 +104,22 @@ def add_user(session, name, password, lastname, firstname, email,
     return user
 
 
+def make_user_admin(session, name):
+    """Make a user a RAMP admin.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    name : str
+        The name of the user.
+    """
+    user = select_user_by_name(session, name)
+    user.access_level = 'admin'
+    user.is_authenticated = True
+    session.commit()
+
+
 def add_user_interaction(session, interaction=None, user=None, problem=None,
                          event=None, ip=None, note=None, submission=None,
                          submission_file=None, diff=None, similarity=None):
