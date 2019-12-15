@@ -46,7 +46,7 @@ def test_add_user(make_toy_db):
 
 def test_approve_user(make_toy_db):
     runner = CliRunner()
-    result = runner.invoke(main, ['make-user-admin',
+    result = runner.invoke(main, ['approve-user',
                                   '--config', database_config_template(),
                                   '--login', 'glemaitre'],
                            catch_exceptions=False)
