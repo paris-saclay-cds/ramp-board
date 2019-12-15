@@ -388,10 +388,8 @@ def get_predictions(session, submission_id):
         A pandas dataframe containing the predictions on each fold.
     """
     results = defaultdict(list)
-    all_cv_folds = (session.query(SubmissionOnCVFold)
-                           .filter_by(submission_id=submission_id)
-                           .all())
-    for fold_id, cv_fold in enumerate(all_cv_folds):
+    sub = get_submission_by_id(session, submission_id)
+    for fold_id, cv_fold in enumerate(sub.on_cv_folds):
         results['fold'].append(fold_id)
         results['y_pred_train'].append(cv_fold.full_train_y_pred)
         results['y_pred_test'].append(cv_fold.test_y_pred)
@@ -646,10 +644,8 @@ def set_predictions(session, submission_id, path_predictions):
     path_predictions : str
         The path where the results files are located.
     """
-    all_cv_folds = (session.query(SubmissionOnCVFold)
-                           .filter_by(submission_id=submission_id)
-                           .all())
-    for fold_id, cv_fold in enumerate(all_cv_folds):
+    sub = get_submission_by_id(session, submission_id)
+    for fold_id, cv_fold in enumerate(sub.on_cv_folds):
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
         cv_fold.full_train_y_pred = np.load(
@@ -671,10 +667,8 @@ def set_time(session, submission_id, path_predictions):
     path_predictions : str
         The path where the results files are located.
     """
-    all_cv_folds = (session.query(SubmissionOnCVFold)
-                           .filter_by(submission_id=submission_id)
-                           .all())
-    for fold_id, cv_fold in enumerate(all_cv_folds):
+    sub = get_submission_by_id(session, submission_id)
+    for fold_id, cv_fold in enumerate(sub.on_cv_folds):
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
         results = {}
@@ -699,10 +693,8 @@ def set_scores(session, submission_id, path_predictions):
     path_predictions : str
         The path where the results files are located.
     """
-    all_cv_folds = (session.query(SubmissionOnCVFold)
-                           .filter_by(submission_id=submission_id)
-                           .all())
-    for fold_id, cv_fold in enumerate(all_cv_folds):
+    sub = get_submission_by_id(session, submission_id)
+    for fold_id, cv_fold in enumerate(sub.on_cv_folds):
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
         scores_update = pd.read_csv(
