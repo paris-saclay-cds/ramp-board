@@ -44,8 +44,8 @@ def database_connection():
     # close the connection and remove the database in the end
     yield
     connection.execute("""SELECT pg_terminate_backend(pid)
-                        FROM pg_stat_activity
-                        WHERE datname = 'databoard_test';""")
+                       FROM pg_stat_activity
+                       WHERE datname = 'databoard_test';""")
     connection.execute(f'DROP DATABASE {database_name}')
     connection.execute(f'DROP USER {username}')
     print(f"deleted database 'databoard_test' and removed user '{username}'")

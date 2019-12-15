@@ -387,7 +387,7 @@ def test_check_bagged_scores(session_scope_module):
     set_bagged_scores(session_scope_module, submission_id, path_results)
     scores = get_bagged_scores(session_scope_module, submission_id)
     multi_index = pd.MultiIndex(levels=[['test', 'valid'], [0, 1]],
-                                labels=[[0, 0, 1, 1], [0, 1, 0, 1]],
+                                codes=[[0, 0, 1, 1], [0, 1, 0, 1]],
                                 names=['step', 'n_bag'])
     expected_df = pd.DataFrame(
         {'acc': [0.70833333333, 0.70833333333, 0.65, 0.6486486486486],
