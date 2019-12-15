@@ -53,6 +53,15 @@ def test_approve_user(make_toy_db):
     assert result.exit_code == 0, result.output
 
 
+def test_make_user_admin(make_toy_db):
+    runner = CliRunner()
+    result = runner.invoke(main, ['make-user-admin',
+                                  '--config', database_config_template(),
+                                  '--login', 'glemaitre'],
+                           catch_exceptions=False)
+    assert result.exit_code == 0, result.output
+
+
 def test_add_problem(make_toy_db):
     runner = CliRunner()
     ramp_config = generate_ramp_config(read_config(ramp_config_template()))
