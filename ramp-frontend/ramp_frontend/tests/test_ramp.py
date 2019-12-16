@@ -278,6 +278,10 @@ def test_sign_up_for_event(client_session):
         session.commit()
         event_team = get_event_team_by_name(session, 'iris_test', 'yy')
         assert not event_team.approved
+        # check that we are informing the user that he has to wait for approval
+        rv = client.get('/events/iris_test')
+        assert rv.status_code == 200
+        assert b'Waiting for approval...' in rv.data
 
     # GET: sign-up to a new uncontrolled event
     event = get_event(session, 'boston_housing_test')
