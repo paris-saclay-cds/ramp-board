@@ -310,7 +310,7 @@ def test_sign_up_for_event_mail(client_session):
                 access_level='user'
             )
             with login_scope(client, 'zz', 'zz') as client:
-                rv = client.get('/events/iris_test/sign_up')
+                client.get('/events/iris_test/sign_up')
                 session.commit()
                 # check that the email has been sent
                 assert len(outbox) == 1
@@ -371,7 +371,7 @@ def test_ask_for_event_mail(client_session):
                     'opening_date': '2019-01-01',
                     'closing_date': '2020-01-01'
                 }
-                rv = client.post('problems/iris/ask_for_event', data=data)
+                client.post('problems/iris/ask_for_event', data=data)
                 # check that the email has been sent
                 assert len(outbox) == 1
                 assert ('User test_user asked to add a new event'
