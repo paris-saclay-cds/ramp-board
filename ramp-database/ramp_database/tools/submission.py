@@ -7,6 +7,8 @@ import shutil
 import numpy as np
 import pandas as pd
 
+from sqlalchemy.orm import defer
+
 from ..exceptions import DuplicateSubmissionError
 from ..exceptions import MissingExtensionError
 from ..exceptions import MissingSubmissionFileError
@@ -414,6 +416,8 @@ def get_time(session, submission_id):
     results = defaultdict(list)
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
                            .all())
     for fold_id, cv_fold in enumerate(all_cv_folds):
         results['fold'].append(fold_id)
@@ -441,6 +445,8 @@ def get_scores(session, submission_id):
     index = []
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
                            .all())
     for fold_id, cv_fold in enumerate(all_cv_folds):
         for step in ('train', 'valid', 'test'):
@@ -628,6 +634,8 @@ def set_predictions(session, submission_id, path_predictions):
     """
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
                            .all())
     for fold_id, cv_fold in enumerate(all_cv_folds):
         path_results = os.path.join(path_predictions,
@@ -653,6 +661,8 @@ def set_time(session, submission_id, path_predictions):
     """
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
                            .all())
     for fold_id, cv_fold in enumerate(all_cv_folds):
         path_results = os.path.join(path_predictions,
@@ -681,6 +691,8 @@ def set_scores(session, submission_id, path_predictions):
     """
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
                            .all())
     for fold_id, cv_fold in enumerate(all_cv_folds):
         path_results = os.path.join(path_predictions,
@@ -791,6 +803,8 @@ def score_submission(session, submission_id):
     # manually if needed for submission in various error states.
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
                            .all())
     for submission_on_cv_fold in all_cv_folds:
         submission_on_cv_fold.session = session
@@ -805,7 +819,7 @@ def score_submission(session, submission_id):
     # Means and stds were constructed on demand by fetching fold times.
     # It was slow because submission_on_folds contain also possibly large
     # predictions. If postgres solves this issue (which can be tested on
-    # the mean and std scores on the private leaderbord), the
+    # the mean and std scores on the private leaderbaord), the
     # corresponding columns (which are now redundant) can be deleted in
     # Submission and this computation can also be deleted.
     submission.train_time_cv_mean = np.mean(
