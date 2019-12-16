@@ -120,6 +120,26 @@ def make_user_admin(session, name):
     session.commit()
 
 
+def set_user_access_level(session, name, access_level="user"):
+    """Change the access level of a user.
+
+    In addition, it will also set the user as authenticated.
+
+    Paramaters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    name : str
+        The name of the user.
+    access_level : {"asked", "user", admin}, default="user"
+        User's access level
+    """
+    user = select_user_by_name(session, name)
+    user.access_level = access_level
+    user.is_authenticated = True
+    session.commit()
+
+
 def add_user_interaction(session, interaction=None, user=None, problem=None,
                          event=None, ip=None, note=None, submission=None,
                          submission_file=None, diff=None, similarity=None):
