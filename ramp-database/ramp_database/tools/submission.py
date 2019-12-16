@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 
 from sqlalchemy.orm import defer
-from sqlalchemy.orm import undefer
 
 from ..exceptions import DuplicateSubmissionError
 from ..exceptions import MissingExtensionError
