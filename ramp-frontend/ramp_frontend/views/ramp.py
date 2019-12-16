@@ -233,7 +233,7 @@ def sign_up_for_event(event_name):
                            ))
             body += ('Click on this link to approve the sign-up request: {}'
                      .format(url_approve))
-            send_mail(admin.mail, subject, body)
+            send_mail(admin.email, subject, body)
         return redirect_to_user("Sign-up request is sent to event admins.",
                                 is_error=False, category='Request sent')
     sign_up_team(db.session, event.name, flask_login.current_user.name)
