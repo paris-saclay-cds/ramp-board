@@ -360,7 +360,7 @@ def test_ask_for_event_mail(client_session):
         with mail.record_messages() as outbox:
             with login_scope(client, 'test_user', 'test') as client:
 
-                rv = client.get('problems/iris/ask_for_event')
+                client.get('problems/iris/ask_for_event')
                 data = {
                     'suffix': 'test_2',
                     'title': 'whatever title',
