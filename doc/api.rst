@@ -107,6 +107,7 @@ User-related database tools
    tools.team.ask_sign_up_team
    tools.user.approve_user
    tools.user.make_user_admin
+   tools.user.set_user_access_level
    tools.team.sign_up_team
 
 **Functions to add new entries in the database**

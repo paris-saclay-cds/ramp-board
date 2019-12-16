@@ -72,6 +72,21 @@ def make_user_admin(config, login):
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
+@click.option('--login', help="User's login to be made admin")
+@click.option('--access-level', help="The access level to grant the user."
+              "One of {'asked', 'user', 'admin'}", default='user',
+              show_default=True)
+def set_user_access_level(config, login, access_level):
+    """Change the access level of a RAMP user."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        user_module.set_user_access_level(session, login, access_level)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
 @click.option('--event', help='Name of the event')
 @click.option('--team', help='Name of the team')
 def sign_up_team(config, event, team):
