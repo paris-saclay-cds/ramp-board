@@ -35,6 +35,7 @@ from ramp_database.exceptions import TooEarlySubmissionError
 
 from ramp_database.tools.event import get_event
 from ramp_database.tools.event import get_problem
+from ramp_database.tools.frontend import did_user_signed_up
 from ramp_database.tools.frontend import is_admin
 from ramp_database.tools.frontend import is_accessible_code
 from ramp_database.tools.frontend import is_accessible_event
@@ -188,7 +189,9 @@ def user_event(event_name):
         approved = is_user_signed_up(
             db.session, event_name, flask_login.current_user.name
         )
-        asked = approved
+        asked = did_user_signed_up(
+            db.session, event_name, flask_login.current_user.name
+        )
         return render_template('event.html',
                                description=description,
                                event=event,
