@@ -25,6 +25,8 @@ from ramp_database.tools.team import ask_sign_up_team
 
 from ramp_frontend import create_app
 from ramp_frontend.testing import login_scope
+from ramp_frontend import mail
+from ramp_frontend.testing import _fail_no_smtp_server
 
 
 @pytest.fixture(scope='module')
@@ -296,6 +298,26 @@ def test_sign_up_for_event(client_session):
         assert event_team.approved
 
 
+@_fail_no_smtp_server
+def test_sign_up_for_event_mail(client_session):
+    client, session = client_session
+
+    # GET: sign-up to a new controlled event
+    with client.application.app_context():
+        with mail.record_messages() as outbox:
+            add_user(
+                session, 'zz', 'zz', 'zz', 'zz', 'zz@gmail',
+                access_level='user'
+            )
+            with login_scope(client, 'zz', 'zz') as client:
+                rv = client.get('/events/iris_test/sign_up')
+                session.commit()
+                # check that the email has been sent
+                assert len(outbox) == 1
+                assert ('Click on this link to approve the sign-up request'
+                        in outbox[0].body)
+
+
 def test_ask_for_event(client_session):
     client, session = client_session
 
@@ -328,6 +350,31 @@ def test_ask_for_event(client_session):
             flash_message = dict(cs['_flashes'])
         assert ("Thank you. Your request has been sent" in
                 flash_message['Event request'])
+
+
+def test_ask_for_event_mail(client_session):
+    client, session = client_session
+
+    with client.application.app_context():
+        with mail.record_messages() as outbox:
+            with login_scope(client, 'test_user', 'test') as client:
+
+                rv = client.get('problems/iris/ask_for_event')
+                data = {
+                    'suffix': 'test_2',
+                    'title': 'whatever title',
+                    'n_students': 200,
+                    'min_duration_between_submissions_hour': 1,
+                    'min_duration_between_submissions_minute': 2,
+                    'min_duration_between_submissions_second': 3,
+                    'opening_date': '2019-01-01',
+                    'closing_date': '2020-01-01'
+                }
+                rv = client.post('problems/iris/ask_for_event', data=data)
+                # check that the email has been sent
+                assert len(outbox) == 1
+                assert ('User test_user asked to add a new event'
+                        in outbox[0].body)
 
 
 # TODO: to be tested
