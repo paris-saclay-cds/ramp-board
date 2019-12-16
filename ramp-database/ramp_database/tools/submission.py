@@ -110,6 +110,7 @@ def add_submission(session, event_name, team_name, submission_name,
             all_cv_folds = (session.query(SubmissionOnCVFold)
                                    .filter_by(submission_id=submission.id)
                                    .all())
+            all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
             for submission_on_cv_fold in all_cv_folds:
                 submission_on_cv_fold.reset()
         else:
@@ -391,6 +392,7 @@ def get_predictions(session, submission_id):
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
                            .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
         results['fold'].append(fold_id)
         results['y_pred_train'].append(cv_fold.full_train_y_pred)
@@ -419,6 +421,7 @@ def get_time(session, submission_id):
                            .options(defer("full_train_y_pred"),
                                     defer("test_y_pred"))
                            .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
         results['fold'].append(fold_id)
         for step in ('train', 'valid', 'test'):
@@ -448,6 +451,7 @@ def get_scores(session, submission_id):
                            .options(defer("full_train_y_pred"),
                                     defer("test_y_pred"))
                            .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
         for step in ('train', 'valid', 'test'):
             index.append((fold_id, step))
@@ -637,6 +641,7 @@ def set_predictions(session, submission_id, path_predictions):
                            .options(defer("full_train_y_pred"),
                                     defer("test_y_pred"))
                            .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
@@ -664,6 +669,7 @@ def set_time(session, submission_id, path_predictions):
                            .options(defer("full_train_y_pred"),
                                     defer("test_y_pred"))
                            .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
@@ -694,6 +700,7 @@ def set_scores(session, submission_id, path_predictions):
                            .options(defer("full_train_y_pred"),
                                     defer("test_y_pred"))
                            .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
@@ -806,6 +813,7 @@ def score_submission(session, submission_id):
                            .options(defer("full_train_y_pred"),
                                     defer("test_y_pred"))
                            .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for submission_on_cv_fold in all_cv_folds:
         submission_on_cv_fold.session = session
         submission_on_cv_fold.compute_train_scores()
