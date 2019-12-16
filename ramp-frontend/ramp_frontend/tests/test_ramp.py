@@ -352,6 +352,7 @@ def test_ask_for_event(client_session):
                 flash_message['Event request'])
 
 
+@_fail_no_smtp_server
 def test_ask_for_event_mail(client_session):
     client, session = client_session
 
