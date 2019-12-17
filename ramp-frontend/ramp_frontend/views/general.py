@@ -1,5 +1,6 @@
 from flask import Blueprint
 from flask import render_template
+import flask_login
 import os as os
 
 from ramp_database.model import Keyword
@@ -23,7 +24,10 @@ def index():
 @mod.route("/description")
 def ramp():
     """RAMP description request."""
-    return render_template('ramp_description.html')
+    user = (flask_login.current_user
+            if flask_login.current_user.is_authenticated else None)
+    admin = user.access_level == 'admin' if user is not None else False
+    return render_template('ramp_description.html', admin=admin)
 
 
 @mod.route("/data_domains")
