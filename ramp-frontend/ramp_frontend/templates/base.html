@@ -180,10 +180,10 @@
                                 </div>
                             </li>
                             {% elif current_user.is_authenticated %}
-                            <li class="panel panel-default dropdown active">
-                                <a data-toggle="collapse" href="#dropdown-event">
-                                    <span class="icon fa fa-cloud"></span><span class="title">Select event to view</span>
-                                </a>
+                            <li class="panel panel-default dropdown disabled">
+                                    <a data-toggle="collapse" href="#">
+                                        <span class="icon fa fa-cloud"></span><span class="title">Select event to view</span>
+                                    </a>
                                 <!-- Dropdown level 1 -->
                                 <div id="dropdown-event" class="panel-collapse active collapse in">
                                     <div class="panel-body">
