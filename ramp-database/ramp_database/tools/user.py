@@ -104,6 +104,21 @@ def add_user(session, name, password, lastname, firstname, email,
     return user
 
 
+def delete_user(session, name):
+    """Delete a user from the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    name : str
+        The name of the user.
+    """
+    user = session.query(User).filter(User.name == name).one()
+    session.delete(user)
+    session.commit()
+
+
 def make_user_admin(session, name):
     """Make a user a RAMP admin.
 

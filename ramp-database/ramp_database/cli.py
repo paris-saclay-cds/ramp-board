@@ -48,6 +48,18 @@ def add_user(config, login, password, lastname, firstname, email,
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
+@click.option('--login', help="User's login to be removed")
+def delete_user(config, login):
+    """Delete a user which asked to sign-up to RAMP studio."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        user_module.delete_user(session, login)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
 @click.option('--login', help="User's login to be approved")
 def approve_user(config, login):
     """Approve a user which asked to sign-up to RAMP studio."""
