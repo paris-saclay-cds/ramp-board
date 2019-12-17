@@ -112,6 +112,19 @@ def sign_up_team(config, event, team):
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
+@click.option('--event', help='Name of the event')
+@click.option('--team', help='Name of the team')
+def delete_event_team(config, event, team):
+    """Delete a link between a user (or team) and a RAMP event."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        team_module.delete_event_team(session, event, team)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
 @click.option('--problem', help='Name of the problem')
 @click.option('--kit-dir', help='Path to the RAMP kit')
 @click.option('--data-dir', help='Path to the RAMP data')

@@ -138,7 +138,6 @@ User-related database tools
 
    tools.user.set_user_by_instance
 
-
 **Functions to delete an entry in the database**
 
 .. autosummary::
@@ -146,6 +145,7 @@ User-related database tools
    :template: function.rst
 
    tools.user.delete_user
+   tools.team.delete_event_team
 
 Event-related database tools
 ............................
