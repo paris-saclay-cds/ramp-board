@@ -168,6 +168,12 @@
                                             <li><a href="/events/{{ event.name }}/competition_leaderboard">competition leaderboard</a></li>
                                             <li><a href="/events/{{ event.name }}/sandbox">sandbox</a></li>
                                             <li><a href="/events/{{ event.name }}/my_submissions">my submissions</a></li>
+                                            {% else %}
+                                            <li class='disabled'><a href="#">starting kit</a></li>
+                                            <li class='disabled'><a href="#">leaderboard</a></li>
+                                            <li class='disabled'><a href="#">competition leaderboard</a></li>
+                                            <li class='disabled'><a href="#">sandbox</a></li>
+                                            <li class='disabled'><a href="#">my submissions</a></li>
                                             {% endif %}
                                             {% if admin %}
                                             <li><a href="/events/{{ event.name }}/dashboard_submissions">dashboard admin</a></li>
