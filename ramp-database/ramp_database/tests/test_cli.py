@@ -44,6 +44,24 @@ def test_add_user(make_toy_db):
     assert result.exit_code == 0, result.output
 
 
+def test_delete_user(make_toy_db):
+    runner = CliRunner()
+    runner.invoke(main, ['add-user',
+                         '--config', database_config_template(),
+                         '--login', 'yyy',
+                         '--password', 'yyy',
+                         '--lastname', 'yyy',
+                         '--firstname', 'yyy',
+                         '--email', 'yyy',
+                         '--access-level', 'user'],
+                  catch_exceptions=False)
+    result = runner.invoke(main, ['delete-user',
+                                  '--config', database_config_template(),
+                                  '--login', 'yyy'],
+                           catch_exceptions=False)
+    assert result.exit_code == 0, result.output
+
+
 def test_approve_user(make_toy_db):
     runner = CliRunner()
     result = runner.invoke(main, ['approve-user',
