@@ -14,7 +14,7 @@
     .flat-blue .navbar > .container-fluid, .flat-blue .navbar.navbar-default > .container-fluid {
       background-color: #FFF; }
     .flat-blue .navbar .navbar-header .navbar-brand, .flat-blue .navbar.navbar-default .navbar-header .navbar-brand {
-      color: #FFF; }
+      color: rgba(30, 32, 31, 0.829); }
     .flat-blue .navbar .navbar-header .navbar-expand-toggle, .flat-blue .navbar.navbar-default .navbar-header .navbar-expand-toggle {
       color: #353d47; }
     .flat-blue .navbar .navbar-header .navbar-right-expand-toggle, .flat-blue .navbar.navbar-default .navbar-header .navbar-right-expand-toggle {
@@ -61,7 +61,7 @@
     .flat-blue .navbar.navbar-inverse > .container-fluid {
       background-color: #353d47; }
     .flat-blue .navbar.navbar-inverse .navbar-header .navbar-brand {
-      color: #FFF; }
+      color: #193b46; }
     .flat-blue .navbar.navbar-inverse .navbar-header .navbar-expand-toggle {
       color: #FFF; }
     .flat-blue .navbar.navbar-inverse .navbar-header .navbar-right-expand-toggle {
@@ -329,7 +329,9 @@
   .flat-blue .progress .progress-bar.progress-bar-danger {
     background-color: #FA2A00; }
   .flat-blue .color-white {
-    color: #FFF; }
+    color: #193b46; }
+  .flat-blue .font-large {
+    font-size: 50px; }
   .flat-blue .pagination > li > a {
     color: #353d47; }
   .flat-blue .pagination .active > a, .flat-blue .pagination .active > a:focus, .flat-blue .pagination .active > a:hover, .flat-blue .pagination .active span, .flat-blue .pagination .active > span:focus, .flat-blue .pagination .active > span:hover {
@@ -641,7 +643,7 @@
   .flat-blue.landing-page .navbar .navbar-nav > li {
     border-left: 0px solid #FFF; }
     .flat-blue.landing-page .navbar .navbar-nav > li > a {
-      color: #FFF; }
+      color: #193b46; }
   .flat-blue.landing-page .navbar .navbar-collapse {
     border: 0; }
 

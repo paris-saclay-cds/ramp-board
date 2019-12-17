@@ -5,7 +5,7 @@ body {
   padding-top: 0px;
   height: 100%;
   position: relative;
-  font-size: 13px; }
+  font-size: 18px; }
 
 * {
   outline: none; }
@@ -941,7 +941,7 @@ body.login-page {
   clear: both; }
 
 .row.example > [class*='col-'] > div {
-  background-color: #EEE;
+  background-color: #DDD;
   padding: 10px;
   border: 1px solid #DDD; }
 
@@ -967,7 +967,7 @@ body.login-page {
         font-weight: bold; }
       .message-list > a > li > .message-block .message-datetime {
         font-size: 10px;
-        color: #AAA; }
+        color: #EEE; }
       .message-list > a > li > .message-block .message {
         font-size: 12px; }
     .message-list > a > li .profile-img {
@@ -993,7 +993,6 @@ body.login-page {
     padding: 0 15px; }
   .landing-page .app-header {
     padding-top: 100px;
-    background-image: url("../img/ramp_room.jpg");
     background-repeat: no-repeat;
     -webkit-background-size: cover;
     -moz-background-size: cover;
@@ -1065,7 +1064,7 @@ body.login-page {
     box-shadow: 0px 0px 6px 0px rgba(96, 100, 109, 0.4); }
   .landing-page .navbar.affix {
     z-index: 4000;
-    background-color: rgba(255, 255, 255, 0.95) !important;
+    background-color: rgba(78, 205, 196, 0.40) !important;
     height: 60px;
     opacity: 1;
     margin-top: 0px; }
