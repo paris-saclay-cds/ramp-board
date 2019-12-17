@@ -324,11 +324,11 @@ def sandbox(event_name):
     start = event.opening_timestamp
     end = event.closing_timestamp
 
-    event_status = {"msg":"",
-                    "state":"not_yet"}
+    event_status = {"msg": "",
+                    "state": "not_yet"}
     start_str = start.strftime("%d of %B %Y at %H:%M")
     end_str = end.strftime("%d of %B %Y, %H:%M")
-    if now < start: 
+    if now < start:
         event_status["msg"] = f"Event submissions will open on the {start_str}"
         event_status["state"] = "close"
     elif now < end:
