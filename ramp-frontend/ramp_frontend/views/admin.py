@@ -25,8 +25,10 @@ from ramp_database.tools.frontend import is_accessible_event
 from ramp_database.tools.frontend import is_user_signed_up
 from ramp_database.tools.frontend import is_user_sign_up_requested
 from ramp_database.tools.user import approve_user
+from ramp_database.tools.user import delete_user
 from ramp_database.tools.user import select_user_by_name
 from ramp_database.tools.user import get_user_interactions_by_name
+from ramp_database.tools.team import delete_event_team
 from ramp_database.tools.team import sign_up_team
 
 from ramp_frontend import db
@@ -63,39 +65,53 @@ def approve_users():
         event_teams_to_be_approved = request.form.getlist(
             'approve_event_teams'
         )
-        message = "Approved users:\n"
+        message = "{}d users:\n".format(request.form["submit_button"][:-1])
         for asked_user in users_to_be_approved:
-            approve_user(db.session, asked_user)
             user = select_user_by_name(db.session, asked_user)
+            if request.form["submit_button"] == "Approve!":
+                approve_user(db.session, asked_user)
 
-            subject = 'Your RAMP account have been approved'
-            body = ('{}, your account have been approved. You can now sign-up '
-                    'for any opened RAMP event.'
-                    .format(user.name))
-            send_mail(
-                to=user.email, subject=subject, body=body
-            )
-
+                subject = 'Your RAMP account have been approved'
+                body = ('{}, your account have been approved. You can now '
+                        'sign-up for any opened RAMP event.'
+                        .format(user.name))
+                send_mail(
+                    to=user.email, subject=subject, body=body
+                )
+            elif request.form["submit_button"] == "Remove!":
+                delete_user(db.session, asked_user)
             message += "{}\n".format(asked_user)
-        message += "Approved event_team:\n"
+
+        message += "{}d event_team:\n".format(
+            request.form["submit_button"][:-1]
+        )
         for asked_id in event_teams_to_be_approved:
             asked_event_team = EventTeam.query.get(asked_id)
-            sign_up_team(db.session, asked_event_team.event.name,
-                         asked_event_team.team.name)
             user = select_user_by_name(db.session, asked_event_team.team.name)
 
-            subject = ('Signed up for the RAMP event {}'
-                       .format(asked_event_team.event.name))
-            body = ('{}, you have been registered to the RAMP event {}. '
-                    'You can now proceed to your sandbox and make submission.'
-                    '\nHave fun!!!'.format(user.name,
-                                           asked_event_team.event.name))
-            send_mail(
-                to=user.email, subject=subject, body=body
-            )
+            if request.form["submit_button"] == "Approve!":
+                sign_up_team(db.session, asked_event_team.event.name,
+                             asked_event_team.team.name)
+
+                subject = ('Signed up for the RAMP event {}'
+                           .format(asked_event_team.event.name))
+                body = ('{}, you have been registered to the RAMP event {}. '
+                        'You can now proceed to your sandbox and make '
+                        'submission.\nHave fun!!!'
+                        .format(user.name, asked_event_team.event.name))
+                send_mail(
+                    to=user.email, subject=subject, body=body
+                )
+            elif request.form["submit_button"] == "Remove!":
+                delete_event_team(
+                    db.session, asked_event_team.event.name,
+                    asked_event_team.team.name
+                )
             message += "{}\n".format(asked_event_team)
-        return redirect_to_user(message, is_error=False,
-                                category="Approved users")
+        return redirect_to_user(
+            message, is_error=False,
+            category="{}d users".format(request.form["submit_button"][:-1])
+        )
 
 
 @mod.route("/sign_up/<user_name>")
