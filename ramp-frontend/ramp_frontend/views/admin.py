@@ -82,15 +82,16 @@ def approve_users():
             asked_event_team = EventTeam.query.get(asked_id)
             sign_up_team(db.session, asked_event_team.event.name,
                          asked_event_team.team.name)
+            user = select_user_by_name(db.session, asked_event_team.team.name)
 
             subject = ('Signed up for the RAMP event {}'
                        .format(asked_event_team.event.name))
             body = ('{}, you have been registered to the RAMP event {}. '
                     'You can now proceed to your sandbox and make submission.'
-                    '\nHave fun!!!'.format(flask_login.current_user.name,
+                    '\nHave fun!!!'.format(user.name,
                                            asked_event_team.event.name))
             send_mail(
-                to=flask_login.current_user.email, subject=subject, body=body
+                to=user.email, subject=subject, body=body
             )
             message += "{}\n".format(asked_event_team)
         return redirect_to_user(message, is_error=False,
@@ -150,11 +151,8 @@ def approve_sign_up_for_event(event_name, user_name):
                .format(event.name))
     body = ('{}, you have been registered to the RAMP event {}. '
             'You can now proceed to your sandbox and make submission.'
-            '\nHave fun!!!'.format(flask_login.current_user.name,
-                                   event.name))
-    send_mail(
-        to=flask_login.current_user.email, subject=subject, body=body
-    )
+            '\nHave fun!!!'.format(user.name, event.name))
+    send_mail(to=user.email, subject=subject, body=body)
 
     return redirect_to_user('{} is signed up for {}.'.format(user, event),
                             is_error=False, category='Successful sign-up')
