@@ -9,10 +9,12 @@ from ramp_utils import read_config
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
 
+from ramp_database.model import Event
 from ramp_database.model import EventTeam
 from ramp_database.model import Model
 from ramp_database.model import Submission
 from ramp_database.model import SubmissionOnCVFold
+from ramp_database.model import User
 
 from ramp_database.utils import setup_db
 from ramp_database.utils import session_scope
@@ -23,6 +25,7 @@ from ramp_database.testing import add_users
 from ramp_database.testing import create_test_db
 
 from ramp_database.tools.team import ask_sign_up_team
+from ramp_database.tools.team import delete_event_team
 from ramp_database.tools.team import sign_up_team
 
 
@@ -93,3 +96,25 @@ def test_sign_up_team(session_scope_function):
         assert fold.state == 'new'
         assert fold.best is False
         assert fold.contributivity == pytest.approx(0)
+
+
+def test_delete_event_team(session_scope_function):
+    event_name, username = 'iris_test', 'test_user'
+
+    sign_up_team(session_scope_function, event_name, username)
+    event_team = session_scope_function.query(EventTeam).all()
+    assert len(event_team) == 1
+
+    delete_event_team(session_scope_function, event_name, username)
+    event_team = session_scope_function.query(EventTeam).all()
+    assert len(event_team) == 0
+
+    # check that the user still exist
+    user = (session_scope_function.query(User)
+                                  .filter(User.name == username)
+                                  .all())
+    assert len(user) == 1
+    event = (session_scope_function.query(Event)
+                                   .filter(Event.name == event_name)
+                                   .all())
+    assert len(event) == 1
