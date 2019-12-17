@@ -97,9 +97,10 @@ def test_user_signed_up(session_toy_db, event_name, user_name, is_accessible):
      ('boston_housing_test', 'test_iris_admin', False),
      ('iris_test', 'test_user', False)]
 )
-def test_is_user_sign_up_requested(session_toy_db, event_name, user_name, asked):
+def test_is_user_sign_up_requested(session_toy_db, event_name, user_name,
+                                   asked):
     assert is_user_sign_up_requested(session_toy_db, event_name,
-                              user_name) is asked
+                                     user_name) is asked
 
 
 def test_is_accessible_code(session_toy_db):
