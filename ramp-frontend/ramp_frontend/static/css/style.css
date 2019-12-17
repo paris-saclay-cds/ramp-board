@@ -273,11 +273,6 @@ a:hover {
           line-height: 44px;
           vertical-align: middle;
           padding: 0em 1.2em; }
-        .app-container .content-container .side-menu .navbar-nav .inactiveLink li.dropdown ul li {
-          pointer-events: none;
-          cursor: not-allowed;
-          color: gray
-         }
         .app-container .content-container .side-menu .navbar-nav li.dropdown > a:after {
           content: "";
           position: absolute;
