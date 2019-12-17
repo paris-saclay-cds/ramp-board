@@ -326,19 +326,17 @@ def sandbox(event_name):
 
     event_status = {"msg":"",
                     "state":"not_yet"}
-    if now > start: 
-        event_status["msg"] = f"""Event submissions will open on the
-                           {start.strftime("%d of %B %Y at %H:%M")}"""
-        event_status["state"] = "not_yet"
-    elif end > now:
-        event_status["msg"] = f"""Event submissions are open until 
-                           {end.strftime("%d of %B %Y, %H:%M")}"""
-        event_status.state = "open"
-    elif end <= now:
-        event_status["msg"] = f"""This event closed on the
-                           {end.strftime("%d of %B %Y at %H:%M")}"""
+    start_str = start.strftime("%d of %B %Y at %H:%M")
+    end_str = end.strftime("%d of %B %Y, %H:%M")
+    if now < start: 
+        event_status["msg"] = f"Event submissions will open on the {start_str}"
         event_status["state"] = "close"
-    import pdb; pdb.set_trace()
+    elif now < end:
+        event_status["msg"] = f"Event submissions are open until {end_str}"
+        event_status["state"] = "open"
+    elif now >= end:
+        event_status["msg"] = f"This event closed on the {end_str}"
+        event_status["state"] = "close"
 
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     if request.method == 'GET':
