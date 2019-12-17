@@ -137,7 +137,9 @@
       <div class="card-header">
         <div class="card-title">
             <div class="title">
-                Submit your code!
+                {{ event_status["msg"] | safe}}
+                
+                <!-- Submit your code! -->
             </div>
         </div>
       </div>
@@ -149,7 +151,11 @@
                 <label>Submission name (between 4 and 20 characters)</label>
                 {{ submit_form.submission_name }}
             </div>
-            <input type="submit" value="Submit" class="ui submit button" id="checksave">
+            {% if event_status["state"] == 'close' %}
+                <input button type="button" value="Submit" class="btn btn-secondary disabled" >
+            {% else %}
+                <input type="submit" value="Submit" class="ui submit button" id="checksave">
+            {% endif %}
     	</center>
         </form>
       </div>
