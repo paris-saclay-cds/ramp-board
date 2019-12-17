@@ -108,6 +108,7 @@ def approve_users():
                     asked_event_team.team.name
                 )
             message += "{}\n".format(asked_event_team)
+        print(message)
         return redirect_to_user(message, is_error=False,
                                 category="Approved users")
 

@@ -114,6 +114,7 @@ def test_approve_users(client_session):
 
         # POST check that we are able to approve a user and event
         data = ImmutableMultiDict([
+            ('submit_button', 'Approve!'),
             ('approve_users', 'yy'),
             ('approve_event_teams', str(event_team.id))]
         )
@@ -129,6 +130,7 @@ def test_approve_users(client_session):
         event_team = get_event_team_by_name(session, 'iris_test', 'xx')
         assert event_team.approved
         with client.session_transaction() as cs:
+            print(cs.__dict__)
             flash_message = dict(cs['_flashes'])
         assert re.match(r"Approved users:\nyy\nApproved event_team:\n"
                         r"Event\(iris_test\)/Team\(.*xx.*\)\n",
