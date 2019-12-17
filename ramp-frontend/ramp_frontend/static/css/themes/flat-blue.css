@@ -74,10 +74,12 @@
       border-left: 1px solid #363c46; }
       .flat-blue .navbar.navbar-inverse .navbar-nav > li > a {
         color: #FFF; }
+      .flat-blue .navbar.navbar-inverse .navbar-nav > li.disabled > a {
+        color: rgba(120, 120, 120, 0.8); }
     .flat-blue .navbar.navbar-inverse .navbar-nav > li:hover > a {
       color: #0ead9a; }
-      a.inactiveLink .flat-blue .navbar.navbar-inverse .navbar-nav > li:hover > a {
-        color:  rgba(0, 0, 0, 0.1)}
+      .flat-blue .navbar.navbar-inverse .navbar-nav > li.disabled:hover > a {
+        color: rgba(120, 120, 120, 0.8); }
     .flat-blue .navbar.navbar-inverse .navbar-nav > li.open > a {
       background-color: transparent;
       color: #0ead9a; }
