@@ -147,7 +147,7 @@ def is_user_signed_up(session, event_name, user_name):
     return False
 
 
-def did_user_signed_up(session, event_name, user_name):
+def is_user_sign_up_requested(session, event_name, user_name):
     """Whether or not user signed up to an event.
 
     Parameters

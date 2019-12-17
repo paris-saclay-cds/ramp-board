@@ -253,12 +253,12 @@ Frontend-related database tools
    :toctree: generated/
    :template: function.rst
 
-   tools.frontend.did_user_signed_up
    tools.frontend.is_admin
    tools.frontend.is_accessible_event
    tools.frontend.is_accessible_leaderboard
    tools.frontend.is_accessible_code
    tools.frontend.is_user_signed_up
+   tools.frontend.is_user_sign_up_requested
 
 :mod:`ramp_database.exceptions`: type of errors raise by the database
 ---------------------------------------------------------------------

@@ -20,10 +20,10 @@ from ramp_database.model import User
 from ramp_database.exceptions import NameClashError
 
 from ramp_database.tools.event import get_event
-from ramp_database.tools.frontend import did_user_signed_up
 from ramp_database.tools.frontend import is_admin
 from ramp_database.tools.frontend import is_accessible_event
 from ramp_database.tools.frontend import is_user_signed_up
+from ramp_database.tools.frontend import is_user_sign_up_requested
 from ramp_database.tools.user import approve_user
 from ramp_database.tools.user import select_user_by_name
 from ramp_database.tools.user import get_user_interactions_by_name
@@ -248,7 +248,7 @@ def update_event(event_name):
     approved = is_user_signed_up(
         db.session, event_name, flask_login.current_user.name
     )
-    asked = did_user_signed_up(
+    asked = is_user_sign_up_requested(
         db.session, event_name, flask_login.current_user.name
     )
     return render_template(
@@ -329,7 +329,7 @@ def dashboard_submissions(event_name):
     approved = is_user_signed_up(
         db.session, event_name, flask_login.current_user.name
     )
-    asked = did_user_signed_up(
+    asked = is_user_sign_up_requested(
         db.session, event_name, flask_login.current_user.name
     )
     return render_template(
