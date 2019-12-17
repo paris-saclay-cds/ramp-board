@@ -93,7 +93,51 @@ def test_check_admin_required(client_session, page, request_function):
             assert rv.status_code == 200
 
 
-def test_approve_users(client_session):
+def test_approve_users_remove(client_session):
+    client, session = client_session
+
+    # create 2 new users
+    add_user(session, 'xx', 'xx', 'xx', 'xx', 'xx', access_level='user')
+    add_user(session, 'yy', 'yy', 'yy', 'yy', 'yy', access_level='asked')
+    # ask for sign up for an event for the first user
+    _, _, event_team = ask_sign_up_team(session, 'iris_test', 'xx')
+
+    with login_scope(client, 'test_iris_admin', 'test') as client:
+
+        # GET check that we get all new user to be approved
+        rv = client.get('/approve_users')
+        assert rv.status_code == 200
+        # line for user approval
+        assert b'yy: yy yy - yy' in rv.data
+        # line for the event approval
+        assert b'iris_test - xx'
+
+        # POST check that we are able to approve a user and event
+        data = ImmutableMultiDict([
+            ('submit_button', 'Remove!'),
+            ('approve_users', 'yy'),
+            ('approve_event_teams', str(event_team.id))]
+        )
+        rv = client.post('/approve_users', data=data)
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+
+        # ensure that the previous change have been committed within our
+        # session
+        session.commit()
+        user = get_user_by_name(session, 'yy')
+        assert user is None
+        event_team = get_event_team_by_name(session, 'iris_test', 'xx')
+        assert event_team is None
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+            print(flash_message)
+        assert re.match(r"Removed users:\nyy\nRemoved event_team:\n"
+                        r"Event\(iris_test\)/Team\(.*xx.*\)\n",
+                        flash_message['Removed users'])
+
+
+def test_approve_users_approve(client_session):
     client, session = client_session
 
     # create 2 new users
@@ -130,7 +174,6 @@ def test_approve_users(client_session):
         event_team = get_event_team_by_name(session, 'iris_test', 'xx')
         assert event_team.approved
         with client.session_transaction() as cs:
-            print(cs.__dict__)
             flash_message = dict(cs['_flashes'])
         assert re.match(r"Approved users:\nyy\nApproved event_team:\n"
                         r"Event\(iris_test\)/Team\(.*xx.*\)\n",

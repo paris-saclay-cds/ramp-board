@@ -65,7 +65,7 @@ def approve_users():
         event_teams_to_be_approved = request.form.getlist(
             'approve_event_teams'
         )
-        message = "{} users:\n".format(request.form["submit_button"][:-1])
+        message = "{}d users:\n".format(request.form["submit_button"][:-1])
         for asked_user in users_to_be_approved:
             user = select_user_by_name(db.session, asked_user)
             if request.form["submit_button"] == "Approve!":
@@ -82,7 +82,7 @@ def approve_users():
                 delete_user(db.session, asked_user)
             message += "{}\n".format(asked_user)
 
-        message += "{} event_team:\n".format(
+        message += "{}d event_team:\n".format(
             request.form["submit_button"][:-1]
         )
         for asked_id in event_teams_to_be_approved:
@@ -108,9 +108,10 @@ def approve_users():
                     asked_event_team.team.name
                 )
             message += "{}\n".format(asked_event_team)
-        print(message)
-        return redirect_to_user(message, is_error=False,
-                                category="Approved users")
+        return redirect_to_user(
+            message, is_error=False,
+            category="{}d users".format(request.form["submit_button"][:-1])
+        )
 
 
 @mod.route("/sign_up/<user_name>")
