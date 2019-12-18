@@ -443,7 +443,9 @@ class EventAdmin(Model):
                                          cascade='all, delete-orphan'))
 
     admin_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    admin = relationship('User', backref=backref('admined_events'))
+    admin = relationship('User',
+                         backref=backref('admined_events',
+                                         cascade='all, delete-orphan'))
 
 
 class EventTeam(Model):
