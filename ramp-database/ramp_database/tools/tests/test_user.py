@@ -101,6 +101,10 @@ def test_delete_user(session_scope_function):
                                   .filter(User.name == username)
                                   .one_or_none())
     assert user is None
+    team = (session_scope_function.query(Team)
+                                  .filter(Team.name == user)
+                                  .all())
+    assert len(team) == 0
 
 
 def test_make_user_admin(session_scope_function):
