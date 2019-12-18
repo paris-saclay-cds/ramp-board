@@ -15,6 +15,12 @@ install:
 	cd ramp-engine && pip install . && cd ..
 	cd ramp-utils && pip install . && cd ..
 
+develop:
+	cd ramp-frontend && pip install -e . && cd ..
+	cd ramp-database && pip install -e . && cd ..
+	cd ramp-engine && pip install -e . && cd ..
+	cd ramp-utils && pip install -e . && cd ..
+
 in: inplace # just a shortcut
 inplace:
 	cd ramp-frontend && pip install -e . && cd ..
