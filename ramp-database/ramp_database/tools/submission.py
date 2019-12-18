@@ -32,6 +32,7 @@ from ._query import select_submission_by_name
 from ._query import select_submission_file_type_by_name
 from ._query import select_team_by_name
 
+CACHE_DIR = '/home/ramp/ramp_deployment/cache/'
 STATES = submission_states.enums
 logger = logging.getLogger('RAMP-DATABASE')
 
@@ -424,18 +425,26 @@ def get_time(session, submission_id):
     computation_time : pd.DataFrame
         A pandas dataframe containing the computation time of each fold.
     """
-    results = defaultdict(list)
-    all_cv_folds = (session.query(SubmissionOnCVFold)
+    cache_filename = os.path.join(
+            CACHE_DIR, 'times_submission_{:09}.pkl.zip'
+            .format(submission_id))
+    if os.path.exists(cache_filename):
+        times = pd.read_pickle(cache_filename)
+    else:
+        results = defaultdict(list)
+        all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
                            .options(defer("full_train_y_pred"),
                                     defer("test_y_pred"))
                            .all())
-    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
-    for fold_id, cv_fold in enumerate(all_cv_folds):
-        results['fold'].append(fold_id)
-        for step in ('train', 'valid', 'test'):
-            results[step].append(getattr(cv_fold, '{}_time'.format(step)))
-    return pd.DataFrame(results).set_index('fold')
+        all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
+        for fold_id, cv_fold in enumerate(all_cv_folds):
+            results['fold'].append(fold_id)
+            for step in ('train', 'valid', 'test'):
+                results[step].append(getattr(cv_fold, '{}_time'.format(step)))
+        times = pd.DataFrame(results).set_index('fold')
+        times.to_pickle(cache_filename)
+    return times
 
 
 def get_scores(session, submission_id):
@@ -453,21 +462,28 @@ def get_scores(session, submission_id):
     scores : pd.DataFrame
         A pandas dataframe containing the scores of each fold.
     """
-    results = defaultdict(list)
-    index = []
-    all_cv_folds = (session.query(SubmissionOnCVFold)
+    cache_filename = os.path.join(
+            CACHE_DIR, 'scores_submission_{:09}.pkl.zip'
+            .format(submission_id))
+    if os.path.exists(cache_filename):
+        scores = pd.read_pickle(cache_filename)
+    else:
+        results = defaultdict(list)
+        index = []
+        all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
                            .options(defer("full_train_y_pred"),
                                     defer("test_y_pred"))
                            .all())
-    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
-    for fold_id, cv_fold in enumerate(all_cv_folds):
-        for step in ('train', 'valid', 'test'):
-            index.append((fold_id, step))
-            for score in cv_fold.scores:
-                results[score.name].append(getattr(score, step + '_score'))
-    multi_index = pd.MultiIndex.from_tuples(index, names=['fold', 'step'])
-    scores = pd.DataFrame(results, index=multi_index)
+        all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
+        for fold_id, cv_fold in enumerate(all_cv_folds):
+            for step in ('train', 'valid', 'test'):
+                index.append((fold_id, step))
+                for score in cv_fold.scores:
+                    results[score.name].append(getattr(score, step + '_score'))
+        multi_index = pd.MultiIndex.from_tuples(index, names=['fold', 'step'])
+        scores = pd.DataFrame(results, index=multi_index)
+        scores.to_pickle(cache_filename)
     return scores
 
 
