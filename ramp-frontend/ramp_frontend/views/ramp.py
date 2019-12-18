@@ -357,7 +357,7 @@ def sandbox(event_name):
                 return redirect_to_sandbox(event, 'Error: {}'.format(e))
             return redirect_to_sandbox(
                 event,
-                'You submission has been saved. You can safely comeback to '
+                'Your submission has been saved. You can safely comeback to '
                 'your sandbox later.',
                 is_error=False, category='File saved'
             )
@@ -823,14 +823,20 @@ def view_model(submission_hash, f_name):
                         submission, filename)
             )
 
-            # TODO: deal with different extensions of the same file
-            src = os.path.join(submission.path, filename)
-            dst = os.path.join(sandbox_submission.path, filename)
-            shutil.copy2(src, dst)  # copying also metadata
-            logger.info('Copying {} to {}'.format(src, dst))
-
             workflow_element = WorkflowElement.query.filter_by(
                 name=filename.split('.')[0], workflow=event.workflow).one()
+
+            # TODO: deal with different extensions of the same file
+            # For non-editable files, only create a symlink if the file
+            # does not already exist.
+            src = os.path.join(submission.path, filename)
+            dst = os.path.join(sandbox_submission.path, filename)
+            if workflow_element.is_editable:
+                shutil.copy2(src, dst)  # copying also metadata
+            elif not os.path.exists(dst):
+                os.symlink(src, dst)
+            logger.info('Copying {} to {}'.format(src, dst))
+
             submission_file = SubmissionFile.query.filter_by(
                 submission=submission,
                 workflow_element=workflow_element).one()

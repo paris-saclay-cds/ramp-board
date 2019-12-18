@@ -121,10 +121,7 @@ def add_workflow(session, workflow_object):
         tokens = element_name.split('.')
         element_filename = tokens[0]
         # inferring that file is code if there is no extension
-        if len(tokens) > 2:
-            raise ValueError('File name {} should contain at most one "."'
-                             .format(element_name))
-        element_file_extension_name = tokens[1] if len(tokens) == 2 else 'py'
+        element_file_extension_name = '.'.join(tokens[1:]) if len(tokens) > 1 else 'py'
         extension = select_extension_by_name(session,
                                              element_file_extension_name)
         if extension is None:
