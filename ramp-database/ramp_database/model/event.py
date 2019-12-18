@@ -499,7 +499,9 @@ class EventTeam(Model):
                                          cascade='all, delete-orphan'))
 
     team_id = Column(Integer, ForeignKey('teams.id'), nullable=False)
-    team = relationship('Team', backref=backref('team_events'))
+    team = relationship('Team',
+                        backref=backref('team_events',
+                                        cascade='all, delete-orphan'))
 
     is_active = Column(Boolean, default=True)
     last_submission_name = Column(String, default=None)
