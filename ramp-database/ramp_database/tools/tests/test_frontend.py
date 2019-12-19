@@ -19,6 +19,7 @@ from ramp_database.tools.event import get_event_admin
 from ramp_database.tools.user import add_user
 from ramp_database.tools.user import get_user_by_name
 
+from ramp_database.tools.frontend import is_user_sign_up_requested
 from ramp_database.tools.frontend import is_admin
 from ramp_database.tools.frontend import is_accessible_code
 from ramp_database.tools.frontend import is_accessible_event
@@ -27,7 +28,7 @@ from ramp_database.tools.frontend import is_user_signed_up
 
 
 @pytest.fixture(scope='module')
-def session_toy_db():
+def session_toy_db(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:
@@ -88,6 +89,18 @@ def test_is_accessible_event(session_toy_db, event_name, user_name,
 def test_user_signed_up(session_toy_db, event_name, user_name, is_accessible):
     assert is_user_signed_up(session_toy_db, event_name,
                              user_name) is is_accessible
+
+
+@pytest.mark.parametrize(
+    "event_name, user_name, asked",
+    [('boston_housing', 'test_iris_admin', False),
+     ('boston_housing_test', 'test_iris_admin', False),
+     ('iris_test', 'test_user', False)]
+)
+def test_is_user_sign_up_requested(session_toy_db, event_name, user_name,
+                                   asked):
+    assert is_user_sign_up_requested(session_toy_db, event_name,
+                                     user_name) is asked
 
 
 def test_is_accessible_code(session_toy_db):

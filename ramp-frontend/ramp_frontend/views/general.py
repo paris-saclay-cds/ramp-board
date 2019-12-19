@@ -1,5 +1,7 @@
 from flask import Blueprint
 from flask import render_template
+import flask_login
+import os as os
 
 from ramp_database.model import Keyword
 
@@ -11,13 +13,21 @@ mod = Blueprint('general', __name__)
 @mod.route('/')
 def index():
     """Default landing page."""
-    return render_template('index.html')
+    img_ext = ('.png', '.jpg', '.jpeg', '.gif', '.svg')
+    current_dir = os.path.dirname(__file__)
+    img_folder = os.path.join(current_dir, "../static/img/powered_by")
+    images = [f for f in os.listdir(img_folder)
+              if f.endswith(img_ext)]
+    return render_template('index.html', images=images)
 
 
 @mod.route("/description")
 def ramp():
     """RAMP description request."""
-    return render_template('ramp_description.html')
+    user = (flask_login.current_user
+            if flask_login.current_user.is_authenticated else None)
+    admin = user.access_level == 'admin' if user is not None else False
+    return render_template('ramp_description.html', admin=admin)
 
 
 @mod.route("/data_domains")

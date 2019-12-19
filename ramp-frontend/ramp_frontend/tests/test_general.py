@@ -16,7 +16,7 @@ from ramp_frontend import create_app
 
 
 @pytest.fixture(scope='module')
-def client_session():
+def client_session(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:

@@ -1,3 +1,4 @@
+import datetime
 import os
 import shutil
 
@@ -17,13 +18,19 @@ from ramp_database.tools.event import get_event
 from ramp_database.tools.user import add_user
 from ramp_database.tools.submission import get_submission_by_name
 from ramp_database.tools.team import get_event_team_by_name
+from ramp_database.tools.event import add_event
+from ramp_database.tools.event import delete_event
+from ramp_database.tools.team import sign_up_team
+from ramp_database.tools.team import ask_sign_up_team
 
 from ramp_frontend import create_app
 from ramp_frontend.testing import login_scope
+from ramp_frontend import mail
+from ramp_frontend.testing import _fail_no_smtp_server
 
 
 @pytest.fixture(scope='module')
-def client_session():
+def client_session(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:
@@ -44,6 +51,15 @@ def client_session():
             pass
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
+
+
+@pytest.fixture(scope='function')
+def makedrop_event(client_session):
+    _, session = client_session
+    add_event(session, 'iris', 'test_4event', 'test_4event', 'starting_kit',
+              '/tmp/databoard_test/submissions', is_public=True)
+    yield
+    delete_event(session, 'test_4event')
 
 
 @pytest.mark.parametrize(
@@ -92,7 +108,7 @@ def test_problems(client_session):
     rv = client.get('/problems')
     assert rv.status_code == 200
     assert b'Hi User!' not in rv.data
-    assert b'number of participants =' in rv.data
+    assert b'participants =' in rv.data
     assert b'Iris classification' in rv.data
     assert b'Boston housing price regression' in rv.data
 
@@ -101,7 +117,7 @@ def test_problems(client_session):
         rv = client.get('/problems')
         assert rv.status_code == 200
         assert b'Hi User!' in rv.data
-        assert b'number of participants =' in rv.data
+        assert b'participants =' in rv.data
         assert b'Iris classification' in rv.data
         assert b'Boston housing price regression' in rv.data
 
@@ -133,6 +149,76 @@ def test_problem(client_session):
         assert b'Iris classification' in rv.data
         assert b'Current events on this problem' in rv.data
         assert b'Keywords' in rv.data
+
+
+def test_user_event_status(client_session):
+    client, session = client_session
+
+    add_user(session, 'new_user', 'new_user', 'new_user',
+             'new_user', 'new_user', access_level='user')
+    add_event(session, 'iris', 'new_event', 'new_event', 'starting_kit',
+              '/tmp/databoard_test/submissions', is_public=True)
+
+    # user signed up, not approved for the event
+    ask_sign_up_team(session, 'new_event', 'new_user')
+    with login_scope(client, 'new_user', 'new_user') as client:
+        rv = client.get('/problems')
+        assert rv.status_code == 200
+        assert b'user-waiting' in rv.data
+        assert b'user-signed' not in rv.data
+
+    # user signed up and approved for the event
+    sign_up_team(session, 'new_event', 'new_user')
+    with login_scope(client, 'new_user', 'new_user') as client:
+        rv = client.get('/problems')
+        assert rv.status_code == 200
+        assert b'user-signed' in rv.data
+        assert b'user-waiting' not in rv.data
+
+
+NOW = datetime.datetime.now()
+testtimestamps = [
+    (NOW.replace(year=NOW.year+1), NOW.replace(year=NOW.year+2),
+     NOW.replace(year=NOW.year+3), b'event-close'),
+    (NOW.replace(year=NOW.year-1), NOW.replace(year=NOW.year+1),
+     NOW.replace(year=NOW.year+2), b'event-comp'),
+    (NOW.replace(year=NOW.year-2), NOW.replace(year=NOW.year-1),
+     NOW.replace(year=NOW.year+1), b'event-collab'),
+    (NOW.replace(year=NOW.year-3), NOW.replace(year=NOW.year-2),
+     NOW.replace(year=NOW.year-1), b'event-close'),
+]
+
+
+@pytest.mark.parametrize(
+    "opening_date,public_date,closing_date,expected", testtimestamps
+)
+def test_event_status(client_session, makedrop_event,
+                      opening_date, public_date,
+                      closing_date, expected):
+    # checks if the event status is displayed correctly
+    client, session = client_session
+
+    # change the datetime stamps for the event
+    event = get_event(session, 'test_4event')
+    event.opening_timestamp = opening_date
+    event.public_opening_timestamp = public_date
+    event.closing_timestamp = closing_date
+    session.commit()
+
+    # GET: access the problems page without login
+    rv = client.get('/problems')
+    assert rv.status_code == 200
+    event_idx = rv.data.index(b'test_4event')
+    event_class_idx = rv.data[:event_idx].rfind(b'<i class')
+    assert expected in rv.data[event_class_idx:event_idx]
+
+    # GET: access the problems when logged-in
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('/problems')
+        assert rv.status_code == 200
+        event_idx = rv.data.index(b'test_4event')
+        event_class_idx = rv.data[:event_idx].rfind(b'<i class')
+        assert expected in rv.data[event_class_idx:event_idx]
 
 
 def test_user_event(client_session):
@@ -192,6 +278,10 @@ def test_sign_up_for_event(client_session):
         session.commit()
         event_team = get_event_team_by_name(session, 'iris_test', 'yy')
         assert not event_team.approved
+        # check that we are informing the user that he has to wait for approval
+        rv = client.get('/events/iris_test')
+        assert rv.status_code == 200
+        assert b'Waiting for approval...' in rv.data
 
     # GET: sign-up to a new uncontrolled event
     event = get_event(session, 'boston_housing_test')
@@ -210,6 +300,27 @@ def test_sign_up_for_event(client_session):
         event_team = get_event_team_by_name(session, 'boston_housing_test',
                                             'yy')
         assert event_team.approved
+
+
+@_fail_no_smtp_server
+def test_sign_up_for_event_mail(client_session):
+    client, session = client_session
+
+    # GET: sign-up to a new controlled event
+    with client.application.app_context():
+        with mail.record_messages() as outbox:
+            add_user(
+                session, 'zz', 'zz', 'zz', 'zz', 'zz@gmail',
+                access_level='user'
+            )
+            with login_scope(client, 'zz', 'zz') as client:
+                rv = client.get('/events/iris_test/sign_up')
+                assert rv.status_code == 302
+                session.commit()
+                # check that the email has been sent
+                assert len(outbox) == 1
+                assert ('Click on this link to approve the sign-up request'
+                        in outbox[0].body)
 
 
 def test_ask_for_event(client_session):
@@ -244,6 +355,34 @@ def test_ask_for_event(client_session):
             flash_message = dict(cs['_flashes'])
         assert ("Thank you. Your request has been sent" in
                 flash_message['Event request'])
+
+
+@_fail_no_smtp_server
+def test_ask_for_event_mail(client_session):
+    client, session = client_session
+
+    with client.application.app_context():
+        with mail.record_messages() as outbox:
+            with login_scope(client, 'test_user', 'test') as client:
+
+                rv = client.get('problems/iris/ask_for_event')
+                assert rv.status_code == 200
+                data = {
+                    'suffix': 'test_2',
+                    'title': 'whatever title',
+                    'n_students': 200,
+                    'min_duration_between_submissions_hour': 1,
+                    'min_duration_between_submissions_minute': 2,
+                    'min_duration_between_submissions_second': 3,
+                    'opening_date': '2019-01-01',
+                    'closing_date': '2020-01-01'
+                }
+                rv = client.post('problems/iris/ask_for_event', data=data)
+                assert rv.status_code == 302
+                # check that the email has been sent
+                assert len(outbox) == 1
+                assert ('User test_user asked to add a new event'
+                        in outbox[0].body)
 
 
 # TODO: to be tested

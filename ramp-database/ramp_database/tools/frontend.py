@@ -148,7 +148,7 @@ def is_user_signed_up(session, event_name, user_name):
     return False
 
 
-def did_user_signed_up(session, event_name, user_name):
+def is_user_sign_up_requested(session, event_name, user_name):
     """Whether or not user signed up to an event.
 
     Parameters
@@ -166,7 +166,6 @@ def did_user_signed_up(session, event_name, user_name):
         Whether or not the user had asked to join event or not.
     """
     event_team = select_event_team_by_name(session, event_name, user_name)
-    print(user_name)
     if (event_team is not None and
             (event_team.is_active and not event_team.approved)):
         return True

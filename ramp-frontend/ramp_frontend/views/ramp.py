@@ -39,7 +39,7 @@ from ramp_database.tools.frontend import is_admin
 from ramp_database.tools.frontend import is_accessible_code
 from ramp_database.tools.frontend import is_accessible_event
 from ramp_database.tools.frontend import is_user_signed_up
-from ramp_database.tools.frontend import did_user_signed_up
+from ramp_database.tools.frontend import is_user_sign_up_requested
 from ramp_database.tools.submission import add_submission
 from ramp_database.tools.submission import add_submission_similarity
 from ramp_database.tools.submission import get_source_submissions
@@ -81,10 +81,37 @@ def problems():
         add_user_interaction(
             db.session, interaction='looking at problems', user=user
         )
+    problems = get_problem(db.session, None)
+
+    for problem in problems:
+        for event in problem.events:
+            # check the state of the event
+            now = datetime.datetime.now()
+            start = event.opening_timestamp
+            start_collab = event.public_opening_timestamp
+            end = event.closing_timestamp
+            if now < start or now >= end:
+                event.state = 'close'
+            elif now >= start and now < start_collab:
+                event.state = 'competitive'
+            elif now >= start and now >= start_collab and now < end:
+                event.state = 'collab'
+            if user:
+                signed = get_event_team_by_name(
+                                    db.session, event.name,
+                                    flask_login.current_user.name)
+                if not signed:
+                    event.state_user = 'not_signed'
+                elif signed.approved:
+                    event.state_user = 'signed'
+                elif signed:
+                    event.state_user = 'waiting'
+            else:
+                event.state_user = 'not_signed'
 
     # problems = Problem.query.order_by(Problem.id.desc())
     return render_template('problems.html',
-                           problems=get_problem(db.session, None),
+                           problems=problems,
                            admin=admin)
 
 
@@ -162,7 +189,7 @@ def user_event(event_name):
         approved = is_user_signed_up(
             db.session, event_name, flask_login.current_user.name
         )
-        asked = did_user_signed_up(
+        asked = is_user_sign_up_requested(
             db.session, event_name, flask_login.current_user.name
         )
         return render_template('event.html',
@@ -209,7 +236,7 @@ def sign_up_for_event(event_name):
                            ))
             body += ('Click on this link to approve the sign-up request: {}'
                      .format(url_approve))
-            send_mail(admin, subject, body)
+            send_mail(admin.email, subject, body)
         return redirect_to_user("Sign-up request is sent to event admins.",
                                 is_error=False, category='Request sent')
     sign_up_team(db.session, event.name, flask_login.current_user.name)
@@ -458,7 +485,7 @@ def sandbox(event_name):
                     """.format(event_team.event.name,
                                flask_login.current_user.name,
                                new_submission.name, new_submission.path)
-                    send_mail(admin, subject, body)
+                    send_mail(admin.email, subject, body)
             if app.config['TRACK_USER_INTERACTION']:
                 add_user_interaction(
                     db.session,
@@ -526,7 +553,7 @@ def ask_for_event(problem_name):
                 form.opening_date.data,
                 form.closing_date.data
             )
-            send_mail(admin, subject, body)
+            send_mail(admin.email, subject, body)
         return redirect_to_user(
             'Thank you. Your request has been sent to RAMP administrators.',
             category='Event request', is_error=False
