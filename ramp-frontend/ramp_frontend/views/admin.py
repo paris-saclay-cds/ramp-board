@@ -71,9 +71,9 @@ def approve_users():
             if request.form["submit_button"] == "Approve!":
                 approve_user(db.session, asked_user)
 
-                subject = 'Your RAMP account have been approved'
-                body = ('{}, your account have been approved. You can now '
-                        'sign-up for any opened RAMP event.'
+                subject = 'Your RAMP account has been approved'
+                body = ('{}, your account has been approved. You can now '
+                        'sign-up for any open RAMP event.'
                         .format(user.name))
                 send_mail(
                     to=user.email, subject=subject, body=body
@@ -97,7 +97,7 @@ def approve_users():
                            .format(asked_event_team.event.name))
                 body = ('{}, you have been registered to the RAMP event {}. '
                         'You can now proceed to your sandbox and make '
-                        'submission.\nHave fun!!!'
+                        'submissions.\nHave fun!!!'
                         .format(user.name, asked_event_team.event.name))
                 send_mail(
                     to=user.email, subject=subject, body=body
@@ -166,7 +166,7 @@ def approve_sign_up_for_event(event_name, user_name):
     subject = ('Signed up for the RAMP event {}'
                .format(event.name))
     body = ('{}, you have been registered to the RAMP event {}. '
-            'You can now proceed to your sandbox and make submission.'
+            'You can now proceed to your sandbox and make submissions.'
             '\nHave fun!!!'.format(user.name, event.name))
     send_mail(to=user.email, subject=subject, body=body)
 
