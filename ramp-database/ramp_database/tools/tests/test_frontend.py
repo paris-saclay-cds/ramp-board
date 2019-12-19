@@ -173,6 +173,8 @@ def test_is_accessible_code(session_toy_db):
     assert not is_accessible_code(
         session_toy_db, event_name, 'test_user_3', submission_name
     )
+    event.public_opening_timestamp = past_public_opening
+    session_toy_db.commit()
 
 
 def test_is_accessible_leaderboard(session_toy_db):
