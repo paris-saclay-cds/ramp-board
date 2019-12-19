@@ -1196,7 +1196,9 @@ class SubmissionSimilarity(Model):
     similarity = Column(Float, default=0.0)
 
     user_id = Column(Integer, ForeignKey('users.id'))
-    user = relationship('User', backref=backref('submission_similaritys'))
+    user = relationship('User',
+                        backref=backref('submission_similaritys',
+                                        cascade='all, delete-orphan'))
 
     source_submission_id = Column(Integer, ForeignKey('submissions.id'))
     source_submission = relationship(
