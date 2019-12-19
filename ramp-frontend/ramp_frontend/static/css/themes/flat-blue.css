@@ -329,13 +329,15 @@
   .flat-blue .progress .progress-bar.progress-bar-danger {
     background-color: #FA2A00; }
   .flat-blue .color-white {
-    color: #193b46; }
+    color: #fdfdfd; }
   .flat-blue .font-large {
-    font-size: 110px; }
+    font-size: 140px; }
   .flat-blue .font-med {
     font-size: 50px; }
   .flat-blue .font-small {
     font-size: 30px; }
+  .flat-blue .font-heavy {
+      font-weight: bold; }
   .flat-blue .pagination > li > a {
     color: #353d47; }
   .flat-blue .pagination .active > a, .flat-blue .pagination .active > a:focus, .flat-blue .pagination .active > a:hover, .flat-blue .pagination .active span, .flat-blue .pagination .active > span:focus, .flat-blue .pagination .active > span:hover {
@@ -647,12 +649,12 @@
   .flat-blue.landing-page .navbar .navbar-nav > li {
     border-left: 0px solid #FFF; }
     .flat-blue.landing-page .navbar .navbar-nav > li > a {
-      color: #193b46; }
+      color: #fdfdfd; }
   .flat-blue.landing-page .navbar .navbar-collapse {
     border: 0; }
 
 .flat-blue.landing-page .navbar.affix .navbar-nav > li > a {
-  color: #353d47; }
+  color: #fdfdfd; }
 
 .flat-blue.landing-page .navbar.affix .navbar-nav > li:hover > a {
   color: #0ead9a; }
@@ -678,3 +680,13 @@
 
 .flat-blue.landing-page .app-content-a {
   background-color: #FFF; }
+
+#titleback {
+  background: radial-gradient(circle, rgba(23,37,42,1) 40%, rgba(32,71,70,1) 71%, rgba(43,122,120,1) 100%);
+}
+#packages {
+  background-color: #f3f9f8;
+}
+#dev {
+  background-color: #f3f9f8;
+}
