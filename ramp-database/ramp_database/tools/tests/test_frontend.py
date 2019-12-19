@@ -1,9 +1,11 @@
 import datetime
+import os
 import shutil
 
 import pytest
 
 from ramp_utils import read_config
+from ramp_utils import generate_ramp_config
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
 
@@ -17,7 +19,10 @@ from ramp_database.tools.event import add_event_admin
 from ramp_database.tools.event import get_event
 from ramp_database.tools.event import get_event_admin
 from ramp_database.tools.user import add_user
+from ramp_database.tools.user import approve_user
 from ramp_database.tools.user import get_user_by_name
+from ramp_database.tools.submission import add_submission
+from ramp_database.tools.team import sign_up_team
 
 from ramp_database.tools.frontend import is_user_sign_up_requested
 from ramp_database.tools.frontend import is_admin
@@ -104,7 +109,14 @@ def test_is_user_sign_up_requested(session_toy_db, event_name, user_name,
 
 
 def test_is_accessible_code(session_toy_db):
+    # create a third user
+    add_user(
+        session_toy_db, name='test_user_3', password='test',
+        lastname='Test_3', firstname='User_3',
+        email='test.user.3@gmail.com', access_level='user')
+    approve_user(session_toy_db, 'test_user_3')
     event_name = 'iris_test'
+    sign_up_team(session_toy_db, event_name, 'test_user_3')
     # simulate a user which is not authenticated
     user = get_user_by_name(session_toy_db, 'test_user_2')
     user.is_authenticated = False
@@ -121,6 +133,46 @@ def test_is_accessible_code(session_toy_db):
     user = add_user(session_toy_db, 'xx', 'xx', 'xx', 'xx', 'xx', 'user')
     user.is_authenticated = True
     assert not is_accessible_code(session_toy_db, event_name, user.name)
+    # simulate that the event is not publicly opened
+    event = get_event(session_toy_db, event_name)
+    past_public_opening = event.public_opening_timestamp
+    tomorrow = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+    event.public_opening_timestamp = tomorrow
+    session_toy_db.commit()
+    assert is_accessible_code(session_toy_db, event_name, 'test_user_3')
+    # Make a submission
+    submission_name = 'random_forest_10_10'
+    ramp_config = generate_ramp_config(read_config(ramp_config_template()))
+    path_submission = os.path.join(
+        os.path.dirname(ramp_config['ramp_sandbox_dir']), submission_name
+    )
+    add_submission(
+        session_toy_db, event_name, 'test_user_3', submission_name,
+        path_submission
+    )
+    # check that the user submitting the submission could access it
+    assert is_accessible_code(
+        session_toy_db, event_name, 'test_user_3', submission_name
+    )
+    # change the admin of the team
+    from ramp_database.model import Team, User
+    team = (session_toy_db.query(Team)
+                          .filter(Team.name == 'test_user_3')
+                          .first())
+    user = (session_toy_db.query(User)
+                          .filter(User.name == 'test_user_2')
+                          .first())
+    team.admin_id = user.id
+    team.admin = user
+    session_toy_db.commit()
+    # check that the admin can access the submission
+    assert is_accessible_code(
+        session_toy_db, event_name, 'test_user_2', submission_name
+    )
+    # but others cannot
+    assert not is_accessible_code(
+        session_toy_db, event_name, 'test_user_3', submission_name
+    )
 
 
 def test_is_accessible_leaderboard(session_toy_db):
