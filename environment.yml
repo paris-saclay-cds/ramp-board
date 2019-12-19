@@ -15,6 +15,7 @@ dependencies:
   - nbconvert
   - numpy
   - pandas
+  - scikit-image
   - pyyaml
   - pytest
   - pytest-cov
