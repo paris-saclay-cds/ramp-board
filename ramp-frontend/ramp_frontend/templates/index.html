@@ -115,7 +115,7 @@
                     <div class="col-md-12">
                         <h2 class="text-center app-content-header">RAMP packages</h2>
                         <p class="text-center app-content-description font-small">
-                        The RAMP packages aim to help you define, build, manage and optimize machine learning workflows, great for internal prototyping model workflows in your data science team.
+                        The RAMP packages help you define, build, manage and optimize machine learning workflows via data challenges, great for internal prototyping models in your data science team.
                         </p>
                     </div>
                 </div>
@@ -161,86 +161,42 @@
             </div>
         </div>
     </div>
-    <div class="container-fluid app-content-a" id="team">
+
+    <div class="container-fluid app-content-a" id="dev">
         <div class="container">
             <div class="row">
+                <h2 class="text-center app-content-header">Developed by:</h2>
                 <div class="col-md-12">
-                    <h2 class="text-center app-content-header">Developed by:</h2>
-                    <p class="text-center app-content-description">
-                            </p>
-
+                    <center>
+                    <a href="https://www.datascience-paris-saclay.fr/" target="_blank">
+                    <img src="{{url_for('static', filename='img/partners/upsaclay.png') }}" class="img" alt="Université Paris-Saclay" height="100">
+                    </a>
+                    </center>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="container-fluid app-content-a" id="partners">
-        <div class="container">
-            <div class="row">
-                <!-- <h2 class="text-center app-content-header">Partners</h2> -->
-                <div class="col-md-12 col-sm-12">
-                    <center>
-                    <a href="https://www.universite-paris-saclay.fr/en" target="_blank">
-                    <img src="{{url_for('static', filename='img/partners/upsaclay.jpg') }}" class="img" alt="Université Paris-Saclay" height="100">
-                    </a>
-                    </center>
-                </div>
-                <div class="col-md-1 col-sm-0">
-                </div>
-                <div class="col-md-2 col-sm-4">
-                    <center>
-                    <a href="http://www.cnrs.fr/mi/spip.php?article53&lang=fr" target="_blank">
-                    <img src="{{url_for('static', filename='img/partners/cnrs.png') }}" class="img" alt="CNRS" height="100">
-                    </a>
-                    </center>
-                </div>
-                <div class="col-md-2 col-sm-4">
-                    <center>
-                    <a href="https://www.polytechnique.edu" target="_blank">
-                    <img src="{{url_for('static', filename='img/partners/polytechnique.jpg') }}" class="img" alt="Ecole Polytechnique" height="100">
-                    </a>
-                    </center>
-                </div>
-                <div class="col-md-2 col-sm-4">
-                    <center>
-                    <a href="http://www.u-psud.fr" target="_blank">
-                    <img src="{{url_for('static', filename='img/partners/upsud.jpg') }}" class="img" alt="Université Paris-Sud" height="100">
-                    </a>
-                    </center>
-                </div>
-                <div class="col-md-2 col-sm-6">
-                    <center>
-                    <a href="http://www.mines-paristech.fr" target="_blank">
-                    <img src="{{url_for('static', filename='img/partners/mines.png') }}" class="img" alt="Mines Paris-Tech" height="100">
-                    </a>
-                    </center>
-                </div>
-                <div class="col-md-2 col-sm-6">
-                    <center>
-                    <a href="http://www.telecom-paristech.fr" target="_blank">
-                    <img src="{{url_for('static', filename='img/partners/telecom.png') }}" class="img" alt="Telecom Paris-Tech" height="100">
-                    </a>
-                    </center>
-                </div>
-                <div class="col-md-1 col-sm-0">
-                </div>
-           </div>
-        </div>
-    </div>
-    <div class="container-fluid app-content-a" id="powered_by">
-        <div class="container">
-            <div class="row">
-                {% if images|length > 0 %}
-                    <h2 class="text-center app-content-header">Powered by</h2>
-                    {% for image in images %}
-                    <div class="col-md-4 col-sm-6">
-                        <img src="{{ url_for('static', filename='../static/img/powered_by/' + image) }}" class="img" alt='' height="60">
+    <div class="container-fluid app-content-a" id="powered">
+            <div class="container">
+                <div class="row">
+                    <h2 class="text-center app-content-header">Powered by:</h2>
+                    <div class="col-md-12">
+                        {% if images|length > 0 %}
+                            {% for image in images %}
+                            <center>
+                                <!-- <a href="https://www.ovhcloud.com/en/" target="_blank"> -->
+                                <img src="{{ url_for('static', filename='../static/img/powered_by/' + image) }}" class="img" alt='' height="80">
+                                <!-- </a> -->
+                            </center>
+                            {% endfor %}
+                        {% endif %}
                     </div>
-                    {% endfor %}
-                {% endif %}
+                </div>
             </div>
         </div>
-    </div>
+
+
     <!-- /END THE FEATURETTES -->
     <!-- FOOTER -->
     <footer class="app-footer">
