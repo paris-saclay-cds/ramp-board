@@ -317,6 +317,20 @@
     border-color: #FA2A00; }
   .flat-blue .btn.btn-link {
     color: #353d47; }
+  .flat-blue .btn.btn-hist {
+    background-color: #17252a;
+    color: #FFF;
+    border-color: #17252a;
+    border-radius: 8px;
+    padding: 10px 18px;
+   }
+  .flat-blue .btn.btn-hist-pad {
+    background-color: #17252a;
+    color: #FFF;
+    border-color: #17252a;
+    border-radius: 8px;
+    padding: 10px 47px;
+   }
   .flat-blue .progress .progress-bar {
     background-color: #353d47;
     color: #FFF; }
@@ -336,6 +350,8 @@
     font-size: 50px; }
   .flat-blue .font-small {
     font-size: 30px; }
+  .flat-blue .font-smaller {
+      font-size: 25px; }
   .flat-blue .font-heavy {
       font-weight: bold; }
   .flat-blue .pagination > li > a {
