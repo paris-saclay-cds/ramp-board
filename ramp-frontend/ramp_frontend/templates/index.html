@@ -37,6 +37,7 @@
 
                 <div id="navbar" class="navbar-collapse collapse " aria-expanded="true">
                         <ul class="nav navbar-nav navbar-left">
+                            <li class="active"><a href="#features"><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" height="26px"></a></li>
                             <li class="active"><a href="/problems">Our challenges</a></li>
                             <li class="active"><a href="/teaching">Your challenges</a></li>
                         </ul>
@@ -55,14 +56,15 @@
         <div class="container">
             <h2 class="text-center">
                 <br>
-                <div class="color-white font-large font-heavy"><span><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" alt="CDS logo" class="app-logo color-white" height="100">&nbsp;RAMP</span></div>
+                <div class="color-white font-large font-heavy"><span><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" alt="CDS logo" class="app-logo color-white" height="110">&nbsp;RAMP</span></div>
             </h2>
             <p class="text-center color-white app-description font-med">Rapid Analytics & Model Prototyping</p>
             <p class="text-center color-white app-description font-small">using Python</p></div>
-            <p class="text-center"><a class="btn btn-primary btn-lg app-btn font-small" href="#features" role="button">Learn more</a></p>
+            <br>
+            <br>
+            <p class="text-center"><a class="btn btn-primary btn-lg app-btn" href="#features" role="button">Learn more »</a></p>
         </div>
     </div>
-
 
     <div class="container-fluid app-content-a" id="features">
         <div class="container">
@@ -105,12 +107,13 @@
                 <!-- /.col-lg-4 -->
                 <!-- /.col-lg-4 -->
             </div>
-            <p class="text-center"><a class="btn btn-primary btn-lg app-btn font-small" href="/description" role="button">Learn more: development history</a></p>
             <!-- <font size=+1>
             Contact us by <a href="mailto:admin@ramp.studio"><strong>email at admin@ramp.studio</strong></a> if you are interested in <font color="#D89B28">using the platform in your classroom</font>, as an <font color="#3B8676">internal tool for prototyping</font> in your data science team, or to <font color="#4E9BCB">launch a data challenge</font>.
             Consider joining our <a href="https://ramp-studio.slack.com/shared_invite/MTg1NDUxNDAyNDk2LTE0OTUzOTcwMDQtMThlOWY1NWU0Mg"><strong>slack team</strong></a> if you would like to be part of the growing community of rampers.</font> -->
         </div>
     </div>
+
+    <hr align="center" width="50%">
 
     <div class="container-fluid app-content-a" id="packages">
             <div class="container">
@@ -163,6 +166,10 @@
                     </center>
                 </div>
             </div>
+            <br>
+            <p class="text-center"><a class="btn btn-primary btn-lg app-btn font-small" href="/history" role="button">Learn more: project history</a></p>
+            <br>
+            <br>
         </div>
     </div>
 

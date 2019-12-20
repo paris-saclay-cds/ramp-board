@@ -5,7 +5,7 @@ body {
   padding-top: 0px;
   height: 100%;
   position: relative;
-  font-size: 18px; }
+  font-size: 20px; }
 
 * {
   outline: none; }
@@ -71,7 +71,7 @@ a:hover {
       height: 60px;
       line-height: 60px;
       margin-left: 0px;
-      font-family: 'Roboto Condensed', sans-serif;
+      font-family: 'Source Sans Pro', sans-serif;
       font-weight: 400;
       padding: 0;
       font-size: 1.5em; }
@@ -112,10 +112,10 @@ a:hover {
       height: 60px;
       line-height: 60px;
       vertical-align: middle;
-      font-family: 'Roboto Condensed', sans-serif;
+      font-family: 'Source Sans Pro', sans-serif;
       font-size: 1.5em; }
   .navbar .navbar-nav > li > a {
-    font-family: 'Roboto Condensed', sans-serif;
+    font-family: 'Source Sans Pro', sans-serif;
     font-size: 1.2em;
     height: 60px;
     line-height: 60px;
@@ -130,13 +130,13 @@ a:hover {
     z-index: -1;
     position: absolute; }
     .navbar .dropdown-menu .title {
-      font-family: 'Roboto Condensed', sans-serif;
+      font-family: 'Source Sans Pro', sans-serif;
       padding: 5px 10px;
       -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); }
     .navbar .dropdown-menu .message {
-      font-family: 'Roboto Condensed', sans-serif;
+      font-family: 'Source Sans Pro', sans-serif;
       text-align: center;
       padding: 10px 20px; }
     .navbar .dropdown-menu .notifications.list-group {
@@ -174,7 +174,7 @@ a:hover {
         margin: 0px;
         border: 0; }
     .navbar .dropdown.profile .dropdown-menu .profile-info {
-      font-family: 'Roboto Condensed', sans-serif;
+      font-family: 'Source Sans Pro', sans-serif;
       padding: 15px; }
       .navbar .dropdown.profile .dropdown-menu .profile-info .username {
         font-size: 1.8em; }
@@ -192,7 +192,7 @@ a:hover {
     -webkit-transition: all 0.25s;
     transition: all 0.25s;
     font-size: 12px;
-    font-family: 'Roboto Condensed', sans-serif; }
+    font-family: 'Source Sans Pro', sans-serif; }
     .app-container .app-footer .wrapper {
       padding: 10px 35px;
       padding-left: 25px;
@@ -220,7 +220,7 @@ a:hover {
           padding: 0;
           width: 100%;
           overflow: hidden;
-          font-family: 'Roboto Condensed', sans-serif; }
+          font-family: 'Source Sans Pro', sans-serif; }
           .app-container .content-container .side-menu .navbar-header .navbar-brand .icon {
             width: 60px;
             text-align: center;
@@ -247,7 +247,7 @@ a:hover {
         width: 100%;
         overflow: hidden; }
         .app-container .content-container .side-menu .navbar-nav li a {
-          font-family: 'Roboto Condensed', sans-serif;
+          font-family: 'Source Sans Pro', sans-serif;
           padding: 0 10px 0 10px;
           height: 46px;
           line-height: 46px;
@@ -326,7 +326,7 @@ a:hover {
   margin-right: -15px; }
 
 .page-title {
-  font-family: 'Roboto Condensed', sans-serif;
+  font-family: 'Source Sans Pro', sans-serif;
   margin-left: -10px;
   margin-right: -10px;
   padding: 15px 10px;
@@ -341,13 +341,13 @@ a:hover {
     vertical-align: middle; }
 
 .sub-title {
-  font-family: 'Roboto Condensed', sans-serif; }
+  font-family: 'Source Sans Pro', sans-serif; }
   .sub-title > * {
     display: inline-block; }
   .sub-title h3 {
     margin-right: 10px; }
   .sub-title .description {
-    font-family: 'Roboto Condensed', sans-serif;
+    font-family: 'Source Sans Pro', sans-serif;
     font-size: 0.9em; }
   .sub-title .action .btn {
     padding: 0 0.5em; }
@@ -427,7 +427,7 @@ a:hover {
     padding: 1.2em 25px;
     float: left; }
     .card .card-header .card-title .title {
-      font-family: 'Roboto Condensed', sans-serif;
+      font-family: 'Source Sans Pro', sans-serif;
       font-size: 1.5em;
       text-decoration: none; }
   .card .card-header .pull-right {
@@ -487,7 +487,7 @@ a:hover {
   margin-bottom: 5px;
   border-radius: 1px;
   border-width: 1px;
-  font-family: 'Roboto Condensed', sans-serif; }
+  font-family: 'DejaVu Sans', sans-serif; }
 
 .btn-group-lg > .btn, .btn-group-lg > .btn-lg {
   border-radius: 1px; }
@@ -520,7 +520,7 @@ a:hover {
 .modal {
   z-index: 100001; }
   .modal .modal-dialog .modal-header {
-    font-family: 'Roboto Condensed', sans-serif; }
+    font-family: 'Source Sans Pro', sans-serif; }
   .modal .modal-dialog .modal-content {
     border-radius: 1px;
     box-shadow: none; }
@@ -984,7 +984,7 @@ body.login-page {
   margin-bottom: 5px; }
 
 .landing-page {
-  font-family: 'Roboto Condensed', sans-serif; }
+  font-family: 'Source Sans Pro', sans-serif; }
   .landing-page .navbar .navbar-toggle {
     position: absolute;
     right: 0;
@@ -1093,7 +1093,7 @@ body.login-page {
         width: 100%;
         overflow: hidden;
         padding-left: 0px;
-        font-family: 'Roboto Condensed', sans-serif; }
+        font-family: 'Source Sans Pro', sans-serif; }
         .landing-page .navbar .navbar-header .navbar-brand .icon {
           width: 50px;
           text-align: center;
@@ -1216,3 +1216,13 @@ body.login-page {
   .featurette-heading {
     margin-top: 100px;
     margin-bottom: 20px; } }
+
+hr {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border: 0;
+        border-top-color: currentcolor;
+        border-top-style: none;
+        border-top-width: 0px;
+    border-top: 3px solid #c5d0cd;
+}

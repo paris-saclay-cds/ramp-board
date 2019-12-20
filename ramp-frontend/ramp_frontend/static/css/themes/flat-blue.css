@@ -657,7 +657,7 @@
   color: #fdfdfd; }
 
 .flat-blue.landing-page .navbar.affix .navbar-nav > li:hover > a {
-  color: #0ead9a; }
+  color: #7fd1c6; }
 
 @media (max-width: 768px) {
   .flat-blue.landing-page .navbar .navbar-collapse {
@@ -683,10 +683,4 @@
 
 #titleback {
   background: radial-gradient(circle, rgba(23,37,42,1) 40%, rgba(32,71,70,1) 71%, rgba(43,122,120,1) 100%);
-}
-#packages {
-  background-color: #f3f9f8;
-}
-#dev {
-  background-color: #f3f9f8;
 }
