@@ -1,2 +1,2 @@
-db_owner: alex # to find out your db_owner type psql -l in the terminal
+db_owner: postgres # to find out your db_owner type psql -l in the terminal
                    # and check who is the owner of your postgres database 
