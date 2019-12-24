@@ -1,58 +1,68 @@
+
+<h3 class="ui horizontal header divider" id="history">RAMP history</h4>
+
 <iframe width="420" height="315" align=right
 src="https://www.youtube.com/embed/vQoH68hb85Q?autoplay=0">
 </iframe>
-The RAMP is a <b>versatile management and software tool</b> for connecting data science to domain sciences, which is the main mission of the <a href="http://www.datascience-paris-saclay.fr/">Paris-Saclay Center for Data Science</a>. It grew organically out of <a href="https://medium.com/@balazskegl/what-is-wrong-with-data-challenges-ed1f34246d44#.wq4oqxlwj">our experience</a> with data challenges, and evolved through the <b>dozen iterations</b> that we carried out in our research and training activities. The RAMP is developed as an in-house tool at the CDS, in collaboration with the Center for Scientific Management (CGS) at Ecole des Mines. It was originally designed as a <b>collaborative prototyping</b> tool that makes efficient use of the time of data scientist in solving the data analytics segment of high-impact domain science problems. We then realized that it is equally valuable for <b>training</b> novice data scientists, for <b>networking</b>, for <b>communication</b>, and as a <b>social science observatory</b>. It has been rapidly <b>becoming a standard educational tool</b>, used in <a href="http://datascience-x-master-paris-saclay.fr/catalogue/data-camp">three UPSaclay data science masters</a>, but also in <b>other programs in Paris and Lille</b>. It has been used <b>six times at Saclay</b>, and in four <b>hackatons outside Saclay</b> (<a href="http://www.parisschoolofeconomics.eu/en/">Paris School of Economics</a>; <a href="http://www.spipoll.org/">French National Museum of Natural History</a>; <a href="http://www2.cisl.ucar.edu/events/workshops/climate-informatics/2015/ci2015-hackathon">NCAR, Colorado</a>; <a href="http://www.epidemium.cc/">Epidemium, Paris</a>).
+The RAMP is a <b>versatile management and software tool</b> for connecting data science to domain sciences, which is the main mission of the <a href="http://www.datascience-paris-saclay.fr/">Paris-Saclay Center for Data Science</a>. It grew organically out of <a href="https://medium.com/@balazskegl/what-is-wrong-with-data-challenges-ed1f34246d44#.wq4oqxlwj">our experience</a> with data challenges, and evolved through the <b>dozen iterations</b> that we carried out in our research and training activities. The RAMP started as an in-house tool at the CDS, in collaboration with the Center for Scientific Management (CGS) at Ecole des Mines. It was originally designed as a <b>collaborative prototyping</b> tool that makes efficient use of the time of data scientist in solving the data analytics segment of high-impact domain science problems. We then realized that it is equally valuable for <b>training</b> novice data scientists, for <b>networking</b>, for <b>communication</b>, and as a <b>social science observatory</b>. It has been rapidly <b>becoming a standard educational tool</b>, used from in <a href="https://datascience-x-master-paris-saclay.fr/le-master/structure-des-enseignements/">three UPSaclay data science masters</a>, but also in <b>other programs in Paris and Lille</b>. From 2015 till 2018, it has been used <b>six times at Saclay</b>, and in four <b>hackatons outside Saclay</b> (<a href="http://www.parisschoolofeconomics.eu/en/">Paris School of Economics</a>; <a href="http://www.spipoll.org/">French National Museum of Natural History</a>; <a href="http://www2.cisl.ucar.edu/events/workshops/climate-informatics/2015/ci2015-hackathon">NCAR, Colorado</a>; <a href="http://www.epidemium.cc/">Epidemium, Paris</a>).
 
-The RAMP is used in the following operational context. Similarly to a data challenge, the data provider arrives with a <b>prediction problem</b> and a corresponding <b>data set</b>. An experienced data scientist then <b>cleans and curates the data</b> and <b>formalizes the problem</b>. This process can take two weeks to six months, and results in a <b>starting kit</b>, typically an ipython notebook that introduces the domain science problem, describes the data, and shows a first untuned solution (benchmark). The problem is then set up using the RAMP software, and a <b>RAMP event</b> is organized with <b>30-50 data scientists and domain scientists</b>. The RAMP event usually takes a <b>single day</b> to attract data scientists who do not wish to engage for a longer period of time learning the domain problem. We have been experimenting with <b>other formats</b>: data challenges usually take several months, and course projects can take several weeks. When the data science problem requires the mastering of a specific tool, the RAMP event can be preceded by a <b>Training Sprint</b> for explaining specific tools to the participants. Part of the Training Sprint can also be devoted to introducing the domain science problem, otherwise this introduction takes place at the beginning of the RAMP. 
+<h3 class="ui horizontal header divider" id="methodology">RAMP Methodology</h4>
+
+The RAMP is used in the following operational context. Similarly to a data challenge, the data provider arrives with a <b>prediction problem</b> and a corresponding <b>data set</b>. An experienced data scientist then <b>cleans and curates the data</b> and <b>formalizes the problem</b>. This process can take two weeks to six months, and results in a <b>starting kit</b>, typically an ipython notebook that introduces the domain science problem, describes the data, and shows a first untuned solution (benchmark). The problem is then set up using the RAMP software, and a <b>RAMP event</b> is organized with <b>30-50 data scientists and domain scientists</b>. The RAMP event usually takes a <b>single day</b> to attract data scientists who do not wish to engage for a longer period of time learning the domain problem. We have been experimenting with <b>other formats</b>: data challenges usually take several months, and course projects can take several weeks. When the data science problem requires the mastering of a specific tool, the RAMP event can be preceded by a <b>Training Sprint</b> for explaining specific tools to the participants. Part of the Training Sprint can also be devoted to introducing the domain science problem, otherwise this introduction takes place at the beginning of the RAMP.
 
 <ul>
 <li>
-<h4>Collaborative prototyping</h4> During the RAMP, the participants <b>submit predictive solutions (code)</b> (as opposed to data challenges, where only predictions are submitted). The models are <b>trained on our <a href="http://informatique.in2p3.fr/li/spip.php?article320">back-end</a></b>. The scores are displayed on a <b>leaderboard</b>. All participants have <b>access to all code</b>, and they are encouraged to look at and to <b>reuse each other's solutions</b>. This accelerates the development process (compared to challenges) since good ideas spread fast. The original single day setup was tested on the <a href="https://indico.lal.in2p3.fr/event/2673/">HiggsML challenge</a> (particle physics), on <a href="https://indico.lal.in2p3.fr/event/2757/">mortality prediction</a> (health care), <a href="https://indico.lal.in2p3.fr/event/2797/">variable star classification</a> (astrophysics), <a href="https://indico.lal.in2p3.fr/event/2888/">El Nino prediction</a> (climate science), <a href="https://indico.lal.in2p3.fr/event/2961/">insect recognition</a> (ecology), and <a href="https://indico.lal.in2p3.fr/event/3095/">replacing agent-based simulations</a> (macroeconomy). Each of these events lead to a <b>significant improvement over the baseline</b>. Since the organizers have access to all the code, the result of the day is a <b>fully functioning near-optimal prototype</b>.
+    <h4>Collaborative prototyping</h4>
+    During the RAMP, the participants <b>submit predictive solutions (code)</b> (as opposed to data challenges, where only predictions are submitted). The models are <b>trained on a back-end</b> (typically a cloud service). The scores are displayed on a <b>leaderboard</b>. All participants have <b>access to all code</b>, and they are encouraged to look at and to <b>reuse each other's solutions</b>. This accelerates the development process (compared to challenges) since good ideas spread fast. The original single day setup was tested on the <a href="https://higgsml.lal.in2p3.fr/documentation/">HiggsML challenge</a> (particle physics), on <a href="https://github.com/ramp-kits/epidemium2_cancer_mortality">mortality prediction</a> (health care), <a href="https://indico.lal.in2p3.fr/event/2797/">variable star classification</a> (astrophysics), <a href="https://github.com/ramp-kits/el_nino">El Nino prediction</a> (climate science), <a href="https://github.com/ramp-kits/pollenating_insects">insect recognition</a> (ecology), and <a href="https://indico.lal.in2p3.fr/event/3095/">replacing agent-based simulations</a> (macroeconomy). Each of these events lead to a <b>significant improvement over the baseline</b>. Since the organizers have access to all the code, the result of the day is a <b>fully functioning near-optimal prototype</b>.
 </li><li>
-<h4>Training.</h4> It became clear from the beginning that the tool had great value for <b>hands-on training of data scientists</b>. About half of our participants attended the RAMPs for learning data science. We had a novice participant with no background in data science, finding a data science job after attending our first four RAMPs. We have been using RAMPs in <a href="https://www.polytechnique.edu/bigdata/dssp/">continuing education</a> (50 students), and we ran a Data Camp M2 course which was part of <b>three UPSaclay M2 programs</b> (70 students): <a href="http://datascience-x-master-paris-saclay.fr/catalogue/data-camp">Data Science</a> (math), <a href="https://www.universite-paris-saclay.fr/fr/formation/master/m2-apprentissage-information-et-contenu-machine-learning-information-and-content">AIC</a> and <a href="http://dbweb.enst.fr/teaching/dk/">Data and Knowledge</a> (computer science). The RAMP was also used in a course on <a href="http://www.quantitativemacro.com/">Machine Learning for Finance and Economics</a> at Université Panthéon-Assas, and in a graduate course in the <a href="http://pierrechainais.ec-lille.fr/Centrale/Option_DAD/Accueil.html">Data analysis and decision} program at Ecole Centrale de Lille.</a>
-</li><li> 
-<h4>Networking.</h4> Each RAMP attracts about <b>30-50 participants</b>, coming from <b>different backgrounds and carrier stages</b>, who usually meet for the first time. They develop a working relationship in a relaxed environment, and sometimes keep working together after the event.
-</li><li>
-<h4>Communication.</h4> The RAMPs have started to receive <b>increased attention from outside the Université Paris-Saclay</b>. We collaborated with the <a href="http://www.spipoll.org/">SPIPOLL project</a> of the French National Museum of Natural History, and the event got <a href="http://blog.heuritech.com/2015/10/27/first-on-insect-image-classification-at-paris-saclay-data-science-challenge/">blogged</a> by one of the participating start-ups. We were invited to the fifth <a href="http://www2.cisl.ucar.edu/events/workshops/climate-informatics/2015/ci2015-hackathon">Climate Informatics</a> workshop in Boulder, Colorado, to re-run our <a href="https://indico.lal.in2p3.fr/event/2888/">El Nino RAMP</a>. We collaborated with the <a href="http://www.parisschoolofeconomics.eu/en/">Paris School of Economics</a> on our <a href="https://indico.lal.in2p3.fr/event/3095/">macroeconomy RAMP</a>. Finally, <a href="http://www.epidemium.cc/">Epidemium</a> recently organized a hackaton using our tool for <a href="http://wiki.epidemium.cc/wiki/RAMP_:_Rapid_Analytics_and_Model_Prototyping">cancer rate prediction</a>.
-</li><li>
-<h4>Social science observatory.</h4> The RAMPs generate a significant amount of <b>quantitative data</b> on the way data scientists <b>work and collaborate</b> with each other, which allows social scientists to study the dynamics of collaborative work. The results of these analyses can then be used to <b>optimize certain aspects of the RAMP</b> format.
+    <h4>Training</h4>
+    It became clear from the beginning that the tool had great value for <b>hands-on training of data scientists</b>. About half of our participants attended the RAMPs for learning data science. We had a novice participant with no background in data science, finding a data science job after attending our first four RAMPs. We have been using RAMPs in <a href="https://www.polytechnique.edu/bigdata/dssp/">professional education</a> (more than 200 students since 2015), and we ran a Data Camp M2 course which was part of different <b>masters programs</b> (more than 100 students every year): <a href="https://datascience-x-master-paris-saclay.fr/le-master/structure-des-enseignements/">Data Science</a> at Institut Polytechnique de Paris (IPP), <a href="https://www.universite-paris-saclay.fr/fr/formation/master/informatique#mention">Computer Science</a> at Université Paris-Saclay. The RAMP was also used in a course on Machine Learning for Finance and Economics at Université Panthéon-Assas, and in a graduate course in the <a href="http://pierrechainais.ec-lille.fr/Centrale/Option_DAD/Accueil.html">Data analysis and decision} program at Ecole Centrale de Lille.</a>
+</li>
+<li>
+    <h4>Networking</h4>
+        A RAMP typically attracts about <b>30-50 participants</b>, coming from <b>different backgrounds and carrier stages</b>, who usually meet for the first time. They develop a working relationship in a relaxed environment, and sometimes keep working together after the event.
+</li>
+<li>
+    <h4>Communication</h4>
+    The RAMPs have started to receive <b>increased attention from outside the Université Paris-Saclay</b>. We collaborated with the <a href="http://www.spipoll.org/">SPIPOLL project</a> of the French National Museum of Natural History, and the event got <a href="http://blog.heuritech.com/2015/10/27/first-on-insect-image-classification-at-paris-saclay-data-science-challenge/">blogged</a> by one of the participating start-ups. We were invited to the fifth <a href="http://www2.cisl.ucar.edu/events/workshops/climate-informatics/2015/ci2015-hackathon">Climate Informatics</a> workshop in Boulder, Colorado, to re-run our <a href="https://github.com/ramp-kits/el_nino">El Nino RAMP</a>. We collaborated with the <a href="http://www.parisschoolofeconomics.eu/en/">Paris School of Economics</a> on our <a href="https://indico.lal.in2p3.fr/event/3095/">macroeconomy RAMP</a>. Finally, <a href="http://www.epidemium.cc/">Epidemium</a> organized a hackaton using our tool for <a href="http://wiki.epidemium.cc/wiki/RAMP_:_Rapid_Analytics_and_Model_Prototyping">cancer rate prediction</a>.
+</li>
+<li>
+    <h4>Social science observatory</h4>
+    The RAMPs generate a significant amount of <b>quantitative data</b> on the way data scientists <b>work and collaborate</b> with each other, which allowed social scientists to study the dynamics of collaborative work. The results of these analyses can then be used to <b>optimize certain aspects of the RAMP</b> format.
 </li>
 </ul>
 
-<h3 class="ui horizontal header divider">Team</h3>
+<h3 class="ui horizontal header divider" id="contributors">Contributors</h3>
 
 <div class="row">
     <div class="col-md-12">
-        <h2 class="text-center app-content-header">Team</h2>
-        <div class="col-lg-1 col-md-0">
+        <div class="col-lg-4 col-md-8 col-sm-12">
+            <ul>
+                <li><a href="https://www.linkedin.com/in/aboucaud/" target="_blank">Alexandre Boucaud</a></li>
+                <li><a href="http://alexandre.gramfort.net" target="_blank">Alexandre Gramfort</a></li>
+                <li><a href="http://www.mines-paristech.fr/Services/Annuaire/akin-kazakci" target="_blank">Akin Kazakçi</a></li>
+                <li><a href="https://www.linkedin.com/in/balazskegl" target="_blank">Balázs Kégl</a></li>
+            </ul>
         </div>
-        <div class="col-lg-2 col-md-4 col-sm-12">
-            <center>
-                <img src="https://paris-saclay-cds.github.io/autism_challenge/images/experts/kegl.jpg" class="img-circle" alt="Balazs Kegl" width="175" height="175">
-                <br>
-                <a href="https://www.linkedin.com/in/balazskegl" target="_blank">Balázs Kégl</a>
-            </center>
+        <div class="col-lg-4 col-md-8 col-sm-12">
+            <ul>
+                <li><a href="https://www.linkedin.com/in/camille-marini-b585b210/?originalSubdomain=fr" target="_blank">Camille Marini</a></li>
+                <li><a href="https://www.linkedin.com/in/djalelbbz/" target="_blank">Djalel Benbouzid</a></li>
+                <li><a href="https://glemaitre.github.io/" target="_blank">Guillaume Lemaitre</a></li>
+                <li><a href="https://jorisvandenbossche.github.io/" target="_blank">Joris Van Den Bossche</a></li>
+            </ul>
         </div>
-        <div class="col-lg-2 col-md-4 col-sm-6">
-            <center>
-                <img src="{{url_for('static', filename='img/Alex.jpg') }}" class="img-circle" alt="Alexandre Gramfort" width="175" height="175">
-                <br>
-                <a href="https://www.linkedin.com/in/alexandregramfort" target="_blank">Alex Gramfort</a>
-            </center>
-        </div>
-        <div class="col-lg-2 col-md-4 col-sm-6">
-            <center>
-                <img src="https://daks2k3a4ib2z.cloudfront.net/596f56b05f724769d8516617/5a65c5b76d63b900011ef927_dubrovnik.png" class="img-circle" alt="Akin Kazakçi" width="175" height="175">
-                <br>
-                <a href="https://www.linkedin.com/in/akin-osman-kazakci-ab49516" target="_blank">Akin Kazakçi</a>
-            </center>
-        </div>
-        <div class="col-lg-2 col-md-0 col-sm-0">
+        <div class="col-lg-4 col-md-8 col-sm-12">
+            <ul>
+                <li><a href="https://twitter.com/lucyleeow" target="_blank">Lucy Liu</a></li>
+                <li><a href="https://www.linkedin.com/in/mehdi-cherti-38424b20" target="_blank">Mehdi Cherti</a></li>
+                <li><a href="http://maria.telenczuk.pl/" target="_blank">Maria Teleńczuk</a></li>
+                <li><a href="https://www.linkedin.com/in/yohann-sitruk-47289133" target="_blank">Yohann Sitruk</a></li>
+            </ul>
         </div>
     </div>
 </div>
 
+<h3 class="ui horizontal header divider" id="contact">Contact</h3>
 
-<h3 class="ui horizontal header divider">Contact</h3>
-
-The RAMP site is open to a limited number of events, challenges, or course projects, organized outside the CDS. <a href="mailto:balazs.kegl@gmail.com">Contact us</a> if you are interested.
+The RAMP site is open to a limited number of events, challenges, or course projects, organized outside the CDS. <a href="mailto:admin@ramp.studio">Contact us</a> if you are interested.
