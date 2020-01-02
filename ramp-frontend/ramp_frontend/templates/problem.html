@@ -43,7 +43,7 @@
     <div class="card-header">
       <div class="card-title">
         <div class="title">Current events on this problem</div>
-          <ul>
+          <ul class="problem-font">
             {% for event in problem.events %}
               {% if event.is_public %}
                   <li> <a href="/events/{{ event.name }}">{{ event.title }}</a>,
