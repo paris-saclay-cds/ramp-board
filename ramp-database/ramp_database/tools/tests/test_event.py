@@ -10,6 +10,7 @@ from ramp_utils import generate_ramp_config
 from ramp_utils.utils import import_module_from_source
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
+from ramp_database.testing import add_users
 
 from ramp_database.model import CVFold
 from ramp_database.model import Event
@@ -30,6 +31,7 @@ from ramp_database.testing import ramp_config_iris
 from ramp_database.testing import setup_ramp_kit_ramp_data
 
 from ramp_database.tools.event import add_event
+from ramp_database.tools.event import add_event_admin
 from ramp_database.tools.event import add_keyword
 from ramp_database.tools.event import add_problem
 from ramp_database.tools.event import add_problem_keyword
@@ -39,10 +41,14 @@ from ramp_database.tools.event import delete_event
 from ramp_database.tools.event import delete_problem
 
 from ramp_database.tools.event import get_event
+from ramp_database.tools.event import get_event_admin
 from ramp_database.tools.event import get_keyword_by_name
 from ramp_database.tools.event import get_problem
 from ramp_database.tools.event import get_problem_keyword_by_name
 from ramp_database.tools.event import get_workflow
+
+from ramp_database.tools.team import sign_up_team
+from ramp_database.tools.team import get_event_team_by_name
 
 HERE = os.path.dirname(__file__)
 
@@ -54,6 +60,7 @@ def session_scope_function(database_connection):
     try:
         deployment_dir = create_test_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
+            add_users(session)
             yield session
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)
@@ -261,6 +268,61 @@ def test_check_event(session_scope_function):
     delete_event(session_scope_function, internal_ramp_config['event_name'])
     event = get_event(session_scope_function, None)
     assert len(event) == 1
+
+
+def test_delete_event(session_scope_function):
+    # add sample problem
+
+    problem_name = 'iris'
+    ramp_config = read_config(ramp_config_iris())
+
+    internal_ramp_config = generate_ramp_config(ramp_config)
+    setup_ramp_kit_ramp_data(internal_ramp_config, problem_name, depth=1)
+    add_problem(session_scope_function, problem_name,
+                    internal_ramp_config['ramp_kit_dir'],
+                    internal_ramp_config['ramp_data_dir'])
+
+    # add sample event
+    #internal_ramp_config = generate_ramp_config(ramp_config)
+    add_event(session_scope_function, problem_name,
+                  internal_ramp_config['event_name'],
+                  internal_ramp_config['event_title'],
+                  internal_ramp_config['sandbox_name'],
+                  internal_ramp_config['ramp_submissions_dir'],
+                  is_public=True, force=False)
+
+    event = get_event(session_scope_function, None)
+    assert len(event) == 1
+
+    # add event-team
+    event_name, username = internal_ramp_config['event_name'], 'test_user'
+    sign_up_team(session_scope_function, event_name, username)
+    assert get_event_team_by_name(session_scope_function, event_name, username)
+
+    # add event admin
+    add_event_admin(session_scope_function, event_name, username)
+    assert get_event_admin(session_scope_function, event_name, username)
+
+    import pdb; pdb.set_trace()
+    event_score_types = (session.query(EventScoreType)
+                                        .filter(EventScoreType.event ==
+                                                event_team.event)
+                                        .all())
+
+
+    delete_event_team(session_scope_function, event_name, username)
+
+    event_team = session_scope_function.query(EventTeam).all()
+    assert len(event_team) == 1
+
+    # add event_score_types
+
+    # event_admins
+
+    # cv_folds
+    
+    # remove event, check if removed event_team, event_score_types, 
+    # event_admins adn cv_folds
 
 
 def test_check_keyword(session_scope_function):
