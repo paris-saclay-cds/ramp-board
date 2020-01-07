@@ -26,19 +26,28 @@
 {% endif %}
 {% endwith %}
 
+<br>
+<div style="font-family: FontAwesome;">
+    Once you have found a challenge of interest, click on an open event, listed underneath the challenge. If there are no open events, you can request a new event (button can be found at the top of each challenge page).
+    You can also browse data challenges by data type, <a href="/data_domains">here</a>.
+</div>
+<br>
+
 {% if problems|length > 0 %}
 <div style="display: flex">
         <div>
+            <p>User status</p>
             <ul class="fas-ul">
                 <li class="fas fa-check-circle-o"> signed up</li>
-                <li class="fas fa-clock-o"> waiting for approval</li> 
-                <li class="fas fa-circle-o"> not signed up </li> 
+                <li class="fas fa-clock-o"> waiting for approval</li>
+                <li class="fas fa-circle-o"> not signed up </li>
             </ul>
         </div>
         <div>
+            <p>Event status</p>
             <ul class="fas-ul">
-                <li class="fas fa-lock"> closed</li> 
-                <li class="fas fa-hand-o-right"> competitive phase</li> 
+                <li class="fas fa-lock"> closed</li>
+                <li class="fas fa-hand-o-right"> competitive phase</li>
                 <li class="fas fa-handshake-o" aria-hidden="true"> collaborative phase</li>
             </ul>
         </div>

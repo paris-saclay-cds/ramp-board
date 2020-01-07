@@ -20,6 +20,7 @@ def redirect_to_user(message_str, is_error=True, category='message'):
         The category of the error. Refer to :func:`flask.flash`.
     """
     flash(message_str, category=category)
+    print(message_str)
     if is_error:
         logger.error(message_str)
     else:

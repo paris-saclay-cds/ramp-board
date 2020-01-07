@@ -288,7 +288,9 @@ default is None
 
     user_id = Column(
         Integer, ForeignKey('users.id'))
-    user = relationship('User', backref=backref('user_interactions'))
+    user = relationship('User',
+                        backref=backref('user_interactions',
+                                        cascade='all, delete-orphan'))
 
     problem_id = Column(
         Integer, ForeignKey('problems.id'))

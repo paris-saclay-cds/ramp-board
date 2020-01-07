@@ -43,7 +43,7 @@ def test_index(client_session):
     client, _ = client_session
     rv = client.get('/')
     assert rv.status_code == 200
-    assert (b'RAMP: collaborative data science challenges at Paris Saclay' in
+    assert (b'RAMP: collaborative data science challenges' in
             rv.data)
 
 
