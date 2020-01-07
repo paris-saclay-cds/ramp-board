@@ -40,6 +40,7 @@ from ramp_database.tools.event import add_workflow
 from ramp_database.tools.event import delete_event
 from ramp_database.tools.event import delete_problem
 
+from ramp_database.tools.event import get_cv_fold_by_event
 from ramp_database.tools.event import get_event
 from ramp_database.tools.event import get_event_admin
 from ramp_database.tools.event import get_keyword_by_name
@@ -304,26 +305,27 @@ def test_delete_event(session_scope_function):
     add_event_admin(session_scope_function, event_name, username)
     assert get_event_admin(session_scope_function, event_name, username)
 
-    
-    #from ramp_database.tools.event import get_score_type_by_event
+    # check if the event is connected to any score type in the database
     event_score_types = get_score_type_by_event(session_scope_function, event)
     assert len(event_score_types) > 0
     
+    # check if the event is connected to any cv_fold in the database
+    event_cv_fold = get_cv_fold_by_event(session_scope_function, event)
+    assert len(event_cv_fold) > 0
 
-    import pdb; pdb.set_trace()
-    delete_event_team(session_scope_function, event_name, username)
+    delete_event(session_scope_function, internal_ramp_config['event_name'])
 
-    event_team = session_scope_function.query(EventTeam).all()
-    assert len(event_team) == 1
+    # make sure event and all the connections were deleted
+    event_test = get_event(session_scope_function, None)
+    assert len(event_test) == 0
 
-    # add event_score_types
-
-    # event_admins
-
-    # cv_folds
     
-    # remove event, check if removed event_team, event_score_types, 
-    # event_admins adn cv_folds
+    assert not get_event_team_by_name(session_scope_function, event_name, username)
+    assert not get_event_admin(session_scope_function, event_name, username)
+    event_score_types = get_score_type_by_event(session_scope_function, event)
+    assert len(event_score_types) == 0
+    event_cv_fold = get_cv_fold_by_event(session_scope_function, event)
+    assert len(event_cv_fold) == 0
 
 
 def test_check_keyword(session_scope_function):
