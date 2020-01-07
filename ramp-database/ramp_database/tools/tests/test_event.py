@@ -45,6 +45,7 @@ from ramp_database.tools.event import get_event_admin
 from ramp_database.tools.event import get_keyword_by_name
 from ramp_database.tools.event import get_problem
 from ramp_database.tools.event import get_problem_keyword_by_name
+from ramp_database.tools.event import get_score_type_by_event
 from ramp_database.tools.event import get_workflow
 
 from ramp_database.tools.team import sign_up_team
@@ -291,8 +292,8 @@ def test_delete_event(session_scope_function):
                   internal_ramp_config['ramp_submissions_dir'],
                   is_public=True, force=False)
 
-    event = get_event(session_scope_function, None)
-    assert len(event) == 1
+    event = get_event(session_scope_function, internal_ramp_config['event_name'])
+    assert event
 
     # add event-team
     event_name, username = internal_ramp_config['event_name'], 'test_user'
@@ -303,13 +304,13 @@ def test_delete_event(session_scope_function):
     add_event_admin(session_scope_function, event_name, username)
     assert get_event_admin(session_scope_function, event_name, username)
 
+    
+    #from ramp_database.tools.event import get_score_type_by_event
+    event_score_types = get_score_type_by_event(session_scope_function, event)
+    assert len(event_score_types) > 0
+    
+
     import pdb; pdb.set_trace()
-    event_score_types = (session.query(EventScoreType)
-                                        .filter(EventScoreType.event ==
-                                                event_team.event)
-                                        .all())
-
-
     delete_event_team(session_scope_function, event_name, username)
 
     event_team = session_scope_function.query(EventTeam).all()
