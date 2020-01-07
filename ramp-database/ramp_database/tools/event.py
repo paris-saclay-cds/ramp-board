@@ -448,9 +448,10 @@ def get_cv_fold_by_event(session, event):
     cv fold : : list of all cv folds of this event
     """
     return (session.query(CVFold)
-                       .filter(EventScoreType.event_id ==
-                                                event.id)
-                       .all())
+                   .filter(EventScoreType.event_id ==
+                           event.id)
+                   .all())
+
 
 def get_score_type_by_event(session, event):
     """Get ScoreType from the database
@@ -465,13 +466,13 @@ def get_score_type_by_event(session, event):
     Returns
     -------
     score type : :class:`ramp_database.model.ScoreType` or \
-list of :list of :class:`ramp_database.model.ScoreType`
+    list of :list of :class:`ramp_database.model.ScoreType`
         The queried problem.
     """
     return (session.query(EventScoreType)
-                       .filter(EventScoreType.event_id ==
-                                                event.id)
-                       .all())
+                   .filter(EventScoreType.event_id ==
+                           event.id)
+                   .all())
 
 
 def get_event_admin(session, event_name, user_name):

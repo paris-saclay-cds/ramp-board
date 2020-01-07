@@ -274,26 +274,25 @@ def test_check_event(session_scope_function):
 
 def test_delete_event(session_scope_function):
     # add sample problem
-
     problem_name = 'iris'
     ramp_config = read_config(ramp_config_iris())
 
     internal_ramp_config = generate_ramp_config(ramp_config)
     setup_ramp_kit_ramp_data(internal_ramp_config, problem_name, depth=1)
     add_problem(session_scope_function, problem_name,
-                    internal_ramp_config['ramp_kit_dir'],
-                    internal_ramp_config['ramp_data_dir'])
+                internal_ramp_config['ramp_kit_dir'],
+                internal_ramp_config['ramp_data_dir'])
 
     # add sample event
-    #internal_ramp_config = generate_ramp_config(ramp_config)
     add_event(session_scope_function, problem_name,
-                  internal_ramp_config['event_name'],
-                  internal_ramp_config['event_title'],
-                  internal_ramp_config['sandbox_name'],
-                  internal_ramp_config['ramp_submissions_dir'],
-                  is_public=True, force=False)
+              internal_ramp_config['event_name'],
+              internal_ramp_config['event_title'],
+              internal_ramp_config['sandbox_name'],
+              internal_ramp_config['ramp_submissions_dir'],
+              is_public=True, force=False)
 
-    event = get_event(session_scope_function, internal_ramp_config['event_name'])
+    event = get_event(session_scope_function,
+                      internal_ramp_config['event_name'])
     assert event
 
     # add event-team
@@ -308,19 +307,17 @@ def test_delete_event(session_scope_function):
     # check if the event is connected to any score type in the database
     event_score_types = get_score_type_by_event(session_scope_function, event)
     assert len(event_score_types) > 0
-    
+
     # check if the event is connected to any cv_fold in the database
     event_cv_fold = get_cv_fold_by_event(session_scope_function, event)
     assert len(event_cv_fold) > 0
 
     delete_event(session_scope_function, internal_ramp_config['event_name'])
-
     # make sure event and all the connections were deleted
     event_test = get_event(session_scope_function, None)
     assert len(event_test) == 0
-
-    
-    assert not get_event_team_by_name(session_scope_function, event_name, username)
+    assert not get_event_team_by_name(session_scope_function,
+                                      event_name, username)
     assert not get_event_admin(session_scope_function, event_name, username)
     event_score_types = get_score_type_by_event(session_scope_function, event)
     assert len(event_score_types) == 0
