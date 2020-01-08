@@ -51,7 +51,7 @@ def test_ramp(client_session):
     client, _ = client_session
     rv = client.get('/description')
     assert rv.status_code == 200
-    assert (b'The RAMP is a <b>versatile management and software tool</b>' in
+    assert (b'The RAMP software packages were developed by the' in
             rv.data)
 
 
