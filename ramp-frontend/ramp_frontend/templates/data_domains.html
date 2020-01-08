@@ -61,6 +61,19 @@
 {% endfor %}
 </ul>
 
+<div class="page-title">
+    <span class="title">Not classified</span>
+</div>
+
+<ul>
+{% for problem in problems %}
+    {% if problem.name not in keywords.problems %}
+        <li> <a href="/problems/{{ problem.name }}"><strong><font size="+1">{{ problem.name }}</font></strong></a><br>
+    {% endif %}
+{% endfor %}
+</ul>
+
+
 {% endblock %}
 {% block scripts %}
 <script>

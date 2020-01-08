@@ -4,6 +4,7 @@ import flask_login
 import os as os
 
 from ramp_database.model import Keyword
+from ramp_database.model import Problem
 
 from .redirect import redirect_to_user
 
@@ -35,8 +36,9 @@ def data_domains():
     """Review of all possible keyword attached to the different RAMP
     problems."""
     current_keywords = Keyword.query.order_by(Keyword.name)
+    current_problems = Problem.query.order_by(Problem.id)
     return render_template('data_domains.html',
-                           keywords=current_keywords)
+                           keywords=current_keywords, problems=current_problems)
 
 
 @mod.route("/teaching")
