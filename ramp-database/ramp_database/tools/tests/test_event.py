@@ -298,7 +298,9 @@ def test_delete_event(session_scope_function):
     # add event-team
     event_name, username = internal_ramp_config['event_name'], 'test_user'
     sign_up_team(session_scope_function, event_name, username)
-    assert get_event_team_by_name(session_scope_function, event_name, username)
+    event_team = get_event_team_by_name(session_scope_function,
+                                        event_name, username)
+    assert event_team
 
     # add event admin
     add_event_admin(session_scope_function, event_name, username)
@@ -312,6 +314,11 @@ def test_delete_event(session_scope_function):
     event_cv_fold = get_cv_fold_by_event(session_scope_function, event)
     assert len(event_cv_fold) > 0
 
+    # add the submission to the event
+    from ramp_database.tools.submission import get_submission_by_id
+    submission = get_submission_by_id(session_scope_function, event.id)
+    assert submission
+
     delete_event(session_scope_function, internal_ramp_config['event_name'])
     # make sure event and all the connections were deleted
     event_test = get_event(session_scope_function, None)
@@ -323,6 +330,8 @@ def test_delete_event(session_scope_function):
     assert len(event_score_types) == 0
     event_cv_fold = get_cv_fold_by_event(session_scope_function, event)
     assert len(event_cv_fold) == 0
+    with pytest.raises(AttributeError):
+        get_submission_by_id(session_scope_function, event.id)
 
 
 def test_check_keyword(session_scope_function):
