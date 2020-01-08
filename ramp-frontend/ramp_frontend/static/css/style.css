@@ -418,7 +418,7 @@ a:hover {
   overflow: hidden;
   position: relative; }
   .card .card-body {
-    padding: 25px;
+    padding: 50px;
     font-size: 1.2em; }
     .card .card-body .sub-title {
       font-size: 1.2em;
@@ -435,7 +435,7 @@ a:hover {
     float: left; }
     .card .card-header .card-title .title {
       font-family: 'Source Sans Pro', sans-serif;
-      font-size: 1.5em;
+      font-size: 2em;
       text-decoration: none; }
   .card .card-header .pull-right {
     padding: 0.5em 1em; }
@@ -451,6 +451,13 @@ a:hover {
 
 .card:hover .card-header .title {
   text-decoration: none !important; }
+
+div.info-header {
+  font-weight: 800;
+  opacity: 1;
+  display: flex;
+  justify-content: center;
+}
 
 .card.summary-inline .card-body {
   padding: 20px; }
@@ -1236,4 +1243,9 @@ hr {
 
 ul.problem-font {
   font-size: 20px;
+}
+
+div.info-pages {
+  padding-left: 220px;
+  padding-right: 220px
 }
