@@ -27,39 +27,44 @@
 {% endif %}
 {% endwith %}
 
-<div class="page-title">
-    <span class="title">Industrial data domains</span>
-</div>
+{% if 'data_domain' in keywords.type and 'industrial data' in keywords.category %}
+    <div class="page-title">
+        <span class="title">Industrial data domains</span>
+    </div>
 
-<ul>
-{% for keyword in keywords %}
-    {% if keyword.type == 'data_domain' and keyword.category == 'industrial data' %}
-        <li> <a href="/keywords/{{ keyword.name }}"><strong><font size="+1">{{ keyword.name }}</font></strong></a><br>
-        <ul>
-        {% for problem in keyword.problems %}
-            <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
-        {% endfor %}
-        </ul>
-    {% endif %}
-{% endfor %}
-</ul>
+    <ul>
+    {% for keyword in keywords %}
+        {% if keyword.type == 'data_domain' and keyword.category == 'industrial data' %}
+            <li> <a href="/keywords/{{ keyword.name }}"><strong><font size="+1">{{ keyword.name }}</font></strong></a><br>
+            <ul>
+            {% for problem in keyword.problems %}
+                <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endfor %}
+    </ul>
+{% endif %}
 
-<div class="page-title">
-    <span class="title">Scientific data domains</span>
-</div>
+{% if 'data_domain' in keywords.type and 'scientific data' in keywords.category %}
+    <div class="page-title">
+        <span class="title">Scientific data domains</span>
+    </div>
 
-<ul>
-{% for keyword in keywords %}
-    {% if keyword.type == 'data_domain' and keyword.category == 'scientific data' %}
-        <li> <a href="/keywords/{{ keyword.name }}"><strong><font size="+1">{{ keyword.name }}</font></strong></a><br>
-        <ul>
-        {% for problem in keyword.problems %}
-            <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
-        {% endfor %}
-        </ul>
-    {% endif %}
-{% endfor %}
-</ul>
+    <ul>
+    {% for keyword in keywords %}
+        {% if keyword.type == 'data_domain' and keyword.category == 'scientific data' %}
+            <li> <a href="/keywords/{{ keyword.name }}"><strong><font size="+1">{{ keyword.name }}</font></strong></a><br>
+            <ul>
+            {% for problem in keyword.problems %}
+                <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endfor %}
+    </ul>
+{% endif %}
+
 
 <div class="page-title">
     <span class="title">Not classified</span>
