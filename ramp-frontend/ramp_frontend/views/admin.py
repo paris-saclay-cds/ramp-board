@@ -20,6 +20,7 @@ from ramp_database.model import User
 from ramp_database.exceptions import NameClashError
 
 from ramp_database.tools.event import get_event
+from ramp_database.tools.event import delete_event
 from ramp_database.tools.frontend import is_admin
 from ramp_database.tools.frontend import is_accessible_event
 from ramp_database.tools.frontend import is_user_signed_up
@@ -221,43 +222,46 @@ def update_event(event_name):
         public_opening_timestamp=event.public_opening_timestamp,
     )
     if form.validate_on_submit():
-        try:
-            if form.suffix.data == '':
-                event.name = event.problem.name
-            else:
-                event.name = event.problem.name + '_' + form.suffix.data
-            event.title = form.title.data
-            event.is_send_trained_mails = form.is_send_trained_mails.data
-            event.is_send_submitted_mails = form.is_send_submitted_mails.data
-            event.is_public = form.is_public.data
-            event.is_controled_signup = form.is_controled_signup.data
-            event.is_competitive = form.is_competitive.data
-            event.min_duration_between_submissions = (
-                form.min_duration_between_submissions_hour.data * 3600 +
-                form.min_duration_between_submissions_minute.data * 60 +
-                form.min_duration_between_submissions_second.data)
-            event.opening_timestamp = form.opening_timestamp.data
-            event.closing_timestamp = form.closing_timestamp.data
-            event.public_opening_timestamp = form.public_opening_timestamp.data
-            db.session.commit()
+        if request.form["submit_button"] == "Confirm":
+            delete_event(db.session, event_name)
+        if request.form["submit_button"] == "Update":
+            try:
+                if form.suffix.data == '':
+                    event.name = event.problem.name
+                else:
+                    event.name = event.problem.name + '_' + form.suffix.data
+                event.title = form.title.data
+                event.is_send_trained_mails = form.is_send_trained_mails.data
+                event.is_send_submitted_mails = form.is_send_submitted_mails.data
+                event.is_public = form.is_public.data
+                event.is_controled_signup = form.is_controled_signup.data
+                event.is_competitive = form.is_competitive.data
+                event.min_duration_between_submissions = (
+                    form.min_duration_between_submissions_hour.data * 3600 +
+                    form.min_duration_between_submissions_minute.data * 60 +
+                    form.min_duration_between_submissions_second.data)
+                event.opening_timestamp = form.opening_timestamp.data
+                event.closing_timestamp = form.closing_timestamp.data
+                event.public_opening_timestamp = form.public_opening_timestamp.data
+                db.session.commit()
 
-        except IntegrityError as e:
-            db.session.rollback()
-            message = ''
-            existing_event = get_event(db.session, event.name)
-            if existing_event is not None:
-                message += 'event name is already in use'
-            # # try:
-            # #     User.query.filter_by(email=email).one()
-            # #     if len(message) > 0:
-            # #         message += ' and '
-            # #     message += 'email is already in use'
-            # except NoResultFound:
-            #     pass
-            if message:
-                e = NameClashError(message)
-            flash('{}'.format(e), category='Update event error')
-            return redirect(url_for('update_event', event_name=event.name))
+            except IntegrityError as e:
+                db.session.rollback()
+                message = ''
+                existing_event = get_event(db.session, event.name)
+                if existing_event is not None:
+                    message += 'event name is already in use'
+                # # try:
+                # #     User.query.filter_by(email=email).one()
+                # #     if len(message) > 0:
+                # #         message += ' and '
+                # #     message += 'email is already in use'
+                # except NoResultFound:
+                #     pass
+                if message:
+                    e = NameClashError(message)
+                flash('{}'.format(e), category='Update event error')
+                return redirect(url_for('update_event', event_name=event.name))
 
         return redirect(url_for('ramp.problems'))
 

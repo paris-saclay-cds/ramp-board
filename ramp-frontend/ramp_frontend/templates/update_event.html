@@ -133,7 +133,7 @@
                            <span style="color: red;">[{{ error }}]</span>
                        {% endfor %}
                    </div>
-                   <input type="submit" value="Update" class="ui submit button">
+                   <input type="submit" name="submit_button" value="Update" class="ui submit button">
                    <!-- Button trigger modal -->
                     <button type="button" class="ui remove button" data-toggle="modal" data-target="#exampleModal">
                         Remove event
@@ -155,7 +155,7 @@
                             </div>
                             <div class="modal-footer">
                             <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-secondary">Confirm</button>
+                            <button type="submit" name="submit_button" class="btn btn-secondary" value='Confirm'>Confirm</button>
                             </div>
                         </div>
                         </div>
