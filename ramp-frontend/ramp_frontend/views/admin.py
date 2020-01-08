@@ -232,7 +232,8 @@ def update_event(event_name):
                     event.name = event.problem.name + '_' + form.suffix.data
                 event.title = form.title.data
                 event.is_send_trained_mails = form.is_send_trained_mails.data
-                event.is_send_submitted_mails = form.is_send_submitted_mails.data
+                event.is_send_submitted_mails = \
+                    form.is_send_submitted_mails.data
                 event.is_public = form.is_public.data
                 event.is_controled_signup = form.is_controled_signup.data
                 event.is_competitive = form.is_competitive.data
@@ -242,7 +243,8 @@ def update_event(event_name):
                     form.min_duration_between_submissions_second.data)
                 event.opening_timestamp = form.opening_timestamp.data
                 event.closing_timestamp = form.closing_timestamp.data
-                event.public_opening_timestamp = form.public_opening_timestamp.data
+                event.public_opening_timestamp = \
+                    form.public_opening_timestamp.data
                 db.session.commit()
 
             except IntegrityError as e:
