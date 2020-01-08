@@ -134,6 +134,32 @@
                        {% endfor %}
                    </div>
                    <input type="submit" value="Update" class="ui submit button">
+                   <!-- Button trigger modal -->
+                    <button type="button" class="ui remove button" data-toggle="modal" data-target="#exampleModal">
+                        Remove event
+                    </button>
+                    
+                    <!-- Modal -->
+                    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Remove event {{ event.name }}</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            </div>
+                            <div class="modal-body">
+                            Are you sure you want to delete {{ event.name }} from the database?
+                            This action will also remove all the submissions assinged to this event.
+                            </div>
+                            <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-secondary">Confirm</button>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
                </div>
            </form>
     </div>
