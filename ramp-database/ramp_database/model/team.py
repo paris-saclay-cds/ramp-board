@@ -54,7 +54,9 @@ class Team(Model):
     name = Column(String(20), nullable=False, unique=True)
 
     admin_id = Column(Integer, ForeignKey('users.id'))
-    admin = relationship('User', backref=backref('admined_teams'))
+    admin = relationship('User',
+                         backref=backref('admined_teams',
+                                         cascade="all, delete"))
 
     # initiator asks for merge, acceptor accepts
     initiator_id = Column(Integer, ForeignKey('teams.id'), default=None)

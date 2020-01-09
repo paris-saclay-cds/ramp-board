@@ -112,7 +112,7 @@ def is_accessible_code(session, event_name, user_name,
         return False
 
     event = select_event_by_name(session, event_name)
-    if event.is_public:
+    if event.is_public_open:
         return True
     submission_name = (event.ramp_sandbox_name
                        if submission_name == 'sandbox' else submission_name)
