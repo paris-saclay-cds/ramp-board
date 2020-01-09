@@ -68,7 +68,8 @@ def test_teaching(client_session):
     client, _ = client_session
     rv = client.get('/teaching')
     assert rv.status_code == 200
-    assert b'RAMP for teaching support' in rv.data
+    assert b'RAMP challenges begin with an interesting supervised prediction' \
+        in rv.data
 
 
 def test_data_science_themes(client_session):
