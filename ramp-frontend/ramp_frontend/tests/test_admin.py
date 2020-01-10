@@ -290,7 +290,7 @@ def test_update_event_remove(client_session):
     client, session = client_session
     add_event(session, 'iris', 'test_4event', 'test_4event', 'starting_kit',
               '/tmp/databoard_test/submissions', is_public=True)
-    assert get_event(session, 'test_4event')  
+    assert get_event(session, 'test_4event')
 
     with login_scope(client, 'test_iris_admin', 'test') as client:
 
