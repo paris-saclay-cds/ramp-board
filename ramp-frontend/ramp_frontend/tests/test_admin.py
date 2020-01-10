@@ -15,6 +15,7 @@ from ramp_database.testing import create_toy_db
 from ramp_database.utils import setup_db
 from ramp_database.utils import session_scope
 
+from ramp_database.tools.event import add_event
 from ramp_database.tools.event import get_event
 from ramp_database.tools.user import add_user
 from ramp_database.tools.user import get_user_by_name
@@ -283,6 +284,29 @@ def test_update_event(client_session):
         assert rv.location == "http://localhost/problems"
         event = get_event(session, 'iris_test')
         assert event.min_duration_between_submissions == 0
+
+
+def test_update_event_remove(client_session):
+    client, session = client_session
+    add_event(session, 'iris', 'test_4event', 'test_4event', 'starting_kit',
+              '/tmp/databoard_test/submissions', is_public=True)
+    assert get_event(session, 'test_4event')  
+
+    with login_scope(client, 'test_iris_admin', 'test') as client:
+
+        # GET: pre-fill the forms
+        rv = client.get('/events/test_4event/update')
+        assert rv.status_code == 200
+
+        # POST: update the event data
+        event_info = {
+            'suffix': 'test',
+            'submit_button': 'Confirm!'
+        }
+        rv = client.post('/events/test_4event/update', data=event_info)
+        assert rv.status_code == 302
+        assert rv.location == "http://localhost/problems"
+        assert not get_event(session, 'test_4event')
 
 
 def test_user_interactions(client_session):
