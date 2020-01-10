@@ -27,11 +27,10 @@
 {% endif %}
 {% endwith %}
 
+<div class="page-title">
+    <span class="title">Industrial data domains</span>
+</div>
 {% if 'data_domain' in keywords.type and 'industrial data' in keywords.category %}
-    <div class="page-title">
-        <span class="title">Industrial data domains</span>
-    </div>
-
     <ul>
     {% for keyword in keywords %}
         {% if keyword.type == 'data_domain' and keyword.category == 'industrial data' %}
@@ -44,14 +43,16 @@
         {% endif %}
     {% endfor %}
     </ul>
+{% else %}
+    <h6><p class="text-muted">There are no problems assigned to this category</p></h6>
 {% endif %}
 
+<div class="page-title">
+    <span class="title">Scientific data domains</span>
+</div>
 {% if 'data_domain' in keywords.type and 'scientific data' in keywords.category %}
-    <div class="page-title">
-        <span class="title">Scientific data domains</span>
-    </div>
+<ul>
 
-    <ul>
     {% for keyword in keywords %}
         {% if keyword.type == 'data_domain' and keyword.category == 'scientific data' %}
             <li> <a href="/keywords/{{ keyword.name }}"><strong><font size="+1">{{ keyword.name }}</font></strong></a><br>
@@ -63,6 +64,8 @@
         {% endif %}
     {% endfor %}
     </ul>
+{% else %}
+    <h6><p class="text-muted">There are no problems assigned to this category</p></h6>
 {% endif %}
 
 
