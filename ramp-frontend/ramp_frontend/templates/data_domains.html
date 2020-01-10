@@ -27,6 +27,8 @@
 {% endif %}
 {% endwith %}
 
+
+{% set problem_list = [] %}
 <div class="page-title">
     <span class="title">Industrial data domains</span>
 </div>
@@ -38,6 +40,7 @@
         <ul>
         {% for problem in keyword.problems %}
             <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
+            {{problem_list.append(problem.problem.name)}}
         {% endfor %}
         </ul>
         {% set industrial_exists = 1 %}
@@ -59,6 +62,7 @@
         <ul>
         {% for problem in keyword.problems %}
             <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
+            {{problem_list.append(problem.problem.name)}}
         {% endfor %}
         </ul>
         {% set scientific_exists = 1 %}
@@ -75,12 +79,10 @@
 </div>
 <ul>
 {% for problem in problems %}
-    {% if problem.name not in keywords.name %}
+    {% if problem.name not in problem_list %}
         <li> <a href="/problems/{{ problem.name }}"><strong><font size="+1">{{ problem.name }}</font></strong></a><br>
     {% endif %}
 {% endfor %}
-<li>{{industrial_exists}}</li>
-<li>{{scientific_exists}}</li>
 </ul>
 
 
