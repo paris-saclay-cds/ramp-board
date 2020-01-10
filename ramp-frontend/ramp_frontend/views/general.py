@@ -38,7 +38,8 @@ def data_domains():
     current_keywords = Keyword.query.order_by(Keyword.name)
     current_problems = Problem.query.order_by(Problem.id)
     return render_template('data_domains.html',
-                           keywords=current_keywords, problems=current_problems)
+                           keywords=current_keywords,
+                           problems=current_problems)
 
 
 @mod.route("/teaching")
