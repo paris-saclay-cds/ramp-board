@@ -222,9 +222,9 @@ def update_event(event_name):
         public_opening_timestamp=event.public_opening_timestamp,
     )
     if form.validate_on_submit():
-        if request.form["submit_button"] == "Confirm":
+        if request.form["submit_button"] == "Confirm!":
             delete_event(db.session, event_name)
-        if request.form["submit_button"] == "Update":
+        if request.form["submit_button"] == "Update!":
             try:
                 if form.suffix.data == '':
                     event.name = event.problem.name
