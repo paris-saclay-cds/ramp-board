@@ -56,10 +56,10 @@ def client_session(database_connection):
 @pytest.fixture(scope='function')
 def makedrop_event(client_session):
     _, session = client_session
-    add_event(session, 'iris', 'test_4event', 'test_4event', 'starting_kit',
+    add_event(session, 'iris', 'iris_test_4event', 'iris_test_4event', 'starting_kit',
               '/tmp/databoard_test/submissions', is_public=True)
     yield
-    delete_event(session, 'test_4event')
+    delete_event(session, 'iris_test_4event')
 
 
 @pytest.mark.parametrize(
@@ -199,7 +199,7 @@ def test_event_status(client_session, makedrop_event,
     client, session = client_session
 
     # change the datetime stamps for the event
-    event = get_event(session, 'test_4event')
+    event = get_event(session, 'iris_test_4event')
     event.opening_timestamp = opening_date
     event.public_opening_timestamp = public_date
     event.closing_timestamp = closing_date
@@ -208,7 +208,7 @@ def test_event_status(client_session, makedrop_event,
     # GET: access the problems page without login
     rv = client.get('/problems')
     assert rv.status_code == 200
-    event_idx = rv.data.index(b'test_4event')
+    event_idx = rv.data.index(b'iris_test_4event')
     event_class_idx = rv.data[:event_idx].rfind(b'<i class')
     assert expected in rv.data[event_class_idx:event_idx]
 
@@ -216,7 +216,7 @@ def test_event_status(client_session, makedrop_event,
     with login_scope(client, 'test_user', 'test') as client:
         rv = client.get('/problems')
         assert rv.status_code == 200
-        event_idx = rv.data.index(b'test_4event')
+        event_idx = rv.data.index(b'iris_test_4event')
         event_class_idx = rv.data[:event_idx].rfind(b'<i class')
         assert expected in rv.data[event_class_idx:event_idx]
 
@@ -383,6 +383,33 @@ def test_ask_for_event_mail(client_session):
                 assert len(outbox) == 1
                 assert ('User test_user asked to add a new event'
                         in outbox[0].body)
+
+
+@pytest.mark.parametrize(
+    "opening_date,public_date,closing_date,expected", testtimestamps
+)
+def test_submit_button_enabled(client_session, makedrop_event,
+                      opening_date, public_date,
+                      closing_date, expected):
+    client, session = client_session
+
+    event = get_event(session, 'iris_test_4event')
+    event.opening_timestamp = opening_date
+    event.public_opening_timestamp = public_date
+    event.closing_timestamp = closing_date
+    session.commit()
+    sign_up_team(session, 'iris_test_4event', 'test_user')
+
+    with login_scope(client, 'test_user', 'test') as client:
+        event_info = {
+            'button': 'Submit'
+        }
+        rv = client.get('http://localhost/events/iris_test_4event/sandbox', data=event_info)
+        assert rv.status_code == 200
+        if expected == b'event-close':
+            assert 'disabled' in str(rv.data)
+        else:
+            assert not 'disabled' in str(rv.data)
 
 
 # TODO: to be tested
