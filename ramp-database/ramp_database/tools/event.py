@@ -219,7 +219,7 @@ def add_event(session, problem_name, event_name, event_title,
     problem_name : str
         The problem name associated with the event.
     event_name : str
-        The suffix given to event name.
+        The event name.
     event_title : str
         The even title.
     ramp_sandbox_name : str
@@ -249,7 +249,8 @@ def add_event(session, problem_name, event_name, event_title,
         delete_event(session, event_name)
 
     if event_name[:len(problem_name)+1] != (problem_name + '_'):
-        raise ValueError("<event_name> must start with '" + problem_name + "_'.")
+        raise ValueError("<event_name> must start with '" +
+                         problem_name + "_'.")
 
     event = Event(name=event_name, problem_name=problem_name,
                   event_title=event_title,
