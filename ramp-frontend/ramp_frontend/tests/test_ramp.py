@@ -56,8 +56,9 @@ def client_session(database_connection):
 @pytest.fixture(scope='function')
 def makedrop_event(client_session):
     _, session = client_session
-    add_event(session, 'iris', 'iris_test_4event', 'iris_test_4event', 'starting_kit',
-              '/tmp/databoard_test/submissions', is_public=True)
+    add_event(session, 'iris', 'iris_test_4event', 'iris_test_4event',
+              'starting_kit', '/tmp/databoard_test/submissions',
+              is_public=True)
     yield
     delete_event(session, 'iris_test_4event')
 
@@ -389,8 +390,8 @@ def test_ask_for_event_mail(client_session):
     "opening_date,public_date,closing_date,expected", testtimestamps
 )
 def test_submit_button_enabled(client_session, makedrop_event,
-                      opening_date, public_date,
-                      closing_date, expected):
+                               opening_date, public_date,
+                               closing_date, expected):
     client, session = client_session
 
     event = get_event(session, 'iris_test_4event')
@@ -404,12 +405,13 @@ def test_submit_button_enabled(client_session, makedrop_event,
         event_info = {
             'button': 'Submit'
         }
-        rv = client.get('http://localhost/events/iris_test_4event/sandbox', data=event_info)
+        rv = client.get('http://localhost/events/iris_test_4event/sandbox',
+                        data=event_info)
         assert rv.status_code == 200
         if expected == b'event-close':
             assert 'disabled' in str(rv.data)
         else:
-            assert not 'disabled' in str(rv.data)
+            assert 'disabled' not in str(rv.data)
 
 
 # TODO: to be tested
