@@ -56,10 +56,11 @@ def client_session(database_connection):
 @pytest.fixture(scope='function')
 def makedrop_event(client_session):
     _, session = client_session
-    add_event(session, 'iris', 'test_4event', 'test_4event', 'starting_kit',
-              '/tmp/databoard_test/submissions', is_public=True)
+    add_event(session, 'iris', 'iris_test_4event', 'iris_test_4event',
+              'starting_kit', '/tmp/databoard_test/submissions',
+              is_public=True)
     yield
-    delete_event(session, 'test_4event')
+    delete_event(session, 'iris_test_4event')
 
 
 @pytest.mark.parametrize(
@@ -151,16 +152,39 @@ def test_problem(client_session):
         assert b'Keywords' in rv.data
 
 
+@pytest.mark.parametrize(
+    "event_name, correct",
+    [("iri_aaa", False),
+     ("irisaaa", False),
+     ("test_iris", False),
+     ("iris_", True),
+     ("iris_aaa_aaa_test", True),
+     ("iris", False),
+     ("iris_t", True)]
+)
+def test_event_name_correct(client_session, event_name, correct):
+    client, session = client_session
+    if not correct:
+        with pytest.raises(ValueError) as e:
+            add_event(session, 'iris', event_name, 'new_event', 'starting_kit',
+                      '/tmp/databoard_test/submissions', is_public=True)
+        assert "<event_name> must start with" in str(e.value)
+    else:
+        assert add_event(session, 'iris', event_name, 'new_event',
+                         'starting_kit', '/tmp/databoard_test/submissions',
+                         is_public=True)
+
+
 def test_user_event_status(client_session):
     client, session = client_session
 
     add_user(session, 'new_user', 'new_user', 'new_user',
              'new_user', 'new_user', access_level='user')
-    add_event(session, 'iris', 'new_event', 'new_event', 'starting_kit',
+    add_event(session, 'iris', 'iris_new_event', 'new_event', 'starting_kit',
               '/tmp/databoard_test/submissions', is_public=True)
 
     # user signed up, not approved for the event
-    ask_sign_up_team(session, 'new_event', 'new_user')
+    ask_sign_up_team(session, 'iris_new_event', 'new_user')
     with login_scope(client, 'new_user', 'new_user') as client:
         rv = client.get('/problems')
         assert rv.status_code == 200
@@ -168,7 +192,7 @@ def test_user_event_status(client_session):
         assert b'user-signed' not in rv.data
 
     # user signed up and approved for the event
-    sign_up_team(session, 'new_event', 'new_user')
+    sign_up_team(session, 'iris_new_event', 'new_user')
     with login_scope(client, 'new_user', 'new_user') as client:
         rv = client.get('/problems')
         assert rv.status_code == 200
@@ -199,7 +223,7 @@ def test_event_status(client_session, makedrop_event,
     client, session = client_session
 
     # change the datetime stamps for the event
-    event = get_event(session, 'test_4event')
+    event = get_event(session, 'iris_test_4event')
     event.opening_timestamp = opening_date
     event.public_opening_timestamp = public_date
     event.closing_timestamp = closing_date
@@ -208,7 +232,7 @@ def test_event_status(client_session, makedrop_event,
     # GET: access the problems page without login
     rv = client.get('/problems')
     assert rv.status_code == 200
-    event_idx = rv.data.index(b'test_4event')
+    event_idx = rv.data.index(b'iris_test_4event')
     event_class_idx = rv.data[:event_idx].rfind(b'<i class')
     assert expected in rv.data[event_class_idx:event_idx]
 
@@ -216,7 +240,7 @@ def test_event_status(client_session, makedrop_event,
     with login_scope(client, 'test_user', 'test') as client:
         rv = client.get('/problems')
         assert rv.status_code == 200
-        event_idx = rv.data.index(b'test_4event')
+        event_idx = rv.data.index(b'iris_test_4event')
         event_class_idx = rv.data[:event_idx].rfind(b'<i class')
         assert expected in rv.data[event_class_idx:event_idx]
 
