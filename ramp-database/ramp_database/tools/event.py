@@ -248,6 +248,7 @@ def add_event(session, problem_name, event_name, event_title,
                              "Use force=True to overwrite.")
         delete_event(session, event_name)
 
+    event_name = problem_name + '_' + event_name 
     event = Event(name=event_name, problem_name=problem_name,
                   event_title=event_title,
                   ramp_sandbox_name=ramp_sandbox_name,

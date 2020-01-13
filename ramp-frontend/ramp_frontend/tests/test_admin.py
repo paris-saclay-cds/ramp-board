@@ -284,43 +284,6 @@ def test_update_event(client_session):
         assert event.min_duration_between_submissions == 0
 
 
-@pytest.mark.parametrize(
-"suffix",
-["leave_same",
-#"test",
-#"ga)ahah",
-#"_ah@ha@!",
-#""
-]
-)
-def test_update_event_name_change(client_session, suffix):
-    client, session = client_session
-
-    with login_scope(client, 'test_iris_admin', 'test') as client:
-        # POST: update the event data
-        event_info = {
-            'suffix': suffix,
-            'submit_button': 'Update'
-            }
-    rv = client.post('/events/iris_test/update', data=event_info)
-    assert rv.status_code == 302
-    new_event_name = 'iris_' + suffix
-    event = get_event(session, new_event_name)
-    assert event.name == new_event_name
-
-    # change back the name and check if changed correctly
-    event_info = {
-    'suffix': 'test',
-    'submit_button': 'Update!'
-    }
-    import pdb; pdb.set_trace()
-    rv = client.post('/events/'+new_event_name+'/update', data=event_info)
-    assert rv.status_code == 302
-    assert rv.location == "http://localhost/problems"
-    event = get_event(session, 'iris_test')
-    assert event.name == 'iris_test'
-
-
 def test_user_interactions(client_session):
     client, _ = client_session
 
