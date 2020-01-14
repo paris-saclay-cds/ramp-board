@@ -329,7 +329,7 @@ def test_delete_event(session_scope_function):
     event_score_types = get_score_type_by_event(session_scope_function, event)
     assert len(event_score_types) == 0
     event_cv_fold = get_cv_fold_by_event(session_scope_function, event)
-    assert len(event_cv_fold) == 0
+    assert not event_cv_fold
     with pytest.raises(AttributeError):
         get_submission_by_id(session_scope_function, event.id)
 
