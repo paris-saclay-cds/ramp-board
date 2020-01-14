@@ -132,16 +132,13 @@ class WorkflowFaultyElements:
 
     @property
     def element_names(self):
-        if self.case == 'multiple-dot':
-            return ['too.much.dot.workflow']
-        elif self.case == 'unknown-extension':
+        if self.case == 'unknown-extension':
             return ['function.cpp']
 
 
 @pytest.mark.parametrize(
     "case, err_msg",
-    [('multiple-dot', 'should contain at most one "."'),
-     ('unknown-extension', 'Unknown extension')]
+    [('unknown-extension', 'Unknown extension')]
 )
 def test_add_workflow_error(case, err_msg, session_scope_function):
     workflow = WorkflowFaultyElements(case=case)
