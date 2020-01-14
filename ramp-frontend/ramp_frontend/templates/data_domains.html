@@ -27,10 +27,12 @@
 {% endif %}
 {% endwith %}
 
+
+{% set problem_list = [] %}
 <div class="page-title">
     <span class="title">Industrial data domains</span>
 </div>
-
+{% set industrial_exists = 0 %}
 <ul>
 {% for keyword in keywords %}
     {% if keyword.type == 'data_domain' and keyword.category == 'industrial data' %}
@@ -38,16 +40,21 @@
         <ul>
         {% for problem in keyword.problems %}
             <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
+            {{problem_list.append(problem.problem.name)}}
         {% endfor %}
         </ul>
+        {% set industrial_exists = 1 %}
     {% endif %}
 {% endfor %}
-</ul>
+ </ul>
+{% if industrial_exists == 0 %}
+    <h6><p class="text-muted">There are no keywords assigned to this category</p></h6>
+{% endif %}
 
 <div class="page-title">
     <span class="title">Scientific data domains</span>
 </div>
-
+{% set scientific_exists = 0 %}
 <ul>
 {% for keyword in keywords %}
     {% if keyword.type == 'data_domain' and keyword.category == 'scientific data' %}
@@ -55,11 +62,29 @@
         <ul>
         {% for problem in keyword.problems %}
             <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
+            {{problem_list.append(problem.problem.name)}}
         {% endfor %}
         </ul>
+        {% set scientific_exists = 1 %}
     {% endif %}
 {% endfor %}
 </ul>
+{% if scientific_exists == 0 %}
+    <h6><p class="text-muted">There are no keywords assigned to this category</p></h6>
+{% endif %}
+
+
+<div class="page-title">
+    <span class="title">Not classified</span>
+</div>
+<ul>
+{% for problem in problems %}
+    {% if problem.name not in problem_list %}
+        <li> <a href="/problems/{{ problem.name }}"><strong><font size="+1">{{ problem.name }}</font></strong></a><br>
+    {% endif %}
+{% endfor %}
+</ul>
+
 
 {% endblock %}
 {% block scripts %}
