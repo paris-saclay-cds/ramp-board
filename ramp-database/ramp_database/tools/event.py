@@ -466,7 +466,7 @@ def get_score_type_by_event(session, event):
     Returns
     -------
     score type : :class:`ramp_database.model.ScoreType` or \
-    list of :list of :class:`ramp_database.model.ScoreType`
+    list of list of :class:`ramp_database.model.ScoreType`
         The queried problem.
     """
     return (session.query(EventScoreType)
