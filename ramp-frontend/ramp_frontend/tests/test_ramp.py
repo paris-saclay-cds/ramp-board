@@ -412,7 +412,7 @@ def test_ask_for_event_mail(client_session):
 @pytest.mark.parametrize(
     "opening_date,public_date,closing_date,expected", testtimestamps
 )
-def test_submit_button_enabled(client_session, makedrop_event,
+def test_submit_button_enabled_disabled(client_session, makedrop_event,
                                opening_date, public_date,
                                closing_date, expected):
     client, session = client_session
