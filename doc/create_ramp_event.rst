@@ -42,7 +42,7 @@ This config file should look like::
         conda_env: ramp-iris
 
 .. note::
-    - <event_name must always be preceeded with the '<problem_name>_' as in 
+    - <event_name> must always be preceeded with the '<problem_name>_' as in 
     the example above.
     - In the previous configuration example, we are using a conda worker. You can
     refer to the documentation about the :ref:`workers <all_workers>` and
