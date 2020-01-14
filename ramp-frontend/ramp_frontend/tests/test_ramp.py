@@ -165,10 +165,12 @@ def test_problem(client_session):
 def test_event_name_correct(client_session, event_name, correct):
     client, session = client_session
     if not correct:
-        with pytest.raises(ValueError) as e:
-            add_event(session, 'iris', event_name, 'new_event', 'starting_kit',
-                      '/tmp/databoard_test/submissions', is_public=True)
-        assert "<event_name> must start with" in str(e.value)
+        err_msg = "The event name should start with the problem name"
+        with pytest.raises(ValueError, match=err_msg) as e:
+            add_event(
+                session, 'iris', event_name, 'new_event', 'starting_kit',
+                '/tmp/databoard_test/submissions', is_public=True
+            )
     else:
         assert add_event(session, 'iris', event_name, 'new_event',
                          'starting_kit', '/tmp/databoard_test/submissions',
