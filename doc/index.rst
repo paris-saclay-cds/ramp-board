@@ -13,6 +13,7 @@ Welcome to RAMP documentation!
    :caption: Getting Started
 
    install
+   contribute
 
 .. toctree::
    :maxdepth: 2

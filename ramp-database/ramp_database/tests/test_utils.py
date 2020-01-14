@@ -18,7 +18,7 @@ from ramp_database.utils import session_scope
 
 
 @pytest.fixture
-def database():
+def database(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:

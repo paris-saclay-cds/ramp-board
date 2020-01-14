@@ -15,14 +15,12 @@ from flask import url_for
 
 from itsdangerous import URLSafeTimedSerializer
 
-from sqlalchemy.orm.exc import NoResultFound
-
 from ramp_database.utils import check_password
 from ramp_database.utils import hash_password
 
 from ramp_database.tools.user import add_user
 from ramp_database.tools.user import add_user_interaction
-from ramp_database.tools.user import get_user_by_name
+from ramp_database.tools.user import get_user_by_name_or_email
 from ramp_database.tools.user import set_user_by_instance
 
 from ramp_database.model import User
@@ -73,9 +71,9 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
-        try:
-            user = get_user_by_name(db.session, name=form.user_name.data)
-        except NoResultFound:
+        user = get_user_by_name_or_email(db.session,
+                                         name=form.user_name.data)
+        if user is None:
             msg = 'User "{}" does not exist'.format(form.user_name.data)
             flash(msg)
             logger.info(msg)
@@ -157,8 +155,8 @@ def sign_up():
             'auth.user_confirm_email', token=token, _external=True
         )
         subject = "Confirm your email for signing-up to RAMP"
-        body = ('Hi {}, \n\nClick on the following link to confirm your email '
-                'address and finalize your sign-up to RAMP.\n\nNote that '
+        body = ('Hi {}, \n\n Click on the following link to confirm your email'
+                ' address and finalize your sign-up to RAMP.\n\n Note that '
                 'your account still needs to be approved by a RAMP '
                 'administrator.\n\n'
                 .format(user.firstname))

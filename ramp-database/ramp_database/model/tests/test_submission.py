@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+from datetime import datetime
 
 import numpy as np
 from numpy.testing import assert_allclose
@@ -36,7 +37,7 @@ from ramp_database.tools.submission import get_submission_by_id
 
 
 @pytest.fixture(scope='module')
-def session_scope_module():
+def session_scope_module(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:
@@ -92,6 +93,18 @@ def test_submission_model_property(session_scope_module):
 
 def test_submission_model_set_state(session_scope_module):
     submission = get_submission_by_id(session_scope_module, 5)
+    submission.set_state('sent_to_training')
+    assert submission.state == 'sent_to_training'
+    assert (
+        submission.sent_to_training_timestamp - datetime.utcnow()
+    ).total_seconds() < 10
+
+    submission.set_state('training')
+    assert submission.state == 'training'
+    assert (
+        submission.training_timestamp - datetime.utcnow()
+    ).total_seconds() < 10
+
     submission.set_state('scored')
     assert submission.state == 'scored'
     for cv_fold in submission.on_cv_folds:

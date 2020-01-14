@@ -63,6 +63,11 @@ def is_accessible_leaderboard(session, event_name, user_name):
         The event name.
     user_name : str
         The user name.
+
+    Returns
+    -------
+    is_accessible : bool
+        True if leaderboard can be displayed.
     """
     event = select_event_by_name(session, event_name)
     user = select_user_by_name(session, user_name)
@@ -138,5 +143,29 @@ def is_user_signed_up(session, event_name, user_name):
     event_team = select_event_team_by_name(session, event_name, user_name)
     if (event_team is not None and
             (event_team.is_active and event_team.approved)):
+        return True
+    return False
+
+
+def is_user_sign_up_requested(session, event_name, user_name):
+    """Whether or not user signed up to an event.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The RAMP event name.
+    team_name : str
+        The name of the team.
+
+    Returns
+    -------
+    asked : bool
+        Whether or not the user had asked to join event or not.
+    """
+    event_team = select_event_team_by_name(session, event_name, user_name)
+    if (event_team is not None and
+            (event_team.is_active and not event_team.approved)):
         return True
     return False

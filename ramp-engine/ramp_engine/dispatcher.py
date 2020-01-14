@@ -172,17 +172,15 @@ class Dispatcher:
 
     def update_database_results(self, session):
         """Update the database with the results of ramp_test_submission."""
-        is_update_leaderboards = False
+        make_update_leaderboard = False
         while not self._processed_submission_queue.empty():
-            is_update_leaderboards = True
+            make_update_leaderboard = True
             submission_id, submission_name = \
                 self._processed_submission_queue.get_nowait()
             if 'error' in get_submission_state(session, submission_id):
-                logger.info('Skip update for {} due to failure during the '
-                            'processing'.format(submission_name))
                 continue
-            logger.info('Update the results obtained on each fold for '
-                        '{}'.format(submission_name))
+            logger.info('Write info in data base for submission {}'
+                        .format(submission_name))
             path_predictions = os.path.join(
                 self._worker_config['predictions_dir'], submission_name
             )
@@ -196,8 +194,8 @@ class Dispatcher:
             set_submission_state(session, submission_id, 'scored')
         # We only update leaderboards once, in case there are multiple
         # submissions processed
-        if is_update_leaderboards:
-            logger.info('Updating leaderboards')
+        if make_update_leaderboard:
+            logger.info('Update all leaderboards')
             update_leaderboards(session, self._ramp_config['event_name'])
             logger.info('Updating user leaderboards')
             update_all_user_leaderboards(

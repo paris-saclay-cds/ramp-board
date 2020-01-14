@@ -18,10 +18,11 @@ from ramp_frontend import create_app
 from ramp_frontend import mail
 from ramp_frontend.utils import body_formatter_user
 from ramp_frontend.utils import send_mail
+from ramp_frontend.testing import _fail_no_smtp_server
 
 
 @pytest.fixture(scope='module')
-def client_session():
+def client_session(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:
@@ -44,7 +45,7 @@ def client_session():
         Model.metadata.drop_all(db)
 
 
-@pytest.mark.xfail
+@_fail_no_smtp_server
 def test_send_mail(client_session):
     client, _ = client_session
     with client.application.app_context():

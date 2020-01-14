@@ -15,23 +15,23 @@ from ramp_database.testing import create_toy_db
 from ramp_engine.cli import main
 
 
-def setup_module(module):
+@pytest.fixture(scope="module")
+def make_toy_db(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
-    module.deployment_dir = create_toy_db(database_config, ramp_config)
-
-
-def teardown_module(module):
-    database_config = read_config(database_config_template())
-    shutil.rmtree(module.deployment_dir, ignore_errors=True)
-    db, _ = setup_db(database_config['sqlalchemy'])
-    Model.metadata.drop_all(db)
+    try:
+        deployment_dir = create_toy_db(database_config, ramp_config)
+        yield
+    finally:
+        shutil.rmtree(deployment_dir, ignore_errors=True)
+        db, _ = setup_db(database_config['sqlalchemy'])
+        Model.metadata.drop_all(db)
 
 
 @pytest.mark.parametrize(
     "verbose_params", [None, "--verbose", "-vv"]
 )
-def test_dispatcher(verbose_params):
+def test_dispatcher(verbose_params, make_toy_db):
     runner = CliRunner()
     cmd = ["dispatcher",
            "--config", database_config_template(),
@@ -45,7 +45,7 @@ def test_dispatcher(verbose_params):
 @pytest.mark.parametrize(
     "verbose_params", [None, "--verbose", "-vv"]
 )
-def test_worker(verbose_params):
+def test_worker(verbose_params, make_toy_db):
     runner = CliRunner()
     cmd = ["worker",
            "--config", ramp_config_template(),

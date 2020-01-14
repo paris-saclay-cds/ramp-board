@@ -20,7 +20,7 @@ from ramp_database.tools.user import get_user_by_name
 
 
 @pytest.fixture(scope='module')
-def session_scope_module():
+def session_scope_module(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:

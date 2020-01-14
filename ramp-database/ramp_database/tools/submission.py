@@ -7,6 +7,8 @@ import shutil
 import numpy as np
 import pandas as pd
 
+from sqlalchemy.orm import defer
+
 from ..exceptions import DuplicateSubmissionError
 from ..exceptions import MissingExtensionError
 from ..exceptions import MissingSubmissionFileError
@@ -110,6 +112,7 @@ def add_submission(session, event_name, team_name, submission_name,
             all_cv_folds = (session.query(SubmissionOnCVFold)
                                    .filter_by(submission_id=submission.id)
                                    .all())
+            all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
             for submission_on_cv_fold in all_cv_folds:
                 submission_on_cv_fold.reset()
         else:
@@ -388,8 +391,11 @@ def get_predictions(session, submission_id):
         A pandas dataframe containing the predictions on each fold.
     """
     results = defaultdict(list)
-    sub = get_submission_by_id(session, submission_id)
-    for fold_id, cv_fold in enumerate(sub.on_cv_folds):
+    all_cv_folds = (session.query(SubmissionOnCVFold)
+                           .filter_by(submission_id=submission_id)
+                           .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
+    for fold_id, cv_fold in enumerate(all_cv_folds):
         results['fold'].append(fold_id)
         results['y_pred_train'].append(cv_fold.full_train_y_pred)
         results['y_pred_test'].append(cv_fold.test_y_pred)
@@ -414,14 +420,16 @@ def get_time(session, submission_id):
     # The code produces identical results to the commented code below
     # but without loading the predictions in SubmissionOnCVFold
     results = defaultdict(list)
-    for step in ('train', 'valid', 'test'):
-        times_per_fold = session.query(
-            getattr(SubmissionOnCVFold, '{}_time'.format(step))).filter(
-            SubmissionOnCVFold.submission_id == submission_id).all()
-        for fold_id, times in enumerate(times_per_fold):
-            if step == 'train':  # only append once
-                results['fold'].append(fold_id)
-            results[step].append(times[0])
+    all_cv_folds = (session.query(SubmissionOnCVFold)
+                           .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
+                           .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
+    for fold_id, cv_fold in enumerate(all_cv_folds):
+        results['fold'].append(fold_id)
+        for step in ('train', 'valid', 'test'):
+            results[step].append(getattr(cv_fold, '{}_time'.format(step)))
     return pd.DataFrame(results).set_index('fold')
 
 #     results = defaultdict(list)
@@ -452,21 +460,19 @@ def get_scores(session, submission_id):
     # The code produces identical results to the commented code below
     # but without loading the predictions in SubmissionOnCVFold
     results = defaultdict(list)
-    sub = get_submission_by_id(session, submission_id)
-    score_names = [sub_sc.score_name for sub_sc in sub.scores]
-    for step in ('train', 'valid', 'test'):
-        scores_per_fold = session.query(
-            getattr(SubmissionScoreOnCVFold, '{}_score'.format(step))).filter(
-            SubmissionScoreOnCVFold.submission_on_cv_fold_id ==
-            SubmissionOnCVFold.id).filter(
-            SubmissionOnCVFold.submission_id == submission_id).all()
-        n_folds = len(scores_per_fold) // len(score_names)
-        score_names_rep = score_names * n_folds
-        for score_name, score in zip(score_names_rep, scores_per_fold):
-            results[score_name].append(score[0])
-    index = [(step, fold_id) for step in ('train', 'valid', 'test')
-             for fold_id in range(n_folds)]
-    multi_index = pd.MultiIndex.from_tuples(index, names=['step', 'fold'])
+    index = []
+    all_cv_folds = (session.query(SubmissionOnCVFold)
+                           .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
+                           .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
+    for fold_id, cv_fold in enumerate(all_cv_folds):
+        for step in ('train', 'valid', 'test'):
+            index.append((fold_id, step))
+            for score in cv_fold.scores:
+                results[score.name].append(getattr(score, step + '_score'))
+    multi_index = pd.MultiIndex.from_tuples(index, names=['fold', 'step'])
     scores = pd.DataFrame(results, index=multi_index)
     scores = scores.swaplevel().reset_index()
     scores = scores.sort_values('fold').set_index(['fold', 'step'])
@@ -659,8 +665,13 @@ def set_predictions(session, submission_id, path_predictions):
     path_predictions : str
         The path where the results files are located.
     """
-    sub = get_submission_by_id(session, submission_id)
-    for fold_id, cv_fold in enumerate(sub.on_cv_folds):
+    all_cv_folds = (session.query(SubmissionOnCVFold)
+                           .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
+                           .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
+    for fold_id, cv_fold in enumerate(all_cv_folds):
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
         cv_fold.full_train_y_pred = np.load(
@@ -682,8 +693,13 @@ def set_time(session, submission_id, path_predictions):
     path_predictions : str
         The path where the results files are located.
     """
-    sub = get_submission_by_id(session, submission_id)
-    for fold_id, cv_fold in enumerate(sub.on_cv_folds):
+    all_cv_folds = (session.query(SubmissionOnCVFold)
+                           .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
+                           .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
+    for fold_id, cv_fold in enumerate(all_cv_folds):
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
         results = {}
@@ -708,8 +724,13 @@ def set_scores(session, submission_id, path_predictions):
     path_predictions : str
         The path where the results files are located.
     """
-    sub = get_submission_by_id(session, submission_id)
-    for fold_id, cv_fold in enumerate(sub.on_cv_folds):
+    all_cv_folds = (session.query(SubmissionOnCVFold)
+                           .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
+                           .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
+    for fold_id, cv_fold in enumerate(all_cv_folds):
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
         scores_update = pd.read_csv(
@@ -818,7 +839,10 @@ def score_submission(session, submission_id):
     # manually if needed for submission in various error states.
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
                            .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for submission_on_cv_fold in all_cv_folds:
         submission_on_cv_fold.session = session
         submission_on_cv_fold.compute_train_scores()
@@ -832,7 +856,7 @@ def score_submission(session, submission_id):
     # Means and stds were constructed on demand by fetching fold times.
     # It was slow because submission_on_folds contain also possibly large
     # predictions. If postgres solves this issue (which can be tested on
-    # the mean and std scores on the private leaderbord), the
+    # the mean and std scores on the private leaderbaord), the
     # corresponding columns (which are now redundant) can be deleted in
     # Submission and this computation can also be deleted.
     submission.train_time_cv_mean = np.mean(
