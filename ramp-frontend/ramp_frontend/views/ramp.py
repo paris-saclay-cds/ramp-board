@@ -334,7 +334,7 @@ def sandbox(event_name):
     elif now < end:
         event_status["msg"] = f"Event submissions are open until {end_str}"
         event_status["state"] = "open"
-    elif now >= end:
+    else: #now >= end
         event_status["msg"] = f"This event closed on the {end_str}"
         event_status["state"] = "close"
 
