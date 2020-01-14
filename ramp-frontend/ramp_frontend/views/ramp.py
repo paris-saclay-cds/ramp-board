@@ -40,6 +40,7 @@ from ramp_database.tools.frontend import is_accessible_code
 from ramp_database.tools.frontend import is_accessible_event
 from ramp_database.tools.frontend import is_user_signed_up
 from ramp_database.tools.frontend import is_user_sign_up_requested
+from ramp_database.tools.leaderboard import update_leaderboards
 from ramp_database.tools.submission import add_submission
 from ramp_database.tools.submission import add_submission_similarity
 from ramp_database.tools.submission import get_source_submissions

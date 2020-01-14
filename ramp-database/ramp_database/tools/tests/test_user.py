@@ -214,7 +214,7 @@ def test_make_admin(session_scope_function):
     user = get_user_by_name(session_scope_function, 'test_user_admin')
     assert user.access_level == 'asked'
     assert user.is_authenticated is False
-    make_admin(session_scope_function, 'test_user_admin')
+    make_user_admin(session_scope_function, 'test_user_admin')
     user = get_user_by_name(session_scope_function, 'test_user_admin')
     assert user.access_level == 'admin'
     assert user.is_authenticated is True
