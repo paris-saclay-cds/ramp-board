@@ -5,7 +5,7 @@ body {
   padding-top: 0px;
   height: 100%;
   position: relative;
-  font-size: 13px; }
+  font-size: 18px; }
 
 * {
   outline: none; }
@@ -71,7 +71,7 @@ a:hover {
       height: 60px;
       line-height: 60px;
       margin-left: 0px;
-      font-family: 'Roboto Condensed', sans-serif;
+      font-family: 'Source Sans Pro', sans-serif;
       font-weight: 400;
       padding: 0;
       font-size: 1.5em; }
@@ -112,13 +112,18 @@ a:hover {
       height: 60px;
       line-height: 60px;
       vertical-align: middle;
-      font-family: 'Roboto Condensed', sans-serif;
+      font-family: 'Source Sans Pro', sans-serif;
       font-size: 1.5em; }
   .navbar .navbar-nav > li > a {
-    font-family: 'Roboto Condensed', sans-serif;
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 1em;
     height: 60px;
     line-height: 60px;
     padding: 0px 20px 0px 20px; }
+  .navbar .navbar-font-index {
+    font-size: 1.2em; }
+  .navbar .navbar-font-about {
+    font-size: 16px; }
   .navbar .dropdown-menu {
     padding: 0;
     border: 0;
@@ -129,13 +134,13 @@ a:hover {
     z-index: -1;
     position: absolute; }
     .navbar .dropdown-menu .title {
-      font-family: 'Roboto Condensed', sans-serif;
+      font-family: 'Source Sans Pro', sans-serif;
       padding: 5px 10px;
       -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); }
     .navbar .dropdown-menu .message {
-      font-family: 'Roboto Condensed', sans-serif;
+      font-family: 'Source Sans Pro', sans-serif;
       text-align: center;
       padding: 10px 20px; }
     .navbar .dropdown-menu .notifications.list-group {
@@ -173,7 +178,7 @@ a:hover {
         margin: 0px;
         border: 0; }
     .navbar .dropdown.profile .dropdown-menu .profile-info {
-      font-family: 'Roboto Condensed', sans-serif;
+      font-family: 'Source Sans Pro', sans-serif;
       padding: 15px; }
       .navbar .dropdown.profile .dropdown-menu .profile-info .username {
         font-size: 1.8em; }
@@ -191,7 +196,7 @@ a:hover {
     -webkit-transition: all 0.25s;
     transition: all 0.25s;
     font-size: 12px;
-    font-family: 'Roboto Condensed', sans-serif; }
+    font-family: 'Source Sans Pro', sans-serif; }
     .app-container .app-footer .wrapper {
       padding: 10px 35px;
       padding-left: 25px;
@@ -208,7 +213,9 @@ a:hover {
       width: 60px;
       height: 100%;
       -webkit-transition: all 0.25s;
-      transition: all 0.25s; }
+      transition: all 0.25s;
+      top: 0px;
+      left: 0px; }
       .app-container .content-container .side-menu .navbar-header {
         width: 100%;
         border-bottom: 0px solid #e7e7e7; }
@@ -219,7 +226,7 @@ a:hover {
           padding: 0;
           width: 100%;
           overflow: hidden;
-          font-family: 'Roboto Condensed', sans-serif; }
+          font-family: 'Source Sans Pro', sans-serif; }
           .app-container .content-container .side-menu .navbar-header .navbar-brand .icon {
             width: 60px;
             text-align: center;
@@ -246,7 +253,7 @@ a:hover {
         width: 100%;
         overflow: hidden; }
         .app-container .content-container .side-menu .navbar-nav li a {
-          font-family: 'Roboto Condensed', sans-serif;
+          font-family: 'Source Sans Pro', sans-serif;
           padding: 0 10px 0 10px;
           height: 46px;
           line-height: 46px;
@@ -280,7 +287,7 @@ a:hover {
       .app-container .content-container .side-menu .navbar-nav .panel-collapse.in {
         display: none; }
     .app-container .content-container .side-menu:hover {
-      width: 250px; }
+      width: 300px; }
       .app-container .content-container .side-menu:hover .navbar-header .navbar-brand .title {
         display: inline-block; }
       .app-container .content-container .side-menu:hover .navbar-nav li a .title {
@@ -325,14 +332,14 @@ a:hover {
   margin-right: -15px; }
 
 .page-title {
-  font-family: 'Roboto Condensed', sans-serif;
+  font-family: 'Source Sans Pro', sans-serif;
   margin-left: -10px;
   margin-right: -10px;
   padding: 15px 10px;
   margin-bottom: 0px;
   height: auto; }
   .page-title .title {
-    font-size: 2em; }
+    font-size: 1.6em; }
   .page-title .page-action {
     float: right;
     height: 40px;
@@ -340,13 +347,13 @@ a:hover {
     vertical-align: middle; }
 
 .sub-title {
-  font-family: 'Roboto Condensed', sans-serif; }
+  font-family: 'Source Sans Pro', sans-serif; }
   .sub-title > * {
     display: inline-block; }
   .sub-title h3 {
     margin-right: 10px; }
   .sub-title .description {
-    font-family: 'Roboto Condensed', sans-serif;
+    font-family: 'Source Sans Pro', sans-serif;
     font-size: 0.9em; }
   .sub-title .action .btn {
     padding: 0 0.5em; }
@@ -411,7 +418,8 @@ a:hover {
   overflow: hidden;
   position: relative; }
   .card .card-body {
-    padding: 25px; }
+    padding: 50px;
+    font-size: 1em; }
     .card .card-body .sub-title {
       font-size: 1.2em;
       padding: 1.2em 0em 0.4em 0em;
@@ -423,11 +431,11 @@ a:hover {
   .card .card-body.half-padding {
     padding: 12.5px; }
   .card .card-header .card-title {
-    padding: 1.2em 25px;
+    padding: 0.8em 25px;
     float: left; }
     .card .card-header .card-title .title {
-      font-family: 'Roboto Condensed', sans-serif;
-      font-size: 1.5em;
+      font-family: 'Source Sans Pro', sans-serif;
+      font-size: 1.1em;
       text-decoration: none; }
   .card .card-header .pull-right {
     padding: 0.5em 1em; }
@@ -443,6 +451,14 @@ a:hover {
 
 .card:hover .card-header .title {
   text-decoration: none !important; }
+
+div.info-header {
+  font-weight: 800;
+  opacity: 1;
+  display: flex;
+  justify-content: center;
+  font-size: 1.8em;
+}
 
 .card.summary-inline .card-body {
   padding: 20px; }
@@ -486,7 +502,7 @@ a:hover {
   margin-bottom: 5px;
   border-radius: 1px;
   border-width: 1px;
-  font-family: 'Roboto Condensed', sans-serif; }
+  font-family: 'DejaVu Sans', sans-serif; }
 
 .btn-group-lg > .btn, .btn-group-lg > .btn-lg {
   border-radius: 1px; }
@@ -519,7 +535,7 @@ a:hover {
 .modal {
   z-index: 100001; }
   .modal .modal-dialog .modal-header {
-    font-family: 'Roboto Condensed', sans-serif; }
+    font-family: 'Source Sans Pro', sans-serif; }
   .modal .modal-dialog .modal-content {
     border-radius: 1px;
     box-shadow: none; }
@@ -941,7 +957,7 @@ body.login-page {
   clear: both; }
 
 .row.example > [class*='col-'] > div {
-  background-color: #EEE;
+  background-color: #DDD;
   padding: 10px;
   border: 1px solid #DDD; }
 
@@ -967,7 +983,7 @@ body.login-page {
         font-weight: bold; }
       .message-list > a > li > .message-block .message-datetime {
         font-size: 10px;
-        color: #AAA; }
+        color: #EEE; }
       .message-list > a > li > .message-block .message {
         font-size: 12px; }
     .message-list > a > li .profile-img {
@@ -983,7 +999,7 @@ body.login-page {
   margin-bottom: 5px; }
 
 .landing-page {
-  font-family: 'Roboto Condensed', sans-serif; }
+  font-family: 'Source Sans Pro', sans-serif; }
   .landing-page .navbar .navbar-toggle {
     position: absolute;
     right: 0;
@@ -993,7 +1009,6 @@ body.login-page {
     padding: 0 15px; }
   .landing-page .app-header {
     padding-top: 100px;
-    background-image: url("../img/ramp_room.jpg");
     background-repeat: no-repeat;
     -webkit-background-size: cover;
     -moz-background-size: cover;
@@ -1065,7 +1080,7 @@ body.login-page {
     box-shadow: 0px 0px 6px 0px rgba(96, 100, 109, 0.4); }
   .landing-page .navbar.affix {
     z-index: 4000;
-    background-color: rgba(255, 255, 255, 0.95) !important;
+    background-color: rgba(23,37,42,1) !important;
     height: 60px;
     opacity: 1;
     margin-top: 0px; }
@@ -1093,7 +1108,7 @@ body.login-page {
         width: 100%;
         overflow: hidden;
         padding-left: 0px;
-        font-family: 'Roboto Condensed', sans-serif; }
+        font-family: 'Source Sans Pro', sans-serif; }
         .landing-page .navbar .navbar-header .navbar-brand .icon {
           width: 50px;
           text-align: center;
@@ -1216,3 +1231,22 @@ body.login-page {
   .featurette-heading {
     margin-top: 100px;
     margin-bottom: 20px; } }
+
+hr {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border: 0;
+        border-top-color: currentcolor;
+        border-top-style: none;
+        border-top-width: 0px;
+    border-top: 3px solid #c5d0cd;
+}
+
+ul.problem-font {
+  font-size: 20px;
+}
+
+div.info-pages {
+  padding-left: 280px;
+  padding-right: 280px
+}

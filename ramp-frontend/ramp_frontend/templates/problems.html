@@ -26,20 +26,28 @@
 {% endif %}
 {% endwith %}
 
+<br>
+<div style="font-family: FontAwesome;">
+    Browse data challenges by data type, <a href="/data_domains">here</a>.
+</div>
+<br>
+
 {% if problems|length > 0 %}
 <div style="display: flex">
         <div>
-            <ul class="fas-ul">
-                <li class="fas fa-check-circle-o"> signed up</li>
-                <li class="fas fa-clock-o"> waiting for approval</li> 
-                <li class="fas fa-circle-o"> not signed up </li> 
+            <p>User status</p>
+            <ul class="fa-ul">
+                <li><span class="fa-li"><i class="fas fa-check-circle-o"></i></span> signed up</li>
+                <li><span class="fa-li"><i class="fas fa-clock-o"></i></span> waiting for approval</li>
+                <li><span class="fa-li"><i class="fas fa-circle-o"></i></span> not signed up </li>
             </ul>
         </div>
         <div>
-            <ul class="fas-ul">
-                <li class="fas fa-lock"> closed</li> 
-                <li class="fas fa-hand-o-right"> competitive phase</li> 
-                <li class="fas fa-handshake-o" aria-hidden="true"> collaborative phase</li>
+            <p>Event status</p>
+            <ul class="fa-ul">
+                <li><span class="fa-li"><i class="fas fa-lock"></i></span> closed</li>
+                <li><span class="fa-li"><i class="fas fa-hand-o-right"></i></span> competitive phase</li>
+                <li><span class="fa-li"><i class="fas fa-handshake-o" aria-hidden="true"></i></span> collaborative phase</li>
             </ul>
         </div>
 </div>
@@ -47,22 +55,22 @@
 <ul>
 {% for problem in problems %}
 <li> <a href="/problems/{{ problem.name }}"><strong><font size="+1">{{ problem.title }}</font></strong></a><br>
-    <ul class="fas-ul">
+    <ul class="fa-ul">
     {% for event in problem.events %}
         {% if event.is_public %}
             {% if event.state_user == 'waiting' %}
-                <li class="fas fa-clock-o user-waiting">
+                <li><span class="fa-li"><i class="fas fa-clock-o user-waiting"></i></span></li>
             {% elif event.state_user == 'signed' %}
-                <li class="fas fa-check-circle-o user-signed">
+                <li><span class="fa-li"><i class="fas fa-check-circle-o user-signed"></i></span></li>
             {% elif event.state_user == 'not_signed' %}
-                <li class="fas fa-circle-o user-not-signed">
+                <li><span class="fa-li"><i class="fas fa-circle-o user-not-signed"></i></span></li>
             {% endif %}
             {% if event.state == 'close' %}
-                <i class="fas fa-lock event-close"></i>
+                <li><span class="fas-li"><i class="fas fa-lock event-close"></i></span>
             {% elif event.state == 'collab' %}
-                <i class="fas fa-handshake-o event-collab" aria-hidden="true"></i>
+                <li><span class="fas-li"><i class="fas fa-handshake-o event-collab" aria-hidden="true"></i></span>
             {% elif event.state == 'competitive' %}
-                <i class="fas fa-hand-o-right event-comp" aria-hidden="true"></i>
+                <li><span class="fas-li"><i class="fas fa-hand-o-right event-comp" aria-hidden="true"></i></span>
             {% endif %}
             <a href="/events/{{ event.name }}">{{ event.title }}</a>,
                 participants = <strong><font color=darkgreen>{{ event.n_participants }}</font></strong>,

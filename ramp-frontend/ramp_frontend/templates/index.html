@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>RAMP: collaborative data science challenges at Paris Saclay</title>
+    <title>RAMP: collaborative data science challenges</title>
     <meta name="description" content="Collaborative crowdsourcing data challenge site for building and optimizing data science workflows for scientific and business applications.">
     <meta name="keyword" content="data science, data challenge, crowdsourcing, open innovation, Paris-Saclay, Center for Data Science, teaching data science, deep learning, time series, missing data, feature extraction, hyperopt, AutoML">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -24,7 +24,8 @@
 </head>
 
 <body class="flat-blue landing-page">
-    <nav class="navbar navbar-inverse navbar-fixed-top  navbar-affix" role="navigation" data-spy="affix" data-offset-top="60">
+
+    <nav class="navbar navbar-inverse navbar-fixed-top navbar-affix" role="navigation" data-spy="affix" data-offset-top="60">
         <div class="container">
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
@@ -33,17 +34,17 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="#">
-                    <div class="title"><span>&nbsp; &nbsp;<img src="{{ url_for('static', filename='img/logo_CDS_footer.svg') }}" height="20px">RAMP: collaborative data science challenges at Paris Saclay</span></div>
-                </a>
+
+                <div id="navbar" class="navbar-collapse collapse " aria-expanded="true">
+                        <ul class="nav navbar-nav navbar-left navbar-font-index">
+                            <li class="active"><a href="#features"><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" height="26px"></a></li>
+                            <li class="active"><a href="/problems">Our challenges</a></li>
+                            <li class="active"><a href="/teaching">Your challenges</a></li>
+                        </ul>
+                    </div>
             </div>
             <div id="navbar" class="navbar-collapse collapse " aria-expanded="true">
-                <ul class="nav navbar-nav navbar-right">
-                    <li class="active"><a href="/problems">Problems</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#contact">Contact</a></li>
-                    <li><a href="#team">Team</a></li>
-                    <li><a href="#partners">Partners</a></li>
+                <ul class="nav navbar-nav navbar-right navbar-font-index">
                     <li><a href="/sign_up">Sign Up</a></li>
                     <li><a href="/login">Login</a></li>
                 </ul>
@@ -51,281 +52,169 @@
             <!--/.nav-collapse -->
         </div>
     </nav>
-    <div class="jumbotron app-header">
+    <div class="jumbotron app-header" id='titleback'>
         <div class="container">
             <h2 class="text-center">
                 <br>
-                <div class="color-white"><span><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" alt="CDS logo" class="app-logo color-white">&nbsp;RAMP</span></div>
+                <div class="color-white font-large font-heavy"><span><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" alt="CDS logo" class="app-logo color-white" height="98">&nbsp;RAMP</span></div>
             </h2>
-            <p class="text-center color-white app-description">Rapid Analytics <br>and Model Prototyping.</p>
+            <p class="text-center color-white app-description font-med">Rapid Analytics & Model Prototyping</p>
+            <p class="text-center color-white app-description font-small">using Python</p></div>
+            <br>
+            <br>
             <p class="text-center"><a class="btn btn-primary btn-lg app-btn" href="#features" role="button">Learn more »</a></p>
         </div>
     </div>
-    <div class="container-fluid app-content-a">
-        <div class="container">
-            <p class="text-center"><a class="btn btn-primary btn-lg app-btn" href="/problems" role="button">Click here for the <strong><font color="#D89B28">list of running RAMPs</font></strong></a></p>
-        </div>
-        <div class="container">
-            <p class="text-center"><a class="btn btn-primary btn-lg app-btn" href="/data_science_themes" role="button">Click here for <strong><font color="#3B8676">data science themes</a></font></strong>
-            <a class="btn btn-primary btn-lg app-btn" href="/data_domains" role="button">Click here for <strong><font color="#4E9BCB">data domains</font></strong></a></p>
-        </div>
-        <div class="container">
-            <p class="text-center"><a class="btn btn-primary btn-lg app-btn" href="/teaching" role="button">Click here if you would like to <strong><font color="#cc104d">use the platform for teaching</font></strong></a></p>
-        </div>
-    </div>
+
     <div class="container-fluid app-content-a" id="features">
         <div class="container">
+
+                <div class="row">
+                        <div class="col-md-12">
+                            <h2 class="text-center app-content-header">RAMP data challenges</h2>
+                            <p class="text-center app-content-description font-small">
+                            RAMP data challenges are a great way to collaboratively prototype and benchmark machine learning workflows. Participants submit their predictive solution (code), competing for the best score, and provide organisers with fully-functioning prototypes.
+                            </p>
+                        </div>
+                    </div>
+
             <div class="row text-center">
-                <div class="col-md-3 col-sm-6">
+                <div class="col-md-4 col-sm-6">
                     <span class="fa-stack fa-lg fa-5x">
                       <i class="fa fa-circle-thin fa-stack-2x"></i>
                       <i class="fa fa-users fa-stack-1x"></i>
                     </span>
                     <h2>Collaborate</h2>
-                    <p>During the RAMP, the participants submit predictive solutions (code). The models are trained on our back-end. The scores are displayed on a leaderboard. In the open phase, all participants have access to all code, and they are encouraged to look at and to reuse each other's solutions. This accelerates the development process since good ideas spread fast.</p>
+                    <p>Solutions submitted by participants are made publically available during the 'open phase', at the end of a challenge. Participants can reuse and learn from each other's solutions, accelerating development.</p>
                 </div>
-                <div class="col-md-3 col-sm-6">
+                <div class="col-md-4 col-sm-6">
                     <span class="fa-stack fa-lg fa-5x">
                       <i class="fa fa-circle-thin fa-stack-2x"></i>
                       <i class="fa fa-cog fa-stack-1x"></i>
                     </span>
                     <h2>Prototype</h2>
-                    <p>During the RAMP we blend the best models, usually achieving a better score than the best submission. Since code is submitted, the blended prototype can be delivered to the organizer, ready to be inserted into a production pipeline, either as code or by exposing it through and API.</p>
+                    <p>RAMP workflow allows 'model blending'. A blend of the best models often achieves a better score than the best single submission.</p>
                 </div>
-                <!-- /.col-lg-4 -->
-                <div class="col-md-3 col-sm-6">
+                <div class="col-md-4 col-sm-6">
                     <span class="fa-stack fa-lg fa-5x">
                       <i class="fa fa-circle-thin fa-stack-2x"></i>
                       <i class="fa fa-graduation-cap fa-stack-1x"></i>
                     </span>
-                    <h2>Learn from fellow data scientists</h2>
-                    <p>A great tool to learn data science! Since all code is open, novice participants can learn from the pros.
-                    RAMPs are used in the MS Big Data at Telecom ParisTech, 
-                    in three UPSaclay M2 programs (Data Science, AIC, Data and Knowledge), in M1 at Polytechnique, and in various
-                    in courses beyond Saclay.</p>
-                </div>
-                <!-- /.col-lg-4 -->
-                <div class="col-md-3 col-sm-6">
-                    <span class="fa-stack fa-lg fa-5x">
-                      <i class="fa fa-circle-thin fa-stack-2x"></i>
-                      <i class="fa fa-comments-o fa-stack-1x"></i>
-                    </span>
-                    <h2>Be part of a growing community</h2>
-                    <p>RAMPs attract participants coming from different backgrounds and carreer stages who usually meet for the first time. They develop a working relationship in a relaxed environment, and sometimes keep working together after the event. </p>
-                </div>
-                <!-- /.col-lg-4 -->
-            </div>
-            <font size=+1>
-            Contact us by <a href="mailto:admin@ramp.studio"><strong>email at admin@ramp.studio</strong></a> if you are interested in <font color="#D89B28">using the platform in your classroom</font>, as an <font color="#3B8676">internal tool for prototyping</font> in your data science team, or to <font color="#4E9BCB">launch a data challenge</font>.
-            Consider joining our <a href="https://ramp-studio.slack.com/shared_invite/MTg1NDUxNDAyNDk2LTE0OTUzOTcwMDQtMThlOWY1NWU0Mg"><strong>slack team</strong></a> if you would like to be part of the growing community of rampers.</font>
-        </div>
-    </div>
-    <div class="container-fluid app-content-b feature-1">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-5 col-sm-6 text-left color-white">
-                    <h2 class="featurette-heading">Paris-Saclay Center of Data Science</h2>
-                    <p class="lead">RAMPs are organized by the Paris Saclay Center for Data Science: A multi-disciplinary initiative to define, structure, and manage the data science ecosystem at the University Paris-Saclay.</p>
-                </div>
-                <div class="col-md-7 col-sm-6">
+                    <h2>Learn</h2>
+                    <p>RAMP data challenges are a great tool to learn data science! Participants can learn from each other, especially during the 'open phase'.</p>
                 </div>
             </div>
         </div>
     </div>
+
+    <hr align="center" width="50%">
+
+    <div class="container-fluid app-content-a" id="packages">
+            <div class="container">
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <h2 class="text-center app-content-header">RAMP packages</h2>
+                        <p class="text-center app-content-description font-small">
+                        RAMP packages offer versatile tools to define, build and optimize machine learning workflows via data challenges, great for prototyping models in your data science team.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row text-center">
+
+                    <div class="col-md-6 col-sm-6">
+                        <span class="fa-stack fa-lg fa-5x">
+                          <i class="fa fa-circle-thin fa-stack-2x"></i>
+                          <i class="fa fa-gears fa-stack-1x"></i>
+                        </span>
+                        <h2>RAMP workflow</h2>
+                        <p><a href="https://github.com/paris-saclay-cds/ramp-workflow">RAMP workflow</a> allows you to formalise a machine learning workflow by defining score types (metrics), workflow elements and prediction types.</p>
+                    </div>
+                    <div class="col-md-6 col-sm-6">
+                        <span class="fa-stack fa-lg fa-5x">
+                          <i class="fa fa-circle-thin fa-stack-2x"></i>
+                          <i class="fa fa-server fa-stack-1x"></i>
+                        </span>
+                        <h2>RAMP board</h2>
+                        <p><a href="https://github.com/paris-saclay-cds/ramp-board">RAMP board</a> consists of a bundle of modules that allow you to easily setup your own RAMP server and deploy new data challenges.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <hr align="center" width="50%">
+
     <div class="container-fluid app-content-a" id="about">
         <div class="container">
             <div class="row">
                 <div class="col-md-12">
-                    <h2 class="text-center app-content-header">What is a RAMP?</h2>
-                    <p class="text-center app-content-description">
-                    A RAMP is a collaborative data challenge. See <a href="/description">here</a> for more details.
+                    <h2 class="text-center app-content-header">RAMP in action</h2>
+                    <br>
+                </div>
+            </div>
+            <div class="row text-center">
+
+                <div class="col-md-6 col-sm-6">
+                    <span>
+                        <iframe width="525" height="394"
+                            src="https://www.youtube.com/embed/vQoH68hb85Q" frameborder="0" allowfullscreen></iframe>
+                    </span>
+                </div>
+                <div class="col-md-6 col-sm-6">
+                    <p>
+                    RAMP was originally developed as a tool for data scientists to efficiently and collaboratively solve the data analytics aspect of high-impact domain science problems. Since then, RAMP has undergone many iterations and has been used in teaching and benchmarking machine learning algorithms as well.
                     </p>
+                    <br>
+                    <span class="text-center"><a class="btn btn-hist font-smaller" href="/description#history" role="button"> Project history » </a></span>
+                    <br>
+                    <span class="text-center"><a class="btn btn-hist-pad font-smaller" href="mailto:admin@ramp.studio" role="button"> Contact us » </a></span>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <br>
+
+    <hr align="center" width="50%">
+
+    <div class="container-fluid app-content-a" id="dev">
+        <div class="container">
             <div class="row">
+                <h2 class="text-center app-content-header">Developed by:</h2>
+                <br>
                 <div class="col-md-12">
                     <center>
-                         <iframe width="420" height="315" 
-                             src="https://www.youtube.com/embed/vQoH68hb85Q" frameborder="0" allowfullscreen></iframe>
+                    <a href="https://www.datascience-paris-saclay.fr/" target="_blank">
+                    <img src="{{url_for('static', filename='img/partners/upsaclay.png') }}" class="img" alt="Université Paris-Saclay" height="100">
+                    </a>
                     </center>
                 </div>
             </div>
         </div>
     </div>
-    <div class="container-fluid app-content-b contact-us" id="contact">
-        <div class="container">
-            <div class="row featurette">
-                <div class="col-md-6"><h2 class="color-white contact-us-header">Contact Us</h2>
-                <p class="color-white contact-us-description">
-                Our office is located on the Orsay campus of the Paris-Saclay University, south-west of Paris. <br>
-                The best way to contact us is to send us an <a href="mailto:admin@ramp.studio"><strong>email</strong></a><br>    
-                </p></div>
-            </div>
-        </div>
-    </div>
-    <div class="container-fluid app-content-a" id="team">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-12">
-                    <h2 class="text-center app-content-header">Team</h2>
-                    <div class="col-lg-1 col-md-0">
-                    </div>
-                    <div class="col-lg-2 col-md-4 col-sm-12">
-                        <center>
-                            <img src="https://paris-saclay-cds.github.io/autism_challenge/images/experts/kegl.jpg" class="img-circle" alt="Balazs Kegl" width="175" height="175">
-                            <br>
-                            <a href="https://www.linkedin.com/in/balazskegl" target="_blank">Balázs Kégl</a>
-                        </center>
-                    </div>
-                    <div class="col-lg-2 col-md-4 col-sm-6">
-                       <center>
-                            <img src="{{url_for('static', filename='img/Alex.jpg') }}" class="img-circle" alt="Alexandre Gramfort" width="175" height="175">
-                            <br>
-                            <a href="https://www.linkedin.com/in/alexandregramfort" target="_blank">Alex Gramfort</a>
-                        </center>
-                    </div>
-                    <div class="col-lg-2 col-md-4 col-sm-6">
-                        <center>
-                            <img src="https://daks2k3a4ib2z.cloudfront.net/596f56b05f724769d8516617/5a65c5b76d63b900011ef927_dubrovnik.png" class="img-circle" alt="Akin Kazakçi" width="175" height="175">
-                            <br>
-                            <a href="https://www.linkedin.com/in/akin-osman-kazakci-ab49516" target="_blank">Akin Kazakçi</a>
-                        </center>
-                    </div>
-                    <div class="col-lg-2 col-md-0 col-sm-0">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="container-fluid app-content-a">
-        <div class="container">
-            <div class="row">
-                <h2 class="text-center app-content-header">Alumni</h2>
-                <div class="col-lg-2 col-md-6 col-sm-6">
-                        <center>
-                            <img src="{{url_for('static', filename='img/Mehdi.png') }}" class="img-circle" alt="Mehdi Cherti" width="175" height="175">
-                            <br>
-                            <a href="https://www.linkedin.com/in/mehdi-cherti-38424b20">Mehdi Cherti</a>
+
+    <div class="container-fluid app-content-a" id="powered">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        {% if images|length > 0 %}
+                        <h2 class="text-center app-content-header">Powered by:</h2>
+                        <br>
+                            {% for image in images %}
+                            <center>
+                                <!-- <a href="https://www.ovhcloud.com/en/" target="_blank"> -->
+                                <img src="{{ url_for('static', filename='../static/img/powered_by/' + image) }}" class="img" alt='' height="80">
+                                <!-- </a> -->
                             </center>
+                            {% endfor %}
+                        {% endif %}
                     </div>
-                    <div class="col-lg-2 col-md-6 col-sm-6">
-                        <center>
-                            <img src="{{url_for('static', filename='img/ysitruk.png') }}" class="img-circle" alt="Yohann Sitruk" width="175" height="175">
-                            <br>
-                            <a href="https://www.linkedin.com/in/yohann-sitruk-47289133" target="_blank">Yohann Sitruk</a>
-                        </center>
-                    </div>
-                    <div class="col-lg-1 col-md-0 col-sm-0">
-                    </div>
-                    <div class="col-lg-2 col-md-0 col-sm-0">
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <center>
-                            <img src="https://paris-saclay-cds.github.io/autism_challenge/images/experts/lemaitre.jpg" class="img-circle" alt="Guillaume Lemaître" width="175" height="175">
-                            <br>
-                            <a href="https://glemaitre.github.io" target="_blank">Guillaume Lemaître</a>
-                        </center>
-                    </div>
-                    <div class="col-lg-2 col-md-4 col-sm-6">
-                        <center>
-                            <img src="https://paris-saclay-cds.github.io/autism_challenge/images/experts/boucaud.jpg" class="img-circle" alt="Alexandre Boucaud" width="175" height="175">
-                            <br>
-                            <a href="https://www.linkedin.com/in/aboucaud/" target="_blank">Alexandre Boucaud</a>
-                        </center>
-                    </div>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <center>
-                            <img src="https://paris-saclay-cds.github.io/autism_challenge/images/experts/vandenbossche.jpg" class="img-circle" alt="Joris Van den Bossche" width="175" height="175">
-                            <br>
-                            <a href="https://www.linkedin.com/in/jorisvandenbossche/" target="_blank">Joris Van den Bossche</a>
-                        </center>
-                    </div>
-                     <div class="col-lg-2 col-md-6 col-sm-6">
-                        <center>
-                        <img src="https://images.deepai.org/author-profile/djalel-benbouzid-thumb-8346.jpg" class="img-circle" alt="Djalel Benbouzid" width="175" height="175">
-                        <br>
-                        <a href="https://www.linkedin.com/in/djalelbbz/" target="_blank">Djalel Benbouzid</a>
-                        </center>
-                    </div>
-                     <div class="col-lg-2 col-md-6 col-sm-6">
-                        <center>
-                        <img src="https://owkin.com/About-Us/img/team/Camille.jpg" class="img-circle" alt="Camille Marini" width="175" height="175">
-                        <br>
-                        <a href="https://www.linkedin.com/in/camille-marini-b585b210/?originalSubdomain=fr" target="_blank">Camille Marini</a>
-                        </center>
-                    </div>
-                    <div class="col-lg-2 col-md-0 col-sm-0">
-                    </div>
-           </div>
-        </div>
-    </div>
-    <div class="container-fluid app-content-a" id="partners">
-        <div class="container">
-            <div class="row">
-                <h2 class="text-center app-content-header">Partners</h2>
-                <div class="col-md-12 col-sm-12">
-                    <center>
-                    <a href="https://www.universite-paris-saclay.fr/en" target="_blank">
-                    <img src="{{url_for('static', filename='img/partners/upsaclay.jpg') }}" class="img" alt="Université Paris-Saclay" height="100">
-                    </a>
-                    </center>
                 </div>
-                <div class="col-md-1 col-sm-0">
-                </div>
-                <div class="col-md-2 col-sm-4">
-                    <center>
-                    <a href="http://www.cnrs.fr/mi/spip.php?article53&lang=fr" target="_blank">
-                    <img src="{{url_for('static', filename='img/partners/cnrs.png') }}" class="img" alt="CNRS" height="100">
-                    </a>
-                    </center>
-                </div>
-                <div class="col-md-2 col-sm-4">
-                    <center>
-                    <a href="https://www.polytechnique.edu" target="_blank">
-                    <img src="{{url_for('static', filename='img/partners/polytechnique.jpg') }}" class="img" alt="Ecole Polytechnique" height="100">
-                    </a>
-                    </center>
-                </div>
-                <div class="col-md-2 col-sm-4">
-                    <center>
-                    <a href="http://www.u-psud.fr" target="_blank">
-                    <img src="{{url_for('static', filename='img/partners/upsud.jpg') }}" class="img" alt="Université Paris-Sud" height="100">
-                    </a>
-                    </center>
-                </div>
-                <div class="col-md-2 col-sm-6">
-                    <center>
-                    <a href="http://www.mines-paristech.fr" target="_blank">
-                    <img src="{{url_for('static', filename='img/partners/mines.png') }}" class="img" alt="Mines Paris-Tech" height="100">
-                    </a>
-                    </center>
-                </div>
-                <div class="col-md-2 col-sm-6">
-                    <center>
-                    <a href="http://www.telecom-paristech.fr" target="_blank">
-                    <img src="{{url_for('static', filename='img/partners/telecom.png') }}" class="img" alt="Telecom Paris-Tech" height="100">
-                    </a>
-                    </center>
-                </div>
-                <div class="col-md-1 col-sm-0">
-                </div>
-           </div>
-        </div>
-    </div>
-    <div class="container-fluid app-content-a" id="powered_by">
-        <div class="container">
-            <div class="row">
-                {% if images|length > 0 %}
-                    <h2 class="text-center app-content-header">Powered by</h2>
-                    {% for image in images %}
-                    <div class="col-md-4 col-sm-6">
-                        <img src="{{ url_for('static', filename='../static/img/powered_by/' + image) }}" class="img" alt='' height="60">
-                    </div>
-                    {% endfor %}
-                {% endif %}
             </div>
         </div>
-    </div>
+
+
     <!-- /END THE FEATURETTES -->
     <!-- FOOTER -->
     <footer class="app-footer">
