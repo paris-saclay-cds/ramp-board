@@ -20,7 +20,6 @@ from ..model import Submission
 from ..model import SubmissionFile
 from ..model import SubmissionFileTypeExtension
 from ..model import SubmissionOnCVFold
-from ..model import SubmissionScoreOnCVFold
 from ..model import SubmissionSimilarity
 from ..model import UserInteraction
 
