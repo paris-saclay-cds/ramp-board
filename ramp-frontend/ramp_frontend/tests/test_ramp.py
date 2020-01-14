@@ -431,10 +431,13 @@ def test_submit_button_enabled(client_session, makedrop_event,
         rv = client.get('http://localhost/events/iris_test_4event/sandbox',
                         data=event_info)
         assert rv.status_code == 200
+        # check for update button status on the generated .html
         if expected == b'event-close':
-            assert 'disabled' in str(rv.data)
+            assert 'disabled' in str(rv.data) # update button need 
+                                              # to be disabled
         else:
-            assert 'disabled' not in str(rv.data)
+            assert 'disabled' not in str(rv.data) # update button 
+                                                  # should not be disabled
 
 
 # TODO: to be tested
