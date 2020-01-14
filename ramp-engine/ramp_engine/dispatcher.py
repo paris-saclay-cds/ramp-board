@@ -133,9 +133,6 @@ class Dispatcher:
                 (worker, (submission_id, submission_name)))
             logger.info('Store the worker {} into the processing queue'
                         .format(worker))
-        if self._processing_worker_queue.full():
-            logger.info('The processing queue is full. Waiting for a worker to'
-                        ' finish')
 
     def collect_result(self, session):
         """Collect result from processed workers."""
@@ -145,7 +142,6 @@ class Dispatcher:
                   for _ in range(self._processing_worker_queue.qsize())]
             )
         except ValueError:
-            logger.info('No workers are currently waiting or processed.')
             if self.hunger_policy == 'sleep':
                 time.sleep(5)
             elif self.hunger_policy == 'exit':
@@ -156,7 +152,6 @@ class Dispatcher:
             if worker.status == 'running':
                 self._processing_worker_queue.put_nowait(
                     (worker, (submission_id, submission_name)))
-                logger.info('Worker {} is still running'.format(worker))
                 time.sleep(0)
             else:
                 logger.info('Collecting results from worker {}'.format(worker))
@@ -179,7 +174,7 @@ class Dispatcher:
                 self._processed_submission_queue.get_nowait()
             if 'error' in get_submission_state(session, submission_id):
                 continue
-            logger.info('Write info in data base for submission {}'
+            logger.info('Write info in database for submission {}'
                         .format(submission_name))
             path_predictions = os.path.join(
                 self._worker_config['predictions_dir'], submission_name
