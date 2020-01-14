@@ -441,7 +441,7 @@ def get_cv_fold_by_event(session, event):
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
     event_name : str or None
-        The event class to query
+        The event class to query.
 
     Returns
     -------
