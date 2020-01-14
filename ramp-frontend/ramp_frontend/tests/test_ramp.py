@@ -152,16 +152,39 @@ def test_problem(client_session):
         assert b'Keywords' in rv.data
 
 
+@pytest.mark.parametrize(
+    "event_name, correct",
+    [("iri_aaa", False),
+     ("irisaaa", False),
+     ("test_iris", False),
+     ("iris_", True),
+     ("iris_aaa_aaa_test", True),
+     ("iris", False),
+     ("iris_t", True)]
+)
+def test_event_name_correct(client_session, event_name, correct):
+    client, session = client_session
+    if not correct:
+        with pytest.raises(ValueError) as e:
+            add_event(session, 'iris', event_name, 'new_event', 'starting_kit',
+                      '/tmp/databoard_test/submissions', is_public=True)
+        assert "<event_name> must start with" in str(e.value)
+    else:
+        assert add_event(session, 'iris', event_name, 'new_event',
+                         'starting_kit', '/tmp/databoard_test/submissions',
+                         is_public=True)
+
+
 def test_user_event_status(client_session):
     client, session = client_session
 
     add_user(session, 'new_user', 'new_user', 'new_user',
              'new_user', 'new_user', access_level='user')
-    add_event(session, 'iris', 'new_event', 'new_event', 'starting_kit',
+    add_event(session, 'iris', 'iris_new_event', 'new_event', 'starting_kit',
               '/tmp/databoard_test/submissions', is_public=True)
 
     # user signed up, not approved for the event
-    ask_sign_up_team(session, 'new_event', 'new_user')
+    ask_sign_up_team(session, 'iris_new_event', 'new_user')
     with login_scope(client, 'new_user', 'new_user') as client:
         rv = client.get('/problems')
         assert rv.status_code == 200
@@ -169,7 +192,7 @@ def test_user_event_status(client_session):
         assert b'user-signed' not in rv.data
 
     # user signed up and approved for the event
-    sign_up_team(session, 'new_event', 'new_user')
+    sign_up_team(session, 'iris_new_event', 'new_user')
     with login_scope(client, 'new_user', 'new_user') as client:
         rv = client.get('/problems')
         assert rv.status_code == 200
