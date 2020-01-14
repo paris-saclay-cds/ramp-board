@@ -12,7 +12,7 @@ from ramp_database.tools.submission import get_submission_by_id
 from ramp_database.tools.submission import get_submission_state
 
 from ramp_database.tools.submission import set_bagged_scores
-from ramp_database.tools.submission import set_predictions
+# from ramp_database.tools.submission import set_predictions
 from ramp_database.tools.submission import set_time
 from ramp_database.tools.submission import set_scores
 from ramp_database.tools.submission import set_submission_error_msg
