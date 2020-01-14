@@ -262,6 +262,19 @@ def test_check_event(session_scope_function):
     event = get_event(session_scope_function, None)
     assert len(event) == 1
 
+    # try to add an event that does not start with the problem name
+    err_msg = "The event name should start with the problem name: 'iris_'"
+    with pytest.raises(ValueError, match=err_msg):
+        add_event(
+            session_scope_function, problem_name,
+            "xxxx",
+            internal_ramp_config['event_title'],
+            internal_ramp_config['sandbox_name'],
+            internal_ramp_config['ramp_submissions_dir'],
+            is_public=True,
+            force=False
+        )
+
 
 def test_check_keyword(session_scope_function):
     add_keyword(session_scope_function, 'keyword', 'data_domain')
