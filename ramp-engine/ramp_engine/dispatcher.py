@@ -179,7 +179,10 @@ class Dispatcher:
             path_predictions = os.path.join(
                 self._worker_config['predictions_dir'], submission_name
             )
-            set_predictions(session, submission_id, path_predictions)
+            # NOTE: In the past we were adding the predictions into the
+            # database. Since they require too much space, we stop to store
+            # them in the database and instead, keep it onto the disk.
+            # set_predictions(session, submission_id, path_predictions)
             set_time(session, submission_id, path_predictions)
             set_scores(session, submission_id, path_predictions)
             set_bagged_scores(session, submission_id, path_predictions)
