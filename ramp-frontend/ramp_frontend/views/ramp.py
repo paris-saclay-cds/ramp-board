@@ -329,13 +329,13 @@ def sandbox(event_name):
     start_str = start.strftime("%d of %B %Y at %H:%M")
     end_str = end.strftime("%d of %B %Y, %H:%M")
     if now < start:
-        event_status["msg"] = f"Event submissions will open on the {start_str}"
+        event_status["msg"] = "Event submissions will open on the " + start_str
         event_status["state"] = "close"
     elif now < end:
-        event_status["msg"] = f"Event submissions are open until {end_str}"
+        event_status["msg"] = "Event submissions are open until " + end_str
         event_status["state"] = "open"
     else:  # now >= end
-        event_status["msg"] = f"This event closed on the {end_str}"
+        event_status["msg"] = "This event closed on the " + end_str
         event_status["state"] = "close"
 
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
