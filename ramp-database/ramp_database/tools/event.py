@@ -247,8 +247,11 @@ def add_event(session, problem_name, event_name, event_title,
         delete_event(session, event_name)
 
     if event_name[:len(problem_name)+1] != (problem_name + '_'):
-        raise ValueError("<event_name> must start with '" +
-                         problem_name + "_'.")
+        raise ValueError(
+            "The event name should start with the problem name: '{}_'. Please "
+            "edit the entry <event_name> of the event configuration file "
+            .format(problem_name)
+        )
 
     event = Event(name=event_name, problem_name=problem_name,
                   event_title=event_title,

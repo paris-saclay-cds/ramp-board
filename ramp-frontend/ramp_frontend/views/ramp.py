@@ -319,6 +319,25 @@ def sandbox(event_name):
     )
     upload_form = UploadForm(prefix='upload')
 
+    #  check if the event is before, during or after open state
+    now = datetime.datetime.now()
+    start = event.opening_timestamp
+    end = event.closing_timestamp
+
+    event_status = {"msg": "",
+                    "state": "not_yet"}
+    start_str = start.strftime("%d of %B %Y at %H:%M")
+    end_str = end.strftime("%d of %B %Y, %H:%M")
+    if now < start:
+        event_status["msg"] = "Event submissions will open on the " + start_str
+        event_status["state"] = "close"
+    elif now < end:
+        event_status["msg"] = "Event submissions are open until " + end_str
+        event_status["state"] = "open"
+    else:  # now >= end
+        event_status["msg"] = "This event closed on the " + end_str
+        event_status["state"] = "close"
+
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     if request.method == 'GET':
         return render_template(
@@ -327,7 +346,8 @@ def sandbox(event_name):
             code_form=code_form,
             submit_form=submit_form, upload_form=upload_form,
             event=event,
-            admin=admin
+            admin=admin,
+            event_status=event_status
         )
 
     if request.method == 'POST':
@@ -510,7 +530,8 @@ def sandbox(event_name):
         code_form=code_form,
         submit_form=submit_form, upload_form=upload_form,
         event=event,
-        admin=admin
+        admin=admin,
+        event_status=event_status
     )
 
 
