@@ -153,10 +153,14 @@
                             <div class="modal-body">
                             Are you sure you want to pernamently delete <b>{{ event.name }}</b> from the database?<br />
                             This action will also remove all the submissions assigned to this event.
+
+                            'Delete from db': deletes event and related submissions from the database only
+                            'Delete all': deletes from the database and from the disk
                             </div>
                             <div class="modal-footer">
                             <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
-                            <button type="submit" name="submit_button" class="btn btn-secondary" value='Confirm!'>Confirm</button>
+                            <button type="submit" name="submit_button" class="btn btn-secondary" value='Confirm!'>Delete from db</button>
+                            <button type="submit" name="submit_button" class="btn btn-secondary" value='Confirm_ALL!'>Delete All</button>
                             </div>
                         </div>
                         </div>

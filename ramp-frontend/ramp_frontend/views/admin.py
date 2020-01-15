@@ -224,6 +224,9 @@ def update_event(event_name):
     if form.validate_on_submit():
         if request.form["submit_button"] == "Confirm!":
             delete_event(db.session, event_name)
+        if request.fomr["submit_button"] == "Confirm_ALL!":
+            # delete event from the disk
+            delete_event(db.session, event_name)
         if request.form["submit_button"] == "Update!":
             try:
                 if form.suffix.data == '':
