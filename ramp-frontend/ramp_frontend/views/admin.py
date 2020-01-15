@@ -202,7 +202,7 @@ def update_event(event_name):
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     # We assume here that event name has the syntax <problem_name>_<suffix>
     # make sure that the event has the syntax <problem_name>_<suffix>
-    
+    #import pdb; pdb.set_trace()
     if event.name[:len(event.problem.name) + 1] == event.problem.name + '_':
         # suffix correct
         suffix = event.name[len(event.problem.name) + 1:]
@@ -216,7 +216,7 @@ def update_event(event_name):
     m = event.min_duration_between_submissions // 60 % 60
     s = event.min_duration_between_submissions % 60
     form = EventUpdateProfileForm(
-        suffix=suffix, suffix_correct=suffix_correct,
+        suffix=suffix,
         title=event.title,
         is_send_trained_mails=event.is_send_trained_mails,
         is_send_submitted_mails=event.is_send_submitted_mails,
@@ -282,6 +282,7 @@ def update_event(event_name):
     return render_template(
         'update_event.html',
         form=form,
+        suffix_correct=suffix_correct,
         event=event,
         admin=admin,
         asked=asked,
