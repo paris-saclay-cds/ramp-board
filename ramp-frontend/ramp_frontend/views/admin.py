@@ -204,11 +204,9 @@ def update_event(event_name):
     # make sure that the event has the syntax <problem_name>_<suffix>
     if event.name[:len(event.problem.name) + 1] == event.problem.name + '_':
         # suffix correct
-        #suffix = event.name[len(event.problem.name) + 1:]
         suffix_correct = True
     else:
         # suffix is not correct. keep the full name
-        #suffix = event.name
         suffix_correct = False
 
     h = event.min_duration_between_submissions // 3600
