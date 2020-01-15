@@ -288,14 +288,14 @@ def test_update_event(client_session):
 
 def test_update_event_remove(client_session):
     client, session = client_session
-    add_event(session, 'iris', 'test_4event', 'test_4event', 'starting_kit',
+    add_event(session, 'iris', 'iris_test_4event', 'iris_test_4event', 'starting_kit',
               '/tmp/databoard_test/submissions', is_public=True)
-    assert get_event(session, 'test_4event')
+    assert get_event(session, 'iris_test_4event')
 
     with login_scope(client, 'test_iris_admin', 'test') as client:
 
         # GET: pre-fill the forms
-        rv = client.get('/events/test_4event/update')
+        rv = client.get('/events/iris_test_4event/update')
         assert rv.status_code == 200
 
         # POST: update the event data
@@ -303,10 +303,10 @@ def test_update_event_remove(client_session):
             'suffix': 'test',
             'submit_button': 'Confirm!'
         }
-        rv = client.post('/events/test_4event/update', data=event_info)
+        rv = client.post('/events/iris_test_4event/update', data=event_info)
         assert rv.status_code == 302
         assert rv.location == "http://localhost/problems"
-        assert not get_event(session, 'test_4event')
+        assert not get_event(session, 'iris_test_4event')
 
 
 def test_user_interactions(client_session):
