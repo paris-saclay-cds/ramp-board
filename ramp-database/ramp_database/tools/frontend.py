@@ -83,7 +83,7 @@ def is_accessible_leaderboard(session, event_name, user_name):
 
 
 def is_accessible_code(session, event_name, user_name,
-                       submission_name='sandbox'):
+                       submission_id):
     """Whether or not the user can look at the code submission.
 
     Parameters
@@ -94,9 +94,8 @@ def is_accessible_code(session, event_name, user_name,
         The event name.
     user_name : str
         The user name.
-    submission_name : str, default == 'sandbox'
-        The submission name which you should be shown. Default is the sandbox
-        submission.
+    submission_id : int
+        The submission id.
 
     Returns
     -------
@@ -114,10 +113,15 @@ def is_accessible_code(session, event_name, user_name,
     event = select_event_by_name(session, event_name)
     if event.is_public_open:
         return True
-    submission_name = (event.ramp_sandbox_name
-                       if submission_name == 'sandbox' else submission_name)
-    submission = select_submission_by_name(session, event_name, user_name,
-                                           submission_name)
+    # submission_name = (event.ramp_sandbox_name
+    #                    if submission_name == 'sandbox' else submission_name)
+    # submission = select_submission_by_name(session, event_name, user_name,
+    #                                        submission_name)
+    from ramp_database.model import Submission
+    submission = session.query(Submission).filter_by(id=submission_id).one()
+    print(submission)
+    print(user)
+    print(submission.event_team.team.admin)
     if user == submission.event_team.team.admin:
         return True
     return False

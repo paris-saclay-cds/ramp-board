@@ -10,6 +10,8 @@ from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
 
 from ramp_database.model import Model
+from ramp_database.model import Event
+from ramp_database.model import Submission
 from ramp_database.testing import create_toy_db
 from ramp_database.utils import setup_db
 from ramp_database.utils import session_scope
@@ -544,3 +546,40 @@ def test_view_submission_error(client_session):
         rv = client.get('{}/{}'.format(submission_hash, 'error.txt'))
         assert rv.status_code == 200
         assert b'This submission is a failure' in rv.data
+
+
+def test_toggle_competition(client_session):
+    client, session = client_session
+
+    # unknown submission
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get("toggle_competition/xxxxx")
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert "Missing submission" in flash_message['message']
+
+    event = (session.query(Event)
+                    .filter_by(name="iris_test")
+                    .first())
+    tmp_timestamp = event.closing_timestamp
+    event.closing_timestamp = datetime.datetime.utcnow()
+
+    session.commit()
+
+    submission = (session.query(Submission)
+                         .filter_by(name="starting_kit_test",
+                                    event_team_id=1)
+                         .first())
+    print(submission)
+    # submission not accessible by the test user
+    with login_scope(client, 'test_user_2', 'test') as client:
+        rv = client.get("toggle_competition/{}".format(submission.hash_))
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert "Missing submission" in flash_message['message']
+
+    print()
