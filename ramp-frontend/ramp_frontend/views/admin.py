@@ -202,7 +202,7 @@ def update_event(event_name):
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     # We assume here that event name has the syntax <problem_name>_<suffix>
     # make sure that the event has the syntax <problem_name>_<suffix>
-    if event.name[:len(event.problem.name) + 1] == event.problem.name + '_':
+    is_suffix_correct = event.name.startswith(event.problem + '_'):
         # suffix correct
         suffix_correct = True
     else:
