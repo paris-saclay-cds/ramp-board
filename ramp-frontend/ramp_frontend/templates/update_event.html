@@ -135,12 +135,12 @@
                    </div>
                    <button type="submit" name="submit_button" value="Update!" class="ui submit button">Update</button>
                    <!-- Button trigger modal -->
-                    <button type="button" class="ui remove button" data-toggle="modal" data-target="#exampleModal">
+                    <button type="button" class="ui remove button" data-toggle="modal" data-target="#remove_event_Modal">
                         Remove event
                     </button>
                     
                     <!-- Modal -->
-                    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal fade" id="remove_event_Modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
                         <div class="modal-dialog" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -158,9 +158,10 @@
                             'Delete all': deletes from the database and from the disk
                             </div>
                             <div class="modal-footer">
-                            <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
-                            <button type="submit" name="submit_button" class="btn btn-secondary" value='Confirm!'>Delete from db</button>
-                            <button type="submit" name="submit_button" class="btn btn-secondary" value='Confirm_ALL!'>Delete All</button>
+                                
+                            <button type="submit" class="btn btn-primary" data-dismiss="modal" id="entered">Cancel</button>
+                            <button type="button" name="submit_button" class="btn btn-secondary" value='Confirm!'>Delete from db</button>
+                            <button type="button" name="submit_button" class="btn btn-secondary" value='Confirm_ALL!'>Delete All</button>
                             </div>
                         </div>
                         </div>
@@ -175,6 +176,11 @@
 <script>
 $(function () {
    $('#formerror').modal('toggle')
+});
+$(document).keypress(function(e) {
+  if ($("#remove_event_Modal").hasClass('in') && (e.keycode == 13 || e.which == 13)) {
+    $('#entered').click();
+  }
 });
 </script>
 {% endblock %}
