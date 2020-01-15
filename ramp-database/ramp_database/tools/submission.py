@@ -68,7 +68,7 @@ def add_submission(session, event_name, team_name, submission_name,
     submission = (session.query(Submission)
                          .filter(Submission.name == submission_name)
                          .filter(Submission.event_team == event_team)
-                         .one_or_none())
+                         .first())
 
     # create a new submission
     if submission is None:
@@ -119,13 +119,10 @@ def add_submission(session, event_name, team_name, submission_name,
                          .format(submission_name, team_name, event_name))
             raise DuplicateSubmissionError(error_msg)
 
-    files_type_extension = [os.path.splitext(filename)
-                            for filename in os.listdir(submission_path)]
     # filter the files which contain an extension
-    # remove the dot of the extension.
-    files_type_extension = [(filename, extension[1:])
-                            for filename, extension in files_type_extension
-                            if extension != '']
+    files_type_extension = [filename.split('.', maxsplit=1)
+                            for filename in os.listdir(submission_path)
+                            if len(filename.split('.')) > 1]
 
     for workflow_element in event.problem.workflow.elements:
         try:
@@ -183,13 +180,25 @@ def add_submission(session, event_name, team_name, submission_name,
             session.add(submission_file)
             event.set_n_submissions()
 
+    def is_editable(filename, workflow):
+        for element in workflow.elements:
+            if element.name in filename:
+                return element.is_editable
+        return True
+
     # copy the submission file in the submission folder
+    # For files that are not editable, only create a symlink to avoid
+    # duplicating large datafiles
     if os.path.exists(submission.path):
         shutil.rmtree(submission.path)
     os.makedirs(submission.path)
     for filename in submission.f_names:
-        shutil.copy2(src=os.path.join(submission_path, filename),
-                     dst=os.path.join(submission.path, filename))
+        src = os.path.join(submission_path, filename)
+        dst = os.path.join(submission.path, filename)
+        if is_editable(filename, event.problem.workflow):
+            shutil.copy2(src=src, dst=dst)
+        else:
+            os.symlink(src, dst)
 
     # for remembering it in the sandbox view
     event_team.last_submission_name = submission_name

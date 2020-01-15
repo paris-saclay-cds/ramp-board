@@ -165,10 +165,12 @@ def test_problem(client_session):
 def test_event_name_correct(client_session, event_name, correct):
     client, session = client_session
     if not correct:
-        with pytest.raises(ValueError) as e:
-            add_event(session, 'iris', event_name, 'new_event', 'starting_kit',
-                      '/tmp/databoard_test/submissions', is_public=True)
-        assert "<event_name> must start with" in str(e.value)
+        err_msg = "The event name should start with the problem name"
+        with pytest.raises(ValueError, match=err_msg):
+            add_event(
+                session, 'iris', event_name, 'new_event', 'starting_kit',
+                '/tmp/databoard_test/submissions', is_public=True
+            )
     else:
         assert add_event(session, 'iris', event_name, 'new_event',
                          'starting_kit', '/tmp/databoard_test/submissions',
@@ -409,6 +411,7 @@ def test_ask_for_event_mail(client_session):
                         in outbox[0].body)
 
 
+<<<<<<< HEAD
 # test_leaderboard_link()
 # test_loading_of_sandbox()
 # test_choose_file()
@@ -417,6 +420,8 @@ def test_ask_for_event_mail(client_session):
 # test_submit_submission()
 
 
+=======
+>>>>>>> 0419d8b4d7a73965c6e7dffdd53f8f1b1e5a72e6
 @pytest.mark.parametrize(
     "opening_date, public_date, closing_date, expected", testtimestamps
 )
@@ -467,6 +472,11 @@ def test_correct_message_sandbox(client_session, makedrop_event,
             assert "Event submissions are open until " in str(rv.data)
         else:
             assert "This event closed on the " in str(rv.data)
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 0419d8b4d7a73965c6e7dffdd53f8f1b1e5a72e6
 # TODO: to be tested
 # def test_sandbox(client_session):
 #     client, session = client_session

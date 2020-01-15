@@ -163,5 +163,4 @@ class CondaEnvWorker(BaseWorker):
                 shutil.rmtree(pred_dir)
             shutil.copytree(output_training_dir, pred_dir)
             self.status = 'collected'
-            logger.info(repr(self))
             return (self._proc.returncode, error_msg)

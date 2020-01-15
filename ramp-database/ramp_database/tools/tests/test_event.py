@@ -132,16 +132,13 @@ class WorkflowFaultyElements:
 
     @property
     def element_names(self):
-        if self.case == 'multiple-dot':
-            return ['too.much.dot.workflow']
-        elif self.case == 'unknown-extension':
+        if self.case == 'unknown-extension':
             return ['function.cpp']
 
 
 @pytest.mark.parametrize(
     "case, err_msg",
-    [('multiple-dot', 'should contain at most one "."'),
-     ('unknown-extension', 'Unknown extension')]
+    [('unknown-extension', 'Unknown extension')]
 )
 def test_add_workflow_error(case, err_msg, session_scope_function):
     workflow = WorkflowFaultyElements(case=case)
@@ -261,6 +258,19 @@ def test_check_event(session_scope_function):
     delete_event(session_scope_function, internal_ramp_config['event_name'])
     event = get_event(session_scope_function, None)
     assert len(event) == 1
+
+    # try to add an event that does not start with the problem name
+    err_msg = "The event name should start with the problem name: 'iris_'"
+    with pytest.raises(ValueError, match=err_msg):
+        add_event(
+            session_scope_function, problem_name,
+            "xxxx",
+            internal_ramp_config['event_title'],
+            internal_ramp_config['sandbox_name'],
+            internal_ramp_config['ramp_submissions_dir'],
+            is_public=True,
+            force=False
+        )
 
 
 def test_check_keyword(session_scope_function):

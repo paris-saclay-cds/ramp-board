@@ -319,6 +319,25 @@ def sandbox(event_name):
     )
     upload_form = UploadForm(prefix='upload')
 
+    #  check if the event is before, during or after open state
+    now = datetime.datetime.now()
+    start = event.opening_timestamp
+    end = event.closing_timestamp
+
+    event_status = {"msg": "",
+                    "state": "not_yet"}
+    start_str = start.strftime("%d of %B %Y at %H:%M")
+    end_str = end.strftime("%d of %B %Y, %H:%M")
+    if now < start:
+        event_status["msg"] = "Event submissions will open on the " + start_str
+        event_status["state"] = "close"
+    elif now < end:
+        event_status["msg"] = "Event submissions are open until " + end_str
+        event_status["state"] = "open"
+    else:  # now >= end
+        event_status["msg"] = "This event closed on the " + end_str
+        event_status["state"] = "close"
+
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     if request.method == 'GET':
         return render_template(
@@ -327,7 +346,8 @@ def sandbox(event_name):
             code_form=code_form,
             submit_form=submit_form, upload_form=upload_form,
             event=event,
-            admin=admin
+            admin=admin,
+            event_status=event_status
         )
 
     if request.method == 'POST':
@@ -357,7 +377,7 @@ def sandbox(event_name):
                 return redirect_to_sandbox(event, 'Error: {}'.format(e))
             return redirect_to_sandbox(
                 event,
-                'You submission has been saved. You can safely comeback to '
+                'Your submission has been saved. You can safely comeback to '
                 'your sandbox later.',
                 is_error=False, category='File saved'
             )
@@ -510,7 +530,8 @@ def sandbox(event_name):
         code_form=code_form,
         submit_form=submit_form, upload_form=upload_form,
         event=event,
-        admin=admin
+        admin=admin,
+        event_status=event_status
     )
 
 
@@ -823,14 +844,20 @@ def view_model(submission_hash, f_name):
                         submission, filename)
             )
 
-            # TODO: deal with different extensions of the same file
-            src = os.path.join(submission.path, filename)
-            dst = os.path.join(sandbox_submission.path, filename)
-            shutil.copy2(src, dst)  # copying also metadata
-            logger.info('Copying {} to {}'.format(src, dst))
-
             workflow_element = WorkflowElement.query.filter_by(
                 name=filename.split('.')[0], workflow=event.workflow).one()
+
+            # TODO: deal with different extensions of the same file
+            # For non-editable files, only create a symlink if the file
+            # does not already exist.
+            src = os.path.join(submission.path, filename)
+            dst = os.path.join(sandbox_submission.path, filename)
+            if workflow_element.is_editable:
+                shutil.copy2(src, dst)  # copying also metadata
+            elif not os.path.exists(dst):
+                os.symlink(src, dst)
+            logger.info('Copying {} to {}'.format(src, dst))
+
             submission_file = SubmissionFile.query.filter_by(
                 submission=submission,
                 workflow_element=workflow_element).one()
