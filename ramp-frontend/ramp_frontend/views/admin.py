@@ -201,13 +201,6 @@ def update_event(event_name):
                 .format(flask_login.current_user.name, event.name))
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     # We assume here that event name has the syntax <problem_name>_<suffix>
-    # make sure that the event has the syntax <problem_name>_<suffix>
-    is_suffix_correct = event.name.startswith(event.problem + '_'):
-        # suffix correct
-        suffix_correct = True
-    else:
-        # suffix is not correct. keep the full name
-        suffix_correct = False
 
     h = event.min_duration_between_submissions // 3600
     m = event.min_duration_between_submissions // 60 % 60
@@ -272,7 +265,6 @@ def update_event(event_name):
     return render_template(
         'update_event.html',
         form=form,
-        suffix_correct=suffix_correct,
         event=event,
         admin=admin,
         asked=asked,

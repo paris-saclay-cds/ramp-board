@@ -37,12 +37,6 @@
         </div>                   
          <div class="card-body">
            <form class="ui form" method="post" action="" name="update_event">
-                {% if not suffix_correct %}
-                    <div class="form-group"></div>
-                        <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
-                        Event name does not correspond to the RAMP standards. In the future, please make sure that it is preceeded by the 'problem_name_', eg: '{{ event.problem.name }}_{{ event.name }}'
-                    </div>
-                {% endif %}
                     <!-- in case we want to allow for event_suffix change:
                     <div class="form-group">
                         
