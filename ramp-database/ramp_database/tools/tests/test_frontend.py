@@ -146,13 +146,13 @@ def test_is_accessible_code(session_toy_db):
     path_submission = os.path.join(
         os.path.dirname(ramp_config['ramp_sandbox_dir']), submission_name
     )
-    add_submission(
+    sub = add_submission(
         session_toy_db, event_name, 'test_user_3', submission_name,
         path_submission
     )
     # check that the user submitting the submission could access it
     assert is_accessible_code(
-        session_toy_db, event_name, 'test_user_3', submission_name
+        session_toy_db, event_name, 'test_user_3', sub.id
     )
     # change the admin of the team
     from ramp_database.model import Team, User
@@ -167,11 +167,11 @@ def test_is_accessible_code(session_toy_db):
     session_toy_db.commit()
     # check that the admin can access the submission
     assert is_accessible_code(
-        session_toy_db, event_name, 'test_user_2', submission_name
+        session_toy_db, event_name, 'test_user_2', sub.id
     )
     # but others cannot
     assert not is_accessible_code(
-        session_toy_db, event_name, 'test_user_3', submission_name
+        session_toy_db, event_name, 'test_user_3', sub.id
     )
     event.public_opening_timestamp = past_public_opening
     session_toy_db.commit()
