@@ -201,13 +201,12 @@ def update_event(event_name):
                 .format(flask_login.current_user.name, event.name))
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     # We assume here that event name has the syntax <problem_name>_<suffix>
-    suffix = event.name[len(event.problem.name) + 1:]
 
     h = event.min_duration_between_submissions // 3600
     m = event.min_duration_between_submissions // 60 % 60
     s = event.min_duration_between_submissions % 60
     form = EventUpdateProfileForm(
-        suffix=suffix, title=event.title,
+        title=event.title,
         is_send_trained_mails=event.is_send_trained_mails,
         is_send_submitted_mails=event.is_send_submitted_mails,
         is_public=event.is_public,
@@ -222,10 +221,6 @@ def update_event(event_name):
     )
     if form.validate_on_submit():
         try:
-            if form.suffix.data == '':
-                event.name = event.problem.name
-            else:
-                event.name = event.problem.name + '_' + form.suffix.data
             event.title = form.title.data
             event.is_send_trained_mails = form.is_send_trained_mails.data
             event.is_send_submitted_mails = form.is_send_submitted_mails.data
