@@ -288,8 +288,9 @@ def test_update_event(client_session):
 
 def test_update_event_remove(client_session):
     client, session = client_session
-    add_event(session, 'iris', 'iris_test_4event', 'iris_test_4event', 'starting_kit',
-              '/tmp/databoard_test/submissions', is_public=True)
+    add_event(session, 'iris', 'iris_test_4event', 'iris_test_4event',
+              'starting_kit', '/tmp/databoard_test/submissions',
+              is_public=True)
     assert get_event(session, 'iris_test_4event')
 
     with login_scope(client, 'test_iris_admin', 'test') as client:
@@ -308,6 +309,33 @@ def test_update_event_remove(client_session):
         assert rv.location == "http://localhost/problems"
         assert not get_event(session, 'iris_test_4event')
 
+        #TODO: check that event was not removed from the disk
+
+
+def test_update_event_remove_all(client_session):
+    client, session = client_session
+    add_event(session, 'iris', 'iris_test_4event', 'iris_test_4event',
+              'starting_kit', '/tmp/databoard_test/submissions',
+              is_public=True)
+    assert get_event(session, 'iris_test_4event')
+
+    with login_scope(client, 'test_iris_admin', 'test') as client:
+
+        # GET: pre-fill the forms
+        rv = client.get('/events/iris_test_4event/update')
+        assert rv.status_code == 200
+
+        # POST: update the event data
+        event_info = {
+            'suffix': 'test',
+            'submit_button': 'Confirm_ALL!'
+        }
+        rv = client.post('/events/iris_test_4event/update', data=event_info)
+        assert rv.status_code == 302
+        assert rv.location == "http://localhost/problems"
+        assert not get_event(session, 'iris_test_4event')
+
+        #TODO: check that event was removed from the disk
 
 def test_user_interactions(client_session):
     client, _ = client_session
