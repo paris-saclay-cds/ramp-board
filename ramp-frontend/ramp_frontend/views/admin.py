@@ -201,13 +201,23 @@ def update_event(event_name):
                 .format(flask_login.current_user.name, event.name))
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     # We assume here that event name has the syntax <problem_name>_<suffix>
-    suffix = event.name[len(event.problem.name) + 1:]
+    # make sure that the event has the syntax <problem_name>_<suffix>
+    
+    if event.name[:len(event.problem.name) + 1] == event.problem.name + '_':
+        # suffix correct
+        suffix = event.name[len(event.problem.name) + 1:]
+        suffix_correct = True
+    else:
+        # suffix is not correct. keep the full name
+        suffix = event.name
+        suffix_correct = False
 
     h = event.min_duration_between_submissions // 3600
     m = event.min_duration_between_submissions // 60 % 60
     s = event.min_duration_between_submissions % 60
     form = EventUpdateProfileForm(
-        suffix=suffix, title=event.title,
+        suffix=suffix, suffix_correct=suffix_correct,
+        title=event.title,
         is_send_trained_mails=event.is_send_trained_mails,
         is_send_submitted_mails=event.is_send_submitted_mails,
         is_public=event.is_public,
@@ -224,8 +234,10 @@ def update_event(event_name):
         try:
             if form.suffix.data == '':
                 event.name = event.problem.name
-            else:
+            elif suffix_correct:
                 event.name = event.problem.name + '_' + form.suffix.data
+            else:
+                event.name = form.suffix.data
             event.title = form.title.data
             event.is_send_trained_mails = form.is_send_trained_mails.data
             event.is_send_submitted_mails = form.is_send_submitted_mails.data
