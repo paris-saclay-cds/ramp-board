@@ -409,6 +409,64 @@ def test_ask_for_event_mail(client_session):
                         in outbox[0].body)
 
 
+# test_leaderboard_link()
+# test_loading_of_sandbox()
+# test_choose_file()
+# test_upload_file()
+# test_save_submission()
+# test_submit_submission()
+
+
+@pytest.mark.parametrize(
+    "opening_date, public_date, closing_date, expected", testtimestamps
+)
+def test_submit_button_enabled_disabled(client_session, makedrop_event,
+                                        opening_date, public_date,
+                                        closing_date, expected):
+    client, session = client_session
+
+    event = get_event(session, 'iris_test_4event')
+    event.opening_timestamp = opening_date
+    event.public_opening_timestamp = public_date
+    event.closing_timestamp = closing_date
+    session.commit()
+    sign_up_team(session, 'iris_test_4event', 'test_user')
+
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('http://localhost/events/iris_test_4event/sandbox')
+        assert rv.status_code == 200
+        # check for update button status on the generated .html
+        if expected == b'event-close':
+            assert 'disabled' in str(rv.data)  # should to be disabled
+        else:
+            assert 'disabled' not in str(rv.data)  # should not be disabled
+
+
+@pytest.mark.parametrize(
+    "opening_date, public_date, closing_date, expected", testtimestamps
+)
+def test_correct_message_sandbox(client_session, makedrop_event,
+                                 opening_date, public_date,
+                                 closing_date, expected):
+    client, session = client_session
+
+    event = get_event(session, 'iris_test_4event')
+    event.opening_timestamp = opening_date
+    event.public_opening_timestamp = public_date
+    event.closing_timestamp = closing_date
+    session.commit()
+    sign_up_team(session, 'iris_test_4event', 'test_user')
+
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('http://localhost/events/iris_test_4event/sandbox')
+        assert rv.status_code == 200
+
+        if NOW < opening_date:
+            assert "Event submissions will open on the " in str(rv.data)
+        elif NOW < closing_date:
+            assert "Event submissions are open until " in str(rv.data)
+        else:
+            assert "This event closed on the " in str(rv.data)
 # TODO: to be tested
 # def test_sandbox(client_session):
 #     client, session = client_session
