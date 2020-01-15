@@ -551,6 +551,12 @@ def test_view_submission_error(client_session):
 def test_toggle_competition(client_session):
     client, session = client_session
 
+    event = (session.query(Event)
+                    .filter_by(name="iris_test")
+                    .first())
+    event.is_competitive = True
+    session.commit()
+
     # unknown submission
     with login_scope(client, 'test_user', 'test') as client:
         rv = client.get("toggle_competition/xxxxx")
@@ -560,19 +566,15 @@ def test_toggle_competition(client_session):
             flash_message = dict(cs['_flashes'])
         assert "Missing submission" in flash_message['message']
 
-    event = (session.query(Event)
-                    .filter_by(name="iris_test")
-                    .first())
     tmp_timestamp = event.closing_timestamp
     event.closing_timestamp = datetime.datetime.utcnow()
-
     session.commit()
 
     submission = (session.query(Submission)
                          .filter_by(name="starting_kit_test",
                                     event_team_id=1)
                          .first())
-    print(submission)
+
     # submission not accessible by the test user
     with login_scope(client, 'test_user_2', 'test') as client:
         rv = client.get("toggle_competition/{}".format(submission.hash_))
@@ -582,4 +584,13 @@ def test_toggle_competition(client_session):
             flash_message = dict(cs['_flashes'])
         assert "Missing submission" in flash_message['message']
 
-    print()
+    event.closing_timestamp = tmp_timestamp
+    session.commit()
+
+    # submission accessible by the user
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get("toggle_competition/{}".format(submission.hash_))
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/{}/classifier.py'.format(
+            submission.hash_)
+        rv = client.get(rv.location)
