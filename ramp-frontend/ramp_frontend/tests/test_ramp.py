@@ -413,46 +413,44 @@ def test_ask_for_event_mail(client_session):
 
 # add fixture to add and then remove files 
 # def submission_f_name()
+# file_dir, file_name, correct 
 def test_sandbox_upload_file(client_session, makedrop_event): #, submission_f_name):
     client, session = client_session
 
     #event = get_event(session, 'iris_test_4event')
-
     #session.commit()
     sign_up_team(session, 'iris_test_4event', 'test_user')
 
-    import pdb; pdb.set_trace()
     from ramp_utils import generate_ramp_config
-    #client_session.ramp_config['ramp_sandbox_dir']
+    from ramp_database.testing import ramp_config_iris
+    from werkzeug.datastructures import ImmutableMultiDict
+
     config = ramp_config_template()
     ramp_config = generate_ramp_config(read_config(config))
-
-    #submission_name = 'random_forest_10_10'
-
-    path_submission = os.path.join(
-        os.path.dirname(ramp_config['ramp_sandbox_dir']), submission_name
-    )
-    
+    #ramp_config_problem = generate_ramp_config(ramp_config)
+    iris_config = read_config(ramp_config_iris())
+    path_submissions = os.path.join(
+            ramp_config['ramp_kit_dir'], 'submissions'
+        )
+    #['starting_kit', 'random_forest_10_10', 'error']
 
     with login_scope(client, 'test_user', 'test') as client:
         rv = client.get('http://localhost/events/iris_test_4event/sandbox')
         assert rv.status_code == 200
 
-        assert rv.status_code == 302
-        assert rv.location == 'http://localhost/problems'
-
         # choose file and check if it was uploaded correctly
-        dir_name = '/submission_temp/'
-        make_file = 'classifier.py'
-        os.mkdir(dir_name)
+        path_submission = os.path.join(path_submissions, 'starting_kit', 'classifier.py')
 
-        upload_f_name = submission_f_name
         data = ImmutableMultiDict([
-            ('submit_button', 'Remove!'),
-            ('approve_users', 'yy'),
-            ('approve_event_teams', str(event_team.id))]
+            ('submit', 'Upload'),
+            ('upload_f_name', path_submission)]
         )
-        rv = client.post('/approve_users', data=data)
+        rv = client.post('http://localhost/events/iris_test_4event/sandbox',
+            headers={'Referer': 'http://localhost/events/iris_test_4event/sandbox'},
+            data={'submit':'Upload','file': (open(path_submission, 'rb'), 'classifiers.py')},
+            follow_redirects=False)
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/events/iris_test_4event/sandbox'
 #def  test_save_submission()
 #def  test_submit_submission()
 
