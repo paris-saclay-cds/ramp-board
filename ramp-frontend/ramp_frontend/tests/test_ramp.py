@@ -411,17 +411,52 @@ def test_ask_for_event_mail(client_session):
                         in outbox[0].body)
 
 
-<<<<<<< HEAD
-# test_leaderboard_link()
-# test_loading_of_sandbox()
-# test_choose_file()
-# test_upload_file()
-# test_save_submission()
-# test_submit_submission()
+# add fixture to add and then remove files 
+# def submission_f_name()
+def test_sandbox_upload_file(client_session, makedrop_event): #, submission_f_name):
+    client, session = client_session
+
+    #event = get_event(session, 'iris_test_4event')
+
+    #session.commit()
+    sign_up_team(session, 'iris_test_4event', 'test_user')
+
+    import pdb; pdb.set_trace()
+    from ramp_utils import generate_ramp_config
+    #client_session.ramp_config['ramp_sandbox_dir']
+    config = ramp_config_template()
+    ramp_config = generate_ramp_config(read_config(config))
+
+    #submission_name = 'random_forest_10_10'
+
+    path_submission = os.path.join(
+        os.path.dirname(ramp_config['ramp_sandbox_dir']), submission_name
+    )
+    
+
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('http://localhost/events/iris_test_4event/sandbox')
+        assert rv.status_code == 200
+
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+
+        # choose file and check if it was uploaded correctly
+        dir_name = '/submission_temp/'
+        make_file = 'classifier.py'
+        os.mkdir(dir_name)
+
+        upload_f_name = submission_f_name
+        data = ImmutableMultiDict([
+            ('submit_button', 'Remove!'),
+            ('approve_users', 'yy'),
+            ('approve_event_teams', str(event_team.id))]
+        )
+        rv = client.post('/approve_users', data=data)
+#def  test_save_submission()
+#def  test_submit_submission()
 
 
-=======
->>>>>>> 0419d8b4d7a73965c6e7dffdd53f8f1b1e5a72e6
 @pytest.mark.parametrize(
     "opening_date, public_date, closing_date, expected", testtimestamps
 )
@@ -472,11 +507,8 @@ def test_correct_message_sandbox(client_session, makedrop_event,
             assert "Event submissions are open until " in str(rv.data)
         else:
             assert "This event closed on the " in str(rv.data)
-<<<<<<< HEAD
-=======
 
 
->>>>>>> 0419d8b4d7a73965c6e7dffdd53f8f1b1e5a72e6
 # TODO: to be tested
 # def test_sandbox(client_session):
 #     client, session = client_session
