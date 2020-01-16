@@ -424,6 +424,9 @@ def test_sandbox_upload_file(client_session, makedrop_event): #, submission_f_na
     from ramp_utils import generate_ramp_config
     from ramp_database.testing import ramp_config_iris
     from werkzeug.datastructures import ImmutableMultiDict
+    from ramp_database.tools.user import get_user_interactions_by_name
+    from ramp_database.model import SubmissionFile
+    correct = True
 
     config = ramp_config_template()
     ramp_config = generate_ramp_config(read_config(config))
@@ -441,16 +444,26 @@ def test_sandbox_upload_file(client_session, makedrop_event): #, submission_f_na
         # choose file and check if it was uploaded correctly
         path_submission = os.path.join(path_submissions, 'starting_kit', 'classifier.py')
 
-        data = ImmutableMultiDict([
-            ('submit', 'Upload'),
-            ('upload_f_name', path_submission)]
-        )
         rv = client.post('http://localhost/events/iris_test_4event/sandbox',
             headers={'Referer': 'http://localhost/events/iris_test_4event/sandbox'},
-            data={'submit':'Upload','file': (open(path_submission, 'rb'), 'classifiers.py')},
+            data={'submit':'Upload','file': (open(path_submission, 'rb'), 'classifier.py')},
             follow_redirects=False)
         assert rv.status_code == 302
         assert rv.location == 'http://localhost/events/iris_test_4event/sandbox'
+
+        user_interactions = get_user_interactions_by_name(session, 'test_user')
+        if correct:
+            assert user_interactions[user_interactions['interaction'] == 'upload']
+            submission_file = \
+                 (SubmissionFile.query.filter_by(submission=submission,
+                                        workflow_element=workflow_element)
+                             .one_or_none())
+
+            submission_file.get_code()
+        1/0
+        else:
+            assert not user_interactions[user_interactions['interaction'] == 'upload']
+        import pdb; pdb.set_trace()
 #def  test_save_submission()
 #def  test_submit_submission()
 
