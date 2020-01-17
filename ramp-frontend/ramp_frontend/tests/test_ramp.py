@@ -433,7 +433,7 @@ def test_sandbox_upload_file(client_session, makedrop_event,
     # upload file in sandbox.html
     iris_config = read_config(ramp_config_iris())
     path_submissions = os.path.join(
-            ramp_config['ramp_kit_dir'], submission_dir
+            ramp_config['ramp_kit_dir'], 'submissions', submission_dir
         )
 
     with login_scope(client, 'test_user', 'test') as client:
@@ -446,7 +446,7 @@ def test_sandbox_upload_file(client_session, makedrop_event,
         try:
             rv = client.post('http://localhost/events/iris_test_4event/sandbox',
                 headers={'Referer': 'http://localhost/events/iris_test_4event/sandbox'},
-                data={'submit':'Upload','file': (open(path_submissions, 'rb'), file_name)},
+                data={'submit':'Upload','file': (open(path_submission, 'rb'), file_name)},
                 follow_redirects=False)
             
             assert rv.status_code == 302
@@ -456,7 +456,7 @@ def test_sandbox_upload_file(client_session, makedrop_event,
             with open(path_submission, 'r') as file:
                 submitted_data = file.read()
         except FileNotFoundError:
-            submitted_data = ''
+            submitted_data = None
 
         # code from the db
         event = get_event(session, 'iris_test_4event')
@@ -475,7 +475,7 @@ def test_sandbox_upload_file(client_session, makedrop_event,
             # check if the user_interaction was added to the db
             assert 'upload' in user_interactions['interaction'].values
         else:
-            assert submitted_data not in submission_code
+            assert submitted_data is None
             assert 'upload' not in user_interactions['interaction'].values
 
 #def  test_save_submission()
