@@ -40,6 +40,7 @@ from ramp_database.tools.frontend import is_accessible_code
 from ramp_database.tools.frontend import is_accessible_event
 from ramp_database.tools.frontend import is_user_signed_up
 from ramp_database.tools.frontend import is_user_sign_up_requested
+from ramp_database.tools.leaderboard import update_leaderboards
 from ramp_database.tools.submission import add_submission
 from ramp_database.tools.submission import add_submission_similarity
 from ramp_database.tools.submission import get_source_submissions
@@ -923,4 +924,36 @@ def view_submission_error(submission_hash):
 
     return render_template(
         'submission_error.html', submission=submission, team=team, event=event
+    )
+
+
+@mod.route("/toggle_competition/<submission_hash>")
+@flask_login.login_required
+def toggle_competition(submission_hash):
+    """Pulling out or putting a submission back into competition.
+
+    Parameters
+    ----------
+    submission_hash : str
+        The submission hash of the current submission.
+    """
+    submission = (Submission.query.filter_by(hash_=submission_hash)
+                                  .one_or_none())
+    if submission is None:
+        error_str = 'Missing submission: {}'.format(submission_hash)
+        return redirect_to_user(error_str)
+
+    access_code = is_accessible_code(
+        db.session, submission.event_team.event.name,
+        flask_login.current_user.name, submission.id
+    )
+    if not access_code:
+        error_str = 'Missing submission: {}'.format(submission_hash)
+        return redirect_to_user(error_str)
+
+    submission.is_in_competition = not submission.is_in_competition
+    db.session.commit()
+    update_leaderboards(db.session, submission.event_team.event.name)
+    return redirect(
+        '/{}/{}'.format(submission_hash, submission.files[0].f_name)
     )
