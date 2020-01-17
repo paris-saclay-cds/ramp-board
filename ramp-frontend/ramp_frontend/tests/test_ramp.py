@@ -489,15 +489,7 @@ def test_sandbox_save_file(client_session, makedrop_event):
     client, session = client_session
     sign_up_team(session, 'iris_test_4event', 'test_user')
 
-    config = ramp_config_template()
-    ramp_config = generate_ramp_config(read_config(config))
-
-    path_submission = os.path.join(ramp_config['ramp_kit_dir'],
-                                    "submissions/starting_kit",
-                                    "classifier.py"
-                                   )
-    with open(path_submission, 'r') as file:
-        saved_data = file.read()
+    example_code = 'example content'
 
     with login_scope(client, 'test_user', 'test') as client:
         rv = client.get('http://localhost/events/iris_test_4event/sandbox')
@@ -506,16 +498,15 @@ def test_sandbox_save_file(client_session, makedrop_event):
         rv = client.post('http://localhost/events/'
                          + 'iris_test_4event/sandbox',
                          headers={'Referer':
-                         'http://localhost/events/'
-                         + 'iris_test_4event/sandbox'},
-                         data={'classifier': b'content',
-                         'code-csrf_token':'temp'},
+                                  'http://localhost/events/'
+                                  + 'iris_test_4event/sandbox'},
+                         data={'classifier': example_code,
+                               'code-csrf_token': 'temp_token'},
                          follow_redirects=False)
-
 
         assert rv.status_code == 302
         assert rv.location == 'http://localhost/events/' \
-                                  'iris_test_4event/sandbox'
+                              + 'iris_test_4event/sandbox'
 
         # code from the db
         event = get_event(session, 'iris_test_4event')
@@ -528,19 +519,8 @@ def test_sandbox_save_file(client_session, makedrop_event):
         # get user interactions from db and check if 'save' was added
         user_interactions = get_user_interactions_by_name(session, 'test_user')
 
-        import pdb; pdb.set_trace()
         assert 'save' in user_interactions['interaction'].values
-        
-
-        if 1:
-        # check if the code of the submitted file in the 'submission_code'
-            assert submitted_data is not None
-            assert submitted_data in submission_code
-            # check if the user_interaction was added to the db
-            assert 'upload' in user_interactions['interaction'].values
-        else:
-            assert submitted_data is None
-            assert 'upload' not in user_interactions['interaction'].values
+        assert example_code in submission_code
 
 
 # TODO: def test_sandbox_submit_submission() submit-submission_name:
