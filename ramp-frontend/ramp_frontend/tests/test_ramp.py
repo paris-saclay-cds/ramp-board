@@ -417,10 +417,12 @@ def test_ask_for_event_mail(client_session):
 
 @pytest.mark.parametrize(
     "submission_dir, file_name, correct", 
-    [("error", "classifier.py", True), 
-     ("random_forest_10_10", "classifier.py", True),
-     ("starting_kit", "classifier.py", True),
-     ("starting_kit", "classifier2.py", False)]
+    [("submissions/error", "classifier.py", True), 
+     ("submissions/random_forest_10_10", "classifier.py", True),
+     ("submissions/starting_kit", "classifier.py", True),
+     ("submissions/starting_kit", "classifier2.py", False),
+     ("/", "README.md", False),
+     ("/", "requirements.txt", False)]
 )
 def test_sandbox_upload_file(client_session, makedrop_event, 
                              submission_dir, file_name, correct):
@@ -433,8 +435,9 @@ def test_sandbox_upload_file(client_session, makedrop_event,
     # upload file in sandbox.html
     iris_config = read_config(ramp_config_iris())
     path_submissions = os.path.join(
-            ramp_config['ramp_kit_dir'], 'submissions', submission_dir
-        )
+                                    ramp_config['ramp_kit_dir'],
+                                    submission_dir
+                                   )
 
     with login_scope(client, 'test_user', 'test') as client:
         rv = client.get('http://localhost/events/iris_test_4event/sandbox')
@@ -471,6 +474,7 @@ def test_sandbox_upload_file(client_session, makedrop_event,
 
         if correct:
             # check if the code of the submitted file is in the 'submission_code'
+            assert submitted_data is not None
             assert submitted_data in submission_code
             # check if the user_interaction was added to the db
             assert 'upload' in user_interactions['interaction'].values
