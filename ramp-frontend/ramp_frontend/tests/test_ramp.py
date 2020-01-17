@@ -415,80 +415,69 @@ def test_ask_for_event_mail(client_session):
                         in outbox[0].body)
 
 
-# add fixture to add and then remove files 
-# def submission_f_name()
-# file_dir, file_name, correct 
-
-
 @pytest.mark.parametrize(
     "submission_dir, file_name, correct", 
-    [("error", "conftest.py", False), 
-     ("random_forest_10_10", "conftest.py", True),
-     ("starting_kit", "conftest.py", True),
-     ("starting_kit", "conftest2.py", False)]
+    [("error", "classifier.py", True), 
+     ("random_forest_10_10", "classifier.py", True),
+     ("starting_kit", "classifier.py", True),
+     ("starting_kit", "classifier2.py", False)]
 )
 def test_sandbox_upload_file(client_session, makedrop_event, 
                              submission_dir, file_name, correct):
     client, session = client_session
     sign_up_team(session, 'iris_test_4event', 'test_user')
 
-
-    correct = True
-
     config = ramp_config_template()
     ramp_config = generate_ramp_config(read_config(config))
-    #ramp_config_problem = generate_ramp_config(ramp_config)
+
+    # upload file in sandbox.html
     iris_config = read_config(ramp_config_iris())
     path_submissions = os.path.join(
-            ramp_config['ramp_kit_dir'], 'submissions'
+            ramp_config['ramp_kit_dir'], submission_dir
         )
-    #['starting_kit', 'random_forest_10_10', 'error']
 
     with login_scope(client, 'test_user', 'test') as client:
         rv = client.get('http://localhost/events/iris_test_4event/sandbox')
         assert rv.status_code == 200
 
         # choose file and check if it was uploaded correctly
-        #path_submission = os.path.join(path_submissions, 'starting_kit', 'classifier.py')
-        path_submission = os.path.join(path_submissions, 'error', 'classifier.py')
+        path_submission = os.path.join(path_submissions, file_name)
 
-        rv = client.post('http://localhost/events/iris_test_4event/sandbox',
-            headers={'Referer': 'http://localhost/events/iris_test_4event/sandbox'},
-            data={'submit':'Upload','file': (open(path_submission, 'rb'), 'classifier.py')},
-            follow_redirects=False)
-        assert rv.status_code == 302
-        assert rv.location == 'http://localhost/events/iris_test_4event/sandbox'
+        try:
+            rv = client.post('http://localhost/events/iris_test_4event/sandbox',
+                headers={'Referer': 'http://localhost/events/iris_test_4event/sandbox'},
+                data={'submit':'Upload','file': (open(path_submissions, 'rb'), file_name)},
+                follow_redirects=False)
+            
+            assert rv.status_code == 302
+            assert rv.location == 'http://localhost/events/iris_test_4event/sandbox'
 
-        # code of the saved file
-        with open(path_submission, 'r') as file:
+            # code of the saved file
+            with open(path_submission, 'r') as file:
                 submitted_data = file.read()
-        
+        except FileNotFoundError:
+            submitted_data = ''
+
         # code from the db
         event = get_event(session, 'iris_test_4event')
         sandbox_submission = get_submission_by_name(session,
                                                     'iris_test_4event',
                                                     'test_user',
                                                     event.ramp_sandbox_name)
-        import pdb; pdb.set_trace()
         submission_code = sandbox_submission.files[-1].get_code()
 
-        # user interactions from db
+        # get user interactions from db and check if 'upload' was added (or not)
         user_interactions = get_user_interactions_by_name(session, 'test_user')
 
         if correct:
             # check if the code of the submitted file is in the 'submission_code'
             assert submitted_data in submission_code
-
-            assert user_interactions[user_interactions['interaction'][-1] == 'upload']
-            submission_file = \
-                 (SubmissionFile.query.filter_by(submission=submission,
-                                        workflow_element=workflow_element)
-                             .one_or_none())
-
-            submission_file.get_code()
+            # check if the user_interaction was added to the db
+            assert 'upload' in user_interactions['interaction'].values
         else:
-            assert not user_interactions[user_interactions['interaction'] == 'upload']
-        import pdb; pdb.set_trace()
+            assert submitted_data not in submission_code
+            assert 'upload' not in user_interactions['interaction'].values
+
 #def  test_save_submission()
 #def  test_submit_submission()
 
