@@ -1,5 +1,22 @@
 flask:
     secret_key: <random string>
+    # you can specify the flask app logger using a nested dictionary as
+    # specified in:
+    # https://flask.palletsprojects.com/en/1.1.x/logging/#basic-configuration
+    # below is an example of configuration (which is the default one)
+    # logger:
+    #   version: 1
+    #   formatters:
+    #     default:
+    #       format: '[%(asctime)s] [%(levelname)s] %(message)s'
+    #     handlers:
+    #       wsgi:
+    #         class: 'logging.StreamHandler'
+    #         stream: 'ext://flask.logging.wsgi_errors_stream'
+    #         formatter: 'default'
+    #     root:
+    #       level: 'INFO'
+    #       handlers: ['wsgi']
     # we are using the python sever to send email
     # we give an example to use SMTP and gmail client
     mail_server: localhost

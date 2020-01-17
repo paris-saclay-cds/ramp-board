@@ -1,3 +1,4 @@
+from logging.config import dictConfig
 import os
 
 from flask import Flask
@@ -33,8 +34,30 @@ def create_app(config):
     app : Flask
         The Flask app created.
     """
+
+    if "LOGGER" in config:
+        logger_config = config.pop("LOGGER")
+        dictConfig(logger_config)
+    else:
+        dictConfig({
+            'version': 1,
+            'formatters': {'default': {
+                'format': '[%(asctime)s] [%(levelname)s] %(message)s',
+            }},
+            'handlers': {'wsgi': {
+                'class': 'logging.StreamHandler',
+                'stream': 'ext://flask.logging.wsgi_errors_stream',
+                'formatter': 'default'
+            }},
+            'root': {
+                'level': 'INFO',
+                'handlers': ['wsgi']
+            }
+        })
+
     app = Flask('ramp-frontend', root_path=HERE)
     app.config.update(config)
+
     with app.app_context():
         db.init_app(app)
         # register the login manager
