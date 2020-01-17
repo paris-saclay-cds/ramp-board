@@ -503,23 +503,13 @@ def test_sandbox_save_file(client_session, makedrop_event):
         rv = client.get('http://localhost/events/iris_test_4event/sandbox')
         assert rv.status_code == 200
 
-        #rv = client.post('http://localhost/events/'
-        #                 + 'iris_test_4event/sandbox',
-        #                 headers={'Referer':
-        #                 'http://localhost/events/'
-        #                 + 'iris_test_4event/sandbox'},
-        #                 data={'submit': 'Save',
-        #                 'file': (open(path_submission, 'rb'),
-        #                 "classifier.py")},
-        #                 follow_redirects=False)
-
-
         rv = client.post('http://localhost/events/'
                          + 'iris_test_4event/sandbox',
                          headers={'Referer':
                          'http://localhost/events/'
                          + 'iris_test_4event/sandbox'},
-                         data={'classifier': 'content'},
+                         data={'classifier': b'content',
+                         'code-csrf_token':'temp'},
                          follow_redirects=False)
 
 
@@ -540,6 +530,8 @@ def test_sandbox_save_file(client_session, makedrop_event):
 
         import pdb; pdb.set_trace()
         assert 'save' in user_interactions['interaction'].values
+        
+
         if 1:
         # check if the code of the submitted file in the 'submission_code'
             assert submitted_data is not None
