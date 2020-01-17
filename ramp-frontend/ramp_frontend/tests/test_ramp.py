@@ -5,17 +5,21 @@ import shutil
 import pytest
 
 from ramp_utils import generate_flask_config
+from ramp_utils import generate_ramp_config
 from ramp_utils import read_config
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
 
 from ramp_database.model import Model
+from ramp_database.model import SubmissionFile
 from ramp_database.testing import create_toy_db
+from ramp_database.testing import ramp_config_iris
 from ramp_database.utils import setup_db
 from ramp_database.utils import session_scope
 
 from ramp_database.tools.event import get_event
 from ramp_database.tools.user import add_user
+from ramp_database.tools.user import get_user_interactions_by_name
 from ramp_database.tools.submission import get_submission_by_name
 from ramp_database.tools.team import get_event_team_by_name
 from ramp_database.tools.event import add_event
@@ -413,20 +417,22 @@ def test_ask_for_event_mail(client_session):
 
 # add fixture to add and then remove files 
 # def submission_f_name()
-# file_dir, file_name, part_of_code, correct 
-def test_sandbox_upload_file(client_session, makedrop_event): #, submission_f_name):
-    client, session = client_session
+# file_dir, file_name, correct 
 
-    #event = get_event(session, 'iris_test_4event')
-    #session.commit()
+
+@pytest.mark.parametrize(
+    "submission_dir, file_name, correct", 
+    [("error", "conftest.py", False), 
+     ("random_forest_10_10", "conftest.py", True),
+     ("starting_kit", "conftest.py", True),
+     ("starting_kit", "conftest2.py", False)]
+)
+def test_sandbox_upload_file(client_session, makedrop_event, 
+                             submission_dir, file_name, correct):
+    client, session = client_session
     sign_up_team(session, 'iris_test_4event', 'test_user')
 
-    from ramp_utils import generate_ramp_config
-    from ramp_database.testing import ramp_config_iris
-    from werkzeug.datastructures import ImmutableMultiDict
-    from ramp_database.tools.user import get_user_interactions_by_name
-    from ramp_database.model import SubmissionFile
-    from ramp_database.tools.submission import get_submission_by_name
+
     correct = True
 
     config = ramp_config_template()
@@ -443,7 +449,8 @@ def test_sandbox_upload_file(client_session, makedrop_event): #, submission_f_na
         assert rv.status_code == 200
 
         # choose file and check if it was uploaded correctly
-        path_submission = os.path.join(path_submissions, 'starting_kit', 'classifier.py')
+        #path_submission = os.path.join(path_submissions, 'starting_kit', 'classifier.py')
+        path_submission = os.path.join(path_submissions, 'error', 'classifier.py')
 
         rv = client.post('http://localhost/events/iris_test_4event/sandbox',
             headers={'Referer': 'http://localhost/events/iris_test_4event/sandbox'},
@@ -452,32 +459,33 @@ def test_sandbox_upload_file(client_session, makedrop_event): #, submission_f_na
         assert rv.status_code == 302
         assert rv.location == 'http://localhost/events/iris_test_4event/sandbox'
 
-        # check if the file was saved correctly
-        #user_interactions = get_user_interactions_by_name(session, 'test_user')
+        # code of the saved file
+        with open(path_submission, 'r') as file:
+                submitted_data = file.read()
+        
+        # code from the db
+        event = get_event(session, 'iris_test_4event')
+        sandbox_submission = get_submission_by_name(session,
+                                                    'iris_test_4event',
+                                                    'test_user',
+                                                    event.ramp_sandbox_name)
+        import pdb; pdb.set_trace()
+        submission_code = sandbox_submission.files[-1].get_code()
+
+        # user interactions from db
+        user_interactions = get_user_interactions_by_name(session, 'test_user')
+
         if correct:
-            event = get_event(session, 'iris_test_4event')
-            sandbox_submission = get_submission_by_name(
-                                    session, 'iris_test_4event', 'test_user',
-            event.ramp_sandbox_name
-             )
-            submission_code = sandbox_submission.files[-1].get_code()
-
             # check if the code of the submitted file is in the 'submission_code'
-            with open('data.txt', 'r') as file:
-                data = file.read()
-            import pdb; pdb.set_trace()
-            str(open(path_submission, 'rb')) in submission_code
+            assert submitted_data in submission_code
 
-
-            import pdb; pdb.set_trace()
-            assert user_interactions[user_interactions['interaction'] == 'upload']
+            assert user_interactions[user_interactions['interaction'][-1] == 'upload']
             submission_file = \
                  (SubmissionFile.query.filter_by(submission=submission,
                                         workflow_element=workflow_element)
                              .one_or_none())
 
             submission_file.get_code()
-            1/0
         else:
             assert not user_interactions[user_interactions['interaction'] == 'upload']
         import pdb; pdb.set_trace()
