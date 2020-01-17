@@ -11,9 +11,7 @@ from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
 
 from ramp_database.model import Model
-from ramp_database.model import SubmissionFile
 from ramp_database.testing import create_toy_db
-from ramp_database.testing import ramp_config_iris
 from ramp_database.utils import setup_db
 from ramp_database.utils import session_scope
 
@@ -416,15 +414,15 @@ def test_ask_for_event_mail(client_session):
 
 
 @pytest.mark.parametrize(
-    "submission_dir, file_name, correct", 
-    [("submissions/error", "classifier.py", True), 
+    "submission_dir, file_name, correct",
+    [("submissions/error", "classifier.py", True),
      ("submissions/random_forest_10_10", "classifier.py", True),
      ("submissions/starting_kit", "classifier.py", True),
      ("submissions/starting_kit", "classifier2.py", False),
      ("/", "README.md", False),
      ("/", "requirements.txt", False)]
 )
-def test_sandbox_upload_file(client_session, makedrop_event, 
+def test_sandbox_upload_file(client_session, makedrop_event,
                              submission_dir, file_name, correct):
     client, session = client_session
     sign_up_team(session, 'iris_test_4event', 'test_user')
@@ -433,7 +431,6 @@ def test_sandbox_upload_file(client_session, makedrop_event,
     ramp_config = generate_ramp_config(read_config(config))
 
     # upload file in sandbox.html
-    iris_config = read_config(ramp_config_iris())
     path_submissions = os.path.join(
                                     ramp_config['ramp_kit_dir'],
                                     submission_dir
@@ -447,13 +444,19 @@ def test_sandbox_upload_file(client_session, makedrop_event,
         path_submission = os.path.join(path_submissions, file_name)
 
         try:
-            rv = client.post('http://localhost/events/iris_test_4event/sandbox',
-                headers={'Referer': 'http://localhost/events/iris_test_4event/sandbox'},
-                data={'submit':'Upload','file': (open(path_submission, 'rb'), file_name)},
-                follow_redirects=False)
-            
+            rv = client.post('http://localhost/events/'
+                             + 'iris_test_4event/sandbox',
+                             headers={'Referer':
+                                      'http://localhost/events/'
+                                      + 'iris_test_4event/sandbox'},
+                             data={'submit': 'Upload',
+                                   'file': (open(path_submission, 'rb'),
+                                            file_name)},
+                             follow_redirects=False)
+
             assert rv.status_code == 302
-            assert rv.location == 'http://localhost/events/iris_test_4event/sandbox'
+            assert rv.location == 'http://localhost/events/' \
+                                  'iris_test_4event/sandbox'
 
             # code of the saved file
             with open(path_submission, 'r') as file:
@@ -469,11 +472,11 @@ def test_sandbox_upload_file(client_session, makedrop_event,
                                                     event.ramp_sandbox_name)
         submission_code = sandbox_submission.files[-1].get_code()
 
-        # get user interactions from db and check if 'upload' was added (or not)
+        # get user interactions from db and check if 'upload' was added
         user_interactions = get_user_interactions_by_name(session, 'test_user')
 
         if correct:
-            # check if the code of the submitted file is in the 'submission_code'
+            # check if the code of the submitted file in the 'submission_code'
             assert submitted_data is not None
             assert submitted_data in submission_code
             # check if the user_interaction was added to the db
@@ -482,8 +485,9 @@ def test_sandbox_upload_file(client_session, makedrop_event,
             assert submitted_data is None
             assert 'upload' not in user_interactions['interaction'].values
 
-#def  test_save_submission()
-#def  test_submit_submission()
+
+# TODO: def  test_sandbox_save_submission()
+# TODO: def test_sandbox_submit_submission()
 
 
 @pytest.mark.parametrize(
