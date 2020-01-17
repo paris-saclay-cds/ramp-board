@@ -587,10 +587,28 @@ def test_toggle_competition(client_session):
     event.closing_timestamp = tmp_timestamp
     session.commit()
 
-    # submission accessible by the user
+    # submission accessible by the user and check if we can add/remove from
+    # competition
     with login_scope(client, 'test_user', 'test') as client:
+        # check that the submission is tagged to be in the competition
+        assert submission.is_in_competition
+        rv = client.get('{}/{}'.format(submission.hash_, 'classifier.py'))
+        assert b"Pull out this submission from the competition" in rv.data
+        # trigger the pull-out of the competition
         rv = client.get("toggle_competition/{}".format(submission.hash_))
         assert rv.status_code == 302
         assert rv.location == 'http://localhost/{}/classifier.py'.format(
             submission.hash_)
         rv = client.get(rv.location)
+        assert b"Enter this submission into the competition" in rv.data
+        session.commit()
+        assert not submission.is_in_competition
+        # trigger the entering in the competition
+        rv = client.get("toggle_competition/{}".format(submission.hash_))
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/{}/classifier.py'.format(
+            submission.hash_)
+        rv = client.get(rv.location)
+        assert b"Pull out this submission from the competition" in rv.data
+        session.commit()
+        assert submission.is_in_competition

@@ -947,7 +947,6 @@ def toggle_competition(submission_hash):
         db.session, submission.event_team.event.name,
         flask_login.current_user.name, submission.id
     )
-    print(access_code)
     if not access_code:
         error_str = 'Missing submission: {}'.format(submission_hash)
         return redirect_to_user(error_str)
