@@ -449,8 +449,7 @@ def test_sandbox_upload_file(client_session, makedrop_event,
                              headers={'Referer':
                                       'http://localhost/events/'
                                       + 'iris_test_4event/sandbox'},
-                             data={'submit': 'Upload',
-                                   'file': (open(path_submission, 'rb'),
+                             data={'file': (open(path_submission, 'rb'),
                                             file_name)},
                              follow_redirects=False)
 
@@ -493,7 +492,7 @@ def test_sandbox_save_file(client_session, makedrop_event):
     config = ramp_config_template()
     ramp_config = generate_ramp_config(read_config(config))
 
-    path_submissions = os.path.join(ramp_config['ramp_kit_dir'],
+    path_submission = os.path.join(ramp_config['ramp_kit_dir'],
                                     "submissions/starting_kit",
                                     "classifier.py"
                                    )
@@ -504,16 +503,28 @@ def test_sandbox_save_file(client_session, makedrop_event):
         rv = client.get('http://localhost/events/iris_test_4event/sandbox')
         assert rv.status_code == 200
 
-        rv = client.post('http://localhost/events/'
-                             + 'iris_test_4event/sandbox',
-                             #headers={'Referer':
-                             #         'http://localhost/events/'
-                             #         + 'iris_test_4event/sandbox'},
-                             data={'submit': 'save'},
-                             follow_redirects=False)
+        #rv = client.post('http://localhost/events/'
+        #                 + 'iris_test_4event/sandbox',
+        #                 headers={'Referer':
+        #                 'http://localhost/events/'
+        #                 + 'iris_test_4event/sandbox'},
+        #                 data={'submit': 'Save',
+        #                 'file': (open(path_submission, 'rb'),
+        #                 "classifier.py")},
+        #                 follow_redirects=False)
 
-            assert rv.status_code == 302
-            assert rv.location == 'http://localhost/events/' \
+
+        rv = client.post('http://localhost/events/'
+                         + 'iris_test_4event/sandbox',
+                         headers={'Referer':
+                         'http://localhost/events/'
+                         + 'iris_test_4event/sandbox'},
+                         data={'classifier': 'content'},
+                         follow_redirects=False)
+
+
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/events/' \
                                   'iris_test_4event/sandbox'
 
         # code from the db
@@ -524,9 +535,12 @@ def test_sandbox_save_file(client_session, makedrop_event):
                                                     event.ramp_sandbox_name)
         submission_code = sandbox_submission.files[-1].get_code()
 
-        # get user interactions from db and check if 'upload' was added
+        # get user interactions from db and check if 'save' was added
         user_interactions = get_user_interactions_by_name(session, 'test_user')
 
+        import pdb; pdb.set_trace()
+        assert 'save' in user_interactions['interaction'].values
+        if 1:
         # check if the code of the submitted file in the 'submission_code'
             assert submitted_data is not None
             assert submitted_data in submission_code
@@ -537,7 +551,7 @@ def test_sandbox_save_file(client_session, makedrop_event):
             assert 'upload' not in user_interactions['interaction'].values
 
 
-# TODO: def test_sandbox_submit_submission()
+# TODO: def test_sandbox_submit_submission() submit-submission_name:
 
 
 @pytest.mark.parametrize(
