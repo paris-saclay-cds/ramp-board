@@ -149,6 +149,9 @@ class Dispatcher:
             return
         for worker, (submission_id, submission_name) in zip(workers,
                                                             submissions):
+            if worker.check_timeout():
+                logger.info('Worker {} killed due to timeout.'.format(worker))
+
             if worker.status == 'running':
                 self._processing_worker_queue.put_nowait(
                     (worker, (submission_id, submission_name)))

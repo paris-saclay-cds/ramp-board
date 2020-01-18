@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 import subprocess
+from datetime import datetime
 
 from .base import BaseWorker, _get_traceback
 
@@ -28,6 +29,9 @@ class CondaEnvWorker(BaseWorker):
           submission will be stored;
         * `predictions_dir`: path to the directory where the
           predictions of the submission will be stored.
+        * 'timeout': timeout after a given number of seconds when
+          running the worker. If not provided, a default of 7200
+          is used.
     submission : str
         Name of the RAMP submission to be handle by the worker.
 
@@ -56,8 +60,7 @@ class CondaEnvWorker(BaseWorker):
                                'logs_dir', 'predictions_dir'):
             self._check_config_name(self.config, required_param)
         # find the path to the conda environment
-        env_name = (self.config['conda_env']
-                    if 'conda_env' in self.config.keys() else 'base')
+        env_name = self.config.get('conda_env', 'base')
         proc = subprocess.Popen(
             ["conda", "info", "--envs", "--json"],
             stdout=subprocess.PIPE,
@@ -105,6 +108,20 @@ class CondaEnvWorker(BaseWorker):
         """
         return False if self._proc.poll() is None else True
 
+    def check_timeout(self):
+        """Check the submission for timeout."""
+        if not hasattr(self, "_start_date"):
+            return
+        dt = (datetime.utcnow() - self._start_date).total_seconds()
+        if dt > self.timeout:
+            self._proc.kill()
+            self.status = "timeout"
+            return True
+
+    @property
+    def timeout(self):
+        return self.config.get('timeout', 7200)
+
     def launch_submission(self):
         """Launch the submission.
 
@@ -127,6 +144,7 @@ class CondaEnvWorker(BaseWorker):
             stderr=subprocess.PIPE
         )
         super().launch_submission()
+        self._start_date = datetime.utcnow()
 
     def collect_results(self):
         """Collect the results after that the submission is completed.
@@ -137,7 +155,7 @@ class CondaEnvWorker(BaseWorker):
         beforehand.
         """
         super().collect_results()
-        if self.status == 'finished' or self.status == 'running':
+        if self.status in ['finished', 'running', 'timeout']:
             # communicate() will wait for the process to be completed
             stdout, stderr = self._proc.communicate()
             # combining stderr and stdout as errors might be piped to either
@@ -145,6 +163,9 @@ class CondaEnvWorker(BaseWorker):
             # and extracting the error message from combined log
             log_output = stdout + b'\n\n' + stderr
             error_msg = _get_traceback(log_output.decode('utf-8'))
+            if self.status == 'timeout':
+                error_msg += ('\nWorker killed due to timeout after '
+                              '{}s.'.format(self.timeout))
             # write the log into the disk
             log_dir = os.path.join(self.config['logs_dir'],
                                    self.submission)
@@ -162,5 +183,9 @@ class CondaEnvWorker(BaseWorker):
             if os.path.exists(pred_dir):
                 shutil.rmtree(pred_dir)
             shutil.copytree(output_training_dir, pred_dir)
+            if self.status == 'timeout':
+                returncode = 124
+            else:
+                returncode = self._proc.returncode
             self.status = 'collected'
-            return (self._proc.returncode, error_msg)
+            return (returncode, error_msg)
