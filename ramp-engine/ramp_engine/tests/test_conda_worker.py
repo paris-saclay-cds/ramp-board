@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import shutil
+from time import sleep
 
 import pytest
 
@@ -91,7 +92,8 @@ def test_conda_worker(submission, get_conda_worker):
         assert worker.status == 'setup'
         worker.launch_submission()
         assert worker.status == 'running'
-        worker.collect_results()
+        exit_status, _ = worker.collect_results()
+        assert exit_status == 0
         assert worker.status == 'collected'
         worker.teardown()
         # check that teardown removed the predictions
@@ -168,3 +170,32 @@ def test_conda_worker_error_soon_collection(get_conda_worker):
     err_msg = r"Call the method launch_submission\(\)"
     with pytest.raises(ValueError, match=err_msg):
         worker.collect_results()
+
+
+def test_conda_worker_timeout(get_conda_worker):
+    worker = get_conda_worker('random_forest_10_10')
+    worker.config['timeout'] = 1
+    try:
+        assert worker.status == 'initialized'
+        worker.setup()
+        assert worker.status == 'setup'
+        worker.launch_submission()
+        assert not worker.check_timeout()
+        assert worker.status == 'running'
+        sleep(2)
+        assert worker.check_timeout() is True
+        assert worker.status == 'timeout'
+        exit_status, _ = worker.collect_results()
+        assert exit_status > 0
+        assert worker.status == 'collected'
+        worker.teardown()
+        # check that teardown removed the predictions
+        output_training_dir = os.path.join(worker.config['kit_dir'],
+                                           'submissions',
+                                           worker.submission,
+                                           'training_output')
+        assert not os.path.exists(output_training_dir), \
+            "teardown() failed to remove the predictions"
+    finally:
+        # remove all directories that we potentially created
+        _remove_directory(worker)

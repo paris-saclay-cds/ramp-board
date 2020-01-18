@@ -35,7 +35,6 @@ class BaseWorker(metaclass=ABCMeta):
         """Setup the worker with some given setting required before launching
         a submission."""
         self.status = 'setup'
-        logger.info(repr(self))
 
     @staticmethod
     def _check_config_name(config, param):
@@ -48,7 +47,6 @@ class BaseWorker(metaclass=ABCMeta):
     def teardown(self):
         """Clean up (i.e., removing path, etc.) before killing the worker."""
         self.status = 'killed'
-        logger.info(repr(self))
 
     @abstractmethod
     def _is_submission_finished(self):
@@ -67,11 +65,14 @@ class BaseWorker(metaclass=ABCMeta):
     def status(self, status):
         self._status = status
 
+    def check_timeout(self):
+        """Check a submission for timeout."""
+        pass
+
     @abstractmethod
     def launch_submission(self):
         """Launch a submission to be trained."""
         self.status = 'running'
-        logger.info(repr(self))
 
     @abstractmethod
     def collect_results(self):

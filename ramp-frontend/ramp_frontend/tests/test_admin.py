@@ -26,7 +26,7 @@ from ramp_frontend.testing import login_scope
 
 
 @pytest.fixture(scope='module')
-def client_session():
+def client_session(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:
@@ -93,7 +93,7 @@ def test_check_admin_required(client_session, page, request_function):
             assert rv.status_code == 200
 
 
-def test_approve_users(client_session):
+def test_approve_users_remove(client_session):
     client, session = client_session
 
     # create 2 new users
@@ -114,6 +114,7 @@ def test_approve_users(client_session):
 
         # POST check that we are able to approve a user and event
         data = ImmutableMultiDict([
+            ('submit_button', 'Remove!'),
             ('approve_users', 'yy'),
             ('approve_event_teams', str(event_team.id))]
         )
@@ -125,33 +126,77 @@ def test_approve_users(client_session):
         # session
         session.commit()
         user = get_user_by_name(session, 'yy')
-        assert user.access_level == 'user'
+        assert user is None
         event_team = get_event_team_by_name(session, 'iris_test', 'xx')
+        assert event_team is None
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+            print(flash_message)
+        assert re.match(r"Removed users:\nyy\nRemoved event_team:\n"
+                        r"Event\(iris_test\)/Team\(.*xx.*\)\n",
+                        flash_message['Removed users'])
+
+
+def test_approve_users_approve(client_session):
+    client, session = client_session
+
+    # create 2 new users
+    add_user(session, 'cc', 'cc', 'cc', 'cc', 'cc', access_level='user')
+    add_user(session, 'dd', 'dd', 'dd', 'dd', 'dd', access_level='asked')
+    # ask for sign up for an event for the first user
+    _, _, event_team = ask_sign_up_team(session, 'iris_test', 'cc')
+
+    with login_scope(client, 'test_iris_admin', 'test') as client:
+
+        # GET check that we get all new user to be approved
+        rv = client.get('/approve_users')
+        assert rv.status_code == 200
+        # line for user approval
+        assert b'dd: dd dd - dd' in rv.data
+        # line for the event approval
+        assert b'iris_test - cc'
+
+        # POST check that we are able to approve a user and event
+        data = ImmutableMultiDict([
+            ('submit_button', 'Approve!'),
+            ('approve_users', 'dd'),
+            ('approve_event_teams', str(event_team.id))]
+        )
+        rv = client.post('/approve_users', data=data)
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+
+        # ensure that the previous change have been committed within our
+        # session
+        session.commit()
+        user = get_user_by_name(session, 'dd')
+        assert user.access_level == 'user'
+        event_team = get_event_team_by_name(session, 'iris_test', 'cc')
         assert event_team.approved
         with client.session_transaction() as cs:
             flash_message = dict(cs['_flashes'])
-        assert re.match(r"Approved users:\nyy\nApproved event_team:\n"
-                        r"Event\(iris_test\)/Team\(.*xx.*\)\n",
+        assert re.match(r"Approved users:\ndd\nApproved event_team:\n"
+                        r"Event\(iris_test\)/Team\(.*cc.*\)\n",
                         flash_message['Approved users'])
 
 
 def test_approve_single_user(client_session):
     client, session = client_session
 
-    add_user(session, 'aa', 'aa', 'aa', 'aa', 'aa', access_level='asked')
+    add_user(session, 'gg', 'gg', 'gg', 'gg', 'gg', access_level='asked')
     with login_scope(client, 'test_iris_admin', 'test') as client:
-        rv = client.get('/sign_up/aa')
+        rv = client.get('/sign_up/gg')
         assert rv.status_code == 302
         assert rv.location == 'http://localhost/problems'
         with client.session_transaction() as cs:
             flash_message = dict(cs['_flashes'])
-        assert re.match("User(.*aa.*) is signed up",
+        assert re.match("User(.*gg.*) is signed up",
                         flash_message['Successful sign-up'])
 
         # ensure that the previous change have been committed within our
         # session
         session.commit()
-        user = get_user_by_name(session, 'aa')
+        user = get_user_by_name(session, 'gg')
         assert user.access_level == 'user'
 
         rv = client.get("/sign_up/unknown_user")

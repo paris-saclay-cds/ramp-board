@@ -25,7 +25,7 @@ from ramp_database.tools.database import get_submission_file_type_extension
 
 
 @pytest.fixture
-def session_scope_function():
+def session_scope_function(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:

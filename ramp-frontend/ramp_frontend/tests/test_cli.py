@@ -4,6 +4,8 @@ import signal
 import subprocess
 import time
 
+import pytest
+
 from ramp_utils import read_config
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
@@ -13,20 +15,20 @@ from ramp_database.model import Model
 from ramp_database.testing import create_toy_db
 
 
-def setup_module(module):
+@pytest.fixture(scope="module")
+def make_toy_db(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
-    module.deployment_dir = create_toy_db(database_config, ramp_config)
+    try:
+        deployment_dir = create_toy_db(database_config, ramp_config)
+        yield
+    finally:
+        shutil.rmtree(deployment_dir, ignore_errors=True)
+        db, _ = setup_db(database_config['sqlalchemy'])
+        Model.metadata.drop_all(db)
 
 
-def teardown_module(module):
-    database_config = read_config(database_config_template())
-    shutil.rmtree(module.deployment_dir, ignore_errors=True)
-    db, _ = setup_db(database_config['sqlalchemy'])
-    Model.metadata.drop_all(db)
-
-
-def test_test_launch():
+def test_test_launch(make_toy_db):
     # pass environment to subprocess
     cmd = ['python', '-m']
     cmd += ["ramp_frontend.cli", "test-launch",

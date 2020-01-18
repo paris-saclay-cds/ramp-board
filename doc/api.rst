@@ -106,6 +106,8 @@ User-related database tools
 
    tools.team.ask_sign_up_team
    tools.user.approve_user
+   tools.user.make_user_admin
+   tools.user.set_user_access_level
    tools.team.sign_up_team
 
 **Functions to add new entries in the database**
@@ -135,6 +137,15 @@ User-related database tools
    :template: function.rst
 
    tools.user.set_user_by_instance
+
+**Functions to delete an entry in the database**
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   tools.user.delete_user
+   tools.team.delete_event_team
 
 Event-related database tools
 ............................
@@ -256,6 +267,7 @@ Frontend-related database tools
    tools.frontend.is_accessible_leaderboard
    tools.frontend.is_accessible_code
    tools.frontend.is_user_signed_up
+   tools.frontend.is_user_sign_up_requested
 
 :mod:`ramp_database.exceptions`: type of errors raise by the database
 ---------------------------------------------------------------------

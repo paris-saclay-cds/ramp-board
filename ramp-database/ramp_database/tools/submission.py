@@ -7,6 +7,8 @@ import shutil
 import numpy as np
 import pandas as pd
 
+from sqlalchemy.orm import defer
+
 from ..exceptions import DuplicateSubmissionError
 from ..exceptions import MissingExtensionError
 from ..exceptions import MissingSubmissionFileError
@@ -66,7 +68,7 @@ def add_submission(session, event_name, team_name, submission_name,
     submission = (session.query(Submission)
                          .filter(Submission.name == submission_name)
                          .filter(Submission.event_team == event_team)
-                         .one_or_none())
+                         .first())
 
     # create a new submission
     if submission is None:
@@ -108,6 +110,7 @@ def add_submission(session, event_name, team_name, submission_name,
             all_cv_folds = (session.query(SubmissionOnCVFold)
                                    .filter_by(submission_id=submission.id)
                                    .all())
+            all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
             for submission_on_cv_fold in all_cv_folds:
                 submission_on_cv_fold.reset()
         else:
@@ -116,13 +119,10 @@ def add_submission(session, event_name, team_name, submission_name,
                          .format(submission_name, team_name, event_name))
             raise DuplicateSubmissionError(error_msg)
 
-    files_type_extension = [os.path.splitext(filename)
-                            for filename in os.listdir(submission_path)]
     # filter the files which contain an extension
-    # remove the dot of the extension.
-    files_type_extension = [(filename, extension[1:])
-                            for filename, extension in files_type_extension
-                            if extension != '']
+    files_type_extension = [filename.split('.', maxsplit=1)
+                            for filename in os.listdir(submission_path)
+                            if len(filename.split('.')) > 1]
 
     for workflow_element in event.problem.workflow.elements:
         try:
@@ -180,13 +180,25 @@ def add_submission(session, event_name, team_name, submission_name,
             session.add(submission_file)
             event.set_n_submissions()
 
+    def is_editable(filename, workflow):
+        for element in workflow.elements:
+            if element.name in filename:
+                return element.is_editable
+        return True
+
     # copy the submission file in the submission folder
+    # For files that are not editable, only create a symlink to avoid
+    # duplicating large datafiles
     if os.path.exists(submission.path):
         shutil.rmtree(submission.path)
     os.makedirs(submission.path)
     for filename in submission.f_names:
-        shutil.copy2(src=os.path.join(submission_path, filename),
-                     dst=os.path.join(submission.path, filename))
+        src = os.path.join(submission_path, filename)
+        dst = os.path.join(submission.path, filename)
+        if is_editable(filename, event.problem.workflow):
+            shutil.copy2(src=src, dst=dst)
+        else:
+            os.symlink(src, dst)
 
     # for remembering it in the sandbox view
     event_team.last_submission_name = submission_name
@@ -389,6 +401,7 @@ def get_predictions(session, submission_id):
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
                            .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
         results['fold'].append(fold_id)
         results['y_pred_train'].append(cv_fold.full_train_y_pred)
@@ -414,7 +427,10 @@ def get_time(session, submission_id):
     results = defaultdict(list)
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
                            .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
         results['fold'].append(fold_id)
         for step in ('train', 'valid', 'test'):
@@ -441,7 +457,10 @@ def get_scores(session, submission_id):
     index = []
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
                            .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
         for step in ('train', 'valid', 'test'):
             index.append((fold_id, step))
@@ -469,7 +488,7 @@ def get_bagged_scores(session, submission_id):
     """
     submission = select_submission_by_id(session, submission_id)
     bagged_scores = {}
-    for step in ('valid', 'test'):
+    for step in ('test', 'valid'):
         score_dict = {}
         for score in submission.scores:
             score_all_bags = getattr(score, '{}_score_cv_bags'.format(step))
@@ -628,7 +647,10 @@ def set_predictions(session, submission_id, path_predictions):
     """
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
                            .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
@@ -653,7 +675,10 @@ def set_time(session, submission_id, path_predictions):
     """
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
                            .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
@@ -681,7 +706,10 @@ def set_scores(session, submission_id, path_predictions):
     """
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
                            .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
         path_results = os.path.join(path_predictions,
                                     'fold_{}'.format(fold_id))
@@ -791,7 +819,10 @@ def score_submission(session, submission_id):
     # manually if needed for submission in various error states.
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
+                           .options(defer("full_train_y_pred"),
+                                    defer("test_y_pred"))
                            .all())
+    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for submission_on_cv_fold in all_cv_folds:
         submission_on_cv_fold.session = session
         submission_on_cv_fold.compute_train_scores()
@@ -805,7 +836,7 @@ def score_submission(session, submission_id):
     # Means and stds were constructed on demand by fetching fold times.
     # It was slow because submission_on_folds contain also possibly large
     # predictions. If postgres solves this issue (which can be tested on
-    # the mean and std scores on the private leaderbord), the
+    # the mean and std scores on the private leaderbaord), the
     # corresponding columns (which are now redundant) can be deleted in
     # Submission and this computation can also be deleted.
     submission.train_time_cv_mean = np.mean(

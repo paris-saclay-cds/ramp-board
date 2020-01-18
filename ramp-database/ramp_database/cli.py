@@ -48,12 +48,51 @@ def add_user(config, login, password, lastname, firstname, email,
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
+@click.option('--login', help="User's login to be removed")
+def delete_user(config, login):
+    """Delete a user which asked to sign-up to RAMP studio."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        user_module.delete_user(session, login)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
 @click.option('--login', help="User's login to be approved")
 def approve_user(config, login):
     """Approve a user which asked to sign-up to RAMP studio."""
     config = read_config(config)
     with session_scope(config['sqlalchemy']) as session:
         user_module.approve_user(session, login)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
+@click.option('--login', help="User's login to be made admin")
+def make_user_admin(config, login):
+    """Make a user a RAMP admin."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        user_module.make_user_admin(session, login)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
+@click.option('--login', help="User's login to be made admin")
+@click.option('--access-level', help="The access level to grant the user."
+              "One of {'asked', 'user', 'admin'}", default='user',
+              show_default=True)
+def set_user_access_level(config, login, access_level):
+    """Change the access level of a RAMP user."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        user_module.set_user_access_level(session, login, access_level)
 
 
 @main.command()
@@ -67,6 +106,19 @@ def sign_up_team(config, event, team):
     config = read_config(config)
     with session_scope(config['sqlalchemy']) as session:
         team_module.sign_up_team(session, event, team)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
+@click.option('--event', help='Name of the event')
+@click.option('--team', help='Name of the team')
+def delete_event_team(config, event, team):
+    """Delete a link between a user (or team) and a RAMP event."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        team_module.delete_event_team(session, event, team)
 
 
 @main.command()

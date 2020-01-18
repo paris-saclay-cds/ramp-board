@@ -16,7 +16,7 @@ from ramp_frontend import create_app
 
 
 @pytest.fixture(scope='module')
-def client_session():
+def client_session(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:
@@ -43,7 +43,7 @@ def test_index(client_session):
     client, _ = client_session
     rv = client.get('/')
     assert rv.status_code == 200
-    assert (b'RAMP: collaborative data science challenges at Paris Saclay' in
+    assert (b'RAMP: collaborative data science challenges' in
             rv.data)
 
 
@@ -51,7 +51,7 @@ def test_ramp(client_session):
     client, _ = client_session
     rv = client.get('/description')
     assert rv.status_code == 200
-    assert (b'The RAMP is a <b>versatile management and software tool</b>' in
+    assert (b'The RAMP software packages were developed by the' in
             rv.data)
 
 
@@ -68,7 +68,8 @@ def test_teaching(client_session):
     client, _ = client_session
     rv = client.get('/teaching')
     assert rv.status_code == 200
-    assert b'RAMP for teaching support' in rv.data
+    assert b'RAMP challenges begin with an interesting supervised prediction' \
+        in rv.data
 
 
 def test_data_science_themes(client_session):

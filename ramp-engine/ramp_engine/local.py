@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 import subprocess
+from datetime import datetime
 
 from .base import BaseWorker, _get_traceback
 
@@ -28,6 +29,9 @@ class CondaEnvWorker(BaseWorker):
           submission will be stored;
         * `predictions_dir`: path to the directory where the
           predictions of the submission will be stored.
+        * 'timeout': timeout after a given number of seconds when
+          running the worker. If not provided, a default of 7200
+          is used.
     submission : str
         Name of the RAMP submission to be handle by the worker.
 
@@ -56,8 +60,7 @@ class CondaEnvWorker(BaseWorker):
                                'logs_dir', 'predictions_dir'):
             self._check_config_name(self.config, required_param)
         # find the path to the conda environment
-        env_name = (self.config['conda_env']
-                    if 'conda_env' in self.config.keys() else 'base')
+        env_name = self.config.get('conda_env', 'base')
         proc = subprocess.Popen(
             ["conda", "info", "--envs", "--json"],
             stdout=subprocess.PIPE,
@@ -105,6 +108,20 @@ class CondaEnvWorker(BaseWorker):
         """
         return False if self._proc.poll() is None else True
 
+    def check_timeout(self):
+        """Check the submission for timeout."""
+        if not hasattr(self, "_start_date"):
+            return
+        dt = (datetime.utcnow() - self._start_date).total_seconds()
+        if dt > self.timeout:
+            self._proc.kill()
+            self.status = "timeout"
+            return True
+
+    @property
+    def timeout(self):
+        return self.config.get('timeout', 7200)
+
     def launch_submission(self):
         """Launch the submission.
 
@@ -116,8 +133,7 @@ class CondaEnvWorker(BaseWorker):
         if self.status == 'running':
             raise ValueError('Wait that the submission is processed before to '
                              'launch a new one.')
-        self._log_dir = os.path.join(self.config['logs_dir'],
-                                     self.submission)
+        self._log_dir = os.path.join(self.config['logs_dir'], self.submission)
         if not os.path.exists(self._log_dir):
             os.makedirs(self._log_dir)
         self._log_file = open(os.path.join(self._log_dir, 'log'), 'wb+')
@@ -129,9 +145,10 @@ class CondaEnvWorker(BaseWorker):
              '--ramp_submission_dir', self.config['submissions_dir'],
              '--save-y-preds'],
             stdout=self._log_file,
-            stderr=subprocess.STDOUT
+            stderr=None,
         )
         super().launch_submission()
+        self._start_date = datetime.utcnow()
 
     def collect_results(self):
         """Collect the results after that the submission is completed.
@@ -142,22 +159,30 @@ class CondaEnvWorker(BaseWorker):
         beforehand.
         """
         super().collect_results()
-        if self.status == 'finished' or self.status == 'running':
+        if self.status in ['finished', 'running', 'timeout']:
+            # communicate() will wait for the process to be completed
+            self._proc.communicate()
             self._log_file.close()
             with open(os.path.join(self._log_dir, 'log'), 'rb') as f:
                 log_output = f.read()
-            print(log_output.decode('utf-8'))
             error_msg = _get_traceback(log_output.decode('utf-8'))
+            if self.status == 'timeout':
+                error_msg += ('\nWorker killed due to timeout after {}s.'
+                              .format(self.timeout))
             # copy the predictions into the disk
             # no need to create the directory, it will be handle by copytree
-            pred_dir = os.path.join(self.config['predictions_dir'],
-                                    self.submission)
+            pred_dir = os.path.join(
+                self.config['predictions_dir'], self.submission
+            )
             output_training_dir = os.path.join(
                 self.config['submissions_dir'], self.submission,
                 'training_output')
             if os.path.exists(pred_dir):
                 shutil.rmtree(pred_dir)
             shutil.copytree(output_training_dir, pred_dir)
+            if self.status == 'timeout':
+                returncode = 124
+            else:
+                returncode = self._proc.returncode
             self.status = 'collected'
-            logger.info(repr(self))
-            return (self._proc.returncode, error_msg)
+            return (returncode, error_msg)

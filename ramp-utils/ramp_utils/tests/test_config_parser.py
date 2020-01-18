@@ -6,7 +6,7 @@ from ramp_utils import read_config
 
 
 @pytest.fixture
-def simple_config():
+def simple_config(database_connection):
     data = {'sqlalchemy': {'username': 'mrramp', 'password': 'mrramp'},
             'ramp': {'event_name': 'iris_test'}}
     with tempfile.NamedTemporaryFile(mode='w', suffix='.yml') as config_file:
