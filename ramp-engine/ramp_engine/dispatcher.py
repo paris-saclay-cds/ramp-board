@@ -197,11 +197,25 @@ class Dispatcher:
             update_all_user_leaderboards(session,
                                          self._ramp_config['event_name'])
 
+    @staticmethod
+    def _reset_submission_after_failure(session, even_name):
+        submissions = get_submissions(session, even_name, state=None)
+        for submission_id, _, _ in submissions:
+            submission_state = get_submission_state(session, submission_id)
+            if submission_state in ('training', 'send_to_training'):
+                set_submission_state(session, submission_id, 'new')
+
     def launch(self):
         """Launch the dispatcher."""
         logger.info('Starting the RAMP dispatcher')
         with session_scope(self._database_config) as session:
             logger.info('Open a session to the database')
+            logger.info(
+                'Reset unfinished trained submission from previous session'
+            )
+            self._reset_submission_after_failure(
+                session, self._ramp_config['event_name']
+            )
             try:
                 while not self._poison_pill:
                     self.fetch_from_db(session)
@@ -211,12 +225,7 @@ class Dispatcher:
             finally:
                 # reset the submissions to 'new' in case of error or unfinished
                 # training
-                submissions = get_submissions(session,
-                                              self._ramp_config['event_name'],
-                                              state=None)
-                for submission_id, _, _ in submissions:
-                    submission_state = get_submission_state(session,
-                                                            submission_id)
-                    if submission_state in ('training', 'send_to_training'):
-                        set_submission_state(session, submission_id, 'new')
+                self._reset_submission_after_failure(
+                    session, self._ramp_config['event_name']
+                )
             logger.info('Dispatcher killed by the poison pill')
