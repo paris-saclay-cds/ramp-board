@@ -76,6 +76,25 @@ This config file should look like::
 You will need to change the information regarding the database and the mail
 information.
 
+Be aware that Flask app can accept a Python logger. This logger configuration
+will be passed to :func:`logging.config.dictConfig`. You can provide this
+configuration directly in the `flask` section of the above config file as::
+
+    flask:
+      logger:
+        version: 1
+        formatters:
+          default:
+            format: '[%(asctime)s] [%(levelname)s] %(message)s'
+          handlers:
+            wsgi:
+              class: 'logging.StreamHandler'
+              stream: 'ext://flask.logging.wsgi_errors_stream'
+              formatter: 'default'
+          root:
+            level: 'INFO'
+            handlers: ['wsgi']
+
 Create an admin user
 --------------------
 
