@@ -106,6 +106,7 @@ class CondaEnvWorker(BaseWorker):
         The submission was launched in a subprocess. Calling ``poll()`` will
         indicate the status of this subprocess.
         """
+        self.check_timeout()
         return False if self._proc.poll() is None else True
 
     def check_timeout(self):
@@ -133,6 +134,10 @@ class CondaEnvWorker(BaseWorker):
         if self.status == 'running':
             raise ValueError('Wait that the submission is processed before to '
                              'launch a new one.')
+        self._log_dir = os.path.join(self.config['logs_dir'], self.submission)
+        if not os.path.exists(self._log_dir):
+            os.makedirs(self._log_dir)
+        self._log_file = open(os.path.join(self._log_dir, 'log'), 'wb+')
         self._proc = subprocess.Popen(
             [cmd_ramp,
              '--submission', self.submission,
@@ -140,8 +145,8 @@ class CondaEnvWorker(BaseWorker):
              '--ramp_data_dir', self.config['data_dir'],
              '--ramp_submission_dir', self.config['submissions_dir'],
              '--save-y-preds'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stdout=self._log_file,
+            stderr=self._log_file,
         )
         super().launch_submission()
         self._start_date = datetime.utcnow()
@@ -157,26 +162,19 @@ class CondaEnvWorker(BaseWorker):
         super().collect_results()
         if self.status in ['finished', 'running', 'timeout']:
             # communicate() will wait for the process to be completed
-            stdout, stderr = self._proc.communicate()
-            # combining stderr and stdout as errors might be piped to either
-            # (see https://github.com/paris-saclay-cds/ramp-board/issues/179)
-            # and extracting the error message from combined log
-            log_output = stdout + b'\n\n' + stderr
+            self._proc.communicate()
+            self._log_file.close()
+            with open(os.path.join(self._log_dir, 'log'), 'rb') as f:
+                log_output = f.read()
             error_msg = _get_traceback(log_output.decode('utf-8'))
             if self.status == 'timeout':
-                error_msg += ('\nWorker killed due to timeout after '
-                              '{}s.'.format(self.timeout))
-            # write the log into the disk
-            log_dir = os.path.join(self.config['logs_dir'],
-                                   self.submission)
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
-            with open(os.path.join(log_dir, 'log'), 'wb+') as f:
-                f.write(log_output)
+                error_msg += ('\nWorker killed due to timeout after {}s.'
+                              .format(self.timeout))
             # copy the predictions into the disk
             # no need to create the directory, it will be handle by copytree
-            pred_dir = os.path.join(self.config['predictions_dir'],
-                                    self.submission)
+            pred_dir = os.path.join(
+                self.config['predictions_dir'], self.submission
+            )
             output_training_dir = os.path.join(
                 self.config['submissions_dir'], self.submission,
                 'training_output')
