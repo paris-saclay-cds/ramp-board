@@ -149,9 +149,6 @@ class Dispatcher:
             return
         for worker, (submission_id, submission_name) in zip(workers,
                                                             submissions):
-            if worker.check_timeout():
-                logger.info('Worker {} killed due to timeout.'.format(worker))
-
             if worker.status == 'running':
                 self._processing_worker_queue.put_nowait(
                     (worker, (submission_id, submission_name)))
@@ -159,9 +156,21 @@ class Dispatcher:
             else:
                 logger.info('Collecting results from worker {}'.format(worker))
                 returncode, stderr = worker.collect_results()
+                if returncode == 1:
+                    logger.info(
+                        'Worker {} killed due to an error during training'
+                        .format(worker)
+                    )
+                    submission_status = 'training_error'
+                elif returncode == 124:
+                    logger.info('Worker {} killed due to timeout.'
+                                .format(worker))
+                    submission_status = 'training_error'
+                else:
+                    submission_status = 'tested'
+
                 set_submission_state(
-                    session, submission_id,
-                    'tested' if not returncode else 'training_error'
+                    session, submission_id, submission_status
                 )
                 set_submission_error_msg(session, submission_id, stderr)
                 self._processed_submission_queue.put_nowait(

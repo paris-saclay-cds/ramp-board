@@ -106,6 +106,7 @@ class CondaEnvWorker(BaseWorker):
         The submission was launched in a subprocess. Calling ``poll()`` will
         indicate the status of this subprocess.
         """
+        self.check_timeout()
         return False if self._proc.poll() is None else True
 
     def check_timeout(self):
@@ -145,7 +146,7 @@ class CondaEnvWorker(BaseWorker):
              '--ramp_submission_dir', self.config['submissions_dir'],
              '--save-y-preds'],
             stdout=self._log_file,
-            stderr=None,
+            stderr=self._log_file,
         )
         super().launch_submission()
         self._start_date = datetime.utcnow()
