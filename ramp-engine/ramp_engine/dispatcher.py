@@ -133,9 +133,6 @@ class Dispatcher:
                 (worker, (submission_id, submission_name)))
             logger.info('Store the worker {} into the processing queue'
                         .format(worker))
-        if self._processing_worker_queue.full():
-            logger.info('The processing queue is full. Waiting for a worker to'
-                        ' finish')
 
     def collect_result(self, session):
         """Collect result from processed workers."""
@@ -145,7 +142,6 @@ class Dispatcher:
                   for _ in range(self._processing_worker_queue.qsize())]
             )
         except ValueError:
-            logger.info('No workers are currently waiting or processed.')
             if self.hunger_policy == 'sleep':
                 time.sleep(5)
             elif self.hunger_policy == 'exit':
@@ -159,7 +155,6 @@ class Dispatcher:
             if worker.status == 'running':
                 self._processing_worker_queue.put_nowait(
                     (worker, (submission_id, submission_name)))
-                logger.info('Worker {} is still running'.format(worker))
                 time.sleep(0)
             else:
                 logger.info('Collecting results from worker {}'.format(worker))
@@ -175,18 +170,15 @@ class Dispatcher:
 
     def update_database_results(self, session):
         """Update the database with the results of ramp_test_submission."""
+        make_update_leaderboard = False
         while not self._processed_submission_queue.empty():
+            make_update_leaderboard = True
             submission_id, submission_name = \
                 self._processed_submission_queue.get_nowait()
             if 'error' in get_submission_state(session, submission_id):
-                update_leaderboards(session, self._ramp_config['event_name'])
-                update_all_user_leaderboards(session,
-                                             self._ramp_config['event_name'])
-                logger.info('Skip update for {} due to failure during the '
-                            'processing'.format(submission_name))
                 continue
-            logger.info('Update the results obtained on each fold for '
-                        '{}'.format(submission_name))
+            logger.info('Write info in database for submission {}'
+                        .format(submission_name))
             path_predictions = os.path.join(
                 self._worker_config['predictions_dir'], submission_name
             )
@@ -195,6 +187,9 @@ class Dispatcher:
             set_scores(session, submission_id, path_predictions)
             set_bagged_scores(session, submission_id, path_predictions)
             set_submission_state(session, submission_id, 'scored')
+
+        if make_update_leaderboard:
+            logger.info('Update all leaderboards')
             update_leaderboards(session, self._ramp_config['event_name'])
             update_all_user_leaderboards(session,
                                          self._ramp_config['event_name'])

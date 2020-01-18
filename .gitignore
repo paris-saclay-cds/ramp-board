@@ -12,6 +12,7 @@ joblib
 *.lock
 db/*
 submissions/*
+.vscode
 # tools/*
 tools/env.sh
 tools/celery_info

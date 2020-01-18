@@ -13,13 +13,13 @@ from ramp_utils import read_config
 @pytest.fixture(scope='session')
 def database_connection():
     """
-    Create a Postgres database for the tests,
-    and drop it when the tests are done.
+    Create a Postgres database for the tests, and drop it when the tests are
+    done.
     """
     config = safe_load(open("db_engine.yml"))
     dbowner = config.get('db_owner')
-    dbcluster = config.get('db_cluster_name')
-    engine = create_engine(f'postgresql://{dbowner}:@localhost/{dbcluster}',
+
+    engine = create_engine(f'postgresql://{dbowner}:@localhost/postgres',
                            isolation_level='AUTOCOMMIT')
 
     connection = engine.connect()
@@ -28,7 +28,7 @@ def database_connection():
     username = database_config['sqlalchemy']['username']
     database_name = database_config['sqlalchemy']['database']
     try:
-        connection.execute(f"""CREATE USER {username} 
+        connection.execute(f"""CREATE USER {username}
                               WITH PASSWORD '{username}';
                               ALTER USER {username} WITH SUPERUSER""")
     except exc.ProgrammingError:
@@ -44,8 +44,8 @@ def database_connection():
     # close the connection and remove the database in the end
     yield
     connection.execute("""SELECT pg_terminate_backend(pid)
-                        FROM pg_stat_activity
-                        WHERE datname = 'databoard_test';""")
+                       FROM pg_stat_activity
+                       WHERE datname = 'databoard_test';""")
     connection.execute(f'DROP DATABASE {database_name}')
     connection.execute(f'DROP USER {username}')
     print(f"deleted database 'databoard_test' and removed user '{username}'")

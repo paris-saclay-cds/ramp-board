@@ -1,3 +1,5 @@
+from ramp_database.model import Submission
+
 from ._query import select_event_admin_by_instance
 from ._query import select_event_by_name
 from ._query import select_event_team_by_name
@@ -63,6 +65,11 @@ def is_accessible_leaderboard(session, event_name, user_name):
         The event name.
     user_name : str
         The user name.
+
+    Returns
+    -------
+    is_accessible : bool
+        True if leaderboard can be displayed.
     """
     event = select_event_by_name(session, event_name)
     user = select_user_by_name(session, user_name)
@@ -78,7 +85,7 @@ def is_accessible_leaderboard(session, event_name, user_name):
 
 
 def is_accessible_code(session, event_name, user_name,
-                       submission_name='sandbox'):
+                       submission_id=None):
     """Whether or not the user can look at the code submission.
 
     Parameters
@@ -89,7 +96,7 @@ def is_accessible_code(session, event_name, user_name,
         The event name.
     user_name : str
         The user name.
-    submission_name : str, default == 'sandbox'
+    submission_id : int, default=None
         The submission name which you should be shown. Default is the sandbox
         submission.
 
@@ -107,13 +114,17 @@ def is_accessible_code(session, event_name, user_name,
         return False
 
     event = select_event_by_name(session, event_name)
-    submission_name = (event.ramp_sandbox_name
-                       if submission_name == 'sandbox' else submission_name)
-    submission = select_submission_by_name(session, event_name, user_name,
-                                           submission_name)
-    if user == submission.event_team.team.admin:
+    if event.is_public_open:
         return True
-    if event.is_public:
+    if submission_id is None:
+        submission = select_submission_by_name(
+            session, event_name, user_name, event.ramp_sandbox_name
+        )
+    else:
+        submission = (session.query(Submission)
+                             .filter_by(id=submission_id)
+                             .one_or_none())
+    if submission is not None and user == submission.event_team.team.admin:
         return True
     return False
 
@@ -138,5 +149,29 @@ def is_user_signed_up(session, event_name, user_name):
     event_team = select_event_team_by_name(session, event_name, user_name)
     if (event_team is not None and
             (event_team.is_active and event_team.approved)):
+        return True
+    return False
+
+
+def is_user_sign_up_requested(session, event_name, user_name):
+    """Whether or not user signed up to an event.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The RAMP event name.
+    team_name : str
+        The name of the team.
+
+    Returns
+    -------
+    asked : bool
+        Whether or not the user had asked to join event or not.
+    """
+    event_team = select_event_team_by_name(session, event_name, user_name)
+    if (event_team is not None and
+            (event_team.is_active and not event_team.approved)):
         return True
     return False

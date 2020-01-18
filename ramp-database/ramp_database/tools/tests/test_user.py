@@ -21,9 +21,12 @@ from ramp_database.testing import create_test_db
 from ramp_database.tools.user import add_user
 from ramp_database.tools.user import add_user_interaction
 from ramp_database.tools.user import approve_user
+from ramp_database.tools.user import delete_user
 from ramp_database.tools.user import get_team_by_name
 from ramp_database.tools.user import get_user_by_name
 from ramp_database.tools.user import get_user_interactions_by_name
+from ramp_database.tools.user import make_user_admin
+from ramp_database.tools.user import set_user_access_level
 from ramp_database.tools.user import set_user_by_instance
 
 
@@ -81,6 +84,56 @@ def test_add_user(session_scope_function):
              access_level=access_level)
     user = get_user_by_name(session_scope_function, name)
     assert user.email == 'mixcase@mail.com'
+
+
+def test_delete_user(session_scope_function):
+    username = 'test_user'
+    add_user(
+        session_scope_function, name=username, password='password',
+        lastname='lastname', firstname='firstname',
+        email='test_user@email.com', access_level='asked')
+    user = (session_scope_function.query(User)
+                                  .filter(User.name == username)
+                                  .all())
+    assert len(user) == 1
+    delete_user(session_scope_function, username)
+    user = (session_scope_function.query(User)
+                                  .filter(User.name == username)
+                                  .one_or_none())
+    assert user is None
+    team = (session_scope_function.query(Team)
+                                  .filter(Team.name == username)
+                                  .all())
+    assert len(team) == 0
+
+
+def test_make_user_admin(session_scope_function):
+    username = 'test_user'
+    user = add_user(
+        session_scope_function, name=username, password='password',
+        lastname='lastname', firstname='firstname',
+        email='test_user@email.com', access_level='asked')
+    assert user.access_level == 'asked'
+    assert user.is_authenticated is False
+    make_user_admin(session_scope_function, username)
+    user = get_user_by_name(session_scope_function, username)
+    assert user.access_level == 'admin'
+    assert user.is_authenticated is True
+
+
+@pytest.mark.parametrize("access_level", ["asked", "user", "admin"])
+def test_set_user_access_level(session_scope_function, access_level):
+    username = 'test_user'
+    user = add_user(
+        session_scope_function, name=username, password='password',
+        lastname='lastname', firstname='firstname',
+        email='test_user@email.com', access_level='asked')
+    assert user.access_level == 'asked'
+    assert user.is_authenticated is False
+    set_user_access_level(session_scope_function, username, access_level)
+    user = get_user_by_name(session_scope_function, username)
+    assert user.access_level == access_level
+    assert user.is_authenticated is True
 
 
 @pytest.mark.parametrize(

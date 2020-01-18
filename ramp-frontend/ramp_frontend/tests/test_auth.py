@@ -22,6 +22,7 @@ from ramp_frontend.testing import login_scope
 from ramp_frontend.testing import login
 from ramp_frontend.testing import logout
 from ramp_frontend import mail
+from ramp_frontend.testing import _fail_no_smtp_server
 
 
 @pytest.fixture(scope='module')
@@ -183,19 +184,33 @@ def test_sign_up(client_session):
     rv = client.post('/sign_up', data=user_profile, follow_redirects=True)
     assert rv.status_code == 200
 
+    def _assert_flash(url, data, status_code=200,
+                      message='username is already in use'):
+        rv = client.post('/sign_up', data=data)
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert (flash_message['message'] == message)
+        assert rv.status_code == status_code
+
     # check that we catch a flash error if we try to sign-up with an identical
-    # username or email
-    user_profile = {'user_name': 'test_user', 'password': 'xx',
+    # username
+    user_profile = {'user_name': 'xx', 'password': 'xx',
                     'firstname': 'xx', 'lastname': 'xx',
                     'email': 'test_user@gmail.com'}
-    rv = client.post('/sign_up', data=user_profile)
-    with client.session_transaction() as cs:
-        flash_message = dict(cs['_flashes'])
-    assert (flash_message['message'] ==
-            'username is already in use and email is already in use')
-    assert rv.status_code == 200
+    _assert_flash('/sign_up', data=user_profile,
+                  message='username is already in use')
+
+    user_profile.update(user_name='new', email="yy")
+    _assert_flash('/sign_up', data=user_profile,
+                  message='email is already in use')
+
+    user_profile.update(user_name='yy', email="yy")
+    _assert_flash('/sign_up', data=user_profile,
+                  message=("username is already in use "
+                           "and email is already in use"))
 
 
+@_fail_no_smtp_server
 def test_sign_up_with_approval(client_session):
     # check the sign-up and email confirmation framework
     client, session = client_session
@@ -213,7 +228,7 @@ def test_sign_up_with_approval(client_session):
             assert 'We sent a confirmation email.'in flash_message['message']
             # check that the email has been sent
             assert len(outbox) == 1
-            assert ('click on the following link to confirm your email'
+            assert ('Click on the following link to confirm your email'
                     in outbox[0].body)
             # get the link to reset the password
             reg_exp = re.search(
@@ -319,6 +334,7 @@ def test_update_profile(client_session):
         assert rv.status_code == 200
 
 
+@_fail_no_smtp_server
 def test_reset_password(client_session):
     client, session = client_session
 
@@ -384,6 +400,7 @@ def test_reset_password(client_session):
     assert check_password(new_password, user.hashed_password)
 
 
+@_fail_no_smtp_server
 def test_reset_token_error(client_session):
     client, session = client_session
 

@@ -4,7 +4,6 @@ import logging
 import pandas as pd
 
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.exc import NoResultFound
 
 from ..exceptions import NameClashError
 from ..model import Team
@@ -87,23 +86,15 @@ def add_user(session, name, password, lastname, firstname, email,
     except IntegrityError as e:
         session.rollback()
         message = ''
-        try:
-            select_user_by_name(session, name)
+        if select_user_by_name(session, name) is not None:
             message += 'username is already in use'
-        except NoResultFound:
+        elif select_team_by_name(session, name) is not None:
             # We only check for team names if username is not in db
-            try:
-                select_team_by_name(session, name)
-                message += 'username is already in use as a team name'
-            except NoResultFound:
-                pass
-        try:
-            select_user_by_email(session, lower_case_email)
+            message += 'username is already in use as a team name'
+        if select_user_by_email(session, lower_case_email) is not None:
             if message:
                 message += ' and '
             message += 'email is already in use'
-        except NoResultFound:
-            pass
         if message:
             raise NameClashError(message)
         else:
@@ -111,6 +102,57 @@ def add_user(session, name, password, lastname, firstname, email,
     logger.info('Creating {}'.format(user))
     logger.info('Creating {}'.format(team))
     return user
+
+
+def delete_user(session, name):
+    """Delete a user from the database.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    name : str
+        The name of the user.
+    """
+    user = session.query(User).filter(User.name == name).one()
+    session.delete(user)
+    session.commit()
+
+
+def make_user_admin(session, name):
+    """Make a user a RAMP admin.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    name : str
+        The name of the user.
+    """
+    user = select_user_by_name(session, name)
+    user.access_level = 'admin'
+    user.is_authenticated = True
+    session.commit()
+
+
+def set_user_access_level(session, name, access_level="user"):
+    """Change the access level of a user.
+
+    In addition, it will also set the user as authenticated.
+
+    Paramaters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    name : str
+        The name of the user.
+    access_level : {"asked", "user", admin}, default="user"
+        User's access level
+    """
+    user = select_user_by_name(session, name)
+    user.access_level = access_level
+    user.is_authenticated = True
+    session.commit()
 
 
 def add_user_interaction(session, interaction=None, user=None, problem=None,
@@ -340,13 +382,9 @@ def set_user_by_instance(session, user, lastname, firstname, email,
         session.commit()
     except IntegrityError as e:
         session.rollback()
-        message = ''
-        try:
-            select_user_by_email(session, user.email)
-            message += 'email is already in use'
-        except NoResultFound:
-            pass
-        if len(message) > 0:
+        if select_user_by_email(session, user.email) is not None:
+            message = 'email is already in use'
+
             logger.error(message)
             raise NameClashError(message)
         else:

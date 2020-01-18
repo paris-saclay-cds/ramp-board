@@ -1,7 +1,11 @@
 """The :mod:`ramp_frontend.testing` module contains all functions used to
 easily test the frontend."""
 
+import errno
+import socket
 from contextlib import contextmanager
+
+import pytest
 
 
 def login(client, username, password):
@@ -69,3 +73,22 @@ def login_scope(client, username, password):
     login(client, username, password)
     yield client
     logout(client)
+
+
+def _bind_smtp_port():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    port_in_use = False
+
+    try:
+        s.bind(("127.0.0.1", 8025))
+    except socket.error as e:
+        if e.errno == errno.EADDRINUSE:
+            port_in_use = True
+
+    s.close()
+    return port_in_use
+
+
+_fail_no_smtp_server = pytest.mark.skipif(
+    not _bind_smtp_port(), reason="No smtp server in use."
+)

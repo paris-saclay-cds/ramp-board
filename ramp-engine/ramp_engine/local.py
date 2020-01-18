@@ -188,5 +188,4 @@ class CondaEnvWorker(BaseWorker):
             else:
                 returncode = self._proc.returncode
             self.status = 'collected'
-            logger.info(repr(self))
             return (returncode, error_msg)
