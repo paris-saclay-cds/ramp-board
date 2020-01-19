@@ -61,24 +61,22 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
         df_time = df_time.rename(columns={0: 'time'})
         df_time = df_time.sum(axis=0, level="step").T
 
-        # df = pd.concat([df_scores], axis=1)
-        df = df_scores
-        df_mean = df.groupby('step').mean()
-        df_std = df.groupby('step').std()
+        df_scores_mean = df_scores.groupby('step').mean()
+        df_scores_std = df_scores.groupby('step').std()
 
         # select only the validation and testing steps and rename them to
         # public and private
         map_renaming = {'valid': 'public', 'test': 'private'}
-        df_mean = (df_mean.loc[list(map_renaming.keys())]
-                          .rename(index=map_renaming)
-                          .stack().to_frame().T)
-        df_std = (df_std.loc[list(map_renaming.keys())]
-                        .rename(index=map_renaming)
-                        .stack().to_frame().T)
+        df_scores_mean = (df_scores_mean.loc[list(map_renaming.keys())]
+                                        .rename(index=map_renaming)
+                                        .stack().to_frame().T)
+        df_scores_std = (df_scores_std.loc[list(map_renaming.keys())]
+                                      .rename(index=map_renaming)
+                                      .stack().to_frame().T)
         df_scores_bag = (df_scores_bag.rename(index=map_renaming)
                                       .stack().to_frame().T)
 
-        df = pd.concat([df_scores_bag, df_mean, df_std], axis=1,
+        df = pd.concat([df_scores_bag, df_scores_mean, df_scores_std], axis=1,
                        keys=['bag', 'mean', 'std'])
 
         df.columns = df.columns.set_names(['stat', 'set', 'score'])
@@ -94,7 +92,6 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
                      'test': 'test time [s]'}
         )
         df = pd.concat([df, df_time], axis=1)
-        # TODO: only show valid in public and test on private
 
         df['team'] = sub.team.name
         df['submission'] = sub.name_with_link if with_links else sub.name
