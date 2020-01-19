@@ -59,8 +59,10 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
         df_time = df_time.stack().to_frame()
         df_time.index = df_time.index.set_names(['fold', 'step'])
         df_time = df_time.rename(columns={0: 'time'})
+        df_time = df_time.sum(axis=0, level="step").T
 
-        df = pd.concat([df_scores, df_time], axis=1)
+        # df = pd.concat([df_scores], axis=1)
+        df = df_scores
         df_mean = df.groupby('step').mean()
         df_std = df.groupby('step').std()
 
@@ -84,6 +86,16 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
         # change the multi-index into a stacked index
         df.columns = df.columns.map(lambda x: " ".join(x))
 
+        # add the aggregated time information
+        df_time.index = df.index
+        df_time = df_time.rename(
+            columns={'train': 'train time [s]',
+                     'valid': 'validation time [s]',
+                     'test': 'test time [s]'}
+        )
+        df = pd.concat([df, df_time], axis=1)
+        # TODO: only show valid in public and test on private
+
         df['team'] = sub.team.name
         df['submission'] = sub.name_with_link if with_links else sub.name
         df['contributivity'] = int(round(100 * sub.contributivity))
@@ -98,11 +110,6 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
 
     # keep only second precision for the time stamp
     df['submitted at (UTC)'] = df['submitted at (UTC)'].astype('datetime64[s]')
-    # rename the column of the time
-    df = df.rename(columns={'mean public time': 'train time [s]',
-                            'std public time': 'train time std [s]',
-                            'mean private time': 'test time [s]',
-                            'std private time': 'test time std [s]'})
 
     # reordered the column
     stats_order = (['bag', 'mean', 'std'] if leaderboard_type == 'private'
@@ -117,12 +124,16 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
         for stat, dataset, score in product(stats_order, dataset_order,
                                             score_order)
     ]
+    # Only display train and validation time for the public leaderboard
+    time_list = (['train time [s]', 'validation time [s]', 'test time [s]']
+                 if leaderboard_type == 'private'
+                 else ['train time [s]', 'validation time [s]'])
     col_ordered = (
         ['team', 'submission'] +
         score_list +
-        ['contributivity', 'historical contributivity',
-         'train time [s]', 'test time [s]',
-         'max RAM [MB]', 'submitted at (UTC)']
+        ['contributivity', 'historical contributivity'] +
+        time_list +
+        ['max RAM [MB]', 'submitted at (UTC)']
     )
     df = df[col_ordered]
 
@@ -166,11 +177,15 @@ def _compute_competition_leaderboard(session, submissions, leaderboard_type,
     private_leaderboard = _compute_leaderboard(session, submissions, 'private',
                                                event_name, with_links=False)
 
+    time_list = (['train time [s]', 'validation time [s]', 'test time [s]']
+                 if leaderboard_type == 'private'
+                 else ['train time [s]', 'validation time [s]'])
+
     col_selected_private = (['team', 'submission'] +
                             ['bag private ' + score_name,
                              'bag public ' + score_name] +
-                            ['train time [s]', 'test time [s]',
-                             'submitted at (UTC)'])
+                            time_list +
+                            ['submitted at (UTC)'])
     leaderboard_df = private_leaderboard[col_selected_private]
     leaderboard_df = leaderboard_df.rename(
         columns={'bag private ' + score_name: 'private ' + score_name,
@@ -223,11 +238,12 @@ def _compute_competition_leaderboard(session, submissions, leaderboard_type,
     leaderboard_df['move'] = [
         '{:+d}'.format(m) if m != 0 else '-' for m in leaderboard_df['move']]
 
-    col_selected = [
-        leaderboard_type + ' rank', 'team', 'submission',
-        leaderboard_type + ' ' + score_name, 'train time [s]', 'test time [s]',
-        'submitted at (UTC)'
-    ]
+    col_selected = (
+        [leaderboard_type + ' rank', 'team', 'submission',
+         leaderboard_type + ' ' + score_name] +
+        time_list +
+        ['submitted at (UTC)']
+    )
     if leaderboard_type == 'private':
         col_selected.insert(1, 'move')
 
