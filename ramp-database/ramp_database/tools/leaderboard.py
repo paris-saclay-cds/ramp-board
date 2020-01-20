@@ -93,6 +93,8 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
         )
         df = pd.concat([df, df_time], axis=1)
 
+        if leaderboard_type == 'private':
+            df['submission ID'] = sub.basename.replace('submission_', '')
         df['team'] = sub.team.name
         df['submission'] = sub.name_with_link if with_links else sub.name
         df['contributivity'] = int(round(100 * sub.contributivity))
@@ -133,6 +135,8 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
         time_list +
         ['max RAM [MB]', 'submitted at (UTC)']
     )
+    if leaderboard_type == "private":
+        col_ordered = ["submission ID"] + col_ordered
     df = df[col_ordered]
 
     df = df.sort_values(
