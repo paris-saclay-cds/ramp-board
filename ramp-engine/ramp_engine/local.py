@@ -130,7 +130,7 @@ class CondaEnvWorker(BaseWorker):
         environment given in the configuration. The submission is launched in
         a subprocess to free to not lock the Python main process.
         """
-        cmd_ramp = os.path.join(self._python_bin_path, 'ramp_test_submission')
+        cmd_ramp = os.path.join(self._python_bin_path, 'ramp-test')
         if self.status == 'running':
             raise ValueError('Wait that the submission is processed before to '
                              'launch a new one.')
@@ -141,10 +141,11 @@ class CondaEnvWorker(BaseWorker):
         self._proc = subprocess.Popen(
             [cmd_ramp,
              '--submission', self.submission,
-             '--ramp_kit_dir', self.config['kit_dir'],
-             '--ramp_data_dir', self.config['data_dir'],
-             '--ramp_submission_dir', self.config['submissions_dir'],
-             '--save-y-preds'],
+             '--ramp-kit-dir', self.config['kit_dir'],
+             '--ramp-data-dir', self.config['data_dir'],
+             '--ramp-submission-dir', self.config['submissions_dir'],
+             '--save-output',
+             '--ignore-warning'],
             stdout=self._log_file,
             stderr=self._log_file,
         )
