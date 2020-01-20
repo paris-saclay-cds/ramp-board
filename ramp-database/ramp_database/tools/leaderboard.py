@@ -314,7 +314,7 @@ def get_leaderboard(session, leaderboard_type, event_name, user_name=None,
         if leaderboard_type == 'new':
             columns = [
                 'team', 'submission', 'submitted at (UTC)', 'state',
-                 'wating list'
+                'wating list'
             ]
         else:
             columns = ['team', 'submission', 'submitted at (UTC)', 'error']
