@@ -21,7 +21,6 @@ from ramp_database.tools.submission import set_submission_state
 
 from ramp_database.tools.leaderboard import update_all_user_leaderboards
 from ramp_database.tools.leaderboard import update_leaderboards
-from ramp_database.tools.leaderboard import update_user_leaderboards
 
 from ramp_database.utils import session_scope
 
