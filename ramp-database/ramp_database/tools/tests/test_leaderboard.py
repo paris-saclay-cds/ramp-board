@@ -196,7 +196,8 @@ def test_get_leaderboard(session_toy_db):
         assert private_term in leaderboard_private
 
     # check the column name in each leaderboard
-    assert """<th>team</th>
+    assert """<th>submission ID</th>
+      <th>team</th>
       <th>submission</th>
       <th>bag public acc</th>
       <th>mean public acc</th>
