@@ -122,8 +122,6 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
                                             score_order,
                                             stats_order)
     ]
-    for x in score_list:
-        print("<th>{}</th>".format(x))
     # Only display train and validation time for the public leaderboard
     time_list = (['train time [s]', 'validation time [s]', 'test time [s]']
                  if leaderboard_type == 'private'
