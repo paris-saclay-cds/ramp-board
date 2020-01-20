@@ -59,7 +59,7 @@ def test_unit_test_dispatcher(session_toy):
     event_config = read_config(ramp_config_template())
     dispatcher = Dispatcher(config=config,
                             event_config=event_config,
-                            worker=CondaEnvWorker, n_workers=100,
+                            worker=CondaEnvWorker, n_workers=3,
                             hunger_policy='exit')
 
     # check that all the queue are empty
@@ -75,10 +75,29 @@ def test_unit_test_dispatcher(session_toy):
     assert dispatcher._awaiting_worker_queue.qsize() == len(submissions) - 2
     submissions = get_submissions(session_toy, 'iris_test', 'sent_to_training')
     assert len(submissions) == 6
+    for idx, (sub_id, _, _) in enumerate(submissions):
+        submission = get_submission_by_id(session_toy, sub_id)
+        assert submission.queue_position == idx + 1
 
     # start the training
     dispatcher.launch_workers(session_toy)
     # be sure that the training is finished
+    while not dispatcher._processing_worker_queue.empty():
+        dispatcher.collect_result(session_toy)
+
+    assert len(get_submissions(session_toy, 'iris_test', 'new')) == 2
+    assert (len(get_submissions(session_toy, 'iris_test', 'training_error')) ==
+            1)
+    assert len(get_submissions(session_toy, 'iris_test', 'tested')) == 2
+    assert (len(get_submissions(session_toy, 'iris_test', 'sent_to_training'))
+            == 3)
+    # only 3 submissions have been trained
+    for idx, (sub_id, _, _) in zip([-1, -1, -1, 1, 2, 3], submissions):
+        submission = get_submission_by_id(session_toy, sub_id)
+        assert submission.queue_position == idx
+
+    # train the remaining submissions
+    dispatcher.launch_workers(session_toy)
     while not dispatcher._processing_worker_queue.empty():
         dispatcher.collect_result(session_toy)
 
