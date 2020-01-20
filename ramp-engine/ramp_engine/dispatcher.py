@@ -1,3 +1,4 @@
+from collections import deque
 import logging
 import multiprocessing
 import numbers
@@ -76,13 +77,15 @@ class Dispatcher:
         self._poison_pill = False
         # create the different dispatcher queues
         self._awaiting_worker_queue = Queue()
+        self._awaiting_submission_id = deque()
         self._processing_worker_queue = LifoQueue(maxsize=self.n_workers)
         self._processed_submission_queue = Queue()
         # split the different configuration required
         if (isinstance(config, str) and
                 isinstance(event_config, str)):
-            self._database_config = read_config(config,
-                                                filter_section='sqlalchemy')
+            self._database_config = read_config(
+                config, filter_section='sqlalchemy'
+            )
             self._ramp_config = generate_ramp_config(event_config, config)
         else:
             self._database_config = config['sqlalchemy']
@@ -98,6 +101,13 @@ class Dispatcher:
                     )
             for lib in ('OMP', 'MKL', 'OPENBLAS'):
                 os.environ[lib + '_NUM_THREADS'] = str(self.n_threads)
+
+    def _set_queue_position(self, session):
+        """Update the position of a submission in the waiting queue."""
+        for idx, submission_id in enumerate(self._awaiting_submission_id):
+            submission = get_submission_by_id(session, submission_id)
+            submission.queue_position = idx + 1
+        session.commit()
 
     def fetch_from_db(self, session):
         """Fetch the submission from the database and create the workers."""
@@ -115,14 +125,16 @@ class Dispatcher:
             # create the worker
             worker = self.worker(self._worker_config, submission_name)
             set_submission_state(session, submission_id, 'sent_to_training')
-            update_user_leaderboards(
-                session, self._ramp_config['event_name'],
-                submission .team.name, new_only=True,
+            self._awaiting_worker_queue.put_nowait(
+                (worker, (submission_id, submission_name))
             )
-            self._awaiting_worker_queue.put_nowait((worker, (submission_id,
-                                                             submission_name)))
+            self._awaiting_submission_id.append(submission_id)
             logger.info('Submission {} added to the queue of submission to be '
                         'processed'.format(submission_name))
+        update_all_user_leaderboards(
+            session, self._ramp_config['event_name'], new_only=True
+        )
+        self._set_queue_position(session)
 
     def launch_workers(self, session):
         """Launch the awaiting workers if possible."""
@@ -135,14 +147,17 @@ class Dispatcher:
             worker.launch_submission()
             set_submission_state(session, submission_id, 'training')
             submission = get_submission_by_id(session, submission_id)
-            update_user_leaderboards(
-                session, self._ramp_config['event_name'],
-                submission.team.name, new_only=True,
-            )
             self._processing_worker_queue.put_nowait(
                 (worker, (submission_id, submission_name)))
             logger.info('Store the worker {} into the processing queue'
                         .format(worker))
+            self._awaiting_submission_id.popleft()
+            submission.queue_position = -1
+            session.commit()
+        update_all_user_leaderboards(
+            session, self._ramp_config['event_name'], new_only=True
+        )
+        self._set_queue_position(session)
 
     def collect_result(self, session):
         """Collect result from processed workers."""
