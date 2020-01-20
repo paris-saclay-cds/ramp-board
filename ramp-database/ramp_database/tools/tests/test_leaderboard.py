@@ -40,7 +40,7 @@ def session_toy_db(database_connection):
 
 
 @pytest.fixture
-def session_toy_function():
+def session_toy_function(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:
@@ -199,32 +199,33 @@ def test_get_leaderboard(session_toy_db):
     assert """<th>team</th>
       <th>submission</th>
       <th>bag public acc</th>
-      <th>bag public error</th>
-      <th>bag public nll</th>
-      <th>bag public f1_70</th>
-      <th>bag private acc</th>
-      <th>bag private error</th>
-      <th>bag private nll</th>
-      <th>bag private f1_70</th>
       <th>mean public acc</th>
-      <th>mean public error</th>
-      <th>mean public nll</th>
-      <th>mean public f1_70</th>
-      <th>mean private acc</th>
-      <th>mean private error</th>
-      <th>mean private nll</th>
-      <th>mean private f1_70</th>
       <th>std public acc</th>
+      <th>bag public error</th>
+      <th>mean public error</th>
       <th>std public error</th>
+      <th>bag public nll</th>
+      <th>mean public nll</th>
       <th>std public nll</th>
+      <th>bag public f1_70</th>
+      <th>mean public f1_70</th>
       <th>std public f1_70</th>
+      <th>bag private acc</th>
+      <th>mean private acc</th>
       <th>std private acc</th>
+      <th>bag private error</th>
+      <th>mean private error</th>
       <th>std private error</th>
+      <th>bag private nll</th>
+      <th>mean private nll</th>
       <th>std private nll</th>
+      <th>bag private f1_70</th>
+      <th>mean private f1_70</th>
       <th>std private f1_70</th>
       <th>contributivity</th>
       <th>historical contributivity</th>
       <th>train time [s]</th>
+      <th>validation time [s]</th>
       <th>test time [s]</th>
       <th>max RAM [MB]</th>
       <th>submitted at (UTC)</th>""" in leaderboard_private
@@ -237,7 +238,7 @@ def test_get_leaderboard(session_toy_db):
       <th>contributivity</th>
       <th>historical contributivity</th>
       <th>train time [s]</th>
-      <th>test time [s]</th>
+      <th>validation time [s]</th>
       <th>max RAM [MB]</th>
       <th>submitted at (UTC)</th>""" in leaderboard_public
     assert """<th>team</th>
@@ -251,7 +252,7 @@ def test_get_leaderboard(session_toy_db):
       <th>submission</th>
       <th>acc</th>
       <th>train time [s]</th>
-      <th>test time [s]</th>
+      <th>validation time [s]</th>
       <th>submitted at (UTC)</th>""" in competition_public
     assert """<th>rank</th>
       <th>move</th>
@@ -259,5 +260,6 @@ def test_get_leaderboard(session_toy_db):
       <th>submission</th>
       <th>acc</th>
       <th>train time [s]</th>
+      <th>validation time [s]</th>
       <th>test time [s]</th>
       <th>submitted at (UTC)</th>""" in competition_private
