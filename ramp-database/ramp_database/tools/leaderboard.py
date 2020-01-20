@@ -307,24 +307,22 @@ def get_leaderboard(session, leaderboard_type, event_name, user_name=None,
             with_links=with_links
         )
     elif leaderboard_type in ['new', 'failed']:
-        columns = ['team',
-                   'submission',
-                   'submitted at (UTC)']
-
-        if leaderboard_type == 'failed':
-            columns.append('error')
+        if leaderboard_type == 'new':
+            columns = ['team', 'submission', 'submitted at (UTC)', 'state']
+        else:
+            columns = ['team', 'submission', 'submitted at (UTC)', 'error']
 
         # we rely on the zip function ignore the submission state if the error
         # column was not appended
-        data = [
-            {column: value
-             for column, value in zip(columns,
-                                      [sub.event_team.team.name,
-                                       sub.name_with_link,
-                                       pd.Timestamp(sub.submission_timestamp),
-                                       sub.state_with_link])}
-            for sub in submissions
-        ]
+        data = [{
+            column: value for column, value in zip(
+                columns,
+                [sub.event_team.team.name,
+                 sub.name_with_link,
+                 pd.Timestamp(sub.submission_timestamp),
+                 (sub.state_with_link if leaderboard_type == 'error'
+                  else sub.state)])
+            } for sub in submissions]
         df = pd.DataFrame(data, columns=columns)
     else:
         # make some extra filtering

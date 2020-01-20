@@ -20,6 +20,7 @@ from ramp_database.tools.submission import set_submission_state
 
 from ramp_database.tools.leaderboard import update_all_user_leaderboards
 from ramp_database.tools.leaderboard import update_leaderboards
+from ramp_database.tools.leaderboard import update_user_leaderboards
 
 from ramp_database.utils import session_scope
 
@@ -114,6 +115,10 @@ class Dispatcher:
             # create the worker
             worker = self.worker(self._worker_config, submission_name)
             set_submission_state(session, submission_id, 'sent_to_training')
+            update_user_leaderboards(
+                session, self._ramp_config['event_name'],
+                submission .team.name, new_only=True,
+            )
             self._awaiting_worker_queue.put_nowait((worker, (submission_id,
                                                              submission_name)))
             logger.info('Submission {} added to the queue of submission to be '
@@ -129,6 +134,11 @@ class Dispatcher:
             worker.setup()
             worker.launch_submission()
             set_submission_state(session, submission_id, 'training')
+            submission = get_submission_by_id(session, submission_id)
+            update_user_leaderboards(
+                session, self._ramp_config['event_name'],
+                submission.team.name, new_only=True,
+            )
             self._processing_worker_queue.put_nowait(
                 (worker, (submission_id, submission_name)))
             logger.info('Store the worker {} into the processing queue'
