@@ -118,9 +118,12 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
                     if score_type.name != event.official_score_name])
     score_list = [
         '{} {} {}'.format(stat, dataset, score)
-        for stat, dataset, score in product(stats_order, dataset_order,
-                                            score_order)
+        for dataset, score, stat in product(dataset_order,
+                                            score_order,
+                                            stats_order)
     ]
+    for x in score_list:
+        print("<th>{}</th>".format(x))
     # Only display train and validation time for the public leaderboard
     time_list = (['train time [s]', 'validation time [s]', 'test time [s]']
                  if leaderboard_type == 'private'

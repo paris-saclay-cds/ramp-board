@@ -199,28 +199,28 @@ def test_get_leaderboard(session_toy_db):
     assert """<th>team</th>
       <th>submission</th>
       <th>bag public acc</th>
-      <th>bag public error</th>
-      <th>bag public nll</th>
-      <th>bag public f1_70</th>
-      <th>bag private acc</th>
-      <th>bag private error</th>
-      <th>bag private nll</th>
-      <th>bag private f1_70</th>
       <th>mean public acc</th>
-      <th>mean public error</th>
-      <th>mean public nll</th>
-      <th>mean public f1_70</th>
-      <th>mean private acc</th>
-      <th>mean private error</th>
-      <th>mean private nll</th>
-      <th>mean private f1_70</th>
       <th>std public acc</th>
+      <th>bag public error</th>
+      <th>mean public error</th>
       <th>std public error</th>
+      <th>bag public nll</th>
+      <th>mean public nll</th>
       <th>std public nll</th>
+      <th>bag public f1_70</th>
+      <th>mean public f1_70</th>
       <th>std public f1_70</th>
+      <th>bag private acc</th>
+      <th>mean private acc</th>
       <th>std private acc</th>
+      <th>bag private error</th>
+      <th>mean private error</th>
       <th>std private error</th>
+      <th>bag private nll</th>
+      <th>mean private nll</th>
       <th>std private nll</th>
+      <th>bag private f1_70</th>
+      <th>mean private f1_70</th>
       <th>std private f1_70</th>
       <th>contributivity</th>
       <th>historical contributivity</th>
