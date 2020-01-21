@@ -275,5 +275,7 @@ The following explain the main steps to release `ramp-board`:
 3. Create a branch for this version `git checkout -b 0.1.X`.
 4. Push the new branch into the upstream repository.
 5. You can create a GitHub release.
-6. Push on PyPI with `make upload-pypi`.
-7. In `master`, run `bumpversion minor`, commit and push on upstream.
+6. Change the symlink in the `ramp-docs` repository such that stable point on
+   0.1.X.
+7. Push on PyPI with `make upload-pypi`.
+8. In `master`, run `bumpversion minor`, commit and push on upstream.
