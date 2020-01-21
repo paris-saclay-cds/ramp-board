@@ -432,7 +432,6 @@ def test_sandbox_upload_file_fail(client_session, makedrop_event,
     # upload file in sandbox.html
     path_submissions = os.path.join(
                                     ramp_config['ramp_kit_dir'],
-                                    submission_dir
                                    )
 
     with login_scope(client, 'test_user', 'test') as client:
