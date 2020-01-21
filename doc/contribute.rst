@@ -270,5 +270,9 @@ Release process
 
 The following explain the main steps to release `ramp-board`:
 
-
-
+1. Run `bumpversion release`. It will remove the `dev0` tag.
+2. Commit the change `git commit -am "bumpversion 0.1.0"`.
+3. Create a branch for this version `git checkout -b 0.1.X`.
+4. Push the new branch into the upstream repository.
+5. You can create a GitHub release.
+6. Push on PyPI with `make upload-pypi`.
