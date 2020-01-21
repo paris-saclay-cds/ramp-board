@@ -422,7 +422,7 @@ def test_ask_for_event_mail(client_session):
      ("submissions/starting_kit", "clasifier.py")]
 )
 def test_sandbox_upload_file_dontexist(client_session, makedrop_event,
-                             submission_dir, filename):
+                                       submission_dir, filename):
     client, session = client_session
     sign_up_team(session, 'iris_test_4event', 'test_user')
 
@@ -444,27 +444,20 @@ def test_sandbox_upload_file_dontexist(client_session, makedrop_event,
 
         with pytest.raises(FileNotFoundError):
             rv = client.post('http://localhost/events/'
-                            + 'iris_test_4event/sandbox',
-                            headers={'Referer':
-                                    'http://localhost/events/'
-                                    + 'iris_test_4event/sandbox'},
-                            data={'file': (open(path_submission, 'rb'),
-                                            filename)},
-                            follow_redirects=False)
+                             + 'iris_test_4event/sandbox',
+                             headers={'Referer':
+                                      'http://localhost/events/'
+                                      + 'iris_test_4event/sandbox'},
+                             data={'file': (open(path_submission, 'rb'),
+                                   filename)},
+                             follow_redirects=False)
 
         assert rv.status_code == 200
 
         with pytest.raises(FileNotFoundError):
             with open(path_submission, 'r') as file:
                 submitted_data = file.read()
-
-        # code from the db
-        event = get_event(session, 'iris_test_4event')
-        sandbox_submission = get_submission_by_name(session,
-                                                    'iris_test_4event',
-                                                    'test_user',
-                                                    event.ramp_sandbox_name)
-        submission_code = sandbox_submission.files[-1].get_code()
+                assert not submitted_data
 
         # get user interactions from db and check if 'upload' was added
         user_interactions = get_user_interactions_by_name(session, 'test_user')
@@ -477,7 +470,7 @@ def test_sandbox_upload_file_dontexist(client_session, makedrop_event,
      ("/", "requirements.txt")]
 )
 def test_sandbox_upload_file_wrong(client_session, makedrop_event,
-                             submission_dir, filename):
+                                   submission_dir, filename):
     client, session = client_session
     sign_up_team(session, 'iris_test_4event', 'test_user')
 
@@ -503,8 +496,8 @@ def test_sandbox_upload_file_wrong(client_session, makedrop_event,
                                   'http://localhost/events/'
                                   + 'iris_test_4event/sandbox'},
                          data={'file': (open(path_submission, 'rb'),
-                                             filename)},
-                        follow_redirects=False)
+                               filename)},
+                         follow_redirects=False)
 
         assert rv.status_code == 302
         assert rv.location == 'http://localhost/events/' \
@@ -512,14 +505,7 @@ def test_sandbox_upload_file_wrong(client_session, makedrop_event,
 
         with open(path_submission, 'r') as file:
             submitted_data = file.read()
-
-        # code from the db
-        event = get_event(session, 'iris_test_4event')
-        sandbox_submission = get_submission_by_name(session,
-                                                    'iris_test_4event',
-                                                    'test_user',
-                                                    event.ramp_sandbox_name)
-        submission_code = sandbox_submission.files[-1].get_code()
+        assert submitted_data
 
         # get user interactions from db and check if 'upload' was added
         user_interactions = get_user_interactions_by_name(session, 'test_user')
@@ -530,8 +516,7 @@ def test_sandbox_upload_file_wrong(client_session, makedrop_event,
     "submission_dir, filename",
     [("submissions/error", "classifier.py"),
      ("submissions/random_forest_10_10", "classifier.py"),
-     ("submissions/starting_kit", "classifier.py")
-    ]
+     ("submissions/starting_kit", "classifier.py")]
 )
 def test_sandbox_upload_file(client_session, makedrop_event,
                              submission_dir, filename):
