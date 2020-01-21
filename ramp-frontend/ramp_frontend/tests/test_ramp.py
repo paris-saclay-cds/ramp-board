@@ -494,7 +494,7 @@ def test_sandbox_upload_file(client_session, makedrop_event,
     path_submissions = os.path.join(
         ramp_config['ramp_kit_dir'], submission_dir
                                     submission_dir
-                                   )
+    )
 
     with login_scope(client, 'test_user', 'test') as client:
         rv = client.get('http://localhost/events/iris_test_4event/sandbox')
