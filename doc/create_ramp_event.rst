@@ -52,7 +52,7 @@ This config file should look like::
 Finally, you can easily deploy the event (adding both problem and event to the
 database) by calling from the deployment directory::
 
-    ramp setup deploy-event --event-config events/iris_test/config.yml --no-cloning
+    ~/ramp_deployment $ ramp setup deploy-event --event-config events/iris_test/config.yml --no-cloning
 
 Without passing ``--no-cloning``, it will try to clone the starting kit and
 data from the https://github.com/ramp-kits/ github organization. If the

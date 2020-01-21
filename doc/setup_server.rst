@@ -131,4 +131,4 @@ where ``config.yml`` is the path to the configuration fle created in the
 ``ramp_deployment`` directory. To have more information about the Gunicorn
 options, refer to::
 
-    gunicorn -h
+    ~ $ gunicorn -h

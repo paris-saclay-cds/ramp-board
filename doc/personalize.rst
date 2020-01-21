@@ -12,7 +12,7 @@ section in the very bottom of your RAMP webpage.
 To do so, add all the images you wish to have displayed to the following
 directory::
 
-    ramp-board/ramp-frontend/ramp_frontend/static/img/powered_by
+    ~ $ ramp-board/ramp-frontend/ramp_frontend/static/img/powered_by
 
 Your images must have one of the following extensions:
 

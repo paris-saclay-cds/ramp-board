@@ -43,9 +43,9 @@ should have these libraries installed, in addition to ramp-workflow.
 Subsequently, you can create such environment and use it in the event
 configuration::
 
-      conda create --name ramp-iris pip numpy pandas scikit-learn
-      conda activate ramp-iris
-      pip install git+https://github.com/paris-saclay-cds/ramp-workflow
+      ~ $ conda create --name ramp-iris pip numpy pandas scikit-learn
+      ~ $ conda activate ramp-iris
+      ~ $ pip install git+https://github.com/paris-saclay-cds/ramp-workflow
 
 If you are using a ramp-kit from the `Paris-Saclay CDS
 <https://github.com/ramp-kits>`_, each kit will provide either an
@@ -73,44 +73,44 @@ A very short how-to for creating such an AMI manually:
 
   - Install miniconda::
 
-        LATEST_MINICONDA="http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
-        wget -q $LATEST_MINICONDA -O ~/miniconda.sh
-        bash ~/miniconda.sh -b
-        echo '. ${HOME}/miniconda3/etc/profile.d/conda.sh' >> ~/.profile
-        echo 'conda activate base' >> ~/.profile
-        source .profile
-        conda info
-        conda update --yes --quiet conda pip
+        ~ $ LATEST_MINICONDA="http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+        ~ $ wget -q $LATEST_MINICONDA -O ~/miniconda.sh
+        ~ $ bash ~/miniconda.sh -b
+        ~ $ echo '. ${HOME}/miniconda3/etc/profile.d/conda.sh' >> ~/.profile
+        ~ $ echo 'conda activate base' >> ~/.profile
+        ~ $ source .profile
+        ~ $ conda info
+        ~ $ conda update --yes --quiet conda pip
 
   - Get the starting kit material (example here for Iris)::
 
-        RAMPKIT_DIR="$HOME/ramp-kits"
-        project_name="iris"
-        kit_url="https://github.com/ramp-kits/$project_name"
-        kit_dir="$RAMPKIT_DIR/$project_name"
-        git clone $kit_url $kit_dir
+        ~ $ RAMPKIT_DIR="$HOME/ramp-kits"
+        ~ $ project_name="iris"
+        ~ $ kit_url="https://github.com/ramp-kits/$project_name"
+        ~ $ kit_dir="$RAMPKIT_DIR/$project_name"
+        ~ $ git clone $kit_url $kit_dir
 
   - Update the base conda environment for the needs of the challenge::
 
-        ami_environment="$kit_dir/ami_environment.yml"
-        conda env update --name base --file $ami_environment
-        conda list
+        ~ $ ami_environment="$kit_dir/ami_environment.yml"
+        ~ $ conda env update --name base --file $ami_environment
+        ~ $ conda list
 
   - Get the data::
 
-        data_dir="$kit_dir/data"
-        rm -rf $data_dir && mkdir $data_dir
-        git clone https://github.com/ramp-data/iris ramp-data/iris
-        cd ramp-data/iris/
-        python prepare_data.py
-        cd ..
+        ~ $ data_dir="$kit_dir/data"
+        ~ $ rm -rf $data_dir && mkdir $data_dir
+        ~ $ git clone https://github.com/ramp-data/iris ramp-data/iris
+        ~ $ cd ramp-data/iris/
+        ~ $ python prepare_data.py
+        ~ $ cd ..
 
     TODO: figure out this data (in ramp-kits/data or in ramp-data?)
 
   - Test the kit::
 
-        cd ramp-kits/iris
-        ramp-test
+        ~ $ cd ramp-kits/iris
+        ~ $ ramp-test
 
 - Save the instance as an AMI: from the instance -> Actions -> Image -> Create image
 
