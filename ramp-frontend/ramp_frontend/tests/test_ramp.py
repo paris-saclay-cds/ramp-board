@@ -97,7 +97,8 @@ def test_check_login_required(client_session, page):
 
 @pytest.mark.parametrize(
     "page",
-    ["/events/xxx", "/events/xxx/sign_up", "/events/xxx/sandbox", "/event_plots/xxx"],
+    ["/events/xxx", "/events/xxx/sign_up",
+     "/events/xxx/sandbox", "/event_plots/xxx"],
 )
 def test_check_unknown_events(client_session, page):
     client, _ = client_session
@@ -272,7 +273,8 @@ testtimestamps = [
     "opening_date,public_date,closing_date,expected", testtimestamps
 )
 def test_event_status(
-    client_session, makedrop_event, opening_date, public_date, closing_date, expected
+    client_session, makedrop_event, opening_date,
+    public_date, closing_date, expected
 ):
     # checks if the event status is displayed correctly
     client, session = client_session
@@ -371,13 +373,15 @@ def test_sign_up_for_event(client_session):
     with login_scope(client, "yy", "yy") as client:
         rv = client.get("/events/boston_housing_test/sign_up")
         assert rv.status_code == 302
-        assert rv.location == "http://localhost/events/boston_housing_test/sandbox"
+        assert (rv.location ==
+                "http://localhost/events/boston_housing_test/sandbox")
         with client.session_transaction() as cs:
             flash_message = dict(cs["_flashes"])
         assert "is signed up for" in flash_message["Successful sign-up"]
         # make sure that the database has been updated for our session
         session.commit()
-        event_team = get_event_team_by_name(session, "boston_housing_test", "yy")
+        event_team = get_event_team_by_name(session,
+                                            "boston_housing_test", "yy")
         assert event_team.approved
 
 
@@ -388,7 +392,8 @@ def test_sign_up_for_event_mail(client_session):
     # GET: sign-up to a new controlled event
     with client.application.app_context():
         with mail.record_messages() as outbox:
-            add_user(session, "zz", "zz", "zz", "zz", "zz@gmail", access_level="user")
+            add_user(session, "zz", "zz", "zz", "zz", "zz@gmail",
+                     access_level="user")
             with login_scope(client, "zz", "zz") as client:
                 rv = client.get("/events/iris_test/sign_up")
                 assert rv.status_code == 302
@@ -431,7 +436,8 @@ def test_ask_for_event(client_session):
         assert rv.location == "http://localhost/problems"
         with client.session_transaction() as cs:
             flash_message = dict(cs["_flashes"])
-        assert "Thank you. Your request has been sent" in flash_message["Event request"]
+        assert "Thank you. Your request has been sent" in \
+               flash_message["Event request"]
 
 
 @_fail_no_smtp_server
@@ -458,7 +464,8 @@ def test_ask_for_event_mail(client_session):
                 assert rv.status_code == 302
                 # check that the email has been sent
                 assert len(outbox) == 1
-                assert "User test_user asked to add a new event" in outbox[0].body
+                assert "User test_user asked to add a new event" in \
+                       outbox[0].body
 
 
 @pytest.mark.parametrize(
@@ -492,7 +499,10 @@ def test_sandbox_upload_file_dontexist(
         with pytest.raises(FileNotFoundError):
             rv = client.post(
                 "http://localhost/events/iris_test_4event/sandbox",
-                headers={"Referer": "http://localhost/events/iris_test_4event/sandbox"},
+                headers={
+                        "Referer":
+                        "http://localhost/events/iris_test_4event/sandbox"
+                        },
                 data={"file": (open(path_submission, "rb"), filename)},
                 follow_redirects=False,
             )
@@ -534,13 +544,15 @@ def test_sandbox_upload_file_wrong(
 
         rv = client.post(
             "http://localhost/events/iris_test_4event/sandbox",
-            headers={"Referer": "http://localhost/events/iris_test_4event/sandbox"},
+            headers={"Referer":
+                     "http://localhost/events/iris_test_4event/sandbox"},
             data={"file": (open(path_submission, "rb"), filename)},
             follow_redirects=False,
         )
 
         assert rv.status_code == 302
-        assert rv.location == "http://localhost/events/iris_test_4event/sandbox"
+        assert (rv.location ==
+                "http://localhost/events/iris_test_4event/sandbox")
 
         with open(path_submission, "r") as file:
             submitted_data = file.read()
@@ -559,7 +571,8 @@ def test_sandbox_upload_file_wrong(
         ("submissions/starting_kit", "classifier.py"),
     ],
 )
-def test_sandbox_upload_file(client_session, makedrop_event, submission_dir, filename):
+def test_sandbox_upload_file(client_session, makedrop_event,
+                             submission_dir, filename):
     client, session = client_session
     sign_up_team(session, "iris_test_4event", "test_user")
 
@@ -567,7 +580,8 @@ def test_sandbox_upload_file(client_session, makedrop_event, submission_dir, fil
     ramp_config = generate_ramp_config(read_config(config))
 
     # upload file in sandbox.html
-    path_submissions = os.path.join(ramp_config["ramp_kit_dir"], submission_dir)
+    path_submissions = os.path.join(ramp_config["ramp_kit_dir"],
+                                    submission_dir)
 
     with login_scope(client, "test_user", "test") as client:
         rv = client.get("http://localhost/events/iris_test_4event/sandbox")
@@ -579,13 +593,16 @@ def test_sandbox_upload_file(client_session, makedrop_event, submission_dir, fil
 
         rv = client.post(
             "http://localhost/events/iris_test_4event/sandbox",
-            headers={"Referer": "http://localhost/events/iris_test_4event/sandbox"},
+            headers={
+                     "Referer":
+                     "http://localhost/events/iris_test_4event/sandbox"},
             data={"file": (open(path_submission, "rb"), filename)},
             follow_redirects=False,
         )
 
         assert rv.status_code == 302
-        assert rv.location == "http://localhost/events/iris_test_4event/sandbox"
+        assert (rv.location ==
+                "http://localhost/events/iris_test_4event/sandbox")
 
         # code of the saved file
         with open(path_submission, "r") as file:
@@ -620,12 +637,15 @@ def test_sandbox_save_file(client_session, makedrop_event):
 
         rv = client.post(
             "http://localhost/events/iris_test_4event/sandbox",
-            headers={"Referer": "http://localhost/events/iris_test_4event/sandbox"},
-            data={"classifier": example_code, "code-csrf_token": "temp_token"},
+            headers={"Referer":
+                     "http://localhost/events/iris_test_4event/sandbox"},
+            data={"classifier": example_code,
+                  "code-csrf_token": "temp_token"},
             follow_redirects=False,
         )
         assert rv.status_code == 302
-        assert rv.location == "http://localhost/events/iris_test_4event/sandbox"
+        assert (rv.location ==
+                "http://localhost/events/iris_test_4event/sandbox")
 
         # code from the db
         event = get_event(session, "iris_test_4event")
@@ -645,7 +665,8 @@ def test_sandbox_save_file(client_session, makedrop_event):
     "opening_date, public_date, closing_date, expected", testtimestamps
 )
 def test_submit_button_enabled_disabled(
-    client_session, makedrop_event, opening_date, public_date, closing_date, expected
+    client_session, makedrop_event, opening_date,
+    public_date, closing_date, expected
 ):
     client, session = client_session
 
@@ -670,7 +691,8 @@ def test_submit_button_enabled_disabled(
     "opening_date, public_date, closing_date, expected", testtimestamps
 )
 def test_correct_message_sandbox(
-    client_session, makedrop_event, opening_date, public_date, closing_date, expected
+    client_session, makedrop_event, opening_date, public_date,
+    closing_date, expected
 ):
     client, session = client_session
 
@@ -765,7 +787,8 @@ def test_view_submission_error(client_session):
             flash_message = dict(cs["_flashes"])
         assert "Missing submission" in flash_message["message"]
 
-    submission = get_submission_by_name(session, "iris_test", "test_user", "error")
+    submission = get_submission_by_name(session, "iris_test",
+                                        "test_user", "error")
     submission.error_msg = "This submission is a failure"
     session.commit()
     submission_hash = submission.hash_
