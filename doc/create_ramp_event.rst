@@ -42,15 +42,17 @@ This config file should look like::
         conda_env: ramp-iris
 
 .. note::
-    In the previous configuration example, we are using a conda worker. You can
-    refer to the documentation about the :ref:`workers <all_workers>` and
-    more precisely the :ref:`conda workers <conda_env_worker>` to have more
-    information.
+    - <event_name> must always be preceeded with the '<problem_name>_' as in
+      the example above.
+    - In the previous configuration example, we are using a conda worker. You
+      can refer to the documentation about the :ref:`workers <all_workers>` and
+      more precisely the :ref:`conda workers <conda_env_worker>` to have more
+      information.
 
 Finally, you can easily deploy the event (adding both problem and event to the
 database) by calling from the deployment directory::
 
-    ramp setup deploy-event --event-config events/iris_test/config.yml --no-cloning
+    ~/ramp_deployment $ ramp setup deploy-event --event-config events/iris_test/config.yml --no-cloning
 
 Without passing ``--no-cloning``, it will try to clone the starting kit and
 data from the https://github.com/ramp-kits/ github organization. If the

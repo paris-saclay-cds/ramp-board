@@ -12,7 +12,7 @@ from ramp_database.tools.submission import get_submission_by_id
 from ramp_database.tools.submission import get_submission_state
 
 from ramp_database.tools.submission import set_bagged_scores
-from ramp_database.tools.submission import set_predictions
+# from ramp_database.tools.submission import set_predictions
 from ramp_database.tools.submission import set_time
 from ramp_database.tools.submission import set_scores
 from ramp_database.tools.submission import set_submission_error_msg
@@ -20,6 +20,7 @@ from ramp_database.tools.submission import set_submission_state
 
 from ramp_database.tools.leaderboard import update_all_user_leaderboards
 from ramp_database.tools.leaderboard import update_leaderboards
+from ramp_database.tools.leaderboard import update_user_leaderboards
 
 from ramp_database.utils import session_scope
 
@@ -114,6 +115,10 @@ class Dispatcher:
             # create the worker
             worker = self.worker(self._worker_config, submission_name)
             set_submission_state(session, submission_id, 'sent_to_training')
+            update_user_leaderboards(
+                session, self._ramp_config['event_name'],
+                submission .team.name, new_only=True,
+            )
             self._awaiting_worker_queue.put_nowait((worker, (submission_id,
                                                              submission_name)))
             logger.info('Submission {} added to the queue of submission to be '
@@ -129,13 +134,15 @@ class Dispatcher:
             worker.setup()
             worker.launch_submission()
             set_submission_state(session, submission_id, 'training')
+            submission = get_submission_by_id(session, submission_id)
+            update_user_leaderboards(
+                session, self._ramp_config['event_name'],
+                submission.team.name, new_only=True,
+            )
             self._processing_worker_queue.put_nowait(
                 (worker, (submission_id, submission_name)))
             logger.info('Store the worker {} into the processing queue'
                         .format(worker))
-        if self._processing_worker_queue.full():
-            logger.info('The processing queue is full. Waiting for a worker to'
-                        ' finish')
 
     def collect_result(self, session):
         """Collect result from processed workers."""
@@ -145,7 +152,6 @@ class Dispatcher:
                   for _ in range(self._processing_worker_queue.qsize())]
             )
         except ValueError:
-            logger.info('No workers are currently waiting or processed.')
             if self.hunger_policy == 'sleep':
                 time.sleep(5)
             elif self.hunger_policy == 'exit':
@@ -156,14 +162,25 @@ class Dispatcher:
             if worker.status == 'running':
                 self._processing_worker_queue.put_nowait(
                     (worker, (submission_id, submission_name)))
-                logger.info('Worker {} is still running'.format(worker))
                 time.sleep(0)
             else:
                 logger.info('Collecting results from worker {}'.format(worker))
                 returncode, stderr = worker.collect_results()
+                if returncode == 1:
+                    logger.info(
+                        'Worker {} killed due to an error during training'
+                        .format(worker)
+                    )
+                    submission_status = 'training_error'
+                elif returncode == 124:
+                    logger.info('Worker {} killed due to timeout.'
+                                .format(worker))
+                    submission_status = 'training_error'
+                else:
+                    submission_status = 'tested'
+
                 set_submission_state(
-                    session, submission_id,
-                    'tested' if not returncode else 'training_error'
+                    session, submission_id, submission_status
                 )
                 set_submission_error_msg(session, submission_id, stderr)
                 self._processed_submission_queue.put_nowait(
@@ -172,35 +189,52 @@ class Dispatcher:
 
     def update_database_results(self, session):
         """Update the database with the results of ramp_test_submission."""
+        make_update_leaderboard = False
         while not self._processed_submission_queue.empty():
+            make_update_leaderboard = True
             submission_id, submission_name = \
                 self._processed_submission_queue.get_nowait()
             if 'error' in get_submission_state(session, submission_id):
-                update_leaderboards(session, self._ramp_config['event_name'])
-                update_all_user_leaderboards(session,
-                                             self._ramp_config['event_name'])
-                logger.info('Skip update for {} due to failure during the '
-                            'processing'.format(submission_name))
                 continue
-            logger.info('Update the results obtained on each fold for '
-                        '{}'.format(submission_name))
+            logger.info('Write info in database for submission {}'
+                        .format(submission_name))
             path_predictions = os.path.join(
                 self._worker_config['predictions_dir'], submission_name
             )
-            set_predictions(session, submission_id, path_predictions)
+            # NOTE: In the past we were adding the predictions into the
+            # database. Since they require too much space, we stop to store
+            # them in the database and instead, keep it onto the disk.
+            # set_predictions(session, submission_id, path_predictions)
             set_time(session, submission_id, path_predictions)
             set_scores(session, submission_id, path_predictions)
             set_bagged_scores(session, submission_id, path_predictions)
             set_submission_state(session, submission_id, 'scored')
+
+        if make_update_leaderboard:
+            logger.info('Update all leaderboards')
             update_leaderboards(session, self._ramp_config['event_name'])
             update_all_user_leaderboards(session,
                                          self._ramp_config['event_name'])
+
+    @staticmethod
+    def _reset_submission_after_failure(session, even_name):
+        submissions = get_submissions(session, even_name, state=None)
+        for submission_id, _, _ in submissions:
+            submission_state = get_submission_state(session, submission_id)
+            if submission_state in ('training', 'send_to_training'):
+                set_submission_state(session, submission_id, 'new')
 
     def launch(self):
         """Launch the dispatcher."""
         logger.info('Starting the RAMP dispatcher')
         with session_scope(self._database_config) as session:
             logger.info('Open a session to the database')
+            logger.info(
+                'Reset unfinished trained submission from previous session'
+            )
+            self._reset_submission_after_failure(
+                session, self._ramp_config['event_name']
+            )
             try:
                 while not self._poison_pill:
                     self.fetch_from_db(session)
@@ -210,12 +244,7 @@ class Dispatcher:
             finally:
                 # reset the submissions to 'new' in case of error or unfinished
                 # training
-                submissions = get_submissions(session,
-                                              self._ramp_config['event_name'],
-                                              state=None)
-                for submission_id, _, _ in submissions:
-                    submission_state = get_submission_state(session,
-                                                            submission_id)
-                    if submission_state in ('training', 'send_to_training'):
-                        set_submission_state(session, submission_id, 'new')
+                self._reset_submission_after_failure(
+                    session, self._ramp_config['event_name']
+                )
             logger.info('Dispatcher killed by the poison pill')

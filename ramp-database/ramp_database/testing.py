@@ -5,6 +5,7 @@ tools and model of ``ramp-database``.
 
 import logging
 import os
+import path
 import shutil
 import subprocess
 
@@ -124,7 +125,7 @@ def _delete_line_from_file(f_name, line_to_delete):
 
 
 def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False,
-                            check_notebook=False):
+                             depth=None, mock_html_conversion=False):
     """Clone ramp-kit and ramp-data repository and setup it up.
 
     Parameters
@@ -138,7 +139,12 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False,
     force : bool, default is False
         Whether or not to overwrite the RAMP kit and data repositories if they
         already exists.
-    check_notebook : it will only run jupyter notebook if set to True
+    depth : int, default=None
+        the depth parameter to pass to git clone. Use ``depth=1`` for a shallow
+        clone (faster).
+    mock_html_conversion : bool, default=False
+        Whether we should call `nbconvert` to create the HTML notebook. If
+        `True`, the file created will be an empty html file.
     """
     problem_kit_path = ramp_config['ramp_kit_dir']
     if os.path.exists(problem_kit_path):
@@ -149,7 +155,10 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False,
             )
         shutil.rmtree(problem_kit_path, ignore_errors=True)
     ramp_kit_url = 'https://github.com/ramp-kits/{}.git'.format(problem_name)
-    Repo.clone_from(ramp_kit_url, problem_kit_path)
+    kwargs = {}
+    if depth is not None:
+        kwargs['depth'] = depth
+    Repo.clone_from(ramp_kit_url, problem_kit_path, **kwargs)
 
     problem_data_path = ramp_config['ramp_data_dir']
     if os.path.exists(problem_data_path):
@@ -160,19 +169,24 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False,
             )
         shutil.rmtree(problem_data_path, ignore_errors=True)
     ramp_data_url = 'https://github.com/ramp-data/{}.git'.format(problem_name)
-    Repo.clone_from(ramp_data_url, problem_data_path)
+    Repo.clone_from(ramp_data_url, problem_data_path, **kwargs)
 
     current_directory = os.getcwd()
     os.chdir(problem_data_path)
     subprocess.check_output(["python", "prepare_data.py"])
     os.chdir(problem_kit_path)
-    if check_notebook:
-        subprocess.check_output(["jupyter", "nbconvert", "--to", "html",
-                             "{}_starting_kit.ipynb".format(problem_name)])
+    filename_notebook_html = "{}_starting_kit.ipynb".format(problem_name)
+    if not mock_html_conversion:
+        subprocess.check_output([
+            "jupyter", "nbconvert", "--to", "html", filename_notebook_html
+        ])
         # delete this line since it trigger in the front-end
         # (try to open execute "custom.css".)
-        _delete_line_from_file("{}_starting_kit.html".format(problem_name),
-                           '<link rel="stylesheet" href="custom.css">\n')
+        _delete_line_from_file(filename_notebook_html,
+                               '<link rel="stylesheet" href="custom.css">\n')
+    else:
+        # create an empty html file
+        Path(filename_notebook_html).touch()
     os.chdir(current_directory)
 
 
@@ -249,7 +263,10 @@ def add_problems(session):
     }
     for problem_name, ramp_config in ramp_configs.items():
         internal_ramp_config = generate_ramp_config(ramp_config)
-        setup_ramp_kit_ramp_data(internal_ramp_config, problem_name)
+        setup_ramp_kit_ramp_data(
+            internal_ramp_config, problem_name, depth=1,
+            mock_html_conversion=True
+        )
         add_problem(session, problem_name,
                     internal_ramp_config['ramp_kit_dir'],
                     internal_ramp_config['ramp_data_dir'])

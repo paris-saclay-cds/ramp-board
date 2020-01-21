@@ -73,6 +73,23 @@ def sign_up_team(session, event_name, team_name):
     session.commit()
 
 
+def delete_event_team(session, event_name, team_name):
+    """Delete a team from an RAMP event.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The RAMP event name.
+    team_name : str
+        The name of the team.
+    """
+    event, team, event_team = ask_sign_up_team(session, event_name, team_name)
+    session.delete(event_team)
+    session.commit()
+
+
 def get_event_team_by_name(session, event_name, user_name):
     """Get the event/team given an event and a user.
 

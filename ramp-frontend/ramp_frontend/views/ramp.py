@@ -39,6 +39,8 @@ from ramp_database.tools.frontend import is_admin
 from ramp_database.tools.frontend import is_accessible_code
 from ramp_database.tools.frontend import is_accessible_event
 from ramp_database.tools.frontend import is_user_signed_up
+from ramp_database.tools.frontend import is_user_sign_up_requested
+from ramp_database.tools.leaderboard import update_leaderboards
 from ramp_database.tools.submission import add_submission
 from ramp_database.tools.submission import add_submission_similarity
 from ramp_database.tools.submission import get_source_submissions
@@ -80,10 +82,37 @@ def problems():
         add_user_interaction(
             db.session, interaction='looking at problems', user=user
         )
+    problems = get_problem(db.session, None)
+
+    for problem in problems:
+        for event in problem.events:
+            # check the state of the event
+            now = datetime.datetime.now()
+            start = event.opening_timestamp
+            start_collab = event.public_opening_timestamp
+            end = event.closing_timestamp
+            if now < start or now >= end:
+                event.state = 'close'
+            elif now >= start and now < start_collab:
+                event.state = 'competitive'
+            elif now >= start and now >= start_collab and now < end:
+                event.state = 'collab'
+            if user:
+                signed = get_event_team_by_name(
+                                    db.session, event.name,
+                                    flask_login.current_user.name)
+                if not signed:
+                    event.state_user = 'not_signed'
+                elif signed.approved:
+                    event.state_user = 'signed'
+                elif signed:
+                    event.state_user = 'waiting'
+            else:
+                event.state_user = 'not_signed'
 
     # problems = Problem.query.order_by(Problem.id.desc())
     return render_template('problems.html',
-                           problems=get_problem(db.session, None),
+                           problems=problems,
                            admin=admin)
 
 
@@ -161,7 +190,9 @@ def user_event(event_name):
         approved = is_user_signed_up(
             db.session, event_name, flask_login.current_user.name
         )
-        asked = approved
+        asked = is_user_sign_up_requested(
+            db.session, event_name, flask_login.current_user.name
+        )
         return render_template('event.html',
                                description=description,
                                event=event,
@@ -206,7 +237,7 @@ def sign_up_for_event(event_name):
                            ))
             body += ('Click on this link to approve the sign-up request: {}'
                      .format(url_approve))
-            send_mail(admin, subject, body)
+            send_mail(admin.email, subject, body)
         return redirect_to_user("Sign-up request is sent to event admins.",
                                 is_error=False, category='Request sent')
     sign_up_team(db.session, event.name, flask_login.current_user.name)
@@ -289,6 +320,25 @@ def sandbox(event_name):
     )
     upload_form = UploadForm(prefix='upload')
 
+    #  check if the event is before, during or after open state
+    now = datetime.datetime.now()
+    start = event.opening_timestamp
+    end = event.closing_timestamp
+
+    event_status = {"msg": "",
+                    "state": "not_yet"}
+    start_str = start.strftime("%d of %B %Y at %H:%M")
+    end_str = end.strftime("%d of %B %Y, %H:%M")
+    if now < start:
+        event_status["msg"] = "Event submissions will open on the " + start_str
+        event_status["state"] = "close"
+    elif now < end:
+        event_status["msg"] = "Event submissions are open until " + end_str
+        event_status["state"] = "open"
+    else:  # now >= end
+        event_status["msg"] = "This event closed on the " + end_str
+        event_status["state"] = "close"
+
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     if request.method == 'GET':
         return render_template(
@@ -297,7 +347,8 @@ def sandbox(event_name):
             code_form=code_form,
             submit_form=submit_form, upload_form=upload_form,
             event=event,
-            admin=admin
+            admin=admin,
+            event_status=event_status
         )
 
     if request.method == 'POST':
@@ -325,12 +376,15 @@ def sandbox(event_name):
                             )
             except Exception as e:
                 return redirect_to_sandbox(event, 'Error: {}'.format(e))
-            return redirect_to_sandbox(
-                event,
-                'You submission has been saved. You can safely comeback to '
-                'your sandbox later.',
-                is_error=False, category='File saved'
-            )
+
+            # if we required to only save the file, redirect now
+            if "saving" in request.form:
+                return redirect_to_sandbox(
+                    event,
+                    'Your submission has been saved. You can safely comeback '
+                    'to your sandbox later.',
+                    is_error=False, category='File saved'
+                )
 
         elif request.files:
             upload_f_name = secure_filename(
@@ -407,8 +461,12 @@ def sandbox(event_name):
             # ie: now we let upload eg external_data.bla, and only fail at
             # submission, without giving a message
 
-        elif ('submit-csrf_token' in request.form and
-              submit_form.validate_on_submit()):
+        if 'submission' in request.form:
+            if not submit_form.validate_on_submit():
+                return redirect_to_sandbox(
+                    event,
+                    'Submission name should not contain any spaces'
+                )
             new_submission_name = request.form['submit-submission_name']
             if not 4 < len(new_submission_name) < 20:
                 return redirect_to_sandbox(
@@ -455,7 +513,7 @@ def sandbox(event_name):
                     """.format(event_team.event.name,
                                flask_login.current_user.name,
                                new_submission.name, new_submission.path)
-                    send_mail(admin, subject, body)
+                    send_mail(admin.email, subject, body)
             if app.config['TRACK_USER_INTERACTION']:
                 add_user_interaction(
                     db.session,
@@ -480,7 +538,8 @@ def sandbox(event_name):
         code_form=code_form,
         submit_form=submit_form, upload_form=upload_form,
         event=event,
-        admin=admin
+        admin=admin,
+        event_status=event_status
     )
 
 
@@ -523,7 +582,7 @@ def ask_for_event(problem_name):
                 form.opening_date.data,
                 form.closing_date.data
             )
-            send_mail(admin, subject, body)
+            send_mail(admin.email, subject, body)
         return redirect_to_user(
             'Thank you. Your request has been sent to RAMP administrators.',
             category='Event request', is_error=False
@@ -793,14 +852,20 @@ def view_model(submission_hash, f_name):
                         submission, filename)
             )
 
-            # TODO: deal with different extensions of the same file
-            src = os.path.join(submission.path, filename)
-            dst = os.path.join(sandbox_submission.path, filename)
-            shutil.copy2(src, dst)  # copying also metadata
-            logger.info('Copying {} to {}'.format(src, dst))
-
             workflow_element = WorkflowElement.query.filter_by(
                 name=filename.split('.')[0], workflow=event.workflow).one()
+
+            # TODO: deal with different extensions of the same file
+            # For non-editable files, only create a symlink if the file
+            # does not already exist.
+            src = os.path.join(submission.path, filename)
+            dst = os.path.join(sandbox_submission.path, filename)
+            if workflow_element.is_editable:
+                shutil.copy2(src, dst)  # copying also metadata
+            elif not os.path.exists(dst):
+                os.symlink(src, dst)
+            logger.info('Copying {} to {}'.format(src, dst))
+
             submission_file = SubmissionFile.query.filter_by(
                 submission=submission,
                 workflow_element=workflow_element).one()
@@ -866,4 +931,36 @@ def view_submission_error(submission_hash):
 
     return render_template(
         'submission_error.html', submission=submission, team=team, event=event
+    )
+
+
+@mod.route("/toggle_competition/<submission_hash>")
+@flask_login.login_required
+def toggle_competition(submission_hash):
+    """Pulling out or putting a submission back into competition.
+
+    Parameters
+    ----------
+    submission_hash : str
+        The submission hash of the current submission.
+    """
+    submission = (Submission.query.filter_by(hash_=submission_hash)
+                                  .one_or_none())
+    if submission is None:
+        error_str = 'Missing submission: {}'.format(submission_hash)
+        return redirect_to_user(error_str)
+
+    access_code = is_accessible_code(
+        db.session, submission.event_team.event.name,
+        flask_login.current_user.name, submission.id
+    )
+    if not access_code:
+        error_str = 'Missing submission: {}'.format(submission_hash)
+        return redirect_to_user(error_str)
+
+    submission.is_in_competition = not submission.is_in_competition
+    db.session.commit()
+    update_leaderboards(db.session, submission.event_team.event.name)
+    return redirect(
+        '/{}/{}'.format(submission_hash, submission.files[0].f_name)
     )

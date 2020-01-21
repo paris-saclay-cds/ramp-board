@@ -84,20 +84,55 @@
       </div>
     </div>
     <div class="card-body">
-      <form class="ui form" method="post" action="" name="save" id="save">
-            {{ code_form.hidden_tag() }}
-            <div>
-                {% for name_code in code_form.names_codes %}
-                    <div class="sub-title">{{ name_code[0] }}</div>
-                    <div>
-                    <textarea cols="80" id="{{ name_code[0] }}" name="{{ name_code[0] }}">{{ name_code[1] }}</textarea>
-                    </div>
-                {% endfor %}
-				&nbsp; <br>
-                <center><p><strong>Save your submission for later</strong></p></center>
-                <center><input type="submit" value="Save" class="ui submit button"></center>
+      <form class="ui form" method="post", name="submit", id="formSubmit">
+          {{ code_form.hidden_tag() }}
+          {{ submit_form.hidden_tag() }}
+          <div>{% for name_code in code_form.names_codes %}
+              <div class="sub-title">{{ name_code[0] }}</div>
+              <div>
+                <textarea cols="80" id="{{ name_code[0] }}" name="{{ name_code[0] }}">{{ name_code[1] }}</textarea>
+              </div>
+            {% endfor %}
+           <br />
+           <br />
+           <div class="card-header">
+            <div class="card-title">
+              <div class="title">
+                {{ event_status["msg"] | safe}}
+              </div>
             </div>
-      </form>
+          </div>
+          </div>
+          <br />
+          <br />
+          <div class="container">
+            <div class="row">
+              <center>
+                <div class="required field">
+                  <label>Submission name (between 4 and 20 characters)</label>
+                    {{ submit_form.submission_name }}
+                </div>
+              </center>
+            </div>
+            <br />
+            <div class="row">
+              <div class="col-xs-6">
+                <center>
+                  <input type="submit" value="Save for later" class="ui submit button", name="saving">
+                </center>
+              </div>
+              <div class="col-xs-6">
+                <center>
+                  {% if event_status["state"] == 'close' %}
+                    <input button type="button" value="Submit now" class="btn btn-secondary disabled" >
+                  {% else %}
+                    <input type="submit" value="Submit now" class="ui submit button" name="submission">
+                  {% endif %}
+                </center>
+              </div>
+            </div>
+          </div>
+        </form>
     </div>
   </div>
 </div>
@@ -131,32 +166,6 @@
   </div>
 </div>
 
-<div class="row">
-  <div class="col-xs-12">
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-            <div class="title">
-                Submit your code!
-            </div>
-        </div>
-      </div>
-	  <div class="card-body">
-        <form class="ui form" method="post" action="" name="submit" id="formSubmit">
-        {{ submit_form.hidden_tag() }}
-    	<center>
-            <div class="required field">
-                <label>Submission name (between 4 and 20 characters)</label>
-                {{ submit_form.submission_name }}
-            </div>
-            <input type="submit" value="Submit" class="ui submit button" id="checksave">
-    	</center>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
 {% endblock %}
 {% block scripts %}
 {% for name_code in code_form.names_codes %}
@@ -170,21 +179,6 @@
   </script>
 {% endfor %}
 
-<script>
-  $('#formSubmit').submit(function() {
-	var modif = 0;
-	{% for name_code in code_form.names_codes %}
-	    var origin_code = document.getElementById(id="{{ name_code[0] }}").innerHTML;
-            if (editor_{{ name_code[0] }}.getValue() != origin_code) {
-                modif = 1;
-	    }
-	{% endfor %}
-	if (modif == 1) {
-    $('#save').submit();
-    $('#formSubmit').submit()
-  }
-  });
-</script>
 <script>
 $(function () {
    $('#formerror').modal('toggle')
