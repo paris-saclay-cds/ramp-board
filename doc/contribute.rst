@@ -1,14 +1,14 @@
 .. _contribute:
 
-########################
+######################
 Develop and contribute
-########################
+######################
 
 Welcome to the RAMP team. We are always happy to have new RAMP developers.
 
-You can contribute to this code by making a `Pull Request 
+You can contribute to this code by making a `Pull Request
 <https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_ 
-on Github_. Please, make sure that your code is coming with unit tests to 
+on Github_. Please, make sure that your code is coming with unit tests to
 ensure full coverage and continuous integration in the API.
 
 
@@ -17,16 +17,16 @@ ensure full coverage and continuous integration in the API.
 
 Install for development
 -----------------------
-To install RAMP please fallow :ref:`install guideline <install>` making sure 
+To install RAMP please fallow :ref:`install guideline <install>` making sure
 that you use the ``make inplace`` option to install RAMP in developer mode.
 
 
 Prepare database engine
 -----------------------
-Testing RAMP requires a database cluster, you need to create it similarly as 
-described in :ref:`create database <set_database>` section. 
+Testing RAMP requires a database cluster, you need to create it similarly as
+described in :ref:`create database <set_database>` section.
 
-If you haven't done so already create the ``Postgres database cluster`` 
+If you haven't done so already create the ``Postgres database cluster``
 using the command::
 
     ~ $ initdb postgres_dbs
@@ -37,26 +37,26 @@ and then start it with::
 
 Within your database cluster `postgres` database is created automatically.
 `pytest` will use it to make and then drop the test engine. But it needs
-to know who is the owner of your `postgres` database and therefore you 
+to know who is the owner of your `postgres` database and therefore you
 need to inform RAMP tests about this.
-To do this, open the ``db_engine.yml`` file located in the ``ramp-board`` 
-directory. 
+To do this, open the ``db_engine.yml`` file located in the ``ramp-board``
+directory.
 It should look as follows::
 
     db_owner: postgres
 
-You need to change <postgres> to the owner of the `postgres` database. 
+You need to change <postgres> to the owner of the `postgres` database.
 
-If you don't know who is the owner of your `postgres` database you can 
+If you don't know who is the owner of your `postgres` database you can
 find it out by typing in your terminal::
-    
+
     ~ $ psql -l
 
-This command will list all of your databases along with their owners. 
+This command will list all of your databases along with their owners.
 
 Test
 ----
-Each time before running the tests make sure your ``Postgres database cluster`` 
+Each time before running the tests make sure your ``Postgres database cluster``
 has been started. You can always start it using the command::
 
     ~ $ pg_ctl -D postgres_dbs -l logfile start
@@ -64,13 +64,14 @@ has been started. You can always start it using the command::
 where `postgres_dbs` is the database cluster you created in the previous steps.
 
 In addition, you might want to start an SMTP server to run all the tests.
-If you don't run the server, some of the tests will fail because they cannot 
-be run. To launch the server, execute the following 
+If you don't run the server, some of the tests will fail because they cannot
+be run. To launch the server, execute the following
 command::
 
     ~ $ python -m smtpd -n -c DebuggingServer localhost:8025 &
 
-You are now ready to run the tests. You can do so using ``pytest`` from the root ``ramp-board`` directory::
+You are now ready to run the tests. You can do so using ``pytest`` from the
+root ``ramp-board`` directory::
 
     ~ $ pytest -vsl .
 
@@ -91,12 +92,13 @@ This guide is adapted from `scikit-learn contribution guide`_.
 Forking RAMP
 ============
 
-The preferred way to contribute to RAMP is to fork the `ramp-board repository`_ on GitHub:
+The preferred way to contribute to RAMP is to fork the `ramp-board repository`_
+on GitHub:
 
 .. _ramp-board repository: https://github.com/paris-saclay-cds/ramp-board
 
-1) To fork the `ramp-board repository`_ click on the 'Fork' button near the 
-   top of the page. This creates a copy of the code under your account 
+1) To fork the `ramp-board repository`_ click on the 'Fork' button near the
+   top of the page. This creates a copy of the code under your account
    on the GitHub server.
 
 2) Clone this copy to your local disk::
@@ -108,7 +110,7 @@ The preferred way to contribute to RAMP is to fork the `ramp-board repository`_ 
 
         $ git checkout -b my-feature
 
-   and start making changes. 
+   and start making changes.
 
 .. note::
     Never work in the ``master`` branch!
@@ -127,7 +129,7 @@ Finally, go to the web page of your fork of the ramp-board repo,
 and click 'Pull request' to send your changes to the maintainers for
 review. This will send an email to the committers.
 
-If any of the above seems like magic to you, then look up `Git documentation`_ 
+If any of the above seems like magic to you, then look up `Git documentation`_
 on the web.
 
 .. _Git documentation: https://git-scm.com/documentation
@@ -153,11 +155,11 @@ following rules before submitting a pull request:
 
 -  Please prefix the title of your pull request with `[MRG]` if the
    contribution is complete and should be subjected to a detailed review.
-   Incomplete contributions should be prefixed `[WIP]` to indicate a work
-   in progress (and changed to `[MRG]` when it matures). WIPs may be useful
-   to: indicate you are working on something to avoid duplicated work,
-   request broad review of functionality or API, or seek collaborators.
-   WIPs often benefit from the inclusion of a `task list`_ in the PR description.
+   Incomplete contributions should be prefixed `[WIP]` to indicate a work in
+   progress (and changed to `[MRG]` when it matures). WIPs may be useful to:
+   indicate you are working on something to avoid duplicated work, request
+   broad review of functionality or API, or seek collaborators. WIPs often
+   benefit from the inclusion of a `task list`_ in the PR description.
 
 -  All other tests pass when everything is rebuilt from scratch. On
    Unix-like systems, check with (from the toplevel source folder)::
@@ -212,8 +214,8 @@ following rules before submitting:
     import numpy; print("NumPy", numpy.__version__)
     import scipy; print("SciPy", scipy.__version__)
     import sklearn; print("Scikit-Learn", sklearn.__version__)
-   
--  Please include a reproducible_ code snippet or link to a gist_. 
+
+-  Please include a reproducible_ code snippet or link to a gist_.
    If an exception is raised, please provide the traceback.
 
 .. _Creating and highlighting code blocks: https://help.github.com/articles/creating-and-highlighting-code-blocks
@@ -237,7 +239,7 @@ documentation without the example gallery. The resulting HTML files will
 be placed in _build/html/ and are viewable in a web browser. See the
 README file in the doc/ directory for more information.
 
-For building the documentation, you will need 
+For building the documentation, you will need
 
     - sphinx_, 
     - sphinx_rtd_theme_,
@@ -261,3 +263,16 @@ intuition to the reader on what the algorithm does. It is best to always
 start with a small paragraph with a hand-waving explanation of what the
 method does to the data and a figure (coming from an example)
 illustrating it.
+
+
+Release process
+---------------
+
+The following explain the main steps to release `ramp-board`:
+
+1. Run `bumpversion release`. It will remove the `dev0` tag.
+2. Commit the change `git commit -am "bumpversion 0.1.0"`.
+3. Create a branch for this version `git checkout -b 0.1.X`.
+4. Push the new branch into the upstream repository.
+5. You can create a GitHub release.
+6. Push on PyPI with `make upload-pypi`.
