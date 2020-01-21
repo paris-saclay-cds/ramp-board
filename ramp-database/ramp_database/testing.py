@@ -5,7 +5,7 @@ tools and model of ``ramp-database``.
 
 import logging
 import os
-import path
+import pathlib
 import shutil
 import subprocess
 
@@ -186,7 +186,7 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False,
                                '<link rel="stylesheet" href="custom.css">\n')
     else:
         # create an empty html file
-        Path(filename_notebook_html).touch()
+        pathlib.Path(filename_notebook_html).touch()
     os.chdir(current_directory)
 
 
