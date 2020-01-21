@@ -186,7 +186,8 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False,
                                '<link rel="stylesheet" href="custom.css">\n')
     else:
         # create an empty html file
-        pathlib.Path(filename_notebook_html).touch()
+        pathlib.Path(
+            os.path.join(problem_kit_path, filename_notebook_html)).touch()
     os.chdir(current_directory)
 
 
