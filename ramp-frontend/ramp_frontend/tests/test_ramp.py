@@ -418,10 +418,10 @@ def test_ask_for_event_mail(client_session):
 @pytest.mark.parametrize(
     "submission_dir, filename",
     [("submissions/starting_kit", "classifier2.py"),
-     ("/", "README.md"),
-     ("/", "requirements.txt")]
+     ("/", "README12.md"),
+     ("submissions/starting_kit", "clasifier.py")]
 )
-def test_sandbox_upload_file_fail(client_session, makedrop_event,
+def test_sandbox_upload_file_dontexist(client_session, makedrop_event,
                              submission_dir, filename):
     client, session = client_session
     sign_up_team(session, 'iris_test_4event', 'test_user')
@@ -440,26 +440,23 @@ def test_sandbox_upload_file_fail(client_session, makedrop_event,
 
         # choose file and check if it was uploaded correctly
         path_submission = os.path.join(path_submissions, filename)
+        assert not os.path.isfile(path_submission)
 
-        try:
+        with pytest.raises(FileNotFoundError):
             rv = client.post('http://localhost/events/'
-                             + 'iris_test_4event/sandbox',
-                             headers={'Referer':
-                                      'http://localhost/events/'
-                                      + 'iris_test_4event/sandbox'},
-                             data={'file': (open(path_submission, 'rb'),
+                            + 'iris_test_4event/sandbox',
+                            headers={'Referer':
+                                    'http://localhost/events/'
+                                    + 'iris_test_4event/sandbox'},
+                            data={'file': (open(path_submission, 'rb'),
                                             filename)},
-                             follow_redirects=False)
+                            follow_redirects=False)
 
-            assert rv.status_code == 302
-            assert rv.location == 'http://localhost/events/' \
-                                  'iris_test_4event/sandbox'
+        assert rv.status_code == 200
 
-            # code of the saved file
+        with pytest.raises(FileNotFoundError):
             with open(path_submission, 'r') as file:
                 submitted_data = file.read()
-        except FileNotFoundError:
-            submitted_data = None
 
         # code from the db
         event = get_event(session, 'iris_test_4event')
@@ -471,7 +468,77 @@ def test_sandbox_upload_file_fail(client_session, makedrop_event,
 
         # get user interactions from db and check if 'upload' was added
         user_interactions = get_user_interactions_by_name(session, 'test_user')
-        assert submitted_data is None
+        assert 'upload' not in user_interactions['interaction'].values
+
+
+@pytest.mark.parametrize(
+    "submission_dir, filename, exists",
+    [("submissions/starting_kit", "classifier2.py", False),
+     ("/", "README.md", True),
+     ("/", "requirements.txt", True)]
+)
+def test_sandbox_upload_file_fail(client_session, makedrop_event,
+                             submission_dir, filename, exists):
+    client, session = client_session
+    sign_up_team(session, 'iris_test_4event', 'test_user')
+
+    config = ramp_config_template()
+    ramp_config = generate_ramp_config(read_config(config))
+
+    # upload file in sandbox.html
+    path_submissions = os.path.join(
+                                    ramp_config['ramp_kit_dir'],
+                                   )
+
+    assert exists == os.path.isfile(path_submission)
+
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get('http://localhost/events/iris_test_4event/sandbox')
+        assert rv.status_code == 200
+
+        # choose file and check if it was uploaded correctly
+        path_submission = os.path.join(path_submissions, filename)
+
+        if exists:
+            rv = client.post('http://localhost/events/'
+                                + 'iris_test_4event/sandbox',
+                                headers={'Referer':
+                                        'http://localhost/events/'
+                                        + 'iris_test_4event/sandbox'},
+                                data={'file': (open(path_submission, 'rb'),
+                                                filename)},
+                                follow_redirects=False)
+        else:
+            with pytest.raises(FileNotFoundError):
+                rv = client.post('http://localhost/events/'
+                                + 'iris_test_4event/sandbox',
+                                headers={'Referer':
+                                        'http://localhost/events/'
+                                        + 'iris_test_4event/sandbox'},
+                                data={'file': (open(path_submission, 'rb'),
+                                                filename)},
+                                follow_redirects=False)
+
+            assert rv.status_code == 302
+            assert rv.location == 'http://localhost/events/' \
+                                  'iris_test_4event/sandbox'
+
+        
+        #if not os.path.isfile(path_submission):
+            with pytest.raises(FileNotFoundError):
+                with open(path_submission, 'r') as file:
+                    submitted_data = file.read()
+
+        # code from the db
+        event = get_event(session, 'iris_test_4event')
+        sandbox_submission = get_submission_by_name(session,
+                                                    'iris_test_4event',
+                                                    'test_user',
+                                                    event.ramp_sandbox_name)
+        submission_code = sandbox_submission.files[-1].get_code()
+
+        # get user interactions from db and check if 'upload' was added
+        user_interactions = get_user_interactions_by_name(session, 'test_user')
         assert 'upload' not in user_interactions['interaction'].values
 
 
@@ -493,7 +560,6 @@ def test_sandbox_upload_file(client_session, makedrop_event,
     # upload file in sandbox.html
     path_submissions = os.path.join(
         ramp_config['ramp_kit_dir'], submission_dir
-                                    submission_dir
     )
 
     with login_scope(client, 'test_user', 'test') as client:
