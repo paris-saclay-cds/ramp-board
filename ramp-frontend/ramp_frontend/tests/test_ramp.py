@@ -552,26 +552,24 @@ def test_sandbox_upload_file(client_session, makedrop_event,
 
         # choose file and check if it was uploaded correctly
         path_submission = os.path.join(path_submissions, filename)
+        assert os.path.isfile(path_submission)
 
-        try:
-            rv = client.post('http://localhost/events/'
-                             + 'iris_test_4event/sandbox',
-                             headers={'Referer':
-                                      'http://localhost/events/'
-                                      + 'iris_test_4event/sandbox'},
-                             data={'file': (open(path_submission, 'rb'),
-                                            filename)},
-                             follow_redirects=False)
+        rv = client.post('http://localhost/events/'
+                         + 'iris_test_4event/sandbox',
+                         headers={'Referer':
+                                  'http://localhost/events/'
+                                  + 'iris_test_4event/sandbox'},
+                         data={'file': (open(path_submission, 'rb'),
+                               filename)},
+                         follow_redirects=False)
 
-            assert rv.status_code == 302
-            assert rv.location == 'http://localhost/events/' \
-                                  'iris_test_4event/sandbox'
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/events/' \
+                              'iris_test_4event/sandbox'
 
-            # code of the saved file
-            with open(path_submission, 'r') as file:
-                submitted_data = file.read()
-        except FileNotFoundError:
-            submitted_data = None
+        # code of the saved file
+        with open(path_submission, 'r') as file:
+            submitted_data = file.read()
 
         # code from the db
         event = get_event(session, 'iris_test_4event')
