@@ -416,13 +416,13 @@ def test_ask_for_event_mail(client_session):
 
 
 @pytest.mark.parametrize(
-    "submission_dir, file_name",
+    "submission_dir, filename",
     [("submissions/starting_kit", "classifier2.py"),
      ("/", "README.md"),
      ("/", "requirements.txt")]
 )
 def test_sandbox_upload_file_fail(client_session, makedrop_event,
-                             submission_dir, file_name):
+                             submission_dir, filename):
     client, session = client_session
     sign_up_team(session, 'iris_test_4event', 'test_user')
 
@@ -440,7 +440,7 @@ def test_sandbox_upload_file_fail(client_session, makedrop_event,
         assert rv.status_code == 200
 
         # choose file and check if it was uploaded correctly
-        path_submission = os.path.join(path_submissions, file_name)
+        path_submission = os.path.join(path_submissions, filename)
 
         try:
             rv = client.post('http://localhost/events/'
@@ -449,7 +449,7 @@ def test_sandbox_upload_file_fail(client_session, makedrop_event,
                                       'http://localhost/events/'
                                       + 'iris_test_4event/sandbox'},
                              data={'file': (open(path_submission, 'rb'),
-                                            file_name)},
+                                            filename)},
                              follow_redirects=False)
 
             assert rv.status_code == 302
@@ -477,14 +477,14 @@ def test_sandbox_upload_file_fail(client_session, makedrop_event,
 
 
 @pytest.mark.parametrize(
-    "submission_dir, file_name",
+    "submission_dir, filename",
     [("submissions/error", "classifier.py"),
      ("submissions/random_forest_10_10", "classifier.py"),
      ("submissions/starting_kit", "classifier.py")
     ]
 )
 def test_sandbox_upload_file(client_session, makedrop_event,
-                             submission_dir, file_name):
+                             submission_dir, filename):
     client, session = client_session
     sign_up_team(session, 'iris_test_4event', 'test_user')
 
@@ -502,7 +502,7 @@ def test_sandbox_upload_file(client_session, makedrop_event,
         assert rv.status_code == 200
 
         # choose file and check if it was uploaded correctly
-        path_submission = os.path.join(path_submissions, file_name)
+        path_submission = os.path.join(path_submissions, filename)
 
         try:
             rv = client.post('http://localhost/events/'
@@ -511,7 +511,7 @@ def test_sandbox_upload_file(client_session, makedrop_event,
                                       'http://localhost/events/'
                                       + 'iris_test_4event/sandbox'},
                              data={'file': (open(path_submission, 'rb'),
-                                            file_name)},
+                                            filename)},
                              follow_redirects=False)
 
             assert rv.status_code == 302
