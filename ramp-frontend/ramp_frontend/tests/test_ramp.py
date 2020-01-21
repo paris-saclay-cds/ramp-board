@@ -472,13 +472,12 @@ def test_sandbox_upload_file_dontexist(client_session, makedrop_event,
 
 
 @pytest.mark.parametrize(
-    "submission_dir, filename, exists",
-    [("submissions/starting_kit", "classifier2.py", False),
-     ("/", "README.md", True),
-     ("/", "requirements.txt", True)]
+    "submission_dir, filename",
+    [("/", "README.md"),
+     ("/", "requirements.txt")]
 )
-def test_sandbox_upload_file_fail(client_session, makedrop_event,
-                             submission_dir, filename, exists):
+def test_sandbox_upload_file_wrong(client_session, makedrop_event,
+                             submission_dir, filename):
     client, session = client_session
     sign_up_team(session, 'iris_test_4event', 'test_user')
 
@@ -490,44 +489,29 @@ def test_sandbox_upload_file_fail(client_session, makedrop_event,
                                     ramp_config['ramp_kit_dir'],
                                    )
 
-    assert exists == os.path.isfile(path_submission)
-
     with login_scope(client, 'test_user', 'test') as client:
         rv = client.get('http://localhost/events/iris_test_4event/sandbox')
         assert rv.status_code == 200
 
         # choose file and check if it was uploaded correctly
         path_submission = os.path.join(path_submissions, filename)
+        assert os.path.isfile(path_submission)
 
-        if exists:
-            rv = client.post('http://localhost/events/'
-                                + 'iris_test_4event/sandbox',
-                                headers={'Referer':
-                                        'http://localhost/events/'
-                                        + 'iris_test_4event/sandbox'},
-                                data={'file': (open(path_submission, 'rb'),
-                                                filename)},
-                                follow_redirects=False)
-        else:
-            with pytest.raises(FileNotFoundError):
-                rv = client.post('http://localhost/events/'
-                                + 'iris_test_4event/sandbox',
-                                headers={'Referer':
-                                        'http://localhost/events/'
-                                        + 'iris_test_4event/sandbox'},
-                                data={'file': (open(path_submission, 'rb'),
-                                                filename)},
-                                follow_redirects=False)
+        rv = client.post('http://localhost/events/'
+                         + 'iris_test_4event/sandbox',
+                         headers={'Referer':
+                                  'http://localhost/events/'
+                                  + 'iris_test_4event/sandbox'},
+                         data={'file': (open(path_submission, 'rb'),
+                                             filename)},
+                        follow_redirects=False)
 
-            assert rv.status_code == 302
-            assert rv.location == 'http://localhost/events/' \
-                                  'iris_test_4event/sandbox'
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/events/' \
+                              'iris_test_4event/sandbox'
 
-        
-        #if not os.path.isfile(path_submission):
-            with pytest.raises(FileNotFoundError):
-                with open(path_submission, 'r') as file:
-                    submitted_data = file.read()
+        with open(path_submission, 'r') as file:
+            submitted_data = file.read()
 
         # code from the db
         event = get_event(session, 'iris_test_4event')
