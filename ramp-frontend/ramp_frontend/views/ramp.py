@@ -376,12 +376,15 @@ def sandbox(event_name):
                             )
             except Exception as e:
                 return redirect_to_sandbox(event, 'Error: {}'.format(e))
-            return redirect_to_sandbox(
-                event,
-                'Your submission has been saved. You can safely comeback to '
-                'your sandbox later.',
-                is_error=False, category='File saved'
-            )
+
+            # if we required to only save the file, redirect now
+            if "saving" in request.form:
+                return redirect_to_sandbox(
+                    event,
+                    'Your submission has been saved. You can safely comeback '
+                    'to your sandbox later.',
+                    is_error=False, category='File saved'
+                )
 
         elif request.files:
             upload_f_name = secure_filename(
@@ -458,8 +461,12 @@ def sandbox(event_name):
             # ie: now we let upload eg external_data.bla, and only fail at
             # submission, without giving a message
 
-        elif ('submit-csrf_token' in request.form and
-              submit_form.validate_on_submit()):
+        if 'submission' in request.form:
+            if not submit_form.validate_on_submit():
+                return redirect_to_sandbox(
+                    event,
+                    'Submission name should not contain any spaces'
+                )
             new_submission_name = request.form['submit-submission_name']
             if not 4 < len(new_submission_name) < 20:
                 return redirect_to_sandbox(
