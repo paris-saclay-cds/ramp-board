@@ -276,3 +276,4 @@ The following explain the main steps to release `ramp-board`:
 4. Push the new branch into the upstream repository.
 5. You can create a GitHub release.
 6. Push on PyPI with `make upload-pypi`.
+7. In `master`, run `bumpversion minor`, commit and push on upstream.

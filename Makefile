@@ -42,5 +42,5 @@ code-analysis:
 upload-pypi:
 	cd ramp-frontend && python setup.py sdist bdist_wheel && twine upload dist/* && cd ..
 	cd ramp-database && python setup.py sdist bdist_wheel && twine upload dist/* && cd ..
-	cd ramp-frontend && python setup.py sdist bdist_wheel && twine upload dist/* && cd ..
+	cd ramp-engine && python setup.py sdist bdist_wheel && twine upload dist/* && cd ..
 	cd ramp-utils && python setup.py sdist bdist_wheel && twine upload dist/* && cd ..
