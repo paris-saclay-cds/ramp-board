@@ -144,7 +144,7 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False,
         clone (faster).
     mock_html_conversion : bool, default=False
         Whether we should call `nbconvert` to create the HTML notebook. If
-        `True`, the file created will be an empty html file.
+        `True`, the file created will be an almost empty html file.
     """
     problem_kit_path = ramp_config['ramp_kit_dir']
     if os.path.exists(problem_kit_path):
@@ -175,19 +175,22 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False,
     os.chdir(problem_data_path)
     subprocess.check_output(["python", "prepare_data.py"])
     os.chdir(problem_kit_path)
-    filename_notebook_html = "{}_starting_kit.ipynb".format(problem_name)
+    filename_notebook_ipynb = "{}_starting_kit.ipynb".format(problem_name)
+    filename_notebook_html = "{}_starting_kit.html".format(problem_name)
     if not mock_html_conversion:
         subprocess.check_output([
-            "jupyter", "nbconvert", "--to", "html", filename_notebook_html
+            "jupyter", "nbconvert", "--to", "html", filename_notebook_ipynb
         ])
         # delete this line since it trigger in the front-end
         # (try to open execute "custom.css".)
         _delete_line_from_file(filename_notebook_html,
                                '<link rel="stylesheet" href="custom.css">\n')
     else:
-        # create an empty html file
-        pathlib.Path(
-            os.path.join(problem_kit_path, filename_notebook_html)).touch()
+        # create an almost empty html file
+        filename = os.path.join(problem_kit_path, filename_notebook_html)
+        with open(filename, mode='w+b') as f:
+            f.write(b"RAMP on iris")
+
     os.chdir(current_directory)
 
 
