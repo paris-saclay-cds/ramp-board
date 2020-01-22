@@ -94,7 +94,7 @@
               </div>
             {% endfor %}
            <br />
-           <br />
+           <center>
            <div class="card-header">
             <div class="card-title">
               <div class="title">
@@ -102,25 +102,46 @@
               </div>
             </div>
           </div>
+        </center>
           </div>
           <br />
-          <br />
+ 
           <div class="container">
-            <div class="row">
-              <center>
-                <div class="required field">
-                  <label>Submission name (between 4 and 20 characters)</label>
-                    {{ submit_form.submission_name }}
-                </div>
-              </center>
-            </div>
-            <br />
             <div class="row">
               <div class="col-xs-6">
                 <center>
                   <input type="submit" value="Save for later" class="ui submit button", name="saving">
+                  {% if event_status["state"] == 'close' %}
+                      <input button type="button" value="Submit now" class="btn btn-secondary disabled" >
+                  {% else %}
+                      <button type="button" class="ui submit button" data-toggle="modal" data-target="#submit_Modal">
+                        Submit now
+                      </button>
+                  
+                    <!-- Modal -->
+                    <div class="modal fade" id="submit_Modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                      <div class="modal-content">
+                          <div class="modal-header">
+                          <h3 class="modal-title" id="exampleModalLabel"></i>
+                              Submit code</h3>
+                          </div>
+                          <div class="required field">
+                            <label>Submission name (between 4 and 20 characters)</label>
+                              {{ submit_form.submission_name }}
+                          </div>
+                          <div class="modal-footer">
+                          <button type="submit" class="btn btn-primary" data-dismiss="modal" id="entered">Cancel</button>
+                          <input type="submit" value="Submit now" class="ui submit button" name="submission">
+                          <!--<button type="submit" name="submit_button" class="ui submit button" value='Submit now'>Submit</button>-->
+                          </div>
+                      </div>
+                      </div>
+                  </div>
+                {% endif %}
                 </center>
               </div>
+              <!--
               <div class="col-xs-6">
                 <center>
                   {% if event_status["state"] == 'close' %}
@@ -130,6 +151,7 @@
                   {% endif %}
                 </center>
               </div>
+            -->
             </div>
           </div>
         </form>
