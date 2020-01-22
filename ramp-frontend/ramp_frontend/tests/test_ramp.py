@@ -643,9 +643,7 @@ def test_sandbox_save_file(client_session, makedrop_event):
                   "code-csrf_token": "temp_token"},
             follow_redirects=False,
         )
-        assert rv.status_code == 302
-        assert (rv.location ==
-                "http://localhost/events/iris_test_4event/sandbox")
+        assert rv.status_code == 200
 
         # code from the db
         event = get_event(session, "iris_test_4event")
