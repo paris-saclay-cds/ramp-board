@@ -630,6 +630,13 @@ def test_sandbox_save_file(client_session, makedrop_event):
         assert "save" in user_interactions["interaction"].values
         assert example_code in submission_code
 
+    # make sure that after changing the code example 
+    # and reloading the page the code is still changed
+    with login_scope(client, "test_user", "test") as client:
+            rv = client.get("http://localhost/events/iris_test_4event/sandbox")
+            assert rv.status_code == 200
+            assert example_code.encode() in rv.data
+    
 
 @pytest.mark.parametrize(
     "opening_date, public_date, closing_date, expected", testtimestamps
