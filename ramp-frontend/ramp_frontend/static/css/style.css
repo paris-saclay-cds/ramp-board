@@ -411,6 +411,13 @@ a:hover {
   .app-container .app-footer .wrapper, .app-container.expanded .app-footer .wrapper {
     padding-left: 25px; } }
 
+.sandbox .title {
+  text-align: center;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1.1em;
+  text-decoration: none;
+}
+
 /* Card */
 .card {
   background-color: #FFF;
@@ -535,7 +542,8 @@ div.info-header {
 .modal {
   z-index: 100001; }
   .modal .modal-dialog .modal-header {
-    font-family: 'Source Sans Pro', sans-serif; }
+    font-family: 'Source Sans Pro', sans-serif;
+  }
   .modal .modal-dialog .modal-content {
     border-radius: 1px;
     box-shadow: none; }
