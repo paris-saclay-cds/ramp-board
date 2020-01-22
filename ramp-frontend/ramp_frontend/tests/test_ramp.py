@@ -442,15 +442,12 @@ def test_submit_button_enabled_disabled(client_session, makedrop_event,
 
 @pytest.mark.parametrize(
     "submission_dir, filename",
-    [
-        ("submissions/starting_kit", "classifier2.py"),
-        ("/", "README12.md"),
-        ("submissions/starting_kit", "clasifier.py"),
-    ],
+    [("submissions/starting_kit", "classifier2.py"),
+     ("/", "README12.md"),
+     ("submissions/starting_kit", "clasifier.py")]
 )
-def test_sandbox_upload_file_dontexist(
-    client_session, makedrop_event, submission_dir, filename
-):
+def test_sandbox_upload_file_dont_exist(client_session, makedrop_event,
+                                        submission_dir, filename):
     client, session = client_session
     sign_up_team(session, "iris_test_4event", "test_user")
 
@@ -472,9 +469,9 @@ def test_sandbox_upload_file_dontexist(
             rv = client.post(
                 "http://localhost/events/iris_test_4event/sandbox",
                 headers={
-                        "Referer":
-                        "http://localhost/events/iris_test_4event/sandbox"
-                        },
+                    "Referer":
+                    "http://localhost/events/iris_test_4event/sandbox"
+                },
                 data={"file": (open(path_submission, "rb"), filename)},
                 follow_redirects=False,
             )
@@ -494,9 +491,8 @@ def test_sandbox_upload_file_dontexist(
 @pytest.mark.parametrize(
     "submission_dir, filename", [("/", "README.md"), ("/", "requirements.txt")]
 )
-def test_sandbox_upload_file_wrong(
-    client_session, makedrop_event, submission_dir, filename
-):
+def test_sandbox_upload_file_wrong(client_session, makedrop_event,
+                                   submission_dir, filename):
     client, session = client_session
     sign_up_team(session, "iris_test_4event", "test_user")
 
@@ -537,11 +533,9 @@ def test_sandbox_upload_file_wrong(
 
 @pytest.mark.parametrize(
     "submission_dir, filename",
-    [
-        ("submissions/error", "classifier.py"),
-        ("submissions/random_forest_10_10", "classifier.py"),
-        ("submissions/starting_kit", "classifier.py"),
-    ],
+    [("submissions/error", "classifier.py"),
+     ("submissions/random_forest_10_10", "classifier.py"),
+     ("submissions/starting_kit", "classifier.py")]
 )
 def test_sandbox_upload_file(client_session, makedrop_event,
                              submission_dir, filename):
