@@ -222,17 +222,6 @@ def update_event(event_name):
         public_opening_timestamp=event.public_opening_timestamp,
     )
     if form.validate_on_submit():
-        if request.form["submit_button"] == "Confirm!":
-            delete_event(db.session, event_name)
-        if request.form["submit_button"] == "Confirm_ALL!":
-            # delete event from the disk
-            # paths_to_remove:
-            event.path_ramp_submissions # submissions path
-            # log path
-            # predictions path
-            #generate_ramp_config(event_config, database_config)
-            delete_event(db.session, event_name)
-
         if request.form["submit_button"] == "Update!":
             try:
                 if form.suffix.data == '':
