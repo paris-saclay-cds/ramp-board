@@ -489,12 +489,19 @@ def sandbox(event_name):
                     'Submission {} already exists. Please change the name.'
                     .format(new_submission_name)
                 )
+                
             except MissingExtensionError:
                 return redirect_to_sandbox(
                     event, 'Missing extension'
                 )
             except TooEarlySubmissionError as e:
                 return redirect_to_sandbox(event, str(e))
+
+            except:
+                return redirect_to_sandbox(
+                    event,
+                    'error'
+                )
 
             logger.info('{} submitted {} for {}.'
                         .format(flask_login.current_user.name,
