@@ -202,13 +202,12 @@ def update_event(event_name):
                 .format(flask_login.current_user.name, event.name))
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     # We assume here that event name has the syntax <problem_name>_<suffix>
-    suffix = event.name[len(event.problem.name) + 1:]
 
     h = event.min_duration_between_submissions // 3600
     m = event.min_duration_between_submissions // 60 % 60
     s = event.min_duration_between_submissions % 60
     form = EventUpdateProfileForm(
-        suffix=suffix, title=event.title,
+        title=event.title,
         is_send_trained_mails=event.is_send_trained_mails,
         is_send_submitted_mails=event.is_send_submitted_mails,
         is_public=event.is_public,
@@ -222,46 +221,39 @@ def update_event(event_name):
         public_opening_timestamp=event.public_opening_timestamp,
     )
     if form.validate_on_submit():
-        if request.form["submit_button"] == "Update!":
-            try:
-                if form.suffix.data == '':
-                    event.name = event.problem.name
-                else:
-                    event.name = event.problem.name + '_' + form.suffix.data
-                event.title = form.title.data
-                event.is_send_trained_mails = form.is_send_trained_mails.data
-                event.is_send_submitted_mails = \
-                    form.is_send_submitted_mails.data
-                event.is_public = form.is_public.data
-                event.is_controled_signup = form.is_controled_signup.data
-                event.is_competitive = form.is_competitive.data
-                event.min_duration_between_submissions = (
-                    form.min_duration_between_submissions_hour.data * 3600 +
-                    form.min_duration_between_submissions_minute.data * 60 +
-                    form.min_duration_between_submissions_second.data)
-                event.opening_timestamp = form.opening_timestamp.data
-                event.closing_timestamp = form.closing_timestamp.data
-                event.public_opening_timestamp = \
-                    form.public_opening_timestamp.data
-                db.session.commit()
+        try:
+            event.title = form.title.data
+            event.is_send_trained_mails = form.is_send_trained_mails.data
+            event.is_send_submitted_mails = form.is_send_submitted_mails.data
+            event.is_public = form.is_public.data
+            event.is_controled_signup = form.is_controled_signup.data
+            event.is_competitive = form.is_competitive.data
+            event.min_duration_between_submissions = (
+                form.min_duration_between_submissions_hour.data * 3600 +
+                form.min_duration_between_submissions_minute.data * 60 +
+                form.min_duration_between_submissions_second.data)
+            event.opening_timestamp = form.opening_timestamp.data
+            event.closing_timestamp = form.closing_timestamp.data
+            event.public_opening_timestamp = form.public_opening_timestamp.data
+            db.session.commit()
 
-            except IntegrityError as e:
-                db.session.rollback()
-                message = ''
-                existing_event = get_event(db.session, event.name)
-                if existing_event is not None:
-                    message += 'event name is already in use'
-                # # try:
-                # #     User.query.filter_by(email=email).one()
-                # #     if len(message) > 0:
-                # #         message += ' and '
-                # #     message += 'email is already in use'
-                # except NoResultFound:
-                #     pass
-                if message:
-                    e = NameClashError(message)
-                flash('{}'.format(e), category='Update event error')
-                return redirect(url_for('update_event', event_name=event.name))
+        except IntegrityError as e:
+            db.session.rollback()
+            message = ''
+            existing_event = get_event(db.session, event.name)
+            if existing_event is not None:
+                message += 'event name is already in use'
+            # # try:
+            # #     User.query.filter_by(email=email).one()
+            # #     if len(message) > 0:
+            # #         message += ' and '
+            # #     message += 'email is already in use'
+            # except NoResultFound:
+            #     pass
+            if message:
+                e = NameClashError(message)
+            flash('{}'.format(e), category='Update event error')
+            return redirect(url_for('update_event', event_name=event.name))
 
         return redirect(url_for('ramp.problems'))
 

@@ -54,17 +54,25 @@ def session_scope_function(database_config, ramp_config, database_connection):
 
 def test_ramp_kit_ramp_data(session_scope_function, ramp_config):
     internal_ramp_config = generate_ramp_config(read_config(ramp_config))
-    setup_ramp_kit_ramp_data(internal_ramp_config, 'iris', depth=1)
+    setup_ramp_kit_ramp_data(
+        internal_ramp_config, 'iris', depth=1, mock_html_conversion=True
+    )
     msg_err = 'The RAMP kit repository was previously cloned.'
     with pytest.raises(ValueError, match=msg_err):
-        setup_ramp_kit_ramp_data(internal_ramp_config, 'iris', depth=1)
+        setup_ramp_kit_ramp_data(
+            internal_ramp_config, 'iris', depth=1, mock_html_conversion=True
+        )
 
     # retrieve the path to the ramp kit to remove it
     shutil.rmtree(internal_ramp_config['ramp_kit_dir'])
     msg_err = 'The RAMP data repository was previously cloned.'
     with pytest.raises(ValueError, match=msg_err):
-        setup_ramp_kit_ramp_data(internal_ramp_config, 'iris', depth=1)
-    setup_ramp_kit_ramp_data(internal_ramp_config, 'iris', force=True)
+        setup_ramp_kit_ramp_data(
+            internal_ramp_config, 'iris', depth=1, mock_html_conversion=True
+        )
+    setup_ramp_kit_ramp_data(
+        internal_ramp_config, 'iris', force=True, mock_html_conversion=True
+    )
 
 
 def test_add_users(session_scope_function):

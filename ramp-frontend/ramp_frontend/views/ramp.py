@@ -40,6 +40,7 @@ from ramp_database.tools.frontend import is_accessible_code
 from ramp_database.tools.frontend import is_accessible_event
 from ramp_database.tools.frontend import is_user_signed_up
 from ramp_database.tools.frontend import is_user_sign_up_requested
+from ramp_database.tools.leaderboard import update_leaderboards
 from ramp_database.tools.submission import add_submission
 from ramp_database.tools.submission import add_submission_similarity
 from ramp_database.tools.submission import get_source_submissions
@@ -375,12 +376,15 @@ def sandbox(event_name):
                             )
             except Exception as e:
                 return redirect_to_sandbox(event, 'Error: {}'.format(e))
-            return redirect_to_sandbox(
-                event,
-                'Your submission has been saved. You can safely comeback to '
-                'your sandbox later.',
-                is_error=False, category='File saved'
-            )
+
+            # if we required to only save the file, redirect now
+            if "saving" in request.form:
+                return redirect_to_sandbox(
+                    event,
+                    'Your submission has been saved. You can safely comeback '
+                    'to your sandbox later.',
+                    is_error=False, category='File saved'
+                )
 
         elif request.files:
             upload_f_name = secure_filename(
@@ -457,8 +461,12 @@ def sandbox(event_name):
             # ie: now we let upload eg external_data.bla, and only fail at
             # submission, without giving a message
 
-        elif ('submit-csrf_token' in request.form and
-              submit_form.validate_on_submit()):
+        if 'submission' in request.form:
+            if not submit_form.validate_on_submit():
+                return redirect_to_sandbox(
+                    event,
+                    'Submission name should not contain any spaces'
+                )
             new_submission_name = request.form['submit-submission_name']
             if not 4 < len(new_submission_name) < 20:
                 return redirect_to_sandbox(
@@ -923,4 +931,36 @@ def view_submission_error(submission_hash):
 
     return render_template(
         'submission_error.html', submission=submission, team=team, event=event
+    )
+
+
+@mod.route("/toggle_competition/<submission_hash>")
+@flask_login.login_required
+def toggle_competition(submission_hash):
+    """Pulling out or putting a submission back into competition.
+
+    Parameters
+    ----------
+    submission_hash : str
+        The submission hash of the current submission.
+    """
+    submission = (Submission.query.filter_by(hash_=submission_hash)
+                                  .one_or_none())
+    if submission is None:
+        error_str = 'Missing submission: {}'.format(submission_hash)
+        return redirect_to_user(error_str)
+
+    access_code = is_accessible_code(
+        db.session, submission.event_team.event.name,
+        flask_login.current_user.name, submission.id
+    )
+    if not access_code:
+        error_str = 'Missing submission: {}'.format(submission_hash)
+        return redirect_to_user(error_str)
+
+    submission.is_in_competition = not submission.is_in_competition
+    db.session.commit()
+    update_leaderboards(db.session, submission.event_team.event.name)
+    return redirect(
+        '/{}/{}'.format(submission_hash, submission.files[0].f_name)
     )

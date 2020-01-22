@@ -37,15 +37,17 @@
         </div>                   
          <div class="card-body">
            <form class="ui form" method="post" action="" name="update_event">
-               {{ form.hidden_tag() }}
-                   Event name will be {{ event.problem.name }} if you leave suffix empty, or {{ event.problem.name }}_&lt;suffix&gt;. The length should be less than 20 characters, only ascii, no space. It will be used to identify the event, primarily in the url. If you open several events for the same class or hackaton, please use the same suffix consistently.
-                   <div class="form-group">
-                       <label>event suffix</label>
-                       {{ form.suffix(placeholder="event_suffix") }}
-                       {% for error in form.suffix.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
+                    <!-- in case we want to allow for event_suffix change:
+                    <div class="form-group">
+                        
+                        <label>event suffix</label>
+                            {{ form.suffix(placeholder="event_suffix") }}
+                            
+                            {% for error in form.suffix.errors %}
+                                <span style="color: red;">[{{ error }}]</span>
+                            {% endfor %}             
                    </div>
+                   -->   
                    The title will be used on web pages to name the event. The length should be less than 80 characters. If you open several events for the same class or hackaton, please use the same title consistently.
                    <div class="form-group">
                        <label>event title</label>

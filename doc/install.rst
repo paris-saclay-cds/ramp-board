@@ -1,11 +1,23 @@
 .. _install:
 
-########################
+#######
 Install
-########################
+#######
+
+Install from PyPI
+=================
+
+The RAMP bundle is available in PyPI and can be installed via `pip`::
+
+    pip install ramp-database ramp-engine ramp-frontend ramp-utils
+
+All dependencies will be installed automatically.
+
+Install from sources
+====================
 
 Prerequisites
-=============
+-------------
 
 The dependencies required by the RAMP bundle are the following:
 
@@ -58,7 +70,7 @@ you need to remember to ``conda activate testenv`` each time when interacting
 with ramp or the database.
 
 Install
-=======
+-------
 
 You can install the RAMP bundle of packages by::
 
