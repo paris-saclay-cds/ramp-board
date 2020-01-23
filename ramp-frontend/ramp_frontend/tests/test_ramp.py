@@ -5,6 +5,7 @@ import shutil
 import pytest
 
 from ramp_utils import generate_flask_config
+from ramp_utils import generate_ramp_config
 from ramp_utils import read_config
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
@@ -18,6 +19,7 @@ from ramp_database.utils import session_scope
 
 from ramp_database.tools.event import get_event
 from ramp_database.tools.user import add_user
+from ramp_database.tools.user import get_user_interactions_by_name
 from ramp_database.tools.submission import get_submission_by_name
 from ramp_database.tools.team import get_event_team_by_name
 from ramp_database.tools.event import add_event
@@ -436,6 +438,198 @@ def test_submit_button_enabled_disabled(client_session, makedrop_event,
             assert 'disabled' in str(rv.data)  # should to be disabled
         else:
             assert 'disabled' not in str(rv.data)  # should not be disabled
+
+
+@pytest.mark.parametrize(
+    "submission_dir, filename",
+    [("submissions/starting_kit", "classifier2.py"),
+     ("/", "README12.md"),
+     ("submissions/starting_kit", "clasifier.py")]
+)
+def test_sandbox_upload_file_dont_exist(client_session, makedrop_event,
+                                        submission_dir, filename):
+    client, session = client_session
+    sign_up_team(session, "iris_test_4event", "test_user")
+
+    config = ramp_config_template()
+    ramp_config = generate_ramp_config(read_config(config))
+
+    # upload file in sandbox.html
+    path_submissions = os.path.join(ramp_config["ramp_kit_dir"],)
+
+    with login_scope(client, "test_user", "test") as client:
+        rv = client.get("http://localhost/events/iris_test_4event/sandbox")
+        assert rv.status_code == 200
+
+        # choose file and check if it was uploaded correctly
+        path_submission = os.path.join(path_submissions, filename)
+        assert not os.path.isfile(path_submission)
+
+        with pytest.raises(FileNotFoundError):
+            rv = client.post(
+                "http://localhost/events/iris_test_4event/sandbox",
+                headers={
+                    "Referer":
+                    "http://localhost/events/iris_test_4event/sandbox"
+                },
+                data={"file": (open(path_submission, "rb"), filename)},
+                follow_redirects=False,
+            )
+
+        assert rv.status_code == 200
+
+        with pytest.raises(FileNotFoundError):
+            with open(path_submission, "r") as file:
+                submitted_data = file.read()
+                assert not submitted_data
+
+        # get user interactions from db and check if 'upload' was added
+        user_interactions = get_user_interactions_by_name(session, "test_user")
+        assert "upload" not in user_interactions["interaction"].values
+
+
+@pytest.mark.parametrize(
+    "submission_dir, filename", [("/", "README.md"), ("/", "requirements.txt")]
+)
+def test_sandbox_upload_file_wrong(client_session, makedrop_event,
+                                   submission_dir, filename):
+    client, session = client_session
+    sign_up_team(session, "iris_test_4event", "test_user")
+
+    config = ramp_config_template()
+    ramp_config = generate_ramp_config(read_config(config))
+
+    # upload file in sandbox.html
+    path_submissions = os.path.join(ramp_config["ramp_kit_dir"],)
+
+    with login_scope(client, "test_user", "test") as client:
+        rv = client.get("http://localhost/events/iris_test_4event/sandbox")
+        assert rv.status_code == 200
+
+        # choose file and check if it was uploaded correctly
+        path_submission = os.path.join(path_submissions, filename)
+        assert os.path.isfile(path_submission)
+
+        rv = client.post(
+            "http://localhost/events/iris_test_4event/sandbox",
+            headers={"Referer":
+                     "http://localhost/events/iris_test_4event/sandbox"},
+            data={"file": (open(path_submission, "rb"), filename)},
+            follow_redirects=False,
+        )
+
+        assert rv.status_code == 302
+        assert (rv.location ==
+                "http://localhost/events/iris_test_4event/sandbox")
+
+        with open(path_submission, "r") as file:
+            submitted_data = file.read()
+        assert submitted_data
+
+        # get user interactions from db and check if 'upload' was added
+        user_interactions = get_user_interactions_by_name(session, "test_user")
+        assert "upload" not in user_interactions["interaction"].values
+
+
+@pytest.mark.parametrize(
+    "submission_dir, filename",
+    [("submissions/error", "classifier.py"),
+     ("submissions/random_forest_10_10", "classifier.py"),
+     ("submissions/starting_kit", "classifier.py")]
+)
+def test_sandbox_upload_file(client_session, makedrop_event,
+                             submission_dir, filename):
+    client, session = client_session
+    sign_up_team(session, "iris_test_4event", "test_user")
+
+    config = ramp_config_template()
+    ramp_config = generate_ramp_config(read_config(config))
+
+    # upload file in sandbox.html
+    path_submissions = os.path.join(ramp_config["ramp_kit_dir"],
+                                    submission_dir)
+
+    with login_scope(client, "test_user", "test") as client:
+        rv = client.get("http://localhost/events/iris_test_4event/sandbox")
+        assert rv.status_code == 200
+
+        # choose file and check if it was uploaded correctly
+        path_submission = os.path.join(path_submissions, filename)
+        assert os.path.isfile(path_submission)
+
+        rv = client.post(
+            "http://localhost/events/iris_test_4event/sandbox",
+            headers={
+                     "Referer":
+                     "http://localhost/events/iris_test_4event/sandbox"},
+            data={"file": (open(path_submission, "rb"), filename)},
+            follow_redirects=False,
+        )
+
+        assert rv.status_code == 302
+        assert (rv.location ==
+                "http://localhost/events/iris_test_4event/sandbox")
+
+        # code of the saved file
+        with open(path_submission, "r") as file:
+            submitted_data = file.read()
+
+        # code from the db
+        event = get_event(session, "iris_test_4event")
+        sandbox_submission = get_submission_by_name(
+            session, "iris_test_4event", "test_user", event.ramp_sandbox_name
+        )
+        submission_code = sandbox_submission.files[-1].get_code()
+
+        # get user interactions from db and check if 'upload' was added
+        user_interactions = get_user_interactions_by_name(session, "test_user")
+
+        # check if the code of the submitted file in the 'submission_code'
+        assert submitted_data is not None
+        assert submitted_data in submission_code
+        # check if the user_interaction was added to the db
+        assert "upload" in user_interactions["interaction"].values
+
+
+def test_sandbox_save_file(client_session, makedrop_event):
+    client, session = client_session
+    sign_up_team(session, "iris_test_4event", "test_user")
+
+    example_code = "example content"
+
+    with login_scope(client, "test_user", "test") as client:
+        rv = client.get("http://localhost/events/iris_test_4event/sandbox")
+        assert rv.status_code == 200
+
+        rv = client.post(
+            "http://localhost/events/iris_test_4event/sandbox",
+            headers={"Referer":
+                     "http://localhost/events/iris_test_4event/sandbox"},
+            data={"classifier": example_code,
+                  "code-csrf_token": "temp_token"},
+            follow_redirects=False,
+        )
+        assert rv.status_code == 200
+
+        # code from the db
+        event = get_event(session, "iris_test_4event")
+        sandbox_submission = get_submission_by_name(
+            session, "iris_test_4event", "test_user", event.ramp_sandbox_name
+        )
+        submission_code = sandbox_submission.files[-1].get_code()
+
+        # get user interactions from db and check if 'save' was added
+        user_interactions = get_user_interactions_by_name(session, "test_user")
+
+        assert "save" in user_interactions["interaction"].values
+        assert example_code in submission_code
+
+    # make sure that after changing the code example
+    # and reloading the page the code is still changed
+    with login_scope(client, "test_user", "test") as client:
+        rv = client.get("http://localhost/events/iris_test_4event/sandbox")
+        assert rv.status_code == 200
+        assert example_code.encode() in rv.data
 
 
 @pytest.mark.parametrize(

@@ -489,6 +489,7 @@ def sandbox(event_name):
                     'Submission {} already exists. Please change the name.'
                     .format(new_submission_name)
                 )
+
             except MissingExtensionError:
                 return redirect_to_sandbox(
                     event, 'Missing extension'

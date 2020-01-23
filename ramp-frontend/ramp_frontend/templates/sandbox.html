@@ -74,94 +74,95 @@
     <div class="description">You can either edit and save the code in the left column or upload the files in the right column. You can also import code from other submissions when the <a href="/events/{{ event.name }}/leaderboard">leaderboard</a> links are open.</div>
 </div>
 
-<div class="col-xs-8">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">
+<div class="row>">
+  <div class="col-xs-8">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
           <div class="title">
-              Edit your submission
+            Edit your submission
           </div>
+        </div>
       </div>
-    </div>
-    <div class="card-body">
-      <form class="ui form" method="post", name="submit", id="formSubmit">
+      <div class="card-body">
+        <form class="ui form" method="post", name="submit", id="formSubmit">
           {{ code_form.hidden_tag() }}
           {{ submit_form.hidden_tag() }}
           <div>{% for name_code in code_form.names_codes %}
-              <div class="sub-title">{{ name_code[0] }}</div>
-              <div>
-                <textarea cols="80" id="{{ name_code[0] }}" name="{{ name_code[0] }}">{{ name_code[1] }}</textarea>
-              </div>
-            {% endfor %}
-           <br />
-           <br />
-           <div class="card-header">
-            <div class="card-title">
-              <div class="title">
-                {{ event_status["msg"] | safe}}
-              </div>
+            <div class="sub-title">{{ name_code[0] }}</div>
+            <div>
+              <textarea cols="80" id="{{ name_code[0] }}" name="{{ name_code[0] }}">{{ name_code[1] }}</textarea>
+            </div>
+          {% endfor %}</div>
+          <br />
+          <div class="sandbox">
+            <div class="title">
+              {{ event_status["msg"] | safe}}
             </div>
           </div>
-          </div>
           <br />
-          <br />
-          <div class="container">
-            <div class="row">
-              <center>
-                <div class="required field">
-                  <label>Submission name (between 4 and 20 characters)</label>
-                    {{ submit_form.submission_name }}
+          <div class="row">
+            <div class="col-sm-6 text-center">
+              <input type="submit" value="Save for later" class="ui submit button", name="saving">
+            </div>
+            <div class="col-sm-6 text-center">
+              {% if event_status["state"] == 'close' %}
+                <input button type="button" value="Submit now" class="btn btn-secondary disabled">
+              {% else %}
+                <button type="button" class="ui submit button" data-toggle="modal" data-target="#submit_Modal">Submit now</button>
+                <!-- Modal -->
+                <div class="modal fade" id="submit_Modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h3 class="modal-title submission-title" id="exampleModalLabel"></i>Submit code</h3>
+                      </div>
+                      <div class="required field">
+                        <label>Submission name (between 4 and 20 characters)</label>
+                          {{ submit_form.submission_name }}
+                      </div>
+                      <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary" data-dismiss="modal" id="entered">Cancel</button>
+                        <input type="submit" value="Submit now" class="ui submit button" name="submission">
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </center>
-            </div>
-            <br />
-            <div class="row">
-              <div class="col-xs-6">
-                <center>
-                  <input type="submit" value="Save for later" class="ui submit button", name="saving">
-                </center>
-              </div>
-              <div class="col-xs-6">
-                <center>
-                  {% if event_status["state"] == 'close' %}
-                    <input button type="button" value="Submit now" class="btn btn-secondary disabled" >
-                  {% else %}
-                    <input type="submit" value="Submit now" class="ui submit button" name="submission">
-                  {% endif %}
-                </center>
-              </div>
+              {% endif %}
             </div>
           </div>
         </form>
-    </div>
-  </div>
-</div>
-<div class="col-xs-4">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">
-          <div class="title">
-              Upload your files!
-          </div>
       </div>
     </div>
-	<div class="card-body">
-      <div class="sub-title"> File list</div>
-          {% for f in submission_names %}
-            <div class="panel fresh-color panel-info">
-              <div class="panel-heading">
-                <i class="fa fa-file"></i> {{ f }}
-              </div>
+  </div>
+
+  <div class="col-xs-4">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+            <div class="title">
+                Upload your files!
             </div>
-          {% endfor %}
-      <div class="sub-title"> Upload file</div>
-        <div class="text-indent">
-          <form class="ui form" action="" method="post" enctype="multipart/form-data">
-              {{ upload_form.hidden_tag() }}
-              <input type="file" name="file" class="ui submit button">
-              <input type="submit" value="Upload" class="ui upload button">
-          </form>
         </div>
+      </div>
+    <div class="card-body">
+        <div class="sub-title"> File list</div>
+            {% for f in submission_names %}
+              <div class="panel fresh-color panel-info">
+                <div class="panel-heading">
+                  <i class="fa fa-file"></i> {{ f }}
+                </div>
+              </div>
+            {% endfor %}
+        <div class="sub-title"> Upload file</div>
+          <div class="text-indent">
+            <form class="ui form" action="" method="post" enctype="multipart/form-data">
+                {{ upload_form.hidden_tag() }}
+                <input type="file" name="file" class="ui submit button">
+                <input type="submit" value="Upload" class="ui upload button">
+            </form>
+          </div>
+      </div>
     </div>
   </div>
 </div>
