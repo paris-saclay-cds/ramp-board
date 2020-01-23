@@ -209,9 +209,9 @@ def delete_event(config, config_event, event_name, from_disk):
     """Delete event."""
     config = read_config(config)
     
+    # check if the event_config dir exists
     if not os.path.isfile(config_event) and from_disk:
-        # if the event_config dir does not exist
-        print('cannot locate on the disk '+config_event)
+        print('cannot find '+config_event)
         from_disk = False
 
     # remove event from the database
@@ -221,12 +221,11 @@ def delete_event(config, config_event, event_name, from_disk):
         if db_event:
             event_module.delete_event(session, event_name)
             if from_disk:
-                # remove from disk
-                event = event_module.select_event_by_name(session, event_name)
-                path_to_submissions = event['path_ramp_submissions']
-                shutil.rmtree(path_to_submissions)
-                print('removed directory '+path_to_submissions)
-                
+                # remove submissions dir from disk if it exists
+                path_to_submissions = db_event.path_ramp_submissions
+                if os.path.isfile(path_to_submissions):
+                    shutil.rmtree(path_to_submissions)
+                    print('removed directory '+path_to_submissions)   
         if db_event:
             event_module.delete_event(session, event_name)
         else:
