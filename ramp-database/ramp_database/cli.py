@@ -190,6 +190,30 @@ def add_submission(config, event, team, submission, path):
 
 
 @main.command()
+@click.option("--config", required=True,
+              help="""Path to configuration file YAML format
+              containing the database information, eg config.yml""")
+@click.option('--name', required=True,
+              help='Name of the event which will be removed.')
+@click.option('--from-disk', is_flag=True, default=False,
+              help="""If True the event and all the related submissions
+                      will be removed from the database and from the disk;
+                      if set to False they will only be removed from 
+                      the database""")
+def delete_event():
+    """Delete event."""
+    config = read_config(config)
+    if from_disk:
+        # remove from disk
+        event = event_module.select_event_by_name(session, event_name)
+        path_to_submissions = event['path_ramp_submissions']
+        print(path_to_submissions)
+    # remove event from the database
+    with session_scope(config['sqlalchemy']) as session:
+        event_module.delete_event(session, event_name)
+
+
+@main.command()
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
