@@ -20,7 +20,6 @@ from ramp_database.model import User
 from ramp_database.exceptions import NameClashError
 
 from ramp_database.tools.event import get_event
-from ramp_database.tools.event import delete_event
 from ramp_database.tools.frontend import is_admin
 from ramp_database.tools.frontend import is_accessible_event
 from ramp_database.tools.frontend import is_user_signed_up

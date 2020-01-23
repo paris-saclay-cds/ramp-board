@@ -203,12 +203,12 @@ def add_submission(config, event, team, submission, path):
 @click.option('--from-disk', is_flag=True, default=False,
               help="""If True the event and all the related submissions
                       will be removed from the database and from the disk;
-                      if set to False they will only be removed from 
+                      if set to False they will only be removed from
                       the database""")
 def delete_event(config, config_event, event_name, from_disk):
     """Delete event."""
     config = read_config(config)
-    
+
     # check if the event_config dir exists
     if not os.path.isfile(config_event) and from_disk:
         print('cannot find '+config_event)
@@ -225,7 +225,7 @@ def delete_event(config, config_event, event_name, from_disk):
                 path_to_submissions = db_event.path_ramp_submissions
                 if os.path.isfile(path_to_submissions):
                     shutil.rmtree(path_to_submissions)
-                    print('removed directory '+path_to_submissions)   
+                    print('removed directory '+path_to_submissions)
         if db_event:
             event_module.delete_event(session, event_name)
         else:
