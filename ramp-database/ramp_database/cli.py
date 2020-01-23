@@ -1,7 +1,9 @@
 from collections import defaultdict
 
 import click
+import os
 import pandas as pd
+import shutil
 
 from ramp_utils import read_config
 
@@ -206,19 +208,34 @@ def add_submission(config, event, team, submission, path):
 def delete_event(config, config_event, event_name, from_disk):
     """Delete event."""
     config = read_config(config)
-    config_event = read_config(config_event)
-    if from_disk:
-        # remove from disk
-        event = event_module.select_event_by_name(session, event_name)
-        path_to_submissions = event['path_ramp_submissions']
-        print(path_to_submissions)
+    
+    if not os.path.isfile(config_event) and from_disk:
+        # if the event_config dir does not exist
+        print('cannot locate on the disk '+config_event)
+        from_disk = False
+
     # remove event from the database
     with session_scope(config['sqlalchemy']) as session:
+        # is event in the database?
         db_event = event_module.get_event(session, event_name)
+        if db_event:
+            event_module.delete_event(session, event_name)
+            if from_disk:
+                # remove from disk
+                event = event_module.select_event_by_name(session, event_name)
+                path_to_submissions = event['path_ramp_submissions']
+                shutil.rmtree(path_to_submissions)
+                print('removed directory '+path_to_submissions)
+                
         if db_event:
             event_module.delete_event(session, event_name)
         else:
             print('!!'+event_name+' was not found in the database')
+    if from_disk:
+        # remove the path to this eventfrom the disk
+        event_dir = os.path.dirname(config_event)
+        shutil.rmtree(event_dir)
+        print('removed directory '+event_dir)
 
 
 @main.command()
