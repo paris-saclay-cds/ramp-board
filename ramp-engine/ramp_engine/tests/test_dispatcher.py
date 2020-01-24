@@ -19,8 +19,6 @@ from ramp_database.tools.submission import get_submission_by_id
 from ramp_engine.local import CondaEnvWorker
 from ramp_engine.dispatcher import Dispatcher
 
-print('HERE')
-
 
 @pytest.fixture
 def session_toy(database_connection):
