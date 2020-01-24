@@ -5,7 +5,7 @@ import shutil
 import subprocess
 from datetime import datetime
 
-from .base import BaseWorker, _get_traceback
+from ..base import BaseWorker, _get_traceback
 
 logger = logging.getLogger('RAMP-WORKER')
 
