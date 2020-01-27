@@ -215,7 +215,8 @@ def delete_event(config, config_event, from_disk, force):
 
     # check if the event_config dir exists
     if not os.path.isfile(config_event):
-        click.secho('No such file: '+config_event, err=True, fg='red')
+        click.secho("No such file: {}".format(config_event),
+                    err=True, fg='red')
     else:
         # read the event_name
         config_event_params = read_config(config_event)
@@ -233,22 +234,24 @@ def delete_event(config, config_event, from_disk, force):
                     path_to_submissions = db_event.path_ramp_submissions
                     if os.path.exists(path_to_submissions):
                         shutil.rmtree(path_to_submissions)
-                        click.echo('removed directory '+path_to_submissions)
+                        click.echo("""removed
+                        directory {}""".format(path_to_submissions))
                     else:
-                        click.secho('No such submissions directory: ' \
-                                    + path_to_submissions,
+                        click.secho("""No such submissions
+                        directory: {}""".format(path_to_submissions),
                                     fg='red', err=True)
             else:
-                click.secho('No such event in the database: ' + event_name,
+                click.secho("""No such event in the
+                            database: {}""".format(event_name),
                             fg='red', err=True)
 
             event_dir = os.path.dirname(config_event)
             if (db_event or force) and from_disk:
                 # remove this event from the disk
                 shutil.rmtree(event_dir)
-                click.echo('removed directory: '+event_dir)
+                click.echo("removed directory: {}".format(event_dir))
             else:
-                click.secho('No such directory: '+event_dir,
+                click.secho("No such directory: {}".format(event_dir),
                             err=True, fg='red')
 
 
