@@ -204,39 +204,48 @@ def add_submission(config, event, team, submission, path):
                       if set to False they will only be removed from
                       the database""")
 @click.option('--force', is_flag=True, default=False,
-              help="""If True the event will be removed from the disk (if it exists)
-                      even if it is not found in the database.
-                      This option must be used with --from-disk option to work""")
+              help="""If True the event will be removed from the disk
+                      (if it exists) even if it is not found
+                      in the database.
+                      This option must be used with --from-disk
+                      option to work""")
 def delete_event(config, config_event, from_disk, force):
     """Delete event."""
     config = read_config(config)
 
     # check if the event_config dir exists
-    if not os.path.isfile(config_event) and from_disk:
-        print('cannot find '+config_event)
-        from_disk = False
+    if not os.path.isfile(config_event):
+        click.secho('No such file: '+config_event, err=True, fg='red')
+    else:
+        # read the event_name
+        config_event_params = read_config(config_event)
+        event_name = config_event_params['ramp']['event_name']
 
-    # remove event from the database
-    with session_scope(config['sqlalchemy']) as session:
-        # is event in the database?
-        db_event = event_module.get_event(session, event_name)
-        if db_event:
-            event_module.delete_event(session, event_name)
-            if from_disk:
-                # remove submissions dir from disk if it exists
-                path_to_submissions = db_event.path_ramp_submissions
-                if os.path.isfile(path_to_submissions):
-                    shutil.rmtree(path_to_submissions)
-                    print('removed directory '+path_to_submissions)
-        if db_event:
-            event_module.delete_event(session, event_name)
-        else:
-            print('!!'+event_name+' was not found in the database')
-    if from_disk:
-        # remove the path to this eventfrom the disk
-        event_dir = os.path.dirname(config_event)
-        shutil.rmtree(event_dir)
-        print('removed directory '+event_dir)
+        # remove event from the database
+        with session_scope(config['sqlalchemy']) as session:
+            # is event in the database?
+            db_event = event_module.get_event(session, event_name)
+            if db_event:
+                event_module.delete_event(session, event_name)
+
+                if from_disk:
+                    # remove submissions dir from disk if it exists
+                    path_to_submissions = db_event.path_ramp_submissions
+                    if os.path.isfile(path_to_submissions):
+                        shutil.rmtree(path_to_submissions)
+                        click.echo('removed directory '+path_to_submissions)
+            else:
+                click.secho('No such event in the database: ' + event_name,
+                            fg='red', err=True)
+
+            event_dir = os.path.dirname(config_event)
+            if (db_event or force) and from_disk:
+                # remove this event from the disk
+                shutil.rmtree(event_dir)
+                click.echo('removed directory: '+event_dir)
+            else:
+                click.secho('No such directory: '+event_dir,
+                            err=True, fg='red')
 
 
 @main.command()
