@@ -248,8 +248,7 @@ def delete_event(config, config_event, from_disk, force):
                 if from_disk and not force:
                     click.echo("please use options --force --from_disk " +
                                "if you would like to remove from the " +
-                               "disk events directory: {}".format(event_dir))     
-
+                               "disk events directory: {}".format(event_dir))
             if event_dir:
                 if (db_event or force) and from_disk:
                     # remove this event from the disk
