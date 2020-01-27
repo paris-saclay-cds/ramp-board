@@ -147,10 +147,5 @@
 $(function () {
    $('#formerror').modal('toggle')
 });
-$(document).keypress(function(e) {
-  if ($("#remove_event_Modal").hasClass('in') && (e.keycode == 13 || e.which == 13)) {
-    $('#entered').click();
-  }
-});
 </script>
 {% endblock %}
