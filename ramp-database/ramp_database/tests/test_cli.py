@@ -120,6 +120,43 @@ def test_add_event(make_toy_db):
     assert result.exit_code == 0, result.output
 
 
+@pytest.mark.parametrize(
+    "config_event, from_disk, force, expected_msg",
+    [("events/iris_test/config2.yml", False, 
+      False, 'No such file: events/iris_test/config'), 
+     ("events/iris_test/config.yml", False, 
+      False, 'No such file: events/iris_test/config') 
+    ]
+)
+def test_delete_event(make_toy_db, config_event, from_disk, 
+                      force, expected_msg):
+    runner = CliRunner()
+    ramp_config = generate_ramp_config(read_config(ramp_config_template()))
+    
+    # add user
+    result = runner.invoke(main, ['add-event',
+                                  '--config', database_config_template(),
+                                  '--problem', 'iris',
+                                  '--event', 'iris_test',
+                                  '--title', 'Iris classification',
+                                  '--sandbox', ramp_config['sandbox_name'],
+                                  '--submissions-dir',
+                                  ramp_config['ramp_submissions_dir'],
+                                  '--is-public', False,
+                                  '--force', True],
+                           catch_exceptions=False)
+    assert result.exit_code == 0, result.output
+    
+    result = runner.invoke(main, ['delete-event',
+                                  '--config', database_config_template(),
+                                  '--config-event', config_event,
+                                  '--from-disk', from_disk,
+                                  '--force', force])
+    import pdb; pdb.set_trace()
+    assert result.exit_code == 0, result.output
+    assert msg in result.output
+
+
 def test_sign_up_team(make_toy_db):
     runner = CliRunner()
     result = runner.invoke(main, ['sign-up-team',

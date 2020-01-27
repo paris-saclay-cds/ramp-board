@@ -195,7 +195,7 @@ def add_submission(config, event, team, submission, path):
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
-@click.option("--config_event", required=True,
+@click.option("--config-event", required=True,
               help="""Path to configuration file YAML format
               containing the database information, eg config.yml""")
 @click.option('--from-disk', is_flag=True, default=False,
