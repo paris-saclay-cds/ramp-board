@@ -231,7 +231,7 @@ def delete_event(config, config_event, from_disk, force):
                 if from_disk:
                     # remove submissions dir from disk if it exists
                     path_to_submissions = db_event.path_ramp_submissions
-                    if os.path.isfile(path_to_submissions):
+                    if os.path.exists(path_to_submissions):
                         shutil.rmtree(path_to_submissions)
                         click.echo('removed directory '+path_to_submissions)
             else:
