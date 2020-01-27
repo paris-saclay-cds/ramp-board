@@ -5,7 +5,7 @@ body {
   padding-top: 0px;
   height: 100%;
   position: relative;
-  font-size: 18px; }
+  font-size: 13px; }
 
 * {
   outline: none; }
@@ -121,7 +121,7 @@ a:hover {
     line-height: 60px;
     padding: 0px 20px 0px 20px; }
   .navbar .navbar-font-index {
-    font-size: 1.2em; }
+    font-size: 1.8em; }
   .navbar .navbar-font-about {
     font-size: 16px; }
   .navbar .dropdown-menu {
@@ -426,7 +426,7 @@ a:hover {
   position: relative; }
   .card .card-body {
     padding: 50px;
-    font-size: 1em; }
+    font-size: 1.5em; }
     .card .card-body .sub-title {
       font-size: 1.2em;
       padding: 1.2em 0em 0.4em 0em;
@@ -442,7 +442,7 @@ a:hover {
     float: left; }
     .card .card-header .card-title .title {
       font-family: 'Source Sans Pro', sans-serif;
-      font-size: 1.1em;
+      font-size: 1.3em;
       text-decoration: none; }
   .card .card-header .pull-right {
     padding: 0.5em 1em; }
@@ -1257,4 +1257,8 @@ ul.problem-font {
 div.info-pages {
   padding-left: 280px;
   padding-right: 280px
+}
+
+p.index-body {
+  font-size: 1.5em;
 }
