@@ -198,14 +198,16 @@ def add_submission(config, event, team, submission, path):
 @click.option("--config_event", required=True,
               help="""Path to configuration file YAML format
               containing the database information, eg config.yml""")
-@click.option('--event-name', required=True,
-              help='Name of the event which will be removed.')
 @click.option('--from-disk', is_flag=True, default=False,
               help="""If True the event and all the related submissions
                       will be removed from the database and from the disk;
                       if set to False they will only be removed from
                       the database""")
-def delete_event(config, config_event, event_name, from_disk):
+@click.option('--force', is_flag=True, default=False,
+              help="""If True the event will be removed from the disk (if it exists)
+                      even if it is not found in the database.
+                      This option must be used with --from-disk option to work""")
+def delete_event(config, config_event, from_disk, force):
     """Delete event."""
     config = read_config(config)
 
