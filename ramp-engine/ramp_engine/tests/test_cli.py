@@ -48,7 +48,6 @@ def test_dispatcher(verbose_params, make_toy_db):
 def test_worker(verbose_params, make_toy_db):
     runner = CliRunner()
     cmd = ["worker",
-           "--config", ramp_config_template(),
            "--event-config", ramp_config_template(),
            "--submission", "starting_kit"]
     if verbose_params is not None:
