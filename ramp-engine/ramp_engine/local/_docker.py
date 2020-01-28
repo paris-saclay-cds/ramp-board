@@ -70,18 +70,20 @@ class DockerWorker(CondaEnvWorker):
             ]
             # add it to PATH
             docker_cmd += ["--env", 'PATH="{conda_path}:$PATH"']
-        current_dir = os.getcwd()
         # add ramp-kit directory
         mounted_dir = []
         for key in ["kit_dir", "data_dir", "submissions_dir", "logs_dir"]:
-            mount_dir = os.path.join(current_dir, self.config[key])
+            mount_dir = self.config[key]
             if mount_dir not in mounted_dir:
                 mounted_dir.append(mount_dir)
+                # docker_cmd += [
+                #     "--mount",
+                #     r"type=bind,source={},target={}".format(
+                #         mount_dir, mount_dir
+                #     )
+                # ]
                 docker_cmd += [
-                    "--mount",
-                    r"type=bind,source={},target={}".format(
-                        mount_dir, mount_dir
-                    )
+                    "-v", "{}:{}".format(mount_dir, mount_dir)
                 ]
         docker_cmd += [f'{docker_image}']
         proc = subprocess.Popen(
@@ -101,27 +103,30 @@ class DockerWorker(CondaEnvWorker):
             self._docker_exec_cmd += [
                 "--env", 'PATH="{conda_path}:$PATH"'
             ]
+        self._docker_exec_cmd += [
+            "--workdir", self.config['kit_dir']
+        ]
+        self._docker_exec_cmd += ["-u", "root:root"]
         self._docker_exec_cmd += [f"{self.submission}", "/bin/bash", "-c"]
         cmd = self._docker_exec_cmd + ["conda info --envs --json"]
         self._python_bin_path = self._find_conda_env_bin_path(self.config, cmd)
         BaseWorker.setup(self)
 
+    def launch_submission(self):
+        print(self._python_bin_path)
+        cmd = self._docker_exec_cmd + [
+            'ramp-test'
+        ]
+        self._launch_ramp_test_submission(cmd)
+        BaseWorker.launch_submission(self)
+
     def collect_results(self):
         BaseWorker.collect_results(self)
         if self.status in ['finished', 'running', 'timeout']:
             # communicate() will wait for the process to be completed
-            x, y = self._proc.communicate()
+            self._proc.communicate()
             self._log_file.close()
-            subprocess.run(self._docker_exec_cmd + [f"cat {os.path.join(self._log_dir, 'log')}"])
-
-    def launch_submission(self):
-        # FIXME: move to kit before to start training
-        mount_dir = os.path.join(os.getcwd(), self.config["kit_dir"])
-        cmd = self._docker_exec_cmd + ["cd", mount_dir, "&&"] + [
-            os.path.join(self._python_bin_path, 'ramp-test')
-        ]
-        self._launch_ramp_test_submission(cmd)
-        BaseWorker.launch_submission(self)
+            mount_dir = os.path.join(os.getcwd(), self.config["kit_dir"])
 
     def teardown(self):
         """Remove the predictions stores within the submission."""
