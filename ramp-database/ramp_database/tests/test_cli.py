@@ -2,6 +2,7 @@ import os
 import shutil
 
 import pytest
+import yaml
 
 from click.testing import CliRunner
 
@@ -124,15 +125,14 @@ def test_add_event(make_toy_db):
 
 @pytest.mark.parametrize(
     "config_event, from_disk, force, expected_msg",
-    [("events/iris_test/config2.yml", False, 
+    [("events/iris_test/config2.yml", False,
       False, 'No such file: events/iris_test/config2'),
-     ("/tmp/databoard_test/events/iris_test/config.yml", False, 
+     ("/tmp/databoard_test/events/iris_test/config.yml", False,
       False, 'please use options --force --from_disk'),
-     ("/tmp/databoard_test/events/iris_test/config.yml", True, 
-      True, ''),
-    ]
+     ("/tmp/databoard_test/events/iris_test/config.yml", True,
+      True, '')]
 )
-def test_delete_event(make_toy_db, config_event, from_disk, 
+def test_delete_event(make_toy_db, config_event, from_disk,
                       force, expected_msg):
     runner = CliRunner()
     ramp_config = read_config(ramp_config_template())
@@ -141,18 +141,20 @@ def test_delete_event(make_toy_db, config_event, from_disk,
                                         ramp_config['ramp']['data_dir']])
 
     result = runner.invoke(main_utils, ['init-event',
-                                      '--name', 'iris_test',
-                                      '--deployment-dir', deployment_dir])
+                                        '--name', 'iris_test',
+                                        '--deployment-dir', deployment_dir])
     assert result.exit_code == 0, result.output
 
     result = runner.invoke(main_utils, ['deploy-event',
-                                  '--config', database_config_template(),
-                                  '--event-config', ramp_config_template(),
-                                  '--force'])
-    import yaml
+                                        '--config',
+                                        database_config_template(),
+                                        '--event-config',
+                                        ramp_config_template(),
+                                        '--force'])
+
     if 'No such file' not in expected_msg:
         with open(config_event, 'w') as file:
-            documents = yaml.dump(ramp_config, file)
+            yaml.dump(ramp_config, file)
 
     assert result.exit_code == 0, result.output
 
@@ -161,7 +163,7 @@ def test_delete_event(make_toy_db, config_event, from_disk,
                                   '--config-event', config_event,
                                   '--from-disk', from_disk,
                                   '--force', force],
-                                  catch_exceptions=False)
+                           catch_exceptions=False)
 
     assert result.exit_code == 0, result.output
     assert expected_msg in result.output
