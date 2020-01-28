@@ -5,7 +5,15 @@ body {
   padding-top: 0px;
   height: 100%;
   position: relative;
-  font-size: 18px; }
+  /* font-size: 0.6vw; */
+}
+
+html,body {
+    text-size-adjust: none;
+    -webkit-text-size-adjust: none;
+    -moz-text-size-adjust: none;
+    -ms-text-size-adjust: none;
+  }
 
 * {
   outline: none; }
@@ -116,12 +124,12 @@ a:hover {
       font-size: 1.5em; }
   .navbar .navbar-nav > li > a {
     font-family: 'Source Sans Pro', sans-serif;
-    font-size: 1em;
+    font-size: 0.9em;
     height: 60px;
     line-height: 60px;
     padding: 0px 20px 0px 20px; }
   .navbar .navbar-font-index {
-    font-size: 1.2em; }
+    font-size: 1.7em; }
   .navbar .navbar-font-about {
     font-size: 16px; }
   .navbar .dropdown-menu {
@@ -425,8 +433,11 @@ a:hover {
   overflow: hidden;
   position: relative; }
   .card .card-body {
-    padding: 50px;
-    font-size: 1em; }
+    padding: 1.2vw;
+    font-size: 1.2em; }
+  .card .card-body-text {
+    padding: 2vw;
+    font-size: 1.4em; }
     .card .card-body .sub-title {
       font-size: 1.2em;
       padding: 1.2em 0em 0.4em 0em;
@@ -438,11 +449,12 @@ a:hover {
   .card .card-body.half-padding {
     padding: 12.5px; }
   .card .card-header .card-title {
-    padding: 0.8em 25px;
-    float: left; }
+    padding: 0.6em 0.6em;
+    float: left;
+    margin-bottom: 0px; }
     .card .card-header .card-title .title {
       font-family: 'Source Sans Pro', sans-serif;
-      font-size: 1.1em;
+      font-size: 1.3em;
       text-decoration: none; }
   .card .card-header .pull-right {
     padding: 0.5em 1em; }
@@ -1067,7 +1079,7 @@ body.login-page {
         border: 0px; }
   .landing-page .app-content-header {
     font-weight: 300;
-    font-size: 46px; }
+    font-size: 3.2em; }
   .landing-page .app-content-description {
     font-weight: 300;
     font-size: 18px; }
@@ -1255,6 +1267,23 @@ ul.problem-font {
 }
 
 div.info-pages {
-  padding-left: 280px;
-  padding-right: 280px
+  padding-left: 15vw;
+  padding-right: 15vw;
+}
+
+p.index-body {
+  font-size: 1.5em;
+}
+
+@media only screen and (max-width: 768px) {
+  body {
+    font-size: 1.8vw;
+  }
+  h2 {
+    font-size: 5vw;
+  }
+  div.info-pages {
+    padding-left: 1vw;
+    padding-right: 1vw;
+  }
 }
