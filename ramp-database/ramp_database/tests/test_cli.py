@@ -33,6 +33,29 @@ def make_toy_db(database_connection):
         Model.metadata.drop_all(db)
 
 
+@pytest.fixture
+def deploy_event(database_connection):
+    runner = CliRunner()
+    ramp_config = read_config(ramp_config_template())
+    event_config = "/tmp/databoard_test/events/iris_test2/config.yml"
+
+    deployment_dir = os.path.commonpath([ramp_config['ramp']['kit_dir'],
+                                        ramp_config['ramp']['data_dir']])
+
+    result = runner.invoke(main_utils, ['init-event',
+                                        '--name', 'iris_test2',
+                                        '--deployment-dir', deployment_dir])
+
+    result = runner.invoke(main_utils, ['deploy-event',
+                                        '--config',
+                                        database_config_template(),
+                                        '--event-config',
+                                        event_config,
+                                        '--force'])
+    with open(event_config, 'w') as file:
+        yaml.dump(ramp_config, file)
+
+
 def test_add_user(make_toy_db):
     runner = CliRunner()
     result = runner.invoke(main, ['add-user',
@@ -127,36 +150,16 @@ def test_add_event(make_toy_db):
     "config_event, from_disk, force, expected_msg",
     [("events/iris_test/config2.yml", False,
       False, 'No such file: events/iris_test/config2'),
-     ("/tmp/databoard_test/events/iris_test/config.yml", False,
+     ("/tmp/databoard_test/events/iris_test2/config.yml", False,
       False, 'please use options --force --from_disk'),
      ("/tmp/databoard_test/events/iris_test/config.yml", True,
       True, '')]
 )
-def test_delete_event(make_toy_db, config_event, from_disk,
+def test_delete_event(make_toy_db, deploy_event,
+                      config_event, from_disk,
                       force, expected_msg):
     runner = CliRunner()
     ramp_config = read_config(ramp_config_template())
-
-    deployment_dir = os.path.commonpath([ramp_config['ramp']['kit_dir'],
-                                        ramp_config['ramp']['data_dir']])
-
-    result = runner.invoke(main_utils, ['init-event',
-                                        '--name', 'iris_test',
-                                        '--deployment-dir', deployment_dir])
-    assert result.exit_code == 0, result.output
-
-    result = runner.invoke(main_utils, ['deploy-event',
-                                        '--config',
-                                        database_config_template(),
-                                        '--event-config',
-                                        ramp_config_template(),
-                                        '--force'])
-
-    if 'No such file' not in expected_msg:
-        with open(config_event, 'w') as file:
-            yaml.dump(ramp_config, file)
-
-    assert result.exit_code == 0, result.output
 
     result = runner.invoke(main, ['delete-event',
                                   '--config', database_config_template(),
