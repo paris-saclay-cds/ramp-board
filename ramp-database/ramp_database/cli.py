@@ -198,12 +198,12 @@ def add_submission(config, event, team, submission, path):
 @click.option("--config-event", required=True,
               help="""Path to configuration file YAML format
               containing the database information, eg config.yml""")
-@click.option('--from-disk', is_flag=True, default=False,
+@click.option('--from-disk', default=False,
               help="""If True the event and all the related submissions
                       will be removed from the database and from the disk;
                       if set to False they will only be removed from
                       the database""")
-@click.option('--force', is_flag=True, default=False,
+@click.option('--force', default=False,
               help="""If True the event will be removed from the disk
                       (if it exists) even if it is not found
                       in the database.
@@ -235,7 +235,7 @@ def delete_event(config, config_event, from_disk, force):
                     path_to_submissions = db_event.path_ramp_submissions
                     if os.path.exists(path_to_submissions):
                         shutil.rmtree(path_to_submissions)
-                        click.echo("removed directory {}" +
+                        click.echo("removed directory " +
                                    "{}".format(path_to_submissions))
                     else:
                         click.secho("No such submissions directory: " +

@@ -16,6 +16,8 @@ from ramp_database.testing import create_toy_db
 
 from ramp_database.cli import main
 
+from ramp_utils.cli import main as main_utils
+
 
 @pytest.fixture(scope="module")
 def make_toy_db(database_connection):
@@ -123,38 +125,49 @@ def test_add_event(make_toy_db):
 @pytest.mark.parametrize(
     "config_event, from_disk, force, expected_msg",
     [("events/iris_test/config2.yml", False, 
-      False, 'No such file: events/iris_test/config'), 
-     ("events/iris_test/config.yml", False, 
-      False, 'No such file: events/iris_test/config') 
+      False, 'No such file: events/iris_test/config2'),
+     ("/tmp/databoard_test/events/iris_test/config.yml", False, 
+      False, 'please use options --force --from_disk'),
+     ("/tmp/databoard_test/events/iris_test/config.yml", True, 
+      True, ''),
     ]
 )
 def test_delete_event(make_toy_db, config_event, from_disk, 
                       force, expected_msg):
     runner = CliRunner()
-    ramp_config = generate_ramp_config(read_config(ramp_config_template()))
-    
-    # add user
-    result = runner.invoke(main, ['add-event',
-                                  '--config', database_config_template(),
-                                  '--problem', 'iris',
-                                  '--event', 'iris_test',
-                                  '--title', 'Iris classification',
-                                  '--sandbox', ramp_config['sandbox_name'],
-                                  '--submissions-dir',
-                                  ramp_config['ramp_submissions_dir'],
-                                  '--is-public', False,
-                                  '--force', True],
-                           catch_exceptions=False)
+    ramp_config = read_config(ramp_config_template())
+
+    deployment_dir = os.path.commonpath([ramp_config['ramp']['kit_dir'],
+                                        ramp_config['ramp']['data_dir']])
+
+    result = runner.invoke(main_utils, ['init-event',
+                                      '--name', 'iris_test',
+                                      '--deployment-dir', deployment_dir])
     assert result.exit_code == 0, result.output
-    
+
+    result = runner.invoke(main_utils, ['deploy-event',
+                                  '--config', database_config_template(),
+                                  '--event-config', ramp_config_template(),
+                                  '--force'])
+    import yaml
+    if 'No such file' not in expected_msg:
+        with open(config_event, 'w') as file:
+            documents = yaml.dump(ramp_config, file)
+
+    assert result.exit_code == 0, result.output
+
     result = runner.invoke(main, ['delete-event',
                                   '--config', database_config_template(),
                                   '--config-event', config_event,
                                   '--from-disk', from_disk,
-                                  '--force', force])
-    import pdb; pdb.set_trace()
+                                  '--force', force],
+                                  catch_exceptions=False)
+
     assert result.exit_code == 0, result.output
-    assert msg in result.output
+    assert expected_msg in result.output
+
+    if force and from_disk:
+        assert not os.path.exists(config_event)
 
 
 def test_sign_up_team(make_toy_db):
