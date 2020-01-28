@@ -42,16 +42,16 @@ def deploy_event(database_connection):
     deployment_dir = os.path.commonpath([ramp_config['ramp']['kit_dir'],
                                         ramp_config['ramp']['data_dir']])
 
-    result = runner.invoke(main_utils, ['init-event',
-                                        '--name', 'iris_test2',
-                                        '--deployment-dir', deployment_dir])
+    runner.invoke(main_utils, ['init-event',
+                               '--name', 'iris_test2',
+                               '--deployment-dir', deployment_dir])
 
-    result = runner.invoke(main_utils, ['deploy-event',
-                                        '--config',
-                                        database_config_template(),
-                                        '--event-config',
-                                        event_config,
-                                        '--force'])
+    runner.invoke(main_utils, ['deploy-event',
+                               '--config',
+                               database_config_template(),
+                               '--event-config',
+                               event_config,
+                               '--force'])
     with open(event_config, 'w') as file:
         yaml.dump(ramp_config, file)
 
@@ -159,7 +159,6 @@ def test_delete_event(make_toy_db, deploy_event,
                       config_event, from_disk,
                       force, expected_msg):
     runner = CliRunner()
-    ramp_config = read_config(ramp_config_template())
 
     result = runner.invoke(main, ['delete-event',
                                   '--config', database_config_template(),
