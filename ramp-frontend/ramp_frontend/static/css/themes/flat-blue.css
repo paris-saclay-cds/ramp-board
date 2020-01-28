@@ -333,7 +333,7 @@
     color: #FFF;
     border-color: #17252a;
     border-radius: 8px;
-    padding: 10px 47px;
+    padding: 10px 35px;
    }
   .flat-blue .progress .progress-bar {
     background-color: #353d47;
@@ -349,13 +349,13 @@
   .flat-blue .color-white {
     color: #fdfdfd; }
   .flat-blue .font-large {
-    font-size: 4.3em; }
+    font-size: 4.4em; }
   .flat-blue .font-med {
-    font-size: 3.5em; }
+    font-size: 3.2em; }
   .flat-blue .font-small {
     font-size: 1.8em; }
   .flat-blue .font-smaller {
-      font-size: 25px; }
+      font-size: 1.2em; }
   .flat-blue .font-heavy {
       font-weight: bold; }
   .flat-blue .pagination > li > a {

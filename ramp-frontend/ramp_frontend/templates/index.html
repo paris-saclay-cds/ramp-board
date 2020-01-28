@@ -56,7 +56,7 @@
         <div class="container">
             <h2 class="text-center">
                 <br>
-                <div class="color-white font-large font-heavy"><span><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" alt="CDS logo" class="app-logo color-white" height="98">&nbsp;RAMP</span></div>
+                <div class="color-white font-large font-heavy"><span><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" alt="CDS logo" class="app-logo color-white" height="96px" style="max-width: 10%">&nbsp;RAMP</span></div>
             </h2>
             <p class="text-center color-white app-description font-med">Rapid Analytics & Model Prototyping</p>
             <p class="text-center color-white app-description font-small">using Python</p></div>
@@ -157,7 +157,7 @@
 
                 <div class="col-md-6 col-sm-6">
                     <span>
-                        <iframe width="525" height="394"
+                        <iframe width="540" height="339" style="max-height: 10%; max-width: 90%"
                             src="https://www.youtube.com/embed/vQoH68hb85Q" frameborder="0" allowfullscreen></iframe>
                     </span>
                 </div>
@@ -186,7 +186,7 @@
                 <div class="col-md-12">
                     <center>
                     <a href="https://www.datascience-paris-saclay.fr/" target="_blank">
-                    <img src="{{url_for('static', filename='img/partners/upsaclay.png') }}" class="img" alt="Université Paris-Saclay" height="100">
+                    <img src="{{url_for('static', filename='img/partners/upsaclay.png') }}" class="img" alt="Université Paris-Saclay" width="700vh" style="max-width: 95%;">
                     </a>
                     </center>
                 </div>
@@ -204,7 +204,7 @@
                             {% for image in images %}
                             <center>
                                 <!-- <a href="https://www.ovhcloud.com/en/" target="_blank"> -->
-                                <img src="{{ url_for('static', filename='../static/img/powered_by/' + image) }}" class="img" alt='' height="80">
+                                <img src="{{ url_for('static', filename='../static/img/powered_by/' + image) }}" class="img" alt='' height="80vh" style="max-width: 90%;">
                                 <!-- </a> -->
                             </center>
                             {% endfor %}
