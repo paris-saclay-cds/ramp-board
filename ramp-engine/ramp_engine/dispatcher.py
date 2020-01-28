@@ -105,7 +105,6 @@ class Dispatcher:
                                       self._ramp_config['event_name'],
                                       state='new')
         if not submissions:
-            logger.info('No new submissions fetch from the database')
             return
         for submission_id, submission_name, _ in submissions:
             # do not train the sandbox submission
