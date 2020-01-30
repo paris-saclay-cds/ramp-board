@@ -15,7 +15,7 @@ from .submission import get_scores
 from .submission import get_submission_max_ram
 from .submission import get_time
 
-pd.set_option('display.max_colwidth', -1)
+pd.set_option('display.max_colwidth', None)
 
 
 def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
