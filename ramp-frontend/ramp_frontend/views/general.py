@@ -16,10 +16,13 @@ def index():
     """Default landing page."""
     img_ext = ('.png', '.jpg', '.jpeg', '.gif', '.svg')
     current_dir = os.path.dirname(__file__)
-    img_folder = os.path.join(current_dir, "../static/img/powered_by")
-    images = [f for f in os.listdir(img_folder)
-              if f.endswith(img_ext)]
-    return render_template('index.html', images=images)
+    img_folder = os.path.join(current_dir, "..", "static", "img", "powered_by")
+    context = {}
+    if os.path.isdir(img_folder):
+        images = [f for f in os.listdir(img_folder)
+                  if f.endswith(img_ext)]
+        context["images": images]
+    return render_template('index.html', **context)
 
 
 @mod.route("/description")
