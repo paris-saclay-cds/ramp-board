@@ -21,7 +21,7 @@ def index():
     if os.path.isdir(img_folder):
         images = [f for f in os.listdir(img_folder)
                   if f.endswith(img_ext)]
-        context["images": images]
+        context["images"] = images
     return render_template('index.html', **context)
 
 
