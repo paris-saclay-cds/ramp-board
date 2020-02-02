@@ -77,3 +77,16 @@ If you are running the dispatcher on a remote server, you want to launch it
 within a terminal multiplexer as ``screen`` or ``tmux``. It will allow you
 to detach the process and let it run. Refer to the documentation of ``screen``
 or ``tmux`` to use them.
+
+
+Launch several dispatchers at once
+----------------------------------
+
+In case that you are running multiple events in parallel, you will want to
+start several dispatchers, on for each open event. We provide a daemon which
+will be in charge of managing the pool of dispatchers. You can start it as::
+
+    ~/ramp_deployment $ ramp launch daemon --events-dir events --verbose
+
+To can interrupt the daemon by pressing the combination of keyboard keys
+`Ctrl+C`. You can start launch the daemon within `tmux` or `screen` as well.
