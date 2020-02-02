@@ -25,16 +25,8 @@ def main():
 @click.option("--event-config", show_default=True,
               help='Configuration file in YAML format containing the RAMP '
               'event information.')
-@click.option('--n-workers', default=-1, show_default=True,
-              help='Number of worker to start in parallel.')
-@click.option('--n-threads', default=None, show_default=None, type=int,
-              help='Number of threads used by each worker.')
-@click.option('--hunger-policy', default='exit', show_default=True,
-              help='Policy to apply in case that there is no anymore workers'
-              'to be processed.')
 @click.option('-v', '--verbose', count=True)
-def dispatcher(config, event_config, n_workers, n_threads, hunger_policy,
-               verbose):
+def dispatcher(config, event_config, verbose):
     """Launch the RAMP dispatcher.
 
     The RAMP dispatcher is in charge of starting RAMP workers, collecting
@@ -53,6 +45,13 @@ def dispatcher(config, event_config, n_workers, n_threads, hunger_policy,
     worker_type = available_workers[
         internal_event_config['worker']['worker_type']
     ]
+
+    dispatcher_config = (internal_event_config['dispatcher']
+                         if 'dispatcher' in internal_event_config else {})
+    n_workers = dispatcher_config.get('n_workers', -1)
+    n_threads = dispatcher_config.get('n_threads', None)
+    hunger_policy = dispatcher_config.get('hunger_policy', 'exit')
+
     disp = Dispatcher(
         config=config, event_config=event_config, worker=worker_type,
         n_workers=n_workers, n_threads=n_threads, hunger_policy=hunger_policy

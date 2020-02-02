@@ -40,6 +40,10 @@ This config file should look like::
     worker:
         worker_type: conda
         conda_env: ramp-iris
+    dispatcher:
+        hunger_policy: sleep
+        n_workers: 2
+        n_threads: 2
 
 .. note::
     - <event_name> must always be preceeded with the '<problem_name>_' as in
