@@ -165,15 +165,17 @@ class Dispatcher:
             else:
                 logger.info('Collecting results from worker {}'.format(worker))
                 returncode, stderr = worker.collect_results()
-                if returncode == 1:
-                    logger.info(
-                        'Worker {} killed due to an error during training'
-                        .format(worker)
-                    )
-                    submission_status = 'training_error'
-                elif returncode == 124:
-                    logger.info('Worker {} killed due to timeout.'
-                                .format(worker))
+                if returncode:
+                    if returncode == 124:
+                        logger.info(
+                            'Worker {} killed due to timeout.'
+                            .format(worker)
+                        )
+                    else:
+                        logger.info(
+                            'Worker {} killed due to an error during training'
+                            .format(worker)
+                        )
                     submission_status = 'training_error'
                 else:
                     submission_status = 'tested'
