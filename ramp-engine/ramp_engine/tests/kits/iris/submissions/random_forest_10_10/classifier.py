@@ -1,3 +1,4 @@
+import time
 from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestClassifier
 
@@ -9,6 +10,7 @@ class Classifier(BaseEstimator):
     def fit(self, X, y):
         self.clf = RandomForestClassifier(
             n_estimators=10, max_leaf_nodes=10, random_state=61)
+        time.sleep(5)
         self.clf.fit(X, y)
 
     def predict(self, X):
