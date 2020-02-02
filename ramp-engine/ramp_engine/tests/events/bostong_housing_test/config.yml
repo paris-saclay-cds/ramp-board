@@ -1,0 +1,15 @@
+ramp:
+    problem_name: boston_housing
+    event_name: boston_housing_test
+    event_title: "Boston housing event"
+    event_is_public: true
+    data_dir: /tmp/databoard_test/ramp-data/boston_housing
+    kit_dir: /tmp/databoard_test/ramp-kits/boston_housing
+    submissions_dir: /tmp/databoard_test/submissions
+    predictions_dir: /tmp/databoard_test/preds
+    logs_dir: /tmp/databoard_test/log
+    sandbox_dir: starting_kit
+worker:
+    worker_type: conda
+    # for testing purpose we do not need another environment
+    conda_env: ramp-iris
