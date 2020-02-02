@@ -165,7 +165,7 @@ class Dispatcher:
             else:
                 logger.info('Collecting results from worker {}'.format(worker))
                 returncode, stderr = worker.collect_results()
-                if not returncode:
+                if returncode:
                     if returncode == 124:
                         logger.info(
                             'Worker {} killed due to timeout.'

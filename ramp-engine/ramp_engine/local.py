@@ -183,9 +183,10 @@ class CondaEnvWorker(BaseWorker):
                 'training_output')
             if os.path.exists(pred_dir):
                 shutil.rmtree(pred_dir)
-            if not returncode:
+            if returncode:
                 if os.path.exists(output_training_dir):
                     shutil.rmtree(output_training_dir)
+                self.status = 'collected'
                 return (returncode, error_msg)
             # copy the predictions into the disk
             # no need to create the directory, it will be handle by copytree
