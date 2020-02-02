@@ -15,6 +15,18 @@ logger = logging.getLogger("RAMP-DAEMON")
 
 
 class Daemon:
+    """RAMP daemon starting dispatchers for open challenges.
+
+    Parameters
+    ----------
+    config : str
+        Path to the configuration YAML file containing the information about
+        the database.
+    events_dir : str
+        The path in which all events configuration files will be located. We
+        expect a pattern as `event_dir/<a ramp event>/config.yml`. The config
+        file will be used to start the daemon.
+    """
 
     def __init__(self, config, events_dir):
         self.config = config
@@ -63,6 +75,10 @@ class Daemon:
         self._poison_pill = True
 
     def launch(self):
+        """Start the daemon.
+
+        The daemon will be killed using a keyboard interuption.
+        """
         with session_scope(self._database_config) as session:
             self.launch_dispatchers(session)
             while not self._poison_pill:

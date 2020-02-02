@@ -31,6 +31,11 @@ def session_toy(database_connection):
         Model.metadata.drop_all(db)
 
 
+def test_daemon_error_init():
+    with pytest.raises(ValueError, match="The path xxx is not existing"):
+        Daemon(config=database_config_template(), events_dir='xxx')
+
+
 def test_daemon(session_toy):
     # close one of the event
     event = session_toy.query(Event).filter_by(name="iris_test").one()
