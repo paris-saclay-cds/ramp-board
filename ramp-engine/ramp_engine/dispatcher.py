@@ -44,7 +44,8 @@ class Dispatcher:
     Parameters
     ----------
     config : dict or str
-        A configuration YAML file containing the information about the database.
+        A configuration YAML file containing the information about the
+        database.
     event_config : dict or str
         A RAMP configuration YAML file with information regarding the worker
         and the ramp event.
