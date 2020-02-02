@@ -171,8 +171,10 @@ class CondaEnvWorker(BaseWorker):
             if self.status == 'timeout':
                 error_msg += ('\nWorker killed due to timeout after {}s.'
                               .format(self.timeout))
-            # copy the predictions into the disk
-            # no need to create the directory, it will be handle by copytree
+            if self.status == 'timeout':
+                returncode = 124
+            else:
+                returncode = self._proc.returncode
             pred_dir = os.path.join(
                 self.config['predictions_dir'], self.submission
             )
@@ -181,10 +183,12 @@ class CondaEnvWorker(BaseWorker):
                 'training_output')
             if os.path.exists(pred_dir):
                 shutil.rmtree(pred_dir)
+            if not returncode:
+                if os.path.exists(output_training_dir):
+                    shutil.rmtree(output_training_dir)
+                return (returncode, error_msg)
+            # copy the predictions into the disk
+            # no need to create the directory, it will be handle by copytree
             shutil.copytree(output_training_dir, pred_dir)
-            if self.status == 'timeout':
-                returncode = 124
-            else:
-                returncode = self._proc.returncode
             self.status = 'collected'
             return (returncode, error_msg)
