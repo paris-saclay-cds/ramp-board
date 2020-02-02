@@ -326,7 +326,7 @@ def get_leaderboard(session, leaderboard_type, event_name, user_name=None,
                 [sub.event_team.team.name,
                  sub.name_with_link,
                  pd.Timestamp(sub.submission_timestamp),
-                 (sub.state_with_link if leaderboard_type == 'error'
+                 (sub.state_with_link if leaderboard_type == 'failed'
                   else sub.state)])
             } for sub in submissions]
         df = pd.DataFrame(data, columns=columns)
