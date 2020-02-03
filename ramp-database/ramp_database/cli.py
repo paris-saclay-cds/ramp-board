@@ -237,7 +237,7 @@ def delete_event(config, config_event, from_disk, force):
                                 .format(path_to_submissions),
                                 fg='red', err=True)
         else:
-            click.secho("No such event in the " +
+            click.secho("No such event in the "
                         "database: {}".format(event_name),
                         fg='red', err=True)
             if from_disk and not force:
