@@ -1308,12 +1308,6 @@ a.request-btn {
     font-size: 3em; }
   .navbar > .container .navbar-right-expand-toggle .icon, .navbar > .container-fluid .navbar-right-expand-toggle .icon {
     font-size: 3em; }
-  .navbar .navbar-nav > li > a {
-    font-family: 'Source Sans Pro', sans-serif;
-    font-size: 2em;
-    height: 60px;
-    line-height: 60px;
-    padding: 0px 20px 0px 20px; }
   ul.problem-font {
     font-size: 1em;
   }
