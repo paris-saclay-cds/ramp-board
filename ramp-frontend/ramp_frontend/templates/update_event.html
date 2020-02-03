@@ -34,20 +34,10 @@
             <div class="card-title">
                 <div class="title">Update event {{ event.name }}</div>
             </div>
-        </div>                   
+        </div>
          <div class="card-body">
            <form class="ui form" method="post" action="" name="update_event">
-                    <!-- in case we want to allow for event_suffix change:
-                    <div class="form-group">
-                        
-                        <label>event suffix</label>
-                            {{ form.suffix(placeholder="event_suffix") }}
-                            
-                            {% for error in form.suffix.errors %}
-                                <span style="color: red;">[{{ error }}]</span>
-                            {% endfor %}             
-                   </div>
-                   -->   
+                   {{ form.hidden_tag() }}
                    The title will be used on web pages to name the event. The length should be less than 80 characters. If you open several events for the same class or hackaton, please use the same title consistently.
                    <div class="form-group">
                        <label>event title</label>
