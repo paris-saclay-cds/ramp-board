@@ -44,3 +44,9 @@ upload-pypi:
 	cd ramp-database && python setup.py sdist bdist_wheel && twine upload dist/* && cd ..
 	cd ramp-engine && python setup.py sdist bdist_wheel && twine upload dist/* && cd ..
 	cd ramp-utils && python setup.py sdist bdist_wheel && twine upload dist/* && cd ..
+
+clean-dist:
+	rm -r ramp-frontend/dist
+	rm -r ramp-database/dist
+	rm -r ramp-engine/dist
+	rm -r ramp-utils/dist

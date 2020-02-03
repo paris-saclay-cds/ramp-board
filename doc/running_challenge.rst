@@ -52,3 +52,14 @@ Then, you can launch the worker for the submission `random_forest_10_10` as::
     ~/Documents/ramp/iris $ ramp launch worker --submission random_forest_10_10
 
 And you can check the results in the `logs` folder.
+
+Update automatically a conda environment link to an event
+---------------------------------------------------------
+
+We provide a command-line tool to automatically update the packages of a RAMP
+event. You use it as follow::
+
+    ~/ramp_deployment $ ramp setup update-conda-env --event-config events/iris_test/config.yml
+
+This will update all package using `conda` if they were installed with `conda`
+and `pip` whenever installed with `pip`.

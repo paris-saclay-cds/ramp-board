@@ -336,7 +336,9 @@ RAMP engine
 ===========
 
 The RAMP engine is made of a dispatcher to orchestrate the training and
-evaluation of submissions which are processed using workers.
+evaluation of submissions which are processed using workers. Since there is
+a dispatcher for each RAMP event, we provide a daemon which will start
+dispatcher for each open event.
 
 RAMP Dispatcher
 ---------------
@@ -347,6 +349,7 @@ RAMP Dispatcher
    :toctree: generated/
    :template: class.rst
 
+   daemon.Daemon
    dispatcher.Dispatcher
 
 RAMP Workers

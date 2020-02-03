@@ -1,3 +1,4 @@
+from distutils.version import LooseVersion
 from itertools import product
 
 import numpy as np
@@ -15,7 +16,8 @@ from .submission import get_scores
 from .submission import get_submission_max_ram
 from .submission import get_time
 
-pd.set_option('display.max_colwidth', -1)
+width = -1 if LooseVersion(pd.__version__) < LooseVersion("1.0.0") else None
+pd.set_option('display.max_colwidth', width)
 
 
 def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
@@ -324,7 +326,7 @@ def get_leaderboard(session, leaderboard_type, event_name, user_name=None,
                 [sub.event_team.team.name,
                  sub.name_with_link,
                  pd.Timestamp(sub.submission_timestamp),
-                 (sub.state_with_link if leaderboard_type == 'error'
+                 (sub.state_with_link if leaderboard_type == 'failed'
                   else sub.state)])
             } for sub in submissions]
         df = pd.DataFrame(data, columns=columns)
