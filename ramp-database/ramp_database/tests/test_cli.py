@@ -170,7 +170,7 @@ def test_delete_event_error(make_toy_db, deploy_event,
 @pytest.mark.parametrize(
     "config_event, from_disk, force, expected_msg",
     [("/tmp/databoard_test/events/iris_test2/config.yml", False,
-      False, 'please use options --force --from_disk'),
+      False, 'Please use options --force --from_disk'),
      ("/tmp/databoard_test/events/iris_test2/config.yml", True,
       True, '')]
 )

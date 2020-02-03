@@ -229,19 +229,19 @@ def delete_event(config, config_event, from_disk, force):
                 path_to_submissions = db_event.path_ramp_submissions
                 if os.path.exists(path_to_submissions):
                     shutil.rmtree(path_to_submissions)
-                    click.echo("removed directory {}"
+                    click.echo("Removed directory {}"
                                .format(path_to_submissions))
                 else:
                     click.secho("No such submissions directory: {}"
                                 .format(path_to_submissions),
                                 fg='red', err=True)
         else:
-            click.secho("No such event in the " +
+            click.secho("No such event in the "
                         "database: {}".format(event_name),
                         fg='red', err=True)
             if from_disk and not force:
-                click.echo("please use options --force --from_disk " +
-                           "if you would like to remove from the " +
+                click.echo("Please use options --force --from_disk "
+                           "if you would like to remove from the "
                            "disk events directory: {}".format(event_dir))
         if event_dir:
             if (db_event or force) and from_disk:
@@ -251,8 +251,8 @@ def delete_event(config, config_event, from_disk, force):
             elif db_event:
                 # event was removed from the db,
                 # but it still exists on the disk
-                click.echo("please use options --force --from_disk " +
-                           "if you would also like to remove from the " +
+                click.echo("Please use options --force --from_disk "
+                           "if you would also like to remove from the "
                            "disk events directory: {}".format(event_dir))
         elif (db_event or force) and from_disk:
             click.secho("No such directory: {}".format(event_dir),
