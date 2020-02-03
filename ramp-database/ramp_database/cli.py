@@ -230,11 +230,11 @@ def delete_event(config, config_event, from_disk, force):
                 path_to_submissions = db_event.path_ramp_submissions
                 if os.path.exists(path_to_submissions):
                     shutil.rmtree(path_to_submissions)
-                    click.echo("removed directory " +
-                               "{}".format(path_to_submissions))
+                    click.echo("removed directory {}"
+                               .format(path_to_submissions))
                 else:
-                    click.secho("No such submissions directory: " +
-                                "{}".format(path_to_submissions),
+                    click.secho("No such submissions directory: {}"
+                                .format(path_to_submissions),
                                 fg='red', err=True)
         else:
             click.secho("No such event in the " +
