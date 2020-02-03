@@ -174,8 +174,6 @@ class EventUpdateProfileForm(FlaskForm):
 
     Attributes
     ----------
-    suffix : str
-        The suffix used for the event.
     title : str
         The event title.
     is_send_trained_mails : bool
@@ -199,9 +197,6 @@ class EventUpdateProfileForm(FlaskForm):
     public_opening_timestamp : datetime
         The date and time when the public phase of the event is opening.
     """
-    suffix = StringField(
-        'event_suffix', [validators.Length(max=20), _ascii_check, _space_check]
-    )
     title = StringField(
         'event_title', [validators.DataRequired(), validators.Length(max=80)]
     )
