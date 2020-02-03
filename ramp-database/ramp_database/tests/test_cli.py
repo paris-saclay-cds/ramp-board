@@ -147,12 +147,31 @@ def test_add_event(make_toy_db):
 
 
 @pytest.mark.parametrize(
-    "config_event, from_disk, force, expected_msg",
+    "config_event, from_disk, force, error",
     [("events/iris_test/config2.yml", False,
-      False, 'No such file: events/iris_test/config2'),
-     ("/tmp/databoard_test/events/iris_test2/config.yml", False,
+      False, FileNotFoundError)]
+)
+def test_delete_event_error(make_toy_db, deploy_event,
+                      config_event, from_disk,
+                      force, error):
+    runner = CliRunner()
+
+    with pytest.raises(error):
+        result = runner.invoke(main,
+                               ['delete-event',
+                                '--config', database_config_template(),
+                                '--config-event', config_event,
+                                '--from-disk', from_disk,
+                                '--force', force],
+                               catch_exceptions=False)
+        assert result.exit_code == 0, result.output
+
+
+@pytest.mark.parametrize(
+    "config_event, from_disk, force, expected_msg",
+    [("/tmp/databoard_test/events/iris_test2/config.yml", False,
       False, 'please use options --force --from_disk'),
-     ("/tmp/databoard_test/events/iris_test/config.yml", True,
+     ("/tmp/databoard_test/events/iris_test2/config.yml", True,
       True, '')]
 )
 def test_delete_event(make_toy_db, deploy_event,
@@ -160,12 +179,14 @@ def test_delete_event(make_toy_db, deploy_event,
                       force, expected_msg):
     runner = CliRunner()
 
-    result = runner.invoke(main, ['delete-event',
-                                  '--config', database_config_template(),
-                                  '--config-event', config_event,
-                                  '--from-disk', from_disk,
-                                  '--force', force],
-                           catch_exceptions=False)
+    result = runner.invoke(main,
+                           ['delete-event',
+                            '--config', database_config_template(),
+                            '--config-event', config_event,
+                            '--from-disk', from_disk,
+                            '--force', force
+                            ],
+                           catch_exceptions=True)
 
     assert result.exit_code == 0, result.output
     assert expected_msg in result.output

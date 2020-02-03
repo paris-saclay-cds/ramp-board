@@ -198,7 +198,7 @@ def add_submission(config, event, team, submission, path):
 @click.option("--config-event", required=True,
               help="""Path to configuration file YAML format
               containing the database information, eg config.yml""")
-@click.option('--from-disk', default=False, show_default=True,
+@click.option('--from-disk', default=False,
               help="""If True the event and all the related submissions
                       will be removed from the database and from the disk;
                       if set to False they will only be removed from
@@ -211,7 +211,7 @@ def add_submission(config, event, team, submission, path):
                       option to work""")
 def delete_event(config, config_event, from_disk, force):
     """Delete event."""
-    # check if the event_config dir exists
+    config = read_config(config)
 
     # read the event_name
     config_event_params = read_config(config_event)
@@ -224,7 +224,6 @@ def delete_event(config, config_event, from_disk, force):
         db_event = event_module.get_event(session, event_name)
         if db_event:
             event_module.delete_event(session, event_name)
-
             if from_disk:
                 # remove submissions dir from disk if it exists
                 path_to_submissions = db_event.path_ramp_submissions
@@ -237,7 +236,7 @@ def delete_event(config, config_event, from_disk, force):
                                 .format(path_to_submissions),
                                 fg='red', err=True)
         else:
-            click.secho("No such event in the "
+            click.secho("No such event in the " +
                         "database: {}".format(event_name),
                         fg='red', err=True)
             if from_disk and not force:
@@ -253,8 +252,8 @@ def delete_event(config, config_event, from_disk, force):
                 # event was removed from the db,
                 # but it still exists on the disk
                 click.echo("please use options --force --from_disk " +
-                            "if you would also like to remove from the " +
-                            "disk events directory: {}".format(event_dir))
+                           "if you would also like to remove from the " +
+                           "disk events directory: {}".format(event_dir))
         elif (db_event or force) and from_disk:
             click.secho("No such directory: {}".format(event_dir),
                         err=True, fg='red')
