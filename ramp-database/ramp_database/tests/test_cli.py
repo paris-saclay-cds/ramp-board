@@ -37,8 +37,9 @@ def make_toy_db(database_connection):
 def deploy_event(database_connection):
     runner = CliRunner()
     ramp_config = read_config(ramp_config_template())
-    event_config = "/tmp/databoard_test/events/iris_test2/config.yml"
+    ramp_config['ramp']['event_name'] = 'iris_test2'
 
+    event_config = "/tmp/databoard_test/events/iris_test2/config.yml"
     deployment_dir = os.path.commonpath([ramp_config['ramp']['kit_dir'],
                                         ramp_config['ramp']['data_dir']])
 
@@ -46,14 +47,15 @@ def deploy_event(database_connection):
                                '--name', 'iris_test2',
                                '--deployment-dir', deployment_dir])
 
+    with open(event_config, 'w') as file:
+        yaml.dump(ramp_config, file)
+
     runner.invoke(main_utils, ['deploy-event',
                                '--config',
                                database_config_template(),
                                '--event-config',
                                event_config,
                                '--force'])
-    with open(event_config, 'w') as file:
-        yaml.dump(ramp_config, file)
 
 
 def test_add_user(make_toy_db):
@@ -170,28 +172,28 @@ def test_delete_event_error(make_toy_db, deploy_event,
 @pytest.mark.parametrize(
     "config_event, from_disk, force, expected_msg",
     [("/tmp/databoard_test/events/iris_test2/config.yml", False,
-      False, 'Please use options --force --from_disk'),
+      False, ''),
      ("/tmp/databoard_test/events/iris_test2/config.yml", True,
-      True, '')]
+      True, '')
+      ]
 )
 def test_delete_event(make_toy_db, deploy_event,
                       config_event, from_disk,
                       force, expected_msg):
     runner = CliRunner()
 
-    result = runner.invoke(main,
-                           ['delete-event',
-                            '--config', database_config_template(),
-                            '--config-event', config_event,
-                            '--from-disk', from_disk,
-                            '--force', force
-                            ],
-                           catch_exceptions=True)
+    result = runner.invoke(main, ['delete-event',
+                                  '--config', database_config_template(),
+                                  '--config-event', config_event,
+                                  '--from-disk', from_disk,
+                                  '--force', force],
+                           catch_exceptions=False)
 
     assert result.exit_code == 0, result.output
     assert expected_msg in result.output
 
     if force and from_disk:
+        assert not os.path.exists(config_event)
         assert not os.path.exists(config_event)
 
 
