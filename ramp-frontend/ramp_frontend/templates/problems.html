@@ -54,7 +54,7 @@
 {% endif %}
 <ul>
 {% for problem in problems %}
-<li> <a href="/problems/{{ problem.name }}"><strong><font size="+1">{{ problem.title }}</font></strong></a><br>
+<li> <a class="title" href="/problems/{{ problem.name }}"><strong>{{ problem.title }}</strong></a><br>
     <ul class="fa-ul">
     {% for event in problem.events %}
         {% if event.is_public %}
