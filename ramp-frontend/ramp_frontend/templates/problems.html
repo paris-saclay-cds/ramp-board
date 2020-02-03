@@ -52,9 +52,9 @@
         </div>
 </div>
 {% endif %}
-<ul>
+<ul style="padding-left: 2vw;">
 {% for problem in problems %}
-<li> <a class="title" href="/problems/{{ problem.name }}"><strong>{{ problem.title }}</strong></a><br>
+<li> <a class="font-small" href="/problems/{{ problem.name }}"><strong>{{ problem.title }}</strong></a><br>
     <ul class="fa-ul">
     {% for event in problem.events %}
         {% if event.is_public %}
