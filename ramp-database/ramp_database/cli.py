@@ -212,6 +212,8 @@ def add_submission(config, event, team, submission, path):
 def delete_event(config, config_event, from_disk, force):
     """Delete event."""
     config = read_config(config)
+    err = False
+    msg = ''
 
     # read the event_name
     config_event_params = read_config(config_event)
@@ -222,41 +224,31 @@ def delete_event(config, config_event, from_disk, force):
     with session_scope(config['sqlalchemy']) as session:
         # is event in the database?
         db_event = event_module.get_event(session, event_name)
-        if db_event:
-            event_module.delete_event(session, event_name)
-            if from_disk:
-                # remove submissions dir from disk if it exists
+
+        if from_disk and (db_event or force):
+            # remove event from the disk
+            if os.path.exists(event_dir):
+                shutil.rmtree(event_dir)
+                msg = msg + 'Removed directory: {}\n'.format(event_dir)
+            else:
+                msg = msg + 'Cannot find: {}\n'.format(event_dir)
+
+            if db_event:
+                # remove submissions dir
                 path_to_submissions = db_event.path_ramp_submissions
                 if os.path.exists(path_to_submissions):
                     shutil.rmtree(path_to_submissions)
-                    click.echo("Removed directory {}"
-                               .format(path_to_submissions))
-                else:
-                    click.secho("No such submissions directory: {}"
-                                .format(path_to_submissions),
-                                fg='red', err=True)
         else:
-            click.secho("No such event in the "
-                        "database: {}".format(event_name),
-                        fg='red', err=True)
-            if from_disk and not force:
-                click.echo("Please use options --force --from_disk "
-                           "if you would like to remove from the "
-                           "disk events directory: {}".format(event_dir))
-        if event_dir:
-            if (db_event or force) and from_disk:
-                # remove this event from the disk
-                shutil.rmtree(event_dir)
-                click.echo("removed directory: {}".format(event_dir))
-            elif db_event:
-                # event was removed from the db,
-                # but it still exists on the disk
-                click.echo("Please use options --force --from_disk "
-                           "if you would also like to remove from the "
-                           "disk events directory: {}".format(event_dir))
-        elif (db_event or force) and from_disk:
-            click.secho("No such directory: {}".format(event_dir),
-                        err=True, fg='red')
+            msg = msg + ('Use options: --force --from_disk if you wish to '
+                         'remove {} from the disk\n').format(event_dir)
+        if db_event:
+            # remove event from the db
+            event_module.delete_event(session, event_name)
+            msg = msg + '{} was removed from the database\n'.format(event_name)
+        else:
+            msg = msg + '{} was not found in the database\n'.format(event_name)
+
+    click.secho(msg, fg='red')
 
 
 @main.command()
