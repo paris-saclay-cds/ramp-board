@@ -34,7 +34,7 @@
 
 <div class="container-fluid app-content-a">
     <div class="container">
-        <p class="text-center"><a class="btn btn-primary btn-lg app-btn" href="{{ problem.name }}/ask_for_event"role="button">Click here if you would like to request a new event</a></p>
+        <p class="text-center"><a class="btn btn-primary btn-lg app-btn request-btn" href="{{ problem.name }}/ask_for_event"role="button">Click here if you would like to request a new event</a></p>
     </div>
 </div>
 
@@ -43,7 +43,7 @@
     <div class="card-header">
       <div class="card-title">
         <div class="title">Current events on this problem</div>
-          <ul class="problem-font">
+          <ul class="problem-font" style="padding-left: 2.5vw;">
             {% for event in problem.events %}
               {% if event.is_public %}
                   <li> <a href="/events/{{ event.name }}">{{ event.title }}</a>,

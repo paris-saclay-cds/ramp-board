@@ -97,7 +97,7 @@ a:hover {
       transition: all 0.25s linear;
       opacity: 0.75; }
     .navbar > .container .navbar-expand-toggle .icon, .navbar > .container-fluid .navbar-expand-toggle .icon {
-      font-size: 1.4em; }
+      font-size: 1.8em; }
     .navbar > .container .navbar-right-expand-toggle, .navbar > .container-fluid .navbar-right-expand-toggle {
       width: 60px;
       height: 60px;
@@ -108,7 +108,8 @@ a:hover {
       -moz-transition: all 0.25s linear;
       -webkit-transition: all 0.25s linear;
       transition: all 0.25s linear;
-      opacity: 0.75; }
+      opacity: 0.75;
+      padding-right: 5vw; }
     .navbar > .container .navbar-right-expand-toggle .icon, .navbar > .container-fluid .navbar-right-expand-toggle .icon {
       font-size: 1.4em; }
   .navbar .navbar-breadcrumb {
@@ -121,7 +122,7 @@ a:hover {
       line-height: 60px;
       vertical-align: middle;
       font-family: 'Source Sans Pro', sans-serif;
-      font-size: 1.5em; }
+      font-size: 1.6em; }
   .navbar .navbar-nav > li > a {
     font-family: 'Source Sans Pro', sans-serif;
     font-size: 0.9em;
@@ -336,8 +337,8 @@ a:hover {
     right: 1em; }
 
 .container-fluid > .navbar-collapse, .container-fluid > .navbar-header, .container > .navbar-collapse, .container > .navbar-header {
-  margin-left: -15px;
-  margin-right: -15px; }
+  margin-left: 1vw;
+  margin-right: 1vw; }
 
 .page-title {
   font-family: 'Source Sans Pro', sans-serif;
@@ -1263,7 +1264,7 @@ hr {
 }
 
 ul.problem-font {
-  font-size: 20px;
+  font-size: 1.4em;
 }
 
 div.info-pages {
@@ -1272,6 +1273,14 @@ div.info-pages {
 }
 
 p.index-body {
+  font-size: 1.5em;
+}
+
+ul.problem-body {
+  font-size: 1.25em;
+}
+
+a.request-btn {
   font-size: 1.5em;
 }
 
@@ -1285,5 +1294,30 @@ p.index-body {
   div.info-pages {
     padding-left: 1vw;
     padding-right: 1vw;
+  }
+  .card .card-body-text {
+    padding: 2vw;
+    font-size: 2em; }
+  .navbar .navbar-breadcrumb > li {
+    height: 60px;
+    line-height: 60px;
+    vertical-align: middle;
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 3em; }
+  .navbar > .container .navbar-expand-toggle .icon, .navbar > .container-fluid .navbar-expand-toggle .icon {
+    font-size: 3em; }
+  .navbar > .container .navbar-right-expand-toggle .icon, .navbar > .container-fluid .navbar-right-expand-toggle .icon {
+    font-size: 3em; }
+  .navbar .navbar-nav > li > a {
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 2em;
+    height: 60px;
+    line-height: 60px;
+    padding: 0px 20px 0px 20px; }
+  ul.problem-font {
+    font-size: 1em;
+  }
+  a.request-btn {
+    font-size: 1em;
   }
 }
