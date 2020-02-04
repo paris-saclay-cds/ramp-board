@@ -27,30 +27,28 @@
 
     <nav class="navbar navbar-inverse navbar-fixed-top navbar-affix" role="navigation" data-spy="affix" data-offset-top="60">
         <div class="container">
+            <a class="navbar-brand" href="#features"><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" height="26px"></a>
             <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                    <span class="sr-only">Toggle navigation</span>
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#myNavbar">
+                    <span class="navbar-toggler-icon"></span>
+                    <!-- <span class="sr-only">Toggle navigation</span> -->
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span> 
                 </button>
-
-                <div id="navbar" class="navbar-collapse collapse " aria-expanded="true">
-                        <ul class="nav navbar-nav navbar-left navbar-font-index">
-                            <li class="active"><a href="#features"><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" height="26px"></a></li>
-                            <li class="active"><a href="/problems">Our challenges</a></li>
-                            <li class="active"><a href="/teaching">Your challenges</a></li>
-                        </ul>
-                    </div>
             </div>
-            <div id="navbar" class="navbar-collapse collapse " aria-expanded="true">
-                <ul class="nav navbar-nav navbar-right navbar-font-index">
-                    <li><a href="/sign_up">Sign Up</a></li>
-                    <li><a href="/login">Login</a></li>
+            <div id="myNavbar" class="navbar-collapse collapse">
+                <ul class="nav navbar-nav navbar-left navbar-font-index">
+                    <li><a href="/problems">Our challenges</a></li>
+                    <li><a href="/teaching">Your challenges</a></li>
                 </ul>
+                <ul class="nav navbar-nav navbar-right navbar-font-index">
+                    <li><a href="/sign_up"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+                    <li><a href="/login"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+                    </ul>
             </div>
-            <!--/.nav-collapse -->
         </div>
+        <!--/.nav-collapse -->
     </nav>
     <div class="jumbotron app-header" id='titleback'>
         <div class="container">

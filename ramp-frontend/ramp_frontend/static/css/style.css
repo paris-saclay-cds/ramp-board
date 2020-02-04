@@ -68,6 +68,21 @@ a:hover {
 .text-indent {
   text-indent: 1em; }
 
+  .navbar-brand
+  {
+    padding: 0px;
+  }
+  
+  .navbar-brand > img
+  {
+    height: 60%; 
+    width: auto;
+    max-height: 60%;
+    margin: 0 auto;
+    display: inline;
+    vertical-align: middle;
+  }
+
 .navbar {
   z-index: 10001;
   padding-left: 60px;
@@ -130,7 +145,7 @@ a:hover {
     line-height: 60px;
     padding: 0px 20px 0px 20px; }
   .navbar .navbar-font-index {
-    font-size: 1.7em; }
+    font-size: 1.6em; }
   .navbar .navbar-font-about {
     font-size: 16px; }
   .navbar .dropdown-menu {
@@ -379,7 +394,21 @@ a:hover {
 
 /* small screen */
 @media (max-width: 768px) {
-  .navbar {
+  .navbar-brand
+  {
+    padding: 0px;
+  }
+  
+  .navbar-brand > img
+  {
+    height: 60%; 
+    width: auto;
+    max-height: 60%;
+    margin: 0 auto;
+    display: inline;
+    vertical-align: middle;
+  }
+ .navbar {
     padding-left: 0; }
     .navbar .navbar-header {
       width: auto;
@@ -387,8 +416,8 @@ a:hover {
     .navbar .navbar-nav {
       width: auto;
       margin: 0; }
-      .navbar .navbar-nav > li {
-        display: inline-block; }
+      /* .navbar .navbar-nav > li {
+        display: inline-block; } */
     .navbar .navbar-right {
       position: absolute;
       top: 0;
@@ -1248,7 +1277,7 @@ body.login-page {
   .featurette-heading {
     font-size: 50px; } }
 
-@media (min-width: 992px) {
+@media (min-width: 768px) {
   .featurette-heading {
     margin-top: 100px;
     margin-bottom: 20px; } }
