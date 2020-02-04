@@ -25,44 +25,50 @@
 
 <body class="flat-blue landing-page">
 
-    <nav class="navbar navbar-inverse navbar-fixed-top navbar-affix" role="navigation" data-spy="affix" data-offset-top="60">
-        <div class="container">
-            <a class="navbar-brand" href="#features"><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" height="26px"></a>
+    <div class="container">
+
+        <nav class="navbar navbar-inverse navbar-fixed-top navbar-affix" data-spy="affix" data-offset-top="60">
+          <div class="container">
             <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#myNavbar">
-                    <span class="navbar-toggler-icon"></span>
-                    <!-- <span class="sr-only">Toggle navigation</span> -->
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="#features"><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" height="26px"></a>
             </div>
-            <div id="myNavbar" class="navbar-collapse collapse">
-                <ul class="nav navbar-nav navbar-left navbar-font-index">
-                    <li><a href="/problems">Our challenges</a></li>
-                    <li><a href="/teaching">Your challenges</a></li>
-                </ul>
-                <ul class="nav navbar-nav navbar-right navbar-font-index">
-                    <li><a href="/sign_up"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
-                    <li><a href="/login"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
-                    </ul>
+            <div id="navbar" class="navbar-collapse collapse">
+              <ul class="nav navbar-nav navbar-font-index">
+                <li><a href="/problems">Our challenges</a></li>
+                <li><a href="/teaching">Your challenges</a></li>
+              </ul>
+              <ul class="nav navbar-nav navbar-right navbar-font-index">
+                <li><a href="/sign_up"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+                <li><a href="/login"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+              </ul>
             </div>
-        </div>
-        <!--/.nav-collapse -->
-    </nav>
-    <div class="jumbotron app-header" id='titleback'>
+          </div>
+        </nav>
+
+      </div>
+
+    <section id="header">
+    <div class="inner jumbotron app-header" id='titleback'>
         <div class="container">
             <h2 class="text-center">
                 <br>
                 <div class="color-white font-large font-heavy"><span><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" alt="CDS logo" class="app-logo color-white" height="96px" style="max-width: 12%">&nbsp;RAMP</span></div>
             </h2>
             <p class="text-center color-white app-description font-med">Rapid Analytics & Model Prototyping</p>
-            <p class="text-center color-white app-description font-small">using Python</p></div>
-            <br>
-            <br>
-            <p class="text-center"><a class="btn btn-primary btn-lg app-btn" href="#features" role="button">Learn more »</a></p>
+            <p class="text-center color-white app-description font-small">using Python</p>
+            <ul class="actions">
+              <li><a href="#features" class="button">Learn more</a></li>
+            </ul>
+          </div>l
         </div>
     </div>
+  </section>
 
     <div class="container-fluid app-content-a" id="features">
         <div class="container">
@@ -224,7 +230,7 @@
       </div>
     </footer>
     <!-- Javascript Libs -->
-    <script type="text/javascript" src="{{ url_for('static', filename='lib/js/jquery-2.2.4.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='lib/js/jquery.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='lib/js/bootstrap.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='lib/js/Chart.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='lib/js/bootstrap-switch.min.js') }}"></script>

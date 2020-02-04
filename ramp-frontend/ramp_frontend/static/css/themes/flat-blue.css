@@ -109,6 +109,7 @@
 .flat-blue .navbar.navbar-inverse > .container-fluid {
   background-color: #353d47;
 }
+
 .flat-blue .navbar.navbar-inverse .navbar-header .navbar-brand {
   color: #193b46;
 }
@@ -258,7 +259,7 @@
   padding: 0 7px;
 }
 @media (max-width: 768px) {
-  .flat-blue .navbar.navbar-default .navbar-nav > li {
+  /* .flat-blue .navbar.navbar-default .navbar-nav > li {
     border-left: 0;
   }
   .flat-blue .navbar.navbar-default .navbar-right {
@@ -269,7 +270,7 @@
   }
   .flat-blue .navbar.navbar-inverse .navbar-right {
     background-color: #353d47;
-  }
+  } */
 }
 .flat-blue .card.red {
   background-color: #fa2a00;
@@ -997,17 +998,19 @@
   color: #7fd1c6;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 740px) {
+
+  /*Get a black background for phone but not for tablet*/
   .flat-blue.landing-page .navbar .navbar-collapse {
     background-color: #333;
   }
-  .flat-blue.landing-page .navbar .navbar-right {
+  /* .flat-blue.landing-page .navbar .navbar-right {
     background-color: transparent;
     color: #fff;
   }
   .flat-blue.landing-page .navbar.affix .navbar-nav > li > a {
     color: #fff;
-  }
+  } */
 }
 
 .flat-blue.landing-page .navbar.affix .navbar-brand {
