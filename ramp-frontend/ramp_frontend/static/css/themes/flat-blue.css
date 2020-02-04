@@ -1022,6 +1022,12 @@
   font-weight: bold;
 }
 
+@media (max-width: 768px) {
+  .navbar.navbar.navbar-default.navbar-fixed-top.navbar-top{
+    padding-left: 0;
+  }
+}
+
 @media (max-width: 740px) {
   /* Index page */
   /* Get a black background for phone but not for tablet */
@@ -1037,7 +1043,7 @@
   .navbar .navbar-collapse > ul > li > a {
     font-size: medium;
   }
-  /* Base page */
+    /* Base page */
   /* Right navigation bar for login/signup */
   .flat-blue .navbar.navbar-default .navbar-right.navbar-base {
     background-color: #fff;
@@ -1085,7 +1091,6 @@
     font-size: medium;
     font-weight: bold;
   }
-
   /* .flat-blue.landing-page .navbar .navbar-right {
     background-color: transparent;
     color: #fff;

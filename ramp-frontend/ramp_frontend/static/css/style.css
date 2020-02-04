@@ -574,6 +574,10 @@ a:hover {
   padding: 1.2vw;
   font-size: 1.2em;
 }
+.card .card-body.login > p {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
 .card .card-body-text {
   padding: 2vw;
   font-size: 1.4em;
@@ -609,16 +613,54 @@ a:hover {
   display: block;
   clear: both;
 }
+.card:hover .card-header .title {
+  text-decoration: none !important;
+}
+
+@media (max-width:740px) {
+  .card .card-header .card-title {
+    padding: 0.6em 0.6em;
+    float: left;
+    margin-bottom: 0px;
+  }
+  .card .card-header .card-title .title {
+    font-family: "Source Sans Pro", sans-serif;
+    font-size: 2.5em;
+    text-decoration: none;
+  }
+  .card .card-body {
+    padding: 1.2vw;
+    font-size: 2.2em;
+  }
+  .card .card-body.login > p {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .card .card-body-text {
+    padding: 2vw;
+    font-size: 1.4em;
+  }
+  .card .card-body .sub-title {
+    font-size: 1.2em;
+    padding: 1.2em 0em 0.4em 0em;
+    margin-bottom: 25px;
+  }
+  .card .card-body .sub-title .description {
+    padding-left: 0.4em;
+    font-size: 0.8em;
+    opacity: 0.8;
+  }
+  /* .card .card-body.half-padding {
+    padding: 12.5px;
+  } */
+}
+
 .card .card-profile-img img {
   width: 100%;
   height: auto;
 }
 .card .card-jumbotron {
   padding: 1.5em 1.5em;
-}
-
-.card:hover .card-header .title {
-  text-decoration: none !important;
 }
 
 div.info-header {
@@ -1650,7 +1692,7 @@ a.request-btn {
   font-size: 1.5em;
 }
 
-@media only screen and (max-width: 768px) {
+@media (max-width: 768px) {
   body {
     font-size: 1.8vw;
   }
