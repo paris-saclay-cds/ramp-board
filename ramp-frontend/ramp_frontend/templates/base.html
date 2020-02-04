@@ -37,7 +37,7 @@
     <div class="app-container">
         <div class="row content-container">
             <nav class="navbar navbar-default navbar-fixed-top navbar-top">
-                <div class="container-fluid">
+                <div class="container-fluid base-top">
                     <div class="navbar-header">
                         <button type="button" class="navbar-expand-toggle">
                             <i class="fa fa-bars icon"></i>
@@ -49,17 +49,13 @@
                             <i class="fa fa-th icon"></i>
                         </button>
                     </div>
-                    <ul class="nav navbar-nav navbar-right">
+                    <ul class="nav navbar-nav navbar-right navbar-base">
                         <button type="button" class="navbar-right-expand-toggle pull-right visible-xs">
                             <i class="fa fa-times icon"></i>
                         </button>
                         {% if not session.logged_in %}
-                            <li>
-                                <a href="/login"><font color="#0ead9a"><b>Login</b></font></a>
-                            </li>
-                            <li>
-                                <a href="/sign_up"><font color="#0ead9a"><b>Sign Up</b></font></a>
-                            </li>
+                            <li><a class="login" href="/login">Login</a></li>
+                            <li><a class="login" href="/sign_up">Sign Up</a></li>
                         {% endif %}
                         <!-- for later
                         <li class="dropdown">
@@ -193,7 +189,7 @@
                                 <!-- Dropdown level 1 -->
                                 <div id="dropdown-event" class="panel-collapse active collapse in">
                                     <div class="panel-body">
-                                        <ul class="nav navbar-nav"> 
+                                        <ul class="nav navbar-nav">
                                             <li class='disabled'><a href="#">description</a></li>
                                             {% if (approved is not defined) or (approved == True) %}
                                             <li class='disabled'><a href="#">starting kit</a></li>

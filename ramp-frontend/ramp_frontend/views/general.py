@@ -7,6 +7,7 @@ from ramp_database.model import Keyword
 from ramp_database.model import Problem
 
 from .redirect import redirect_to_user
+from .._version import __version__
 
 mod = Blueprint('general', __name__)
 
@@ -22,6 +23,7 @@ def index():
         images = [f for f in os.listdir(img_folder)
                   if f.endswith(img_ext)]
         context["images"] = images
+    context["version"] = __version__
     return render_template('index.html', **context)
 
 

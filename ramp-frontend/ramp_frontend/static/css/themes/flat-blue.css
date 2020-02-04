@@ -258,20 +258,7 @@
 .flat-blue .side-menu.sidebar-inverse .navbar li.dropdown .panel-body {
   padding: 0 7px;
 }
-@media (max-width: 768px) {
-  /* .flat-blue .navbar.navbar-default .navbar-nav > li {
-    border-left: 0;
-  }
-  .flat-blue .navbar.navbar-default .navbar-right {
-    background-color: #fff;
-  }
-  .flat-blue .navbar.navbar-inverse .navbar-nav > li {
-    border-left: 0;
-  }
-  .flat-blue .navbar.navbar-inverse .navbar-right {
-    background-color: #353d47;
-  } */
-}
+
 .flat-blue .card.red {
   background-color: #fa2a00;
   color: #fff;
@@ -998,21 +985,6 @@
   color: #7fd1c6;
 }
 
-@media (max-width: 740px) {
-
-  /*Get a black background for phone but not for tablet*/
-  .flat-blue.landing-page .navbar .navbar-collapse {
-    background-color: #333;
-  }
-  /* .flat-blue.landing-page .navbar .navbar-right {
-    background-color: transparent;
-    color: #fff;
-  }
-  .flat-blue.landing-page .navbar.affix .navbar-nav > li > a {
-    color: #fff;
-  } */
-}
-
 .flat-blue.landing-page .navbar.affix .navbar-brand {
   color: #353d47;
 }
@@ -1037,4 +1009,94 @@
     rgba(32, 71, 70, 1) 71%,
     rgba(43, 122, 120, 1) 100%
   );
+}
+
+.navbar .container-fluid.base-top {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.navbar.navbar-default .navbar-nav > li > a.login {
+  color: #0ead9a;
+  font-size: medium;
+  font-weight: bold;
+}
+
+@media (max-width: 740px) {
+  /* Index page */
+  /* Get a black background for phone but not for tablet */
+  .flat-blue.landing-page .navbar .navbar-collapse {
+    background-color: #333;
+  }
+  .navbar .container-fluid.base-top {
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .navbar .navbar-collapse > ul > li > a {
+    font-size: medium;
+  }
+  /* Base page */
+  /* Right navigation bar for login/signup */
+  .flat-blue .navbar.navbar-default .navbar-right.navbar-base {
+    background-color: #fff;
+  }
+  .navbar .navbar-right.navbar-base {
+    position: absolute;
+    top: 0;
+    right: -100%;
+    height: 100%;
+    width: 100%;
+    -moz-transition: all 0.25s linear;
+    -webkit-transition: all 0.25s linear;
+    transition: all 0.25s linear;
+  }
+  .navbar .navbar-right.navbar-base .open .dropdown-menu {
+    position: absolute;
+  }
+  .navbar .navbar-right.navbar-base.expanded {
+    right: 0;
+  }
+  .navbar .navbar-right.navbar-base > li {
+    display: inline-block;
+  }
+  .navbar.navbar-default .navbar-nav > li > a.login {
+    color: #0ead9a;
+    font-size: medium;
+    font-weight: bold;
+  }
+  /* Left navigation bar for RAMP logo */
+  .flat-blue .navbar.navbar-default .navbar-nav > li {
+    border-left: 0;
+  }
+  .navbar {
+    padding-left: 0;
+  }
+  .navbar .navbar-header {
+    width: auto;
+    display: block;
+  }
+  .navbar .navbar-nav {
+    width: auto;
+    margin: 0;
+  }
+  .flat-blue .navbar.navbar-inverse .navbar-header .navbar-expand-toggle {
+    font-size: medium;
+    font-weight: bold;
+  }
+
+  /* .flat-blue.landing-page .navbar .navbar-right {
+    background-color: transparent;
+    color: #fff;
+  } */
+  /* .flat-blue .navbar.navbar-inverse .navbar-nav > li {
+    border-left: 0;
+  } */
+  /* .flat-blue .navbar.navbar-inverse .navbar-right {
+    background-color: #353d47;
+  } */
+  /* .flat-blue.landing-page .navbar.affix .navbar-nav > li > a {
+    color: #fff;
+  } */
 }
