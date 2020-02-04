@@ -159,14 +159,13 @@ def test_delete_event_error(make_toy_db, deploy_event,
     runner = CliRunner()
 
     with pytest.raises(error):
-        result = runner.invoke(main,
-                               ['delete-event',
-                                '--config', database_config_template(),
-                                '--config-event', config_event,
-                                '--from-disk', from_disk,
-                                '--force', force],
-                               catch_exceptions=False)
-        assert result.exit_code == 0, result.output
+        cmd = ('delete-event --config '+ database_config_template() +
+          ' --config-event ' + config_event)
+        if from_disk:
+            cmd += ' --from-disk'
+        if force:
+            cmd += ' --force'
+        result = runner.invoke(main, cmd, catch_exceptions=False)
 
 
 @pytest.mark.parametrize(
@@ -201,12 +200,13 @@ def test_delete_event(make_toy_db,
                                event_config,
                                '--no-cloning'])
 
-    result = runner.invoke(main, ['delete-event',
-                                  '--config', database_config_template(),
-                                  '--config-event', config_event,
-                                  '--from-disk', from_disk,
-                                  '--force', force],
-                           catch_exceptions=False)
+    cmd = ('delete-event --config '+ database_config_template() +
+          ' --config-event ' + config_event)
+    if from_disk:
+        cmd += ' --from-disk'
+    if force:
+        cmd += ' --force'
+    result = runner.invoke(main, cmd, catch_exceptions=False)
 
     assert result.exit_code == 0, result.output
     assert expected_msg in result.output
