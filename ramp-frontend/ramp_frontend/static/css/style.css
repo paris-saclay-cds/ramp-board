@@ -412,7 +412,7 @@ a:hover {
   .navbar-nav
   li.dropdown
   > a:after {
-  font-family: FontAwesome;
+  /* font-family: FontAwesome; */
   content: "\f107";
   position: absolute;
   right: 1em;
@@ -466,7 +466,7 @@ a:hover {
   .navbar-nav
   li.dropdown
   > a:after {
-  font-family: FontAwesome;
+  /* font-family: FontAwesome; */
   content: "\f107";
   position: absolute;
   right: 1em;
@@ -602,7 +602,8 @@ a:hover {
 }
 .card .card-header .card-title .title {
   font-family: "Source Sans Pro", sans-serif;
-  font-size: 1.3em;
+  font-size: 1.5em;
+  font-weight: bold;
   text-decoration: none;
 }
 .card .card-header .pull-right {
@@ -617,20 +618,29 @@ a:hover {
   text-decoration: none !important;
 }
 
+.card .card-body > li.item {
+  list-style-type: none;
+}
+.card .card-body > li > a.problem-title {
+  font-size: larger;
+  font-weight: bold;
+}
+
 @media (max-width:740px) {
   .card .card-header .card-title {
     padding: 0.6em 0.6em;
     float: left;
-    margin-bottom: 0px;
+    margin-bottom: 2px;
   }
   .card .card-header .card-title .title {
     font-family: "Source Sans Pro", sans-serif;
-    font-size: 2.5em;
+    font-size: 3em;
+    font-weight: bold;
     text-decoration: none;
   }
   .card .card-body {
     padding: 1.2vw;
-    font-size: 2.2em;
+    font-size: 2.5em;
   }
   .card .card-body.login > p {
     padding-top: 10px;
@@ -1330,7 +1340,7 @@ body.login-page .login-footer {
   margin-bottom: 0;
 }
 .breadcrumb > li + li:before {
-  font-family: FontAwesome;
+  /* font-family: FontAwesome; */
   content: "\f105";
   margin-right: 3px;
 }
@@ -1682,10 +1692,6 @@ div.info-pages {
 
 p.index-body {
   font-size: 1.5em;
-}
-
-ul.problem-body {
-  font-size: 1.25em;
 }
 
 a.request-btn {
