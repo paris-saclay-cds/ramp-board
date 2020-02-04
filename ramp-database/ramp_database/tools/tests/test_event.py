@@ -298,20 +298,21 @@ def test_delete_event(session_scope_function):
                 internal_ramp_config['ramp_kit_dir'],
                 internal_ramp_config['ramp_data_dir'])
 
+    event_name = 'iris_test_delete'
     # add sample event
     add_event(session_scope_function, problem_name,
-              internal_ramp_config['event_name'],
+              event_name,
               internal_ramp_config['event_title'],
               internal_ramp_config['sandbox_name'],
               internal_ramp_config['ramp_submissions_dir'],
               is_public=True, force=False)
 
     event = get_event(session_scope_function,
-                      internal_ramp_config['event_name'])
+                      event_name)
     assert event
 
     # add event-team
-    event_name, username = internal_ramp_config['event_name'], 'test_user'
+    username = 'test_user'
     sign_up_team(session_scope_function, event_name, username)
     event_team = get_event_team_by_name(session_scope_function,
                                         event_name, username)
@@ -334,7 +335,9 @@ def test_delete_event(session_scope_function):
     submission = get_submission_by_id(session_scope_function, event.id)
     assert submission
 
-    delete_event(session_scope_function, internal_ramp_config['event_name'])
+    session_scope_function.commit()
+
+    delete_event(session_scope_function, event_name)
     # make sure event and all the connections were deleted
     event_test = get_event(session_scope_function, None)
     assert len(event_test) == 0

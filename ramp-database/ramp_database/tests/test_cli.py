@@ -55,7 +55,7 @@ def deploy_event(database_connection):
                                database_config_template(),
                                '--event-config',
                                event_config,
-                               '--force'])
+                               '--no-cloning'])
 
 
 def test_add_user(make_toy_db):
@@ -172,15 +172,34 @@ def test_delete_event_error(make_toy_db, deploy_event,
 @pytest.mark.parametrize(
     "config_event, from_disk, force, expected_msg",
     [("/tmp/databoard_test/events/iris_test2/config.yml", False,
-      False, ''),
+      False, '--force --from_disk if you wish to'),
      ("/tmp/databoard_test/events/iris_test2/config.yml", True,
-      True, '')
+      True, 'Removed directory: ')
       ]
 )
-def test_delete_event(make_toy_db, deploy_event,
+def test_delete_event(make_toy_db,
                       config_event, from_disk,
                       force, expected_msg):
     runner = CliRunner()
+    ramp_config = read_config(ramp_config_template())
+    ramp_config['ramp']['event_name'] = 'iris_test2'
+    event_config = "/tmp/databoard_test/events/iris_test2/config.yml"
+    deployment_dir = os.path.commonpath([ramp_config['ramp']['kit_dir'],
+                                        ramp_config['ramp']['data_dir']])
+
+    runner.invoke(main_utils, ['init-event',
+                               '--name', 'iris_test2',
+                               '--deployment-dir', deployment_dir])
+
+    with open(event_config, 'w+') as file:
+        yaml.dump(ramp_config, file)
+
+    result = runner.invoke(main_utils, ['deploy-event',
+                               '--config',
+                               database_config_template(),
+                               '--event-config',
+                               event_config,
+                               '--no-cloning'])
 
     result = runner.invoke(main, ['delete-event',
                                   '--config', database_config_template(),
@@ -193,7 +212,6 @@ def test_delete_event(make_toy_db, deploy_event,
     assert expected_msg in result.output
 
     if force and from_disk:
-        assert not os.path.exists(config_event)
         assert not os.path.exists(config_event)
 
 
