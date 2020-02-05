@@ -147,13 +147,24 @@ def problem(problem_name):
             current_problem.path_ramp_kit,
             '{}_starting_kit.html'.format(current_problem.name)
         )
+
         with codecs.open(description_f_name, 'r', 'utf-8') as description_file:
             description = description_file.read()
         return render_template('problem.html', problem=current_problem,
-                               description=description, admin=admin)
+                               description=description, admin=admin,
+                               notebook_filename=description_f_name)
     else:
         return redirect_to_user('Problem {} does not exist'
                                 .format(problem_name), is_error=True)
+
+
+@mod.route("/notebook/<problem_name>")
+def notebook(problem_name):
+    current_problem = get_problem(db.session, problem_name)
+    return send_from_directory(
+        current_problem.path_ramp_kit,
+        '{}_starting_kit.html'.format(current_problem.name)
+    )
 
 
 @mod.route("/events/<event_name>")

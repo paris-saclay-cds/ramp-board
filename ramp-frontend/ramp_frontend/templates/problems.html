@@ -77,10 +77,10 @@
             <li><span class="fas-li"><i class="fas fa-hand-o-right event-comp" aria-hidden="true"></i></span>
           {% endif %}
           <a href="/events/{{ event.name }}">{{ event.title }}</a>,
-          participants = <strong><font color=darkgreen>{{ event.n_participants }}</font></strong>,
-          submissions = <strong><font color=darkblue>{{ event.n_submissions }}</font></strong>,
-          combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong>,
-          <a href="/event_plots/{{ event.name }}">score vs time plot</a></li>
+          <strong><font color=darkgreen>{{ event.n_participants }}</font></strong> participants,
+          <strong><font color=darkblue>{{ event.n_submissions }}</font></strong> submissions,
+          <!-- combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong>, -->
+          <a href="/event_plots/{{ event.name }}">Plot score vs time</a></li>
         {% endif %}
       {% endfor %}
       </ul>
