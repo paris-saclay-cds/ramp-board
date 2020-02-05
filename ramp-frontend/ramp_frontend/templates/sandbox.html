@@ -69,19 +69,21 @@
 {% endif %}
 {% endwith %}
 
-<div class="page-title">
-    <span class="title">Sandbox</span>
-    <div class="description">You can either edit and save the code in the left column or upload the files in the right column. You can also import code from other submissions when the <a href="/events/{{ event.name }}/leaderboard">leaderboard</a> links are open.</div>
-</div>
-
 <div class="row>">
-  <div class="col-xs-8">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="title">Sandbox</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row>">
+  <div class="col-sm-8">
     <div class="card">
       <div class="card-header">
         <div class="card-title">
-          <div class="title">
-            Edit your submission
-          </div>
+          <div class="subtitle">Edit your submission</div>
         </div>
       </div>
       <div class="card-body">
@@ -103,13 +105,13 @@
           <br />
           <div class="row">
             <div class="col-sm-6 text-center">
-              <input type="submit" value="Save for later" class="ui submit button", name="saving">
+              <input type="submit" value="Save for later" class="ui submit button btn btn-default", name="saving">
             </div>
             <div class="col-sm-6 text-center">
               {% if event_status["state"] == 'close' %}
                 <input button type="button" value="Submit now" class="btn btn-secondary disabled">
               {% else %}
-                <button type="button" class="ui submit button" data-toggle="modal" data-target="#submit_Modal">Submit now</button>
+                <button type="button" class="ui submit button btn btn-default" data-toggle="modal" data-target="#submit_Modal">Submit now</button>
                 <!-- Modal -->
                 <div class="modal fade" id="submit_Modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
                   <div class="modal-dialog" role="document">
@@ -118,12 +120,12 @@
                         <h3 class="modal-title submission-title" id="exampleModalLabel"></i>Submit code</h3>
                       </div>
                       <div class="required field">
-                        <label>Submission name (between 4 and 20 characters)</label>
+                        <label>Submission name (between 4 and 20 characters)</label><br />
                           {{ submit_form.submission_name }}
                       </div>
                       <div class="modal-footer">
                         <button type="submit" class="btn btn-primary" data-dismiss="modal" id="entered">Cancel</button>
-                        <input type="submit" value="Submit now" class="ui submit button" name="submission">
+                        <input type="submit" value="Submit now" class="ui submit button btn btn-default" name="submission">
                       </div>
                     </div>
                   </div>
@@ -136,13 +138,11 @@
     </div>
   </div>
 
-  <div class="col-xs-4">
+  <div class="col-sm-4">
     <div class="card">
       <div class="card-header">
         <div class="card-title">
-            <div class="title">
-                Upload your files!
-            </div>
+            <div class="subtitle">Upload your files!</div>
         </div>
       </div>
     <div class="card-body">
@@ -159,7 +159,7 @@
             <form class="ui form" action="" method="post" enctype="multipart/form-data">
                 {{ upload_form.hidden_tag() }}
                 <input type="file" name="file" class="ui submit button">
-                <input type="submit" value="Upload" class="ui upload button">
+                <input type="submit" value="Upload" class="ui upload button btn btn-default">
             </form>
           </div>
       </div>

@@ -412,7 +412,7 @@ a:hover {
   .navbar-nav
   li.dropdown
   > a:after {
-  /* font-family: FontAwesome; */
+  font-family: FontAwesome;
   content: "\f107";
   position: absolute;
   right: 1em;
@@ -466,7 +466,7 @@ a:hover {
   .navbar-nav
   li.dropdown
   > a:after {
-  /* font-family: FontAwesome; */
+  font-family: FontAwesome;
   content: "\f107";
   position: absolute;
   right: 1em;
@@ -1367,7 +1367,7 @@ body.login-page .login-footer {
   margin-bottom: 0;
 }
 .breadcrumb > li + li:before {
-  /* font-family: FontAwesome; */
+  font-family: FontAwesome;
   content: "\f105";
   margin-right: 3px;
 }
