@@ -154,18 +154,18 @@ def test_add_event(make_toy_db):
       False, FileNotFoundError)]
 )
 def test_delete_event_error(make_toy_db, deploy_event,
-                      config_event, from_disk,
-                      force, error):
+                            config_event, from_disk,
+                            force, error):
     runner = CliRunner()
 
     with pytest.raises(error):
-        cmd = ('delete-event --config '+ database_config_template() +
-          ' --config-event ' + config_event)
+        cmd = ('delete-event --config ' + database_config_template() +
+               ' --config-event ' + config_event)
         if from_disk:
             cmd += ' --from-disk'
         if force:
             cmd += ' --force'
-        result = runner.invoke(main, cmd, catch_exceptions=False)
+        runner.invoke(main, cmd, catch_exceptions=False)
 
 
 @pytest.mark.parametrize(
@@ -173,8 +173,7 @@ def test_delete_event_error(make_toy_db, deploy_event,
     [("/tmp/databoard_test/events/iris_test2/config.yml", False,
       False, '--force --from_disk if you wish to'),
      ("/tmp/databoard_test/events/iris_test2/config.yml", True,
-      True, 'Removed directory: ')
-      ]
+      True, 'Removed directory: ')]
 )
 def test_delete_event(make_toy_db,
                       config_event, from_disk,
@@ -194,14 +193,14 @@ def test_delete_event(make_toy_db,
         yaml.dump(ramp_config, file)
 
     result = runner.invoke(main_utils, ['deploy-event',
-                               '--config',
-                               database_config_template(),
-                               '--event-config',
-                               event_config,
-                               '--no-cloning'])
+                                        '--config',
+                                        database_config_template(),
+                                        '--event-config',
+                                        event_config,
+                                        '--no-cloning'])
 
-    cmd = ('delete-event --config '+ database_config_template() +
-          ' --config-event ' + config_event)
+    cmd = ('delete-event --config ' + database_config_template() +
+           ' --config-event ' + config_event)
     if from_disk:
         cmd += ' --from-disk'
     if force:

@@ -212,7 +212,6 @@ def add_submission(config, event, team, submission, path):
 def delete_event(config, config_event, from_disk, force):
     """Delete event."""
     config = read_config(config)
-    err = False
     msg = ''
 
     # read the event_name
