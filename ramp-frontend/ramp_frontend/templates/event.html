@@ -1,34 +1,41 @@
-{% extends "base.html" %}
-{% block head %}
-    {{ super() }}
-{% endblock %}
-{% block title %}{{ event.name }} Description{% endblock %}
-{% block content %}
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-
-{% if messages %}
-    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    {% for category, message in messages %}
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
-                </div>
-                <div class="modal-body">
-                    {{ message }}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    {% endfor %}
+{% extends "base.html" %} {% block head %} {{ super() }} {% endblock %} {% block
+title %}{{ event.name }} Description{% endblock %} {% block content %} {% with
+messages = get_flashed_messages(with_categories=true) %} {% if messages %}
+<div
+  class="modal fade modal-warning"
+  id="formerror"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="myModalLabel"
+  aria-hidden="true"
+>
+  {% for category, message in messages %}
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+      </div>
+      <div class="modal-body">
+        {{ message }}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal">
+          Close
+        </button>
+      </div>
     </div>
-{% endif %}
-
-{% endwith %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %} {% endwith %}
 
 <div class="col-xs-12">
   <div class="card">
@@ -38,39 +45,76 @@
         <div class="subtitle">{{ event.title }}</div>
       </div>
     </div>
-    <div class="card-body">
-
-    <!-- Static navbar -->
-    <div id="topheader">
-      <div id="event-container">
+    <div class="card-body event-container">
+      <!-- Static navbar -->
       <nav class="navbar navbar-inverse navbar-event">
-        <div class="container-fluid">
-          <div id="event-navbar">
-            <ul class="nav navbar-nav">
-              <li class="active"><a href="{{ url_for('ramp.notebook', problem_name=event.problem.name) }}" target="iframe_content">Notebook</a></li>
-              <li><a href="https://github.com/ramp-kits/{{ event.problem.name }}">Starting-kit</a></li>
-              <li><a href="{{ url_for('ramp.rules', event_name=event.name) }}" target="iframe_content">Rules</a></li>
-              </ul>
-            <ul class="nav navbar-nav navbar-right">
-              {% if approved %}
-              <li class="disabled"><a href="./">Competition joined <span class="sr-only">(current)</span></a></li>
-              {% elif current_user.access_level in ['user', 'admin'] %}
-                {% if asked %}
-                <li class="btn-danger"><a href="./">Waiting approval... <span class="sr-only">(current)</span></a></li>
-                {% else %}
-                <li class="active"><a href="./">Join competition <span class="sr-only">(current)</span></a></li>
-                {% endif %}
-              {% endif %}
-            </ul>
-          </div><!--/.nav-collapse -->
-        </div><!--/.container-fluid -->
+        <button
+          type="button"
+          class="navbar-toggle collapsed"
+          data-toggle="collapse"
+          data-target="#event-navbar"
+          aria-expanded="false"
+          aria-controls="event-navbar"
+        >
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <div id="event-navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="active">
+              <a
+                href="{{ url_for('ramp.notebook', problem_name=event.problem.name) }}"
+                target="iframe_content"
+                >Notebook</a
+              >
+            </li>
+            <li>
+              <a href="https://github.com/ramp-kits/{{ event.problem.name }}"
+                >Starting-kit</a
+              >
+            </li>
+            <li>
+              <a
+                href="{{ url_for('ramp.rules', event_name=event.name) }}"
+                target="iframe_content"
+                >Rules</a
+              >
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            {% if approved %}
+            <li class="btn-sucess disabled">
+              <a>Competition joined <span class="sr-only">(current)</span></a>
+            </li>
+            {% elif current_user.access_level in ['user', 'admin'] %} {% if
+            asked %}
+            <li class="btn-danger disabled">
+              <a>Waiting approval... <span class="sr-only">(current)</span></a>
+            </li>
+            {% else %}
+            <li class="btn-primary">
+              <a href="/events/{{ event.name }}/sign_up"
+                >Join competition <span class="sr-only">(current)</span></a
+              >
+            </li>
+            {% endif %} {% endif %}
+          </ul>
+        </div>
+        <!--/.nav-collapse -->
       </nav>
-    </div>
-    </div>
 
-    <div class="iframe-container">
-      <iframe src="{{ url_for('ramp.notebook', problem_name=event.problem.name) }}" name="iframe_content", scolling="no", onload="AdjustIframeHeightOnLoad()"></iframe>
-    </div>
+      <div class="iframe-container">
+        <iframe
+          src="{{ url_for('ramp.notebook', problem_name=event.problem.name) }}"
+          name="iframe_content"
+          ,
+          scolling="no"
+          ,
+          onload="AdjustIframeHeightOnLoad()"
+        ></iframe>
+      </div>
     </div>
   </div>
 </div>
@@ -78,21 +122,25 @@
 {% block scripts %}
 <script type="text/javascript">
   function AdjustIframeHeightOnLoad() {
-    document.getElementsByName('iframe_content')[0].style.height = document.getElementsByName('iframe_content')[0].contentWindow.document.body.scrollHeight + "px";
+    document.getElementsByName("iframe_content")[0].style.height =
+      document.getElementsByName("iframe_content")[0].contentWindow.document
+        .body.scrollHeight + "px";
   }
   function AdjustIframeHeight(i) {
-    document.getElementsByName('iframe_content')[0].style.height = parseInt(i) + "px";
+    document.getElementsByName("iframe_content")[0].style.height =
+      parseInt(i) + "px";
   }
 </script>
 <script>
-  $(document).ready(function () {
-    $(".nav a").on("click", function(){
-      $(".nav").find(".active").removeClass("active");
-      $(this).parent().addClass("active");
+  $(document).ready(function() {
+    $(".nav a").on("click", function() {
+      $(".nav")
+        .find(".active")
+        .removeClass("active");
+      $(this)
+        .parent()
+        .addClass("active");
     });
   });
 </script>
-{% endblock %}
-
-{% endblock %}
-
+{% endblock %} {% endblock %}
