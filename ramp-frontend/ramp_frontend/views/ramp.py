@@ -166,6 +166,11 @@ def notebook(problem_name):
         '{}_starting_kit.html'.format(current_problem.name)
     )
 
+@mod.route("/rules/<event_name>")
+def rules(event_name):
+    event = get_event(db.session, event_name)
+    return render_template('rules.html', event=event)
+
 
 @mod.route("/events/<event_name>")
 @flask_login.login_required
