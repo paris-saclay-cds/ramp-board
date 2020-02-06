@@ -1021,6 +1021,10 @@
   padding-left: 0;
 }
 
+.navbar.navbar-inverse.navbar-event {
+  z-index: 1;
+}
+
 .navbar.navbar-default .navbar-nav > li > a.login {
   color: #0ead9a;
   font-size: medium;
