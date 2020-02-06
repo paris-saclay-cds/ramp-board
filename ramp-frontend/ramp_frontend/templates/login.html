@@ -10,8 +10,10 @@
         </button>
         <h4 class="modal-title" id="myModalLabel">Login Error</h4>
       </div>
-      <div class="modal-body" style="font-size: larger;">
-        {% for message in messages %} {{ message }} {% endfor %}
+      <div class="modal-body">
+        <div class="modal-message">
+          {% for message in messages %} {{ message }} {% endfor %}
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-warning" data-dismiss="modal">

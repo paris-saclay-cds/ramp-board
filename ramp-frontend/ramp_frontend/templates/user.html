@@ -6,68 +6,83 @@
 
 {% if messages %}
 
-    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    {% for category, message in messages %}
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
-                </div>
-                <div class="modal-body">
-                    {{ message }}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                </div>
-            </div>
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  {% for category, message in messages %}
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message">
+          {{ message }}
         </div>
-    {% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+      </div>
     </div>
+  </div>
+  {% endfor %}
+</div>
 {% endif %}
 {% endwith %}
 
 <div class="col-xs-12">
-    <div class="card">
-        <div class="card-body">
+  <div class="card">
+    <div class="card-body">
 
-            {% if current_user.access_level == 'asked' %}
-            <strong><font color="#e84b3a">Waiting for approval ...</font></strong>
-            
-            {% endif %}
-            {% for url, f_name, f_signed_up, f_asked_sign_up in event_urls_f_names %}
-                <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12">
-                  <div class="alert fresh-color alert-warning" role="alert">
-                     <strong>{{ f_name }}</strong></br>
-                     <a class="alert-link" href="/events/{{ url }}" title="Description" style="text-decoration:none"><i class="icon fa fa-sticky-note"></i> description</a><br>
-                     {% if admin %}
-                       <a class="alert-link" href="/events/{{ url }}/private_leaderboard" title="Private Leaderboard" style="text-decoration:none"><i class="icon fa fa-flag-checkered"></i> private leaderboard</a><br>
-                       <a class="alert-link" href="/events/{{ url }}/dashboard_submissions" title="Dashboard Admin" style="text-decoration:none"><i class="icon fa fa-cogs"></i> dashboard admin</a><br>
-            	     {% endif %}
-                     {% if f_signed_up %}
-                       <a class="alert-link" href="/events/{{ url }}/leaderboard" title="Leaderboard" style="text-decoration:none"><i class="icon fa fa-flag"></i> leaderboard</a><br>
-                       <a class="alert-link" href="/events/{{ url }}/my_submissions" title="My submissions" style="text-decoration:none"><i class="icon fa fa-folder"></i> my submissions</a><br>
-                       <a class="alert-link" href="/events/{{ url }}/sandbox" title="Sandbox" style="text-decoration:none"><i class="icon fa fa-edit"></i> sandbox</a><br>
-                     {% elif current_user.access_level in ['user', 'admin'] %}
-                        {% if f_asked_sign_up %}
-                            <strong><font color="#e84b3a">Waiting for approval...</font></strong>
-            	        {% else %}
-                            <a class="alert-link" href="/events/{{ url }}/sign_up" title="Sign up" style="text-decoration:none"><i class="icon fa fa-sign-in"></i> SIGN UP</a><br>
-                        {% endif %}
-                     {% endif %}
-            
-            	  </div>
-                </div>
-            {% endfor %}
-	    </div>  
+      {% if current_user.access_level == 'asked' %}
+      <strong>
+        <font color="#e84b3a">Waiting for approval ...</font>
+      </strong>
+
+      {% endif %}
+      {% for url, f_name, f_signed_up, f_asked_sign_up in event_urls_f_names %}
+      <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12">
+        <div class="alert fresh-color alert-warning" role="alert">
+          <strong>{{ f_name }}</strong></br>
+          <a class="alert-link" href="/events/{{ url }}" title="Description" style="text-decoration:none"><i
+              class="icon fa fa-sticky-note"></i> description</a><br>
+          {% if admin %}
+          <a class="alert-link" href="/events/{{ url }}/private_leaderboard" title="Private Leaderboard"
+            style="text-decoration:none"><i class="icon fa fa-flag-checkered"></i> private leaderboard</a><br>
+          <a class="alert-link" href="/events/{{ url }}/dashboard_submissions" title="Dashboard Admin"
+            style="text-decoration:none"><i class="icon fa fa-cogs"></i> dashboard admin</a><br>
+          {% endif %}
+          {% if f_signed_up %}
+          <a class="alert-link" href="/events/{{ url }}/leaderboard" title="Leaderboard" style="text-decoration:none"><i
+              class="icon fa fa-flag"></i> leaderboard</a><br>
+          <a class="alert-link" href="/events/{{ url }}/my_submissions" title="My submissions"
+            style="text-decoration:none"><i class="icon fa fa-folder"></i> my submissions</a><br>
+          <a class="alert-link" href="/events/{{ url }}/sandbox" title="Sandbox" style="text-decoration:none"><i
+              class="icon fa fa-edit"></i> sandbox</a><br>
+          {% elif current_user.access_level in ['user', 'admin'] %}
+          {% if f_asked_sign_up %}
+          <strong>
+            <font color="#e84b3a">Waiting for approval...</font>
+          </strong>
+          {% else %}
+          <a class="alert-link" href="/events/{{ url }}/sign_up" title="Sign up" style="text-decoration:none"><i
+              class="icon fa fa-sign-in"></i> SIGN UP</a><br>
+          {% endif %}
+          {% endif %}
+
+        </div>
+      </div>
+      {% endfor %}
     </div>
+  </div>
 </div>
 
 {% endblock %}
 {% block scripts %}
 <script>
-$(function () {
-   $('#formerror').modal('toggle')
-});
+  $(function () {
+    $('#formerror').modal('toggle')
+  });
 </script>
 {% endblock %}

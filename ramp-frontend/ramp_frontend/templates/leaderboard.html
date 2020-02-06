@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block head %}
-    {{ super() }}
+{{ super() }}
 {% endblock %}
 {% block title %}Leaderboards{% endblock %}
 {% block content %}
@@ -18,7 +18,9 @@
         <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
       </div>
       <div class="modal-body">
-        {{ message }}
+        <div class="modal-message">
+          {{ message }}
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-warning" data-dismiss="modal">

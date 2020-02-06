@@ -6,100 +6,109 @@
 
 {% if messages %}
 
-    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    {% for category, message in messages %}
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
-                </div>
-                <div class="modal-body">
-                   	{{ message }}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                </div>
-            </div>
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  {% for category, message in messages %}
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message">
+          {{ message }}
         </div>
-	{% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+      </div>
     </div>
+  </div>
+  {% endfor %}
+</div>
 
 {% endif %}
 {% endwith %}
- <!-- style="padding-bottom: 20px " -->
+<!-- style="padding-bottom: 20px " -->
 <div class="col-xs-12">
-     <div class="card">
-        <div class="card-header">
-            <div class="card-title">
-                <div class="title">Ask for a new event on {{ problem.name }}</div>
-                You will be able to change all these fields later. We will need approximate information for the decision on granting the event request.
-            </div>
-        </div>
-         <div class="card-body">
-           <form class="ui form" method="post" action="" name="ask_for_event">
-               {{ form.hidden_tag() }}
-                   Event name will be {{ problem.name }}_&lt;suffix&gt;. The length should be less than 20 characters, only ascii, no space. It will be used to identify the event, primarily in the url. If you plan to ask for several events for the same class or hackaton, please use the same suffix consistently.
-                   <div class="form-group">
-                       {{ form.suffix(placeholder="event_suffix") }}
-                       {% for error in form.suffix.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                   The title will be used on web pages to name the event. The length should be less than 80 characters. If you plan to ask for several events for the same class or hackaton, please use the same title consistently.
-                   <div class="form-group">
-                       {{ form.title(placeholder="event_title") }}
-                       {% for error in form.title.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                   Minimum duration between submissions.
-                   <div class="form-group">
-                       {{ form.min_duration_between_submissions_hour() }}hours
-                       {% for error in form.min_duration_between_submissions_hour.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                       {{ form.min_duration_between_submissions_minute() }}minutes
-                       {% for error in form.min_duration_between_submissions_minute.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                       {{ form.min_duration_between_submissions_second() }}seconds
-                       {% for error in form.min_duration_between_submissions_second.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                  Approximate number of students.
-                   <div class="form-group">
-                       {{ form.n_students() }}
-                       {% for error in form.n_students.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                  Opening date.
-                   <div class="form-group">
-                       {{ form.opening_date(placeholder="YYYY-MM-DD") }}
-                       {% for error in form.opening_date.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                  Closing date.
-                   <div class="form-group">
-                       {{ form.closing_date(placeholder="YYYY-MM-DD") }}
-                       {% for error in form.closing_date.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                   <input type="submit" value="Send" class="ui submit button">
-               </div>
-           </form>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="title">Ask for a new event on {{ problem.name }}</div>
+        You will be able to change all these fields later. We will need approximate information for the decision
+        on granting the event request.
+      </div>
     </div>
-   </div>
+    <div class="card-body">
+      <form class="ui form" method="post" action="" name="ask_for_event">
+        {{ form.hidden_tag() }}
+        Event name will be {{ problem.name }}_&lt;suffix&gt;. The length should be less than 20 characters, only
+        ascii, no space. It will be used to identify the event, primarily in the url. If you plan to ask for
+        several events for the same class or hackaton, please use the same suffix consistently.
+        <div class="form-group">
+          {{ form.suffix(placeholder="event_suffix") }}
+          {% for error in form.suffix.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        The title will be used on web pages to name the event. The length should be less than 80 characters. If
+        you plan to ask for several events for the same class or hackaton, please use the same title
+        consistently.
+        <div class="form-group">
+          {{ form.title(placeholder="event_title") }}
+          {% for error in form.title.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        Minimum duration between submissions.
+        <div class="form-group">
+          {{ form.min_duration_between_submissions_hour() }}hours
+          {% for error in form.min_duration_between_submissions_hour.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+          {{ form.min_duration_between_submissions_minute() }}minutes
+          {% for error in form.min_duration_between_submissions_minute.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+          {{ form.min_duration_between_submissions_second() }}seconds
+          {% for error in form.min_duration_between_submissions_second.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        Approximate number of students.
+        <div class="form-group">
+          {{ form.n_students() }}
+          {% for error in form.n_students.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        Opening date.
+        <div class="form-group">
+          {{ form.opening_date(placeholder="YYYY-MM-DD") }}
+          {% for error in form.opening_date.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        Closing date.
+        <div class="form-group">
+          {{ form.closing_date(placeholder="YYYY-MM-DD") }}
+          {% for error in form.closing_date.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        <input type="submit" value="Send" class="ui submit button">
+    </div>
+    </form>
+  </div>
+</div>
 </div>
 {% endblock %}
 {% block scripts %}
 <script>
-$(function () {
-   $('#formerror').modal('toggle')
-});
+  $(function () {
+    $('#formerror').modal('toggle')
+  });
 </script>
 {% endblock %}

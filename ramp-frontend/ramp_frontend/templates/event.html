@@ -13,7 +13,9 @@ messages = get_flashed_messages(with_categories=true) %} {% if messages %}
         <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
       </div>
       <div class="modal-body">
-        {{ message }}
+        <div class="modal-message">
+          {{ message }}
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-warning" data-dismiss="modal">
