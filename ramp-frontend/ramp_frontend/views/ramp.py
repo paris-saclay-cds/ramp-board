@@ -148,11 +148,10 @@ def problem(problem_name):
             '{}_starting_kit.html'.format(current_problem.name)
         )
 
-        with codecs.open(description_f_name, 'r', 'utf-8') as description_file:
-            description = description_file.read()
-        return render_template('problem.html', problem=current_problem,
-                               description=description, admin=admin,
-                               notebook_filename=description_f_name)
+        return render_template(
+            'problem.html', problem=current_problem, admin=admin,
+            notebook_filename=description_f_name
+        )
     else:
         return redirect_to_user('Problem {} does not exist'
                                 .format(problem_name), is_error=True)
@@ -200,8 +199,6 @@ def user_event(event_name):
             event.problem.path_ramp_kit,
             '{}_starting_kit.html'.format(event.problem.name)
         )
-        with codecs.open(description_f_name, 'r', 'utf-8') as description_file:
-            description = description_file.read()
         admin = is_admin(db.session, event_name, flask_login.current_user.name)
         approved = is_user_signed_up(
             db.session, event_name, flask_login.current_user.name
@@ -210,7 +207,6 @@ def user_event(event_name):
             db.session, event_name, flask_login.current_user.name
         )
         return render_template('event.html',
-                               description=description,
                                event=event,
                                admin=admin,
                                approved=approved,

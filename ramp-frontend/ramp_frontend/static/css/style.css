@@ -1570,9 +1570,49 @@ body.login-page .login-footer {
   opacity: 0.75;
 }
 
+.landing-page .app-header .header-title h2 {
+  font-size: 8em;
+  font-weight: bold;
+}
+
+p.index-body {
+  font-size: 1.5em;
+}
+
 @media only screen and (max-width: 768px) {
   .landing-page .navbar .navbar-header .navbar-brand {
     padding-left: 15px;
+  }
+  .landing-page .app-content-header {
+    font-weight: 300;
+    font-size: 4em;
+  }
+  .landing-page .app-content-description {
+    font-weight: 300;
+    font-size: 16px;
+  }
+  h2 {
+    font-size: 4em;
+  }
+  p.index-body {
+    font-size: 2em;
+  }
+}
+
+@media (min-width: 768px) {
+  .landing-page .app-content-header {
+    font-weight: 300;
+    font-size: 3.5em;
+  }
+  .landing-page .app-content-description {
+    font-weight: 300;
+    font-size: 20px;
+  }
+  h2 {
+    font-size: 3em;
+  }
+  p.index-body {
+    font-size: 1.5em;
   }
 }
 
@@ -1717,10 +1757,6 @@ div.info-pages {
   padding-right: 15vw;
 }
 
-p.index-body {
-  font-size: 1.5em;
-}
-
 a.request-btn {
   font-size: 1.5em;
 }
@@ -1728,9 +1764,6 @@ a.request-btn {
 @media (max-width: 768px) {
   body {
     font-size: 1.8vw;
-  }
-  h2 {
-    font-size: 5vw;
   }
   div.info-pages {
     padding-left: 1vw;
