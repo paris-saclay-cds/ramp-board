@@ -113,7 +113,7 @@ def test_problems(client_session):
     rv = client.get('/problems')
     assert rv.status_code == 200
     assert b'Hi User!' not in rv.data
-    assert b'participants =' in rv.data
+    assert b'participants' in rv.data
     assert b'Iris classification' in rv.data
     assert b'Boston housing price regression' in rv.data
 
@@ -122,7 +122,7 @@ def test_problems(client_session):
         rv = client.get('/problems')
         assert rv.status_code == 200
         assert b'Hi User!' in rv.data
-        assert b'participants =' in rv.data
+        assert b'participants' in rv.data
         assert b'Iris classification' in rv.data
         assert b'Boston housing price regression' in rv.data
 
@@ -144,16 +144,14 @@ def test_problem(client_session):
     rv = client.get('problems/iris')
     assert rv.status_code == 200
     assert b'Iris classification' in rv.data
-    assert b'Current events on this problem' in rv.data
-    assert b'Keywords' in rv.data
+    assert b'Registered events' in rv.data
 
     # GET: looking at the problem being logged-in
     with login_scope(client, 'test_user', 'test') as client:
         rv = client.get('problems/iris')
         assert rv.status_code == 200
         assert b'Iris classification' in rv.data
-        assert b'Current events on this problem' in rv.data
-        assert b'Keywords' in rv.data
+        assert b'Registered events' in rv.data
 
 
 @pytest.mark.parametrize(
@@ -280,7 +278,6 @@ def test_user_event(client_session):
         assert rv.status_code == 200
         assert b'Iris classification' in rv.data
         assert b'Rules' in rv.data
-        assert b'RAMP on iris' in rv.data
 
 
 def test_sign_up_for_event(client_session):
@@ -311,7 +308,7 @@ def test_sign_up_for_event(client_session):
         # check that we are informing the user that he has to wait for approval
         rv = client.get('/events/iris_test')
         assert rv.status_code == 200
-        assert b'Waiting for approval...' in rv.data
+        assert b'Waiting approval...' in rv.data
 
     # GET: sign-up to a new uncontrolled event
     event = get_event(session, 'boston_housing_test')
