@@ -33,13 +33,13 @@ def database_connection():
                               ALTER USER {username} WITH SUPERUSER""")
     except exc.ProgrammingError:
         print(f'user {username} already exists')
-        raise
+        # raise
 
     try:
         connection.execute(f'CREATE DATABASE {database_name} OWNER {username}')
     except exc.ProgrammingError:
         print(f'{database_name} database used for testing already exists')
-        raise
+        # raise
 
     # close the connection and remove the database in the end
     yield

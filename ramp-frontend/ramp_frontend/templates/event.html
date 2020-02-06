@@ -70,7 +70,7 @@ messages = get_flashed_messages(with_categories=true) %} {% if messages %}
               <a>Waiting approval... <span class="sr-only">(current)</span></a>
             </li>
             {% else %}
-            <li class="btn-primary" style="pointer-events: none;">
+            <li class="btn-primary">
               <a href="/events/{{ event.name }}/sign_up">Join competition <span class="sr-only">(current)</span></a>
             </li>
             {% endif %} {% endif %}
