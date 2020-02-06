@@ -26,84 +26,69 @@
 {% endif %}
 {% endwith %}
 
-
-<div class="page-title">
-<span class="title">{{ event.name }}</span>
-</div>
-
 <div class="col-xs-12">
   <div class="card">
     <div class="card-header">
       <div class="card-title">
-          <div class="title">
-			General Information
-          </div>
+        <div class="title">{{ event.title }}</div>
+        <div class="subtitle">General Information</div>
       </div>
     </div>
     <div class="card-body">
       <p>Opening time of the event: {{ event.opening_timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
-      <p>Send data to datarun and split between train and test on datarun: <a href='/{{ event.name }}/send_data_datarun'><i class='icon fa fa-paper-plane'></i><i class='icon fa fa-paper-plane'></i></a> 
-      <!-- <p>Open submissions? <b>TODO</b>  --!>
-      <!-- <p>Time between two submissions: <b>TODO</b> --!>
-    </div>
+      <p>Send data to datarun and split between train and test on datarun: <a href='/{{ event.name }}/send_data_datarun'><i class='icon fa fa-paper-plane'></i><i class='icon fa fa-paper-plane'></i></a>
   </div>
 </div>
 
-<div class="col-xs-12">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">
-          <div class="title">
-			Submissions
-          </div>
+<div class="row">
+  <div class="col-xs-12">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="subtitle">Submissions</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <center><div id="submissions_stat" style="width: 1000px; height: 400px;"><!-- Plotly --></div></center>
+        <canvas id="line-chart" width="20" height="20"></canvas>
       </div>
     </div>
-    <div class="card-body">
-	  <div class="row">
-		<div class="col-xs-12">
-          <center><div id="submissions_stat" style="width: 1000px; height: 400px;"><!-- Plotly --></div></center> 
-			<canvas id="line-chart" width="20" height="20"></canvas>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-6">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="subtitle">New submissions</div>
         </div>
-      </div>
-	  <div class="row">
-		<div class="col-xs-6">
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title">
-                  <div class="title">
-                      New submissions (pending training)
-                  </div>
-              </div>
-            </div>
-            <div class="card-body">
-                <table class="table table-hover" cellspacing="0" width="100%">
-                  {{ new_leaderboard | safe}}
-                </table>
-            </div>
-          </div>
+      </div>
+      <div class="card-body">
+        <div class="table-leaderboard">
+          <table class="table table-hover" cellspacing="0" width="100%">
+            {{ new_leaderboard | safe}}
+          </table>
         </div>
-
-        <div class="col-xs-6">
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title">
-                  <div class="title">
-                      Failed submissions
-                  </div>
-              </div>
-            </div>
-            <div class="card-body">
-                <table class="table table-hover" cellspacing="0" width="100%">
-                  {{ failed_leaderboard | safe}}
-                </table>
-            </div>
-          </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="subtitle">Failed submissions</div>
         </div>
-
-      </div> <!-- row -->
-    </div> <!-- card-body -->
-  </div> <!-- card -->
-</div> <!-- col -->
+      </div>
+      <div class="card-body">
+        <div class="table-leaderboard">
+          <table class="table table-hover" cellspacing="0" width="100%">
+            {{ failed_leaderboard | safe}}
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endblock %}
 
