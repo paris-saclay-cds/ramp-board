@@ -122,7 +122,7 @@
                     </ul>
                 </div>
             </nav>
-            <div class="side-menu sidebar-inverse">
+            <div class="side-menu sidebar-inverse" id="mySidenav">
                 <nav class="navbar navbar-inverse" role="navigation">
                     <div class="side-menu-container">
                         <div class="navbar-header">
@@ -130,7 +130,7 @@
                                 <div class="icon fa fa-users"></div>
                                 <div class="title">RAMP</div>
                             </a>
-                            <button type="button" class="navbar-expand-toggle pull-right visible-xs visible-sm">
+                            <button type="button" class="navbar-expand-toggle pull-right visible-xs" onclick="closeNav()">
                                 <i class="fa fa-times icon"></i>
                             </button>
                         </div>
@@ -232,6 +232,11 @@
         </footer>
         <div>
             <!-- Javascript Libs -->
+            <script>
+            function closeNav() {
+                document.getElementById("mySidenav").style.width = "0px";
+              }
+            </script>
             <script type="text/javascript" src="{{ url_for('static', filename='lib/js/jquery.min.js') }}"></script>
             <script type="text/javascript" src="{{ url_for('static', filename='lib/js/bootstrap.min.js') }}"></script>
             <script type="text/javascript" src="{{ url_for('static', filename='lib/js/Chart.min.js') }}"></script>
