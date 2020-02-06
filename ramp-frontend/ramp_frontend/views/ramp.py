@@ -1,4 +1,3 @@
-import codecs
 import datetime
 import difflib
 import logging
@@ -165,6 +164,7 @@ def notebook(problem_name):
         '{}_starting_kit.html'.format(current_problem.name)
     )
 
+
 @mod.route("/rules/<event_name>")
 def rules(event_name):
     event = get_event(db.session, event_name)
@@ -195,10 +195,6 @@ def user_event(event_name):
         if app.config['TRACK_USER_INTERACTION']:
             add_user_interaction(db.session, interaction='looking at event',
                                  event=event, user=flask_login.current_user)
-        description_f_name = os.path.join(
-            event.problem.path_ramp_kit,
-            '{}_starting_kit.html'.format(event.problem.name)
-        )
         admin = is_admin(db.session, event_name, flask_login.current_user.name)
         approved = is_user_signed_up(
             db.session, event_name, flask_login.current_user.name
