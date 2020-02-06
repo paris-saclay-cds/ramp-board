@@ -1,27 +1,16 @@
 {% extends "base.html" %} {% block title %}Login{% endblock %} {% block content
 %} {% with messages = get_flashed_messages() %} {% if messages %}
-<div
-  class="modal fade modal-warning"
-  id="formerror"
-  tabindex="-1"
-  role="dialog"
-  aria-labelledby="myModalLabel"
-  aria-hidden="true"
->
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button
-          type="button"
-          class="close"
-          data-dismiss="modal"
-          aria-label="Close"
-        >
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
         <h4 class="modal-title" id="myModalLabel">Login Error</h4>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="font-size: larger;">
         {% for message in messages %} {{ message }} {% endfor %}
       </div>
       <div class="modal-footer">
@@ -45,20 +34,14 @@
       <form class="ui form" method="post" action="" name="login">
         {{ form.hidden_tag() }}
         <div class="one field">
-          <div
-            class="required field"
-            style="margin-top: 4px;margin-bottom: 4px;"
-          >
+          <div class="required field" style="margin-top: 4px;margin-bottom: 4px;">
             <label>Username or e-mail</label><br />
             {{ form.user_name(placeholder="username or e-mail") }} {% for error
             in form.user_name.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
           </div>
-          <div
-            class="required field"
-            style="margin-top: 4px;margin-bottom: 4px;"
-          >
+          <div class="required field" style="margin-top: 4px;margin-bottom: 4px;">
             <label>Password</label><br />
             {{ form.password(placeholder="password") }} {% for error in
             form.password.errors %}
@@ -77,10 +60,8 @@
       </form>
       <p>
         Consider joining our
-        <a
-          href="https://ramp-studio.slack.com/shared_invite/MTg1NDUxNDAyNDk2LTE0OTUzOTcwMDQtMThlOWY1NWU0Mg"
-          ><strong>slack team</strong></a
-        >
+        <a href="https://ramp-studio.slack.com/shared_invite/MTg1NDUxNDAyNDk2LTE0OTUzOTcwMDQtMThlOWY1NWU0Mg"><strong>slack
+            team</strong></a>
         if you would like to be part of the growing community of rampers.
       </p>
     </div>
@@ -89,7 +70,7 @@
 
 {% endblock %} {% block scripts %}
 <script>
-  $(function() {
+  $(function () {
     $("#formerror").modal("toggle");
   });
 </script>
