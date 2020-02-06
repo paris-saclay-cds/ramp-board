@@ -7,8 +7,8 @@
     <meta name="keyword" content="data science, data challenge, crowdsourcing, open innovation, Paris-Saclay, Center for Data Science, teaching data science, deep learning, time series, missing data, feature extraction, hyperopt, AutoML">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Fonts -->
-    <link href='http://fonts.googleapis.com/css?family=Roboto+Condensed:300,400' rel='stylesheet' type='text/css'>
-    <link href='http://fonts.googleapis.com/css?family=Lato:300,400,700,900' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:300,400' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Lato:300,400,700,900' rel='stylesheet' type='text/css'>
     <!-- CSS Libs -->
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/bootstrap.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='lib/css/font-awesome.min.css') }}">
@@ -25,44 +25,44 @@
 
 <body class="flat-blue landing-page">
 
-    <nav class="navbar navbar-inverse navbar-fixed-top navbar-affix" role="navigation" data-spy="affix" data-offset-top="60">
-        <div class="container">
+    <div class="container">
+        <nav class="navbar navbar-inverse navbar-fixed-top navbar-affix" data-spy="affix" data-offset-top="60">
+          <div class="container">
             <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="#features"><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" height="26px"></a>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+              <ul class="nav navbar-nav navbar-font-index">
+                <li><a href="/problems">Our challenges</a></li>
+                <li><a href="/teaching">Your challenges</a></li>
+              </ul>
+              <ul class="nav navbar-nav navbar-right navbar-font-index">
+                <li><a href="/sign_up"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+                <li><a href="/login"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+      </div>
 
-                <div id="navbar" class="navbar-collapse collapse " aria-expanded="true">
-                        <ul class="nav navbar-nav navbar-left navbar-font-index">
-                            <li class="active"><a href="#features"><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" height="26px"></a></li>
-                            <li class="active"><a href="/problems">Our challenges</a></li>
-                            <li class="active"><a href="/teaching">Your challenges</a></li>
-                        </ul>
-                    </div>
-            </div>
-            <div id="navbar" class="navbar-collapse collapse " aria-expanded="true">
-                <ul class="nav navbar-nav navbar-right navbar-font-index">
-                    <li><a href="/sign_up">Sign Up</a></li>
-                    <li><a href="/login">Login</a></li>
-                </ul>
-            </div>
-            <!--/.nav-collapse -->
-        </div>
-    </nav>
     <div class="jumbotron app-header" id='titleback'>
-        <div class="container">
+        <div class="container header-title">
             <h2 class="text-center">
                 <br>
-                <div class="color-white font-large font-heavy"><span><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" alt="CDS logo" class="app-logo color-white" height="96px" style="max-width: 12%">&nbsp;RAMP</span></div>
+                <div class="color-white"><span><img src="{{ url_for('static', filename='img/logo_CDS.svg') }}" alt="CDS logo" class="app-logo color-white" height="96px" style="max-width: 12%">&nbsp;RAMP</span></div>
             </h2>
-            <p class="text-center color-white app-description font-med">Rapid Analytics & Model Prototyping</p>
-            <p class="text-center color-white app-description font-small">using Python</p></div>
-            <br>
-            <br>
-            <p class="text-center"><a class="btn btn-primary btn-lg app-btn" href="#features" role="button">Learn more »</a></p>
+            <p class="text-center color-white app-description">Rapid Analytics & Model Prototyping</p>
+            <p class="text-center color-white app-description">using Python</p>
+            <div class="header-button">
+              <a class="btn btn-primary btn-lg app-btn" href="#features" role="button">Learn More »</a>
+          </div>
+          </div>
         </div>
     </div>
 
@@ -72,14 +72,14 @@
                 <div class="row">
                         <div class="col-md-12">
                             <h2 class="text-center app-content-header">RAMP data challenges</h2>
-                            <p class="text-center app-content-description font-small">
+                            <p class="text-center app-content-description">
                             RAMP data challenges are a great way to collaboratively prototype and benchmark machine learning workflows. Participants submit their predictive solution (code), competing for the best score, and provide organisers with fully-functioning prototypes.
                             </p>
                         </div>
                     </div>
 
-            <div class="row text-center">
-                <div class="col-md-4 col-sm-6">
+            <div class="row text-center app-content-details">
+                <div class="col-md-4 col-sm-4">
                     <span class="fa-stack fa-lg fa-5x">
                       <i class="fa fa-circle-thin fa-stack-2x"></i>
                       <i class="fa fa-users fa-stack-1x"></i>
@@ -87,7 +87,7 @@
                     <h2>Collaborate</h2>
                     <p class="index-body">Solutions submitted by participants are made publically available during the 'open phase', at the end of a challenge. Participants can reuse and learn from each other's solutions, accelerating development.</p>
                 </div>
-                <div class="col-md-4 col-sm-6">
+                <div class="col-md-4 col-sm-4">
                     <span class="fa-stack fa-lg fa-5x">
                       <i class="fa fa-circle-thin fa-stack-2x"></i>
                       <i class="fa fa-cog fa-stack-1x"></i>
@@ -95,7 +95,7 @@
                     <h2>Prototype</h2>
                     <p class="index-body">RAMP workflow allows 'model blending'. A blend of the best models often achieves a better score than the best single submission.</p>
                 </div>
-                <div class="col-md-4 col-sm-6">
+                <div class="col-md-4 col-sm-4">
                     <span class="fa-stack fa-lg fa-5x">
                       <i class="fa fa-circle-thin fa-stack-2x"></i>
                       <i class="fa fa-graduation-cap fa-stack-1x"></i>
@@ -115,7 +115,7 @@
                 <div class="row">
                     <div class="col-md-12">
                         <h2 class="text-center app-content-header">RAMP packages</h2>
-                        <p class="text-center app-content-description font-small">
+                        <p class="text-center app-content-description">
                         RAMP packages offer versatile tools to define, build and optimize machine learning workflows via data challenges, great for prototyping models in your data science team.
                         </p>
                     </div>
@@ -166,9 +166,9 @@
                     RAMP was originally developed as a tool for data scientists to efficiently and collaboratively solve the data analytics aspect of high-impact domain science problems. Since then, RAMP has undergone many iterations and has been used in teaching and benchmarking machine learning algorithms as well.
                     </p>
                     <br>
-                    <span class="text-center"><a class="btn btn-hist font-smaller" href="/description#history" role="button"> Project history » </a></span>
+                    <span class="text-center"><a class="btn btn-hist" href="/description#history" role="button"> Project history » </a></span>
                     <br>
-                    <span class="text-center"><a class="btn btn-hist-pad font-smaller" href="mailto:admin@ramp.studio" role="button"> Contact us » </a></span>
+                    <span class="text-center"><a class="btn btn-hist-pad" href="mailto:admin@ramp.studio" role="button"> Contact us » </a></span>
                 </div>
             </div>
         </div>
@@ -219,7 +219,7 @@
     <!-- FOOTER -->
     <footer class="app-footer">
       <div class="container">
-          <center><span class="pull-left"><i class="icon fa fa-copyright"></i> RAMP version beta <a href="#"><i class="icon fa fa-long-arrow-up"></i><i class="icon fa fa-long-arrow-up"></i></a></span> &nbsp; &nbsp; &nbsp; &nbsp;
+          <center><span class="pull-left"><i class="icon fa fa-copyright"></i> RAMP version {{ version }} <a href="#"><i class="icon fa fa-long-arrow-up"></i><i class="icon fa fa-long-arrow-up"></i></a></span> &nbsp; &nbsp; &nbsp; &nbsp;
           <span><a href="/"><img src="{{ url_for('static', filename='img/logo_CDS_footer.svg') }}" height="20px"></a></span> &nbsp; &nbsp; &nbsp; &nbsp; <span><a href="mailto:admin@ramp.studio">Contact Us <i class="icon fa fa-envelope"></i></a></span>
           <span class="pull-right">Thanks to <a href="https://github.com/tui2tone/flat-admin-bootstrap-templates" target="_blank">tui2tone</a> for the  template!</span>
           </center>

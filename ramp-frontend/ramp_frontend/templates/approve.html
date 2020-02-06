@@ -26,52 +26,42 @@
 {% endif %}
 {% endwith %}
 
-<div class="col-xs-12 col-lg-12">
-     <form method="post">
-     <div class="card">
-        <div class="card-header">
-            <div class="card-title">
-                <div class="title">Approve or remove new users <br /> <br />
-		   	    <input type="submit" name="submit_button" value="Approve!">
-                <input type="submit" name="submit_button" value="Remove!">
-			    </div>
-            </div>
+<div class="row">
+  <form method="post">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="title">Approve or remove users and event subscribers <br />
+          </div>
         </div>
-
-         <div class="card-body">
-             <div class="col-xs-6 col-lg-6">
-                  <div class="card">
-                     <div class="card-header">
-                         <div class="card-title">
-                             <div class="title">New users</div>
-                         </div>
-                     </div>
-         			 <div class="card-body">
-                		<input type="checkbox" onClick="toggle_users(this)" checked> Approve all users<br/><br/>
-                		{% for asked_user in asked_users %}
-							<input type="checkbox" name="approve_users" value="{{ asked_user.name }}" checked> {{ asked_user.name }}: {{ asked_user.firstname }} {{ asked_user.lastname }} - {{ asked_user.email }}<br>
-						{% endfor %}
-					 </div>
-				  </div>
-			 </div>
-             <div class="col-xs-6 col-lg-6">
-                  <div class="card">
-                     <div class="card-header">
-                         <div class="card-title">
-                             <div class="title">New users for events</div>
-                         </div>
-                     </div>
-         			 <div class="card-body">
-                		<input type="checkbox" onClick="toggle_event_teams(this)" checked> Approve all event teams<br/><br/>
-                		{% for asked_event_team in asked_sign_up %}
-							<input type="checkbox" name="approve_event_teams" value="{{ asked_event_team.id }}" checked> {{ asked_event_team.event.name }} - {{ asked_event_team.team.name }} <br>
-						{% endfor %}
-					 </div>
-				  </div>
-			 </div>
-			</form>
-         </div>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-sm-6 col-lg-6">
+            <h3>New users</h3>
+            <input type="checkbox" onClick="toggle_users(this)" checked> Approve all users<br/><br/>
+            {% for asked_user in asked_users %}
+              <input type="checkbox" name="approve_users" value="{{ asked_user.name }}" checked> {{ asked_user.name }}: {{ asked_user.firstname }} {{ asked_user.lastname }} - {{ asked_user.email }}<br>
+            {% endfor %}
+          </div>
+          <div class="col-sm-6 col-lg-6">
+            <h3>Event subscribers</h3>
+            <input type="checkbox" onClick="toggle_event_teams(this)" checked> Approve all event teams<br/><br/>
+            {% for asked_event_team in asked_sign_up %}
+              <input type="checkbox" name="approve_event_teams" value="{{ asked_event_team.id }}" checked> {{ asked_event_team.event.name }} - {{ asked_event_team.team.name }} <br>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-6 col-lg-6 text-center">
+            <input type="submit" name="submit_button" value="Approve!" class="btn btn-default">
+          </div>
+          <div class="col-sm-6 col-lg-6 text-center">
+            <input type="submit" name="submit_button" value="Remove!" class="btn btn-default">
+        </div>
+      </div>
     </div>
+  </form>
 </div>
 
 {% endblock %}
