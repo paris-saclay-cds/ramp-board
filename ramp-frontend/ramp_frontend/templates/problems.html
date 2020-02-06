@@ -5,24 +5,28 @@
 {% with messages = get_flashed_messages(with_categories=true) %}
 
 {% if messages %}
-    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    {% for category, message in messages %}
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
-                </div>
-                <div class="modal-body">
-                    {{ message }}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                </div>
-            </div>
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  {% for category, message in messages %}
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message">
+          {{ message }}
         </div>
-    {% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+      </div>
     </div>
+  </div>
+  {% endfor %}
+</div>
 {% endif %}
 {% endwith %}
 
@@ -50,41 +54,46 @@
           <ul class="fa-ul problem-body">
             <li><span class="fa-li"><i class="fas fa-lock"></i></span> closed</li>
             <li><span class="fa-li"><i class="fas fa-hand-o-right"></i></span> competitive phase</li>
-            <li><span class="fa-li"><i class="fas fa-handshake-o" aria-hidden="true"></i></span> collaborative phase</li>
+            <li><span class="fa-li"><i class="fas fa-handshake-o" aria-hidden="true"></i></span> collaborative phase
+            </li>
           </ul>
         </div>
       </div>
       {% endif %}
     </div>
     <div class="card-body">
-    {% for problem in problems %}
+      {% for problem in problems %}
       <li class="item"> <a class="problem-title" href="/problems/{{ problem.name }}">{{ problem.title }}</a><br>
-      <ul class="fa-ul">
-      {% for event in problem.events %}
-        {% if event.is_public %}
+        <ul class="fa-ul">
+          {% for event in problem.events %}
+          {% if event.is_public %}
           {% if event.state_user == 'waiting' %}
-            <li><span class="fa-li"><i class="fas fa-clock-o user-waiting"></i></span></li>
+          <li><span class="fa-li"><i class="fas fa-clock-o user-waiting"></i></span></li>
           {% elif event.state_user == 'signed' %}
-            <li><span class="fa-li"><i class="fas fa-check-circle-o user-signed"></i></span></li>
+          <li><span class="fa-li"><i class="fas fa-check-circle-o user-signed"></i></span></li>
           {% elif event.state_user == 'not_signed' %}
-            <li><span class="fa-li"><i class="fas fa-circle-o user-not-signed"></i></span></li>
+          <li><span class="fa-li"><i class="fas fa-circle-o user-not-signed"></i></span></li>
           {% endif %}
           {% if event.state == 'close' %}
-            <li><span class="fas-li"><i class="fas fa-lock event-close"></i></span>
-          {% elif event.state == 'collab' %}
-            <li><span class="fas-li"><i class="fas fa-handshake-o event-collab" aria-hidden="true"></i></span>
-          {% elif event.state == 'competitive' %}
-            <li><span class="fas-li"><i class="fas fa-hand-o-right event-comp" aria-hidden="true"></i></span>
+          <li><span class="fas-li"><i class="fas fa-lock event-close"></i></span>
+            {% elif event.state == 'collab' %}
+          <li><span class="fas-li"><i class="fas fa-handshake-o event-collab" aria-hidden="true"></i></span>
+            {% elif event.state == 'competitive' %}
+          <li><span class="fas-li"><i class="fas fa-hand-o-right event-comp" aria-hidden="true"></i></span>
+            {% endif %}
+            <a href="/events/{{ event.name }}">{{ event.title }}</a>,
+            <strong>
+              <font color=darkgreen>{{ event.n_participants }}</font>
+            </strong> participants,
+            <strong>
+              <font color=darkblue>{{ event.n_submissions }}</font>
+            </strong> submissions,
+            <!-- combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong>, -->
+            <a href="/event_plots/{{ event.name }}">Plot score vs time</a></li>
           {% endif %}
-          <a href="/events/{{ event.name }}">{{ event.title }}</a>,
-          <strong><font color=darkgreen>{{ event.n_participants }}</font></strong> participants,
-          <strong><font color=darkblue>{{ event.n_submissions }}</font></strong> submissions,
-          <!-- combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong>, -->
-          <a href="/event_plots/{{ event.name }}">Plot score vs time</a></li>
-        {% endif %}
-      {% endfor %}
-      </ul>
-    {% endfor %}
+          {% endfor %}
+        </ul>
+        {% endfor %}
     </div>
   </div>
 </div>
@@ -92,8 +101,8 @@
 {% endblock %}
 {% block scripts %}
 <script>
-$(function () {
-   $('#formerror').modal('toggle')
-});
+  $(function () {
+    $('#formerror').modal('toggle')
+  });
 </script>
 {% endblock %}

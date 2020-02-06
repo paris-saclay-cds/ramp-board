@@ -957,6 +957,10 @@ body.login-page .login-footer {
   border-bottom-right-radius: 3px;
 }
 
+.modal-message {
+  font-size: 14px;
+}
+
 @media (max-width: 768px) {
   body.login-page .login-form .login-header {
     margin-bottom: 1em;

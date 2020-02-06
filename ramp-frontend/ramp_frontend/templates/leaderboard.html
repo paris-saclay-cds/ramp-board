@@ -1,30 +1,26 @@
-{% extends "base.html" %} {% block title %}Leaderboards{% endblock %} {% block
-content %} {% with messages = get_flashed_messages(with_categories=true) %} {%
-if messages %}
-<div
-  class="modal fade modal-warning"
-  id="formerror"
-  tabindex="-1"
-  role="dialog"
-  aria-labelledby="myModalLabel"
-  aria-hidden="true"
->
+{% extends "base.html" %}
+{% block head %}
+{{ super() }}
+{% endblock %}
+{% block title %}Leaderboards{% endblock %}
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{%if messages %}
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
   {% for category, message in messages %}
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button
-          type="button"
-          class="close"
-          data-dismiss="modal"
-          aria-label="Close"
-        >
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
         <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
       </div>
       <div class="modal-body">
-        {{ message }}
+        <div class="modal-message">
+          {{ message }}
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-warning" data-dismiss="modal">
@@ -35,7 +31,8 @@ if messages %}
   </div>
   {% endfor %}
 </div>
-{% endif %} {% endwith %}
+{% endif %}
+{% endwith %}
 
 <div class="row">
   <div class="container">
@@ -59,12 +56,7 @@ if messages %}
           </font>
         </h4>
 
-        <table
-          id="leaderboard"
-          class="display table-leaderboard"
-          cellspacing="0"
-          width="100%"
-        >
+        <table id="leaderboard" class="display table-leaderboard" cellspacing="0" width="100%">
           {{ leaderboard | safe}}
         </table>
       </div>
@@ -72,7 +64,7 @@ if messages %}
   </div>
 </div>
 
-{% if new_leaderboard %}
+
 <div class="row">
   <div class="col-sm-6">
     <div class="card">
@@ -83,6 +75,7 @@ if messages %}
           </div>
         </div>
       </div>
+      {% if new_leaderboard %}
       <div class="card-body">
         <div class="table-leaderboard">
           <table class="table table-bordered">
@@ -90,9 +83,9 @@ if messages %}
           </table>
         </div>
       </div>
+      {% endif %}
     </div>
   </div>
-  {% endif %} {% if failed_leaderboard %}
   <div class="col-sm-6">
     <div class="card">
       <div class="card-header">
@@ -102,6 +95,7 @@ if messages %}
           </div>
         </div>
       </div>
+      {% if failed_leaderboard %}
       <div class="card-body">
         <div class="table-leaderboard">
           <table class="table table-bordered">
@@ -109,20 +103,21 @@ if messages %}
           </table>
         </div>
       </div>
+      {% endif %}
     </div>
   </div>
-  {% endif %}
 </div>
-{% endblock %} {% block scripts %}
+{% endblock %}
+{% block scripts %}
 <script>
   $(function () {
-         $('#formerror').modal('toggle')
+    $('#formerror').modal('toggle')
   });
 
-  $(document).ready(function() {
-          $('#leaderboard').DataTable({
-               "order": [[ {{ sorting_column_index }}, "{{ sorting_direction }}" ]],
-               "scrollX": true
+  $(document).ready(function () {
+    $('#leaderboard').DataTable({
+      "order": [[{{ sorting_column_index }}, "{{ sorting_direction }}" ]],
+      "scrollX": true
                });
   } );
 </script>
