@@ -21,6 +21,7 @@ from wtforms.widgets import TextArea
 
 from werkzeug.utils import secure_filename
 
+from ramp_database.model import Event
 from ramp_database.model import Problem
 from ramp_database.model import Submission
 from ramp_database.model import SubmissionFile
@@ -154,6 +155,15 @@ def problem(problem_name):
     else:
         return redirect_to_user('Problem {} does not exist'
                                 .format(problem_name), is_error=True)
+
+
+@mod.route("/download_starting_kit/<event_name>")
+def download_starting_kit(event_name):
+    event = db.session.query(Event).filter_by(name=event_name).one()
+    return send_from_directory(
+        os.path.join(event.problem.path_ramp_kit, "events_archived"),
+        event_name + ".zip"
+    )
 
 
 @mod.route("/notebook/<problem_name>")

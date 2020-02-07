@@ -53,7 +53,7 @@ messages = get_flashed_messages(with_categories=true) %} {% if messages %}
                 target="iframe_content">Description</a>
             </li>
             <li>
-              <a href="https://github.com/ramp-kits/{{ event.problem.name }}">Download kit</a>
+              <a href="{{ url_for('ramp.download_starting_kit', event_name=event.name) }}">Download kit</a>
             </li>
             <li>
               <a href="{{ url_for('ramp.rules', event_name=event.name) }}" target="iframe_content">Rules</a>
