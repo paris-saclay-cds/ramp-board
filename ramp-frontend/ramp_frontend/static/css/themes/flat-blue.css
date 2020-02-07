@@ -1018,7 +1018,7 @@
 
 .navbar .container-fluid.base-top {
   margin-left: 0;
-  padding-left: 0;
+  padding-left: 0px;
 }
 
 .navbar.navbar-inverse.navbar-event {
@@ -1032,27 +1032,15 @@
 }
 
 @media (max-width: 768px) {
-  .navbar.navbar.navbar-default.navbar-fixed-top.navbar-top{
-    padding-left: 0;
-  }
-}
-
-@media (max-width: 740px) {
   /* Index page */
   /* Get a black background for phone but not for tablet */
   .flat-blue.landing-page .navbar .navbar-collapse {
     background-color: #333;
   }
-  .navbar .container-fluid.base-top {
-    margin-left: 0;
-    margin-right: 0;
-    padding-left: 0;
-    padding-right: 0;
-  }
   .navbar .navbar-collapse > ul > li > a {
     font-size: medium;
   }
-    /* Base page */
+  /* Base page */
   /* Right navigation bar for login/signup */
   .flat-blue .navbar.navbar-default .navbar-right.navbar-base {
     background-color: #fff;
