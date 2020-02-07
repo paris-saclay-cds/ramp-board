@@ -141,6 +141,11 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
         col_ordered = ["submission ID"] + col_ordered
     df = df[col_ordered]
 
+    # check if the contributivity columns are null
+    contrib_columns = ['contributivity', 'historical contributivity']
+    if (df[contrib_columns] == 0).all(axis=0).all():
+        df = df.drop(columns=contrib_columns)
+
     df = df.sort_values(
         "bag {} {}".format(leaderboard_type, event.official_score_name),
         ascending=event.get_official_score_type(session).is_lower_the_better
