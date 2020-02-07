@@ -1,5 +1,6 @@
 import os
 import subprocess
+import zipfile
 
 from ramp_database.testing import _delete_line_from_file
 from ramp_database.testing import setup_files_extension_type
@@ -83,6 +84,28 @@ def deploy_ramp_event(config, event_config, setup_ramp_repo=True, force=False):
 
         if not os.path.exists(ramp_config['ramp_submissions_dir']):
             os.makedirs(ramp_config['ramp_submissions_dir'])
+
+        # create a folder in the ramp-kit directory to store the archive
+        archive_dir = os.path.abspath(os.path.join(
+            ramp_config['ramp_kit_dir'], 'events_archived'
+        ))
+        if not os.path.exists(archive_dir):
+            os.makedirs(archive_dir)
+        zip_filename = os.path.join(
+            archive_dir, ramp_config["event_name"] + ".zip"
+        )
+        with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for root, dirs, files in os.walk(ramp_config['ramp_kit_dir']):
+                if archive_dir not in os.path.abspath(root):
+                    for f in files:
+                        path_file = os.path.join(root, f)
+                        zipf.write(
+                            path_file,
+                            os.path.relpath(
+                                path_file, start=ramp_config["ramp_kit_dir"]
+                            )
+                        )
+
         add_event(session, ramp_config['problem_name'],
                   ramp_config['event_name'],
                   ramp_config['event_title'],
