@@ -62,7 +62,7 @@ messages = get_flashed_messages(with_categories=true) %} {% if messages %}
           <ul class="nav navbar-nav navbar-right">
             {% if approved %}
             <li class="btn-success" style="pointer-events: none;">
-              <a>Competition joined <span class="sr-only">(current)</span></a>
+              <a>Event joined <span class="sr-only">(current)</span></a>
             </li>
             {% elif current_user.access_level in ['user', 'admin'] %} {% if
             asked %}
@@ -71,7 +71,7 @@ messages = get_flashed_messages(with_categories=true) %} {% if messages %}
             </li>
             {% else %}
             <li class="btn-primary">
-              <a href="/events/{{ event.name }}/sign_up">Join competition <span class="sr-only">(current)</span></a>
+              <a href="/events/{{ event.name }}/sign_up">Join event <span class="sr-only">(current)</span></a>
             </li>
             {% endif %} {% endif %}
           </ul>
