@@ -2,7 +2,7 @@
 The :mod:`ramp_database.testing` module create facility functions to test the
 tools and model of ``ramp-database``.
 """
-
+from pathlib import Path
 import logging
 import os
 import shutil
@@ -309,6 +309,16 @@ def add_events(session):
             ramp_submissions_path=ramp_config_problem['ramp_submissions_dir'],
             is_public=True, force=False
         )
+        # create an empty event archive
+        archive_dir = os.path.join(
+            ramp_config_problem['ramp_kit_dir'], 'events_archived',
+        )
+        if not os.path.isdir(archive_dir):
+            os.makedirs(archive_dir)
+        archive_file = os.path.join(
+            archive_dir, ramp_config_problem['event_name'] + '.zip'
+        )
+        Path(archive_file).touch()
 
 
 def sign_up_teams_to_events(session):
