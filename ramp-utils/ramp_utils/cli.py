@@ -123,7 +123,7 @@ def create_conda_env(config, event_config):
     subprocess.run(
         ["conda", "create", "--name", conda_env_name, "--yes"]
     )
-    proc = subprocess.run(
+    subprocess.run(
         ["conda", "env", "update",
          "--name", conda_env_name,
          "--file", path_environment_file]
