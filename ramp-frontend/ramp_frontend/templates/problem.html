@@ -45,7 +45,8 @@
         </div>
         <div class="col-sm-6">
           <h4>Starting-kit</h4>
-          <a class="btn btn-warning" href="https://github.com/ramp-kits/{{ problem.name }}">Access on GitHub</a>
+          <a class="btn btn-warning"
+            href="{{ url_for('ramp.download_starting_kit', event_name=latest_event) }}">Download</a>
         </div>
       </div>
       <div class="iframe-container">

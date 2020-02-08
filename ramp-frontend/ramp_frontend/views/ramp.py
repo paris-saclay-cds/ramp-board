@@ -147,10 +147,19 @@ def problem(problem_name):
             current_problem.path_ramp_kit,
             '{}_starting_kit.html'.format(current_problem.name)
         )
+        # check which event ramp-kit archive is the latest
+        archive_dir = os.path.join(
+            current_problem.path_ramp_kit, "events_archived"
+        )
+        latest_event_zip = max(
+            [f for f in os.scandir(archive_dir) if f.name.endswith(".zip")],
+            key=lambda x: x.stat().st_mtime
+        )
+        latest_event = os.path.splitext(latest_event_zip.name)[0]
 
         return render_template(
             'problem.html', problem=current_problem, admin=admin,
-            notebook_filename=description_f_name
+            notebook_filename=description_f_name, latest_event=latest_event
         )
     else:
         return redirect_to_user('Problem {} does not exist'
