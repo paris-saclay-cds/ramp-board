@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block head %}
-    {{ super() }}
-    <script>
-    function resizeIframe(obj) {
-      obj.style.height = obj.contentWindow.document.documentElement.scrollHeight + 'px';
-    }
-  </script>
+{{ super() }}
+<script>
+  function resizeIframe(obj) {
+    obj.style.height = obj.contentWindow.document.documentElement.scrollHeight + 'px';
+  }
+</script>
 {% endblock %}
 {% block title %}Challenge description {% endblock %}
 {% block content %}
@@ -18,26 +18,36 @@
       </div>
     </div>
     <div class="card-body">
-      <h4>Registered events:</h4>
-      <ul>
-      {% for event in problem.events %}
-        {% if event.is_public %}
-        <li> <a href="/events/{{ event.name }}">{{ event.title }}</a><br />
-          <strong><font color=darkgreen>{{ event.n_participants }}</font></strong> participants,
-          <strong><font color=darkblue>{{ event.n_submissions }}</font></strong> submissions,
-          <!-- combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong><br /> -->
-          <a href="/event_plots/{{ event.name }}">Plot score vs time</a>
-        {% endif %}
-      {% endfor %}
-      </ul>
-      <!-- <h4>Keywords:</h4>
-      <ul>
-        {% for problem_keyword in problem.keywords %}
-          <li> <a href="/keywords/{{ problem_keyword.keyword.name }}">{{ problem_keyword.keyword.name }}</a>
-        {% endfor %}
-      </ul> -->
-      <h4>Starting-kit:</h4>
-      <a class="btn btn-warning" href="https://github.com/ramp-kits/{{ problem.name }}">Access on GitHub</a>
+      <div class="row">
+        <div class="col-sm-6">
+          <h4>Registered events</h4>
+          <ul>
+            {% for event in problem.events %}
+            {% if event.is_public %}
+            <li> <a href="/events/{{ event.name }}">{{ event.title }}</a><br />
+              <strong>
+                <font color=darkgreen>{{ event.n_participants }}</font>
+              </strong> participants,
+              <strong>
+                <font color=darkblue>{{ event.n_submissions }}</font>
+              </strong> submissions,
+              <!-- combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong><br /> -->
+              <a href="/event_plots/{{ event.name }}">Plot score vs time</a>
+              {% endif %}
+              {% endfor %}
+          </ul>
+          <!-- <h4>Keywords:</h4>
+        <ul>
+          {% for problem_keyword in problem.keywords %}
+            <li> <a href="/keywords/{{ problem_keyword.keyword.name }}">{{ problem_keyword.keyword.name }}</a>
+          {% endfor %}
+        </ul> -->
+        </div>
+        <div class="col-sm-6">
+          <h4>Starting-kit</h4>
+          <a class="btn btn-warning" href="https://github.com/ramp-kits/{{ problem.name }}">Access on GitHub</a>
+        </div>
+      </div>
       <div class="iframe-container">
         <iframe onload="resizeIframe(this)" src="{{ url_for('ramp.notebook', problem_name=problem.name) }}"></iframe>
       </div>
@@ -46,4 +56,3 @@
 </div>
 
 {% endblock %}
-
