@@ -53,8 +53,24 @@ Then, you can launch the worker for the submission `random_forest_10_10` as::
 
 And you can check the results in the `logs` folder.
 
-Update automatically a conda environment link to an event
----------------------------------------------------------
+.. _create_conda_env:
+
+Create automatically a conda environment linked to an event
+-----------------------------------------------------------
+
+When launching an event, you might need to create a conda environment. We
+provide a command-line tool to automatically create the `conda` environment::
+
+    ~/ramp_deployment $ ramp setup create-conda-env --event-config events/iris_test/config.yml
+
+This command will create the `conda` environment and install the packages
+using the `environment.yml` which should be located inside the `ramp-kit`
+directory of the challenge.
+
+.. _update_conda_env:
+
+Update automatically a conda environment linked to an event
+-----------------------------------------------------------
 
 We provide a command-line tool to automatically update the packages of a RAMP
 event. You use it as follow::
