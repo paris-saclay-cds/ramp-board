@@ -45,7 +45,7 @@ configuration::
 
       ~ $ conda create --name ramp-iris pip numpy pandas scikit-learn
       ~ $ conda activate ramp-iris
-      ~ $ pip install git+https://github.com/paris-saclay-cds/ramp-workflow
+      ~ $ pip install ramp-workflow
 
 If you are using a ramp-kit from the `Paris-Saclay CDS
 <https://github.com/ramp-kits>`_, each kit will provide either an
@@ -53,6 +53,15 @@ If you are using a ramp-kit from the `Paris-Saclay CDS
 the environment::
 
       conda create --name ramp-iris --file environment.yml
+
+Alternatively, you can include an `environment.yml` file inside the `ramp-kit`
+directory and use the following to install the environment::
+
+      ~/ramp_deployment $ ramp setup create-conda-env --event-config events/iris_test/config.yml
+
+You can update an existing environment with the following::
+
+      ~/ramp_deployment $ ramp setup update-conda-env --event-config events/iris_test/config.yml
 
 Running submissions on Amazon Web Services (AWS)
 ------------------------------------------------

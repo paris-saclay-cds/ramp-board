@@ -8,6 +8,7 @@ import pandas as pd
 
 from ramp_utils import deploy
 from ramp_utils import read_config
+from ramp_utils import generate_ramp_config
 
 
 HERE = os.path.dirname(__file__)
@@ -103,6 +104,30 @@ def deploy_event(config, event_config, cloning, force):
     kit and data)
     """
     deploy.deploy_ramp_event(config, event_config, cloning, force)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file in YAML format containing the database '
+              'information')
+@click.option("--event-config", default='config.yml', show_default=True,
+              help='Configuration file in YAML format containing the RAMP '
+              'information')
+def create_conda_env(config, event_config):
+    """Create the conda environment for a specific event"""
+    conda_env_name = read_config(event_config)["worker"]["conda_env"]
+    ramp_config = generate_ramp_config(event_config, database_config=config)
+    path_environment_file = os.path.join(
+        ramp_config["ramp_kit_dir"], "environment.yml"
+    )
+    subprocess.run(
+        ["conda", "create", "--name", conda_env_name, "--yes"]
+    )
+    proc = subprocess.run(
+        ["conda", "env", "update",
+         "--name", conda_env_name,
+         "--file", path_environment_file]
+    )
 
 
 @main.command()
