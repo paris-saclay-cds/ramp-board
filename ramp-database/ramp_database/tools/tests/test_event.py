@@ -10,6 +10,7 @@ from ramp_utils import generate_ramp_config
 from ramp_utils.utils import import_module_from_source
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
+from ramp_database.testing import add_users
 
 from ramp_database.model import CVFold
 from ramp_database.model import Event
@@ -18,6 +19,7 @@ from ramp_database.model import Keyword
 from ramp_database.model import Model
 from ramp_database.model import Problem
 from ramp_database.model import ProblemKeyword
+from ramp_database.model import Submission
 from ramp_database.model import Workflow
 
 from ramp_database.utils import setup_db
@@ -30,6 +32,7 @@ from ramp_database.testing import ramp_config_iris
 from ramp_database.testing import setup_ramp_kit_ramp_data
 
 from ramp_database.tools.event import add_event
+from ramp_database.tools.event import add_event_admin
 from ramp_database.tools.event import add_keyword
 from ramp_database.tools.event import add_problem
 from ramp_database.tools.event import add_problem_keyword
@@ -38,11 +41,17 @@ from ramp_database.tools.event import add_workflow
 from ramp_database.tools.event import delete_event
 from ramp_database.tools.event import delete_problem
 
+from ramp_database.tools.event import get_cv_fold_by_event
 from ramp_database.tools.event import get_event
+from ramp_database.tools.event import get_event_admin
 from ramp_database.tools.event import get_keyword_by_name
 from ramp_database.tools.event import get_problem
 from ramp_database.tools.event import get_problem_keyword_by_name
+from ramp_database.tools.event import get_score_type_by_event
 from ramp_database.tools.event import get_workflow
+
+from ramp_database.tools.team import sign_up_team
+from ramp_database.tools.team import get_event_team_by_name
 
 HERE = os.path.dirname(__file__)
 
@@ -54,6 +63,7 @@ def session_scope_function(database_connection):
     try:
         deployment_dir = create_test_db(database_config, ramp_config)
         with session_scope(database_config['sqlalchemy']) as session:
+            add_users(session)
             yield session
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)
@@ -276,6 +286,77 @@ def test_check_event(session_scope_function):
             is_public=True,
             force=False
         )
+
+
+def test_delete_event(session_scope_function):
+    ###########################################################################
+    # Setup the problem/event
+
+    # add sample problem
+    problem_name = 'iris'
+    ramp_config = read_config(ramp_config_iris())
+
+    internal_ramp_config = generate_ramp_config(ramp_config)
+    setup_ramp_kit_ramp_data(internal_ramp_config, problem_name, depth=1)
+    add_problem(session_scope_function, problem_name,
+                internal_ramp_config['ramp_kit_dir'],
+                internal_ramp_config['ramp_data_dir'])
+
+    event_name = 'iris_test_delete'
+    # add sample event
+    add_event(session_scope_function, problem_name,
+              event_name,
+              internal_ramp_config['event_title'],
+              internal_ramp_config['sandbox_name'],
+              internal_ramp_config['ramp_submissions_dir'],
+              is_public=True, force=False)
+
+    event = get_event(session_scope_function,
+                      event_name)
+    assert event
+
+    # add event-team
+    username = 'test_user'
+    sign_up_team(session_scope_function, event_name, username)
+    event_team = get_event_team_by_name(session_scope_function,
+                                        event_name, username)
+    assert event_team
+
+    # add event admin
+    add_event_admin(session_scope_function, event_name, username)
+    assert get_event_admin(session_scope_function, event_name, username)
+
+    # check if the event is connected to any score type in the database
+    event_score_types = get_score_type_by_event(session_scope_function, event)
+    assert len(event_score_types) > 0
+
+    # check if the event is connected to any cv_fold in the database
+    event_cv_fold = get_cv_fold_by_event(session_scope_function, event)
+    assert len(event_cv_fold) > 0
+
+    # add the submission to the event
+    from ramp_database.tools.submission import get_submission_by_id
+    submission = get_submission_by_id(session_scope_function, event.id)
+    assert submission
+
+    # ensure that the changes have been committed in the database
+    session_scope_function.commit()
+
+    ###########################################################################
+    # Check the behaviour of delete_event
+
+    delete_event(session_scope_function, event_name)
+    # make sure event and all the connections were deleted
+    event_test = get_event(session_scope_function, None)
+    assert len(event_test) == 0
+    assert not get_event_team_by_name(session_scope_function,
+                                      event_name, username)
+    assert not get_event_admin(session_scope_function, event_name, username)
+    event_score_types = get_score_type_by_event(session_scope_function, event)
+    assert len(event_score_types) == 0
+    event_cv_fold = get_cv_fold_by_event(session_scope_function, event)
+    assert not event_cv_fold
+    assert len(session_scope_function.query(Submission).all()) == 0
 
 
 def test_check_keyword(session_scope_function):

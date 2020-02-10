@@ -1,9 +1,12 @@
 from collections import defaultdict
 
 import click
+import os
 import pandas as pd
+import shutil
 
 from ramp_utils import read_config
+from ramp_utils import generate_ramp_config
 
 from .utils import session_scope
 
@@ -187,6 +190,63 @@ def add_submission(config, event, team, submission, path):
     with session_scope(config['sqlalchemy']) as session:
         submission_module.add_submission(session, event, team, submission,
                                          path)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
+@click.option("--config-event", required=True,
+              help='Path to configuration file YAML format '
+              'containing the database information, eg config.yml')
+@click.option('--dry-run', is_flag=True,
+              help='Emulate the removal without taking action. Basically, '
+              'only the printing information will be shown. The deletion will '
+              'not be done.')
+@click.option('--from-disk', is_flag=True,
+              help='Flag to remove the event folder from the disk as well.')
+@click.option('--force', is_flag=True,
+              help='Flag to force a removal, even from the disk, when an '
+              'event is not in the database.')
+def delete_event(config, config_event, dry_run, from_disk, force):
+    """Delete event."""
+    internal_config = read_config(config)
+    ramp_config = generate_ramp_config(config_event, config)
+    event_name = ramp_config["event_name"]
+
+    with session_scope(internal_config['sqlalchemy']) as session:
+        db_event = event_module.get_event(session, event_name)
+
+        if db_event:
+            if not dry_run:
+                event_module.delete_event(session, event_name)
+            click.echo(
+                '{} was removed from the database'
+                .format(event_name)
+            )
+        if from_disk:
+            if not db_event and not force:
+                err_msg = ('{} event not found in the database. If you want '
+                           'to force removing event files from the disk, add '
+                           'the option "--force".'
+                           .format(event_name))
+                raise click.ClickException(err_msg)
+            for key in ("ramp_submissions_dir", "ramp_predictions_dir",
+                        "ramp_logs_dir"):
+                dir_to_remove = ramp_config[key]
+                if os.path.exists(dir_to_remove):
+                    if not dry_run:
+                        shutil.rmtree(dir_to_remove)
+                    click.echo("Removed directory:\n{}".format(dir_to_remove))
+                else:
+                    click.echo(
+                        "Directory not found. Skip removal for the "
+                        "directory:\n{}".format(dir_to_remove)
+                    )
+            event_dir = os.path.dirname(config_event)
+            if not dry_run:
+                shutil.rmtree(event_dir)
+            click.echo("Removed directory:\n{}".format(event_dir))
 
 
 @main.command()

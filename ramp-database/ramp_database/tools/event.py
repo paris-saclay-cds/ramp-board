@@ -438,6 +438,48 @@ list of :class:`ramp_database.model.Event`
     return select_event_by_name(session, event_name)
 
 
+def get_cv_fold_by_event(session, event):
+    """Get ScoreType from the database
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str or None
+        The event class to query.
+
+    Returns
+    -------
+    cv fold : : list of all cv folds of this event
+    """
+    return (session.query(CVFold)
+                   .filter(EventScoreType.event_id ==
+                           event.id)
+                   .all())
+
+
+def get_score_type_by_event(session, event):
+    """Get ScoreType from the database
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str or None
+        The event class to query
+
+    Returns
+    -------
+    score type : :class:`ramp_database.model.ScoreType` or \
+    list of list of :class:`ramp_database.model.ScoreType`
+        The queried problem.
+    """
+    return (session.query(EventScoreType)
+                   .filter(EventScoreType.event_id ==
+                           event.id)
+                   .all())
+
+
 def get_event_admin(session, event_name, user_name):
     """Get an administrator event.
 
