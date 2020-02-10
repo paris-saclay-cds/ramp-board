@@ -276,7 +276,6 @@ def test_update_event(client_session):
             'opening_timestamp': "2000-01-01 00:00:00",
             'closing_timestamp': "2100-01-01 00:00:00",
             'public_opening_timestamp': "2000-01-01 00:00:00",
-            'submit_button': 'Update!'
         }
         rv = client.post('/events/iris_test/update', data=event_info)
         assert rv.status_code == 302

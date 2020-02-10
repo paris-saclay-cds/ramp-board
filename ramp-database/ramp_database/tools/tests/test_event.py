@@ -19,6 +19,7 @@ from ramp_database.model import Keyword
 from ramp_database.model import Model
 from ramp_database.model import Problem
 from ramp_database.model import ProblemKeyword
+from ramp_database.model import Submission
 from ramp_database.model import Workflow
 
 from ramp_database.utils import setup_db
@@ -288,6 +289,9 @@ def test_check_event(session_scope_function):
 
 
 def test_delete_event(session_scope_function):
+    ###########################################################################
+    # Setup the problem/event
+
     # add sample problem
     problem_name = 'iris'
     ramp_config = read_config(ramp_config_iris())
@@ -335,7 +339,11 @@ def test_delete_event(session_scope_function):
     submission = get_submission_by_id(session_scope_function, event.id)
     assert submission
 
+    # ensure that the changes have been committed in the database
     session_scope_function.commit()
+
+    ###########################################################################
+    # Check the behaviour of delete_event
 
     delete_event(session_scope_function, event_name)
     # make sure event and all the connections were deleted
@@ -348,8 +356,7 @@ def test_delete_event(session_scope_function):
     assert len(event_score_types) == 0
     event_cv_fold = get_cv_fold_by_event(session_scope_function, event)
     assert not event_cv_fold
-    with pytest.raises(AttributeError):
-        get_submission_by_id(session_scope_function, event.id)
+    assert len(session_scope_function.query(Submission).all()) == 0
 
 
 def test_check_keyword(session_scope_function):
