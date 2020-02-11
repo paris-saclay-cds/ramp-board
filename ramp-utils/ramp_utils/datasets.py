@@ -26,6 +26,9 @@ def _sha256(path):
 def fetch_from_osf(path_data, metadata, token=None):
     """Fetch files from OSF storage.
 
+    If the file is inside a private project, you will need to specify your
+    token.
+
     Parameters
     ----------
     path_data : str

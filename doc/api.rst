@@ -564,6 +564,23 @@ Configuration utilities
    testing.database_config_template
    testing.ramp_config_template
 
+Datasets utilities
+------------------
+
+.. currentmodule:: ramp_utils
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   datasets.fetch_from_osf
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   datasets.OSFRemoteMetaData
+
 Deployment utilities
 --------------------
 
