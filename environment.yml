@@ -9,7 +9,6 @@ dependencies:
   - Flask
   - Flask-Login
   - Flask-SQLAlchemy
-  - Flask-Wtf
   - gitpython
   - itsdangerous
   - nbconvert
@@ -21,9 +20,9 @@ dependencies:
   - pytest-cov
   - psycopg2
   - sqlalchemy
-  - tornado==5.1.1  # downgrade tornado for nbconvert and should be fix
-  - werkzeug<=1.0.0
+  # - tornado==5.1.1  # downgrade tornado for nbconvert and should be fix
   - pip:
     - codecov
     - ramp-workflow
     - Flask-Mail
+    - Flask-Wtf

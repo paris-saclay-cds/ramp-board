@@ -21,4 +21,3 @@ pytest-cov
 pyyaml
 psycopg2
 sqlalchemy
-werkzeug<=1.0.0
