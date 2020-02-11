@@ -22,7 +22,8 @@ dependencies:
   - psycopg2
   - sqlalchemy
   - tornado==5.1.1  # downgrade tornado for nbconvert and should be fix
+  - werkzeug<=1.0.0
   - pip:
     - codecov
-    - git+https://github.com/paris-saclay-cds/ramp-workflow
+    - ramp-workflow
     - Flask-Mail

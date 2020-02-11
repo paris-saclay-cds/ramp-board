@@ -14,10 +14,11 @@ ipykernel
 jupyter
 numpy
 pandas
+ramp-workflow
 scikit-image
 pytest
 pytest-cov
 pyyaml
 psycopg2
 sqlalchemy
-git+https://github.com/paris-saclay-cds/ramp-workflow
+werkzeug<=1.0.0

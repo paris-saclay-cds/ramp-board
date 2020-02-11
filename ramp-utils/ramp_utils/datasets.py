@@ -67,5 +67,5 @@ def fetch_from_osf(path_data, metadata, token=None):
             raise RuntimeError(response.read())
         with open(filename, "wb") as fid:
             fid.write(response.read())
-        assert (_sha256(filename) == original_checksum,
-                f"{filename} was corrupted during download")
+        assert _sha256(filename) == original_checksum, \
+            f"{filename} was corrupted during download"
