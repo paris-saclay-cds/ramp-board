@@ -1018,10 +1018,8 @@ def download_submission(submission_hash):
         db.session, submission.event_team.event.name,
         flask_login.current_user.name, submission.id
     )
-    print(access_code)
-    print(submission)
     if not access_code:
-        error_str = 'Missing submission: {}'.format(submission_hash)
+        error_str = 'Unauthorized access: {}'.format(submission_hash)
         return redirect_to_user(error_str)
 
     file_in_memory = io.BytesIO()
