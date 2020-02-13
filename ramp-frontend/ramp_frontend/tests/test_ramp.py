@@ -822,13 +822,6 @@ def test_download_submission(client_session):
                                     event_team_id=1)
                          .first())
 
-    event = (session.query(Event)
-                    .filter_by(name="iris_test")
-                    .first())
-    tmp_timestamp = event.closing_timestamp
-    event.closing_timestamp = datetime.datetime.utcnow()
-    session.commit()
-
     with login_scope(client, 'test_user', 'test') as client:
         rv = client.get(f"download/{submission.hash_}")
         assert rv.status_code == 200
