@@ -1,9 +1,12 @@
 import datetime
 import difflib
 import logging
+import io
 import os
 import shutil
 import tempfile
+import time
+import zipfile
 
 from bokeh.embed import components
 
@@ -15,6 +18,7 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import send_from_directory
+from flask import send_file
 
 from wtforms import StringField
 from wtforms.widgets import TextArea
@@ -991,4 +995,45 @@ def toggle_competition(submission_hash):
     update_leaderboards(db.session, submission.event_team.event.name)
     return redirect(
         '/{}/{}'.format(submission_hash, submission.files[0].f_name)
+    )
+
+
+@mod.route("/download/<submission_hash>")
+@flask_login.login_required
+def download_submission(submission_hash):
+    """Download a submission from the server.
+
+    Parameters
+    ----------
+    submission_hash : str
+        The submission hash of the current submission.
+    """
+    submission = (Submission.query.filter_by(hash_=submission_hash)
+                                  .one_or_none())
+    if submission is None:
+        error_str = 'Missing submission: {}'.format(submission_hash)
+        return redirect_to_user(error_str)
+
+    access_code = is_accessible_code(
+        db.session, submission.event_team.event.name,
+        flask_login.current_user.name, submission.id
+    )
+    print(access_code)
+    print(submission)
+    if not access_code:
+        error_str = 'Missing submission: {}'.format(submission_hash)
+        return redirect_to_user(error_str)
+
+    file_in_memory = io.BytesIO()
+    with zipfile.ZipFile(file_in_memory, 'w') as zf:
+        for ff in submission.files:
+            data = zipfile.ZipInfo(ff.f_name)
+            data.date_time = time.localtime(time.time())[:6]
+            data.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(data, ff.get_code())
+    file_in_memory.seek(0)
+    return send_file(
+        file_in_memory,
+        attachment_filename=f"submission_{submission.id}.zip",
+        as_attachment=True,
     )
