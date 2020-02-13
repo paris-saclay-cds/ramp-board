@@ -1,0 +1,23 @@
+.. _changes_0_4:
+
+Version 0.4
+===========
+
+Changelog
+---------
+
+`ramp-database`
+...............
+
+`ramp-engine`
+.............
+
+`ramp-frontend`
+...............
+
+- Bug: fix a bug for which it was impossible to download a submission
+  via the frontend.
+  :pr:`397` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+`ramp-utils`
+............

@@ -803,3 +803,26 @@ def test_toggle_competition(client_session):
         assert b"Pull out this submission from the competition" in rv.data
         session.commit()
         assert submission.is_in_competition
+
+
+def test_download_submission(client_session):
+    client, session = client_session
+
+    # unknown submission
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get("download/xxxxx")
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert "Missing submission" in flash_message['message']
+
+    submission = (session.query(Submission)
+                         .filter_by(name="starting_kit_test",
+                                    event_team_id=1)
+                         .first())
+
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get(f"download/{submission.hash_}")
+        assert rv.status_code == 200
+        assert rv.data

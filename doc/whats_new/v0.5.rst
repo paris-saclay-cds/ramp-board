@@ -20,4 +20,4 @@ Changelog
 
 - Enhancement: add :func:`ramp_utils.datasets.fetch_from_osf` allowing to fetch
   a file from OSF.
-  By :pr:`396` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`396` by :user:`Guillaume Lemaitre <glemaitre>`.
