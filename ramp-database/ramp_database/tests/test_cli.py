@@ -243,7 +243,6 @@ def test_delete_predictions(make_toy_db):
            '--config', database_config_template(),
            '--config-event', event_config]
     result = runner.invoke(main, cmd)
-
     assert result.exit_code == 0, result.output
 
     dir_to_remove = ramp_config["ramp_predictions_dir"]
