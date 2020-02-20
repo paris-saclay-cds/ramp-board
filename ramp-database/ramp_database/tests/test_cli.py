@@ -205,8 +205,7 @@ def test_delete_event(make_toy_db, from_disk):
     cmd = ['delete-event',
            '--config', database_config_template(),
            '--config-event', event_config]
-    if from_disk:
-        cmd.append('--from-disk')
+
     result = runner.invoke(main, cmd)
 
     assert result.exit_code == 0, result.output
@@ -214,6 +213,42 @@ def test_delete_event(make_toy_db, from_disk):
     event_path = os.path.dirname(event_config)
     assert (os.path.exists(event_path) if not from_disk
             else not os.path.exists(event_path))
+
+
+def test_delete_predictions(make_toy_db):
+    runner = CliRunner()
+
+    # deploy a new event named `iris_test2`
+    ramp_config = read_config(ramp_config_template())
+    ramp_config['ramp']['event_name'] = 'iris_test2'
+    deployment_dir = os.path.commonpath([ramp_config['ramp']['kit_dir'],
+                                         ramp_config['ramp']['data_dir']])
+    runner.invoke(main_utils, ['init-event',
+                               '--name', 'iris_test2',
+                               '--deployment-dir', deployment_dir])
+    event_config = os.path.join(
+        deployment_dir, 'events', ramp_config['ramp']['event_name'],
+        'config.yml'
+    )
+    with open(event_config, 'w+') as f:
+        yaml.dump(ramp_config, f)
+    result = runner.invoke(main_utils, ['deploy-event',
+                                        '--config',
+                                        database_config_template(),
+                                        '--event-config',
+                                        event_config,
+                                        '--no-cloning'])
+
+    cmd = ['delete-predictions',
+           '--config', database_config_template(),
+           '--config-event', event_config]
+
+    result = runner.invoke(main, ['delete_predictions',
+                                  '--config', database_config_template(),
+                                  '--event', 'iris_test',
+                                  '--team', 'glemaitre'],
+                           catch_exceptions=False)
+    assert result.exit_code == 0, result.output
 
 
 def test_sign_up_team(make_toy_db):
