@@ -242,13 +242,12 @@ def test_delete_predictions(make_toy_db):
     cmd = ['delete-predictions',
            '--config', database_config_template(),
            '--config-event', event_config]
+    result = runner.invoke(main, cmd)
 
-    result = runner.invoke(main, ['delete_predictions',
-                                  '--config', database_config_template(),
-                                  '--event', 'iris_test',
-                                  '--team', 'glemaitre'],
-                           catch_exceptions=False)
     assert result.exit_code == 0, result.output
+
+    dir_to_remove = ramp_config["ramp_predictions_dir"]
+    assert not os.path.exists(dir_to_remove)
 
 
 def test_sign_up_team(make_toy_db):
