@@ -258,8 +258,8 @@ def delete_event(config, config_event, dry_run, from_disk, force):
               help='Path to configuration file YAML format '
               'containing the database information, eg config.yml')
 @click.option('--force', is_flag=True,
-              help='Flag to force a removal, even from the disk, when an '
-              'event is not in the database.')
+              help='Flag to force a removal of the predictions from the disk,
+              'when an event is not in the database.')
 def delete_predictions(config, config_event, dry_run, from_disk, force):
     """Delete event predictions from the disk."""
     internal_config = read_config(config)
