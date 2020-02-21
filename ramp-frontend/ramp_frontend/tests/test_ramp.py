@@ -712,7 +712,8 @@ def test_view_model(client_session):
         rv = client.get('{}/{}'.format(submission_hash, 'estimator.py'))
         assert rv.status_code == 200
         assert b'file = estimator.py' in rv.data
-        assert b'from sklearn.ensemble import RandomForestClassifier' in rv.data
+        assert (b'from sklearn.ensemble import RandomForestClassifier' in
+                rv.data)
 
 
 def test_view_submission_error(client_session):
