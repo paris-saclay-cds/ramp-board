@@ -49,7 +49,7 @@ def test_event_model_property(session_scope_module):
     assert repr(event) == 'Event(iris_test)'
     assert issubclass(event.Predictions, BasePrediction)
     assert isinstance(event.workflow, Workflow)
-    assert event.workflow.name == 'Classifier'
+    assert event.workflow.name == 'Estimator'
     assert event.n_participants == 2
     assert event.n_jobs == 2
 
@@ -102,7 +102,7 @@ def test_event_model_score(session_scope_module):
     assert repr(event) == 'Event(iris_test)'
     assert issubclass(event.Predictions, BasePrediction)
     assert isinstance(event.workflow, Workflow)
-    assert event.workflow.name == 'Classifier'
+    assert event.workflow.name == 'Estimator'
 
     event_type_score = event.official_score_type
     assert event_type_score.name == 'acc'
