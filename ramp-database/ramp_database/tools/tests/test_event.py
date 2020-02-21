@@ -169,8 +169,8 @@ def test_check_workflow(session_scope_function):
     workflow = get_workflow(session_scope_function, None)
     assert len(workflow) == 2
     assert isinstance(workflow, list)
-    workflow = get_workflow(session_scope_function, 'Classifier')
-    assert workflow.name == 'Classifier'
+    workflow = get_workflow(session_scope_function, 'Estimator')
+    assert workflow.name == 'Estimator'
     assert isinstance(workflow, Workflow)
 
 
