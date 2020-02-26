@@ -226,7 +226,7 @@ def test_delete_predictions(make_toy_db, database_connection, force,
     ramp_config = read_config(ramp_config_template())
     ramp_config['ramp']['event_name'] = 'iris_test2'
     deployment_dir = os.path.commonpath([ramp_config['ramp']['kit_dir'],
-                                            ramp_config['ramp']['data_dir']])
+                                         ramp_config['ramp']['data_dir']])
     event_config = os.path.join(
         deployment_dir, 'events', ramp_config['ramp']['event_name'],
         'config.yml'
@@ -235,8 +235,8 @@ def test_delete_predictions(make_toy_db, database_connection, force,
     if add_to_db:
         # deploy a new event named `iris_test2`
         runner.invoke(main_utils, ['init-event',
-                                '--name', 'iris_test2',
-                                '--deployment-dir', deployment_dir])
+                                   '--name', 'iris_test2',
+                                   '--deployment-dir', deployment_dir])
 
         with open(event_config, 'w+') as f:
             yaml.dump(ramp_config, f)
@@ -272,8 +272,8 @@ def test_delete_predictions(make_toy_db, database_connection, force,
     if add_to_db:
         # remove event from the db
         cmd = ['delete-event',
-            '--config', database_config_template(),
-            '--config-event', event_config]
+               '--config', database_config_template(),
+               '--config-event', event_config]
         result = runner.invoke(main, cmd)
 
     if os.path.exists(predictions_dir):
