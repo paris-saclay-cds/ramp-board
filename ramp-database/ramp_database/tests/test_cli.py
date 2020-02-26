@@ -224,19 +224,20 @@ def test_delete_predictions(make_toy_db, database_connection, force,
     # the disk
     runner = CliRunner()
     ramp_config = read_config(ramp_config_template())
+    ramp_config['ramp']['event_name'] = 'iris_test2'
+    deployment_dir = os.path.commonpath([ramp_config['ramp']['kit_dir'],
+                                            ramp_config['ramp']['data_dir']])
+    event_config = os.path.join(
+        deployment_dir, 'events', ramp_config['ramp']['event_name'],
+        'config.yml'
+    )
 
     if add_to_db:
         # deploy a new event named `iris_test2`
-        ramp_config['ramp']['event_name'] = 'iris_test2'
-        deployment_dir = os.path.commonpath([ramp_config['ramp']['kit_dir'],
-                                            ramp_config['ramp']['data_dir']])
         runner.invoke(main_utils, ['init-event',
                                 '--name', 'iris_test2',
                                 '--deployment-dir', deployment_dir])
-        event_config = os.path.join(
-            deployment_dir, 'events', ramp_config['ramp']['event_name'],
-            'config.yml'
-        )
+
         with open(event_config, 'w+') as f:
             yaml.dump(ramp_config, f)
         result = runner.invoke(main_utils, ['deploy-event',
@@ -259,22 +260,24 @@ def test_delete_predictions(make_toy_db, database_connection, force,
         cmd.append('--force')
     result = runner.invoke(main, cmd)
 
-    assert result.exit_code == 0, result.output
-
-    if (add_to_db and force) or not add_to_db:
-        assert not os.path.exists(predictions_dir)
+    if not add_to_db and not force:
+        assert result.exit_code == 1
+        assert 'use the option' in result.output
+        assert os.path.exists(predictions_dir)
     else:
-        assert os.path.exists(prediction_dir)
+        assert result.exit_code == 0, result.output
+        assert not os.path.exists(predictions_dir)
 
     # clean up
-    # remove event from the db
-    cmd = ['delete-event',
-           '--config', database_config_template(),
-           '--config-event', event_config]
-    result = runner.invoke(main, cmd)
+    if add_to_db:
+        # remove event from the db
+        cmd = ['delete-event',
+            '--config', database_config_template(),
+            '--config-event', event_config]
+        result = runner.invoke(main, cmd)
 
-    # remove the dir if not already done
-    if os.path.isdir(predictions_dir):
+    if os.path.exists(predictions_dir):
+        # remove the dir if not already done
         shutil.rmtree(predictions_dir)
 
 
