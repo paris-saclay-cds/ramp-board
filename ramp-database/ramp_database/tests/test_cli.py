@@ -14,7 +14,6 @@ from ramp_utils.testing import ramp_config_template
 from ramp_database.utils import setup_db
 from ramp_database.model import Model
 from ramp_database.testing import create_toy_db
-from ramp_database.tools.submission import set_predictions
 
 from ramp_database.cli import main
 
@@ -50,7 +49,9 @@ def test_add_user(make_toy_db):
 
 def test_delete_user(make_toy_db):
     runner = CliRunner()
-    runner.invoke(main, ['add-user',ramp_config['ramp']['predictions_dir'],
+    runner.invoke(main, ['add-user',
+                         '--config', database_config_template(),
+                         '--login', 'yyy',
                          '--password', 'yyy',
                          '--lastname', 'yyy',
                          '--firstname', 'yyy',
