@@ -14,6 +14,7 @@ from ramp_utils.testing import ramp_config_template
 from ramp_database.utils import setup_db
 from ramp_database.model import Model
 from ramp_database.testing import create_toy_db
+from ramp_database.tools.submission import set_predictions
 
 from ramp_database.cli import main
 
@@ -49,9 +50,7 @@ def test_add_user(make_toy_db):
 
 def test_delete_user(make_toy_db):
     runner = CliRunner()
-    runner.invoke(main, ['add-user',
-                         '--config', database_config_template(),
-                         '--login', 'yyy',
+    runner.invoke(main, ['add-user',ramp_config['ramp']['predictions_dir'],
                          '--password', 'yyy',
                          '--lastname', 'yyy',
                          '--firstname', 'yyy',
@@ -205,7 +204,8 @@ def test_delete_event(make_toy_db, from_disk):
     cmd = ['delete-event',
            '--config', database_config_template(),
            '--config-event', event_config]
-
+    if from_disk:
+        cmd.append('--from-disk')
     result = runner.invoke(main, cmd)
 
     assert result.exit_code == 0, result.output
@@ -215,7 +215,9 @@ def test_delete_event(make_toy_db, from_disk):
             else not os.path.exists(event_path))
 
 
-def test_delete_predictions(make_toy_db):
+def test_delete_predictions(make_toy_db, database_connection):
+    # check that delete event is removed from the database and optionally from
+    # the disk
     runner = CliRunner()
 
     # deploy a new event named `iris_test2`
@@ -239,14 +241,17 @@ def test_delete_predictions(make_toy_db):
                                         event_config,
                                         '--no-cloning'])
 
+    predictions_dir = ramp_config['ramp']['predictions_dir']
+    os.mkdir(predictions_dir)
+    assert os.path.exists(predictions_dir)
+
     cmd = ['delete-predictions',
            '--config', database_config_template(),
            '--config-event', event_config]
     result = runner.invoke(main, cmd)
-    assert result.exit_code == 0, result.output
 
-    dir_to_remove = ramp_config["ramp_predictions_dir"]
-    assert not os.path.exists(dir_to_remove)
+    assert result.exit_code == 0, result.output
+    assert not os.path.exists(predictions_dir)
 
 
 def test_sign_up_team(make_toy_db):
