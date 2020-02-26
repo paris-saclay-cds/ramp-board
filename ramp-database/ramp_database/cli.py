@@ -259,7 +259,7 @@ def delete_event(config, config_event, dry_run, from_disk, force):
 @click.option('--force', is_flag=True,
               help='Flag to force a removal of the predictions from the disk, '
                    'when an event is not in the database.')
-def delete_predictions(config, config_event, dry_run, from_disk, force):
+def delete_predictions(config, config_event, force):
     """Delete event predictions from the disk."""
     internal_config = read_config(config)
     ramp_config = generate_ramp_config(config_event, config)
