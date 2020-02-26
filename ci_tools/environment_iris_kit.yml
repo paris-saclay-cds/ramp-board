@@ -6,4 +6,4 @@ dependencies:
   - scikit-learn
   - pandas
   - pip:
-    - git+https://github.com/paris-saclay-cds/ramp-workflow
+    - ramp-workflow

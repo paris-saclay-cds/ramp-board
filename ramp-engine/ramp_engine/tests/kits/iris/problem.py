@@ -1,10 +1,7 @@
 import os
-
 import pandas as pd
-from sklearn.model_selection import StratifiedShuffleSplit
-
 import rampwf as rw
-
+from sklearn.model_selection import StratifiedShuffleSplit
 
 problem_title = 'Iris classification'
 _target_column_name = 'species'
@@ -13,10 +10,13 @@ _prediction_label_names = ['setosa', 'versicolor', 'virginica']
 Predictions = rw.prediction_types.make_multiclass(
     label_names=_prediction_label_names)
 # An object implementing the workflow
-workflow = rw.workflows.Classifier()
+workflow = rw.workflows.Estimator()
 
 score_types = [
     rw.score_types.Accuracy(name='acc'),
+    rw.score_types.ClassificationError(name='error'),
+    rw.score_types.NegativeLogLikelihood(name='nll'),
+    rw.score_types.F1Above(name='f1_70', threshold=0.7),
 ]
 
 
@@ -28,7 +28,7 @@ def get_cv(X, y):
 def _read_data(path, f_name):
     data = pd.read_csv(os.path.join(path, 'data', f_name))
     y_array = data[_target_column_name].values
-    X_array = data.drop([_target_column_name], axis=1).values
+    X_array = data.drop([_target_column_name], axis=1)
     return X_array, y_array
 
 

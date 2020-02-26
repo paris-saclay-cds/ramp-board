@@ -56,8 +56,13 @@ This command will list all of your databases along with their owners.
 
 Test
 ----
-Each time before running the tests make sure your ``Postgres database cluster``
-has been started. You can always start it using the command::
+In order to run your tests please create a test conda environment (you will
+need to do that only once)::
+
+    ~ $ conda env create -f ci_tools/environment_iris_kit.yml
+
+Also, before running the tests make sure your ``Postgres database cluster`` has
+been started. You can always start it using the command::
 
     ~ $ pg_ctl -D postgres_dbs -l logfile start
 

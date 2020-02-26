@@ -530,9 +530,9 @@ def test_sandbox_upload_file_wrong(client_session, makedrop_event,
 
 @pytest.mark.parametrize(
     "submission_dir, filename",
-    [("submissions/error", "classifier.py"),
-     ("submissions/random_forest_10_10", "classifier.py"),
-     ("submissions/starting_kit", "classifier.py")]
+    [("submissions/error", "estimator.py"),
+     ("submissions/random_forest_10_10", "estimator.py"),
+     ("submissions/starting_kit", "estimator.py")]
 )
 def test_sandbox_upload_file(client_session, makedrop_event,
                              submission_dir, filename):
@@ -602,7 +602,7 @@ def test_sandbox_save_file(client_session, makedrop_event):
             "http://localhost/events/iris_test_4event/sandbox",
             headers={"Referer":
                      "http://localhost/events/iris_test_4event/sandbox"},
-            data={"classifier": example_code,
+            data={"estimator": example_code,
                   "code-csrf_token": "temp_token"},
             follow_redirects=False,
         )
@@ -698,7 +698,7 @@ def test_view_model(client_session):
     os.rename(submission.path, submission.path + 'xxxxx')
     try:
         with login_scope(client, 'test_user', 'test') as client:
-            rv = client.get('{}/{}'.format(submission_hash, 'classifier.py'))
+            rv = client.get('{}/{}'.format(submission_hash, 'estimator.py'))
             assert rv.status_code == 302
             assert rv.location == 'http://localhost/problems'
             with client.session_transaction() as cs:
@@ -709,10 +709,11 @@ def test_view_model(client_session):
 
     # GET: normal file display
     with login_scope(client, 'test_user', 'test') as client:
-        rv = client.get('{}/{}'.format(submission_hash, 'classifier.py'))
+        rv = client.get('{}/{}'.format(submission_hash, 'estimator.py'))
         assert rv.status_code == 200
-        assert b'file = classifier.py' in rv.data
-        assert b'from sklearn.base import BaseEstimator' in rv.data
+        assert b'file = estimator.py' in rv.data
+        assert (b'from sklearn.ensemble import RandomForestClassifier' in
+                rv.data)
 
 
 def test_view_submission_error(client_session):
@@ -783,12 +784,12 @@ def test_toggle_competition(client_session):
     with login_scope(client, 'test_user', 'test') as client:
         # check that the submission is tagged to be in the competition
         assert submission.is_in_competition
-        rv = client.get('{}/{}'.format(submission.hash_, 'classifier.py'))
+        rv = client.get('{}/{}'.format(submission.hash_, 'estimator.py'))
         assert b"Pull out this submission from the competition" in rv.data
         # trigger the pull-out of the competition
         rv = client.get("toggle_competition/{}".format(submission.hash_))
         assert rv.status_code == 302
-        assert rv.location == 'http://localhost/{}/classifier.py'.format(
+        assert rv.location == 'http://localhost/{}/estimator.py'.format(
             submission.hash_)
         rv = client.get(rv.location)
         assert b"Enter this submission into the competition" in rv.data
@@ -797,7 +798,7 @@ def test_toggle_competition(client_session):
         # trigger the entering in the competition
         rv = client.get("toggle_competition/{}".format(submission.hash_))
         assert rv.status_code == 302
-        assert rv.location == 'http://localhost/{}/classifier.py'.format(
+        assert rv.location == 'http://localhost/{}/estimator.py'.format(
             submission.hash_)
         rv = client.get(rv.location)
         assert b"Pull out this submission from the competition" in rv.data

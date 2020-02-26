@@ -83,10 +83,10 @@ def test_sign_up_team(session_scope_function):
     assert submission.name == 'starting_kit'
     assert submission.event_team == event_team
     submission_file = submission.files[0]
-    assert submission_file.name == 'classifier'
+    assert submission_file.name == 'estimator'
     assert submission_file.extension == 'py'
     assert (os.path.join('submission_000000001',
-                         'classifier.py') in submission_file.path)
+                         'estimator.py') in submission_file.path)
     # check the submission on cv fold
     cv_folds = (session_scope_function.query(SubmissionOnCVFold)
                                       .options(defer("full_train_y_pred"),

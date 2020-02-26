@@ -49,7 +49,7 @@ def test_integration_dispatcher(session_toy):
     )
     assert len(submissions) == 2
     submission = get_submission_by_id(session_toy, submissions[0][0])
-    assert 'SyntaxError' in submission.error_msg
+    assert 'ValueError' in submission.error_msg
 
 
 def test_unit_test_dispatcher(session_toy):
