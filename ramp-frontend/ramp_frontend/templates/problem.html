@@ -17,43 +17,76 @@
         <div class="title">{{ problem.title }}</div>
       </div>
     </div>
+
+
     <div class="card-body">
-      <div class="row">
-        <div class="col-sm-6">
-          <h4>Registered events</h4>
-          <ul>
-            {% for event in problem.events %}
-            {% if event.is_public %}
-            <li> <a href="/events/{{ event.name }}">{{ event.title }}</a><br />
-              <strong>
-                <font color=darkgreen>{{ event.n_participants }}</font>
-              </strong> participants,
-              <strong>
-                <font color=darkblue>{{ event.n_submissions }}</font>
-              </strong> submissions,
-              <!-- combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong><br /> -->
-              <a href="/event_plots/{{ event.name }}">Plot score vs time</a>
-              {% endif %}
-              {% endfor %}
-          </ul>
-          <!-- <h4>Keywords:</h4>
+
+      <div class="col-sm-6">
+        <h4>Registered events</h4>
         <ul>
-          {% for problem_keyword in problem.keywords %}
-            <li> <a href="/keywords/{{ problem_keyword.keyword.name }}">{{ problem_keyword.keyword.name }}</a>
-          {% endfor %}
-        </ul> -->
-        </div>
-        <div class="col-sm-6">
-          <h4>Starting-kit</h4>
-          <a class="btn btn-warning"
-            href="{{ url_for('ramp.download_starting_kit', event_name=latest_event) }}">Download</a>
-        </div>
-      </div>
-      <div class="iframe-container">
-        <iframe onload="resizeIframe(this)" src="{{ url_for('ramp.notebook', problem_name=problem.name) }}"></iframe>
+          {% for event in problem.events %}
+          {% if event.is_public %}
+          <li> <a href="/events/{{ event.name }}">{{ event.title }}</a><br />
+            <strong>
+              <font color=darkgreen>{{ event.n_participants }}</font>
+            </strong> participants,
+            <strong>
+              <font color=darkblue>{{ event.n_submissions }}</font>
+            </strong> submissions,
+            <!-- combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong><br /> -->
+            <a href="/event_plots/{{ event.name }}">Plot score vs time</a>
+            {% endif %}
+            {% endfor %}
+        </ul>
+        <!-- <h4>Keywords:</h4>
+      <ul>
+        {% for problem_keyword in problem.keywords %}
+          <li> <a href="/keywords/{{ problem_keyword.keyword.name }}">{{ problem_keyword.keyword.name }}</a>
+        {% endfor %}
+      </ul> -->
       </div>
     </div>
+
+    <div class="card-body event-container">
+      <!-- Static navbar -->
+      <nav class="navbar navbar-inverse navbar-event">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#event-navbar"
+          aria-expanded="false" aria-controls="event-navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <div id="event-navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li>
+              <a href="/notebook/iris"
+                target="iframe_content">Description</a>
+            </li>
+          </ul>
+        </div>
+        <!--/.nav-collapse -->
+      </nav>
+    </div>
+
+    <div class="iframe-container">
+      <iframe onload="resizeIframe(this)" src="{{ url_for('ramp.notebook', problem_name=problem.name) }}" name="iframe_content"></iframe>
+    </div>
+
+
   </div>
 </div>
 
-{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+  function AdjustIframeHeightOnLoad() {
+    document.getElementsByName("iframe_content")[0].style.height =
+      document.getElementsByName("iframe_content")[0].contentWindow.document
+        .body.scrollHeight + "px";
+  }
+  function AdjustIframeHeight(i) {
+    document.getElementsByName("iframe_content")[0].style.height =
+      parseInt(i) + "px";
+  }
+</script>
+{% endblock %} {% endblock %}
