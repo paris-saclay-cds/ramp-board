@@ -18,7 +18,6 @@
       </div>
     </div>
 
-
     <div class="card-body">
 
       <div class="col-sm-6">
@@ -60,8 +59,11 @@
         <div id="event-navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li>
-              <a href="/notebook/iris"
-                target="iframe_content">Description</a>
+              <a href="{{ url_for('ramp.notebook', problem_name=problem.name) }}"
+              target="iframe_content">Description</a>
+            </li>
+            <li>
+              <a href="{{ url_for('ramp.download_starting_kit', event_name=latest_event) }}">Download kit</a>
             </li>
           </ul>
         </div>
