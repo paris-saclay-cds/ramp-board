@@ -19,5 +19,9 @@ Changelog
   via the frontend.
   :pr:`397` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- Bug: fix a bug for which a user could not check their own code in
+  "My submission" menu.
+  :pr:`408` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 `ramp-utils`
 ............
