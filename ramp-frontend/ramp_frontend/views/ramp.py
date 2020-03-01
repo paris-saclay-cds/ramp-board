@@ -637,7 +637,7 @@ def credit(submission_hash):
                                   .one_or_none())
     access_code = is_accessible_code(
         db.session, submission.event_team.event.name,
-        flask_login.current_user.name, submission.name
+        flask_login.current_user.name, submission.id
     )
     if submission is None or not access_code:
         error_str = 'Missing submission: {}'.format(submission_hash)
@@ -796,7 +796,7 @@ def view_model(submission_hash, f_name):
     if (submission is None or
             not is_accessible_code(db.session, submission.event.name,
                                    flask_login.current_user.name,
-                                   submission.name)):
+                                   submission.id)):
         error_str = 'Missing submission: {}'.format(submission_hash)
         return redirect_to_user(error_str)
     event = submission.event_team.event
