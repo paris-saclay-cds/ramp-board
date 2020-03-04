@@ -66,7 +66,8 @@ def sign_up_team(session, event_name, team_name):
                                            event.ramp_sandbox_name)
     submission_name = event.ramp_sandbox_name
     submission = add_submission(session, event_name, team_name,
-                                submission_name, path_sandbox_submission)
+                                submission_name, path_sandbox_submission,
+                                hard_copy=True)
     logger.info('Copying the submission files into the deployment folder')
     logger.info('Adding {}'.format(submission))
     event_team.approved = True

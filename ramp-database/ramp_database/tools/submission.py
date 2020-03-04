@@ -39,7 +39,7 @@ logger = logging.getLogger('RAMP-DATABASE')
 # Add functions: add information to the database
 # TODO: move the queries in "_query"
 def add_submission(session, event_name, team_name, submission_name,
-                   submission_path):
+                   submission_path, hard_copy=False):
     """Create a submission in the database and returns an handle.
 
     Parameters
@@ -56,6 +56,9 @@ def add_submission(session, event_name, team_name, submission_name,
         The path of the files associated to the current submission. It will
         corresponds to the key `ramp_kit_subissions_dir` of the dictionary
         created with :func:`ramp_utils.generate_ramp_config`.
+    hard_copy : bool, default=False
+        Whether or not to trigger a hard copy or just a symlink of the external
+        data.
 
     Returns
     -------
@@ -195,7 +198,7 @@ def add_submission(session, event_name, team_name, submission_name,
     for filename in submission.f_names:
         src = os.path.join(submission_path, filename)
         dst = os.path.join(submission.path, filename)
-        if is_editable(filename, event.problem.workflow):
+        if is_editable(filename, event.problem.workflow) or hard_copy:
             shutil.copy2(src=src, dst=dst)
         else:
             os.symlink(src, dst)
