@@ -170,7 +170,8 @@ def sign_up():
             "We sent a confirmation email. Go read your email and click on "
             "the confirmation link"
         )
-        return render_template('index.html')
+        #return render_template('index.html')
+        return redirect(url_for('login'))
     return render_template('sign_up.html', form=form)
 
 
