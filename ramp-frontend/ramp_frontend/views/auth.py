@@ -146,7 +146,7 @@ def sign_up():
                 access_level='not_confirmed'
             )
         except NameClashError as e:
-            flash(str(e), category='Sign-up error')
+            flash(str(e))
             logger.info(str(e))
             return redirect(url_for('auth.sign_up'))
         # send an email to the participant such that he can confirm his email
