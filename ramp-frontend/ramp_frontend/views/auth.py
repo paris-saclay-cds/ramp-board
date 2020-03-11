@@ -147,6 +147,7 @@ def sign_up():
             )
         except NameClashError as e:
             flash(str(e), category='Sign-up error')
+            logger.info(str(e))
             return redirect(url_for('auth.sign_up'))
         # send an email to the participant such that he can confirm his email
         token = ts.dumps(user.email)
