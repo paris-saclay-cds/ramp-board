@@ -888,14 +888,9 @@ def view_model(submission_hash, f_name):
                 name=filename.split('.')[0], workflow=event.workflow).one()
 
             # TODO: deal with different extensions of the same file
-            # For non-editable files, only create a symlink if the file
-            # does not already exist.
             src = os.path.join(submission.path, filename)
             dst = os.path.join(sandbox_submission.path, filename)
-            if workflow_element.is_editable:
-                shutil.copy2(src, dst)  # copying also metadata
-            elif not os.path.exists(dst):
-                os.symlink(src, dst)
+            shutil.copy2(src, dst)  # copying also metadata
             logger.info('Copying {} to {}'.format(src, dst))
 
             submission_file = SubmissionFile.query.filter_by(

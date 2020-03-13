@@ -639,7 +639,8 @@ class SubmissionFile(Model):
 
     @property
     def is_editable(self):
-        """bool: Whether the submission file is from an editable format."""
+        """bool: Whether the submission file is from an editable format on the
+        frontend."""
         return self.workflow_element.is_editable
 
     @property
@@ -754,7 +755,7 @@ class SubmissionFileType(Model):
     name : str
         The name of the submission file type.
     is_editable : bool
-        Whether or not this type of file is editable.
+        Whether or not this type of file is editable on the frontend.
     max_size : int
         The maximum size of this file type.
     workflow_element_types : list of \

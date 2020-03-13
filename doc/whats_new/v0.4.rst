@@ -9,6 +9,10 @@ Changelog
 `ramp-database`
 ...............
 
+- Bug: fix a bug which was always doing a symlink of the external data.
+Instead, we now always copy the file.
+:pr:`413` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 `ramp-engine`
 .............
 

@@ -57,7 +57,8 @@ class WorkflowElementType(Model):
 
     @property
     def is_editable(self):
-        """bool: Whether or not the submission file is an editable type."""
+        """bool: Whether or not the submission file is an editable type on the
+        frontend."""
         return self.type.is_editable
 
     @property
@@ -180,7 +181,8 @@ class WorkflowElement(Model):
 
     @property
     def is_editable(self):
-        """bool: Whether or not the submission file is an editable type."""
+        """bool: Whether or not the submission file is an editable type on the
+        frontend."""
         return self.workflow_element_type.is_editable
 
     @property
