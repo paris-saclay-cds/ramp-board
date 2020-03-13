@@ -23,5 +23,9 @@ Changelog
   "My submission" menu.
   :pr:`408` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- Bug: fix a bug which was not showing modal box during sign-in due to lack
+  of redirection.
+  :pr:`412` by :user:`Maria Telenczuk <maikia>`.
+
 `ramp-utils`
 ............
