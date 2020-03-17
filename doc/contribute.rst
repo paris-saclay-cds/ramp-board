@@ -277,12 +277,12 @@ The following explain the main steps to release `ramp-board`:
 
 1. Run `bumpversion release`. It will remove the `dev0` tag.
 2. Commit the change `git commit -am "bumpversion 0.<version number>.0"`
-   (e.g., `git commit -am "bumpversion 0.5.0"`.
+   (e.g., `git commit -am "bumpversion 0.5.0"`).
 3. Create a branch for this version `git checkout -b 0.<version number>.X`.
 4. Push the new branch into the upstream repository.
 5. Create a GitHub release by clicking 'Draft a new release' `here
    <https://github.com/paris-saclay-cds/ramp-board/releases>`_. Copy the
-   release notes from `here
+   release notes from `whats_new
    <https://paris-saclay-cds.github.io/ramp-docs/ramp-board/dev/whats_new.html>`_.
 6. Change the `symlink
    <https://github.com/paris-saclay-cds/ramp-docs/blob/master/ramp-board/stable>`_
