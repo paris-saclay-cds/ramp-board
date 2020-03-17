@@ -284,13 +284,17 @@ The following explain the main steps to release `ramp-board`:
    <https://github.com/paris-saclay-cds/ramp-board/releases>`_. Copy the
    release notes from `whats_new
    <https://paris-saclay-cds.github.io/ramp-docs/ramp-board/dev/whats_new.html>`_.
-6. Change the `symlink
+6. Change the symlink in the `ramp-docs
+   <https://github.com/paris-saclay-cds/ramp-docs>`_ repository such that
+   stable points to the latest release version, i.e, 0.<version number>. To do
+   this, clone the repository, `cd` into `ramp-board/` then run `unlink stable`
+   then `ln -s 0.<version number> stable` in a bash shell. To check that
+   this was performed correctly, ensure that `ramp-board/stable
    <https://github.com/paris-saclay-cds/ramp-docs/blob/master/ramp-board/stable>`_
-   in the `ramp-docs` repository such that stable points to the latest
-   release version: 0.<version number>.
+   has the new version number.
 7. Remove unnecessary files with `make clean-dist` then push on PyPI with
    `make upload-pypi`.
-8. Switch to `master` barnch and run `bumpversion minor`, commit and push on
+8. Switch to `master` branch and run `bumpversion minor`, commit and push on
    upstream.
 9. Add a new `v0.<version number>.rst` file in `doc/whats_new/
    <https://github.com/paris-saclay-cds/ramp-board/tree/master/doc/whats_new>`_
