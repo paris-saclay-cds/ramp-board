@@ -298,5 +298,5 @@ The following explain the main steps to release `ramp-board`:
    upstream.
 9. Add a new `v0.<version number>.rst` file in `doc/whats_new/
    <https://github.com/paris-saclay-cds/ramp-board/tree/master/doc/whats_new>`_
-   and include this new file in `doc/whats_new.rst
+   and `.. include::` this new file in `doc/whats_new.rst
    <https://github.com/paris-saclay-cds/ramp-board/blob/master/doc/whats_new.rst>`_.
