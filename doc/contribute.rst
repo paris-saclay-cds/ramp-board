@@ -7,7 +7,7 @@ Develop and contribute
 Welcome to the RAMP team. We are always happy to have new RAMP developers.
 
 You can contribute to this code by making a `Pull Request
-<https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_ 
+<https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_
 on Github_. Please, make sure that your code is coming with unit tests to
 ensure full coverage and continuous integration in the API.
 
@@ -246,7 +246,7 @@ README file in the doc/ directory for more information.
 
 For building the documentation, you will need
 
-    - sphinx_, 
+    - sphinx_,
     - sphinx_rtd_theme_,
     - numpydoc_,
     - graphviz_,
@@ -276,11 +276,30 @@ Release process
 The following explain the main steps to release `ramp-board`:
 
 1. Run `bumpversion release`. It will remove the `dev0` tag.
-2. Commit the change `git commit -am "bumpversion 0.1.0"`.
-3. Create a branch for this version `git checkout -b 0.1.X`.
+2. Commit the change `git commit -am "bumpversion 0.<version number>.0"`
+   (e.g., `git commit -am "bumpversion 0.5.0"`).
+3. Create a branch for this version `git checkout -b 0.<version number>.X`.
 4. Push the new branch into the upstream repository.
-5. You can create a GitHub release.
-6. Change the symlink in the `ramp-docs` repository such that stable point on
-   0.1.X.
-7. Push on PyPI with `make upload-pypi`.
-8. In `master`, run `bumpversion minor`, commit and push on upstream.
+5. Create a GitHub release by clicking 'Draft a new release' `here
+   <https://github.com/paris-saclay-cds/ramp-board/releases>`_. Copy the
+   release notes from `whats_new
+   <https://paris-saclay-cds.github.io/ramp-docs/ramp-board/dev/whats_new.html>`_.
+6. Change the symlink in the `ramp-docs
+   <https://github.com/paris-saclay-cds/ramp-docs>`_ repository such that
+   stable points to the latest release version, i.e, 0.<version number>. To do
+   this, clone the repository, `cd` into `ramp-board/` then run `unlink stable`
+   then `ln -s 0.<version number> stable` in a bash shell. To check that
+   this was performed correctly, ensure that `ramp-board/stable
+   <https://github.com/paris-saclay-cds/ramp-docs/blob/master/ramp-board/stable>`_
+   has the new version number.
+7. Remove unnecessary files with `make clean-dist` then push on PyPI with
+   `make upload-pypi`.
+8. Switch to `master` branch and run `bumpversion minor`, commit and push on
+   upstream.
+9. Add a new `v0.<version number>.rst` file in `doc/whats_new/
+   <https://github.com/paris-saclay-cds/ramp-board/tree/master/doc/whats_new>`_
+   and `.. include::` this new file in `doc/whats_new.rst
+   <https://github.com/paris-saclay-cds/ramp-board/blob/master/doc/whats_new.rst>`_.
+
+Note that the steps from 4 to 7 should be performed while in the release
+branch, e.g. branch `0.5.X`.
