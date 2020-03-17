@@ -301,5 +301,5 @@ The following explain the main steps to release `ramp-board`:
    and `.. include::` this new file in `doc/whats_new.rst
    <https://github.com/paris-saclay-cds/ramp-board/blob/master/doc/whats_new.rst>`_.
 
-Note that the steps from 3 to 7 should be performed while in the release
+Note that the steps from 4 to 7 should be performed while in the release
 branch, e.g. branch `0.5.X`.
