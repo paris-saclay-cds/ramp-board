@@ -300,3 +300,6 @@ The following explain the main steps to release `ramp-board`:
    <https://github.com/paris-saclay-cds/ramp-board/tree/master/doc/whats_new>`_
    and `.. include::` this new file in `doc/whats_new.rst
    <https://github.com/paris-saclay-cds/ramp-board/blob/master/doc/whats_new.rst>`_.
+
+Note that the steps from 3 to 7 should be performed while in the release
+branch, e.g. branch `0.5.X`.
