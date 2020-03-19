@@ -317,7 +317,7 @@ Patch/bug fix release process
 5. Mark the current version as release version (as opposed to 'dev' version)
    with `bumpversion release --allow-dirty`.
 6. Check that the desired commits have been added with `git diff`
-7. Commit the changes with `git commit -am 'bumpversion <new vesrion>'`.
+7. Commit the changes with `git commit -am 'bumpversion <new version>'`.
 8. Push the changes to the release branch in upstream, e.g.
    `git push <upstream remote> <release branch>`
 9. Remove unnecessary files with `make clean-dist` then push on PyPI with
