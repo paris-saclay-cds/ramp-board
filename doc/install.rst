@@ -28,12 +28,12 @@ The dependencies required by the RAMP bundle are the following:
     * nbconvert
     * numpy
     * pandas
-    * psycopg2
+    * psycopg2-binary
     * sqlalchemy
 2. ``ramp-engine``:
     * click
     * numpy
-    * psycopg2
+    * psycopg2-binary
     * sqlalchemy
 3. ``ramp-frontend``:
     * bokeh
