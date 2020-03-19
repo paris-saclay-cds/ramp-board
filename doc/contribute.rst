@@ -314,13 +314,14 @@ Patch/bug fix release process
 3. Append the bug fix commit(s) to the branch using `git cherry pick <hash>`.
 4. Bump the version number with `bumpversion patch`. This will bump the
    patch version, for example from 0.5.0 to 0.5.1.
-5. 
+5. Mark the current version as release version (as opposed to 'dev' version)
+   with `bumpversion release --allow-dirty`.
 6. Check that the desired commits have been added with `git diff`
-7. Commit the changes with `git commit -am 'bumpversion <new vesrion>`.
+7. Commit the changes with `git commit -am 'bumpversion <new vesrion>'`.
 8. Push the changes to the release branch in upstream, e.g.
    `git push <upstream remote> <release branch>`
 9. Remove unnecessary files with `make clean-dist` then push on PyPI with
    `make upload-pypi`.
 10. Create a GitHub release by clicking 'Draft a new release' `here
    <https://github.com/paris-saclay-cds/ramp-board/releases>`_. Note down the
-   bug fix added in the patch.
+   bug fixes added in the patch.
