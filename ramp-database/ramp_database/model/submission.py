@@ -693,7 +693,6 @@ class SubmissionFile(Model):
         code : str
             The code to write into the submission file.
         """
-        code.encode('ascii')  # to raise an exception if code is not ascii
         with open(self.path, 'w') as f:
             f.write(code)
 
