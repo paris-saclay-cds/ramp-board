@@ -19,5 +19,5 @@ scikit-image
 pytest
 pytest-cov
 pyyaml
-psycopg2
+psycopg2-binary
 sqlalchemy
