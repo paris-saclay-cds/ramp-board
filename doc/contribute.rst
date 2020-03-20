@@ -270,8 +270,8 @@ method does to the data and a figure (coming from an example)
 illustrating it.
 
 
-Release process
----------------
+Minor release process
+---------------------
 
 The following explain the main steps to release `ramp-board`:
 
@@ -303,3 +303,25 @@ The following explain the main steps to release `ramp-board`:
 
 Note that the steps from 4 to 7 should be performed while in the release
 branch, e.g. branch `0.5.X`.
+
+Patch/bug fix release process
+-----------------------------
+
+1. Checkout the branch for the lastest release, e.g.,
+   `git checkout 0.5.X`.
+2. Find the commit(s) hash of the bug fix commit you wish to back port
+   using `git log`.
+3. Append the bug fix commit(s) to the branch using `git cherry pick <hash>`.
+4. Bump the version number with `bumpversion patch`. This will bump the
+   patch version, for example from 0.5.0 to 0.5.1.dev0.
+5. Mark the current version as release version (as opposed to 'dev' version)
+   with `bumpversion release --allow-dirty`. It will bump the version from
+   0.5.1.dev0 to 0.5.1.
+6. Commit the changes with `git commit -am 'bumpversion <new version>'`.
+7. Push the changes to the release branch in upstream, e.g.
+   `git push <upstream remote> <release branch>`
+8. Remove unnecessary files with `make clean-dist` then push on PyPI with
+   `make upload-pypi`.
+9. Create a GitHub release by clicking 'Draft a new release' `here
+   <https://github.com/paris-saclay-cds/ramp-board/releases>`_. Note down the
+   bug fixes added in the patch.
