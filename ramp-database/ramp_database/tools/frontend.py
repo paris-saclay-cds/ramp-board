@@ -73,19 +73,15 @@ def is_accessible_leaderboard(session, event_name, user_name):
     """
     event = select_event_by_name(session, event_name)
     user = select_user_by_name(session, user_name)
-    user_allowed = (
-        user.is_authenticated and
-        user.is_active and
-        is_user_signed_up(session, event_name, user_name) and
-        event.is_public_open
-    )
+    if not user.is_authenticated or not user.is_active:
+        return False
     if is_admin(session, event_name, user_name):
-        status = True
-    elif user_allowed:
-        status = True
-    else:
-        status = False
-    return status
+        return True
+    if not is_user_signed_up(session, event_name, user_name):
+        return False
+    if event.is_public_open:
+        return True
+    return False
 
 
 def is_accessible_code(session, event_name, user_name,
