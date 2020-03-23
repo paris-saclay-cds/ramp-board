@@ -188,7 +188,7 @@ def test_is_accessible_leaderboard(session_toy_db):
     user.is_authenticated = True
     a = user.is_active
     print(a)
-    b = is_user_signed_up(session_toy_db, event_name, user)
+    b = is_user_signed_up(session_toy_db, event_name, user.name)
     print(b)
     assert is_accessible_leaderboard(session_toy_db, event_name, user.name)
     # simulate an admin user
