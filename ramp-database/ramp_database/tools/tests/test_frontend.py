@@ -30,7 +30,7 @@ from ramp_database.tools.frontend import is_accessible_code
 from ramp_database.tools.frontend import is_accessible_event
 from ramp_database.tools.frontend import is_accessible_leaderboard
 from ramp_database.tools.frontend import is_user_signed_up
-
+from ramp_database.tools._query import select_event_by_name
 
 @pytest.fixture(scope='module')
 def session_toy_db(database_connection):
@@ -187,6 +187,7 @@ def test_is_accessible_leaderboard(session_toy_db):
     # public event
     print(is_admin(session_toy_db, event_name, user.name))
     print(is_user_signed_up(session_toy_db, event_name, user.name))
+    event = select_event_by_name(session_toy_db, event_name)
     print(event.is_public_open)
     user.is_authenticated = True
     assert is_accessible_leaderboard(session_toy_db, event_name, user.name)
