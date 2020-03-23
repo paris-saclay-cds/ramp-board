@@ -187,7 +187,9 @@ def test_is_accessible_leaderboard(session_toy_db):
     # public event
     user.is_authenticated = True
     a = user.is_active
+    print(a)
     b = is_user_signed_up(session_toy_db, event_name, user)
+    print(b)
     assert is_accessible_leaderboard(session_toy_db, event_name, user.name)
     # simulate an admin user
     user = get_user_by_name(session_toy_db, 'test_iris_admin')
