@@ -32,6 +32,7 @@ from ramp_database.tools.frontend import is_accessible_leaderboard
 from ramp_database.tools.frontend import is_user_signed_up
 from ramp_database.tools._query import select_event_by_name
 
+
 @pytest.fixture(scope='module')
 def session_toy_db(database_connection):
     database_config = read_config(database_config_template())
