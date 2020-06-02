@@ -53,7 +53,7 @@ This config file should look like::
       more precisely the :ref:`conda workers <conda_env_worker>` to have more
       information.
 
-Before you continue make sure that::
+Before you continue make sure that:
     1.  you have the private and the public data in the following directory
         structure::
 
