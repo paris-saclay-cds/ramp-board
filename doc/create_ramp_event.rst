@@ -53,23 +53,26 @@ This config file should look like::
       more precisely the :ref:`conda workers <conda_env_worker>` to have more
       information.
 
+
 Before you continue make sure that:
+
     1.  you have the private and the public data in the following directory
         structure::
 
-        ├──ramp_deployment
+        └──ramp_deployment
             ├── ramp-kits
-                ├── iris
-                    ├── data  # your public data
+                └── iris
+                    └── data  # your public data
                         ├── test
-                        ├── train
-            ├── ramp-data
-                ├── iris
-                    ├── data  # your private data
+                        └── train
+            └── ramp-data
+                └── iris
+                    └── data  # your private data
                         ├── test
-                        ├── train
+                        └── train
 
-    2.  conda environment used by your event exists (if you are using one)::
+    2.  conda environment used by your event exists (if you are using one). To
+        check your conda environments::
 
         > conda env list
 
