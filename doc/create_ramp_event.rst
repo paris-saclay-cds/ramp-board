@@ -53,7 +53,27 @@ This config file should look like::
       more precisely the :ref:`conda workers <conda_env_worker>` to have more
       information.
 
-Finally, you can easily deploy the event (adding both problem and event to the
+Before you continue make sure that::
+    1.  you have the private and the public data in the following directory
+        structure::
+
+        ├──ramp_deployment
+            ├── ramp-kits
+                ├── iris
+                    ├── data  # your public data
+                        ├── test
+                        ├── train
+            ├── ramp-data
+                ├── iris
+                    ├── data  # your private data
+                        ├── test
+                        ├── train
+
+    2.  conda environment used by your event exists (if you are using one)::
+
+        > conda env list
+
+Now, you can easily deploy the event (adding both problem and event to the
 database) by calling from the deployment directory::
 
     ~/ramp_deployment $ ramp setup deploy-event --event-config events/iris_test/config.yml --no-cloning
