@@ -60,11 +60,11 @@ Before you continue make sure that:
         the following directory structure::
 
         └──ramp_deployment/
-            ├── ramp-kits/
-                └── iris/
-                    └── data/  # your public data
-                        ├── test
-                        └── train
+           ├── ramp-kits/
+            |   └── iris/
+            |       └── data/  # your public data
+            |           ├── test
+            |           └── train
             └── ramp-data/
                 └── iris/
                     └── data/  # your private data
