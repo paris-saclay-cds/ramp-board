@@ -59,9 +59,10 @@ Before you continue make sure that:
     1.  your private and public data are available. For example, your private
         and public data might be in
         `ramp_deployment/ramp-kits/<problem_name>/data` and
-        `ramp_deployment/ramp-data/<problem_name>/data respectively.
+        `ramp_deployment/ramp-data/<problem_name>/data` respectively.
 
-    .. note::
+        Note that:
+
         - test and train can be directories or files, depending on the
           challenge
         - for more information on directory tree of the starting kits check
