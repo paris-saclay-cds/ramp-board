@@ -78,7 +78,6 @@ Before you continue make sure that:
           `overall-directory-structure
           <https://paris-saclay-cds.github.io/ramp-docs/ramp-workflow/dev/workflow.html#overall-directory-structure>`_
 
-
     2.  conda environment used by your event exists (if you are using one). To
         check your conda environments::
 
