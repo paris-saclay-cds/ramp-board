@@ -56,10 +56,9 @@ This config file should look like::
 
 Before you continue make sure that:
 
-    1.  your private and public data are available. For example, your private
-        and public data might be in
-        `ramp_deployment/ramp-kits/<problem_name>/data` and
-        `ramp_deployment/ramp-data/<problem_name>/data` respectively.
+    1.  your private and public data are available. For example, your data
+        might be in: public, `ramp_deployment/ramp-kits/<problem_name>/data`
+        and private, `ramp_deployment/ramp-data/<problem_name>/data`.
 
         Note that:
 
