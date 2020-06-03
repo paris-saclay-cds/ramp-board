@@ -56,20 +56,10 @@ This config file should look like::
 
 Before you continue make sure that:
 
-    1.  your private and public data are available. For example, you might have
-        the following directory structure::
-
-        └──ramp_deployment/
-           ├── ramp-kits/
-            |   └── iris/
-            |       └── data/  # your public data
-            |           ├── test
-            |           └── train
-            └── ramp-data/
-                └── iris/
-                    └── data/  # your private data
-                        ├── test
-                        └── train
+    1.  your private and public data are available. For example, your private
+        and public data might be in
+        `ramp_deployment/ramp-kits/<problem_name>/data` and
+        `ramp_deployment/ramp-data/<problem_name>/data respectively.
 
     .. note::
         - test and train can be directories or files, depending on the
@@ -78,8 +68,10 @@ Before you continue make sure that:
           `overall-directory-structure
           <https://paris-saclay-cds.github.io/ramp-docs/ramp-workflow/dev/workflow.html#overall-directory-structure>`_
 
-    2.  conda environment used by your event exists (if you are using one). To
-        check your conda environments::
+    2.  the conda environment (set in the ``config.yml`` file above, here
+        called ramp-iris) used by your event exists. Note, that this only
+        applies to the events which use conda environment. To check which conda
+        environments you have type::
 
         $ conda env list
 
