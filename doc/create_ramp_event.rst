@@ -63,7 +63,7 @@ Before you continue make sure that:
         - public data: `ramp_deployment/ramp-kits/<problem_name>/data/`, and
         - private data: `ramp_deployment/ramp-data/<problem_name>/data/`.
 
-        Note that:
+        Note:
 
         - test and train can be directories or files, depending on the
           challenge
