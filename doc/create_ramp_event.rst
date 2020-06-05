@@ -72,7 +72,7 @@ Before you continue make sure that:
           <https://paris-saclay-cds.github.io/ramp-docs/ramp-workflow/dev/workflow.html#overall-directory-structure>`_
 
     2.  the conda environment (set in the ``config.yml`` file above, here
-        called ramp-iris) used by your event exists. Note, that this only
+        called `ramp-iris`) used by your event exists. Note, that this only
         applies to the events which use the conda environment. To check which conda
         environments you have type::
 
