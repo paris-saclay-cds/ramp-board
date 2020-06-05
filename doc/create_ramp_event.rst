@@ -68,7 +68,7 @@ Before you continue make sure that:
         - test and train can be directories or files, depending on the
           challenge
         - for more information on directory tree of the starting kits check
-          `overall-directory-structure
+          `Overall directory structure
           <https://paris-saclay-cds.github.io/ramp-docs/ramp-workflow/dev/workflow.html#overall-directory-structure>`_
 
     2.  the conda environment (set in the ``config.yml`` file above, here
