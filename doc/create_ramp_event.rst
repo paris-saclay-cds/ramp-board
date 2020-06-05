@@ -56,7 +56,7 @@ This config file should look like::
 
 Before you continue make sure that:
 
-    1.  your private and public data are available.
+    1.  Your private and public data are stored in the correct folders.
 
         For example, your data might be in:
 
