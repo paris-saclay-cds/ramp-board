@@ -60,8 +60,8 @@ Before you continue make sure that:
 
         For example, your data might be in:
 
-        - public data: `ramp_deployment/ramp-kits/<problem_name>/data`, and
-        - private data: `ramp_deployment/ramp-data/<problem_name>/data`.
+        - public data: `ramp_deployment/ramp-kits/<problem_name>/data/`, and
+        - private data: `ramp_deployment/ramp-data/<problem_name>/data/`.
 
         Note that:
 
