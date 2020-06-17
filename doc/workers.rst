@@ -122,12 +122,9 @@ need to install git.
         ~ $ LATEST_MINICONDA="http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
         ~ $ wget -q $LATEST_MINICONDA -O ~/miniconda.sh
         ~ $ bash ~/miniconda.sh -b
-
-
         ~ $ echo '. ${HOME}/miniconda3/etc/profile.d/conda.sh' >> ~/.profile
         ~ $ echo 'conda activate base' >> ~/.profile
         ~ $ source .profile
-
         ~ $ conda info
         ~ $ conda update --yes --quiet conda pip
 
@@ -159,16 +156,16 @@ need to install git.
         ~ $ cd ~/ramp-kits/iris
         ~ $ ramp-test
 
-- Save the instance as an AMI. Starting from the instance tab:
-  Actions -> Image -> Create image. See `Create an AMI from an Amazon EC2
-  instance <https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/tkv-create-ami-from-instance.html>`_
-  for more details.
+Next, save the instance as an AMI. Starting from the instance tab:
+Actions -> Image -> Create image. See `Create an AMI from an Amazon EC2
+instance <https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/tkv-create-ami-from-instance.html>`_
+for more details.
 
-config.yml file
+Event configuration
 ^^^^^^^^^^^^^^^
 
-- Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
-  'worker' section, which should look something like::
+Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
+'worker' section, which should look something like::
 
       ramp:
           problem_name: iris
