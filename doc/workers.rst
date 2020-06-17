@@ -69,6 +69,10 @@ Running submissions on Amazon Web Services (AWS)
 The AWS worker will train and evaluate the submissions on an AWS instance,
 which can be useful if the server itself has not much resources or if you need
 specific resources (e.g. GPU's).
+to create an instance:
+when you are saving the key pair put it in the secure location (eg your .ssh
+directory) and change the rights using:
+> chmod 400 aws_key.pem
 
 You need to create an Amazon Machine Image (AMI) with the starting kit and
 data, and the needed packages to run submissions. This AMI will then be used
@@ -76,7 +80,7 @@ to launch instances to run submissions.
 
 A very short how-to for creating such an AMI manually:
 
-- launch an Amazon instance
+- launch an Amazon instance (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html?icmpid=docs_ec2_console)
 - connect to it
 - prepare the instance:
 
@@ -85,9 +89,12 @@ A very short how-to for creating such an AMI manually:
         ~ $ LATEST_MINICONDA="http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
         ~ $ wget -q $LATEST_MINICONDA -O ~/miniconda.sh
         ~ $ bash ~/miniconda.sh -b
+
+
         ~ $ echo '. ${HOME}/miniconda3/etc/profile.d/conda.sh' >> ~/.profile
         ~ $ echo 'conda activate base' >> ~/.profile
         ~ $ source .profile
+
         ~ $ conda info
         ~ $ conda update --yes --quiet conda pip
 
@@ -128,9 +135,8 @@ A very short how-to for creating such an AMI manually:
       ramp:
           problem_name: iris
           event_name: iris_ramp_aws_test
-          event_title: iris_ramp_aws_test
+          event_title: "iris ramp aws test"
           event_is_public: true
-          ...
       worker:
           worker_type: aws
           access_key_id: <aws_access_key_id for boto3 Session>
@@ -144,6 +150,21 @@ A very short how-to for creating such an AMI manually:
           key_path: <path to pem file corresponding to user name>
           remote_ramp_kit_folder : /home/ubuntu/ramp-kits/iris
           memory_profiling : false
+
+Access_key_id and secret_access_key: in your AWS account go to services -> IAM
+-> access keys -> show details
+copy the information. Save them somewhere. You will not be able to see them again
+
+region_name: got to your instance, and read availability zone in the description
+ami_user_name: the most standard one is ec2-user. you also used it to connect through ssh
+instance_type: you can find this information in the details of your instance
+key_name: the same user name which you use to ssh, eg ec2-user
+security_group: you can find this information in the details of your instance
+key_path: you need to first store the ssh key on your (RAMP?) server. give the path to it. 
+Best to give absolute path, eg: /home/ramp/…
+Make sure that this key is read only by you
+remote_ramp_kit_folder: location where your starting kit is stored on your sshed AWS instance, eg /home/ec3-user/ramp-kits/iris
+
 
 Create your own worker
 ----------------------
