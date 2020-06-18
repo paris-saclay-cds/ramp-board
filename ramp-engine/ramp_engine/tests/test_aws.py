@@ -29,8 +29,20 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S')
-
-
+'''
+def test_simple():
+    import yaml
+    from ramp_engine.aws.worker import AWSWorker
+    fid = open("/home/maja/maja/ramp/ramp_code/ramp-board/ramp-engine/ramp_engine/tests/config.yml")
+    config = yaml.load(fid)
+    worker = AWSWorker(config['worker'], "random_forest_10_10")
+    worker.setup()
+    worker.launch_submission()
+    worker._is_submission_finished()
+    worker.status
+    worker.collect_results()
+    worker.teardown()
+'''
 def test_aws_worker():
     if not os.path.isfile(os.path.join(HERE, 'config.yml')):
         pytest.skip("Only for local tests for now")
@@ -53,7 +65,6 @@ def test_aws_worker():
     assert worker.status in ('running', 'finished')
     worker.collect_results()
     assert worker.status == 'collected'
-
     assert os.path.isdir(os.path.join(
         ramp_kit_dir, 'predictions', 'starting_kit_local', 'fold_0'))
     assert os.path.isfile(os.path.join(
@@ -70,6 +81,7 @@ def test_aws_dispatcher(session_toy):  # noqa
 
     config = read_config(database_config_template())
     event_config = ramp_config_template()
+    event_config = read_config(event_config)
 
     # patch the event_config to match local config.yml for AWS
     aws_event_config = read_config(os.path.join(HERE, 'config.yml'))
