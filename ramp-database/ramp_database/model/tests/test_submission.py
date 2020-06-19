@@ -283,14 +283,14 @@ def test_submission_file_type_extension_model_backref(session_scope_module,
 
 def test_submission_score_on_cv_fold_model_property(session_scope_module):
     cv_fold_score = (session_scope_module
-        .query(SubmissionScoreOnCVFold)
-        .filter(SubmissionScoreOnCVFold.submission_score_id ==
-                SubmissionScore.id)
-        .filter(SubmissionScore.event_score_type_id ==
-                EventScoreType.id)
-        .filter(SubmissionScore.submission_id == 5)
-        .filter(EventScoreType.name == 'acc')
-        .first())  # noqa
+        .query(SubmissionScoreOnCVFold)                         # noqa
+        .filter(SubmissionScoreOnCVFold.submission_score_id ==  # noqa
+                SubmissionScore.id)                             # noqa
+        .filter(SubmissionScore.event_score_type_id ==          # noqa
+                EventScoreType.id)                              # noqa
+        .filter(SubmissionScore.submission_id == 5)             # noqa
+        .filter(EventScoreType.name == 'acc')                   # noqa
+        .first())                                               # noqa
     assert cv_fold_score.name == 'acc'
     assert isinstance(cv_fold_score.event_score_type, EventScoreType)
     assert callable(cv_fold_score.score_function)
