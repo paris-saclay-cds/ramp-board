@@ -65,9 +65,7 @@ Before you continue make sure that:
 
         Note:
 
-        - test and train can be directories or files, depending on the
-          challenge
-        - for more information on directory tree of the starting kits check
+        - for more information on directory structure of the starting kits check
           `Overall directory structure
           <https://paris-saclay-cds.github.io/ramp-docs/ramp-workflow/dev/workflow.html#overall-directory-structure>`_
 
