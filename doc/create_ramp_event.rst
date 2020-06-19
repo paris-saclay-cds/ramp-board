@@ -53,7 +53,30 @@ This config file should look like::
       more precisely the :ref:`conda workers <conda_env_worker>` to have more
       information.
 
-Finally, you can easily deploy the event (adding both problem and event to the
+
+Before you continue make sure that:
+
+    1.  Your private and public data are stored in the correct folders.
+
+        For example, your data might be in:
+
+        - public data: `ramp_deployment/ramp-kits/<problem_name>/data/`, and
+        - private data: `ramp_deployment/ramp-data/<problem_name>/data/`.
+
+        Note:
+
+        - for more information on directory structure of the starting kits check
+          `Overall directory structure
+          <https://paris-saclay-cds.github.io/ramp-docs/ramp-workflow/dev/workflow.html#overall-directory-structure>`_
+
+    2.  The conda environment (set in the ``config.yml`` file above, here
+        called `ramp-iris`) used by your event exists. Note, that this only
+        applies to the events which use the conda environment. To check which conda
+        environments you have type::
+
+        $ conda env list
+
+Now, you can easily deploy the event (adding both problem and event to the
 database) by calling from the deployment directory::
 
     ~/ramp_deployment $ ramp setup deploy-event --event-config events/iris_test/config.yml --no-cloning
