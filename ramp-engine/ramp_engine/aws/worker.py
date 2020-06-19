@@ -24,7 +24,7 @@ class AWSWorker(BaseWorker):
     status : str
         The status of the worker. It should be one of the following state:
 
-            * 'initialized': the worker has been instanciated.
+            * 'initialized': the worker has been instantiated.
             * 'setup': the worker has been set up.
             * 'error': setup failed / training couldn't be started
             * 'running': the worker is training the submission.
@@ -49,9 +49,14 @@ class AWSWorker(BaseWorker):
 
         logger.info("Setting up AWSWorker for submission '{}'".format(
             self.submission))
-        self.instance, = aws.launch_ec2_instances(self.config)
-        logger.info("Instance launched for submission '{}'".format(
-            self.submission))
+        self.instance = aws.launch_ec2_instances(self.config)
+        if self.instance:
+            logger.info("Instance launched for submission '{}'".format(
+                self.submission))
+        else:
+            logger.info("Unable to launch instance launched for submission "
+                        "'{}'".format(self.submission))
+            self.status = 'error'
         for _ in range(5):
             # try uploading the submission a few times, as this regularly fails
             exit_status = aws.upload_submission(
