@@ -17,9 +17,9 @@ worker:
     ami_image_name: <name of the AMI set up for this event>
     ami_user_name: ec2-user  # might also be ubuntu or other
     instance_type: t2.micro
-    key_name: <user that can ssh connect with the created AWS instance>
+    key_name: <name of your pem file, eg iris_key>
     security_group: launch-wizard-1  # name of the security group
-    key_path: <path to pem file corresponding to user name>
+    key_path: <path to pem file corresponding to user name, eg my_path/iris_key.pem>
     remote_ramp_kit_folder: /home/ec2-user/ramp-kits/iris
     memory_profiling: false
 dispatcher:
