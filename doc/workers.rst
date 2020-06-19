@@ -180,9 +180,9 @@ Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
           ami_image_name: <name of the AMI set up for this event>
           ami_user_name: ubuntu
           instance_type: t2.micro
-          key_name: <user that can ssh connect with the created AWS instance>
+          key_name: <name of your pem file, eg iris_key>
           security_group: launch-wizard-103
-          key_path: <path to pem file corresponding to user name>
+          key_path: <path to pem file corresponding to user name, eg my_path/iris_key.pem>
           remote_ramp_kit_folder: /home/ubuntu/ramp-kits/iris
           submissions_dir: /home/ramp/ramp_deployment/events/iris_aws/submissions
           predictions_dir: /home/ramp/ramp_deployment/events/iris_aws/predictions
@@ -207,13 +207,15 @@ Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
   Commonly 'ec2-user' or 'ubuntu'.
 * ``instance_type``: found in the EC2 console, 'Instances' tab, 'Description'
   tab at the bottom, under 'Instance type'.
-* ``key_name``: same as ``ami_user_name``.
+* ``key_name``: name of the key, eg if your key file is 'iris_key.pem', the key
+name is 'iris_key'
 * ``security_group``: in the EC2 console, 'Instances' tab, 'Description' tab
   at the bottom, under 'Security groups'.
 * ``key_path``: path to the you private key used to ssh to your instance
   (see :ref:`launch_aws`). Note that you need to copy your key into the RAMP.
   It is best to give the absolute path. Ensure the permissions of this file
-  is set to only 'read' by owner.
+  is set to only 'read' by owner (which can be done using ``chmod 400
+  key_name.pem`` command).
 * ``remote_ramp_kit_folder``: path to the starting kit folder on
   the AWS image you prepared (see :ref:`prepare_instance`).
 * ``submissions_dir``: path to the submissions directory on the RAMP server.
