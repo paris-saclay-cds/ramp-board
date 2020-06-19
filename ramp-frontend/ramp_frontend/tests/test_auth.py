@@ -225,7 +225,7 @@ def test_sign_up_with_approval(client_session):
             # check the flash box to inform the user about the mail
             with client.session_transaction() as cs:
                 flash_message = dict(cs['_flashes'])
-            assert 'We sent a confirmation email.'in flash_message['message']
+            assert 'We sent a confirmation email.' in flash_message['message']
             # check that the email has been sent
             assert len(outbox) == 1
             assert ('Click on the following link to confirm your email'
