@@ -42,6 +42,7 @@ class CondaEnvWorker(BaseWorker):
 
             * 'initialized': the worker has been instanciated.
             * 'setup': the worker has been set up.
+            * 'error': setup failed / training couldn't be started
             * 'running': the worker is training the submission.
             * 'finished': the worker finished to train the submission.
             * 'collected': the results of the training have been collected.
@@ -74,6 +75,7 @@ class CondaEnvWorker(BaseWorker):
         else:
             envs_path = conda_info['envs'][1:]
             if not envs_path:
+                self.status = 'error'
                 raise ValueError('Only the conda base environment exist. You '
                                  'need to create the "{}" conda environment '
                                  'to use it.'.format(env_name))
@@ -84,10 +86,15 @@ class CondaEnvWorker(BaseWorker):
                     self._python_bin_path = os.path.join(env, 'bin')
                     break
             if not is_env_found:
+                self.status = 'error'
                 raise ValueError('The specified conda environment {} does not '
                                  'exist. You need to create it.'
                                  .format(env_name))
+<<<<<<< HEAD
             super().setup()
+=======
+        super(CondaEnvWorker, self).setup()
+>>>>>>> bcd2b9ff6c5258505053bb77c710370b91472107
 
     def teardown(self):
         """Remove the predictions stores within the submission."""

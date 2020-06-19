@@ -26,6 +26,7 @@ class AWSWorker(BaseWorker):
 
             * 'initialized': the worker has been instanciated.
             * 'setup': the worker has been set up.
+            * 'error': setup failed / training couldn't be started
             * 'running': the worker is training the submission.
             * 'finished': the worker finished to train the submission.
             * 'collected': the results of the training have been collected.
@@ -64,8 +65,12 @@ class AWSWorker(BaseWorker):
             logger.error(
                 'Cannot upload submission "{}"'
                 ', an error occured'.format(self.submission))
+<<<<<<< HEAD
             # TODO do something with this status (no launching needs to be
             # done)
+=======
+            self.status = 'error'
+>>>>>>> bcd2b9ff6c5258505053bb77c710370b91472107
         else:
             logger.info("Uploaded submission '{}'".format(self.submission))
             self.status = 'setup'
@@ -79,12 +84,15 @@ class AWSWorker(BaseWorker):
         if self.status == 'running':
             raise RuntimeError("Cannot launch submission: one is already "
                                "started")
+        if self.status == 'error':
+            raise RuntimeError("Cannot launch submission: the setup failed")
         exit_status = aws.launch_train(
             self.config, self.instance.id, self.submission)
         if exit_status != 0:
             logger.error(
                 'Cannot start training of submission "{}"'
                 ', an error occured.'.format(self.submission))
+            self.status = 'error'
         else:
             self.status = 'running'
         return exit_status
