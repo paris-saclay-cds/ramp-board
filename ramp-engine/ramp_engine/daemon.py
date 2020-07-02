@@ -12,6 +12,11 @@ from ramp_utils import read_config
 
 
 logger = logging.getLogger("RAMP-DAEMON")
+# Daemon logger
+disptach_logger = logging.getLogger("Dispatcher-log")
+fh = logging.FileHandler('dispatcher.log')
+dispatch_logger = logging.getLogger("Dispatcher-log")
+dispatch_logger.addHandler(fh)
 
 
 class Daemon:
