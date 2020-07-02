@@ -132,7 +132,13 @@ class Dispatcher:
                 self._awaiting_worker_queue.get()
             logger.info('Starting worker: {}'.format(worker))
             worker.setup()
+            if worker.status == 'error':
+                set_submission_state(session, submission_id, 'checking_error')
+                continue
             worker.launch_submission()
+            if worker.status == 'error':
+                set_submission_state(session, submission_id, 'checking_error')
+                continue
             set_submission_state(session, submission_id, 'training')
             submission = get_submission_by_id(session, submission_id)
             update_user_leaderboards(

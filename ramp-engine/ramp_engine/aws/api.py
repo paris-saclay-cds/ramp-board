@@ -151,7 +151,10 @@ def launch_ec2_instances(config, nb=1):
     )
     # Wait until AMI is okay
     waiter = client.get_waiter('instance_status_ok')
-    waiter.wait(InstanceIds=[instance.id for instance in instances])
+    try:
+        waiter.wait(InstanceIds=[instance.id for instance in instances])
+    except botocore.exceptions.WaiterError:
+        return None
     return instances
 
 
