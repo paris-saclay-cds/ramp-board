@@ -54,7 +54,7 @@ class AWSWorker(BaseWorker):
             logger.info("Instance launched for submission '{}'".format(
                 self.submission))
         else:
-            logger.info("Unable to launch instance launched for submission "
+            logger.info("Unable to launch instance for submission "
                         "'{}'".format(self.submission))
             self.status = 'error'
         for _ in range(5):
