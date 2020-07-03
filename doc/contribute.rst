@@ -278,8 +278,9 @@ The following explain the main steps to release `ramp-board`:
 1. Run `bumpversion release`. It will remove the `dev0` tag.
 2. Commit the change `git commit -am "bumpversion 0.<version number>.0"`
    (e.g., `git commit -am "bumpversion 0.5.0"`).
-3. Create a branch for this version `git checkout -b 0.<version number>.X`.
-4. Push the new branch into the upstream repository.
+3. Create a branch for this version (e.g.,
+   `git checkout -b 0.<version number>.X`).
+4. Push the new branch into the upstream remote ramp-board repository.
 5. Create a GitHub release by clicking 'Draft a new release' `here
    <https://github.com/paris-saclay-cds/ramp-board/releases>`_. Copy the
    release notes from `whats_new
@@ -287,13 +288,15 @@ The following explain the main steps to release `ramp-board`:
 6. Change the symlink in the `ramp-docs
    <https://github.com/paris-saclay-cds/ramp-docs>`_ repository such that
    stable points to the latest release version, i.e, 0.<version number>. To do
-   this, clone the repository, `cd` into `ramp-board/` then run `unlink stable`
-   then `ln -s 0.<version number> stable` in a bash shell. To check that
+   this, clone the `ramp-docs` repository, `cd` into `ramp-docs/ramp-board/`
+   then run `unlink stable`, followed by
+   `ln -s 0.<version number> stable`. To check that
    this was performed correctly, ensure that `ramp-board/stable
    <https://github.com/paris-saclay-cds/ramp-docs/blob/master/ramp-board/stable>`_
    has the new version number.
-7. Remove unnecessary files with `make clean-dist` then push on PyPI with
-   `make upload-pypi`.
+7. `cd` back into the `ramp-board` code repository and ensure you are in the
+   release branch (e.g., branch `0.5.X`). Remove unnecessary files
+   with `make clean-dist` then push on PyPI with `make upload-pypi`.
 8. Switch to `master` branch and run `bumpversion minor`, commit and push on
    upstream.
 9. Add a new `v0.<version number>.rst` file in `doc/whats_new/
@@ -301,7 +304,7 @@ The following explain the main steps to release `ramp-board`:
    and `.. include::` this new file in `doc/whats_new.rst
    <https://github.com/paris-saclay-cds/ramp-board/blob/master/doc/whats_new.rst>`_.
 
-Note that the steps from 4 to 7 should be performed while in the release
+Note that the steps 4, 5 and 7 should be performed while in the release
 branch, e.g. branch `0.5.X`.
 
 Patch/bug fix release process
