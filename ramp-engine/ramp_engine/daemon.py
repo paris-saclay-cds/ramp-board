@@ -49,6 +49,7 @@ class Daemon:
         self._poison_pill = False
 
     def launch_dispatchers(self, session):
+        disptach_logger.info("Starting dispatcher log.")
         events = [e for e in session.query(Event).all() if e.is_open]
         for e in events:
             event_config = os.path.join(
