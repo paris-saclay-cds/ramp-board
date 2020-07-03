@@ -6,6 +6,17 @@ from . import api as aws
 
 logger = logging.getLogger('RAMP-AWS')
 
+log_file = 'aws_worker.log'
+formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')  # noqa
+fileHandler = logging.FileHandler(log_file, mode='a')
+fileHandler.setFormatter(formatter)
+streamHandler = logging.StreamHandler()
+streamHandler.setFormatter(formatter)
+
+logger.setLevel(logging.DEBUG)
+logger.addHandler(fileHandler)
+logger.addHandler(streamHandler)
+
 
 class AWSWorker(BaseWorker):
     """
