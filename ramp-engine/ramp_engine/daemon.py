@@ -10,13 +10,7 @@ from ramp_database.utils import session_scope
 
 from ramp_utils import read_config
 
-
 logger = logging.getLogger("RAMP-DAEMON")
-# Daemon logger
-disptach_logger = logging.getLogger("Dispatcher-log")
-fh = logging.FileHandler('dispatcher.log')
-dispatch_logger = logging.getLogger("Dispatcher-log")
-dispatch_logger.addHandler(fh)
 
 
 class Daemon:
@@ -49,7 +43,6 @@ class Daemon:
         self._poison_pill = False
 
     def launch_dispatchers(self, session):
-        disptach_logger.info("Starting dispatcher log.")
         events = [e for e in session.query(Event).all() if e.is_open]
         for e in events:
             event_config = os.path.join(

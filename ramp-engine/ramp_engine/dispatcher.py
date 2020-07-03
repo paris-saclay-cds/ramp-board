@@ -32,6 +32,17 @@ from .local import CondaEnvWorker
 
 logger = logging.getLogger('RAMP-DISPATCHER')
 
+log_file = 'dispatcher.log'
+formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')  # noqa
+fileHandler = logging.FileHandler(log_file, mode='a')
+fileHandler.setFormatter(formatter)
+streamHandler = logging.StreamHandler()
+streamHandler.setFormatter(formatter)
+
+logger.setLevel(logging.DEBUG)
+logger.addHandler(fileHandler)
+logger.addHandler(streamHandler)
+
 
 class Dispatcher:
     """Dispatcher which schedule workers and communicate with the database.
