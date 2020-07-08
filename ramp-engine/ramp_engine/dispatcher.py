@@ -30,11 +30,17 @@ from ramp_utils import read_config
 
 from .local import CondaEnvWorker
 
+log_dir = "logs"
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
 logger = logging.getLogger('RAMP-DISPATCHER')
 
-log_file = 'dispatcher.log'
+log_file = os.path.join(log_dir, 'dispatcher.log')
 formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')  # noqa
-fileHandler = logging.FileHandler(log_file, mode='a')
+fileHandler = logging.handlers.RotatingFileHandler(
+    log_file, maxBytes=1000, backupCount=5
+)
 fileHandler.setFormatter(formatter)
 streamHandler = logging.StreamHandler()
 streamHandler.setFormatter(formatter)
