@@ -10,7 +10,6 @@ from ramp_database.utils import session_scope
 
 from ramp_utils import read_config
 
-
 logger = logging.getLogger("RAMP-DAEMON")
 
 

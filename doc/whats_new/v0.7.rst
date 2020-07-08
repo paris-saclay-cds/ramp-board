@@ -1,0 +1,19 @@
+.. _changes_0_7:
+
+Version 0.7
+===========
+
+Changelog
+---------
+
+`ramp-database`
+...............
+
+`ramp-engine`
+.............
+
+`ramp-frontend`
+...............
+
+`ramp-utils`
+............

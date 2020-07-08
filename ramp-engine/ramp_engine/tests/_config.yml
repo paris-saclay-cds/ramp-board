@@ -1,0 +1,28 @@
+ramp:
+    problem_name: iris
+    event_name: iris_aws_test
+    event_title: "iris aws"
+    event_is_public: true
+    data_dir: ramp-board/ramp_deployment/ramp-data/iris
+    kit_dir: ramp-board/ramp-engine/ramp_engine/tests/kits
+    submissions_dir: ramp-board/ramp-engine/ramp_engine/tests/kits/iris/submissions
+    predictions_dir: ramp-board/ramp-engine/ramp_engine/tests/kits/iris/predictions
+    logs_dir: ramp-board/ramp-engine/ramp_engine/tests/kits/iris/logs
+    sandbox_dir: starting_kit
+worker:
+    worker_type: aws
+    access_key_id: <aws_access_key_id for boto3 Session>
+    secret_access_key: <aws_secret_access_key for boto3 Session>
+    region_name: us-west-2 # oregon
+    ami_image_name: <name of the AMI set up for this event>
+    ami_user_name: ec2-user  # might also be ubuntu or other
+    instance_type: t2.micro
+    key_name: <name of your pem file, eg iris_key>
+    security_group: launch-wizard-1  # name of the security group
+    key_path: <path to pem file corresponding to user name, eg my_path/iris_key.pem>
+    remote_ramp_kit_folder: /home/ec2-user/ramp-kits/iris
+    memory_profiling: false
+dispatcher:
+    hunger_policy: sleep
+    # n_workers: (number of RAMP workers launched in parallel. Default: # CPUs)
+    # n_threads: (number of threads used by a RAMP worker: Default: # CPUs)

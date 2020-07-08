@@ -70,15 +70,52 @@ The AWS worker will train and evaluate the submissions on an AWS instance,
 which can be useful if the server itself has not much resources or if you need
 specific resources (e.g. GPU's).
 
-You need to create an Amazon Machine Image (AMI) with the starting kit and
-data, and the needed packages to run submissions. This AMI will then be used
-to launch instances to run submissions.
+Summary of steps:
 
-A very short how-to for creating such an AMI manually:
+1. Launch AWS instance and connect to it.
+2. Prepare the instance for running submissions.
+3. Save the instance as an Amazon Machine Image (AMI).
+4. Update the event ``config.yml`` file on the RAMP server.
 
-- launch an Amazon instance
-- connect to it
-- prepare the instance:
+.. _launch_aws:
+
+Launching AWS instance
+^^^^^^^^^^^^^^^^^^^^^^
+
+Follow `AWS getting started
+<https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html>`_
+to launch an Amazon EC2 Linux instance. Amazon can create a new key-pair
+for your instance, which you can download. You need to store this in a
+hidden directory (e.g., ``.ssh/``) and change the rights to file permissions
+to only read for owner. You can use::
+
+      ~ $ chmod 400 <path_to_aws_key>
+
+To connect to your instance via ssh, use::
+
+      ~ $ ssh -i /path/my-key-pair.pem my-instance-user-name@my-instance-public-dns-name
+
+`'my-instance-user-name'` depends on the type of instance you picked but is
+commonly 'ec2-user' or 'ubuntu'. The full list can be found `here
+<https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connection-prereqs.html#connection-prereqs-get-info-about-instance>`_
+under 'Get the user name for your instance'. 'my-instance-public-dns-name' can
+be found by clicking on your 'Instances' tab in your EC2 dashboard.
+Full connection details can be found in the `AWS guide
+<https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AccessingInstancesLinux.html>`_.
+
+.. _prepare_instance:
+
+Prepare the instance
+^^^^^^^^^^^^^^^^^^^^
+
+To prepare the instance you need to download the starting kit, data and all
+required packages to run submissions. This can be saved as an AMI (image) and
+will then be used to launch instances to run submissions.
+
+Below is a basic guide for creating such an AMI manually, using the Iris
+challenge. This guide is for an ubuntu instance. If you have a Linux instance
+you will need not need to add miniconda to your ``~/.profile`` but you will
+need to install git.
 
   - Install miniconda::
 
@@ -105,45 +142,89 @@ A very short how-to for creating such an AMI manually:
         ~ $ conda env update --name base --file $ami_environment
         ~ $ conda list
 
-  - Get the data::
+  - Get the data and copy public data to ``ramp-kits/iris/data``::
 
         ~ $ data_dir="$kit_dir/data"
         ~ $ rm -rf $data_dir && mkdir $data_dir
         ~ $ git clone https://github.com/ramp-data/iris ramp-data/iris
         ~ $ cd ramp-data/iris/
         ~ $ python prepare_data.py
-        ~ $ cd ..
-
-    TODO: figure out this data (in ramp-kits/data or in ramp-data?)
+        ~ $ cp data/public/* ~/ramp-kits/iris/data/
 
   - Test the kit::
 
-        ~ $ cd ramp-kits/iris
+        ~ $ cd ~/ramp-kits/iris
         ~ $ ramp-test
 
-- Save the instance as an AMI: from the instance -> Actions -> Image -> Create image
+Next, save the instance as an AMI. Starting from the instance tab:
+Actions -> Image -> Create image. See `Create an AMI from an Amazon EC2
+instance <https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/tkv-create-ami-from-instance.html>`_
+for more details.
 
-- Create an event config.yml, which should look something like::
+Event configuration
+^^^^^^^^^^^^^^^
+
+Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
+'worker' section, which should look something like::
 
       ramp:
           problem_name: iris
           event_name: iris_ramp_aws_test
-          event_title: iris_ramp_aws_test
+          event_title: "iris ramp aws test"
           event_is_public: true
-          ...
       worker:
           worker_type: aws
           access_key_id: <aws_access_key_id for boto3 Session>
           secret_access_key: <aws_secret_access_key for boto3 Session>
           region_name: us-west-2 # oregon
           ami_image_name: <name of the AMI set up for this event>
-          ami_user_name : ubuntu
-          instance_type : t2.micro
-          key_name: <user that can ssh connect with the created AWS instance>
-          security_group : launch-wizard-103
-          key_path: <path to pem file corresponding to user name>
-          remote_ramp_kit_folder : /home/ubuntu/ramp-kits/iris
-          memory_profiling : false
+          ami_user_name: ubuntu
+          instance_type: t2.micro
+          key_name: <name of your pem file, eg iris_key>
+          security_group: launch-wizard-103
+          key_path: <path to pem file corresponding to user name, eg my_path/iris_key.pem>
+          remote_ramp_kit_folder: /home/ubuntu/ramp-kits/iris
+          submissions_dir: /home/ramp/ramp_deployment/events/iris_aws/submissions
+          predictions_dir: /home/ramp/ramp_deployment/events/iris_aws/predictions
+          logs_dir: /home/ramp/ramp_deployment/events/iris_aws/logs
+          memory_profiling: false
+
+* ``access_key_id`` and ``secret_access_key``: to create a new access key, go
+  to your top navigation bar, click on your user name -> My Security
+  Credentials. Open the 'Access keys' tab then click on 'Create New Access
+  Key'. You will be prompted to download your 'access key ID' and 'secret
+  access key' to a ``.csv`` file, which should be saved in a secure location.
+  You can also use an existing access key by obtaining the ID and key from
+  your saved ``.csv`` file. See `Managing Access Keys
+  <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html#Using_CreateAccessKey>`_
+  for more details.
+* ``region_name``: zone of your instance, which can be found in the EC2
+  console, 'Instances' tab on the left, under 'availability zone'.
+* ``ami_image_name``: name you gave to the image you prepared (see
+  :ref:`prepare_instance`). This can be found in the EC2 console, under
+  'Images' -> 'AMI' tab.
+* ``ami_user_name``: user name you used to ssh into your instance.
+  Commonly 'ec2-user' or 'ubuntu'.
+* ``instance_type``: found in the EC2 console, 'Instances' tab, 'Description'
+  tab at the bottom, under 'Instance type'.
+* ``key_name``: name of the key, eg if your key file is 'iris_key.pem', the key
+name is 'iris_key'
+* ``security_group``: in the EC2 console, 'Instances' tab, 'Description' tab
+  at the bottom, under 'Security groups'.
+* ``key_path``: path to the you private key used to ssh to your instance
+  (see :ref:`launch_aws`). Note that you need to copy your key into the RAMP.
+  It is best to give the absolute path. Ensure the permissions of this file
+  is set to only 'read' by owner (which can be done using ``chmod 400
+  key_name.pem`` command).
+* ``remote_ramp_kit_folder``: path to the starting kit folder on
+  the AWS image you prepared (see :ref:`prepare_instance`).
+* ``submissions_dir``: path to the submissions directory on the RAMP server.
+* ``predictions_dir``: path to the predictions directoryon the RAMP server.
+* ``logs_dir``: path to store the submission logs on the RAMP server.
+* ``memory_profiling``: boolean, whether or not to profile memory used by each
+  submission. You need to install `memory profiler
+  <https://pypi.org/project/memory-profiler/>`_ in your prepared AMI image
+  to enable this.
 
 Create your own worker
 ----------------------
