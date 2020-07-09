@@ -1,6 +1,4 @@
 import logging
-from logging.handlers import RotatingFileHandler
-
 import os
 
 from ..base import BaseWorker, _get_traceback

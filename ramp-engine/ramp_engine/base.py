@@ -1,5 +1,4 @@
 import logging
-from logging.handlers import RotatingFileHandler
 import os
 from abc import ABCMeta, abstractmethod
 
