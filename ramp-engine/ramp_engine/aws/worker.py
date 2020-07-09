@@ -16,7 +16,7 @@ logger = logging.getLogger('RAMP-AWS')
 log_file = os.path.join(log_dir, 'aws_worker.log')
 formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')  # noqa
 fileHandler = logging.handlers.RotatingFileHandler(
-    log_file, maxBytes=1000, backupCount=5
+    log_file, maxBytes=1000, backupCount=2
 )
 fileHandler.setFormatter(formatter)
 streamHandler = logging.StreamHandler()
