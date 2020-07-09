@@ -20,6 +20,7 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
+
 class BaseWorker(metaclass=ABCMeta):
     """Metaclass used to build a RAMP worker. Do not use this class directly.
 
