@@ -11,15 +11,14 @@ logger = logging.getLogger('RAMP-WORKER')
 
 log_file = os.path.join(log_dir, "worker.log")
 formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')  # noqa
-fileHandler = RotatingFileHandler(log_file, maxBytes=1000, backupCount=2)
-fileHandler.setFormatter(formatter)
-streamHandler = logging.StreamHandler()
-streamHandler.setFormatter(formatter)
+file_handler = RotatingFileHandler(log_file, maxBytes=1000, backupCount=2)
+file_handler.setFormatter(formatter)
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
 
 logger.setLevel(logging.DEBUG)
-logger.addHandler(fileHandler)
-logger.addHandler(streamHandler)
-
+logger.addHandler(file_handler)
+logger.addHandler(stream_handler)
 
 class BaseWorker(metaclass=ABCMeta):
     """Metaclass used to build a RAMP worker. Do not use this class directly.
