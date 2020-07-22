@@ -208,7 +208,7 @@ Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
 * ``instance_type``: found in the EC2 console, 'Instances' tab, 'Description'
   tab at the bottom, under 'Instance type'.
 * ``key_name``: name of the key, eg if your key file is 'iris_key.pem', the key
-name is 'iris_key'
+  name is 'iris_key'
 * ``security_group``: in the EC2 console, 'Instances' tab, 'Description' tab
   at the bottom, under 'Security groups'.
 * ``key_path``: path to the you private key used to ssh to your instance
