@@ -60,7 +60,7 @@ class AWSWorker(BaseWorker):
 
         logger.info("Setting up AWSWorker for submission '{}'".format(
             self.submission))
-        self.instance = aws.launch_ec2_instances(self.config)
+        self.instance, = aws.launch_ec2_instances(self.config)
         if self.instance:
             logger.info("Instance launched for submission '{}'".format(
                 self.submission))
