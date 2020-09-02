@@ -6,144 +6,150 @@
 
 {% if messages %}
 
-    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    {% for category, message in messages %}
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
-                </div>
-                <div class="modal-body">
-                   	{{ message }}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                </div>
-            </div>
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  {% for category, message in messages %}
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message">
+          {{ message }}
         </div>
-	{% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+      </div>
     </div>
+  </div>
+  {% endfor %}
+</div>
 
 {% endif %}
 {% endwith %}
- <!-- style="padding-bottom: 20px " -->
+<!-- style="padding-bottom: 20px " -->
 <div class="col-xs-12">
-     <div class="card">
-        <div class="card-header">
-            <div class="card-title">
-                <div class="title">Sign Up</div>
-            </div>
-        </div>
-
-         <div class="card-body">
-           <form class="ui form" method="post" action="" name="sign_up">
-               {{ form.hidden_tag() }}
-                   <div class="form-group">
-                       <label>Username</label>
-                       {{ form.user_name(placeholder="username") }}
-                       {% for error in form.user_name.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                   <div class="form-group">
-                       <label>Password</label>
-                       {{ form.password(placeholder="password") }}
-                       {% for error in form.password.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                   <div class="form-group">
-                       <label>First name</label>
-                       {{ form.firstname(placeholder="firstname") }}
-                       {% for error in form.firstname.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                   <div class="form-group">
-                       <label>Last name</label>
-                       {{ form.lastname(placeholder="lastname") }}
-                       {% for error in form.lastname.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                   <div class="form-group">
-                       <label>Email</label>
-                       {{ form.email(placeholder="email") }}
-                       {% for error in form.email.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                   <div class="checkbox">
-                       {{ form.is_want_news(placeholder="is_want_news", checked=True) }}
-                       <label>I would like to receive news about future RAMP events</label>
-                       {% for error in form.is_want_news.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-    Consider joining our <a href="https://ramp-studio.slack.com/shared_invite/MTg1NDUxNDAyNDk2LTE0OTUzOTcwMDQtMThlOWY1NWU0Mg"><strong>slack team</strong></a> if you would like to be part of the growing community of rampers.</font><br>
-                   <p> The following fields are not mandatory, but the more we know about you, the more likely we will approve your sign-up application.</p>
-                   
-				  <div class="form-group">
-                       <label>LinkedIn URL</label>
-                       {{ form.linkedin_url(placeholder="linkedin_url") }}
-                       {% for error in form.linkedin_url.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                   <div class="form-group">
-                       <label>Twitter URL</label>
-                       {{ form.twitter_url(placeholder="twitter_url") }}
-                       {% for error in form.twitter_url.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                   <div class="form-group">
-                       <label>Facebook URL</label>
-                       {{ form.facebook_url(placeholder="facebook_url") }}
-                       {% for error in form.facebook_url.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                   <div class="form-group">
-                       <label>Google+ URL</label>
-                       {{ form.google_url(placeholder="google_url") }}
-                       {% for error in form.google_url.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                   <div class="form-group">
-                       <label>GitHub URL</label>
-                       {{ form.github_url(placeholder="github_url") }}
-                       {% for error in form.github_url.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                   <div class="form-group">
-                       <label>Short biography</label>
-                       {{ form.bio(placeholder="bio") }}
-                       {% for error in form.bio.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                   <div class="form-group">
-                       <label>Web site</label>
-                       {{ form.website_url(placeholder="website_url") }}
-                       {% for error in form.website_url.errors %}
-                           <span style="color: red;">[{{ error }}]</span>
-                       {% endfor %}
-                   </div>
-                   <input type="submit" value="Sign up" class="ui submit button">
-               </div>
-           </form>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="title">Sign Up</div>
+      </div>
     </div>
-   </div>
+
+    <div class="card-body">
+      <form class="ui form" method="post" action="" name="sign_up">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+          <label>Username</label><br />
+          {{ form.user_name(placeholder="username") }}
+          {% for error in form.user_name.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label>Password</label><br />
+          {{ form.password(placeholder="password") }}
+          {% for error in form.password.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label>First name</label><br />
+          {{ form.firstname(placeholder="firstname") }}
+          {% for error in form.firstname.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label>Last name</label><br />
+          {{ form.lastname(placeholder="lastname") }}
+          {% for error in form.lastname.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label>Email</label><br />
+          {{ form.email(placeholder="email") }}
+          {% for error in form.email.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        <div class="checkbox">
+          {{ form.is_want_news(placeholder="is_want_news", checked=True) }}
+          <label>I would like to receive news about future RAMP events</label>
+          {% for error in form.is_want_news.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        Consider joining our <a
+          href="https://ramp-studio.slack.com/shared_invite/MTg1NDUxNDAyNDk2LTE0OTUzOTcwMDQtMThlOWY1NWU0Mg"><strong>slack
+            team</strong></a> if you would like to be part of the growing community of rampers.</font><br>
+        <p> The following fields are not mandatory, but the more we know about you, the more likely we will
+          approve your sign-up application.</p>
+        <div class="form-group">
+          <label>LinkedIn URL</label> <br />
+          {{ form.linkedin_url(placeholder="linkedin_url") }}
+          {% for error in form.linkedin_url.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label>Twitter URL</label> <br />
+          {{ form.twitter_url(placeholder="twitter_url") }}
+          {% for error in form.twitter_url.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label>Facebook URL</label> <br />
+          {{ form.facebook_url(placeholder="facebook_url") }}
+          {% for error in form.facebook_url.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label>Google+ URL</label> <br />
+          {{ form.google_url(placeholder="google_url") }}
+          {% for error in form.google_url.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label>GitHub URL</label> <br />
+          {{ form.github_url(placeholder="github_url") }}
+          {% for error in form.github_url.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label>Short biography</label> <br />
+          {{ form.bio(placeholder="bio") }}
+          {% for error in form.bio.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label>Web site</label> <br />
+          {{ form.website_url(placeholder="website_url") }}
+          {% for error in form.website_url.errors %}
+          <span style="color: red;">[{{ error }}]</span>
+          {% endfor %}
+        </div>
+        <input type="submit" value="Sign up" class="ui submit button">
+    </div>
+    </form>
+  </div>
+</div>
 </div>
 {% endblock %}
 {% block scripts %}
 <script>
-$(function () {
-   $('#formerror').modal('toggle')
-});
+  $(function () {
+    $('#formerror').modal('toggle')
+  });
 </script>
 {% endblock %}

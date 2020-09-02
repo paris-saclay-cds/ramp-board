@@ -5,24 +5,28 @@
 {% with messages = get_flashed_messages(with_categories=true) %}
 
 {% if messages %}
-    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    {% for category, message in messages %}
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
-                </div>
-                <div class="modal-body">
-                    {{ message }}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                </div>
-            </div>
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  {% for category, message in messages %}
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message">
+          {{ message }}
         </div>
-    {% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+      </div>
     </div>
+  </div>
+  {% endfor %}
+</div>
 {% endif %}
 {% endwith %}
 
@@ -31,54 +35,61 @@
   <div class="card">
     <div class="card-header">
       <div class="card-title">
-          <div class="title">
-              Quantify credits for {{ submission.full_name_with_link|safe }}
-          </div>
+        <div class="title">
+          Quantify credits for {{ submission.full_name_with_link|safe }}
+        </div>
       </div>
     </div>
     <div class="card-body">
-        <p><strong><font color="#e3a712">Please take a couple of minutes to credit the sources of this submission: what percentage of it is new? what percentage of it is coming from or inspired by other submissions?</font></strong><br>
+      <p><strong>
+          <font color="#e3a712">Please take a couple of minutes to credit the sources of this submission: what
+            percentage of it is new? what percentage of it is coming from or inspired by other submissions?
+          </font>
+        </strong><br>
         The numbers should add up to 100. <br>
-        The list contains all submissions by team {{ submission.team.name }} and submissions that team members have looked at. <br>
-        The numbers will be used for computing the total contributivity of the submissions by propagating the current contributivity backwards. <br>
+        The list contains all submissions by team {{ submission.team.name }} and submissions that team members
+        have looked at. <br>
+        The numbers will be used for computing the total contributivity of the submissions by propagating the
+        current contributivity backwards. <br>
         Be honest and fair as much as possible.
-		<div class="col-xs-10">
-            <form class="ui form" method="post" action="" name="save">
-                {{ credit_form.hidden_tag() }}
-                    <table border="1" class="dataframe ui blue celled table sortable">
-                        <thead>
-                            <tr style="text-align: left;">
-                                <th>submission</th>
-                                <th>credit</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>self credit</td>
-                                <td><input id="self_credit" name="self_credit" type="text" value="0"></td>
-                            </tr>
-                        {% for name_credit in credit_form.name_credits %}
-                            <tr>
-                                <td><a href="{{ name_credit[2] }}">{{ name_credit[0] }}</a></td>
-                                <td><input id="{{ name_credit[0] }}" name="{{ name_credit[0] }}" type="text" value="{{ name_credit[1] }}"></td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                    <input type="submit" value="Submit" class="ui submit button">
-                </div>
-                </table>
-            </form>
-		</div>
-	</div>
+        <div class="col-xs-10">
+          <form class="ui form" method="post" action="" name="save">
+            {{ credit_form.hidden_tag() }}
+            <table border="1" class="dataframe ui blue celled table sortable">
+              <thead>
+                <tr style="text-align: left;">
+                  <th>submission</th>
+                  <th>credit</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>self credit</td>
+                  <td><input id="self_credit" name="self_credit" type="text" value="0"></td>
+                </tr>
+                {% for name_credit in credit_form.name_credits %}
+                <tr>
+                  <td><a href="{{ name_credit[2] }}">{{ name_credit[0] }}</a></td>
+                  <td><input id="{{ name_credit[0] }}" name="{{ name_credit[0] }}" type="text"
+                      value="{{ name_credit[1] }}"></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            <input type="submit" value="Submit" class="ui submit button">
+        </div>
+        </table>
+        </form>
+    </div>
   </div>
+</div>
 </div>
 
 {% endblock %}
 {% block scripts %}
 <script>
-$(function () {
-       $('#formerror').modal('toggle')
-});
+  $(function () {
+    $('#formerror').modal('toggle')
+  });
 </script>
 {% endblock %}

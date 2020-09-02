@@ -134,7 +134,7 @@ def test_add_submission_create_new_submission(base_db):
     for sub_id, _, _ in all_submissions:
         sub = get_submission_by_id(session, sub_id)
         assert os.path.exists(sub.path)
-        assert os.path.exists(os.path.join(sub.path, 'classifier.py'))
+        assert os.path.exists(os.path.join(sub.path, 'estimator.py'))
 
     # `sign_up_team` make a submission (sandbox) by user. This submission will
     # be the third submission.
@@ -146,10 +146,10 @@ def test_add_submission_create_new_submission(base_db):
                                         submission_name)
     assert submission.name == submission_name
     submission_file = submission.files[0]
-    assert submission_file.name == 'classifier'
+    assert submission_file.name == 'estimator'
     assert submission_file.extension == 'py'
     assert (os.path.join('submission_000000005',
-                         'classifier.py') in submission_file.path)
+                         'estimator.py') in submission_file.path)
 
 
 def test_add_submission_too_early_submission(base_db):
@@ -257,7 +257,7 @@ def test_add_submission_wrong_submission_files(base_db):
                        path_submission)
 
     # case that we have the correct filename but not the right extension
-    filename = os.path.join(path_submission, 'classifier.xxx')
+    filename = os.path.join(path_submission, 'estimator.xxx')
     open(filename, "w+").close()
     err_msg = 'All extensions "xxx" are unknown for the submission'
     with pytest.raises(MissingExtensionError, match=err_msg):
@@ -299,7 +299,7 @@ def test_get_submissions(session_scope_module, state, expected_id):
         assert submission_id in expected_id
         assert 'submission_{:09d}'.format(submission_id) == sub_name
         path_file = os.path.join('submission_{:09d}'.format(submission_id),
-                                 'classifier.py')
+                                 'estimator.py')
         assert path_file in sub_path[0]
 
 
@@ -312,7 +312,7 @@ def test_get_submission_by_id(session_scope_module):
     submission = get_submission_by_id(session_scope_module, 1)
     assert isinstance(submission, Submission)
     assert submission.basename == 'submission_000000001'
-    assert os.path.exists(os.path.join(submission.path, 'classifier.py'))
+    assert os.path.exists(os.path.join(submission.path, 'estimator.py'))
     assert submission.state == 'trained'
 
 
@@ -321,7 +321,7 @@ def test_get_submission_by_name(session_scope_module):
                                         'test_user', 'starting_kit')
     assert isinstance(submission, Submission)
     assert submission.basename == 'submission_000000001'
-    assert os.path.exists(os.path.join(submission.path, 'classifier.py'))
+    assert os.path.exists(os.path.join(submission.path, 'estimator.py'))
     assert submission.state == 'trained'
 
 

@@ -1,79 +1,79 @@
-{% extends "base.html" %}
-{% block title %}Login{% endblock %}
-
-{% block content %}
-
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">Login Error</h4>
-                </div>
-                <div class="modal-body">
-    				{% for message in messages %}
-                    	{{ message }}
-					{% endfor %}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                </div>
-            </div>
+{% extends "base.html" %} {% block title %}Login{% endblock %} {% block content
+%} {% with messages = get_flashed_messages() %} {% if messages %}
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel">Login Error</h4>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message">
+          {% for message in messages %} {{ message }} {% endfor %}
         </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal">
+          Close
+        </button>
+      </div>
     </div>
-{% endif %}
-{% endwith %}
+  </div>
+</div>
+{% endif %} {% endwith %}
 
 <div class="col-xs-12">
-     <div class="card">
-        <div class="card-header">
-            <div class="card-title">
-                <div class="title">Login</div>
-            </div>
-        </div>
-         <div class="card-body">
-
-             <form class="ui form" method="post" action="" name="login">
-                 {{ form.hidden_tag() }}
-                 <div class="one field">
-                     <div class="required field">
-                         <label>Username or e-mail</label>
-                         {{ form.user_name(placeholder="username or e-mail") }}
-                         {% for error in form.user_name.errors %}
-                             <span style="color: red;">[{{ error }}]</span>
-                         {% endfor %}
-                     </div>
-                     <div class="required field">
-                         <label>Password</label>
-                         {{ form.password(placeholder="password") }}
-                         {% for error in form.password.errors %}
-                             <span style="color: red;">[{{ error }}]</span>
-                         {% endfor %}
-                     </div>
-             <!--
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="title">Login</div>
+      </div>
+    </div>
+    <div class="card-body login">
+      <form class="ui form" method="post" action="" name="login">
+        {{ form.hidden_tag() }}
+        <div class="one field">
+          <div class="required field" style="margin-top: 4px;margin-bottom: 4px;">
+            <label>Username or e-mail</label><br />
+            {{ form.user_name(placeholder="username or e-mail") }} {% for error
+            in form.user_name.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+          </div>
+          <div class="required field" style="margin-top: 4px;margin-bottom: 4px;">
+            <label>Password</label><br />
+            {{ form.password(placeholder="password") }} {% for error in
+            form.password.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+          </div>
+          <!--
                      <div class="required field">
                          <label>Remember me</label>
                          {{ form.remember_me }}
                      </div>
              -->
-                     <input type="submit" value="Login" class="ui submit button">
-                     Forgot your password? <a href="/reset_password">Reset it!</a>
-                 </div>
-             </form>
-Consider joining our <a href="https://ramp-studio.slack.com/shared_invite/MTg1NDUxNDAyNDk2LTE0OTUzOTcwMDQtMThlOWY1NWU0Mg"><strong>slack team</strong></a> if you would like to be part of the growing community of rampers.</font>
-         </div>
+          <input type="submit" value="Login" class="ui submit button" /><br />
+          Forgot your password? <a href="/reset_password">Reset it!</a>
+        </div>
+      </form>
+      <p>
+        Consider joining our
+        <a href="https://ramp-studio.slack.com/shared_invite/MTg1NDUxNDAyNDk2LTE0OTUzOTcwMDQtMThlOWY1NWU0Mg"><strong>slack
+            team</strong></a>
+        if you would like to be part of the growing community of rampers.
+      </p>
     </div>
+  </div>
 </div>
 
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
-$(function () {
-       $('#formerror').modal('toggle')
-});
+  $(function () {
+    $("#formerror").modal("toggle");
+  });
 </script>
 {% endblock %}
-

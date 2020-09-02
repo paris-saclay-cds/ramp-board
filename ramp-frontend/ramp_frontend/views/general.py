@@ -7,6 +7,7 @@ from ramp_database.model import Keyword
 from ramp_database.model import Problem
 
 from .redirect import redirect_to_user
+from .._version import __version__
 
 mod = Blueprint('general', __name__)
 
@@ -16,10 +17,14 @@ def index():
     """Default landing page."""
     img_ext = ('.png', '.jpg', '.jpeg', '.gif', '.svg')
     current_dir = os.path.dirname(__file__)
-    img_folder = os.path.join(current_dir, "../static/img/powered_by")
-    images = [f for f in os.listdir(img_folder)
-              if f.endswith(img_ext)]
-    return render_template('index.html', images=images)
+    img_folder = os.path.join(current_dir, "..", "static", "img", "powered_by")
+    context = {}
+    if os.path.isdir(img_folder):
+        images = [f for f in os.listdir(img_folder)
+                  if f.endswith(img_ext)]
+        context["images"] = images
+    context["version"] = __version__
+    return render_template('index.html', **context)
 
 
 @mod.route("/description")

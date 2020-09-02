@@ -7,7 +7,7 @@ Develop and contribute
 Welcome to the RAMP team. We are always happy to have new RAMP developers.
 
 You can contribute to this code by making a `Pull Request
-<https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_ 
+<https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_
 on Github_. Please, make sure that your code is coming with unit tests to
 ensure full coverage and continuous integration in the API.
 
@@ -56,8 +56,13 @@ This command will list all of your databases along with their owners.
 
 Test
 ----
-Each time before running the tests make sure your ``Postgres database cluster``
-has been started. You can always start it using the command::
+In order to run your tests please create a test conda environment (you will
+need to do that only once)::
+
+    ~ $ conda env create -f ci_tools/environment_iris_kit.yml
+
+Also, before running the tests make sure your ``Postgres database cluster`` has
+been started. You can always start it using the command::
 
     ~ $ pg_ctl -D postgres_dbs -l logfile start
 
@@ -241,7 +246,7 @@ README file in the doc/ directory for more information.
 
 For building the documentation, you will need
 
-    - sphinx_, 
+    - sphinx_,
     - sphinx_rtd_theme_,
     - numpydoc_,
     - graphviz_,
@@ -265,17 +270,61 @@ method does to the data and a figure (coming from an example)
 illustrating it.
 
 
-Release process
----------------
+Minor release process
+---------------------
 
 The following explain the main steps to release `ramp-board`:
 
 1. Run `bumpversion release`. It will remove the `dev0` tag.
-2. Commit the change `git commit -am "bumpversion 0.1.0"`.
-3. Create a branch for this version `git checkout -b 0.1.X`.
-4. Push the new branch into the upstream repository.
-5. You can create a GitHub release.
-6. Change the symlink in the `ramp-docs` repository such that stable point on
-   0.1.X.
-7. Push on PyPI with `make upload-pypi`.
-8. In `master`, run `bumpversion minor`, commit and push on upstream.
+2. Commit the change `git commit -am "bumpversion 0.<version number>.0"`
+   (e.g., `git commit -am "bumpversion 0.5.0"`).
+3. Create a branch for this version (e.g.,
+   `git checkout -b 0.<version number>.X`).
+4. Push the new branch into the upstream remote ramp-board repository.
+5. Create a GitHub release by clicking 'Draft a new release' `here
+   <https://github.com/paris-saclay-cds/ramp-board/releases>`_. Copy the
+   release notes from `whats_new
+   <https://paris-saclay-cds.github.io/ramp-docs/ramp-board/dev/whats_new.html>`_.
+6. Change the symlink in the `ramp-docs
+   <https://github.com/paris-saclay-cds/ramp-docs>`_ repository such that
+   stable points to the latest release version, i.e, 0.<version number>. To do
+   this, clone the `ramp-docs` repository, `cd` into `ramp-docs/ramp-board/`
+   then run `unlink stable`, followed by
+   `ln -s 0.<version number> stable`. To check that
+   this was performed correctly, ensure that `ramp-board/stable
+   <https://github.com/paris-saclay-cds/ramp-docs/blob/master/ramp-board/stable>`_
+   has the new version number.
+7. `cd` back into the `ramp-board` code repository and ensure you are in the
+   release branch (e.g., branch `0.5.X`). Remove unnecessary files
+   with `make clean-dist` then push on PyPI with `make upload-pypi`.
+8. Switch to `master` branch and run `bumpversion minor`, commit and push on
+   upstream.
+9. Add a new `v0.<version number>.rst` file in `doc/whats_new/
+   <https://github.com/paris-saclay-cds/ramp-board/tree/master/doc/whats_new>`_
+   and `.. include::` this new file in `doc/whats_new.rst
+   <https://github.com/paris-saclay-cds/ramp-board/blob/master/doc/whats_new.rst>`_.
+
+Note that the steps 4, 5 and 7 should be performed while in the release
+branch, e.g. branch `0.5.X`.
+
+Patch/bug fix release process
+-----------------------------
+
+1. Checkout the branch for the lastest release, e.g.,
+   `git checkout 0.5.X`.
+2. Find the commit(s) hash of the bug fix commit you wish to back port
+   using `git log`.
+3. Append the bug fix commit(s) to the branch using `git cherry pick <hash>`.
+4. Bump the version number with `bumpversion patch`. This will bump the
+   patch version, for example from 0.5.0 to 0.5.1.dev0.
+5. Mark the current version as release version (as opposed to 'dev' version)
+   with `bumpversion release --allow-dirty`. It will bump the version from
+   0.5.1.dev0 to 0.5.1.
+6. Commit the changes with `git commit -am 'bumpversion <new version>'`.
+7. Push the changes to the release branch in upstream, e.g.
+   `git push <upstream remote> <release branch>`
+8. Remove unnecessary files with `make clean-dist` then push on PyPI with
+   `make upload-pypi`.
+9. Create a GitHub release by clicking 'Draft a new release' `here
+   <https://github.com/paris-saclay-cds/ramp-board/releases>`_. Note down the
+   bug fixes added in the patch.

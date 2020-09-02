@@ -138,6 +138,7 @@ def launch_ec2_instances(config, nb=1):
         ]
     }]
     sess = _get_boto_session(config)
+    client = sess.client('ec2')
     resource = sess.resource('ec2')
     instances = resource.create_instances(
         ImageId=ami_image_id,
@@ -148,6 +149,12 @@ def launch_ec2_instances(config, nb=1):
         TagSpecifications=tags,
         SecurityGroups=[security_group],
     )
+    # Wait until AMI is okay
+    waiter = client.get_waiter('instance_status_ok')
+    try:
+        waiter.wait(InstanceIds=[instance.id for instance in instances])
+    except botocore.exceptions.WaiterError:
+        return None
     return instances
 
 

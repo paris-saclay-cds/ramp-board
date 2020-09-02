@@ -1,0 +1,23 @@
+.. _changes_0_5:
+
+Version 0.5
+===========
+
+Changelog
+---------
+
+`ramp-database`
+...............
+
+`ramp-engine`
+.............
+
+`ramp-frontend`
+...............
+
+`ramp-utils`
+............
+
+- Enhancement: add :func:`ramp_utils.datasets.fetch_from_osf` allowing to fetch
+  a file from OSF.
+  :pr:`396` by :user:`Guillaume Lemaitre <glemaitre>`.

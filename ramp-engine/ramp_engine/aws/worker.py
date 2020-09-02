@@ -6,6 +6,17 @@ from . import api as aws
 
 logger = logging.getLogger('RAMP-AWS')
 
+log_file = 'aws_worker.log'
+formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')  # noqa
+fileHandler = logging.FileHandler(log_file, mode='a')
+fileHandler.setFormatter(formatter)
+streamHandler = logging.StreamHandler()
+streamHandler.setFormatter(formatter)
+
+logger.setLevel(logging.DEBUG)
+logger.addHandler(fileHandler)
+logger.addHandler(streamHandler)
+
 
 class AWSWorker(BaseWorker):
     """
@@ -24,8 +35,9 @@ class AWSWorker(BaseWorker):
     status : str
         The status of the worker. It should be one of the following state:
 
-            * 'initialized': the worker has been instanciated.
+            * 'initialized': the worker has been instantiated.
             * 'setup': the worker has been set up.
+            * 'error': setup failed / training couldn't be started
             * 'running': the worker is training the submission.
             * 'finished': the worker finished to train the submission.
             * 'collected': the results of the training have been collected.
@@ -49,8 +61,13 @@ class AWSWorker(BaseWorker):
         logger.info("Setting up AWSWorker for submission '{}'".format(
             self.submission))
         self.instance, = aws.launch_ec2_instances(self.config)
-        logger.info("Instance launched for submission '{}'".format(
-            self.submission))
+        if self.instance:
+            logger.info("Instance launched for submission '{}'".format(
+                self.submission))
+        else:
+            logger.info("Unable to launch instance for submission "
+                        "'{}'".format(self.submission))
+            self.status = 'error'
         for _ in range(5):
             # try uploading the submission a few times, as this regularly fails
             exit_status = aws.upload_submission(
@@ -64,8 +81,7 @@ class AWSWorker(BaseWorker):
             logger.error(
                 'Cannot upload submission "{}"'
                 ', an error occured'.format(self.submission))
-            # TODO do something with this status (no launching needs to be
-            # done)
+            self.status = 'error'
         else:
             logger.info("Uploaded submission '{}'".format(self.submission))
             self.status = 'setup'
@@ -79,12 +95,15 @@ class AWSWorker(BaseWorker):
         if self.status == 'running':
             raise RuntimeError("Cannot launch submission: one is already "
                                "started")
+        if self.status == 'error':
+            raise RuntimeError("Cannot launch submission: the setup failed")
         exit_status = aws.launch_train(
             self.config, self.instance.id, self.submission)
         if exit_status != 0:
             logger.error(
                 'Cannot start training of submission "{}"'
                 ', an error occured.'.format(self.submission))
+            self.status = 'error'
         else:
             self.status = 'running'
         return exit_status

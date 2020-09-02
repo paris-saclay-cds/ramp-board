@@ -34,7 +34,9 @@ echo "ramp:
     event_is_public: true
 worker:
     worker_type: conda
-    conda_env: ramp-iris" > events/iris_test/config.yml
+    conda_env: ramp-iris
+dispatcher:
+    hunger_policy: exit" > events/iris_test/config.yml
 ramp setup deploy-event --event-config events/iris_test/config.yml
 ramp-database approve-user --login admin_user
 ramp-database sign-up-team --event iris_test --team admin_user

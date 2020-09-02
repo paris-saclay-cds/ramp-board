@@ -1,10 +1,7 @@
 """
-For testing the Amazon worker locally, you need:
-- the iris starting kit with a 'starting_kit_local' submission
-- a config.yml file with credentials to interact with Amazon, and appropriate
-  fields for the iris problem:
-    - ami_image_name: ramp_aws_iris_test
-    - remote_ramp_kit_folder : /home/ubuntu/ramp-kits/iris
+For testing the Amazon worker locally, you need to:
+copy the _config.yml file and rename it config.yml, then update it using the
+credentials to interact with Amazon
 
 """
 import logging
@@ -31,11 +28,21 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S')
 
 
+def add_empty_dir(dir_name):
+    if not os.path.exists(dir_name):
+        os.mkdir(dir_name)
+
+
 def test_aws_worker():
     if not os.path.isfile(os.path.join(HERE, 'config.yml')):
         pytest.skip("Only for local tests for now")
 
     ramp_kit_dir = os.path.join(HERE, 'kits', 'iris')
+
+    # make sure predictio and log dirs exist, if not, add them
+    add_empty_dir(os.path.join(ramp_kit_dir, 'predictions'))
+    add_empty_dir(os.path.join(ramp_kit_dir, 'logs'))
+
     # if the prediction / log files are still there, remove them
     for subdir in os.listdir(os.path.join(ramp_kit_dir, 'predictions')):
         if os.path.isdir(subdir):
@@ -53,7 +60,6 @@ def test_aws_worker():
     assert worker.status in ('running', 'finished')
     worker.collect_results()
     assert worker.status == 'collected'
-
     assert os.path.isdir(os.path.join(
         ramp_kit_dir, 'predictions', 'starting_kit_local', 'fold_0'))
     assert os.path.isfile(os.path.join(
@@ -70,6 +76,7 @@ def test_aws_dispatcher(session_toy):  # noqa
 
     config = read_config(database_config_template())
     event_config = ramp_config_template()
+    event_config = read_config(event_config)
 
     # patch the event_config to match local config.yml for AWS
     aws_event_config = read_config(os.path.join(HERE, 'config.yml'))

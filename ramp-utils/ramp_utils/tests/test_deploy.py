@@ -93,6 +93,14 @@ def test_deploy_ramp_event(session_scope_function):
     ramp_config = generate_ramp_config(event_config)
     deploy_ramp_event(database_config_template(), ramp_config_template())
 
+    # check that we created the archive
+    assert os.path.isfile(
+        os.path.join(
+            ramp_config['ramp_kit_dir'], 'events_archived',
+            ramp_config['event_name'] + '.zip'
+        )
+    )
+
     # simulate that we add users and sign-up for the event and that they
     # submitted the starting kit
     with session_scope(database_config['sqlalchemy']) as session:

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block head %}
-    {{ super() }}
-    <script src="{{ url_for('static', filename='tablesort.js') }}"></script>
+{{ super() }}
+<script src="{{ url_for('static', filename='tablesort.js') }}"></script>
 {% endblock %}
 {% block title %}User interactions{% endblock %}
 {% block content %}
@@ -9,39 +9,43 @@
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
 
-    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    {% for category, message in messages %}
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
-                </div>
-                <div class="modal-body">
-                    {{ message }}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                </div>
-            </div>
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  {% for category, message in messages %}
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message">
+          {{ message }}
         </div>
-    {% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+      </div>
     </div>
+  </div>
+  {% endfor %}
+</div>
 
 {% endif %}
 {% endwith %}
 
 <div class="page-title">
-    <span class="title">User interactions</span>
+  <span class="title">User interactions</span>
 </div>
 
 
 <div class="col-xs-12">
   <div class="card">
     <div class="card-body">
-        <table class="datatable stripe cell-border" cellspacing="0" width="100%">
-          {{ user_interactions | safe}}
-        </table>
+      <table class="datatable stripe cell-border" cellspacing="0" width="100%">
+        {{ user_interactions | safe}}
+      </table>
     </div>
   </div>
 </div>
@@ -52,10 +56,9 @@
 {% block scripts %}
 
 <script>
-$(function () {
-   $('#formerror').modal('toggle')
-});
+  $(function () {
+    $('#formerror').modal('toggle')
+  });
 </script>
 
 {% endblock %}
-

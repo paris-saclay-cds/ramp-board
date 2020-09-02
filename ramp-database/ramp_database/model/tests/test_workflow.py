@@ -71,7 +71,7 @@ def test_workflow_element_type_model_backref(session_scope_module, backref,
 
 
 def test_workflow_model(session_scope_module):
-    workflow = get_workflow(session_scope_module, 'Classifier')
+    workflow = get_workflow(session_scope_module, 'Estimator')
     assert re.match(r'Workflow\(.*\)\n\t.*WorkflowElement.*', repr(workflow))
 
 
@@ -81,7 +81,7 @@ def test_workflow_model(session_scope_module):
      ('elements', WorkflowElement)]
 )
 def test_workflow_model_backref(session_scope_module, backref, expected_type):
-    workflow = get_workflow(session_scope_module, 'Classifier')
+    workflow = get_workflow(session_scope_module, 'Estimator')
     backref_attr = getattr(workflow, backref)
     assert isinstance(backref_attr, list)
     # only check if the list is not empty
@@ -94,12 +94,12 @@ def test_workflow_element_model(session_scope_module):
         (session_scope_module.query(WorkflowElement)
                              .filter(WorkflowElement.workflow_id ==
                                      Workflow.id)
-                             .filter(Workflow.name == 'Classifier')
+                             .filter(Workflow.name == 'Estimator')
                              .one())
 
     assert re.match(r'Workflow\(.*\): WorkflowElement\(.*\)',
                     repr(workflow_element))
-    assert workflow_element.type == 'classifier'
+    assert workflow_element.type == 'estimator'
     assert workflow_element.file_type == 'code'
     assert workflow_element.is_editable is True
     assert workflow_element.max_size == 100000
@@ -115,7 +115,7 @@ def test_workflow_element_model_backref(session_scope_module, backref,
         (session_scope_module.query(WorkflowElement)
                              .filter(WorkflowElement.workflow_id ==
                                      Workflow.id)
-                             .filter(Workflow.name == 'Classifier')
+                             .filter(Workflow.name == 'Estimator')
                              .one())
     backref_attr = getattr(workflow_element, backref)
     assert isinstance(backref_attr, list)

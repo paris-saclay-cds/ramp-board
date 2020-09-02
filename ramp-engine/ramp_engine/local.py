@@ -42,6 +42,7 @@ class CondaEnvWorker(BaseWorker):
 
             * 'initialized': the worker has been instanciated.
             * 'setup': the worker has been set up.
+            * 'error': setup failed / training couldn't be started
             * 'running': the worker is training the submission.
             * 'finished': the worker finished to train the submission.
             * 'collected': the results of the training have been collected.
@@ -74,6 +75,7 @@ class CondaEnvWorker(BaseWorker):
         else:
             envs_path = conda_info['envs'][1:]
             if not envs_path:
+                self.status = 'error'
                 raise ValueError('Only the conda base environment exist. You '
                                  'need to create the "{}" conda environment '
                                  'to use it.'.format(env_name))
@@ -84,10 +86,11 @@ class CondaEnvWorker(BaseWorker):
                     self._python_bin_path = os.path.join(env, 'bin')
                     break
             if not is_env_found:
+                self.status = 'error'
                 raise ValueError('The specified conda environment {} does not '
                                  'exist. You need to create it.'
                                  .format(env_name))
-            super().setup()
+        super(CondaEnvWorker, self).setup()
 
     def teardown(self):
         """Remove the predictions stores within the submission."""
@@ -171,8 +174,10 @@ class CondaEnvWorker(BaseWorker):
             if self.status == 'timeout':
                 error_msg += ('\nWorker killed due to timeout after {}s.'
                               .format(self.timeout))
-            # copy the predictions into the disk
-            # no need to create the directory, it will be handle by copytree
+            if self.status == 'timeout':
+                returncode = 124
+            else:
+                returncode = self._proc.returncode
             pred_dir = os.path.join(
                 self.config['predictions_dir'], self.submission
             )
@@ -181,10 +186,13 @@ class CondaEnvWorker(BaseWorker):
                 'training_output')
             if os.path.exists(pred_dir):
                 shutil.rmtree(pred_dir)
+            if returncode:
+                if os.path.exists(output_training_dir):
+                    shutil.rmtree(output_training_dir)
+                self.status = 'collected'
+                return (returncode, error_msg)
+            # copy the predictions into the disk
+            # no need to create the directory, it will be handle by copytree
             shutil.copytree(output_training_dir, pred_dir)
-            if self.status == 'timeout':
-                returncode = 124
-            else:
-                returncode = self._proc.returncode
             self.status = 'collected'
             return (returncode, error_msg)

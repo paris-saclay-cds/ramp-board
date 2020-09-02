@@ -1,85 +1,59 @@
 {% extends "base.html" %}
 {% block head %}
-    {{ super() }}
+{{ super() }}
+<script>
+  function resizeIframe(obj) {
+    obj.style.height = obj.contentWindow.document.documentElement.scrollHeight + 'px';
+  }
+</script>
 {% endblock %}
-{% block title %}{{ problem.name }} Description {% endblock %}
+{% block title %}Challenge description {% endblock %}
 {% block content %}
-
-<!-- Loading mathjax macro -->
-<!-- Load mathjax -->
-    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
-    <!-- MathJax configuration -->
-    <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [ ['$','$'], ["\\(","\\)"] ],
-            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
-            processEscapes: true,
-            processEnvironments: true
-        },
-        // Center justify equations in code and markdown cells. Elsewhere
-        // we use CSS to left justify single line equations in code cells.
-        displayAlign: 'center',
-        "HTML-CSS": {
-            styles: {'.MathJax_Display': {"margin": 0}},
-            linebreaks: { automatic: true }
-        }
-    });
-    </script>
-    <!-- End of mathjax configuration -->
-
-<div class="page-title">
-    <span class="title">{{ problem.title }}</span>
-</div>
-
-<div class="container-fluid app-content-a">
-    <div class="container">
-        <p class="text-center"><a class="btn btn-primary btn-lg app-btn" href="{{ problem.name }}/ask_for_event"role="button">Click here if you would like to request a new event</a></p>
-    </div>
-</div>
 
 <div class="col-xs-12">
   <div class="card">
     <div class="card-header">
       <div class="card-title">
-        <div class="title">Current events on this problem</div>
-          <ul class="problem-font">
-            {% for event in problem.events %}
-              {% if event.is_public %}
-                  <li> <a href="/events/{{ event.name }}">{{ event.title }}</a>,
-                  number of participants = <strong><font color=darkgreen>{{ event.n_participants }}</font></strong>,
-                  number of submissions = <strong><font color=darkblue>{{ event.n_submissions }}</font></strong>,
-                  combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong>,
-                  <a href="/event_plots/{{ event.name }}">click here for score vs time plot</a>
-              {% endif %}
-            {% endfor %}
-          </ul>
-        <div class="title">Keywords</div>
+        <div class="title">{{ problem.title }}</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-sm-6">
+          <h4>Registered events</h4>
           <ul>
-            {% for problem_keyword in problem.keywords %}
-              <li> <a href="/keywords/{{ problem_keyword.keyword.name }}">{{ problem_keyword.keyword.name }}</a>
-            {% endfor %}
+            {% for event in problem.events %}
+            {% if event.is_public %}
+            <li> <a href="/events/{{ event.name }}">{{ event.title }}</a><br />
+              <strong>
+                <font color=darkgreen>{{ event.n_participants }}</font>
+              </strong> participants,
+              <strong>
+                <font color=darkblue>{{ event.n_submissions }}</font>
+              </strong> submissions,
+              <!-- combined score = <strong><font color=firebrick>{{ event.combined_combined_valid_score_str }}</font></strong><br /> -->
+              <a href="/event_plots/{{ event.name }}">Plot score vs time</a>
+              {% endif %}
+              {% endfor %}
           </ul>
+          <!-- <h4>Keywords:</h4>
+        <ul>
+          {% for problem_keyword in problem.keywords %}
+            <li> <a href="/keywords/{{ problem_keyword.keyword.name }}">{{ problem_keyword.keyword.name }}</a>
+          {% endfor %}
+        </ul> -->
+        </div>
+        <div class="col-sm-6">
+          <h4>Starting-kit</h4>
+          <a class="btn btn-warning"
+            href="{{ url_for('ramp.download_starting_kit', event_name=latest_event) }}">Download</a>
+        </div>
+      </div>
+      <div class="iframe-container">
+        <iframe onload="resizeIframe(this)" src="{{ url_for('ramp.notebook', problem_name=problem.name) }}"></iframe>
       </div>
     </div>
   </div>
 </div>
 
-<div class="col-xs-12">
-  <div class="card">
-    <div class="card-body">
-      <a class="btn btn-warning" href="https://github.com/ramp-kits/{{ problem.name }}">starting kit</a>
-    </div>
-  </div>
-</div>
-
-<div class="col-xs-12">
-  <div class="card">
-    <div class="card-body">
-	    {{ description|safe }}
-    </div>
-  </div>
-</div>
-
 {% endblock %}
-

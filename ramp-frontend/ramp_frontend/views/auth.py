@@ -148,7 +148,7 @@ def sign_up():
         except NameClashError as e:
             flash(str(e))
             logger.info(str(e))
-            return render_template('index.html')
+            return redirect(url_for('auth.sign_up'))
         # send an email to the participant such that he can confirm his email
         token = ts.dumps(user.email)
         recover_url = url_for(
@@ -170,7 +170,7 @@ def sign_up():
             "We sent a confirmation email. Go read your email and click on "
             "the confirmation link"
         )
-        return render_template('index.html')
+        return redirect(url_for('auth.login'))
     return render_template('sign_up.html', form=form)
 
 

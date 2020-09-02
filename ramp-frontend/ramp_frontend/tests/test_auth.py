@@ -176,7 +176,7 @@ def test_sign_up(client_session):
     user_profile = {'user_name': 'xx', 'password': 'xx', 'firstname': 'xx',
                     'lastname': 'xx', 'email': 'xx'}
     rv = client.post('/sign_up', data=user_profile)
-    assert rv.status_code == 200
+    assert rv.status_code == 302
     user = get_user_by_name(session, 'xx')
     assert user.name == 'xx'
     user_profile = {'user_name': 'yy', 'password': 'yy', 'firstname': 'yy',
@@ -184,7 +184,7 @@ def test_sign_up(client_session):
     rv = client.post('/sign_up', data=user_profile, follow_redirects=True)
     assert rv.status_code == 200
 
-    def _assert_flash(url, data, status_code=200,
+    def _assert_flash(url, data, status_code=302,
                       message='username is already in use'):
         rv = client.post('/sign_up', data=data)
         with client.session_transaction() as cs:
@@ -225,7 +225,7 @@ def test_sign_up_with_approval(client_session):
             # check the flash box to inform the user about the mail
             with client.session_transaction() as cs:
                 flash_message = dict(cs['_flashes'])
-            assert 'We sent a confirmation email.'in flash_message['message']
+            assert 'We sent a confirmation email.' in flash_message['message']
             # check that the email has been sent
             assert len(outbox) == 1
             assert ('Click on the following link to confirm your email'
@@ -240,7 +240,7 @@ def test_sign_up_with_approval(client_session):
                 confirm_email_link.find('/confirm_email'):
             ]
             # check the redirection
-            assert rv.status_code == 200
+            assert rv.status_code == 302
             user = get_user_by_name(session, 'new_user_1')
             assert user is not None
             assert user.access_level == 'not_confirmed'

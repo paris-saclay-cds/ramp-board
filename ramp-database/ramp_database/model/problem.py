@@ -86,7 +86,7 @@ class Problem(Model):
         if session is not None:
             self.workflow = \
                 (session.query(Workflow)
-                        .filter(Workflow.name ==
+                        .filter(Workflow.name ==                      # noqa
                                 type(self.module.workflow).__name__)  # noqa
                         .one())
         else:

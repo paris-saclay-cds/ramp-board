@@ -181,24 +181,20 @@ def add_submission(session, event_name, team_name, submission_name,
             event.set_n_submissions()
 
     def is_editable(filename, workflow):
+        """Whether or not the file format is editable on the frontend."""
         for element in workflow.elements:
             if element.name in filename:
                 return element.is_editable
         return True
 
     # copy the submission file in the submission folder
-    # For files that are not editable, only create a symlink to avoid
-    # duplicating large datafiles
     if os.path.exists(submission.path):
         shutil.rmtree(submission.path)
     os.makedirs(submission.path)
     for filename in submission.f_names:
         src = os.path.join(submission_path, filename)
         dst = os.path.join(submission.path, filename)
-        if is_editable(filename, event.problem.workflow):
-            shutil.copy2(src=src, dst=dst)
-        else:
-            os.symlink(src, dst)
+        shutil.copy2(src=src, dst=dst)
 
     # for remembering it in the sandbox view
     event_team.last_submission_name = submission_name

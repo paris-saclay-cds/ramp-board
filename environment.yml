@@ -9,20 +9,21 @@ dependencies:
   - Flask
   - Flask-Login
   - Flask-SQLAlchemy
-  - Flask-Wtf
   - gitpython
   - itsdangerous
   - nbconvert
   - numpy
   - pandas
-  - scikit-image
+  - pip
   - pyyaml
   - pytest
   - pytest-cov
-  - psycopg2
+  - scikit-image
   - sqlalchemy
-  - tornado==5.1.1  # downgrade tornado for nbconvert and should be fix
   - pip:
     - codecov
-    - git+https://github.com/paris-saclay-cds/ramp-workflow
+    - ramp-workflow
+    - psycopg2-binary
     - Flask-Mail
+    - Flask-Wtf  # install from conda default channel when 0.14.3 is available
+    - wtforms[email]

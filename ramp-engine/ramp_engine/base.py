@@ -3,6 +3,17 @@ from abc import ABCMeta, abstractmethod
 
 logger = logging.getLogger('RAMP-WORKER')
 
+log_file = "worker.log"
+formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')  # noqa
+fileHandler = logging.FileHandler(log_file, mode='a')
+fileHandler.setFormatter(formatter)
+streamHandler = logging.StreamHandler()
+streamHandler.setFormatter(formatter)
+
+logger.setLevel(logging.DEBUG)
+logger.addHandler(fileHandler)
+logger.addHandler(streamHandler)
+
 
 class BaseWorker(metaclass=ABCMeta):
     """Metaclass used to build a RAMP worker. Do not use this class directly.
@@ -21,6 +32,7 @@ class BaseWorker(metaclass=ABCMeta):
 
             * 'initialized': the worker has been instanciated.
             * 'setup': the worker has been set up.
+            * 'error': setup failed / training couldn't be started
             * 'running': the worker is training the submission.
             * 'finished': the worker finished to train the submission.
             * 'collected': the results of the training have been collected.
