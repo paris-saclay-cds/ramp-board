@@ -6,4 +6,4 @@ dependencies:
   - scikit-learn
   - pandas
   - pip:
-    - git+https://github.com/paris-saclay-cds/ramp-workflow
+    - git+https://github.com/kegl/ramp-workflow/tree/decoupled_cv
