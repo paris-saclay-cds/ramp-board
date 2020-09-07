@@ -5,6 +5,7 @@
 [![CircleCI](https://circleci.com/gh/paris-saclay-cds/ramp-board.svg?style=svg)](https://circleci.com/gh/paris-saclay-cds/ramp-board)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
+The advanced branch contains advanced features and may be less stable than the master. It works with the [advanced branch of ramp-workflow](https://github.com/paris-saclay-cds/ramp-workflow/tree/advanced).
 
 This repository contains the following RAMP modules:
 
