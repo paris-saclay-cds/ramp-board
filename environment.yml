@@ -22,7 +22,7 @@ dependencies:
   - sqlalchemy
   - pip:
     - codecov
-    - git+https://github.com/kegl/ramp-workflow@decoupled_cv
+    - git+https://github.com/kegl/ramp-workflow@data_label
     - psycopg2-binary
     - Flask-Mail
     - Flask-Wtf  # install from conda default channel when 0.14.3 is available
