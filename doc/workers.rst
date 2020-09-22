@@ -152,7 +152,7 @@ need to install git.
         ~ $ git clone $data_url $data_dir
         ~ $ cd $data_dir
         ~ $ python prepare_data.py
-        ~ $ cp /public/* $kit_dir/data/
+        ~ $ cp data/public/* $kit_dir/data/
 
   - Test the kit::
 
