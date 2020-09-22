@@ -114,7 +114,7 @@ will then be used to launch instances to run submissions.
 
 Below is a basic guide for creating such an AMI manually, using the Iris
 challenge. This guide is for an ubuntu instance. If you have a Linux instance
-you will need not need to add miniconda to your ``~/.profile`` but you will
+you will not need to add miniconda to your ``~/.profile`` but you will
 need to install git.
 
   - Install miniconda::
@@ -128,7 +128,7 @@ need to install git.
         ~ $ conda info
         ~ $ conda update --yes --quiet conda pip
 
-  - Get the starting kit material (example here for Iris)::
+  - Get the starting kit material (e.g. for 'iris')::
 
         ~ $ RAMPKIT_DIR="$HOME/ramp-kits"
         ~ $ project_name="iris"
@@ -138,22 +138,25 @@ need to install git.
 
   - Update the base conda environment for the needs of the challenge::
 
-        ~ $ ami_environment="$kit_dir/ami_environment.yml"
-        ~ $ conda env update --name base --file $ami_environment
+        ~ $ environment="$kit_dir/environment.yml"
+        ~ $ conda env update --name base --file $environment
         ~ $ conda list
 
-  - Get the data and copy public data to ``ramp-kits/iris/data``::
+  - Get the data and copy public data to ``ramp-kits/<project>/data/``.
+    Note: depending on how ``prepare_data.py`` structures the data files,
+    the last command may differ::
 
-        ~ $ data_dir="$kit_dir/data"
-        ~ $ rm -rf $data_dir && mkdir $data_dir
-        ~ $ git clone https://github.com/ramp-data/iris ramp-data/iris
-        ~ $ cd ramp-data/iris/
+        ~ $ RAMPDATA_DIR="$HOME/ramp-data"
+        ~ $ data_url="https://github.com/ramp-data/$project_name"
+        ~ $ data_dir="$RAMPDATA_DIR/$project_name"
+        ~ $ git clone $data_url $data_dir
+        ~ $ cd $data_dir
         ~ $ python prepare_data.py
-        ~ $ cp data/public/* ~/ramp-kits/iris/data/
+        ~ $ cp data/public/* $kit_dir/data/
 
   - Test the kit::
 
-        ~ $ cd ~/ramp-kits/iris
+        ~ $ cd $kit_dir
         ~ $ ramp-test
 
 Next, save the instance as an AMI. Starting from the instance tab:
