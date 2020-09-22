@@ -142,7 +142,9 @@ need to install git.
         ~ $ conda env update --name base --file $environment
         ~ $ conda list
 
-  - Get the data and copy public data to ``ramp-kits/<project>/data/``::
+  - Get the data and copy public data to ``ramp-kits/<project>/data/``.
+    Note: depending on how ``prepare_data.py`` structures the data files,
+    the last command may differ::
 
         ~ $ RAMPDATA_DIR="$HOME/ramp-data"
         ~ $ data_url="https://github.com/ramp-data/$project_name"
