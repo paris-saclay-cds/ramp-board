@@ -6,4 +6,4 @@ dependencies:
   - scikit-learn
   - pandas
   - pip:
-    - git+https://github.com/kegl/ramp-workflow@data_label
+    - git+https://github.com/kegl/ramp-workflow@leaderboard
