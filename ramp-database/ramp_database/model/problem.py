@@ -122,20 +122,15 @@ class Problem(Model):
         """The testing data."""
         return self.module.get_test_data(path=self.path_ramp_data)
 
-    def ground_truths_train(self):
-        """Predictions: the true labels for the training."""
-        _, y_train = self.get_train_data()
-        return self.Predictions(y_true=y_train)
-
     def ground_truths_test(self):
         """Predictions: the true labels for the testing."""
         _, y_test = self.get_test_data()
         return self.Predictions(y_true=y_test)
 
-    def ground_truths_valid(self, test_is):
-        """Predictions: the true labels for the validation."""
+    def ground_truths_train(self, fold_is):
+        """Predictions: the true labels for the train/validation."""
         _, y_train = self.get_train_data()
-        return self.Predictions(y_true=y_train[test_is])
+        return self.Predictions(y_true=y_train, fold_is=fold_is)
 
     @property
     def workflow_object(self):
