@@ -94,7 +94,7 @@ At this stage, you can launch the RAMP dispatcher from the ``ramp_deployment``
 directory, which will be in charge of training, evaluating submissions, and
 updating the database::
 
-    ~/ramp_deployment $ ramp launch dispatcher --event-config events/iris_test/config.yml --hunger-policy sleep -vv
+    ~/ramp_deployment $ ramp launch dispatcher --event-config events/iris_test/config.yml -vv
 
 If you are running the dispatcher on a remote server, you want to launch it
 within a terminal multiplexer as ``screen`` or ``tmux``. It will allow you
