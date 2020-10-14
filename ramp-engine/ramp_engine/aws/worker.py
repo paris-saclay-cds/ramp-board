@@ -137,7 +137,7 @@ class AWSWorker(BaseWorker):
                 self.status = 'finished'
             if self.status != 'finished':
                 raise ValueError("Cannot collect results if worker is not"
-                                "'running' or 'finished'")
+                                 "'running' or 'finished'")
 
         logger.info("Collecting submission '{}'".format(self.submission))
         aws.download_log(self.config, self.instance.id, self.submission)
