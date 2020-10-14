@@ -81,6 +81,10 @@ class BaseWorker(metaclass=ABCMeta):
         """Check a submission for timeout."""
         pass
 
+    def time_last_status_check(self):
+        """Calculate how long the last status check was, in seconds."""
+        pass
+
     @abstractmethod
     def launch_submission(self):
         """Launch a submission to be trained."""
