@@ -152,7 +152,7 @@ class Event(Model):
         DateTime, default=datetime.datetime(2000, 1, 1, 0, 0, 0))
     # before links to submissions in leaderboard are not alive
     public_opening_timestamp = Column(
-        DateTime, default=datetime.datetime(2000, 1, 1, 0, 0, 0))
+        DateTime, default=datetime.datetime(2100, 1, 1, 0, 0, 0))
     closing_timestamp = Column(
         DateTime, default=datetime.datetime(2100, 1, 1, 0, 0, 0))
 

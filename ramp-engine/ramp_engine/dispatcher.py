@@ -32,6 +32,17 @@ from .local import CondaEnvWorker
 
 logger = logging.getLogger('RAMP-DISPATCHER')
 
+log_file = 'dispatcher.log'
+formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')  # noqa
+fileHandler = logging.FileHandler(log_file, mode='a')
+fileHandler.setFormatter(formatter)
+streamHandler = logging.StreamHandler()
+streamHandler.setFormatter(formatter)
+
+logger.setLevel(logging.DEBUG)
+logger.addHandler(fileHandler)
+logger.addHandler(streamHandler)
+
 
 class Dispatcher:
     """Dispatcher which schedule workers and communicate with the database.
@@ -44,7 +55,8 @@ class Dispatcher:
     Parameters
     ----------
     config : dict or str
-        A configuration YAML file containing the inforation about the database.
+        A configuration YAML file containing the information about the
+        database.
     event_config : dict or str
         A RAMP configuration YAML file with information regarding the worker
         and the ramp event.
@@ -105,7 +117,6 @@ class Dispatcher:
                                       self._ramp_config['event_name'],
                                       state='new')
         if not submissions:
-            logger.info('No new submissions fetch from the database')
             return
         for submission_id, submission_name, _ in submissions:
             # do not train the sandbox submission
@@ -132,7 +143,13 @@ class Dispatcher:
                 self._awaiting_worker_queue.get()
             logger.info('Starting worker: {}'.format(worker))
             worker.setup()
+            if worker.status == 'error':
+                set_submission_state(session, submission_id, 'checking_error')
+                continue
             worker.launch_submission()
+            if worker.status == 'error':
+                set_submission_state(session, submission_id, 'checking_error')
+                continue
             set_submission_state(session, submission_id, 'training')
             submission = get_submission_by_id(session, submission_id)
             update_user_leaderboards(
@@ -166,15 +183,17 @@ class Dispatcher:
             else:
                 logger.info('Collecting results from worker {}'.format(worker))
                 returncode, stderr = worker.collect_results()
-                if returncode == 1:
-                    logger.info(
-                        'Worker {} killed due to an error during training'
-                        .format(worker)
-                    )
-                    submission_status = 'training_error'
-                elif returncode == 124:
-                    logger.info('Worker {} killed due to timeout.'
-                                .format(worker))
+                if returncode:
+                    if returncode == 124:
+                        logger.info(
+                            'Worker {} killed due to timeout.'
+                            .format(worker)
+                        )
+                    else:
+                        logger.info(
+                            'Worker {} killed due to an error during training'
+                            .format(worker)
+                        )
                     submission_status = 'training_error'
                 else:
                     submission_status = 'tested'

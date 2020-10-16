@@ -2,6 +2,7 @@ import os
 import shutil
 
 import pytest
+import yaml
 
 from click.testing import CliRunner
 
@@ -15,6 +16,8 @@ from ramp_database.model import Model
 from ramp_database.testing import create_toy_db
 
 from ramp_database.cli import main
+
+from ramp_utils.cli import main as main_utils
 
 
 @pytest.fixture(scope="module")
@@ -118,6 +121,99 @@ def test_add_event(make_toy_db):
                                   '--force', True],
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output
+
+
+@pytest.mark.parametrize("from_disk", [True, False])
+@pytest.mark.parametrize("force", [True, False])
+def test_delete_event_error(make_toy_db, from_disk, force):
+    runner = CliRunner()
+
+    with pytest.raises(FileNotFoundError):
+        cmd = ('delete-event --config ' + database_config_template() +
+               ' --config-event ' + "random")
+        if from_disk:
+            cmd += ' --from-disk'
+        if force:
+            cmd += ' --force'
+        runner.invoke(main, cmd, catch_exceptions=False)
+
+
+def test_delete_event_only_files(make_toy_db):
+    # check the behavior when only file are present on disks
+    runner = CliRunner()
+
+    # create the event folder
+    ramp_config = read_config(ramp_config_template())
+    ramp_config['ramp']['event_name'] = 'iris_test2'
+    deployment_dir = os.path.commonpath([ramp_config['ramp']['kit_dir'],
+                                         ramp_config['ramp']['data_dir']])
+    runner.invoke(main_utils, ['init-event',
+                               '--name', 'iris_test2',
+                               '--deployment-dir', deployment_dir])
+    event_config = os.path.join(
+        deployment_dir, 'events', ramp_config['ramp']['event_name'],
+        'config.yml'
+    )
+    with open(event_config, 'w+') as f:
+        yaml.dump(ramp_config, f)
+
+    # check that --from-disk will raise an error
+    cmd = ['delete-event',
+           '--config', database_config_template(),
+           '--config-event', event_config,
+           '--from-disk']
+    result = runner.invoke(main, cmd)
+    assert result.exit_code == 1
+    assert 'add the option "--force"' in result.output
+
+    cmd = ['delete-event',
+           '--config', database_config_template(),
+           '--config-event', event_config,
+           '--from-disk', '--force']
+    result = runner.invoke(main, cmd)
+    assert result.exit_code == 0, result.output
+    assert not os.path.exists(os.path.dirname(event_config))
+
+
+@pytest.mark.parametrize("from_disk", [True, False])
+def test_delete_event(make_toy_db, from_disk):
+    # check that delete event is removed from the database and optionally from
+    # the disk
+    runner = CliRunner()
+
+    # deploy a new event named `iris_test2`
+    ramp_config = read_config(ramp_config_template())
+    ramp_config['ramp']['event_name'] = 'iris_test2'
+    deployment_dir = os.path.commonpath([ramp_config['ramp']['kit_dir'],
+                                         ramp_config['ramp']['data_dir']])
+    runner.invoke(main_utils, ['init-event',
+                               '--name', 'iris_test2',
+                               '--deployment-dir', deployment_dir])
+    event_config = os.path.join(
+        deployment_dir, 'events', ramp_config['ramp']['event_name'],
+        'config.yml'
+    )
+    with open(event_config, 'w+') as f:
+        yaml.dump(ramp_config, f)
+    result = runner.invoke(main_utils, ['deploy-event',
+                                        '--config',
+                                        database_config_template(),
+                                        '--event-config',
+                                        event_config,
+                                        '--no-cloning'])
+
+    cmd = ['delete-event',
+           '--config', database_config_template(),
+           '--config-event', event_config]
+    if from_disk:
+        cmd.append('--from-disk')
+    result = runner.invoke(main, cmd)
+
+    assert result.exit_code == 0, result.output
+
+    event_path = os.path.dirname(event_config)
+    assert (os.path.exists(event_path) if not from_disk
+            else not os.path.exists(event_path))
 
 
 def test_sign_up_team(make_toy_db):

@@ -6,50 +6,56 @@
 
 {% if messages %}
 
-    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    {% for category, message in messages %}
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
-                </div>
-                <div class="modal-body">
-                    {{ message }}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                </div>
-            </div>
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  {% for category, message in messages %}
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message">
+          {{ message }}
         </div>
-    {% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+      </div>
     </div>
+  </div>
+  {% endfor %}
+</div>
 {% endif %}
 {% endwith %}
 
 <div class="page-title">
-    <span class="title">Data science themes</span>
+  <span class="title">Data science themes</span>
 </div>
 
 <ul>
-{% for keyword in keywords %}
-    {% if keyword.type == 'data_science_theme' and keyword.problems|length > 0 %}
-        <li> <a href="/keywords/{{ keyword.name }}"><strong><font size="+1">{{ keyword.name }}</font></strong></a><br>
-        <ul>
-        {% for problem in keyword.problems %}
-            <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
+  {% for keyword in keywords %}
+  {% if keyword.type == 'data_science_theme' and keyword.problems|length > 0 %}
+  <li> <a href="/keywords/{{ keyword.name }}"><strong>
+        <font size="+1">{{ keyword.name }}</font>
+      </strong></a><br>
+    <ul>
+      {% for problem in keyword.problems %}
+      <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
         {% endfor %}
-        </ul>
+    </ul>
     {% endif %}
-{% endfor %}
+    {% endfor %}
 </ul>
 
 
 {% endblock %}
 {% block scripts %}
 <script>
-$(function () {
-   $('#formerror').modal('toggle')
-});
+  $(function () {
+    $('#formerror').modal('toggle')
+  });
 </script>
 {% endblock %}

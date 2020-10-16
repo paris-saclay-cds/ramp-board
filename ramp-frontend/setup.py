@@ -30,7 +30,8 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Operating System :: Unix',
                'Operating System :: MacOS',
                'Programming Language :: Python :: 3.6',
-               'Programming Language :: Python :: 3.7']
+               'Programming Language :: Python :: 3.7',
+               'Programming Language :: Python :: 3.8']
 INSTALL_REQUIRES = ['bokeh', 'click', 'Flask', 'Flask-Login', 'Flask-Mail',
                     'Flask-SQLAlchemy', 'Flask-WTF', 'itsdangerous', 'numpy',
                     'pandas']

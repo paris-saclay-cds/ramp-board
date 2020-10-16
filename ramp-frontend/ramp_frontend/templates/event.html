@@ -1,111 +1,102 @@
-{% extends "base.html" %}
-{% block head %}
-    {{ super() }}
-{% endblock %}
-{% block title %}{{ event.name }} Description{% endblock %}
-{% block content %}
-
-<!-- Loading mathjax macro -->
-<!-- Load mathjax -->
-    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
-    <!-- MathJax configuration -->
-    <script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        tex2jax: {
-            inlineMath: [ ['$','$'], ["\\(","\\)"] ],
-            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
-            processEscapes: true,
-            processEnvironments: true
-        },
-        // Center justify equations in code and markdown cells. Elsewhere
-        // we use CSS to left justify single line equations in code cells.
-        displayAlign: 'center',
-        "HTML-CSS": {
-            styles: {'.MathJax_Display': {"margin": 0}},
-            linebreaks: { automatic: true }
-        }
-    });
-    </script>
-    <!-- End of mathjax configuration -->
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-
-{% if messages %}
-    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    {% for category, message in messages %}
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
-                </div>
-                <div class="modal-body">
-                    {{ message }}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                </div>
-            </div>
+{% extends "base.html" %} {% block head %} {{ super() }} {% endblock %} {% block
+title %}{{ event.name }} Description{% endblock %} {% block content %} {% with
+messages = get_flashed_messages(with_categories=true) %} {% if messages %}
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  {% for category, message in messages %}
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message">
+          {{ message }}
         </div>
-    {% endfor %}
-    </div>
-{% endif %}
-
-{% endwith %}
-<div class="page-title">
-    <span class="title">{{ event.problem.title }}, {{ event.title }}</span>
-</div>
-
-<div class="col-xs-12">
-  <div class="card">
-    <div class="card-body">
-      <a class="btn btn-warning" href="https://github.com/ramp-kits/{{ event.problem.name }}">starting kit</a>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal">
+          Close
+        </button>
+      </div>
     </div>
   </div>
+  {% endfor %}
 </div>
-
-{% if approved %}
-{% elif current_user.access_level in ['user', 'admin'] %}
-    {% if asked %}
-        <strong><font color="#e84b3a">Waiting for approval...</font></strong>
-    {% else %}
-        <div class="col-xs-12">
-          <div class="card">
-            <div class="card-body">
-              <a class="btn btn-warning" href="/events/{{ event.name }}/sign_up">Sign up <span"></span></a>
-            </div>
-          </div>
-        </div>
-     {% endif %}
-{% endif %}
+{% endif %} {% endwith %}
 
 <div class="col-xs-12">
   <div class="card">
     <div class="card-header">
       <div class="card-title">
-          <div class="title">Rules</div>
+        <div class="title">{{ event.problem.title }}</div>
+        <div class="subtitle">{{ event.title }}</div>
       </div>
     </div>
-    <div class="card-body">
-      <ul>
-      <li>Submissions will open at (UTC) {{ event.opening_timestamp }}
-      <li>When you submit, your submission is sent to be trained automatically. The jobs may wait some time in a queue before being run so be patient.</li>
-      <li>Pending (untrained) and failing submissions can be resubmitted under the same name at an arbitrary frequency.</li>
-      <li>Once your submission is trained, it cannot be deleted or replaced.</li>
-      <li> After each succesfully trained submission, you have to wait {{ event.min_duration_between_submissions }}s to resubmit. </li>
-      <li>The leaderboard is in "hidden" mode until (UTC) {{ event.public_opening_timestamp }} which means that all scores are visible, but the links pointing to the code of the participants are hidden. After (UTC) {{ event.public_opening_timestamp }}, all submitted codes are public. <b>You will be encouraged to look at and reuse each other's code.</b>
-      </ul>
+    <div class="card-body event-container">
+      <!-- Static navbar -->
+      <nav class="navbar navbar-inverse navbar-event">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#event-navbar"
+          aria-expanded="false" aria-controls="event-navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <div id="event-navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li>
+              <a href="{{ url_for('ramp.notebook', problem_name=event.problem.name) }}"
+                target="iframe_content">Description</a>
+            </li>
+            <li>
+              <a href="{{ url_for('ramp.download_starting_kit', event_name=event.name) }}">Download kit</a>
+            </li>
+            <li>
+              <a href="{{ url_for('ramp.rules', event_name=event.name) }}" target="iframe_content">Rules</a>
+            </li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            {% if approved %}
+            <li class="btn-success" style="pointer-events: none;">
+              <a>Event joined <span class="sr-only">(current)</span></a>
+            </li>
+            {% elif current_user.access_level in ['user', 'admin'] %} {% if
+            asked %}
+            <li class="btn-danger" style="pointer-events: none;">
+              <a>Waiting approval... <span class="sr-only">(current)</span></a>
+            </li>
+            {% else %}
+            <li class="btn-primary">
+              <a href="/events/{{ event.name }}/sign_up">Join event <span class="sr-only">(current)</span></a>
+            </li>
+            {% endif %} {% endif %}
+          </ul>
+        </div>
+        <!--/.nav-collapse -->
+      </nav>
+
+      <div class="iframe-container">
+        <iframe src="{{ url_for('ramp.notebook', problem_name=event.problem.name) }}" name="iframe_content" ,
+          scolling="no" , onload="AdjustIframeHeightOnLoad()"></iframe>
+      </div>
     </div>
   </div>
 </div>
 
-<div class="col-xs-12">
-  <div class="card">
-    <div class="card-body">
-	  {{ description|safe }}
-    </div>
-  </div>
-</div>
-
-{% endblock %}
-
+{% block scripts %}
+<script type="text/javascript">
+  function AdjustIframeHeightOnLoad() {
+    document.getElementsByName("iframe_content")[0].style.height =
+      document.getElementsByName("iframe_content")[0].contentWindow.document
+        .body.scrollHeight + "px";
+  }
+  function AdjustIframeHeight(i) {
+    document.getElementsByName("iframe_content")[0].style.height =
+      parseInt(i) + "px";
+  }
+</script>
+{% endblock %} {% endblock %}

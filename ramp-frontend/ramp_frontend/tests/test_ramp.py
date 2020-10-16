@@ -113,7 +113,7 @@ def test_problems(client_session):
     rv = client.get('/problems')
     assert rv.status_code == 200
     assert b'Hi User!' not in rv.data
-    assert b'participants =' in rv.data
+    assert b'participants' in rv.data
     assert b'Iris classification' in rv.data
     assert b'Boston housing price regression' in rv.data
 
@@ -122,7 +122,7 @@ def test_problems(client_session):
         rv = client.get('/problems')
         assert rv.status_code == 200
         assert b'Hi User!' in rv.data
-        assert b'participants =' in rv.data
+        assert b'participants' in rv.data
         assert b'Iris classification' in rv.data
         assert b'Boston housing price regression' in rv.data
 
@@ -144,16 +144,14 @@ def test_problem(client_session):
     rv = client.get('problems/iris')
     assert rv.status_code == 200
     assert b'Iris classification' in rv.data
-    assert b'Current events on this problem' in rv.data
-    assert b'Keywords' in rv.data
+    assert b'Registered events' in rv.data
 
     # GET: looking at the problem being logged-in
     with login_scope(client, 'test_user', 'test') as client:
         rv = client.get('problems/iris')
         assert rv.status_code == 200
         assert b'Iris classification' in rv.data
-        assert b'Current events on this problem' in rv.data
-        assert b'Keywords' in rv.data
+        assert b'Registered events' in rv.data
 
 
 @pytest.mark.parametrize(
@@ -280,7 +278,6 @@ def test_user_event(client_session):
         assert rv.status_code == 200
         assert b'Iris classification' in rv.data
         assert b'Rules' in rv.data
-        assert b'RAMP on iris' in rv.data
 
 
 def test_sign_up_for_event(client_session):
@@ -311,7 +308,7 @@ def test_sign_up_for_event(client_session):
         # check that we are informing the user that he has to wait for approval
         rv = client.get('/events/iris_test')
         assert rv.status_code == 200
-        assert b'Waiting for approval...' in rv.data
+        assert b'Waiting approval...' in rv.data
 
     # GET: sign-up to a new uncontrolled event
     event = get_event(session, 'boston_housing_test')
@@ -533,9 +530,9 @@ def test_sandbox_upload_file_wrong(client_session, makedrop_event,
 
 @pytest.mark.parametrize(
     "submission_dir, filename",
-    [("submissions/error", "classifier.py"),
-     ("submissions/random_forest_10_10", "classifier.py"),
-     ("submissions/starting_kit", "classifier.py")]
+    [("submissions/error", "estimator.py"),
+     ("submissions/random_forest_10_10", "estimator.py"),
+     ("submissions/starting_kit", "estimator.py")]
 )
 def test_sandbox_upload_file(client_session, makedrop_event,
                              submission_dir, filename):
@@ -605,7 +602,7 @@ def test_sandbox_save_file(client_session, makedrop_event):
             "http://localhost/events/iris_test_4event/sandbox",
             headers={"Referer":
                      "http://localhost/events/iris_test_4event/sandbox"},
-            data={"classifier": example_code,
+            data={"estimator": example_code,
                   "code-csrf_token": "temp_token"},
             follow_redirects=False,
         )
@@ -701,7 +698,7 @@ def test_view_model(client_session):
     os.rename(submission.path, submission.path + 'xxxxx')
     try:
         with login_scope(client, 'test_user', 'test') as client:
-            rv = client.get('{}/{}'.format(submission_hash, 'classifier.py'))
+            rv = client.get('{}/{}'.format(submission_hash, 'estimator.py'))
             assert rv.status_code == 302
             assert rv.location == 'http://localhost/problems'
             with client.session_transaction() as cs:
@@ -712,10 +709,11 @@ def test_view_model(client_session):
 
     # GET: normal file display
     with login_scope(client, 'test_user', 'test') as client:
-        rv = client.get('{}/{}'.format(submission_hash, 'classifier.py'))
+        rv = client.get('{}/{}'.format(submission_hash, 'estimator.py'))
         assert rv.status_code == 200
-        assert b'file = classifier.py' in rv.data
-        assert b'from sklearn.base import BaseEstimator' in rv.data
+        assert b'file = estimator.py' in rv.data
+        assert (b'from sklearn.ensemble import RandomForestClassifier' in
+                rv.data)
 
 
 def test_view_submission_error(client_session):
@@ -786,12 +784,12 @@ def test_toggle_competition(client_session):
     with login_scope(client, 'test_user', 'test') as client:
         # check that the submission is tagged to be in the competition
         assert submission.is_in_competition
-        rv = client.get('{}/{}'.format(submission.hash_, 'classifier.py'))
+        rv = client.get('{}/{}'.format(submission.hash_, 'estimator.py'))
         assert b"Pull out this submission from the competition" in rv.data
         # trigger the pull-out of the competition
         rv = client.get("toggle_competition/{}".format(submission.hash_))
         assert rv.status_code == 302
-        assert rv.location == 'http://localhost/{}/classifier.py'.format(
+        assert rv.location == 'http://localhost/{}/estimator.py'.format(
             submission.hash_)
         rv = client.get(rv.location)
         assert b"Enter this submission into the competition" in rv.data
@@ -800,9 +798,32 @@ def test_toggle_competition(client_session):
         # trigger the entering in the competition
         rv = client.get("toggle_competition/{}".format(submission.hash_))
         assert rv.status_code == 302
-        assert rv.location == 'http://localhost/{}/classifier.py'.format(
+        assert rv.location == 'http://localhost/{}/estimator.py'.format(
             submission.hash_)
         rv = client.get(rv.location)
         assert b"Pull out this submission from the competition" in rv.data
         session.commit()
         assert submission.is_in_competition
+
+
+def test_download_submission(client_session):
+    client, session = client_session
+
+    # unknown submission
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get("download/xxxxx")
+        assert rv.status_code == 302
+        assert rv.location == 'http://localhost/problems'
+        with client.session_transaction() as cs:
+            flash_message = dict(cs['_flashes'])
+        assert "Missing submission" in flash_message['message']
+
+    submission = (session.query(Submission)
+                         .filter_by(name="starting_kit_test",
+                                    event_team_id=1)
+                         .first())
+
+    with login_scope(client, 'test_user', 'test') as client:
+        rv = client.get(f"download/{submission.hash_}")
+        assert rv.status_code == 200
+        assert rv.data

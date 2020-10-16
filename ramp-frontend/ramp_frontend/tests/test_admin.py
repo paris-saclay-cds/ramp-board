@@ -108,7 +108,7 @@ def test_approve_users_remove(client_session):
         rv = client.get('/approve_users')
         assert rv.status_code == 200
         # line for user approval
-        assert b'yy: yy yy - yy' in rv.data
+        assert b'yy yy - yy' in rv.data
         # line for the event approval
         assert b'iris_test - xx'
 
@@ -116,8 +116,8 @@ def test_approve_users_remove(client_session):
         data = ImmutableMultiDict([
             ('submit_button', 'Remove!'),
             ('approve_users', 'yy'),
-            ('approve_event_teams', str(event_team.id))]
-        )
+            ('approve_event_teams', str(event_team.id))
+        ])
         rv = client.post('/approve_users', data=data)
         assert rv.status_code == 302
         assert rv.location == 'http://localhost/problems'
@@ -131,7 +131,6 @@ def test_approve_users_remove(client_session):
         assert event_team is None
         with client.session_transaction() as cs:
             flash_message = dict(cs['_flashes'])
-            print(flash_message)
         assert re.match(r"Removed users:\nyy\nRemoved event_team:\n"
                         r"Event\(iris_test\)/Team\(.*xx.*\)\n",
                         flash_message['Removed users'])
@@ -152,7 +151,7 @@ def test_approve_users_approve(client_session):
         rv = client.get('/approve_users')
         assert rv.status_code == 200
         # line for user approval
-        assert b'dd: dd dd - dd' in rv.data
+        assert b'dd dd - dd' in rv.data
         # line for the event approval
         assert b'iris_test - cc'
 
@@ -275,7 +274,7 @@ def test_update_event(client_session):
             'min_duration_between_submissions_second': 0,
             'opening_timestamp': "2000-01-01 00:00:00",
             'closing_timestamp': "2100-01-01 00:00:00",
-            'public_opening_timestamp': "2000-01-01 00:00:00"
+            'public_opening_timestamp': "2000-01-01 00:00:00",
         }
         rv = client.post('/events/iris_test/update', data=event_info)
         assert rv.status_code == 302

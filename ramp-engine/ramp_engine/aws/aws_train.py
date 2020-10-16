@@ -258,7 +258,7 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
     actual_nb_folds = get_event_nb_folds(config, submission.event.name)
     if _training_successful(conf_aws, instance_id, submission_id,
                             actual_nb_folds):
-        logger.info('Training of "{}" was successful'.format(
+        logger.info('Training of "{}" on instance: {} was successful'.format(
             label, instance_id))
         if conf_aws[MEMORY_PROFILING_FIELD]:
             logger.info('Download max ram usage info of "{}"'.format(label))

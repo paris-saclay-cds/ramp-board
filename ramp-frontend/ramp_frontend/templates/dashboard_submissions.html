@@ -5,155 +5,154 @@
 {% with messages = get_flashed_messages(with_categories=true) %}
 
 {% if messages %}
-    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    {% for category, message in messages %}
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
-                </div>
-                <div class="modal-body">
-                    {{ message }}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                </div>
-            </div>
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  {% for category, message in messages %}
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message">
+          {{ message }}
         </div>
-    {% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+      </div>
     </div>
+  </div>
+  {% endfor %}
+</div>
 {% endif %}
 {% endwith %}
-
-
-<div class="page-title">
-<span class="title">{{ event.name }}</span>
-</div>
 
 <div class="col-xs-12">
   <div class="card">
     <div class="card-header">
       <div class="card-title">
-          <div class="title">
-			General Information
-          </div>
+        <div class="title">{{ event.title }}</div>
+        <div class="subtitle">General Information</div>
       </div>
     </div>
     <div class="card-body">
       <p>Opening time of the event: {{ event.opening_timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
-      <p>Send data to datarun and split between train and test on datarun: <a href='/{{ event.name }}/send_data_datarun'><i class='icon fa fa-paper-plane'></i><i class='icon fa fa-paper-plane'></i></a> 
-      <!-- <p>Open submissions? <b>TODO</b>  --!>
-      <!-- <p>Time between two submissions: <b>TODO</b> --!>
+        <p>Send data to datarun and split between train and test on datarun: <a
+            href='/{{ event.name }}/send_data_datarun'><i class='icon fa fa-paper-plane'></i><i
+              class='icon fa fa-paper-plane'></i></a>
     </div>
   </div>
-</div>
 
-<div class="col-xs-12">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">
-          <div class="title">
-			Submissions
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="subtitle">Submissions</div>
           </div>
+        </div>
+        <div class="card-body">
+          <center>
+            <div id="submissions_stat" style="width: 1000px; height: 400px;">
+              <!-- Plotly -->
+            </div>
+          </center>
+          <canvas id="line-chart" width="20" height="20"></canvas>
+        </div>
       </div>
     </div>
-    <div class="card-body">
-	  <div class="row">
-		<div class="col-xs-12">
-          <center><div id="submissions_stat" style="width: 1000px; height: 400px;"><!-- Plotly --></div></center> 
-			<canvas id="line-chart" width="20" height="20"></canvas>
-        </div>
-      </div>
-	  <div class="row">
-		<div class="col-xs-6">
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title">
-                  <div class="title">
-                      New submissions (pending training)
-                  </div>
-              </div>
-            </div>
-            <div class="card-body">
-                <table class="table table-hover" cellspacing="0" width="100%">
-                  {{ new_leaderboard | safe}}
-                </table>
-            </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-6">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="subtitle">New submissions</div>
           </div>
         </div>
-
-        <div class="col-xs-6">
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title">
-                  <div class="title">
-                      Failed submissions
-                  </div>
-              </div>
-            </div>
-            <div class="card-body">
-                <table class="table table-hover" cellspacing="0" width="100%">
-                  {{ failed_leaderboard | safe}}
-                </table>
-            </div>
+        <div class="card-body">
+          <div class="table-leaderboard">
+            <table class="table table-hover" cellspacing="0" width="100%">
+              {{ new_leaderboard | safe}}
+            </table>
           </div>
         </div>
+      </div>
+    </div>
+    <div class="col-sm-6">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="subtitle">Failed submissions</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-leaderboard">
+            <table class="table table-hover" cellspacing="0" width="100%">
+              {{ failed_leaderboard | safe}}
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-      </div> <!-- row -->
-    </div> <!-- card-body -->
-  </div> <!-- card -->
-</div> <!-- col -->
+  {% endblock %}
 
-{% endblock %}
-
-{% block scripts %}
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script>
-var training_time =   {
-    x: {{ timestamp_submissions|safe }},
-    y: {{ training_sec }},
+  {% block scripts %}
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script>
+    var training_time = {
+      x: {{ timestamp_submissions| safe }},
+    y: { { training_sec } },
     mode: 'markers',
-    type: 'scatter',
-    text: {{ name_submissions|tojson|safe }},
-    marker: { color: "#e84b3a",
-              size: 12 },
+      type: 'scatter',
+        text: { { name_submissions | tojson | safe } },
+    marker: {
+      color: "#e84b3a",
+        size: 12
+    },
     name: 'training time'
   };
-var cum_submissions =   {
-    x: {{ timestamp_submissions|safe }},
-    y: {{ cumulated_submissions|safe }},
+    var cum_submissions = {
+      x: {{ timestamp_submissions| safe }},
+    y: { { cumulated_submissions | safe } },
     type: 'scatter',
-    text: {{ name_submissions|tojson|safe }},
-    marker: { color: "#e3a712",
-              size: 12 },
+      text: { { name_submissions | tojson | safe } },
+    marker: {
+      color: "#e3a712",
+        size: 12
+    },
     name: '# submissions',
-    xaxis: 'x2',
-    yaxis: 'y2',
+      xaxis: 'x2',
+        yaxis: 'y2',
   };
-var layout = {
-  xaxis: {
-    domain: [0, 0.4],
-    title: 'submission timestamp',
-  },
-  yaxis: {
-    title: 'time between submission and training',
-  },
-  yaxis2: {
-    anchor: 'x2',
-    title: 'cumulated submission number',
-  },
-  xaxis2: {
-    domain: [0.6, 1],
-    title: 'submission timestamp'
-  },
-};
-var data = [training_time, cum_submissions];
-Plotly.newPlot('submissions_stat', data, layout);
-</script>
-<script>
-$(function () {
-   $('#formerror').modal('toggle')
-});
-</script>
-{% endblock %}
+    var layout = {
+      xaxis: {
+        domain: [0, 0.4],
+        title: 'submission timestamp',
+      },
+      yaxis: {
+        title: 'time between submission and training',
+      },
+      yaxis2: {
+        anchor: 'x2',
+        title: 'cumulated submission number',
+      },
+      xaxis2: {
+        domain: [0.6, 1],
+        title: 'submission timestamp'
+      },
+    };
+    var data = [training_time, cum_submissions];
+    Plotly.newPlot('submissions_stat', data, layout);
+  </script>
+  <script>
+    $(function () {
+      $('#formerror').modal('toggle')
+    });
+  </script>
+  {% endblock %}

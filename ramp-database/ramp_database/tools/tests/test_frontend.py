@@ -186,7 +186,7 @@ def test_is_accessible_leaderboard(session_toy_db):
     # simulate a user which authenticated and author of the submission to a
     # public event
     user.is_authenticated = True
-    assert is_accessible_leaderboard(session_toy_db, event_name, user.name)
+    assert not is_accessible_leaderboard(session_toy_db, event_name, user.name)
     # simulate an admin user
     user = get_user_by_name(session_toy_db, 'test_iris_admin')
     user.is_authenticated = True

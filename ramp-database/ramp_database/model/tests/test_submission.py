@@ -73,9 +73,9 @@ def test_submission_model_property(session_scope_module):
     assert submission.basename == 'submission_000000005'
     assert "submissions.submission_000000005" in submission.module
     assert len(submission.f_names) == 1
-    assert submission.f_names[0] == 'classifier.py'
+    assert submission.f_names[0] == 'estimator.py'
     assert submission.link == '/' + os.path.join(submission.hash_,
-                                                 'classifier.py')
+                                                 'estimator.py')
     assert re.match('<a href={}>{}/{}/{}</a>'
                     .format(submission.link, submission.event.name,
                             submission.team.name, submission.name),
@@ -236,7 +236,7 @@ def test_submission_score_model_backref(session_scope_module, backref,
 
 
 def test_submission_file_model_property(session_scope_module):
-    # get the submission file of an iris submission with only a classifier file
+    # get the submission file of an iris submission with only a estimator file
     submission_file = \
         (session_scope_module.query(SubmissionFile)
                              .filter(SubmissionFile.submission_id == 5)
@@ -245,15 +245,15 @@ def test_submission_file_model_property(session_scope_module):
                     repr(submission_file))
     assert submission_file.is_editable is True
     assert submission_file.extension == 'py'
-    assert submission_file.type == 'classifier'
-    assert submission_file.name == 'classifier'
-    assert submission_file.f_name == 'classifier.py'
-    assert re.match('/.*classifier.py', submission_file.link)
-    assert re.match('.*submissions.*submission_000000005.*classifier.py',
+    assert submission_file.type == 'estimator'
+    assert submission_file.name == 'estimator'
+    assert submission_file.f_name == 'estimator.py'
+    assert re.match('/.*estimator.py', submission_file.link)
+    assert re.match('.*submissions.*submission_000000005.*estimator.py',
                     submission_file.path)
-    assert re.match('<a href=".*classifier.py">.*classifier</a>',
+    assert re.match('<a href=".*estimator.py">.*estimator</a>',
                     submission_file.name_with_link)
-    assert re.match('from sklearn.base import BaseEstimator.*',
+    assert re.match('from sklearn.ensemble import RandomForestClassifier.*',
                     submission_file.get_code())
     submission_file.set_code(code='# overwriting a code file')
     assert submission_file.get_code() == '# overwriting a code file'
@@ -283,14 +283,14 @@ def test_submission_file_type_extension_model_backref(session_scope_module,
 
 def test_submission_score_on_cv_fold_model_property(session_scope_module):
     cv_fold_score = (session_scope_module
-        .query(SubmissionScoreOnCVFold)
-        .filter(SubmissionScoreOnCVFold.submission_score_id ==
-                SubmissionScore.id)
-        .filter(SubmissionScore.event_score_type_id ==
-                EventScoreType.id)
-        .filter(SubmissionScore.submission_id == 5)
-        .filter(EventScoreType.name == 'acc')
-        .first())  # noqa
+        .query(SubmissionScoreOnCVFold)                         # noqa
+        .filter(SubmissionScoreOnCVFold.submission_score_id ==  # noqa
+                SubmissionScore.id)                             # noqa
+        .filter(SubmissionScore.event_score_type_id ==          # noqa
+                EventScoreType.id)                              # noqa
+        .filter(SubmissionScore.submission_id == 5)             # noqa
+        .filter(EventScoreType.name == 'acc')                   # noqa
+        .first())                                               # noqa
     assert cv_fold_score.name == 'acc'
     assert isinstance(cv_fold_score.event_score_type, EventScoreType)
     assert callable(cv_fold_score.score_function)

@@ -223,8 +223,6 @@ def test_get_leaderboard(session_toy_db):
       <th>bag private f1_70</th>
       <th>mean private f1_70</th>
       <th>std private f1_70</th>
-      <th>contributivity</th>
-      <th>historical contributivity</th>
       <th>train time [s]</th>
       <th>validation time [s]</th>
       <th>test time [s]</th>
@@ -236,8 +234,6 @@ def test_get_leaderboard(session_toy_db):
       <th>error</th>
       <th>nll</th>
       <th>f1_70</th>
-      <th>contributivity</th>
-      <th>historical contributivity</th>
       <th>train time [s]</th>
       <th>validation time [s]</th>
       <th>max RAM [MB]</th>

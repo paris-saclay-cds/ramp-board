@@ -31,15 +31,15 @@ def database_connection():
         connection.execute(f"""CREATE USER {username}
                               WITH PASSWORD '{username}';
                               ALTER USER {username} WITH SUPERUSER""")
-    except exc.ProgrammingError:
-        print(f'user {username} already exists')
-        raise
+    except exc.ProgrammingError as e:
+        raise ValueError(f'user {username} already exists') from e
 
     try:
         connection.execute(f'CREATE DATABASE {database_name} OWNER {username}')
-    except exc.ProgrammingError:
-        print(f'{database_name} database used for testing already exists')
-        raise
+    except exc.ProgrammingError as e:
+        raise ValueError(
+            f'{database_name} database used for testing already exists'
+        ) from e
 
     # close the connection and remove the database in the end
     yield

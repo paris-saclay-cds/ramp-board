@@ -6,91 +6,105 @@
 
 {% if messages %}
 
-    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    {% for category, message in messages %}
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
-                </div>
-                <div class="modal-body">
-                    {{ message }}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                </div>
-            </div>
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  {% for category, message in messages %}
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message">
+          {{ message }}
         </div>
-    {% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+      </div>
     </div>
+  </div>
+  {% endfor %}
+</div>
 {% endif %}
 {% endwith %}
 
 
 {% set problem_list = [] %}
 <div class="page-title">
-    <span class="title">Industrial data domains</span>
+  <span class="title">Industrial data domains</span>
 </div>
 {% set industrial_exists = 0 %}
 <ul>
-{% for keyword in keywords %}
-    {% if keyword.type == 'data_domain' and keyword.category == 'industrial data' %}
-        <li> <a href="/keywords/{{ keyword.name }}"><strong><font size="+1">{{ keyword.name }}</font></strong></a><br>
-        <ul>
-        {% for problem in keyword.problems %}
-            <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
-            {{problem_list.append(problem.problem.name)}}
+  {% for keyword in keywords %}
+  {% if keyword.type == 'data_domain' and keyword.category == 'industrial data' %}
+  <li> <a href="/keywords/{{ keyword.name }}"><strong>
+        <font size="+1">{{ keyword.name }}</font>
+      </strong></a><br>
+    <ul>
+      {% for problem in keyword.problems %}
+      <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
+        {{problem_list.append(problem.problem.name)}}
         {% endfor %}
-        </ul>
-        {% set industrial_exists = 1 %}
+    </ul>
+    {% set industrial_exists = 1 %}
     {% endif %}
-{% endfor %}
- </ul>
+    {% endfor %}
+</ul>
 {% if industrial_exists == 0 %}
-    <h6><p class="text-muted">There are no keywords assigned to this category</p></h6>
+<h6>
+  <p class="text-muted">There are no keywords assigned to this category</p>
+</h6>
 {% endif %}
 
 <div class="page-title">
-    <span class="title">Scientific data domains</span>
+  <span class="title">Scientific data domains</span>
 </div>
 {% set scientific_exists = 0 %}
 <ul>
-{% for keyword in keywords %}
-    {% if keyword.type == 'data_domain' and keyword.category == 'scientific data' %}
-        <li> <a href="/keywords/{{ keyword.name }}"><strong><font size="+1">{{ keyword.name }}</font></strong></a><br>
-        <ul>
-        {% for problem in keyword.problems %}
-            <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
-            {{problem_list.append(problem.problem.name)}}
+  {% for keyword in keywords %}
+  {% if keyword.type == 'data_domain' and keyword.category == 'scientific data' %}
+  <li> <a href="/keywords/{{ keyword.name }}"><strong>
+        <font size="+1">{{ keyword.name }}</font>
+      </strong></a><br>
+    <ul>
+      {% for problem in keyword.problems %}
+      <li> <a href="/problems/{{ problem.problem.name }}">{{ problem.problem.title }}</a>
+        {{problem_list.append(problem.problem.name)}}
         {% endfor %}
-        </ul>
-        {% set scientific_exists = 1 %}
+    </ul>
+    {% set scientific_exists = 1 %}
     {% endif %}
-{% endfor %}
+    {% endfor %}
 </ul>
 {% if scientific_exists == 0 %}
-    <h6><p class="text-muted">There are no keywords assigned to this category</p></h6>
+<h6>
+  <p class="text-muted">There are no keywords assigned to this category</p>
+</h6>
 {% endif %}
 
 
 <div class="page-title">
-    <span class="title">Not classified</span>
+  <span class="title">Not classified</span>
 </div>
 <ul>
-{% for problem in problems %}
-    {% if problem.name not in problem_list %}
-        <li> <a href="/problems/{{ problem.name }}"><strong><font size="+1">{{ problem.name }}</font></strong></a><br>
+  {% for problem in problems %}
+  {% if problem.name not in problem_list %}
+  <li> <a href="/problems/{{ problem.name }}"><strong>
+        <font size="+1">{{ problem.name }}</font>
+      </strong></a><br>
     {% endif %}
-{% endfor %}
+    {% endfor %}
 </ul>
 
 
 {% endblock %}
 {% block scripts %}
 <script>
-$(function () {
-   $('#formerror').modal('toggle')
-});
+  $(function () {
+    $('#formerror').modal('toggle')
+  });
 </script>
 {% endblock %}

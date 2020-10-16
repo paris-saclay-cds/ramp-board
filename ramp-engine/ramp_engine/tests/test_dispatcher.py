@@ -49,7 +49,7 @@ def test_integration_dispatcher(session_toy):
     )
     assert len(submissions) == 2
     submission = get_submission_by_id(session_toy, submissions[0][0])
-    assert 'SyntaxError' in submission.error_msg
+    assert 'ValueError' in submission.error_msg
 
 
 def test_unit_test_dispatcher(session_toy):
@@ -135,3 +135,22 @@ def test_dispatcher_error():
                    worker=CondaEnvWorker, n_workers=100,
                    n_threads='whatever',
                    hunger_policy='exit')
+
+
+def test_dispatcher_timeout(session_toy):
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_config_template())
+    dispatcher = Dispatcher(
+        config=config, event_config=event_config, worker=CondaEnvWorker,
+        n_workers=-1, hunger_policy='exit'
+    )
+    # override the timeout of the worker
+    dispatcher._worker_config["timeout"] = 1
+    dispatcher.launch()
+
+    # we should have at least 3 submissions which will fail:
+    # 2 for errors and 1 for timeout
+    submissions = get_submissions(
+        session_toy, event_config['ramp']['event_name'], 'training_error'
+    )
+    assert len(submissions) >= 2
