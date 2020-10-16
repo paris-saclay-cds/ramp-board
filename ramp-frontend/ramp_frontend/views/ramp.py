@@ -832,7 +832,7 @@ def view_model(submission_hash, f_name):
                              event, team, submission, f_name))
         return redirect_to_user(error_str)
 
-    if app.config['TRACK_USER_INTERACTION']:
+    if app.config['TRACK_USER_INTERACTION'] or app.config['TRACK_CREDITS']:
         add_user_interaction(
             db.session,
             interaction='looking at submission',

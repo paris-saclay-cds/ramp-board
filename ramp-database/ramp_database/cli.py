@@ -13,6 +13,7 @@ from .utils import session_scope
 from .tools import event as event_module
 from .tools import leaderboard as leaderboard_module
 from .tools import submission as submission_module
+from .tools import contributivity as contributivity_module
 from .tools import team as team_module
 from .tools import user as user_module
 
@@ -161,6 +162,18 @@ def add_event(config, problem, event, title, sandbox, submissions_dir,
     with session_scope(config['sqlalchemy']) as session:
         event_module.add_event(session, problem, event, title, sandbox,
                                submissions_dir, is_public, force)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
+@click.option("--user", help='Name of the user becoming site admin')
+def make_admin(config, user):
+    """Make a user site admin."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        user_module.make_admin(session, user)
 
 
 @main.command()
@@ -323,6 +336,32 @@ def update_all_users_leaderboards(config, event):
     """Update the leaderboards of all users for a given event."""
     config = read_config(config)
     with session_scope(config['sqlalchemy']) as session:
+        leaderboard_module.update_all_user_leaderboards(session, event)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
+@click.option("--event", help='The event name')
+@click.option('--ramp-kit-dir', default='.', show_default=True,
+              help='Root directory of the ramp-kit to test.')
+@click.option('--ramp-data-dir', default='.', show_default=True,
+              help='Directory containing the data. This directory should '
+              'contain a "data" folder.')
+@click.option("--min-improvement", default='0.0',
+              help='The minimum score improvement '
+              'to continue building the ensemble')
+def compute_contributivity(config, event, ramp_kit_dir, ramp_data_dir,
+                           min_improvement):
+    """Blend submissions, compute combined score and contributivities."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        contributivity_module.compute_contributivity(
+            session, event, ramp_kit_dir, ramp_data_dir,
+            float(min_improvement))
+        contributivity_module.compute_historical_contributivity(session, event)
+        leaderboard_module.update_leaderboards(session, event)
         leaderboard_module.update_all_user_leaderboards(session, event)
 
 
