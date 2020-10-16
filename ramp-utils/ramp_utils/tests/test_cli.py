@@ -75,7 +75,7 @@ def test_setup_init_event(deployment_dir):
         shutil.rmtree(deployment_dir, ignore_errors=True)
 
 
-def test_deploy_ramp_event():
+def test_deploy_ramp_event(deployment_dir):
     runner = CliRunner()
     result = runner.invoke(main, ['deploy-event',
                                   '--config', database_config_template(),

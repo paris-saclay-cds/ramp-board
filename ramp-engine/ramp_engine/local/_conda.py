@@ -5,7 +5,7 @@ import shutil
 import subprocess
 from datetime import datetime
 
-from .base import BaseWorker, _get_traceback
+from ..base import BaseWorker, _get_traceback
 
 logger = logging.getLogger('RAMP-WORKER')
 
@@ -47,23 +47,12 @@ class CondaEnvWorker(BaseWorker):
             * 'finished': the worker finished to train the submission.
             * 'collected': the results of the training have been collected.
     """
-    def __init__(self, config, submission):
-        super().__init__(config=config, submission=submission)
-
-    def setup(self):
-        """Set up the worker.
-
-        The worker will find the path to the conda environment to use using
-        the configuration passed when instantiating the worker.
-        """
-        # sanity check for the configuration variable
-        for required_param in ('kit_dir', 'data_dir', 'submissions_dir',
-                               'logs_dir', 'predictions_dir'):
-            self._check_config_name(self.config, required_param)
-        # find the path to the conda environment
-        env_name = self.config.get('conda_env', 'base')
+    @staticmethod
+    def _find_conda_env_bin_path(config, cmd):
+        """Find the `bin` path of a `conda` environment."""
+        env_name = config.get('conda_env', 'base')
         proc = subprocess.Popen(
-            ["conda", "info", "--envs", "--json"],
+            cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
         )
@@ -71,7 +60,7 @@ class CondaEnvWorker(BaseWorker):
         conda_info = json.loads(stdout)
 
         if env_name == 'base':
-            self._python_bin_path = os.path.join(conda_info['envs'][0], 'bin')
+            python_bin_path = os.path.join(conda_info['envs'][0], 'bin')
         else:
             envs_path = conda_info['envs'][1:]
             if not envs_path:
@@ -83,14 +72,32 @@ class CondaEnvWorker(BaseWorker):
             for env in envs_path:
                 if env_name == os.path.split(env)[-1]:
                     is_env_found = True
-                    self._python_bin_path = os.path.join(env, 'bin')
+                    python_bin_path = os.path.join(env, 'bin')
                     break
             if not is_env_found:
                 self.status = 'error'
                 raise ValueError('The specified conda environment {} does not '
                                  'exist. You need to create it.'
                                  .format(env_name))
-        super(CondaEnvWorker, self).setup()
+        return python_bin_path
+
+    def setup(self):
+        """Set up the worker.
+
+        The worker will find the path to the conda environment to use using
+        the configuration passed when instantiating the worker.
+        """
+        # sanity check for the configuration variable
+        for required_param in ('kit_dir', 'data_dir', 'submissions_dir',
+                               'logs_dir', 'predictions_dir'):
+            self._check_config_name(self.config, required_param)
+        self._log_dir = os.path.join(self.config['logs_dir'], self.submission)
+        if not os.path.exists(self._log_dir):
+            os.makedirs(self._log_dir)
+        self._python_bin_path = _find_conda_env_bin_path(
+            self.config, ["conda", "info", "--envs", "--json"]
+        )
+        super().setup()
 
     def teardown(self):
         """Remove the predictions stores within the submission."""
@@ -126,6 +133,26 @@ class CondaEnvWorker(BaseWorker):
     def timeout(self):
         return self.config.get('timeout', 7200)
 
+    def _launch_ramp_test_submission(self, cmd):
+        if self.status == 'running':
+            raise ValueError('Wait that the submission is processed before to '
+                             'launch a new one.')
+        self._log_file = open(os.path.join(self._log_dir, 'log'), 'wb+')
+        cmd_ramp = cmd + [
+            '--submission', self.submission,
+            '--ramp-kit-dir', self.config['kit_dir'],
+            '--ramp-data-dir', self.config['data_dir'],
+            '--ramp-submission-dir', self.config['submissions_dir'],
+            '--save-output',
+            '--ignore-warning'
+        ]
+        self._proc = subprocess.Popen(
+            cmd_ramp,
+            stdout=self._log_file,
+            stderr=self._log_file,
+        )
+        self._start_date = datetime.utcnow()
+
     def launch_submission(self):
         """Launch the submission.
 
@@ -134,26 +161,8 @@ class CondaEnvWorker(BaseWorker):
         a subprocess to free to not lock the Python main process.
         """
         cmd_ramp = os.path.join(self._python_bin_path, 'ramp-test')
-        if self.status == 'running':
-            raise ValueError('Wait that the submission is processed before to '
-                             'launch a new one.')
-        self._log_dir = os.path.join(self.config['logs_dir'], self.submission)
-        if not os.path.exists(self._log_dir):
-            os.makedirs(self._log_dir)
-        self._log_file = open(os.path.join(self._log_dir, 'log'), 'wb+')
-        self._proc = subprocess.Popen(
-            [cmd_ramp,
-             '--submission', self.submission,
-             '--ramp-kit-dir', self.config['kit_dir'],
-             '--ramp-data-dir', self.config['data_dir'],
-             '--ramp-submission-dir', self.config['submissions_dir'],
-             '--save-output',
-             '--ignore-warning'],
-            stdout=self._log_file,
-            stderr=self._log_file,
-        )
+        self._launch_ramp_test_submission(cmd_ramp)
         super().launch_submission()
-        self._start_date = datetime.utcnow()
 
     def collect_results(self):
         """Collect the results after that the submission is completed.
