@@ -127,7 +127,8 @@ class AWSWorker(BaseWorker):
         dt = self.time_since_last_status_check()
         min_wait = self.config.get('check_finished_training_interval_secs', 1)
         wait_longer = False if dt is None else dt < min_wait
-        logger.info(f'XXXX dt:{dt} min_wait:{min_wait} XXXX')
+        logger.info(f'check_finished_training_interval_secs: '
+                    f'dt:{dt} min_wait:{min_wait}')
         if wait_longer:
             time.sleep(min_wait)
         else:
