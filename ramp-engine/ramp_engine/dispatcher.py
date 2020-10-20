@@ -7,6 +7,8 @@ import time
 from queue import Queue
 from queue import LifoQueue
 
+import numpy as np
+
 from ramp_database.tools.submission import get_submissions
 from ramp_database.tools.submission import get_submission_by_id
 from ramp_database.tools.submission import get_submission_state
@@ -77,13 +79,17 @@ class Dispatcher:
           for new submission;
         * if 'exit': the dispatcher will stop after collecting the results of
           the last submissions.
+    status_check_wait : int, default=1
+        When `status = 'running', the time, in seconds, to wait before
+        checking if `_is_submission_finished` again.
     """
     def __init__(self, config, event_config, worker=None, n_workers=1,
-                 n_threads=None, hunger_policy=None):
+                 n_threads=None, hunger_policy=None, status_check_wait=1):
         self.worker = CondaEnvWorker if worker is None else worker
         self.n_workers = (max(multiprocessing.cpu_count() + 1 + n_workers, 1)
                           if n_workers < 0 else n_workers)
         self.hunger_policy = hunger_policy
+        self.status_check_wait = status_check_wait
         # init the poison pill to kill the dispatcher
         self._poison_pill = False
         # create the different dispatcher queues
@@ -174,37 +180,51 @@ class Dispatcher:
             elif self.hunger_policy == 'exit':
                 self._poison_pill = True
             return
-        for worker, (submission_id, submission_name) in zip(workers,
-                                                            submissions):
-            if worker.status == 'running':
-                self._processing_worker_queue.put_nowait(
-                    (worker, (submission_id, submission_name)))
-                time.sleep(0)
-            else:
-                logger.info('Collecting results from worker {}'.format(worker))
-                returncode, stderr = worker.collect_results()
-                if returncode:
-                    if returncode == 124:
-                        logger.info(
-                            'Worker {} killed due to timeout.'
-                            .format(worker)
-                        )
-                    else:
-                        logger.info(
-                            'Worker {} killed due to an error during training'
-                            .format(worker)
-                        )
-                    submission_status = 'training_error'
+        worker_processed = np.full(len(workers), False)
+        while True:
+            for indx, (worker, (submission_id, submission_name)) in \
+                enumerate(zip(workers, submissions)):
+                dt = worker.time_since_last_status_check()
+                wait_longer = False if dt is None else dt < self.status_check_wait
+                if wait_longer:
+                    worker_processed[indx] = False
+                    continue
                 else:
-                    submission_status = 'tested'
+                    worker_processed[indx] = True
+                logger.info(f'Status - dt:{dt}, '
+                            f'status_check_wait: {self.status_check_wait}')
+                if worker.status == 'running':
+                    self._processing_worker_queue.put_nowait(
+                        (worker, (submission_id, submission_name)))
+                    time.sleep(0)
+                else:
+                    logger.info(f'Collecting results from worker {worker}')
+                    returncode, stderr = worker.collect_results()
+                    if returncode:
+                        if returncode == 124:
+                            logger.info(
+                                'Worker {} killed due to timeout.'
+                                .format(worker)
+                            )
+                        else:
+                            logger.info(
+                                f'Worker {worker} killed due to an error '
+                                'during training'
+                            )
+                        submission_status = 'training_error'
+                    else:
+                        submission_status = 'tested'
 
-                set_submission_state(
-                    session, submission_id, submission_status
-                )
-                set_submission_error_msg(session, submission_id, stderr)
-                self._processed_submission_queue.put_nowait(
-                    (submission_id, submission_name))
-                worker.teardown()
+                    set_submission_state(
+                        session, submission_id, submission_status
+                    )
+                    set_submission_error_msg(session, submission_id, stderr)
+                    self._processed_submission_queue.put_nowait(
+                        (submission_id, submission_name))
+                    worker.teardown()
+
+            if np.all(worker_processed):
+                break
 
     def update_database_results(self, session):
         """Update the database with the results of ramp_test_submission."""

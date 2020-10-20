@@ -1,6 +1,4 @@
 import logging
-import time
-from datetime import datetime
 
 from ..base import BaseWorker, _get_traceback
 from . import api as aws
@@ -111,34 +109,22 @@ class AWSWorker(BaseWorker):
         return exit_status
 
     def _is_submission_finished(self):
-        self._status_check_time_ = datetime.utcnow()
         return aws._training_finished(
             self.config, self.instance.id, self.submission)
 
-    def time_since_last_status_check(self):
-        """Calculate how long the last status check was, in seconds."""
-        if not hasattr(self, "_status_check_time_"):
-            return None
-        dt = (datetime.utcnow() - self._status_check_time_).total_seconds()
-        return dt
-
     def collect_results(self):
         super().collect_results()
-        dt = self.time_since_last_status_check()
-        min_wait = self.config.get('check_finished_training_interval_secs', 1)
-        wait_longer = False if dt is None else dt < min_wait
-        logger.info(f'check_finished_training_interval_secs: '
-                    f'dt:{dt} min_wait:{min_wait}')
-        if wait_longer:
-            time.sleep(min_wait)
-        else:
-            if self.status == 'running':
-                aws._wait_until_train_finished(
-                    self.config, self.instance.id, self.submission)
-                self.status = 'finished'
-            if self.status != 'finished':
-                raise ValueError("Cannot collect results if worker is not"
-                                 "'running' or 'finished'")
+        # Fail safe that is only used when worker used alone (not
+        # with dispatcher).
+        # The event config: 'check_finished_training_interval_secs'
+        # is used here, but again only when worker used alone.
+        if self.status == 'running':
+            aws._wait_until_train_finished(
+                self.config, self.instance.id, self.submission)
+            self.status = 'finished'
+        if self.status != 'finished':
+            raise ValueError("Cannot collect results if worker is not"
+                                "'running' or 'finished'")
 
         logger.info("Collecting submission '{}'".format(self.submission))
         aws.download_log(self.config, self.instance.id, self.submission)
