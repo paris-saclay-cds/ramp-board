@@ -516,24 +516,37 @@ def test_add_submission_similarity(session_scope_module):
 
 
 def test_compute_contributivity(session_scope_module):
+    session = session_scope_module
     ramp_kit_dir = os.path.join(HERE, 'data', 'iris_kit')
     ramp_data_dir = ramp_kit_dir
     deployment_dir = os.path.join('/', 'tmp', 'databoard_test')
     ramp_submission_dir = os.path.join(deployment_dir, 'submissions')
+
+    submission_id = 9
+
     # for testing blending, we need to train a submission
     # ouputting predictions into the submission directory
     assert_submission(
         ramp_kit_dir=ramp_kit_dir,
         ramp_data_dir=ramp_data_dir,
         ramp_submission_dir=ramp_submission_dir,
-        submission='submission_000000009',
+        submission='submission_00000000{}'.format(submission_id),
         save_output=True)
+
+    # Mark the submission as scored in the DB
+    sub = (session.query(Submission)
+                  .filter(Submission.id == submission_id)
+                  .first())
+    sub.set_state('scored')
+    session.commit()
+
     compute_contributivity(
-        session_scope_module, 'iris_test',
+        session, 'iris_test',
         ramp_kit_dir, ramp_data_dir)
-    submissions = get_submissions(session_scope_module, 'iris_test', 'scored')
-    s = get_submission_by_id(session_scope_module, submissions[0][0])
+    submissions = get_submissions(session, 'iris_test', 'scored')
+    assert len(submissions)
+    s = get_submission_by_id(session, submissions[0][0])
     assert s.contributivity == pytest.approx(1.0)
     for s_on_cv_fold in s.on_cv_folds:
         s_on_cv_fold.contributivity == pytest.approx(1.0)
-    compute_historical_contributivity(session_scope_module, 'iris_test')
+    compute_historical_contributivity(session, 'iris_test')
