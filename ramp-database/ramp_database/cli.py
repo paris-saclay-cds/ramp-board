@@ -168,18 +168,6 @@ def add_event(config, problem, event, title, sandbox, submissions_dir,
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
-@click.option("--user", help='Name of the user becoming site admin')
-def make_admin(config, user):
-    """Make a user site admin."""
-    config = read_config(config)
-    with session_scope(config['sqlalchemy']) as session:
-        user_module.make_admin(session, user)
-
-
-@main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
 @click.option("--event", help='Name of the event')
 @click.option("--user", help='Name of the user becoming event admin')
 def add_event_admin(config, event, user):
