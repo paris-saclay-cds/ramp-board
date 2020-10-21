@@ -183,10 +183,10 @@ class Dispatcher:
                                                             submissions):
             dt = worker.time_since_last_status_check()
             wait_longer = (False if dt is None else
-                            dt < self.status_check_wait)
+                           dt < self.status_check_wait)
             if wait_longer:
                 self._processing_worker_queue.put_nowait(
-                (worker, (submission_id, submission_name)))
+                    (worker, (submission_id, submission_name)))
                 time.sleep(0)
                 continue
             if worker.status == 'running':
