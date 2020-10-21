@@ -7,8 +7,6 @@ import time
 from queue import Queue
 from queue import LifoQueue
 
-import numpy as np
-
 from ramp_database.tools.submission import get_submissions
 from ramp_database.tools.submission import get_submission_by_id
 from ramp_database.tools.submission import get_submission_state
@@ -188,7 +186,7 @@ class Dispatcher:
                             dt < self.status_check_wait)
             if wait_longer:
                 self._processing_worker_queue.put_nowait(
-                    (worker, (submission_id, submission_name)))
+                (worker, (submission_id, submission_name)))
                 time.sleep(0)
                 continue
             if worker.status == 'running':
