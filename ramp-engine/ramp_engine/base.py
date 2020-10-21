@@ -71,7 +71,7 @@ class BaseWorker(metaclass=ABCMeta):
     def status(self):
         status = self._status
         if status == 'running':
-            self._status_check_time_ = datetime.utcnow()
+            self._status_check_time = datetime.utcnow()
             if self._is_submission_finished():
                 self._status = 'finished'
         return self._status
@@ -86,9 +86,9 @@ class BaseWorker(metaclass=ABCMeta):
 
     def time_since_last_status_check(self):
         """Calculate how long the last status check was, in seconds."""
-        if not hasattr(self, "_status_check_time_"):
+        if not hasattr(self, "_status_check_time"):
             return None
-        dt = (datetime.utcnow() - self._status_check_time_).total_seconds()
+        dt = (datetime.utcnow() - self._status_check_time).total_seconds()
         return dt
 
     @abstractmethod

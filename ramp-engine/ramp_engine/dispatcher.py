@@ -180,51 +180,46 @@ class Dispatcher:
             elif self.hunger_policy == 'exit':
                 self._poison_pill = True
             return
-        worker_processed = np.full(len(workers), False)
-        while True:
-            for indx, (worker, (submission_id, submission_name)) in \
-                enumerate(zip(workers, submissions)):
-                dt = worker.time_since_last_status_check()
-                wait_longer = False if dt is None else dt < self.status_check_wait
-                if wait_longer:
-                    worker_processed[indx] = False
-                    continue
-                else:
-                    worker_processed[indx] = True
-                logger.info(f'Status - dt:{dt}, '
-                            f'status_check_wait: {self.status_check_wait}')
-                if worker.status == 'running':
-                    self._processing_worker_queue.put_nowait(
-                        (worker, (submission_id, submission_name)))
-                    time.sleep(0)
-                else:
-                    logger.info(f'Collecting results from worker {worker}')
-                    returncode, stderr = worker.collect_results()
-                    if returncode:
-                        if returncode == 124:
-                            logger.info(
-                                'Worker {} killed due to timeout.'
-                                .format(worker)
-                            )
-                        else:
-                            logger.info(
-                                f'Worker {worker} killed due to an error '
-                                'during training'
-                            )
-                        submission_status = 'training_error'
+
+        for worker, (submission_id, submission_name) in zip(workers,
+                                                            submissions):
+            dt = worker.time_since_last_status_check()
+            wait_longer = (False if dt is None else
+                            dt < self.status_check_wait)
+            if wait_longer:
+                self._processing_worker_queue.put_nowait(
+                    (worker, (submission_id, submission_name)))
+                time.sleep(0)
+                continue
+            if worker.status == 'running':
+                self._processing_worker_queue.put_nowait(
+                    (worker, (submission_id, submission_name)))
+                time.sleep(0)
+            else:
+                logger.info(f'Collecting results from worker {worker}')
+                returncode, stderr = worker.collect_results()
+                if returncode:
+                    if returncode == 124:
+                        logger.info(
+                            'Worker {} killed due to timeout.'
+                            .format(worker)
+                        )
                     else:
-                        submission_status = 'tested'
+                        logger.info(
+                            f'Worker {worker} killed due to an error '
+                            'during training'
+                        )
+                    submission_status = 'training_error'
+                else:
+                    submission_status = 'tested'
 
-                    set_submission_state(
-                        session, submission_id, submission_status
-                    )
-                    set_submission_error_msg(session, submission_id, stderr)
-                    self._processed_submission_queue.put_nowait(
-                        (submission_id, submission_name))
-                    worker.teardown()
-
-            if np.all(worker_processed):
-                break
+                set_submission_state(
+                    session, submission_id, submission_status
+                )
+                set_submission_error_msg(session, submission_id, stderr)
+                self._processed_submission_queue.put_nowait(
+                    (submission_id, submission_name))
+                worker.teardown()
 
     def update_database_results(self, session):
         """Update the database with the results of ramp_test_submission."""
