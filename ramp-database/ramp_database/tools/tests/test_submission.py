@@ -520,10 +520,10 @@ def test_compute_contributivity(session_scope_module):
     config = ramp_config_template()
     ramp_config = generate_ramp_config(read_config(config))
 
-    ramp_kit_dir = ramp_config['kit_dir']
-    ramp_data_dir = ramp_config['data_dir']
-    ramp_submission_dir = ramp_config['submission_dir']
-    ramp_predictions_dir = ramp_config['predictions_dir']
+    ramp_kit_dir = ramp_config['ramp_kit_dir']
+    ramp_data_dir = ramp_config['ramp_data_dir']
+    ramp_submission_dir = ramp_config['ramp_submissions_dir']
+    ramp_predictions_dir = ramp_config['ramp_predictions_dir']
 
     submission_id = 9
 

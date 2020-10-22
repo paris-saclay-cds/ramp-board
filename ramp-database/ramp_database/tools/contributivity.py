@@ -100,10 +100,11 @@ def compute_contributivity(session, event_name, ramp_kit_dir,
             Path(ramp_submission_dir) / sub.basename / 'training_output'
         )
 
-        if (not training_output_dir_ramwf.exist()
+        if (not training_output_dir_ramwf.exists()
                 and training_output_dir_board.exists()):
             # Note: on Windows 10+ this requires to enable the Developer Mode
-            os.symlink(training_output_dir_board, training_output_dir_ramwf)
+            os.symlink(training_output_dir_board.resolve(),
+                       training_output_dir_ramwf)
 
     blend_submissions(
             submissions=[sub.basename for sub in submissions],
