@@ -517,10 +517,13 @@ def test_add_submission_similarity(session_scope_module):
 
 def test_compute_contributivity(session_scope_module):
     session = session_scope_module
-    ramp_kit_dir = os.path.join(HERE, 'data', 'iris_kit')
-    ramp_data_dir = ramp_kit_dir
-    deployment_dir = os.path.join('/', 'tmp', 'databoard_test')
-    ramp_submission_dir = os.path.join(deployment_dir, 'submissions')
+    config = ramp_config_template()
+    ramp_config = generate_ramp_config(read_config(config))
+
+    ramp_kit_dir = ramp_config['kit_dir']
+    ramp_data_dir = ramp_config['data_dir']
+    ramp_submission_dir = ramp_config['submission_dir']
+    ramp_predictions_dir = ramp_config['predictions_dir']
 
     submission_id = 9
 
@@ -542,7 +545,7 @@ def test_compute_contributivity(session_scope_module):
 
     compute_contributivity(
         session, 'iris_test',
-        ramp_kit_dir, ramp_data_dir)
+        ramp_kit_dir, ramp_data_dir, ramp_predictions_dir)
     submissions = get_submissions(session, 'iris_test', 'scored')
     assert len(submissions)
     s = get_submission_by_id(session, submissions[0][0])

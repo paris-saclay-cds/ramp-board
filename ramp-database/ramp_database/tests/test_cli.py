@@ -321,6 +321,8 @@ def test_compute_contributivity():
                '--config', database_config_template(),
                '--event', 'iris_test',
                '--ramp-kit-dir', ramp_config['ramp_kit_dir'],
-               '--ramp-data-dir', ramp_config['ramp_data_dir']],
+               '--ramp-data-dir', ramp_config['ramp_data_dir'];
+               '--ramp-predictions-dir', ramp_config['predictions_dir'];
+               ],
         catch_exceptions=False)
     assert result.exit_code == 0, result.output

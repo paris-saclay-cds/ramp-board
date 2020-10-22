@@ -337,17 +337,19 @@ def update_all_users_leaderboards(config, event):
 @click.option('--ramp-data-dir', default='.', show_default=True,
               help='Directory containing the data. This directory should '
               'contain a "data" folder.')
+@click.option('--ramp-predictions-dir', default=None, show_default=True,
+              help='Directory containing predictions.')
 @click.option("--min-improvement", default='0.0',
               help='The minimum score improvement '
               'to continue building the ensemble')
 def compute_contributivity(config, event, ramp_kit_dir, ramp_data_dir,
-                           min_improvement):
+                           ramp_predictions_dir, min_improvement):
     """Blend submissions, compute combined score and contributivities."""
     config = read_config(config)
     with session_scope(config['sqlalchemy']) as session:
         contributivity_module.compute_contributivity(
             session, event, ramp_kit_dir, ramp_data_dir,
-            float(min_improvement))
+            ramp_predictions_dir, float(min_improvement))
         contributivity_module.compute_historical_contributivity(session, event)
         leaderboard_module.update_leaderboards(session, event)
         leaderboard_module.update_all_user_leaderboards(session, event)

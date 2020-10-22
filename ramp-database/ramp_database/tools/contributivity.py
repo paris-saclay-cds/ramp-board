@@ -1,6 +1,6 @@
 import os
 import logging
-from path import Pathlib
+from pathlib import Path
 import pandas as pd
 
 from rampwf.utils import blend_submissions
@@ -52,7 +52,8 @@ def compute_historical_contributivity(session, event_name):
 
 
 def compute_contributivity(session, event_name, ramp_kit_dir,
-                           ramp_data_dir, min_improvement=0.0):
+                           ramp_data_dir, ramp_predictions_dir=None,
+                           min_improvement=0.0):
     """Blend submissions of an event, compute combined score and
        contributivities.
 
@@ -66,6 +67,8 @@ def compute_contributivity(session, event_name, ramp_kit_dir,
         The directory of the RAMP kit.
     ramp_data_dir : str
         The directory of the data.
+    ramp_predictions_dir : str
+        The directory with predictions
     min_improvement : float, default is 0.0
         The minimum improvement under which greedy blender is stopped.
     """
@@ -87,11 +90,14 @@ def compute_contributivity(session, event_name, ramp_kit_dir,
     # to predictions/sumbmission_<id>/ if it exists, in order to avoid
     # rescoring the model.
     for sub in submissions:
+        if (ramp_predictions_dir is None or
+                not Path(ramp_predictions_dir).exists()):
+            continue
+        training_output_dir_board = (
+            Path(ramp_predictions_dir) / sub.basename
+        )
         training_output_dir_ramwf = (
             Path(ramp_submission_dir) / sub.basename / 'training_output'
-        )
-        training_output_dir_board = (
-            Path(ramp_submission_dir) / ".." / "predictions" / sub.basename
         )
 
         if (not training_output_dir_ramwf.exist()
