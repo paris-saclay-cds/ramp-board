@@ -88,6 +88,8 @@ def _compute_leaderboard(session, submissions, leaderboard_type, event_name,
 
         # add the aggregated time information
         df_time.index = df.index
+        for key in ['train', 'valid', 'test']:
+            df_time[key] = df_time[key].round(3)
         df_time = df_time.rename(
             columns={'train': 'train time [s]',
                      'valid': 'validation time [s]',
