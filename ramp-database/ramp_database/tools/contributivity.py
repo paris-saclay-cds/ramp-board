@@ -1,5 +1,6 @@
 import os
 import logging
+from path import Pathlib
 import pandas as pd
 
 from rampwf.utils import blend_submissions
@@ -80,6 +81,23 @@ def compute_contributivity(session, event_name, ramp_kit_dir,
     if len(submissions) == 0:
         logger.info('No submissions to blend.')
         return
+    # ramp-board submission folder layout is different to that of
+    # ramp-worklow. Here we symlink
+    # submissions/submissions_<id>/training_output
+    # to predictions/sumbmission_<id>/ if it exists, in order to avoid
+    # rescoring the model.
+    for sub in submissions:
+        training_output_dir_ramwf = (
+            Path(ramp_submission_dir) / sub.basename / 'training_output'
+        )
+        training_output_dir_board = (
+            Path(ramp_submission_dir) / ".." / "predictions" / sub.basename
+        )
+
+        if not training_output_dir_ramwf.exist() and training_output_dir_board.exists():
+            # Note: on Windows 10+ this requires to enable the Developer Mode
+            os.symlink(training_output_dir_board, training_output_dir_ramwf)
+
 
     blend_submissions(
             submissions=[sub.basename for sub in submissions],
