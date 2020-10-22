@@ -77,17 +77,24 @@ class Dispatcher:
           for new submission;
         * if 'exit': the dispatcher will stop after collecting the results of
           the last submissions.
-    status_check_wait : int, default=1
-        When `status = 'running', the time, in seconds, to wait before
-        checking if `_is_submission_finished` again.
+    time_between_collection : int, default=1
+        The amount of time in seconds to wait before checking if we can
+        collect results from worker.
+
+        .. note::
+           This parameter is important when using a cloud platform to run
+           submissions, as the check for collection will be done through SSH.
+           Thus, if the time between checks is too small, the repetitive
+           SSH requests may be potentially blocked by the cloud provider.
     """
     def __init__(self, config, event_config, worker=None, n_workers=1,
-                 n_threads=None, hunger_policy=None, status_check_wait=1):
+                 n_threads=None, hunger_policy=None,
+                 time_between_collection=1):
         self.worker = CondaEnvWorker if worker is None else worker
         self.n_workers = (max(multiprocessing.cpu_count() + 1 + n_workers, 1)
                           if n_workers < 0 else n_workers)
         self.hunger_policy = hunger_policy
-        self.status_check_wait = status_check_wait
+        self.time_between_collection = time_between_collection
         # init the poison pill to kill the dispatcher
         self._poison_pill = False
         # create the different dispatcher queues
@@ -182,14 +189,12 @@ class Dispatcher:
         for worker, (submission_id, submission_name) in zip(workers,
                                                             submissions):
             dt = worker.time_since_last_status_check()
-            wait_longer = (False if dt is None else
-                           dt < self.status_check_wait)
-            if wait_longer:
+            if dt is not None and dt < self.time_between_collection:
                 self._processing_worker_queue.put_nowait(
                     (worker, (submission_id, submission_name)))
                 time.sleep(0)
                 continue
-            if worker.status == 'running':
+            elif worker.status == 'running':
                 self._processing_worker_queue.put_nowait(
                     (worker, (submission_id, submission_name)))
                 time.sleep(0)

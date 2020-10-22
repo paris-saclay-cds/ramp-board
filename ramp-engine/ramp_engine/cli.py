@@ -79,12 +79,13 @@ def dispatcher(config, event_config, verbose):
     n_workers = dispatcher_config.get('n_workers', -1)
     n_threads = dispatcher_config.get('n_threads', None)
     hunger_policy = dispatcher_config.get('hunger_policy', 'sleep')
-    status_check_wait = dispatcher_config.get('status_check_wait', 1)
+    time_between_collection = dispatcher_config.get(
+        'time_between_collection', 1)
 
     disp = Dispatcher(
         config=config, event_config=event_config, worker=worker_type,
         n_workers=n_workers, n_threads=n_threads, hunger_policy=hunger_policy,
-        status_check_wait=status_check_wait
+        time_between_collection=time_between_collection
     )
     disp.launch()
 

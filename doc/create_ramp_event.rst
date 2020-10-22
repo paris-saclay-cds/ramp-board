@@ -78,8 +78,9 @@ The ``config.yml`` file should look like::
 * ``n_workers``: Maximum number of workers that can run submissions
   simultaneously.
 * ``n_threads``: The number of threads that each worker can use.
-* ``status_check_wait``: How long, in seconds, the worker should wait before
-  re-checking if the submission has finished training. The default is 1 second.
+* ``time_between_collection``: How long, in seconds, the worker should wait
+  before re-checking if the submission is ready for collection. The default is
+  1 second.
 
 Before you continue make sure that:
 

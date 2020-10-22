@@ -195,7 +195,7 @@ Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
           hunger_policy: sleep
           n_workers: 5
           n_threads: 2
-          status_check_wait: 60
+          time_between_collection: 60
 
 **Worker configuration**
 
@@ -247,11 +247,12 @@ Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
   AWS instance limit.
 * ``n_threads``: The number of threads that each worker can use. This would
   depend on the AWS instance type you have choosen.
-* ``status_check_wait``: How long, in seconds, the worker should wait before
-  re-checking if the submission has finished training. The default is 1 second.
-  For AWS workers this means that a request would be sent every second, which
-  can sometimes cause the worker to hang. We advise to set this configuration
-  to at least 60 seconds.
+* ``time_between_collection``: How long, in seconds, the worker should wait
+  before re-checking if the submission is ready for collection. The default is
+  1 second. For AWS workers the check for collection will be done through SSH.
+  If the time between checks is too small, the repetitive SSH requests may be
+  potentially blocked by the cloud provider. We advise to set this
+  configuration to at least 60 seconds.
 
 Create your own worker
 ----------------------
