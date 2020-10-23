@@ -1,5 +1,6 @@
 import logging
 from abc import ABCMeta, abstractmethod
+from datetime import datetime
 
 logger = logging.getLogger('RAMP-WORKER')
 
@@ -69,6 +70,7 @@ class BaseWorker(metaclass=ABCMeta):
     def status(self):
         status = self._status
         if status == 'running':
+            self._status_running_check_time = datetime.utcnow()
             if self._is_submission_finished():
                 self._status = 'finished'
         return self._status
@@ -80,6 +82,24 @@ class BaseWorker(metaclass=ABCMeta):
     def check_timeout(self):
         """Check a submission for timeout."""
         pass
+
+    def time_since_last_status_check(self):
+        """Calculate time elapsed since the last 'running' status check, in
+        seconds.
+
+        Returns
+        -------
+        elapsed_time : int or None
+            Time elapsed in seconds since the last 'running' status
+            check. If `_status_running_check_time` attribute does not
+            exist (e.g. `worker.status` has not been called once status
+            is 'running'), `None` is returned.
+        """
+        if not hasattr(self, "_status_running_check_time"):
+            return None
+        elapsed_time = ((datetime.utcnow() -
+                        self._status_running_check_time).total_seconds())
+        return elapsed_time
 
     @abstractmethod
     def launch_submission(self):

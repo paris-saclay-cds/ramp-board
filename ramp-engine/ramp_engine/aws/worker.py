@@ -114,6 +114,10 @@ class AWSWorker(BaseWorker):
 
     def collect_results(self):
         super().collect_results()
+        # Fail safe that is only used when worker used alone (not
+        # with dispatcher).
+        # The event config: 'check_finished_training_interval_secs'
+        # is used here, but again only when worker used alone.
         if self.status == 'running':
             aws._wait_until_train_finished(
                 self.config, self.instance.id, self.submission)
