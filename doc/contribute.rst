@@ -299,10 +299,18 @@ The following explain the main steps to release `ramp-board`:
    with `make clean-dist` then push on PyPI with `make upload-pypi`.
 8. Switch to `master` branch and run `bumpversion minor`, commit and push on
    upstream.
-9. Add a new `v0.<version number>.rst` file in `doc/whats_new/
+9. Create a GitHub release by clicking on 'Draft a new release' `here
+   <https://github.com/paris-saclay-cds/ramp-board/releases>`_. 'Tag version'
+   should be the latest version number (e.g., 0.5.0), 'Target' should be the
+   branch for that minor version (e.g., 0.5.X) and 'Release title' should
+   be 'Version <release version>' (e.g., 'Version 0.5.0'). Detail changes
+   in this release, using what's in the `doc/whats_new/
    <https://github.com/paris-saclay-cds/ramp-board/tree/master/doc/whats_new>`_
-   and `.. include::` this new file in `doc/whats_new.rst
-   <https://github.com/paris-saclay-cds/ramp-board/blob/master/doc/whats_new.rst>`_.
+   file for the latest release.
+10. Add a new `v0.<version number>.rst` file in `doc/whats_new/
+    <https://github.com/paris-saclay-cds/ramp-board/tree/master/doc/whats_new>`_
+    and `.. include::` this new file in `doc/whats_new.rst
+    <https://github.com/paris-saclay-cds/ramp-board/blob/master/doc/whats_new.rst>`_.
 
 Note that the steps 4, 5 and 7 should be performed while in the release
 branch, e.g. branch `0.5.X`.
@@ -310,19 +318,20 @@ branch, e.g. branch `0.5.X`.
 Patch/bug fix release process
 -----------------------------
 
-1. Checkout the branch for the lastest release, e.g.,
-   `git checkout 0.5.X`.
-2. Find the commit(s) hash of the bug fix commit you wish to back port
+1. Find the commit(s) hash of the bug fix commit you wish to back port
    using `git log`.
-3. Append the bug fix commit(s) to the branch using `git cherry pick <hash>`.
+2. Checkout the branch for the lastest release, e.g.,
+   `git checkout 0.5.X`.
+3. Append the bug fix commit(s) to the branch using `git cherry-pick <hash>`.
 4. Bump the version number with `bumpversion patch`. This will bump the
    patch version, for example from 0.5.0 to 0.5.1.dev0.
-5. Mark the current version as release version (as opposed to 'dev' version)
-   with `bumpversion release --allow-dirty`. It will bump the version from
-   0.5.1.dev0 to 0.5.1.
+5. Mark the current version as a release version (as opposed to 'dev' version)
+   with `bumpversion release --allow-dirty`. It will bump the version, for
+   example from 0.5.1.dev0 to 0.5.1.
 6. Commit the changes with `git commit -am 'bumpversion <new version>'`.
 7. Push the changes to the release branch in upstream, e.g.
-   `git push <upstream remote> <release branch>`
+   `git push <upstream remote> <release branch>`. For minor version 0.5
+   'release branch' would be '0.5.X'
 8. Remove unnecessary files with `make clean-dist` then push on PyPI with
    `make upload-pypi`.
 9. Create a GitHub release by clicking 'Draft a new release' `here
