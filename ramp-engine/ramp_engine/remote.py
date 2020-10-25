@@ -4,14 +4,19 @@ import shutil
 import subprocess
 from datetime import datetime
 
-from .base import BaseWorker, _get_traceback
-from .conda import _conda_info_envs, _get_conda_env_path
+from ..base import BaseWorker, _get_traceback
+from ..conda import _conda_info_envs, _get_conda_env_path
 
 logger = logging.getLogger('RAMP-WORKER')
 
 
-class CondaEnvWorker(BaseWorker):
-    """Local worker which uses conda environment to dispatch submission.
+class RemoteWorker(BaseWorker):
+    """Remote dask distributed worker
+
+
+    This worker uses conda environment to dispatch submission on the
+    remote machine. It needs the dask worker to run on the remote machine
+    with the same version of dependencies as on the local machine.
 
     Parameters
     ----------
@@ -19,16 +24,16 @@ class CondaEnvWorker(BaseWorker):
         Configuration dictionary to set the worker. The following parameter
         should be set:
 
-        * 'conda_env': the name of the conda environment to use. If not
-          specified, the base environment will be used.
-        * 'kit_dir': path to the directory of the RAMP kit;
-        * 'data_dir': path to the directory of the data;
-        * 'submissions_dir': path to the directory containing the
+        * 'conda_env': the name of the *remote* conda environment to use.
+        * 'kit_dir': path to the *remote* directory of the RAMP kit;
+        * 'data_dir': path to the *remote* directory of the data;
+        * 'submissions_dir': path to the *local* directory containing the
           submissions;
-        * `logs_dir`: path to the directory where the log of the
+        * `logs_dir`: path to the *local* directory where the log of the
           submission will be stored;
-        * `predictions_dir`: path to the directory where the
+        * `predictions_dir`: path to the *local* directory where the
           predictions of the submission will be stored.
+        * `dask_scheduler`: URL of the dask scheduler used for submissions.
         * 'timeout': timeout after a given number of seconds when
           running the worker. If not provided, a default of 7200
           is used.
@@ -53,20 +58,31 @@ class CondaEnvWorker(BaseWorker):
     def setup(self):
         """Set up the worker.
 
-        The worker will find the path to the conda environment to use using
-        the configuration passed when instantiating the worker.
+        Following steps will be performed;
+         - start a dask distributed client
+         - find the path to the conda environment to use on the remote machine
         """
+        from dask.distributed import Client
+
         # sanity check for the configuration variable
-        for required_param in ('kit_dir', 'data_dir', 'submissions_dir',
-                               'logs_dir', 'predictions_dir'):
+        for required_param in ('conda_env', 'kit_dir', 'data_dir',
+                               'submissions_dir', 'logs_dir',
+                               'predictions_dir', 'dask_scheduler'):
             self._check_config_name(self.config, required_param)
         # find the path to the conda environment
-        env_name = self.config.get('conda_env', 'base')
-        conda_info = _conda_info_envs()
+        env_name = self.config['conda_env']
+        self._client = Client(self.config['dask_scheduler'])
+
+        # Fail early if the Dask worker is not working properly
+        self._client.submit(lambda: 1+1).result()
+
+        conda_info = self._client.submit(
+                _conda_info_envs, pure=False
+        ).result()
 
         self._python_bin_path = _get_conda_env_path(conda_info, env_name, self)
 
-        super(CondaEnvWorker, self).setup()
+        super().setup()
 
     def teardown(self):
         """Remove the predictions stores within the submission."""
