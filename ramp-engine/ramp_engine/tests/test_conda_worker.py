@@ -37,7 +37,7 @@ pytestmark = pytest.mark.skipif(
 
 @contextmanager
 def get_conda_worker(submission_name, Worker=CondaEnvWorker,
-                     conda_env='ramp-iris'):
+                     conda_env='ramp-iris', dask_scheduler=None):
 
     module_path = os.path.dirname(__file__)
     config = {'kit_dir': os.path.join(module_path, 'kits', 'iris'),
@@ -52,7 +52,7 @@ def get_conda_worker(submission_name, Worker=CondaEnvWorker,
     if issubclass(Worker, RemoteWorker):
         pytest.importorskip('dask')
         pytest.importorskip('dask.distributed')
-        config['dask_scheduler'] = None
+        config['dask_scheduler'] = dask_scheduler
 
     worker = Worker(config=config, submission='starting_kit')
     yield worker
@@ -79,8 +79,10 @@ def _remove_directory(worker):
 
 @pytest.mark.parametrize("submission", ('starting_kit', 'random_forest_10_10'))
 @pytest.mark.parametrize("Worker", ALL_WORKERS)
-def test_conda_worker_launch(submission, Worker):
-    with get_conda_worker(submission, Worker=Worker) as worker:
+def test_conda_worker_launch(submission, Worker, dask_scheduler):
+    with get_conda_worker(
+        submission, Worker=Worker, dask_scheduler=dask_scheduler
+    ) as worker:
         worker.launch()
         # check that teardown removed the predictions
         output_training_dir = os.path.join(worker.config['kit_dir'],
@@ -93,8 +95,10 @@ def test_conda_worker_launch(submission, Worker):
 
 @pytest.mark.parametrize("submission", ('starting_kit', 'random_forest_10_10'))
 @pytest.mark.parametrize("Worker", ALL_WORKERS)
-def test_conda_worker(submission, Worker):
-    with get_conda_worker(submission, Worker=Worker) as worker:
+def test_conda_worker(submission, Worker, dask_scheduler):
+    with get_conda_worker(
+        submission, Worker=Worker, dask_scheduler=dask_scheduler
+    ) as worker:
         assert worker.status == 'initialized'
         worker.setup()
         assert worker.status == 'setup'
@@ -114,8 +118,10 @@ def test_conda_worker(submission, Worker):
 
 
 @pytest.mark.parametrize("Worker", ALL_WORKERS)
-def test_conda_worker_without_conda_env_specified(Worker):
-    with get_conda_worker('starting_kit', Worker=Worker) as worker:
+def test_conda_worker_without_conda_env_specified(Worker, dask_scheduler):
+    with get_conda_worker(
+        'starting_kit', Worker=Worker, dask_scheduler=dask_scheduler
+    ) as worker:
         # remove the conda_env parameter from the configuration
         del worker.config['conda_env']
         # if the conda environment is not given in the configuration, we should
@@ -127,8 +133,10 @@ def test_conda_worker_without_conda_env_specified(Worker):
 
 
 @pytest.mark.parametrize("Worker", ALL_WORKERS)
-def test_conda_worker_error_missing_config_param(Worker):
-    with get_conda_worker('starting_kit', Worker=Worker) as worker:
+def test_conda_worker_error_missing_config_param(Worker, dask_scheduler):
+    with get_conda_worker(
+        'starting_kit', Worker=Worker, dask_scheduler=dask_scheduler
+    ) as worker:
         # we remove one of the required parameter
         del worker.config['kit_dir']
 
@@ -138,9 +146,10 @@ def test_conda_worker_error_missing_config_param(Worker):
 
 
 @pytest.mark.parametrize("Worker", ALL_WORKERS)
-def test_conda_worker_error_unknown_env(Worker):
+def test_conda_worker_error_unknown_env(Worker, dask_scheduler):
     with get_conda_worker(
-        'starting_kit', conda_env='xxx', Worker=Worker
+        'starting_kit', conda_env='xxx', Worker=Worker,
+        dask_scheduler=dask_scheduler
     ) as worker:
         msg_err = "The specified conda environment xxx does not exist."
         with pytest.raises(ValueError, match=msg_err):
@@ -149,9 +158,11 @@ def test_conda_worker_error_unknown_env(Worker):
 
 
 @pytest.mark.parametrize("Worker", ALL_WORKERS)
-def test_conda_worker_error_multiple_launching(Worker):
+def test_conda_worker_error_multiple_launching(Worker, dask_scheduler):
     submission = 'starting_kit'
-    with get_conda_worker(submission, Worker=Worker) as worker:
+    with get_conda_worker(
+        submission, Worker=Worker, dask_scheduler=dask_scheduler
+    ) as worker:
 
         worker.setup()
         worker.launch_submission()
@@ -163,8 +174,10 @@ def test_conda_worker_error_multiple_launching(Worker):
 
 
 @pytest.mark.parametrize("Worker", ALL_WORKERS)
-def test_conda_worker_error_soon_teardown(Worker):
-    with get_conda_worker('starting_kit', Worker=Worker) as worker:
+def test_conda_worker_error_soon_teardown(Worker, dask_scheduler):
+    with get_conda_worker(
+        'starting_kit', Worker=Worker, dask_scheduler=dask_scheduler
+    ) as worker:
         worker.setup()
         err_msg = 'Collect the results before to kill the worker.'
         with pytest.raises(ValueError, match=err_msg):
@@ -172,8 +185,10 @@ def test_conda_worker_error_soon_teardown(Worker):
 
 
 @pytest.mark.parametrize("Worker", ALL_WORKERS)
-def test_conda_worker_error_soon_collection(Worker):
-    with get_conda_worker('starting_kit', Worker=Worker) as worker:
+def test_conda_worker_error_soon_collection(Worker, dask_scheduler):
+    with get_conda_worker(
+        'starting_kit', Worker=Worker, dask_scheduler=dask_scheduler
+    ) as worker:
         err_msg = r"Call the method setup\(\) and launch_submission\(\) before"
         with pytest.raises(ValueError, match=err_msg):
             worker.collect_results()
@@ -184,8 +199,10 @@ def test_conda_worker_error_soon_collection(Worker):
 
 
 @pytest.mark.parametrize("Worker", ALL_WORKERS)
-def test_conda_worker_timeout(Worker):
-    with get_conda_worker('random_forest_10_10', Worker=Worker) as worker:
+def test_conda_worker_timeout(Worker, dask_scheduler):
+    with get_conda_worker(
+        'random_forest_10_10', Worker=Worker, dask_scheduler=dask_scheduler
+    ) as worker:
         worker.config['timeout'] = 1
 
         assert worker.status == 'initialized'

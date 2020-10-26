@@ -37,19 +37,19 @@ def session_toy(database_connection):
         Model.metadata.drop_all(db)
 
 
-def _update_worker_config(event_config, Worker):
+def _update_worker_config(event_config, Worker, dask_scheduler):
     if issubclass(Worker, RemoteWorker):
         pytest.importorskip('dask')
         pytest.importorskip('dask.distributed')
-        event_config['worker']['dask_scheduler'] = None
+        event_config['worker']['dask_scheduler'] = dask_scheduler
         event_config['worker']['worker_type'] = 'remote'
 
 
 @pytest.mark.parametrize('Worker', ALL_WORKERS)
-def test_integration_dispatcher(session_toy, Worker):
+def test_integration_dispatcher(session_toy, Worker, dask_scheduler):
     config = read_config(database_config_template())
     event_config = read_config(ramp_config_template())
-    _update_worker_config(event_config, Worker)
+    _update_worker_config(event_config, Worker, dask_scheduler)
     dispatcher = Dispatcher(
         config=config, event_config=event_config, worker=Worker,
         n_workers=-1, hunger_policy='exit'
@@ -66,12 +66,12 @@ def test_integration_dispatcher(session_toy, Worker):
 
 
 @pytest.mark.parametrize('Worker', ALL_WORKERS)
-def test_unit_test_dispatcher(session_toy, Worker):
+def test_unit_test_dispatcher(session_toy, Worker, dask_scheduler):
     # make sure that the size of the list is bigger than the number of
     # submissions
     config = read_config(database_config_template())
     event_config = read_config(ramp_config_template())
-    _update_worker_config(event_config, Worker)
+    _update_worker_config(event_config, Worker, dask_scheduler)
     dispatcher = Dispatcher(config=config,
                             event_config=event_config,
                             worker=Worker, n_workers=100,
@@ -118,11 +118,11 @@ def test_unit_test_dispatcher(session_toy, Worker):
     "n_threads", [None, 4]
 )
 @pytest.mark.parametrize('Worker', ALL_WORKERS)
-def test_dispatcher_num_threads(n_threads, Worker):
+def test_dispatcher_num_threads(n_threads, Worker, dask_scheduler):
     libraries = ('OMP', 'MKL', 'OPENBLAS')
     config = read_config(database_config_template())
     event_config = read_config(ramp_config_template())
-    _update_worker_config(event_config, Worker)
+    _update_worker_config(event_config, Worker, dask_scheduler)
 
     # check that by default we don't set the environment by default
     dispatcher = Dispatcher(config=config,
@@ -155,10 +155,10 @@ def test_dispatcher_error():
 
 
 @pytest.mark.parametrize('Worker', ALL_WORKERS)
-def test_dispatcher_timeout(session_toy, Worker):
+def test_dispatcher_timeout(session_toy, Worker, dask_scheduler):
     config = read_config(database_config_template())
     event_config = read_config(ramp_config_template())
-    _update_worker_config(event_config, Worker)
+    _update_worker_config(event_config, Worker, dask_scheduler)
     dispatcher = Dispatcher(
         config=config, event_config=event_config, worker=Worker,
         n_workers=-1, hunger_policy='exit'

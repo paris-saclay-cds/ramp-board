@@ -50,3 +50,14 @@ def database_connection():
     connection.execute(f'DROP DATABASE {database_name}')
     connection.execute(f'DROP USER {username}')
     print(f"deleted database 'databoard_test' and removed user '{username}'")
+
+
+@pytest.fixture(scope='session')
+def dask_scheduler():
+    try:
+        from dask.distributed import LocalCluster
+        cluster = LocalCluster(n_workers=4)
+        yield cluster.scheduler_address
+        cluster.close()
+    except ImportError:
+        yield None
