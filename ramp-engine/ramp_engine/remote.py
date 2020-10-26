@@ -1,9 +1,12 @@
 import logging
 import os
 import shutil
+from pathlib import Path
 from datetime import datetime
-from typing import List
+from typing import List, Union
 from urllib.parse import urlparse
+import tarfile
+from io import BytesIO
 
 from .base import BaseWorker, _get_traceback
 from .conda import _conda_info_envs, _get_conda_env_path
@@ -33,6 +36,33 @@ def _check_dask_workers_single_machine(worker_urls: List[str]) -> bool:
     else:
         raise ValueError(f'All dask workers should be on 1 machine, '
                          f'found {len(worker_hosts)}: {worker_hosts}')
+
+
+def _read_file(path: Union[str, Path]) -> bytes:
+    """Open and read a file"""
+    with open(path, 'rb') as fh:
+        return fh.read()
+
+
+def _serialize_folder(path: Union[str, Path]) -> bytes:
+    """Serialize a folder as a bytes object of its .tar.gz"""
+    with BytesIO() as fh:
+        with tarfile.open(fileobj=fh, mode='w:gz') as fh_tar:
+            fh_tar.add(path, arcname='.')
+        fh.seek(0)
+        return fh.read()
+
+
+def _deserialize_folder(stream: bytes, out_dir: Union[str, Path]):
+    """Given the bytes object of a .tar.gz re-create the original folder
+
+    The destination folder will be remoted if it exists
+    """
+    shutil.rmtree(out_dir, ignore_errors=True)
+    with BytesIO(stream) as fh:
+        fh.seek(0)
+        with tarfile.open(fileobj=fh, mode='r:gz') as fh_tar:
+            fh_tar.extractall(out_dir)
 
 
 class RemoteWorker(BaseWorker):
@@ -98,13 +128,20 @@ class RemoteWorker(BaseWorker):
         env_name = self.config.get('conda_env', 'base')
         self._client = Client(self.config['dask_scheduler'])
 
+        dask_worker_urls = list(self._client.nthreads())
+        _check_dask_workers_single_machine(dask_worker_urls)
+
+        # Check if Dask workers are on the same host as the scheduler
+        self._is_local_cluster = (
+            urlparse(self.config['dask_scheduler']).hostname
+            == urlparse(dask_worker_urls[0]).hostname
+        )
+
         # Fail early if the Dask worker is not working properly
         self._client.submit(lambda: 1+1).result()
 
-        _check_dask_workers_single_machine(self._client.nthreads().keys())
-
         conda_info = self._client.submit(
-                _conda_info_envs, pure=False
+            _conda_info_envs, pure=False
         ).result()
 
         self._python_bin_path = _get_conda_env_path(conda_info, env_name, self)
@@ -118,8 +155,9 @@ class RemoteWorker(BaseWorker):
         output_training_dir = os.path.join(self.config['kit_dir'],
                                            'submissions', self.submission,
                                            'training_output')
-        if os.path.exists(output_training_dir):
-            shutil.rmtree(output_training_dir)
+        self._client.submit(
+            shutil.rmtree, output_training_dir, ignore_errors=True, pure=False
+        ).result()
         super().teardown()
         self._client.close()
 
@@ -159,6 +197,10 @@ class RemoteWorker(BaseWorker):
                              'launch a new one.')
 
         self._log_dir = os.path.join(self.config['logs_dir'], self.submission)
+        if self._local_cluster:
+            # need to copy submission to the remote folder
+            raise NotImplementedError
+
         self._proc = self._client.submit(
             _conda_ramp_test_submission,
             self.config,
@@ -190,8 +232,9 @@ class RemoteWorker(BaseWorker):
                 returncode = self._proc.result()
             except CancelledError:
                 pass
-            with open(os.path.join(self._log_dir, 'log'), 'rb') as f:
-                log_output = f.read()
+            log_output = self._client.submit(
+                _read_file, os.path.join(self._log_dir, 'log'), pure=False
+            ).result()
             error_msg = _get_traceback(log_output.decode('utf-8'))
             if self.status == 'timeout':
                 error_msg += ('\nWorker killed due to timeout after {}s.'
@@ -203,15 +246,23 @@ class RemoteWorker(BaseWorker):
             output_training_dir = os.path.join(
                 self.config['submissions_dir'], self.submission,
                 'training_output')
-            if os.path.exists(pred_dir):
-                shutil.rmtree(pred_dir)
+            self._client.submit(
+                shutil.rmtree, pred_dir, ignore_errors=True, pure=False
+            ).result()
             if returncode:
-                if os.path.exists(output_training_dir):
-                    shutil.rmtree(output_training_dir)
+                self._client.submit(
+                    shutil.rmtree,
+                    output_training_dir,
+                    ignore_errors=True,
+                    pure=False
+                ).result()
                 self.status = 'collected'
                 return (returncode, error_msg)
-            # copy the predictions into the disk
-            # no need to create the directory, it will be handle by copytree
-            shutil.copytree(output_training_dir, pred_dir)
+            # copy predictions from the remote training directory
+            # to the local prediction folder
+            stream = self._client.submit(
+                _serialize_folder, output_training_dir, pure=False
+            ).result()
+            _deserialize_folder(stream, pred_dir)
             self.status = 'collected'
             return (returncode, error_msg)
