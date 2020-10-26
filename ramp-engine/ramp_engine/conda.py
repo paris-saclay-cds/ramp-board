@@ -31,16 +31,12 @@ def _get_conda_env_path(conda_info: Dict, env_name: str, worker=None) -> str:
             raise ValueError('Only the conda base environment exist. You '
                              'need to create the "{}" conda environment '
                              'to use it.'.format(env_name))
-        is_env_found = False
         for env in envs_path:
             if env_name == os.path.split(env)[-1]:
-                is_env_found = True
                 return os.path.join(env, 'bin')
-                break
-        if not is_env_found:
-            worker.status = 'error'
-            raise ValueError(f'The specified conda environment {env_name} '
-                             f'does not exist. You need to create it.')
+        worker.status = 'error'
+        raise ValueError(f'The specified conda environment {env_name} '
+                         f'does not exist. You need to create it.')
 
 
 def _conda_ramp_test_submission(config: Dict, submission: str, cmd_ramp: str,
@@ -67,5 +63,6 @@ def _conda_ramp_test_submission(config: Dict, submission: str, cmd_ramp: str,
         # to be blocking with dask, since dask has another mechanism for
         # cancelling tasks.
         proc.communicate()
+        return proc.returncode
     else:
         return proc, log_file

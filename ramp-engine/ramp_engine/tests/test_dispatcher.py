@@ -39,6 +39,8 @@ def session_toy(database_connection):
 
 def _update_worker_config(event_config, Worker):
     if issubclass(Worker, RemoteWorker):
+        pytest.importorskip('dask')
+        pytest.importorskip('dask.distributed')
         event_config['worker']['dask_scheduler'] = None
         event_config['worker']['worker_type'] = 'remote'
 

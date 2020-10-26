@@ -184,9 +184,10 @@ class RemoteWorker(BaseWorker):
 
         super().collect_results()
         if self.status in ['finished', 'running', 'timeout']:
-            # communicate() will wait for the process to be completed
+            returncode = 1
             try:
-                self._proc.result()
+                # Wait for the computation to run.
+                returncode = self._proc.result()
             except CancelledError:
                 pass
             with open(os.path.join(self._log_dir, 'log'), 'rb') as f:
@@ -195,10 +196,7 @@ class RemoteWorker(BaseWorker):
             if self.status == 'timeout':
                 error_msg += ('\nWorker killed due to timeout after {}s.'
                               .format(self.timeout))
-            if self.status == 'timeout':
                 returncode = 124
-            else:
-                returncode = self._proc.cancelled()
             pred_dir = os.path.join(
                 self.config['predictions_dir'], self.submission
             )
