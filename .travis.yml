@@ -16,6 +16,10 @@ install:
     - conda env update -n testenv -f environment.yml
     - conda env create -f ci_tools/environment_iris_kit.yml
     - source activate testenv
+    - |
+      if [ "$PYTHON_VERSION" == "3.8" ]; then
+         pip install dask dask-distributed
+      fi
     - make inplace
 script:
     - python -m smtpd -n -c DebuggingServer localhost:8025 &
