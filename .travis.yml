@@ -18,7 +18,7 @@ install:
     - source activate testenv
     - |
       if [ "$PYTHON_VERSION" == "3.8" ]; then
-         pip install dask dask-distributed
+         pip install dask distributed
       fi
     - make inplace
 script:
