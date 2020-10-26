@@ -1,13 +1,38 @@
 import logging
 import os
 import shutil
-import subprocess
 from datetime import datetime
+from typing import List
+from urllib.parse import urlparse
 
-from ..base import BaseWorker, _get_traceback
-from ..conda import _conda_info_envs, _get_conda_env_path
+from .base import BaseWorker, _get_traceback
+from .conda import _conda_info_envs, _get_conda_env_path
+from .conda import _conda_ramp_test_submission
 
 logger = logging.getLogger('RAMP-WORKER')
+
+
+def _check_dask_workers_single_machine(worker_urls: List[str]) -> bool:
+    """Check that all Dask workers are running on a single machine
+
+    The expected usage is as follows
+
+    .. code-block:: python
+
+        from dask.distributed import Client
+
+        client = Client(...)
+        _check_dask_workers_single_machine(client.nthreads().keys())
+    """
+    worker_hosts = set(urlparse(url).hostname for url in worker_urls)
+    if None in worker_hosts:
+        # skip hostnames that couldn't ne parsed
+        worker_hosts.remove(None)
+    if len(worker_hosts) == 1 and worker_hosts != {None}:
+        return True
+    else:
+        raise ValueError(f'All dask workers should be on 1 machine, '
+                         f'found {len(worker_hosts)}: {worker_hosts}')
 
 
 class RemoteWorker(BaseWorker):
@@ -65,16 +90,18 @@ class RemoteWorker(BaseWorker):
         from dask.distributed import Client
 
         # sanity check for the configuration variable
-        for required_param in ('conda_env', 'kit_dir', 'data_dir',
-                               'submissions_dir', 'logs_dir',
-                               'predictions_dir', 'dask_scheduler'):
+        for required_param in ('kit_dir', 'data_dir', 'submissions_dir',
+                               'logs_dir', 'predictions_dir',
+                               'dask_scheduler'):
             self._check_config_name(self.config, required_param)
         # find the path to the conda environment
-        env_name = self.config['conda_env']
+        env_name = self.config.get('conda_env', 'base')
         self._client = Client(self.config['dask_scheduler'])
 
         # Fail early if the Dask worker is not working properly
         self._client.submit(lambda: 1+1).result()
+
+        _check_dask_workers_single_machine(self._client.nthreads().keys())
 
         conda_info = self._client.submit(
                 _conda_info_envs, pure=False
@@ -94,6 +121,7 @@ class RemoteWorker(BaseWorker):
         if os.path.exists(output_training_dir):
             shutil.rmtree(output_training_dir)
         super().teardown()
+        self._client.close()
 
     def _is_submission_finished(self):
         """Status of the submission.
@@ -102,7 +130,7 @@ class RemoteWorker(BaseWorker):
         indicate the status of this subprocess.
         """
         self.check_timeout()
-        return False if self._proc.poll() is None else True
+        return self._proc.done()
 
     def check_timeout(self):
         """Check the submission for timeout."""
@@ -110,7 +138,7 @@ class RemoteWorker(BaseWorker):
             return
         dt = (datetime.utcnow() - self._start_date).total_seconds()
         if dt > self.timeout:
-            self._proc.kill()
+            self._proc.cancel()
             self.status = "timeout"
             return True
 
@@ -129,21 +157,18 @@ class RemoteWorker(BaseWorker):
         if self.status == 'running':
             raise ValueError('Wait that the submission is processed before to '
                              'launch a new one.')
+
         self._log_dir = os.path.join(self.config['logs_dir'], self.submission)
-        if not os.path.exists(self._log_dir):
-            os.makedirs(self._log_dir)
-        self._log_file = open(os.path.join(self._log_dir, 'log'), 'wb+')
-        self._proc = subprocess.Popen(
-            [cmd_ramp,
-             '--submission', self.submission,
-             '--ramp-kit-dir', self.config['kit_dir'],
-             '--ramp-data-dir', self.config['data_dir'],
-             '--ramp-submission-dir', self.config['submissions_dir'],
-             '--save-output',
-             '--ignore-warning'],
-            stdout=self._log_file,
-            stderr=self._log_file,
+        self._proc = self._client.submit(
+            _conda_ramp_test_submission,
+            self.config,
+            self.submission,
+            cmd_ramp,
+            self._log_dir,
+            wait=True,
+            pure=False,
         )
+
         super().launch_submission()
         self._start_date = datetime.utcnow()
 
@@ -155,11 +180,15 @@ class RemoteWorker(BaseWorker):
         to be processed. Use ``worker.status`` to know the status of the worker
         beforehand.
         """
+        from distributed.utils import CancelledError
+
         super().collect_results()
         if self.status in ['finished', 'running', 'timeout']:
             # communicate() will wait for the process to be completed
-            self._proc.communicate()
-            self._log_file.close()
+            try:
+                self._proc.result()
+            except CancelledError:
+                pass
             with open(os.path.join(self._log_dir, 'log'), 'rb') as f:
                 log_output = f.read()
             error_msg = _get_traceback(log_output.decode('utf-8'))
@@ -169,7 +198,7 @@ class RemoteWorker(BaseWorker):
             if self.status == 'timeout':
                 returncode = 124
             else:
-                returncode = self._proc.returncode
+                returncode = self._proc.cancelled()
             pred_dir = os.path.join(
                 self.config['predictions_dir'], self.submission
             )

@@ -41,3 +41,31 @@ def _get_conda_env_path(conda_info: Dict, env_name: str, worker=None) -> str:
             worker.status = 'error'
             raise ValueError(f'The specified conda environment {env_name} '
                              f'does not exist. You need to create it.')
+
+
+def _conda_ramp_test_submission(config: Dict, submission: str, cmd_ramp: str,
+                                log_dir: str, wait: bool = False):
+    import os
+    import subprocess
+
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    log_file = open(os.path.join(log_dir, 'log'), 'wb+')
+    proc = subprocess.Popen(
+        [cmd_ramp,
+         '--submission', submission,
+         '--ramp-kit-dir', config['kit_dir'],
+         '--ramp-data-dir', config['data_dir'],
+         '--ramp-submission-dir', config['submissions_dir'],
+         '--save-output',
+         '--ignore-warning'],
+        stdout=log_file,
+        stderr=log_file,
+    )
+    if wait:
+        # Wait untill process completes. In particular, we need this call
+        # to be blocking with dask, since dask has another mechanism for
+        # cancelling tasks.
+        proc.communicate()
+    else:
+        return proc, log_file

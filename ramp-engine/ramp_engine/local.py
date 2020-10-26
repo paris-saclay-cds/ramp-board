@@ -1,11 +1,11 @@
 import logging
 import os
 import shutil
-import subprocess
 from datetime import datetime
 
 from .base import BaseWorker, _get_traceback
 from .conda import _conda_info_envs, _get_conda_env_path
+from .conda import _conda_ramp_test_submission
 
 logger = logging.getLogger('RAMP-WORKER')
 
@@ -114,19 +114,12 @@ class CondaEnvWorker(BaseWorker):
             raise ValueError('Wait that the submission is processed before to '
                              'launch a new one.')
         self._log_dir = os.path.join(self.config['logs_dir'], self.submission)
-        if not os.path.exists(self._log_dir):
-            os.makedirs(self._log_dir)
-        self._log_file = open(os.path.join(self._log_dir, 'log'), 'wb+')
-        self._proc = subprocess.Popen(
-            [cmd_ramp,
-             '--submission', self.submission,
-             '--ramp-kit-dir', self.config['kit_dir'],
-             '--ramp-data-dir', self.config['data_dir'],
-             '--ramp-submission-dir', self.config['submissions_dir'],
-             '--save-output',
-             '--ignore-warning'],
-            stdout=self._log_file,
-            stderr=self._log_file,
+        self._proc, self._log_file = _conda_ramp_test_submission(
+            self.config,
+            self.submission,
+            cmd_ramp,
+            self._log_dir,
+            wait=False,
         )
         super().launch_submission()
         self._start_date = datetime.utcnow()

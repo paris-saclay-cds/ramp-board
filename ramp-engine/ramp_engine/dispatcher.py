@@ -29,6 +29,7 @@ from ramp_utils import generate_worker_config
 from ramp_utils import read_config
 
 from .local import CondaEnvWorker
+from .remote import RemoteWorker
 
 logger = logging.getLogger('RAMP-DISPATCHER')
 

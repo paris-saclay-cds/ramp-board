@@ -17,7 +17,10 @@ from ramp_database.tools.submission import get_submissions
 from ramp_database.tools.submission import get_submission_by_id
 
 from ramp_engine.local import CondaEnvWorker
+from ramp_engine.remote import RemoteWorker
 from ramp_engine.dispatcher import Dispatcher
+
+ALL_WORKERS = [CondaEnvWorker, RemoteWorker]
 
 
 @pytest.fixture
@@ -34,11 +37,19 @@ def session_toy(database_connection):
         Model.metadata.drop_all(db)
 
 
-def test_integration_dispatcher(session_toy):
+def _update_worker_config(event_config, Worker):
+    if issubclass(Worker, RemoteWorker):
+        event_config['worker']['dask_scheduler'] = None
+        event_config['worker']['worker_type'] = 'remote'
+
+
+@pytest.mark.parametrize('Worker', ALL_WORKERS)
+def test_integration_dispatcher(session_toy, Worker):
     config = read_config(database_config_template())
     event_config = read_config(ramp_config_template())
+    _update_worker_config(event_config, Worker)
     dispatcher = Dispatcher(
-        config=config, event_config=event_config, worker=CondaEnvWorker,
+        config=config, event_config=event_config, worker=Worker,
         n_workers=-1, hunger_policy='exit'
     )
     dispatcher.launch()
@@ -52,14 +63,16 @@ def test_integration_dispatcher(session_toy):
     assert 'ValueError' in submission.error_msg
 
 
-def test_unit_test_dispatcher(session_toy):
+@pytest.mark.parametrize('Worker', ALL_WORKERS)
+def test_unit_test_dispatcher(session_toy, Worker):
     # make sure that the size of the list is bigger than the number of
     # submissions
     config = read_config(database_config_template())
     event_config = read_config(ramp_config_template())
+    _update_worker_config(event_config, Worker)
     dispatcher = Dispatcher(config=config,
                             event_config=event_config,
-                            worker=CondaEnvWorker, n_workers=100,
+                            worker=Worker, n_workers=100,
                             hunger_policy='exit')
 
     # check that all the queue are empty
@@ -102,15 +115,17 @@ def test_unit_test_dispatcher(session_toy):
 @pytest.mark.parametrize(
     "n_threads", [None, 4]
 )
-def test_dispatcher_num_threads(n_threads):
+@pytest.mark.parametrize('Worker', ALL_WORKERS)
+def test_dispatcher_num_threads(n_threads, Worker):
     libraries = ('OMP', 'MKL', 'OPENBLAS')
     config = read_config(database_config_template())
     event_config = read_config(ramp_config_template())
+    _update_worker_config(event_config, Worker)
 
     # check that by default we don't set the environment by default
     dispatcher = Dispatcher(config=config,
                             event_config=event_config,
-                            worker=CondaEnvWorker, n_workers=100,
+                            worker=Worker, n_workers=100,
                             n_threads=n_threads,
                             hunger_policy='exit')
     if n_threads is None:
@@ -137,11 +152,13 @@ def test_dispatcher_error():
                    hunger_policy='exit')
 
 
-def test_dispatcher_timeout(session_toy):
+@pytest.mark.parametrize('Worker', ALL_WORKERS)
+def test_dispatcher_timeout(session_toy, Worker):
     config = read_config(database_config_template())
     event_config = read_config(ramp_config_template())
+    _update_worker_config(event_config, Worker)
     dispatcher = Dispatcher(
-        config=config, event_config=event_config, worker=CondaEnvWorker,
+        config=config, event_config=event_config, worker=Worker,
         n_workers=-1, hunger_policy='exit'
     )
     # override the timeout of the worker

@@ -26,3 +26,4 @@ test_submissions/submission*
 databoard.db
 db_engine.yml
 prof
+dask-worker-space/
