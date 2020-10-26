@@ -197,9 +197,7 @@ class RemoteWorker(BaseWorker):
                              'launch a new one.')
 
         self._log_dir = os.path.join(self.config['logs_dir'], self.submission)
-        if self._local_cluster:
-            # need to copy submission to the remote folder
-            raise NotImplementedError
+        # TODO: need to copy submission to the remote folder
 
         self._proc = self._client.submit(
             _conda_ramp_test_submission,
