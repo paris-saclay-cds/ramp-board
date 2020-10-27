@@ -7,7 +7,8 @@ DEFAULT_CONFIG = {
     'MAX_CONTENT_LENGTH': 1073741824,
     'SQLALCHEMY_TRACK_MODIFICATIONS': False,
     'TRACK_USER_INTERACTION': False,
-    'DOMAIN_NAME': 'localhost'
+    'TRACK_CREDITS': True,
+    'DOMAIN_NAME': 'localhost',
 }
 
 

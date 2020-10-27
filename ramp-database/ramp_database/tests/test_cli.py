@@ -311,3 +311,17 @@ def test_update_all_user_leaderboards(make_toy_db):
                                   '--event', 'iris_test'],
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output
+
+
+def test_compute_contributivity():
+    runner = CliRunner()
+    ramp_config = generate_ramp_config(read_config(ramp_config_template()))
+    result = runner.invoke(
+        main, ['compute-contributivity',
+               '--config', database_config_template(),
+               '--event', 'iris_test',
+               '--ramp-kit-dir', ramp_config['ramp_kit_dir'],
+               '--ramp-data-dir', ramp_config['ramp_data_dir'],
+               '--ramp-predictions-dir', ramp_config['ramp_predictions_dir']],
+        catch_exceptions=False)
+    assert result.exit_code == 0, result.output
