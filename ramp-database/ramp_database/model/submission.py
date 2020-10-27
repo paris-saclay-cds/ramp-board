@@ -1,4 +1,4 @@
-import o://github.com/paris-saclay-cds/ramp-board/blob/advanced/ramp-database/ramp_database/models
+import os
 import hashlib
 import datetime
 
