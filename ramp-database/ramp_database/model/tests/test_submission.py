@@ -496,9 +496,6 @@ def test_submission_on_cv_fold_model_train_scores(session_scope_module):
                              .first())
     # Set fake predictions to compute the score
     cv_fold.state = 'trained'
-    cv_fold.full_train_y_pred = np.empty((120, 3))
-    cv_fold.full_train_y_pred[:, 0] = 1
-    cv_fold.full_train_y_pred[:, 1:] = 0
     cv_fold.compute_train_scores()
     for score in cv_fold.scores:
         if score.name == 'acc':
@@ -520,9 +517,6 @@ def test_submission_on_cv_fold_model_valid_scores(session_scope_module):
                              .first())
     # Set fake predictions to compute the score
     cv_fold.state = 'validated'
-    cv_fold.full_train_y_pred = np.empty((120, 3))
-    cv_fold.full_train_y_pred[:, 0] = 1
-    cv_fold.full_train_y_pred[:, 1:] = 0
     cv_fold.compute_valid_scores()
     for score in cv_fold.scores:
         if score.name == 'acc':
