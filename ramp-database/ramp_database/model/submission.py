@@ -974,11 +974,12 @@ class SubmissionOnCVFold(Model):
         """bool: Whether or not the submission failed at one of the stage."""
         return 'error' in self.state
 
+    # TODO: untested, doesn't work but never used in the current setup
     @property
     def path_predictions(self):
         return os.path.join(
             self.submission.event.path_ramp_submissions,
-            '{}'.format(self.submission_id),
+            self.submission.name,
             'training_output', 'fold_{}'.format(self.cv_fold_id))
 
     # prediction on the full training set, including train and valid points

@@ -431,15 +431,15 @@ def test_submission_on_cv_fold_model_is_error(session_scope_module,
     assert cv_fold.is_error is expected_state
 
 
-#def test_submission_on_cv_fold_model_predictions(session_scope_module):
-#    cv_fold = \
-#        (session_scope_module.query(SubmissionOnCVFold)
-#                             .filter(SubmissionOnCVFold.submission_id == 5)
-#                             .first())
-#    assert isinstance(cv_fold.full_train_predictions, BasePrediction)
-#    assert isinstance(cv_fold.train_predictions, BasePrediction)
-#    assert isinstance(cv_fold.valid_predictions, BasePrediction)
-#    assert isinstance(cv_fold.test_predictions, BasePrediction)
+# def test_submission_on_cv_fold_model_predictions(session_scope_module):
+#     cv_fold = \
+#         (session_scope_module.query(SubmissionOnCVFold)
+#                              .filter(SubmissionOnCVFold.submission_id == 5)
+#                              .first())
+#     assert isinstance(cv_fold.full_train_predictions, BasePrediction)
+#     assert isinstance(cv_fold.train_predictions, BasePrediction)
+#     assert isinstance(cv_fold.valid_predictions, BasePrediction)
+#     assert isinstance(cv_fold.test_predictions, BasePrediction)
 
 
 def test_submission_on_cv_fold_model_reset(session_scope_module):
