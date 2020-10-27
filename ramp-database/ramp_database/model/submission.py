@@ -881,10 +881,6 @@ class SubmissionOnCVFold(Model):
         The contributivity of the submission.
     best : bool
         Whether or not the submission is the best.
-    full_train_y_pred : ndarray
-        Predictions on the full training set.
-    test_y_pred : ndarray
-        Predictions on the testing set.
     train_time : float
         Computation time for the training set.
     valid_time : float
@@ -928,8 +924,6 @@ class SubmissionOnCVFold(Model):
 
     # prediction on the full training set, including train and valid points
     # properties train_predictions and valid_predictions will make the slicing
-    full_train_y_pred = Column(NumpyType, default=None)
-    test_y_pred = Column(NumpyType, default=None)
     train_time = Column(Float, default=0.0)
     valid_time = Column(Float, default=0.0)
     test_time = Column(Float, default=0.0)
@@ -985,6 +979,17 @@ class SubmissionOnCVFold(Model):
             self.submission.event.path_ramp_submissions, self.submission_id,
             'training_output', 'fold_{}'.format(self.cv_fold_id))
 
+    # prediction on the full training set, including train and valid points
+    @property
+    def full_train_y_pred(self):
+        return np.load(
+            os.path.join(self.path_predictions, 'y_pred_train.npz'))['y_pred']
+
+    @property
+    def test_y_pred(self):
+        return np.load(
+            os.path.join(self.path_predictions, 'y_pred_test.npz'))['y_pred']
+    
     # The following four functions are converting the stored numpy arrays
     # <>_y_pred into Prediction instances
     @property
@@ -1029,8 +1034,6 @@ class SubmissionOnCVFold(Model):
         """
         self.contributivity = 0.0
         self.best = False
-        self.full_train_y_pred = None
-        self.test_y_pred = None
         self.train_time = 0.0
         self.valid_time = 0.0
         self.test_time = 0.0
