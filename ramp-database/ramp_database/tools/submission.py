@@ -423,8 +423,6 @@ def get_time(session, submission_id):
     results = defaultdict(list)
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
-                           .options(defer("full_train_y_pred"),
-                                    defer("test_y_pred"))
                            .all())
     all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
@@ -453,8 +451,6 @@ def get_scores(session, submission_id):
     index = []
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
-                           .options(defer("full_train_y_pred"),
-                                    defer("test_y_pred"))
                            .all())
     all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
@@ -643,8 +639,6 @@ def set_predictions(session, submission_id, path_predictions):
     """
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
-                           .options(defer("full_train_y_pred"),
-                                    defer("test_y_pred"))
                            .all())
     all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
@@ -671,8 +665,6 @@ def set_time(session, submission_id, path_predictions):
     """
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
-                           .options(defer("full_train_y_pred"),
-                                    defer("test_y_pred"))
                            .all())
     all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
@@ -702,8 +694,6 @@ def set_scores(session, submission_id, path_predictions):
     """
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
-                           .options(defer("full_train_y_pred"),
-                                    defer("test_y_pred"))
                            .all())
     all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
@@ -815,8 +805,6 @@ def score_submission(session, submission_id):
     # manually if needed for submission in various error states.
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
-                           .options(defer("full_train_y_pred"),
-                                    defer("test_y_pred"))
                            .all())
     all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for submission_on_cv_fold in all_cv_folds:
