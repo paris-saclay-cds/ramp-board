@@ -448,13 +448,6 @@ def test_submission_on_cv_fold_model_reset(session_scope_module):
                              .filter(SubmissionOnCVFold.submission_id == 5)
                              .first())
     # set to non-default values]
-    cv_fold.full_train_y_pred = np.empty((120, 3))
-    cv_fold.full_train_y_pred[:, 0] = 1
-    cv_fold.full_train_y_pred[:, 1:] = 0
-    cv_fold.test_y_pred = np.ones(30)
-    cv_fold.test_y_pred = np.empty((30, 3))
-    cv_fold.test_y_pred[:, 0] = 1
-    cv_fold.test_y_pred[:, 1:] = 0
     cv_fold.contributivity = 0.3
     cv_fold.best = True
     cv_fold.train_time = 1
@@ -471,8 +464,6 @@ def test_submission_on_cv_fold_model_reset(session_scope_module):
     cv_fold.reset()
     assert cv_fold.contributivity == pytest.approx(0)
     assert cv_fold.best is False
-    assert cv_fold.full_train_y_pred is None
-    assert cv_fold.test_y_pred is None
     assert cv_fold.train_time == pytest.approx(0)
     assert cv_fold.valid_time == pytest.approx(0)
     assert cv_fold.test_time == pytest.approx(0)

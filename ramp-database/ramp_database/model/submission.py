@@ -977,7 +977,8 @@ class SubmissionOnCVFold(Model):
     @property
     def path_predictions(self):
         return os.path.join(
-            self.submission.event.path_ramp_submissions, self.submission_id,
+            self.submission.event.path_ramp_submissions,
+            {}.format(self.submission_id),
             'training_output', 'fold_{}'.format(self.cv_fold_id))
 
     # prediction on the full training set, including train and valid points
