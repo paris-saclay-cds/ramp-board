@@ -1,6 +1,7 @@
 import os
 import hashlib
 import datetime
+import numpy as np
 
 from sqlalchemy import Enum
 from sqlalchemy import Float
@@ -989,7 +990,7 @@ class SubmissionOnCVFold(Model):
     def test_y_pred(self):
         return np.load(
             os.path.join(self.path_predictions, 'y_pred_test.npz'))['y_pred']
-    
+
     # The following four functions are converting the stored numpy arrays
     # <>_y_pred into Prediction instances
     @property

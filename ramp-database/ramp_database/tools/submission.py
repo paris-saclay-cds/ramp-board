@@ -7,8 +7,6 @@ import shutil
 import numpy as np
 import pandas as pd
 
-from sqlalchemy.orm import defer
-
 from ..exceptions import DuplicateSubmissionError
 from ..exceptions import MissingExtensionError
 from ..exceptions import MissingSubmissionFileError
