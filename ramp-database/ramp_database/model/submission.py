@@ -978,7 +978,7 @@ class SubmissionOnCVFold(Model):
     def path_predictions(self):
         return os.path.join(
             self.submission.event.path_ramp_submissions,
-            {}.format(self.submission_id),
+            '{}'.format(self.submission_id),
             'training_output', 'fold_{}'.format(self.cv_fold_id))
 
     # prediction on the full training set, including train and valid points
@@ -1063,47 +1063,6 @@ class SubmissionOnCVFold(Model):
         self.reset()
         self.state = error
         self.error_msg = error_msg
-
-    def compute_train_scores(self):
-        """Compute all training scores."""
-        if self.is_trained:
-            true_train_predictions = \
-                self.submission.event.problem.ground_truths_train(
-                    self.cv_fold.train_is)
-            for score in self.scores:
-                score.train_score = float(score.score_function(
-                    true_train_predictions,
-                    self.train_predictions))
-        else:
-            for score in self.scores:
-                score.train_score = score.event_score_type.worst
-
-    def compute_valid_scores(self):
-        """Compute all validating scores."""
-        if self.is_validated:
-            true_valid_predictions = \
-                self.submission.event.problem.ground_truths_train(
-                    self.cv_fold.test_is)
-            for score in self.scores:
-                score.valid_score = float(score.score_function(
-                    true_valid_predictions,
-                    self.valid_predictions))
-        else:
-            for score in self.scores:
-                score.valid_score = score.event_score_type.worst
-
-    def compute_test_scores(self):
-        """Compute all testing scores."""
-        if self.is_tested:
-            true_test_predictions = \
-                self.submission.event.problem.ground_truths_test()
-            for score in self.scores:
-                score.test_score = float(score.score_function(
-                    true_test_predictions,
-                    self.test_predictions))
-        else:
-            for score in self.scores:
-                score.test_score = score.event_score_type.worst
 
 
 submission_similarity_type = Enum(

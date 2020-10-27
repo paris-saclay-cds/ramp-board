@@ -431,15 +431,15 @@ def test_submission_on_cv_fold_model_is_error(session_scope_module,
     assert cv_fold.is_error is expected_state
 
 
-def test_submission_on_cv_fold_model_predictions(session_scope_module):
-    cv_fold = \
-        (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
-                             .first())
-    assert isinstance(cv_fold.full_train_predictions, BasePrediction)
-    assert isinstance(cv_fold.train_predictions, BasePrediction)
-    assert isinstance(cv_fold.valid_predictions, BasePrediction)
-    assert isinstance(cv_fold.test_predictions, BasePrediction)
+#def test_submission_on_cv_fold_model_predictions(session_scope_module):
+#    cv_fold = \
+#        (session_scope_module.query(SubmissionOnCVFold)
+#                             .filter(SubmissionOnCVFold.submission_id == 5)
+#                             .first())
+#    assert isinstance(cv_fold.full_train_predictions, BasePrediction)
+#    assert isinstance(cv_fold.train_predictions, BasePrediction)
+#    assert isinstance(cv_fold.valid_predictions, BasePrediction)
+#    assert isinstance(cv_fold.test_predictions, BasePrediction)
 
 
 def test_submission_on_cv_fold_model_reset(session_scope_module):
@@ -486,72 +486,6 @@ def test_submission_on_cv_fold_model_error(session_scope_module):
     cv_fold.set_error(error, error_msg)
     assert cv_fold.state == error
     assert cv_fold.error_msg == error_msg
-
-
-@pytest.mark.filterwarnings('ignore:F-score is ill-defined and being set to')
-def test_submission_on_cv_fold_model_train_scores(session_scope_module):
-    cv_fold = \
-        (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
-                             .first())
-    # Set fake predictions to compute the score
-    cv_fold.state = 'trained'
-    cv_fold.compute_train_scores()
-    for score in cv_fold.scores:
-        if score.name == 'acc':
-            assert score.train_score == pytest.approx(0.3333333333333333)
-
-    # simulate that the training did not complete
-    cv_fold.state = 'training'
-    cv_fold.compute_train_scores()
-    for score in cv_fold.scores:
-        if score.name == 'acc':
-            assert score.train_score == pytest.approx(0)
-
-
-@pytest.mark.filterwarnings('ignore:F-score is ill-defined and being set to')
-def test_submission_on_cv_fold_model_valid_scores(session_scope_module):
-    cv_fold = \
-        (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
-                             .first())
-    # Set fake predictions to compute the score
-    cv_fold.state = 'validated'
-    cv_fold.compute_valid_scores()
-    for score in cv_fold.scores:
-        if score.name == 'acc':
-            assert score.valid_score == pytest.approx(0.3333333333333333)
-
-    # simulate that the training did not complete
-    cv_fold.state = 'training'
-    cv_fold.compute_valid_scores()
-    for score in cv_fold.scores:
-        if score.name == 'acc':
-            assert score.valid_score == pytest.approx(0)
-
-
-@pytest.mark.filterwarnings('ignore:F-score is ill-defined and being set to')
-def test_submission_on_cv_fold_model_test_scores(session_scope_module):
-    cv_fold = \
-        (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
-                             .first())
-    # Set fake predictions to compute the score
-    cv_fold.state = 'scored'
-    cv_fold.test_y_pred = np.empty((30, 3))
-    cv_fold.test_y_pred[:, 0] = 1
-    cv_fold.test_y_pred[:, 1:] = 0
-    cv_fold.compute_test_scores()
-    for score in cv_fold.scores:
-        if score.name == 'acc':
-            assert score.test_score == pytest.approx(0.3333333333333333)
-
-    # simulate that the training did not complete
-    cv_fold.state = 'training'
-    cv_fold.compute_test_scores()
-    for score in cv_fold.scores:
-        if score.name == 'acc':
-            assert score.test_score == pytest.approx(0)
 
 
 @pytest.mark.parametrize(
