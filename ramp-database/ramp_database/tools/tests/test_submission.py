@@ -4,8 +4,6 @@ import shutil
 
 import pytest
 
-import numpy as np
-from numpy.testing import assert_allclose
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
@@ -42,7 +40,6 @@ from ramp_database.tools.submission import add_submission_similarity
 
 from ramp_database.tools.submission import get_bagged_scores
 from ramp_database.tools.submission import get_event_nb_folds
-from ramp_database.tools.submission import get_predictions
 from ramp_database.tools.submission import get_scores
 from ramp_database.tools.submission import get_source_submissions
 from ramp_database.tools.submission import get_submission_by_id
