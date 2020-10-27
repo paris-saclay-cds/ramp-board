@@ -436,13 +436,6 @@ def test_submission_on_cv_fold_model_predictions(session_scope_module):
         (session_scope_module.query(SubmissionOnCVFold)
                              .filter(SubmissionOnCVFold.submission_id == 5)
                              .first())
-    # Set fake predictions to check the prediction properties
-    cv_fold.full_train_y_pred = np.empty((120, 3))
-    cv_fold.full_train_y_pred[:, 0] = 1
-    cv_fold.full_train_y_pred[:, 1:] = 0
-    cv_fold.test_y_pred = np.empty((30, 3))
-    cv_fold.test_y_pred[:, 0] = 1
-    cv_fold.test_y_pred[:, 1:] = 0
     assert isinstance(cv_fold.full_train_predictions, BasePrediction)
     assert isinstance(cv_fold.train_predictions, BasePrediction)
     assert isinstance(cv_fold.valid_predictions, BasePrediction)
