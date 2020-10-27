@@ -3,7 +3,6 @@ import os
 import shutil
 
 import pytest
-from sqlalchemy.orm import defer
 
 from ramp_utils import read_config
 from ramp_utils.testing import database_config_template
@@ -89,8 +88,6 @@ def test_sign_up_team(session_scope_function):
                          'estimator.py') in submission_file.path)
     # check the submission on cv fold
     cv_folds = (session_scope_function.query(SubmissionOnCVFold)
-                                      .options(defer("full_train_y_pred"),
-                                               defer("test_y_pred"))
                                       .all())
     for fold in cv_folds:
         assert fold.state == 'new'
