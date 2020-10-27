@@ -1,4 +1,4 @@
-import os
+import o://github.com/paris-saclay-cds/ramp-board/blob/advanced/ramp-database/ramp_database/models
 import hashlib
 import datetime
 
@@ -1094,61 +1094,6 @@ class SubmissionOnCVFold(Model):
         else:
             for score in self.scores:
                 score.test_score = score.event_score_type.worst
-
-    def update(self, detached_submission_on_cv_fold):
-        """Update the submission on CV Fold from a detached submission.
-
-        Parameters
-        ----------
-        detached_submission_on_cv_fold : \
-:class:`ramp_database.model.DetachedSubmissionOnCVFold`
-            The detached submission from which we will update the current
-            submission.
-        """
-        self.state = detached_submission_on_cv_fold.state
-        if self.is_error:
-            self.error_msg = detached_submission_on_cv_fold.error_msg
-        else:
-            if self.is_trained:
-                self.train_time = detached_submission_on_cv_fold.train_time
-            if self.is_validated:
-                self.valid_time = detached_submission_on_cv_fold.valid_time
-                self.full_train_y_pred = \
-                    detached_submission_on_cv_fold.full_train_y_pred
-            if self.is_tested:
-                self.test_time = detached_submission_on_cv_fold.test_time
-                self.test_y_pred = detached_submission_on_cv_fold.test_y_pred
-
-
-class DetachedSubmissionOnCVFold:
-    """Copy of SubmissionOnCVFold, all the fields we need in train and test.
-
-    It's because SQLAlchemy objects don't persist through
-    multiprocessing jobs. Maybe eliminated if we do the parallelization
-    differently, though I doubt it.
-    """
-
-    def __init__(self, submission_on_cv_fold):
-        self.train_is = submission_on_cv_fold.cv_fold.train_is
-        self.test_is = submission_on_cv_fold.cv_fold.test_is
-        self.full_train_y_pred = submission_on_cv_fold.full_train_y_pred
-        self.test_y_pred = submission_on_cv_fold.test_y_pred
-        self.state = submission_on_cv_fold.state
-        self.name = (submission_on_cv_fold.submission.event.name + '/' +
-                     submission_on_cv_fold.submission.team.name + '/' +
-                     submission_on_cv_fold.submission.name)
-        self.path = submission_on_cv_fold.submission.path
-        self.error_msg = submission_on_cv_fold.error_msg
-        self.train_time = submission_on_cv_fold.train_time
-        self.valid_time = submission_on_cv_fold.valid_time
-        self.test_time = submission_on_cv_fold.test_time
-        self.trained_submission = None
-        self.workflow = \
-            submission_on_cv_fold.submission.event.problem.workflow_object
-
-    def __repr__(self):
-        return ('Submission({}) on fold {}'
-                .format(self.name, str(self.train_is)[:10]))
 
 
 submission_similarity_type = Enum(
