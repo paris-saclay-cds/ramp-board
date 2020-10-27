@@ -29,7 +29,6 @@ __all__ = [
     'Extension',
     'SubmissionScoreOnCVFold',
     'SubmissionOnCVFold',
-    'DetachedSubmissionOnCVFold',
     'SubmissionSimilarity',
 ]
 
@@ -979,6 +978,12 @@ class SubmissionOnCVFold(Model):
     def is_error(self):
         """bool: Whether or not the submission failed at one of the stage."""
         return 'error' in self.state
+
+    @property
+    def path_predictions(self):
+        return os.path.join(
+            self.submission.event.path_ramp_submissions, self.submission_id,
+            'training_output', 'fold_{}'.format(self.cv_fold_id))
 
     # The following four functions are converting the stored numpy arrays
     # <>_y_pred into Prediction instances
