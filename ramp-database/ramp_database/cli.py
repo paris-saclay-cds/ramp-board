@@ -253,6 +253,41 @@ def delete_event(config, config_event, dry_run, from_disk, force):
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
+@click.option("--config-event", required=True,
+              help='Path to configuration file YAML format '
+              'containing the database information, eg config.yml')
+@click.option('--force', is_flag=True,
+              help='Flag to force a removal of the predictions from the disk, '
+                   'when an event is not in the database.')
+def delete_predictions(config, config_event, force):
+    """Delete event predictions from the disk."""
+    internal_config = read_config(config)
+    ramp_config = generate_ramp_config(config_event, config)
+    event_name = ramp_config["event_name"]
+
+    with session_scope(internal_config['sqlalchemy']) as session:
+        db_event = event_module.get_event(session, event_name)
+
+        if not db_event and not force:
+            err_msg = ('{} event not found in the database. If you want '
+                       'to force removing perdiction files from the disk use '
+                       'the option "--force".'
+                       .format(event_name))
+            raise click.ClickException(err_msg)
+
+        dir_to_remove = ramp_config["ramp_predictions_dir"]
+        if os.path.exists(dir_to_remove):
+            shutil.rmtree(dir_to_remove)
+            click.echo("Removed directory:\n{}".format(dir_to_remove))
+        else:
+            err_msg = ("Directory not found:\n{}".format(dir_to_remove))
+            raise click.ClickException(err_msg)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
 @click.option("--event", help='Name of the event')
 @click.option("--state", help='The state of the submissions to display')
 def get_submissions_by_state(config, event, state):
