@@ -4,8 +4,6 @@ import shutil
 
 import pytest
 
-import numpy as np
-from numpy.testing import assert_allclose
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
@@ -42,7 +40,6 @@ from ramp_database.tools.submission import add_submission_similarity
 
 from ramp_database.tools.submission import get_bagged_scores
 from ramp_database.tools.submission import get_event_nb_folds
-from ramp_database.tools.submission import get_predictions
 from ramp_database.tools.submission import get_scores
 from ramp_database.tools.submission import get_source_submissions
 from ramp_database.tools.submission import get_submission_by_id
@@ -54,14 +51,12 @@ from ramp_database.tools.submission import get_submissions
 from ramp_database.tools.submission import get_time
 
 from ramp_database.tools.submission import set_bagged_scores
-from ramp_database.tools.submission import set_predictions
 from ramp_database.tools.submission import set_scores
 from ramp_database.tools.submission import set_submission_error_msg
 from ramp_database.tools.submission import set_submission_max_ram
 from ramp_database.tools.submission import set_submission_state
 from ramp_database.tools.submission import set_time
 
-from ramp_database.tools.submission import score_submission
 from ramp_database.tools.submission import submit_starting_kits
 
 from ramp_database.tools.contributivity import compute_contributivity
@@ -408,26 +403,6 @@ def test_check_bagged_scores(session_scope_module):
     assert_frame_equal(scores, expected_df, check_less_precise=True)
 
 
-def test_check_predictions(session_scope_module):
-    # check both set_predictions and get_predictions
-    submission_id = 1
-    path_results = os.path.join(HERE, 'data', 'iris_predictions')
-    set_predictions(session_scope_module, submission_id, path_results)
-    predictions = get_predictions(session_scope_module, submission_id)
-    for fold_idx in range(2):
-        path_fold = os.path.join(path_results, 'fold_{}'.format(fold_idx))
-        expected_y_pred_train = np.load(
-            os.path.join(path_fold, 'y_pred_train.npz')
-        )['y_pred']
-        expected_y_pred_test = np.load(
-            os.path.join(path_fold, 'y_pred_test.npz')
-        )['y_pred']
-        assert_allclose(predictions.loc[fold_idx, 'y_pred_train'],
-                        expected_y_pred_train)
-        assert_allclose(predictions.loc[fold_idx, 'y_pred_test'],
-                        expected_y_pred_test)
-
-
 def test_check_submission_max_ram(session_scope_module):
     # check both get_submission_max_ram and set_submission_max_ram
     submission_id = 1
@@ -445,29 +420,6 @@ def test_check_submission_error_msg(session_scope_module):
                              expected_err_msg)
     err_msg = get_submission_error_msg(session_scope_module, submission_id)
     assert err_msg == expected_err_msg
-
-
-@pytest.mark.filterwarnings('ignore:F-score is ill-defined and being set')
-def test_score_submission(session_scope_module):
-    submission_id = 9
-    multi_index = pd.MultiIndex.from_product(
-        [[0, 1], ['train', 'valid', 'test']], names=['fold', 'step']
-    )
-    expected_df = pd.DataFrame(
-        {'acc': [0.604167, 0.583333, 0.733333, 0.604167, 0.583333, 0.733333],
-         'error': [0.395833, 0.416667, 0.266667, 0.395833, 0.416667, 0.266667],
-         'nll': [0.732763, 2.194549, 0.693464, 0.746132, 2.030762, 0.693992],
-         'f1_70': [0.333333, 0.33333, 0.666667, 0.33333, 0.33333, 0.666667]},
-        index=multi_index
-    )
-    path_results = os.path.join(HERE, 'data', 'iris_predictions')
-    with pytest.raises(ValueError, match='Submission state must be "tested"'):
-        score_submission(session_scope_module, submission_id)
-    set_submission_state(session_scope_module, submission_id, 'tested')
-    set_predictions(session_scope_module, submission_id, path_results)
-    score_submission(session_scope_module, submission_id)
-    scores = get_scores(session_scope_module, submission_id)
-    assert_frame_equal(scores, expected_df, check_less_precise=True)
 
 
 def test_get_source_submission(session_scope_module):

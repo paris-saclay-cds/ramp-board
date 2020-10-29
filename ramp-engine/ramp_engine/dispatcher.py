@@ -12,7 +12,6 @@ from ramp_database.tools.submission import get_submission_by_id
 from ramp_database.tools.submission import get_submission_state
 
 from ramp_database.tools.submission import set_bagged_scores
-# from ramp_database.tools.submission import set_predictions
 from ramp_database.tools.submission import set_time
 from ramp_database.tools.submission import set_scores
 from ramp_database.tools.submission import set_submission_error_msg
@@ -220,10 +219,6 @@ class Dispatcher:
             path_predictions = os.path.join(
                 self._worker_config['predictions_dir'], submission_name
             )
-            # NOTE: In the past we were adding the predictions into the
-            # database. Since they require too much space, we stop to store
-            # them in the database and instead, keep it onto the disk.
-            # set_predictions(session, submission_id, path_predictions)
             set_time(session, submission_id, path_predictions)
             set_scores(session, submission_id, path_predictions)
             set_bagged_scores(session, submission_id, path_predictions)
