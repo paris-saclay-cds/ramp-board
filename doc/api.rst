@@ -206,7 +206,6 @@ Submission-related database tools
    :toctree: generated/
    :template: function.rst
 
-   tools.submission.score_submission
    tools.submission.submit_starting_kits
 
 **Functions to add new entries in the database**
@@ -229,7 +228,6 @@ Submission-related database tools
 
    tools.submission.get_event_nb_folds
    tools.database.get_extension
-   tools.submission.get_predictions
    tools.submission.get_scores
    tools.submission.get_source_submissions
    tools.submission.get_submissions
@@ -248,7 +246,6 @@ Submission-related database tools
    :template: function.rst
 
    tools.submission.set_bagged_scores
-   tools.submission.set_predictions
    tools.submission.set_scores
    tools.submission.set_submission_error_msg
    tools.submission.set_submission_max_ram
