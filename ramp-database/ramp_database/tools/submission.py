@@ -376,33 +376,6 @@ def get_submission_state(session, submission_id):
     return submission.state
 
 
-def get_predictions(session, submission_id):
-    """Get the predictions from the database of a submission.
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-    submission_id : int
-        The id of the submission.
-
-    Returns
-    -------
-    predictions : pd.DataFrame
-        A pandas dataframe containing the predictions on each fold.
-    """
-    results = defaultdict(list)
-    all_cv_folds = (session.query(SubmissionOnCVFold)
-                           .filter_by(submission_id=submission_id)
-                           .all())
-    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
-    for fold_id, cv_fold in enumerate(all_cv_folds):
-        results['fold'].append(fold_id)
-        results['y_pred_train'].append(cv_fold.full_train_y_pred)
-        results['y_pred_test'].append(cv_fold.test_y_pred)
-    return pd.DataFrame(results).set_index('fold')
-
-
 def get_time(session, submission_id):
     """Get the computation time for each fold of a submission.
 

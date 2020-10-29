@@ -229,7 +229,6 @@ Submission-related database tools
 
    tools.submission.get_event_nb_folds
    tools.database.get_extension
-   tools.submission.get_predictions
    tools.submission.get_scores
    tools.submission.get_source_submissions
    tools.submission.get_submissions
