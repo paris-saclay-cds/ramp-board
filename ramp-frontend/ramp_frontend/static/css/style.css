@@ -278,6 +278,9 @@ a:hover {
   line-height: 50px;
   vertical-align: middle;
 }
+.app-footer .wrapper > span {
+  margin-right: 20px;
+}
 .app-container .content-container {
   margin-right: 0;
   margin-left: 0;
