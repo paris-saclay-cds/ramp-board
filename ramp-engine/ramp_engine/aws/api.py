@@ -159,12 +159,20 @@ def launch_ec2_instances(config, nb=1):
             ValidFrom=now,
             ValidUntil=now + request_wait,
         )
-        time.sleep(request_wait)
         # check status of request
-        if response['status']['code'] == 'fulfilled':
-            on_demand = False
-        else:
+        waiter = client.get_waiter('spot_instance_request_fulfilled')
+        request_id = \
+            response['SpotInstanceRequests'][0]['SpotInstanceRequestId']
+        try:
+            waiter.wait(SpotInstanceRequestIds=[request_id])
+        except botocore.exceptions.WaiterError:
             on_demand = True
+
+        status_code = response['SpotInstanceRequests'][0]['status']['code']
+        if status_code == 'fulfilled':
+            on_demand = False
+            instance_id = response['SpotInstanceRequests'][0]['InstanceId']
+            instances = list(resource.Instance(instance_id))
 
     if on_demand or not use_spot_instance:
         instances = resource.create_instances(
@@ -176,12 +184,12 @@ def launch_ec2_instances(config, nb=1):
             TagSpecifications=tags,
             SecurityGroups=[security_group],
         )
-    # Wait until AMI is okay
-    waiter = client.get_waiter('instance_status_ok')
-    try:
-        waiter.wait(InstanceIds=[instance.id for instance in instances])
-    except botocore.exceptions.WaiterError:
-        return None
+        # Wait until AMI is okay
+        waiter = client.get_waiter('instance_status_ok')
+        try:
+            waiter.wait(InstanceIds=[instance.id for instance in instances])
+        except botocore.exceptions.WaiterError:
+            return None
     return instances
 
 
