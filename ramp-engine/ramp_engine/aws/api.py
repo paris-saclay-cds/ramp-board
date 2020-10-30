@@ -5,6 +5,7 @@ import logging
 import subprocess
 import re
 import codecs
+from datetime import datetime
 
 # amazon api
 import botocore  # noqa
@@ -41,6 +42,7 @@ AMI_IMAGE_ID_FIELD = 'ami_image_id'
 AMI_IMAGE_NAME_FIELD = 'ami_image_name'
 AMI_USER_NAME_FIELD = 'ami_user_name'
 INSTANCE_TYPE_FIELD = 'instance_type'
+USE_SPOT_INSTANCE_FIELD = 'use_spot_instance'
 KEY_PATH_FIELD = 'key_path'
 KEY_NAME_FIELD = 'key_name'
 SECURITY_GROUP_FIELD = 'security_group'
@@ -71,6 +73,7 @@ ALL_FIELDS = [
     AMI_IMAGE_NAME_FIELD,
     AMI_USER_NAME_FIELD,
     INSTANCE_TYPE_FIELD,
+    USE_SPOT_INSTANCE_FIELD,
     KEY_PATH_FIELD,
     KEY_NAME_FIELD,
     SECURITY_GROUP_FIELD,
@@ -113,6 +116,7 @@ def launch_ec2_instances(config, nb=1):
     """
     Launch new ec2 instance(s)
     """
+    use_spot_instance = config.get(USE_SPOT_INSTANCE_FIELD)
     ami_image_id = config.get(AMI_IMAGE_ID_FIELD)
     ami_name = config.get(AMI_IMAGE_NAME_FIELD)
     if ami_image_id and ami_name:
@@ -140,15 +144,38 @@ def launch_ec2_instances(config, nb=1):
     sess = _get_boto_session(config)
     client = sess.client('ec2')
     resource = sess.resource('ec2')
-    instances = resource.create_instances(
-        ImageId=ami_image_id,
-        MinCount=nb,
-        MaxCount=nb,
-        InstanceType=instance_type,
-        KeyName=key_name,
-        TagSpecifications=tags,
-        SecurityGroups=[security_group],
-    )
+
+    if use_spot_instance:
+        now = datetime.utcnow()
+        request_wait = datetime.timedelta(minutes=10)
+        response = client.request_spot_instances(
+            ImageId=ami_image_id,
+            InstanceCount=nb,
+            InstanceType=instance_type,
+            KeyName=key_name,
+            TagSpecifications=tags,
+            SecurityGroups=[security_group],
+            Type='one-time',
+            ValidFrom=now,
+            ValidUntil=now + request_wait,
+        )
+        time.sleep(request_wait)
+        # check status of request
+        if response['status']['code'] == 'fulfilled':
+            on_demand = False
+        else:
+            on_demand = True
+
+    if on_demand or not use_spot_instance:
+        instances = resource.create_instances(
+            ImageId=ami_image_id,
+            MinCount=nb,
+            MaxCount=nb,
+            InstanceType=instance_type,
+            KeyName=key_name,
+            TagSpecifications=tags,
+            SecurityGroups=[security_group],
+        )
     # Wait until AMI is okay
     waiter = client.get_waiter('instance_status_ok')
     try:
