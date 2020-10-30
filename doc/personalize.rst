@@ -59,5 +59,5 @@ You can add personalized messages to the Sign Up and Login pages, as follows,
 where ``login_instructions`` and ``sign_up_instructions`` can be either a path to an HTML
 file, or directly the HTML contents.
 
-By including HTML code with JavaScripts, these field can also be used to customize the
+By including HTML code with JavaScript, these field can also be used to customize the
 Sign Up and Login forms.
