@@ -86,9 +86,6 @@ class Dispatcher:
            submissions, as the check for collection will be done through SSH.
            Thus, if the time between checks is too small, the repetitive
            SSH requests may be potentially blocked by the cloud provider.
-    use_spot_instance : bool, default=False
-        Whether or not to use AWS spot instance. Only relevant when using AWS
-        worker.
     """
     def __init__(self, config, event_config, worker=None, n_workers=1,
                  n_threads=None, hunger_policy=None,
