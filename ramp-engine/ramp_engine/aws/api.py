@@ -5,7 +5,7 @@ import logging
 import subprocess
 import re
 import codecs
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # amazon api
 import botocore  # noqa
@@ -147,17 +147,20 @@ def launch_ec2_instances(config, nb=1):
 
     if use_spot_instance:
         now = datetime.utcnow()
-        request_wait = datetime.timedelta(minutes=10)
+        request_wait = timedelta(minutes=10)
         response = client.request_spot_instances(
-            ImageId=ami_image_id,
+            AvailabilityZoneGroup=config[REGION_NAME_FIELD],
             InstanceCount=nb,
-            InstanceType=instance_type,
-            KeyName=key_name,
+            LaunchSpecification={
+                'SecurityGroups': [security_group],
+                'ImageId': ami_image_id,
+                'InstanceType': instance_type,
+                'KeyName': key_name,
+            },
             TagSpecifications=tags,
-            SecurityGroups=[security_group],
             Type='one-time',
             ValidFrom=now,
-            ValidUntil=now + request_wait,
+            ValidUntil=(now + request_wait),
         )
         # check status of request
         waiter = client.get_waiter('spot_instance_request_fulfilled')
