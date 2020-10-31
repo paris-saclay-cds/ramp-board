@@ -148,6 +148,7 @@ def launch_ec2_instances(config, nb=1):
     if use_spot_instance:
         now = datetime.utcnow()
         request_wait = timedelta(minutes=10)
+        tags[0]['ResourceType'] = ''
         response = client.request_spot_instances(
             AvailabilityZoneGroup=config[REGION_NAME_FIELD],
             InstanceCount=nb,
@@ -175,7 +176,9 @@ def launch_ec2_instances(config, nb=1):
         if status_code == 'fulfilled':
             on_demand = False
             instance_id = response['SpotInstanceRequests'][0]['InstanceId']
-            instances = list(resource.Instance(instance_id))
+            instance = resource.Instance(instance_id)
+            instance.create_tags(Tags=tags)
+            instances = list(instance)
 
     if on_demand or not use_spot_instance:
         instances = resource.create_instances(
