@@ -146,9 +146,8 @@ def launch_ec2_instances(config, nb=1):
     resource = sess.resource('ec2')
 
     if use_spot_instance:
-        now = datetime.utcnow()
+        now = datetime.utcnow() + timedelta(seconds=5)
         request_wait = timedelta(minutes=10)
-        tags[0]['ResourceType'] = ''
         response = client.request_spot_instances(
             AvailabilityZoneGroup=config[REGION_NAME_FIELD],
             InstanceCount=nb,
@@ -158,7 +157,6 @@ def launch_ec2_instances(config, nb=1):
                 'InstanceType': instance_type,
                 'KeyName': key_name,
             },
-            TagSpecifications=tags,
             Type='one-time',
             ValidFrom=now,
             ValidUntil=(now + request_wait),
@@ -167,18 +165,18 @@ def launch_ec2_instances(config, nb=1):
         waiter = client.get_waiter('spot_instance_request_fulfilled')
         request_id = \
             response['SpotInstanceRequests'][0]['SpotInstanceRequestId']
+        on_demand = False
         try:
             waiter.wait(SpotInstanceRequestIds=[request_id])
-        except botocore.exceptions.WaiterError:
-            on_demand = True
-
-        status_code = response['SpotInstanceRequests'][0]['status']['code']
-        if status_code == 'fulfilled':
-            on_demand = False
             instance_id = response['SpotInstanceRequests'][0]['InstanceId']
             instance = resource.Instance(instance_id)
             instance.create_tags(Tags=tags)
             instances = list(instance)
+        except Exception:
+            on_demand = True
+
+        status_code = response['SpotInstanceRequests'][0]['Status']['Code']
+        logger.info(f'Spot instance request status code: {status_code}')
 
     if on_demand or not use_spot_instance:
         instances = resource.create_instances(
