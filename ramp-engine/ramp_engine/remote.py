@@ -198,6 +198,22 @@ class RemoteWorker(BaseWorker):
 
         self._log_dir = os.path.join(self.config['logs_dir'], self.submission)
         # TODO: need to copy submission to the remote folder
+        if not self._is_local_cluster:
+            submission_dir = os.path.join(
+                self.config['submissions_dir'], self.submission
+            )
+            # remove remote submission dir if it exists
+            self._client.submit(
+                shutil.rmtree,
+                submission_dir,
+                ignore_errors=True,
+                pure=False
+            ).result()
+            # Upload the submission dir to the remote machine
+            stream = _serialize_folder(submission_dir)
+            self._client.submit(
+                _deserialize_folder, stream, submission_dir, pure=False
+            ).result()
 
         self._proc = self._client.submit(
             _conda_ramp_test_submission,

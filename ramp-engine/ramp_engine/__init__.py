@@ -1,11 +1,13 @@
 from .aws import AWSWorker
 from .dispatcher import Dispatcher
 from .local import CondaEnvWorker
+from .remote import RemoteWorker
 
 from ._version import __version__
 
 available_workers = {'conda': CondaEnvWorker,
-                     'aws': AWSWorker}
+                     'aws': AWSWorker,
+                     'remote': RemoteWorker}
 
 __all__ = [
     'AWSWorker',
