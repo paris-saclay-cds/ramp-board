@@ -45,6 +45,13 @@ then
     doc_clone_commit
     git push origin $DOC_BRANCH
     echo "Push complete"
+elif [ "$CIRCLE_BRANCH" = "advanced" ]
+then
+    # Changes are made to advanced/ directory
+    DIR="ramp-board/advanced"
+    doc_clone_commit
+    git push origin $DOC_BRANCH
+    echo "Push complete"
 elif [[ "$CIRCLE_BRANCH" =~ ^[0-9]+\.[0-9]+\.X$ ]]
 then
     # Strip off .X from branch name, so changes will go to 0.1/, 91.235/, etc

@@ -12,7 +12,6 @@ from ramp_database.tools.submission import get_submission_by_id
 from ramp_database.tools.submission import get_submission_state
 
 from ramp_database.tools.submission import set_bagged_scores
-# from ramp_database.tools.submission import set_predictions
 from ramp_database.tools.submission import set_time
 from ramp_database.tools.submission import set_scores
 from ramp_database.tools.submission import set_submission_error_msg
@@ -77,13 +76,24 @@ class Dispatcher:
           for new submission;
         * if 'exit': the dispatcher will stop after collecting the results of
           the last submissions.
+    time_between_collection : int, default=1
+        The amount of time in seconds to wait before checking if we can
+        collect results from worker.
+
+        .. note::
+           This parameter is important when using a cloud platform to run
+           submissions, as the check for collection will be done through SSH.
+           Thus, if the time between checks is too small, the repetitive
+           SSH requests may be potentially blocked by the cloud provider.
     """
     def __init__(self, config, event_config, worker=None, n_workers=1,
-                 n_threads=None, hunger_policy=None):
+                 n_threads=None, hunger_policy=None,
+                 time_between_collection=1):
         self.worker = CondaEnvWorker if worker is None else worker
         self.n_workers = (max(multiprocessing.cpu_count() + 1 + n_workers, 1)
                           if n_workers < 0 else n_workers)
         self.hunger_policy = hunger_policy
+        self.time_between_collection = time_between_collection
         # init the poison pill to kill the dispatcher
         self._poison_pill = False
         # create the different dispatcher queues
@@ -174,14 +184,21 @@ class Dispatcher:
             elif self.hunger_policy == 'exit':
                 self._poison_pill = True
             return
+
         for worker, (submission_id, submission_name) in zip(workers,
                                                             submissions):
-            if worker.status == 'running':
+            dt = worker.time_since_last_status_check()
+            if dt is not None and dt < self.time_between_collection:
+                self._processing_worker_queue.put_nowait(
+                    (worker, (submission_id, submission_name)))
+                time.sleep(0)
+                continue
+            elif worker.status == 'running':
                 self._processing_worker_queue.put_nowait(
                     (worker, (submission_id, submission_name)))
                 time.sleep(0)
             else:
-                logger.info('Collecting results from worker {}'.format(worker))
+                logger.info(f'Collecting results from worker {worker}')
                 returncode, stderr = worker.collect_results()
                 if returncode:
                     if returncode == 124:
@@ -191,8 +208,8 @@ class Dispatcher:
                         )
                     else:
                         logger.info(
-                            'Worker {} killed due to an error during training'
-                            .format(worker)
+                            f'Worker {worker} killed due to an error '
+                            'during training'
                         )
                     submission_status = 'training_error'
                 else:
@@ -220,10 +237,6 @@ class Dispatcher:
             path_predictions = os.path.join(
                 self._worker_config['predictions_dir'], submission_name
             )
-            # NOTE: In the past we were adding the predictions into the
-            # database. Since they require too much space, we stop to store
-            # them in the database and instead, keep it onto the disk.
-            # set_predictions(session, submission_id, path_predictions)
             set_time(session, submission_id, path_predictions)
             set_scores(session, submission_id, path_predictions)
             set_bagged_scores(session, submission_id, path_predictions)

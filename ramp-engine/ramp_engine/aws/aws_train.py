@@ -5,7 +5,6 @@ import time
 
 import botocore  # amazon api
 
-from ramp_database.tools import set_predictions
 from ramp_database.tools import set_time
 from ramp_database.tools import set_scores
 from ramp_database.tools import set_submission_state
@@ -13,7 +12,6 @@ from ramp_database.tools import get_submissions
 from ramp_database.tools import get_submission_state
 from ramp_database.tools import get_submission_by_id
 from ramp_database.tools import set_submission_max_ram
-from ramp_database.tools import score_submission
 from ramp_database.tools import set_submission_error_msg
 from ramp_database.tools import get_event_nb_folds
 
@@ -85,7 +83,6 @@ def train_loop(config, event_name):
         for submission_id, _ in submissions:
             label = _get_submission_label_by_id(config, submission_id)
             logger.info('Scoring submission : {}'.format(label))
-            score_submission(config, submission_id)
             _run_hook(config, HOOK_SUCCESSFUL_TRAINING, submission_id)
         # Get running instances and process events
         instance_ids = list_ec2_instance_ids(conf_aws)
@@ -166,7 +163,6 @@ def train_loop(config, event_name):
                                     .format(label))
                         path = download_predictions(
                             conf_aws, instance_id, submission_name)
-                        set_predictions(config, submission_id, path)
                         set_time(config, submission_id, path)
                         set_scores(config, submission_id, path)
                         set_submission_state(config, submission_id, 'tested')
@@ -270,12 +266,10 @@ def train_on_existing_ec2_instance(config, instance_id, submission_id):
         logger.info('Downloading predictions of : "{}"'.format(label))
         predictions_folder_path = download_predictions(
             conf_aws, instance_id, submission_id)
-        set_predictions(config, submission_id, predictions_folder_path)
         set_time(config, submission_id, predictions_folder_path)
         set_scores(config, submission_id, predictions_folder_path)
         set_submission_state(config, submission_id, 'tested')
         logger.info('Scoring "{}"'.format(label))
-        score_submission(config, submission_id)
         _run_hook(config, HOOK_SUCCESSFUL_TRAINING, submission_id)
     else:
         logger.info('Training of "{}" in "{}" failed'.format(

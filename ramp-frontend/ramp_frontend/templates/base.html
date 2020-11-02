@@ -20,6 +20,8 @@
     <!-- CSS App -->
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/themes/flat-blue.css') }}">
+
+    <script type="text/javascript" src="{{ url_for('static', filename='lib/js/jquery.min.js') }}"></script>
     {% endblock %}
     <script>
         (function (i, s, o, g, r, a, m) {
@@ -236,10 +238,14 @@
                 <span><a href="/"><img src="{{ url_for('static', filename='img/logo_CDS_footer.svg') }}"
                             height="20px"></a></span> &nbsp; &nbsp; &nbsp; &nbsp; <span><a
                         href="mailto:admin@ramp.studio">Contact Us <i class="icon fa fa-envelope"></i></a></span>
+	        {% if config['PRIVACY_POLICY_PAGE'] %}
+	        <span>
+		  <a href='/privacy_policy'>Privacy policy</a> 
+		</span>
+		{% endif %}
             </div>
         </footer>
         <div>
-            <script type="text/javascript" src="{{ url_for('static', filename='lib/js/jquery.min.js') }}"></script>
             <script type="text/javascript" src="{{ url_for('static', filename='lib/js/bootstrap.min.js') }}"></script>
             <script type="text/javascript" src="{{ url_for('static', filename='lib/js/Chart.min.js') }}"></script>
             <script type="text/javascript"

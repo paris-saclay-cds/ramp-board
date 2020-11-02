@@ -1,6 +1,7 @@
 import os
 import hashlib
 import datetime
+import numpy as np
 
 from sqlalchemy import Enum
 from sqlalchemy import Float
@@ -29,7 +30,6 @@ __all__ = [
     'Extension',
     'SubmissionScoreOnCVFold',
     'SubmissionOnCVFold',
-    'DetachedSubmissionOnCVFold',
     'SubmissionSimilarity',
 ]
 
@@ -882,10 +882,6 @@ class SubmissionOnCVFold(Model):
         The contributivity of the submission.
     best : bool
         Whether or not the submission is the best.
-    full_train_y_pred : ndarray
-        Predictions on the full training set.
-    test_y_pred : ndarray
-        Predictions on the testing set.
     train_time : float
         Computation time for the training set.
     valid_time : float
@@ -929,8 +925,6 @@ class SubmissionOnCVFold(Model):
 
     # prediction on the full training set, including train and valid points
     # properties train_predictions and valid_predictions will make the slicing
-    full_train_y_pred = Column(NumpyType, default=None)
-    test_y_pred = Column(NumpyType, default=None)
     train_time = Column(Float, default=0.0)
     valid_time = Column(Float, default=0.0)
     test_time = Column(Float, default=0.0)
@@ -980,6 +974,25 @@ class SubmissionOnCVFold(Model):
         """bool: Whether or not the submission failed at one of the stage."""
         return 'error' in self.state
 
+    # TODO: untested, doesn't work but never used in the current setup
+    @property
+    def path_predictions(self):
+        return os.path.join(
+            self.submission.event.path_ramp_submissions,
+            self.submission.name,
+            'training_output', 'fold_{}'.format(self.cv_fold_id))
+
+    # prediction on the full training set, including train and valid points
+    @property
+    def full_train_y_pred(self):
+        return np.load(
+            os.path.join(self.path_predictions, 'y_pred_train.npz'))['y_pred']
+
+    @property
+    def test_y_pred(self):
+        return np.load(
+            os.path.join(self.path_predictions, 'y_pred_test.npz'))['y_pred']
+
     # The following four functions are converting the stored numpy arrays
     # <>_y_pred into Prediction instances
     @property
@@ -1024,8 +1037,6 @@ class SubmissionOnCVFold(Model):
         """
         self.contributivity = 0.0
         self.best = False
-        self.full_train_y_pred = None
-        self.test_y_pred = None
         self.train_time = 0.0
         self.valid_time = 0.0
         self.test_time = 0.0
@@ -1053,102 +1064,6 @@ class SubmissionOnCVFold(Model):
         self.reset()
         self.state = error
         self.error_msg = error_msg
-
-    def compute_train_scores(self):
-        """Compute all training scores."""
-        if self.is_trained:
-            true_train_predictions = \
-                self.submission.event.problem.ground_truths_train(
-                    self.cv_fold.train_is)
-            for score in self.scores:
-                score.train_score = float(score.score_function(
-                    true_train_predictions,
-                    self.train_predictions))
-        else:
-            for score in self.scores:
-                score.train_score = score.event_score_type.worst
-
-    def compute_valid_scores(self):
-        """Compute all validating scores."""
-        if self.is_validated:
-            true_valid_predictions = \
-                self.submission.event.problem.ground_truths_train(
-                    self.cv_fold.test_is)
-            for score in self.scores:
-                score.valid_score = float(score.score_function(
-                    true_valid_predictions,
-                    self.valid_predictions))
-        else:
-            for score in self.scores:
-                score.valid_score = score.event_score_type.worst
-
-    def compute_test_scores(self):
-        """Compute all testing scores."""
-        if self.is_tested:
-            true_test_predictions = \
-                self.submission.event.problem.ground_truths_test()
-            for score in self.scores:
-                score.test_score = float(score.score_function(
-                    true_test_predictions,
-                    self.test_predictions))
-        else:
-            for score in self.scores:
-                score.test_score = score.event_score_type.worst
-
-    def update(self, detached_submission_on_cv_fold):
-        """Update the submission on CV Fold from a detached submission.
-
-        Parameters
-        ----------
-        detached_submission_on_cv_fold : \
-:class:`ramp_database.model.DetachedSubmissionOnCVFold`
-            The detached submission from which we will update the current
-            submission.
-        """
-        self.state = detached_submission_on_cv_fold.state
-        if self.is_error:
-            self.error_msg = detached_submission_on_cv_fold.error_msg
-        else:
-            if self.is_trained:
-                self.train_time = detached_submission_on_cv_fold.train_time
-            if self.is_validated:
-                self.valid_time = detached_submission_on_cv_fold.valid_time
-                self.full_train_y_pred = \
-                    detached_submission_on_cv_fold.full_train_y_pred
-            if self.is_tested:
-                self.test_time = detached_submission_on_cv_fold.test_time
-                self.test_y_pred = detached_submission_on_cv_fold.test_y_pred
-
-
-class DetachedSubmissionOnCVFold:
-    """Copy of SubmissionOnCVFold, all the fields we need in train and test.
-
-    It's because SQLAlchemy objects don't persist through
-    multiprocessing jobs. Maybe eliminated if we do the parallelization
-    differently, though I doubt it.
-    """
-
-    def __init__(self, submission_on_cv_fold):
-        self.train_is = submission_on_cv_fold.cv_fold.train_is
-        self.test_is = submission_on_cv_fold.cv_fold.test_is
-        self.full_train_y_pred = submission_on_cv_fold.full_train_y_pred
-        self.test_y_pred = submission_on_cv_fold.test_y_pred
-        self.state = submission_on_cv_fold.state
-        self.name = (submission_on_cv_fold.submission.event.name + '/' +
-                     submission_on_cv_fold.submission.team.name + '/' +
-                     submission_on_cv_fold.submission.name)
-        self.path = submission_on_cv_fold.submission.path
-        self.error_msg = submission_on_cv_fold.error_msg
-        self.train_time = submission_on_cv_fold.train_time
-        self.valid_time = submission_on_cv_fold.valid_time
-        self.test_time = submission_on_cv_fold.test_time
-        self.trained_submission = None
-        self.workflow = \
-            submission_on_cv_fold.submission.event.problem.workflow_object
-
-    def __repr__(self):
-        return ('Submission({}) on fold {}'
-                .format(self.name, str(self.train_is)[:10]))
 
 
 submission_similarity_type = Enum(

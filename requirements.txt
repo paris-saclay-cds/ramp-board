@@ -3,6 +3,7 @@ bokeh
 boto3
 click
 codecov
+email_validator
 flake8
 Flask
 Flask-Login

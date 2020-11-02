@@ -165,7 +165,7 @@ instance <https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guid
 for more details.
 
 Event configuration
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 
 Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
 'worker' section, which should look something like::
@@ -191,6 +191,13 @@ Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
           predictions_dir: /home/ramp/ramp_deployment/events/iris_aws/predictions
           logs_dir: /home/ramp/ramp_deployment/events/iris_aws/logs
           memory_profiling: false
+      dispatcher:
+          hunger_policy: sleep
+          n_workers: 5
+          n_threads: 2
+          time_between_collection: 60
+
+**Worker configuration**
 
 * ``access_key_id`` and ``secret_access_key``: to create a new access key, go
   to your top navigation bar, click on your user name -> My Security
@@ -228,6 +235,24 @@ Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
   submission. You need to install `memory profiler
   <https://pypi.org/project/memory-profiler/>`_ in your prepared AMI image
   to enable this.
+
+.. _AWS_dispatcher:
+
+**Dispatcher configuration**
+
+* ``hunger_policy``: See :ref:`dispatcher_configuration`.
+* ``n_workers``: Maximum number of workers that can run submissions
+  simultaneously. For AWS workers, this means the maximum number of
+  instances that can be run at one time. This should fall within your
+  AWS instance limit.
+* ``n_threads``: The number of threads that each worker can use. This would
+  depend on the AWS instance type you have choosen.
+* ``time_between_collection``: How long, in seconds, the worker should wait
+  before re-checking if the submission is ready for collection. The default is
+  1 second. For AWS workers the check for collection will be done through SSH.
+  If the time between checks is too small, the repetitive SSH requests may be
+  potentially blocked by the cloud provider. We advise to set this
+  configuration to at least 60 seconds.
 
 Create your own worker
 ----------------------
