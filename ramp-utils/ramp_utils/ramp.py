@@ -109,4 +109,5 @@ def generate_ramp_config(event_config, database_config=None):
     ramp_config['ramp_kit_submissions_dir'] = os.path.join(
         ramp_config['ramp_kit_dir'], 'submissions'
     )
+
     return ramp_config

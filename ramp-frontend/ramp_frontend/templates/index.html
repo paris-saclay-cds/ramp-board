@@ -221,6 +221,11 @@
       <div class="container">
           <center><span class="pull-left"><i class="icon fa fa-copyright"></i> RAMP version {{ version }} <a href="#"><i class="icon fa fa-long-arrow-up"></i><i class="icon fa fa-long-arrow-up"></i></a></span> &nbsp; &nbsp; &nbsp; &nbsp;
           <span><a href="/"><img src="{{ url_for('static', filename='img/logo_CDS_footer.svg') }}" height="20px"></a></span> &nbsp; &nbsp; &nbsp; &nbsp; <span><a href="mailto:admin@ramp.studio">Contact Us <i class="icon fa fa-envelope"></i></a></span>
+	{% if config['PRIVACY_POLICY_PAGE'] %}
+	<span>
+	  <a href='/privacy_policy'>Privacy policy</a>
+	</span>
+	{% endif %}
           <span class="pull-right">Thanks to <a href="https://github.com/tui2tone/flat-admin-bootstrap-templates" target="_blank">tui2tone</a> for the  template!</span>
           </center>
       </div>

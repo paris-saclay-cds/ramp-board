@@ -278,6 +278,9 @@ a:hover {
   line-height: 50px;
   vertical-align: middle;
 }
+.app-footer span {
+  margin-right: 20px;
+}
 .app-container .content-container {
   margin-right: 0;
   margin-left: 0;
@@ -878,6 +881,12 @@ div.info-header {
 .checkbox-inline,
 .radio-inline {
   font-weight: normal;
+}
+
+.container-fluid .checkbox input[type=checkbox] {
+  /* Overwriting  value set in forms.less to -20px;
+     as Sign Up form doesn't render well otherwise */
+  margin-left: 0px;
 }
 
 .bootstrap-switch {
