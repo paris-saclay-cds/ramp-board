@@ -65,6 +65,15 @@ def _deserialize_folder(stream: bytes, out_dir: Union[str, Path]):
             fh_tar.extractall(out_dir)
 
 
+def _remove_link_or_dir(path: str):
+    """Remove a path that could be either a folder or a symlink to a folder"""
+    if os.path.islink(path):
+        # path is a symbolic link
+        os.unlink(path)
+    else:
+        shutil.rmtree(path, ignore_errors=True)
+
+
 class RemoteWorker(BaseWorker):
     """Remote dask distributed worker
 
@@ -202,7 +211,7 @@ class RemoteWorker(BaseWorker):
             submission_dir = os.path.join(
                 self.config['submissions_dir'], self.submission
             )
-            # remove remote submission dir if it exists
+            # remove remote submission and local prediction dir if it exists
             self._client.submit(
                 shutil.rmtree,
                 submission_dir,
@@ -213,6 +222,12 @@ class RemoteWorker(BaseWorker):
             stream = _serialize_folder(submission_dir)
             self._client.submit(
                 _deserialize_folder, stream, submission_dir, pure=False
+            ).result()
+            # If there is a training_output in the submission, remove it
+            self._client.submit(
+                _remove_link_or_dir,
+                os.path.join(submission_dir, 'training_output'),
+                pure=False
             ).result()
 
         self._proc = self._client.submit(
@@ -272,11 +287,16 @@ class RemoteWorker(BaseWorker):
                 ).result()
                 self.status = 'collected'
                 return (returncode, error_msg)
-            # copy predictions from the remote training directory
-            # to the local prediction folder
-            stream = self._client.submit(
-                _serialize_folder, output_training_dir, pure=False
-            ).result()
-            _deserialize_folder(stream, pred_dir)
+            if self._is_local_cluster:
+                shutil.copytree(output_training_dir, pred_dir)
+            else:
+                # copy predictions from the remote training directory
+                # to the local prediction folder
+                stream = self._client.submit(
+                    _serialize_folder, output_training_dir, pure=False
+                ).result()
+                # remove the local predictions dir if it exists
+                shutil.rmtree(pred_dir, ignore_errors=True)
+                _deserialize_folder(stream, pred_dir)
             self.status = 'collected'
             return (returncode, error_msg)
