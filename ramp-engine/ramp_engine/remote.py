@@ -29,7 +29,7 @@ def _check_dask_workers_single_machine(worker_urls: List[str]) -> bool:
     """
     worker_hosts = set(urlparse(url).hostname for url in worker_urls)
     if None in worker_hosts:
-        # skip hostnames that couldn't ne parsed
+        # skip hostnames that couldn't be parsed
         worker_hosts.remove(None)
     if len(worker_hosts) == 1 and worker_hosts != {None}:
         return True
@@ -56,7 +56,7 @@ def _serialize_folder(path: Union[str, Path]) -> bytes:
 def _deserialize_folder(stream: bytes, out_dir: Union[str, Path]):
     """Given the bytes object of a .tar.gz re-create the original folder
 
-    The destination folder will be remoted if it exists
+    The destination folder will be removed if it exists
     """
     shutil.rmtree(out_dir, ignore_errors=True)
     with BytesIO(stream) as fh:
@@ -122,7 +122,7 @@ class RemoteWorker(BaseWorker):
     def setup(self):
         """Set up the worker.
 
-        Following steps will be performed;
+        Following steps will be performed:
          - start a dask distributed client
          - find the path to the conda environment to use on the remote machine
         """
@@ -158,7 +158,7 @@ class RemoteWorker(BaseWorker):
         super().setup()
 
     def teardown(self):
-        """Remove the predictions stores within the submission."""
+        """Remove the predictions stored within the submission."""
         if self.status != 'collected':
             raise ValueError("Collect the results before to kill the worker.")
         output_training_dir = os.path.join(self.config['kit_dir'],
@@ -196,7 +196,7 @@ class RemoteWorker(BaseWorker):
     def launch_submission(self):
         """Launch the submission.
 
-        Basically, it comes to run ``ramp_test_submission`` using the conda
+        Basically, it comes to run ``ramp-test`` using the conda
         environment given in the configuration. The submission is launched in
         a subprocess to free to not lock the Python main process.
         """
