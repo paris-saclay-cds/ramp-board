@@ -74,11 +74,13 @@ def _remove_link_or_dir(path: str):
         shutil.rmtree(path, ignore_errors=True)
 
 
-class RemoteWorker(BaseWorker):
-    """Remote dask distributed worker
+class DaskWorker(BaseWorker):
+    """Dask distributed worker
 
+    This workers relies on dask.distributed and can be used both on a local
+    machine and on a remote cluster.
 
-    This worker uses conda environment to dispatch submission on the
+    It uses conda environment to dispatch submission on the
     remote machine. It needs the dask worker to run on the remote machine
     with the same version of dependencies as on the local machine.
 

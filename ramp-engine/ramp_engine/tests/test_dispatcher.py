@@ -17,10 +17,10 @@ from ramp_database.tools.submission import get_submissions
 from ramp_database.tools.submission import get_submission_by_id
 
 from ramp_engine.local import CondaEnvWorker
-from ramp_engine.remote import RemoteWorker
+from ramp_engine.remote import DaskWorker
 from ramp_engine.dispatcher import Dispatcher
 
-ALL_WORKERS = [CondaEnvWorker, RemoteWorker]
+ALL_WORKERS = [CondaEnvWorker, DaskWorker]
 
 
 @pytest.fixture
@@ -38,11 +38,11 @@ def session_toy(database_connection):
 
 
 def _update_worker_config(event_config, Worker, dask_scheduler):
-    if issubclass(Worker, RemoteWorker):
+    if issubclass(Worker, DaskWorker):
         pytest.importorskip('dask')
         pytest.importorskip('dask.distributed')
         event_config['worker']['dask_scheduler'] = dask_scheduler
-        event_config['worker']['worker_type'] = 'remote'
+        event_config['worker']['worker_type'] = 'dask'
 
 
 @pytest.mark.parametrize('Worker', ALL_WORKERS)

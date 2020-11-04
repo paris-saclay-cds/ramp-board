@@ -6,10 +6,10 @@ from contextlib import contextmanager
 import pytest
 
 from ramp_engine.local import CondaEnvWorker
-from ramp_engine.remote import RemoteWorker
+from ramp_engine.remote import DaskWorker
 from ramp_engine.conda import _conda_info_envs
 
-ALL_WORKERS = [CondaEnvWorker, RemoteWorker]
+ALL_WORKERS = [CondaEnvWorker, DaskWorker]
 
 
 def _is_conda_env_installed():
@@ -49,7 +49,7 @@ def get_conda_worker(submission_name, Worker=CondaEnvWorker,
                   module_path, 'kits', 'iris', 'predictions'),
               'conda_env': conda_env}
 
-    if issubclass(Worker, RemoteWorker):
+    if issubclass(Worker, DaskWorker):
         pytest.importorskip('dask')
         pytest.importorskip('dask.distributed')
         config['dask_scheduler'] = dask_scheduler
@@ -59,7 +59,7 @@ def get_conda_worker(submission_name, Worker=CondaEnvWorker,
     # remove all directories that we potentially created
     _remove_directory(worker)
 
-    if issubclass(Worker, RemoteWorker) and hasattr(worker, '_client'):
+    if issubclass(Worker, DaskWorker) and hasattr(worker, '_client'):
         worker._client.close()
 
 
@@ -147,11 +147,12 @@ def test_conda_worker_error_missing_config_param(Worker, dask_scheduler):
 
 @pytest.mark.parametrize("Worker", ALL_WORKERS)
 def test_conda_worker_error_unknown_env(Worker, dask_scheduler):
+    conda_env = 'xxx'
     with get_conda_worker(
-        'starting_kit', conda_env='xxx', Worker=Worker,
+        'starting_kit', conda_env=conda_env, Worker=Worker,
         dask_scheduler=dask_scheduler
     ) as worker:
-        msg_err = "The specified conda environment xxx does not exist."
+        msg_err = f"specified conda environment {conda_env} does not exist."
         with pytest.raises(ValueError, match=msg_err):
             worker.setup()
             assert worker.status == 'error'
