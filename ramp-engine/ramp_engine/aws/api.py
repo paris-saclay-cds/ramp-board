@@ -146,7 +146,7 @@ def launch_ec2_instances(config, nb=1):
     resource = sess.resource('ec2')
 
     if use_spot_instance:
-        now = datetime.utcnow() + timedelta(seconds=5)
+        now = datetime.utcnow() + timedelta(seconds=3)
         request_wait = timedelta(minutes=10)
         response = client.request_spot_instances(
             AvailabilityZoneGroup=config[REGION_NAME_FIELD],
@@ -161,22 +161,39 @@ def launch_ec2_instances(config, nb=1):
             ValidFrom=now,
             ValidUntil=(now + request_wait),
         )
-        # check status of request
+
+        # Wait until request fulfilled
         waiter = client.get_waiter('spot_instance_request_fulfilled')
         request_id = \
             response['SpotInstanceRequests'][0]['SpotInstanceRequestId']
         on_demand = False
         try:
-            waiter.wait(SpotInstanceRequestIds=[request_id])
-            instance_id = response['SpotInstanceRequests'][0]['InstanceId']
-            instance = resource.Instance(instance_id)
-            instance.create_tags(Tags=tags)
-            instances = list(instance)
-        except Exception:
+            waiter.wait(SpotInstanceRequestIds=[request_id,])
+        except botocore.exceptions.WaiterError:
+            logger.info(f'Spot instance request waiter timed out. Using '
+                        'on-demand instance instead')
             on_demand = True
-
-        status_code = response['SpotInstanceRequests'][0]['Status']['Code']
-        logger.info(f'Spot instance request status code: {status_code}')
+            client.cancel_spot_instance_requests(
+                SpotInstanceRequestIds=[request_id,]
+            )
+        else:
+            # Get instance ID
+            response_updated = client.describe_spot_instance_requests(
+                SpotInstanceRequestIds=[request_id]
+            )
+            instance_id = \
+                response_updated['SpotInstanceRequests'][0]['InstanceId']
+            # Create EC2.Instance class
+            instance = resource.Instance(instance_id)
+            instance.create_tags(
+                Resources=[instance_id,],
+                Tags=[
+                    {
+                        'Key': RAMP_AWS_BACKEND_TAG,
+                        'Value': '1'
+                    },
+                ])
+            instances = [instance,]
 
     if on_demand or not use_spot_instance:
         instances = resource.create_instances(
