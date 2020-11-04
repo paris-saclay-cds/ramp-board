@@ -168,13 +168,13 @@ def launch_ec2_instances(config, nb=1):
             response['SpotInstanceRequests'][0]['SpotInstanceRequestId']
         on_demand = False
         try:
-            waiter.wait(SpotInstanceRequestIds=[request_id,])
+            waiter.wait(SpotInstanceRequestIds=[request_id, ])
         except botocore.exceptions.WaiterError:
             logger.info(f'Spot instance request waiter timed out. Using '
                         'on-demand instance instead')
             on_demand = True
             client.cancel_spot_instance_requests(
-                SpotInstanceRequestIds=[request_id,]
+                SpotInstanceRequestIds=[request_id, ]
             )
         else:
             # Get instance ID
@@ -186,14 +186,14 @@ def launch_ec2_instances(config, nb=1):
             # Create EC2.Instance class
             instance = resource.Instance(instance_id)
             instance.create_tags(
-                Resources=[instance_id,],
+                Resources=[instance_id, ],
                 Tags=[
                     {
                         'Key': RAMP_AWS_BACKEND_TAG,
                         'Value': '1'
                     },
                 ])
-            instances = [instance,]
+            instances = [instance, ]
 
     if on_demand or not use_spot_instance:
         instances = resource.create_instances(
