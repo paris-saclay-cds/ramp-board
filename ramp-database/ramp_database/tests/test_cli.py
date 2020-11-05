@@ -378,15 +378,30 @@ def test_update_all_user_leaderboards(make_toy_db):
     assert result.exit_code == 0, result.output
 
 
-def test_compute_contributivity():
+def test_compute_contributivity(make_toy_db):
     runner = CliRunner()
-    ramp_config = generate_ramp_config(read_config(ramp_config_template()))
+    ramp_config = read_config(ramp_config_template())
+    deployment_dir = os.path.commonpath([ramp_config['ramp']['kit_dir'],
+                                         ramp_config['ramp']['data_dir']])
+    event_config = os.path.join(
+        deployment_dir, 'events', ramp_config['ramp']['event_name'],
+        'config.yml'
+    )
+
+    # Create the event config on disk
+    runner.invoke(main_utils, ['init-event',
+                               '--name', ramp_config['ramp']['event_name'],
+                               '--deployment-dir', deployment_dir])
+    event_config = os.path.join(
+        deployment_dir, 'events', ramp_config['ramp']['event_name'],
+        'config.yml'
+    )
+    with open(event_config, 'w+') as f:
+        yaml.dump(ramp_config, f)
+
     result = runner.invoke(
         main, ['compute-contributivity',
                '--config', database_config_template(),
-               '--event', 'iris_test',
-               '--ramp-kit-dir', ramp_config['ramp_kit_dir'],
-               '--ramp-data-dir', ramp_config['ramp_data_dir'],
-               '--ramp-predictions-dir', ramp_config['ramp_predictions_dir']],
+               '--config-event', event_config],
         catch_exceptions=False)
     assert result.exit_code == 0, result.output

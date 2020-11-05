@@ -7,7 +7,6 @@ import shutil
 
 from ramp_utils import read_config
 from ramp_utils import generate_ramp_config
-from ramp_utils import generate_worker_config
 
 from .utils import session_scope
 
@@ -367,27 +366,26 @@ def update_all_users_leaderboards(config, event):
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
-@click.option("--event", help='The event name')
-@click.option("--event-config", default=None,
-              show_default=True,
-              help='The event config file name. If None, the default '
-              'is ./events/<event_name>/config.yml')
+@click.option("--config-event", required=True,
+              help='The event config file name.')
 @click.option("--min-improvement", default='0.0',
               help='The minimum score improvement '
               'to continue building the ensemble')
-def compute_contributivity(config, event, event_config, min_improvement):
+def compute_contributivity(config, config_event, min_improvement):
     """Blend submissions, compute combined score and contributivities."""
-    if event_config is None:
-        event_config = 'events/{}/config.yml'.format(event)
-    event_config = generate_worker_config(event_config, config)
+    config_event = generate_ramp_config(config_event, config)
+    event_name = config_event['event_name']
     config = read_config(config)
     with session_scope(config['sqlalchemy']) as session:
         contributivity_module.compute_contributivity(
-            session, event, event_config['kit_dir'], event_config['data_dir'],
-            event_config['predictions_dir'], float(min_improvement))
-        contributivity_module.compute_historical_contributivity(session, event)
-        leaderboard_module.update_leaderboards(session, event)
-        leaderboard_module.update_all_user_leaderboards(session, event)
+            session, event_name, config_event['ramp_kit_dir'],
+            config_event['ramp_data_dir'],
+            config_event['ramp_predictions_dir'], float(min_improvement))
+        contributivity_module.compute_historical_contributivity(
+                session, event_name
+        )
+        leaderboard_module.update_leaderboards(session, event_name)
+        leaderboard_module.update_all_user_leaderboards(session, event_name)
 
 
 def start():
