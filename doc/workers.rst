@@ -183,6 +183,7 @@ Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
           ami_image_name: <name of the AMI set up for this event>
           ami_user_name: ubuntu
           instance_type: t2.micro
+          use_spot_instance: false
           key_name: <name of your pem file, eg iris_key>
           security_group: launch-wizard-103
           key_path: <path to pem file corresponding to user name, eg my_path/iris_key.pem>
@@ -217,6 +218,10 @@ Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
   Commonly 'ec2-user' or 'ubuntu'.
 * ``instance_type``: found in the EC2 console, 'Instances' tab, 'Description'
   tab at the bottom, under 'Instance type'.
+* ``use_spot_instance``: boolean, default false. Whether or not to use spot
+  instances. See `AWS
+  <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances.html>`_
+  for more information on spot instances.
 * ``key_name``: name of the key, eg if your key file is 'iris_key.pem', the key
   name is 'iris_key'
 * ``security_group``: in the EC2 console, 'Instances' tab, 'Description' tab

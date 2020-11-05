@@ -198,14 +198,20 @@ class Dispatcher:
                 self._processing_worker_queue.put_nowait(
                     (worker, (submission_id, submission_name)))
                 time.sleep(0)
+            elif worker.status == 'reset':
+                self._reset_single_submission(
+                    session, submission_id
+                )
+                logging.info(f'Submission: {submission_id} has been reset due '
+                             'to spot instance being terminated by AWS.')
+                worker.teardown()
             else:
                 logger.info(f'Collecting results from worker {worker}')
                 returncode, stderr = worker.collect_results()
                 if returncode:
                     if returncode == 124:
                         logger.info(
-                            'Worker {} killed due to timeout.'
-                            .format(worker)
+                            f'Worker {worker} killed due to timeout.'
                         )
                     else:
                         logger.info(
@@ -252,6 +258,10 @@ class Dispatcher:
             update_leaderboards(session, self._ramp_config['event_name'])
             update_all_user_leaderboards(session,
                                          self._ramp_config['event_name'])
+
+    @staticmethod
+    def _reset_single_submission(session, submission_id):
+        set_submission_state(session, submission_id, 'new')
 
     @staticmethod
     def _reset_submission_after_failure(session, even_name):

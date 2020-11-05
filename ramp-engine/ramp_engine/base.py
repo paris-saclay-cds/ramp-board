@@ -62,6 +62,11 @@ class BaseWorker(metaclass=ABCMeta):
         self.status = 'killed'
 
     @abstractmethod
+    def _is_submission_terminated(self):
+        """Check if submission has been terminated."""
+        pass
+
+    @abstractmethod
     def _is_submission_finished(self):
         """Indicate the status of submission"""
         pass
@@ -71,7 +76,9 @@ class BaseWorker(metaclass=ABCMeta):
         status = self._status
         if status == 'running':
             self._status_running_check_time = datetime.utcnow()
-            if self._is_submission_finished():
+            if self._is_submission_terminated():
+                self._status = 'reset'
+            elif self._is_submission_finished():
                 self._status = 'finished'
         return self._status
 

@@ -112,6 +112,11 @@ class AWSWorker(BaseWorker):
         return aws._training_finished(
             self.config, self.instance.id, self.submission)
 
+    def _is_submission_terminated(self):
+        """Check if spot instance has been terminated."""
+        return aws.is_spot_terminated(self.config, self.instance.id)
+
+
     def collect_results(self):
         super().collect_results()
         # Fail safe that is only used when worker used alone (not
@@ -145,5 +150,10 @@ class AWSWorker(BaseWorker):
 
     def teardown(self):
         """Terminate the Amazon instance"""
-        aws.terminate_ec2_instance(self.config, self.instance.id)
+        # Only terminate if instance is running
+        instance_status = aws.check_instance_status(
+            self.config, self.instance.id
+        )
+        if instance_status == 'running':
+            aws.terminate_ec2_instance(self.config, self.instance.id)
         super().teardown()
