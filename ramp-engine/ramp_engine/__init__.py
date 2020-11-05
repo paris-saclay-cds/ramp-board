@@ -12,7 +12,7 @@ available_workers = {'conda': CondaEnvWorker,
 __all__ = [
     'AWSWorker',
     'CondaEnvWorker',
-    'DaskWorker'
+    'DaskWorker',
     'Dispatcher',
     'available_workers',
     '__version__'
