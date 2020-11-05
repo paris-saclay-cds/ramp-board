@@ -171,7 +171,7 @@ def launch_ec2_instances(config, nb=1):
         try:
             waiter.wait(SpotInstanceRequestIds=[request_id, ])
         except botocore.exceptions.WaiterError:
-            logger.info(f'Spot instance request waiter timed out. Using '
+            logger.info('Spot instance request failed due to time out. Using '
                         'on-demand instance instead')
             on_demand = True
             client.cancel_spot_instance_requests(

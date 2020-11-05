@@ -116,7 +116,6 @@ class AWSWorker(BaseWorker):
         """Check if spot instance has been terminated."""
         return aws.is_spot_terminated(self.config, self.instance.id)
 
-
     def collect_results(self):
         super().collect_results()
         # Fail safe that is only used when worker used alone (not
