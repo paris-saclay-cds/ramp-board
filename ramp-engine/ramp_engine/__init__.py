@@ -1,5 +1,5 @@
 from .aws import AWSWorker
-from .dispatcher import Dispatcher
+from .dispatcher import Dispatcher  # noqa
 from .local import CondaEnvWorker
 from .remote import DaskWorker
 
