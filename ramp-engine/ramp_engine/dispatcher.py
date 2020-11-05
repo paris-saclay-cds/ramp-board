@@ -198,12 +198,11 @@ class Dispatcher:
                 self._processing_worker_queue.put_nowait(
                     (worker, (submission_id, submission_name)))
                 time.sleep(0)
-            elif worker.status == 'reset':
-                self._reset_single_submission(
-                    session, submission_id
-                )
-                logging.info(f'Submission: {submission_id} has been reset due '
-                             'to spot instance being terminated by AWS.')
+            elif worker.status == 'retry':
+                set_submission_state(session, submission_id, 'new')
+                logging.info(f'Submission: {submission_id} has been '
+                             'interrupted. It will be added to queue again '
+                             'and retried.')
                 worker.teardown()
             else:
                 logger.info(f'Collecting results from worker {worker}')
@@ -258,10 +257,6 @@ class Dispatcher:
             update_leaderboards(session, self._ramp_config['event_name'])
             update_all_user_leaderboards(session,
                                          self._ramp_config['event_name'])
-
-    @staticmethod
-    def _reset_single_submission(session, submission_id):
-        set_submission_state(session, submission_id, 'new')
 
     @staticmethod
     def _reset_submission_after_failure(session, even_name):

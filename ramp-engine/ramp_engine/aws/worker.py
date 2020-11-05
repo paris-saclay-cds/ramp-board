@@ -112,8 +112,9 @@ class AWSWorker(BaseWorker):
         return aws._training_finished(
             self.config, self.instance.id, self.submission)
 
-    def _is_submission_terminated(self):
-        """Check if spot instance has been terminated."""
+    def _is_submission_interrupted(self):
+        """Check if spot instance has been marked as to be terminated by
+        AWS."""
         return aws.is_spot_terminated(self.config, self.instance.id)
 
     def collect_results(self):

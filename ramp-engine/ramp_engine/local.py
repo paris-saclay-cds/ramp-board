@@ -112,8 +112,8 @@ class CondaEnvWorker(BaseWorker):
         self.check_timeout()
         return False if self._proc.poll() is None else True
 
-    def _is_submission_terminated(self):
-        """Check if submission has been terminated."""
+    def _is_submission_interrupted(self):
+        """Check if submission has been interrupted."""
         # Always return False for conda worker
         return False
 
