@@ -19,11 +19,11 @@ install:
     - make inplace
 script:
     - python -m smtpd -n -c DebuggingServer localhost:8025 &
-    - bash ci_tools/travis/test_ramp_frontend.sh || travis_terminate 1
-    - bash ci_tools/travis/test_ramp_engine.sh || travis_terminate 1
-    - bash ci_tools/travis/test_ramp_database.sh || travis_terminate 1
-    - bash ci_tools/travis/test_ramp_utils.sh || travis_terminate 1
-    - bash ci_tools/travis/integration_test.sh || travis_terminate 1
+    - bash ci_tools/travis/test_ramp_frontend.sh
+    - bash ci_tools/travis/test_ramp_engine.sh
+    - bash ci_tools/travis/test_ramp_database.sh
+    - bash ci_tools/travis/test_ramp_utils.sh
+    - bash ci_tools/travis/integration_test.sh
 after_success:
     - cp .coverage $TRAVIS_BUILD_DIR
     - codecov --root $TRAVIS_BUILD_DIR || echo "codecov upload failed"

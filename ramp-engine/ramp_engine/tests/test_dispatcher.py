@@ -165,7 +165,6 @@ def test_dispatcher_worker_retry(session_toy):
                             worker=CondaEnvWorker, n_workers=100,
                             hunger_policy='exit')
 
-    # check that all submissions are queued
     submissions = get_submissions(session_toy, 'iris_test', 'new')
     dispatcher.fetch_from_db(session_toy)
 
