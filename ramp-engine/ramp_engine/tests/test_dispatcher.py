@@ -157,24 +157,28 @@ def test_dispatcher_timeout(session_toy):
     assert len(submissions) >= 2
 
 
-# def test_dispatcher_worker_retry(session_toy):
-#     config = read_config(database_config_template())
-#     event_config = read_config(ramp_config_template())
-#     dispatcher = Dispatcher(
-#         config=config, event_config=event_config, worker=CondaEnvWorker,
-#         n_workers=1, hunger_policy='exit'
-#     )
-#     dispatcher.launch()
+def test_dispatcher_worker_retry(session_toy):
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_config_template())
+    dispatcher = Dispatcher(config=config,
+                            event_config=event_config,
+                            worker=CondaEnvWorker, n_workers=100,
+                            hunger_policy='exit')
 
-#     worker, (_, submission_name) = \
-#         dispatcher._awaiting_worker_queue.get()
-#     setattr(worker, 'status', 'retry')
-#     assert worker.status == 'retry'
-#     sleep(1)
-#     assert worker.status == 'killed'
-#     sleep(5)
-#     submissions = get_submissions(
-#         session_toy, event_config['ramp']['event_name'], 'training_error'
-#     )
-#     # Check that the submission has been run
-#     assert submission_name in [sub[1] for sub in submissions]
+    # check that all submissions are queued
+    submissions = get_submissions(session_toy, 'iris_test', 'new')
+    dispatcher.fetch_from_db(session_toy)
+
+    worker, (_, submission_name) = \
+        dispatcher._awaiting_worker_queue.get()
+
+    setattr(worker, 'status', 'retry')
+    assert worker.status == 'retry'
+    sleep(1)
+    assert worker.status == 'killed'
+    sleep(5)
+    # submissions = get_submissions(
+    #     session_toy, event_config['ramp']['event_name'], 'training_error'
+    # )
+    # Check that the submission has been run
+    # assert submission_name in [sub[1] for sub in submissions]
