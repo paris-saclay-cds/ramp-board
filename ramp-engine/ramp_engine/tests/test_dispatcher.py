@@ -170,6 +170,8 @@ def test_dispatcher_worker_retry(session_toy):
         dispatcher._awaiting_worker_queue.get()
     setattr(worker, 'status', 'retry')
     assert worker.status == 'retry'
+    sleep(1)
+    assert worker.status == 'killed'
     sleep(5)
     submissions = get_submissions(
         session_toy, event_config['ramp']['event_name'], 'training_error'
