@@ -1,6 +1,6 @@
 bcrypt
 bokeh
-boto3>=1.16.9
+boto3
 click
 codecov
 email_validator
