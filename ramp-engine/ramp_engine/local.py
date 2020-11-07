@@ -94,7 +94,7 @@ class CondaEnvWorker(BaseWorker):
 
     def teardown(self):
         """Remove the predictions stores within the submission."""
-        if self.status != 'collected':
+        if self.status not in ('collected', 'retry'):
             raise ValueError("Collect the results before to kill the worker.")
         output_training_dir = os.path.join(self.config['kit_dir'],
                                            'submissions', self.submission,
