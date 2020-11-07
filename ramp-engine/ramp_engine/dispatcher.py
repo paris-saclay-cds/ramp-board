@@ -198,14 +198,19 @@ class Dispatcher:
                 self._processing_worker_queue.put_nowait(
                     (worker, (submission_id, submission_name)))
                 time.sleep(0)
+            elif worker.status == 'retry':
+                set_submission_state(session, submission_id, 'new')
+                logging.info(f'Submission: {submission_id} has been '
+                             'interrupted. It will be added to queue again '
+                             'and retried.')
+                worker.teardown()
             else:
                 logger.info(f'Collecting results from worker {worker}')
                 returncode, stderr = worker.collect_results()
                 if returncode:
                     if returncode == 124:
                         logger.info(
-                            'Worker {} killed due to timeout.'
-                            .format(worker)
+                            f'Worker {worker} killed due to timeout.'
                         )
                     else:
                         logger.info(

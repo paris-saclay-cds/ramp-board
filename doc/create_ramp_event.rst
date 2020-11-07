@@ -44,6 +44,7 @@ The ``config.yml`` file should look like::
         hunger_policy: sleep
         n_workers: 2
         n_threads: 2
+        time_between_collection: 1
 
 **ramp configuration**
 
