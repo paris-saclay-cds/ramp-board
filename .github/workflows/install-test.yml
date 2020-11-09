@@ -1,0 +1,57 @@
+name: build_wheels
+
+on: [push, pull_request]
+
+
+jobs:
+  build_wheels:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04]
+        python: [3.6, 3.7, 3.8]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: ${{  matrix.python }}
+      - name: Setup conda
+        uses: s-weigand/setup-conda@v1
+        with:
+          update-conda: true
+          python-version: ${{ matrix.python-version }}
+          conda-channels: anaconda #, conda-forge
+
+      - name: Create envs and install ramp-board
+        run: |
+          conda create --yes -n testenv python=$PYTHON_VERSION
+          conda env update -n testenv -f environment.yml
+          conda env create -f ci_tools/environment_iris_kit.yml
+          conda activate testenv
+          make inplace
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+
+      - name: Test ramp-frontend
+        run: |
+          bash ci_tools/travis/test_ramp_frontend.sh
+
+      - name: Test ramp-engine
+        run: |
+          bash ci_tools/travis/test_ramp_engine.sh
+
+      - name: Test ramp-database
+        run: |
+          bash ci_tools/travis/test_ramp_database.sh
+
+      - name: Test ramp-utils
+        run: |
+          bash ci_tools/travis/test_ramp_utils.sh
+
+      - name: Test integration
+        run: |
+          bash ci_tools/travis/integration_test.sh
