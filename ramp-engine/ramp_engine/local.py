@@ -94,7 +94,7 @@ class CondaEnvWorker(BaseWorker):
 
     def teardown(self):
         """Remove the predictions stores within the submission."""
-        if self.status != 'collected':
+        if self.status not in ('collected', 'retry'):
             raise ValueError("Collect the results before to kill the worker.")
         output_training_dir = os.path.join(self.config['kit_dir'],
                                            'submissions', self.submission,
@@ -111,6 +111,11 @@ class CondaEnvWorker(BaseWorker):
         """
         self.check_timeout()
         return False if self._proc.poll() is None else True
+
+    def _is_submission_interrupted(self):
+        """Check if submission has been interrupted."""
+        # Always return False for conda worker
+        return False
 
     def check_timeout(self):
         """Check the submission for timeout."""

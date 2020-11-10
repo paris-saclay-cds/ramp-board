@@ -1,0 +1,106 @@
+name: main
+
+on: [push, pull_request]
+
+
+jobs:
+  main:
+    name: test-py-${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04]
+        python: [3.6, 3.7, 3.8]
+
+    services:
+      postgres:
+        image: postgres:11.6-alpine
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ""
+        # Add a health check
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup conda
+        uses: s-weigand/setup-conda@v1
+        with:
+          update-conda: true
+          activate-conda: false
+          python-version: ${{ matrix.python }}
+          conda-channels: anaconda
+
+      - name: Create envs
+        run: |
+          conda create --yes -n testenv python=$PYTHON_VERSION
+          conda env update -n testenv -f environment.yml
+          conda env create -f ci_tools/environment_iris_kit.yml
+        env:
+          PYTHON_VERSION: ${{ matrix.python }}
+
+      - name: Install ramp-board
+        run: |
+          source activate testenv
+          make inplace
+        env:
+          PYTHON_VERSION: ${{ matrix.python }}
+
+      - name: Test ramp-frontend
+        run: |
+          set -e
+          source activate testenv
+          python -m smtpd -n -c DebuggingServer 127.0.0.1:8025 &
+          sleep 3 # wait for the server to start
+          pytest -rvsl ramp-frontend --cov=ramp_frontend --cov-report=term-missing --cov-report=xml --cov-append
+
+      - name: Test ramp-engine
+        run: |
+          set -e
+          source activate testenv
+          pytest -rvsl ramp-engine/ --cov=ramp_engine --cov-report=term-missing --cov-report=xml --cov-append
+
+      - name: Test ramp-database
+        run: |
+          set -e
+          source activate testenv
+          pytest -rvsl ramp-database/ --cov=ramp_database --cov-report=term-missing  --cov-report=xml --cov-append
+
+      - name: Test ramp-utils
+        run: |
+          set -e
+          source activate testenv
+          pytest -rvsl ramp-utils/ --cov=ramp_utils --cov-report=term-missing --cov-report=xml --cov-append
+
+      - name: Test integration
+        run: |
+          set -e
+          source activate testenv
+          bash ci_tools/actions/integration_test.sh
+
+      - uses: codecov/codecov-action@v1
+        with:
+          fail_ci_if_error: true
+          verbose: true
+          file: ./coverage.xml
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: '3.7'
+
+      - name: Install dependencies
+        run: pip install flake8
+
+      - name: Run flake8
+        run: flake8 ramp-*
