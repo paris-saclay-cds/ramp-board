@@ -1,10 +1,10 @@
-name: build_wheels
+name: test
 
 on: [push, pull_request]
 
 
 jobs:
-  build_wheels:
+  main:
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
