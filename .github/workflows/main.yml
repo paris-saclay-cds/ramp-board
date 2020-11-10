@@ -55,25 +55,25 @@ jobs:
           set -e
           source activate testenv
           python -m smtpd -n -c DebuggingServer localhost:8025 &
-          pytest -rvsl ramp-frontend --cov=ramp_frontend --cov-report=term-missing --cov-append
+          pytest -rvsl ramp-frontend --cov=ramp_frontend --cov-report=term-missing --cov-report=xml --cov-append
 
       - name: Test ramp-engine
         run: |
           set -e
           source activate testenv
-          pytest -rvsl ramp-engine/ --cov=ramp_engine --cov-report=term-missing --cov-append
+          pytest -rvsl ramp-engine/ --cov=ramp_engine --cov-report=term-missing --cov-report=xml --cov-append
 
       - name: Test ramp-database
         run: |
           set -e
           source activate testenv
-          pytest -rvsl ramp-database/ --cov=ramp_database --cov-report=term-missing --cov-append
+          pytest -rvsl ramp-database/ --cov=ramp_database --cov-report=term-missing  --cov-report=xml --cov-append
 
       - name: Test ramp-utils
         run: |
           set -e
           source activate testenv
-          pytest -rvsl ramp-utils/ --cov=ramp_utils --cov-report=term-missing --cov-append
+          pytest -rvsl ramp-utils/ --cov=ramp_utils --cov-report=term-missing --cov-report=xml --cov-append
 
       - name: Test integration
         run: |
@@ -85,6 +85,7 @@ jobs:
         with:
           fail_ci_if_error: true
           verbose: true
+          file: ./coverage.xml
 
   lint:
     name: lint
