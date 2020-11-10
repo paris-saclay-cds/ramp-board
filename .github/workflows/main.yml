@@ -55,6 +55,7 @@ jobs:
           set -e
           source activate testenv
           python -m smtpd -n -c DebuggingServer localhost:8025 &
+          sleep 3 # wait for the server to start
           pytest -rvsl ramp-frontend --cov=ramp_frontend --cov-report=term-missing --cov-report=xml --cov-append
 
       - name: Test ramp-engine
