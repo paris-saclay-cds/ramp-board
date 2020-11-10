@@ -111,11 +111,11 @@ def generate_ramp_config(event_config, database_config=None):
     ramp_config['ramp_kit_submissions_dir'] = os.path.join(
         ramp_config['ramp_kit_dir'], 'submissions'
     )
-
+    
     # parameters only used with DaskWorker
     if event_config.get('worker', {}).get('worker_type', None) == 'dask':
         ramp_config['dask_scheduler'] = ramp_config.get(
             'worker', {}
         ).get('dask_scheduler', None)
-
+    
     return ramp_config
