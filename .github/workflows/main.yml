@@ -22,12 +22,17 @@ jobs:
           python-version: ${{ matrix.python }}
           conda-channels: anaconda #, conda-forge
 
-      - name: Create envs and install ramp-board
+      - name: Create envs install ramp-board
         run: |
           conda create --yes -n testenv python=$PYTHON_VERSION
           conda env update -n testenv -f environment.yml
           conda env create -f ci_tools/environment_iris_kit.yml
-          conda activate testenv
+        env:
+          PYTHON_VERSION: ${{ matrix.python }}
+
+      - name: Install ramp-board
+        run: |
+          source activate testenv
           make inplace
         env:
           PYTHON_VERSION: ${{ matrix.python }}
