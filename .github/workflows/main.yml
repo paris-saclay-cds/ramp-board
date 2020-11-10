@@ -54,7 +54,7 @@ jobs:
         run: |
           set -e
           source activate testenv
-          python -m smtpd -n -d -c DebuggingServer 127.0.0.1:8025 &
+          python -m smtpd -n -c DebuggingServer 127.0.0.1:8025 &
           sleep 3 # wait for the server to start
           pytest -rvsl ramp-frontend --cov=ramp_frontend --cov-report=term-missing --cov-report=xml --cov-append
 
