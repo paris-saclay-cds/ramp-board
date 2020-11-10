@@ -1,6 +1,5 @@
 import shutil
 import os
-from time import sleep
 
 import pytest
 
@@ -16,7 +15,6 @@ from ramp_database.testing import create_toy_db
 from ramp_database.tools.event import get_event
 from ramp_database.tools.submission import get_submissions
 from ramp_database.tools.submission import get_submission_by_id
-from ramp_database.tools.submission import set_submission_state
 
 from ramp_engine.local import CondaEnvWorker
 from ramp_engine.dispatcher import Dispatcher

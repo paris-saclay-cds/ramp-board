@@ -25,3 +25,4 @@ test_submissions/submission*
 *.egg-info
 databoard.db
 db_engine.yml
+coverage.xml
