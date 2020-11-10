@@ -366,28 +366,26 @@ def update_all_users_leaderboards(config, event):
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
-@click.option("--event", help='The event name')
-@click.option('--ramp-kit-dir', default='.', show_default=True,
-              help='Root directory of the ramp-kit to test.')
-@click.option('--ramp-data-dir', default='.', show_default=True,
-              help='Directory containing the data. This directory should '
-              'contain a "data" folder.')
-@click.option('--ramp-predictions-dir', default=None, show_default=True,
-              help='Directory containing predictions.')
+@click.option("--config-event", required=True,
+              help='The event config file name.')
 @click.option("--min-improvement", default='0.0',
               help='The minimum score improvement '
               'to continue building the ensemble')
-def compute_contributivity(config, event, ramp_kit_dir, ramp_data_dir,
-                           ramp_predictions_dir, min_improvement):
+def compute_contributivity(config, config_event, min_improvement):
     """Blend submissions, compute combined score and contributivities."""
+    config_event = generate_ramp_config(config_event, config)
+    event_name = config_event['event_name']
     config = read_config(config)
     with session_scope(config['sqlalchemy']) as session:
         contributivity_module.compute_contributivity(
-            session, event, ramp_kit_dir, ramp_data_dir,
-            ramp_predictions_dir, float(min_improvement))
-        contributivity_module.compute_historical_contributivity(session, event)
-        leaderboard_module.update_leaderboards(session, event)
-        leaderboard_module.update_all_user_leaderboards(session, event)
+            session, event_name, config_event['ramp_kit_dir'],
+            config_event['ramp_data_dir'],
+            config_event['ramp_predictions_dir'], float(min_improvement))
+        contributivity_module.compute_historical_contributivity(
+                session, event_name
+        )
+        leaderboard_module.update_leaderboards(session, event_name)
+        leaderboard_module.update_all_user_leaderboards(session, event_name)
 
 
 def start():
