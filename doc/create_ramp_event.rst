@@ -116,6 +116,8 @@ starting kit is located on this GitHub organization, you can skip the first
 step above, which manually clones the kit and prepares the data, and let
 ``ramp setup deploy-event`` do this for you.
 
+.. _launch_dispatcher:
+
 Launch the dispatcher to train and evaluate submissions
 -------------------------------------------------------
 
