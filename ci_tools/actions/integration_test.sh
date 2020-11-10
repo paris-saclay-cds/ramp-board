@@ -4,7 +4,7 @@ cd $HOME
 mkdir ramp_deployment
 cd ramp_deployment
 psql -U postgres -h 127.0.0.1 -c "CREATE USER mrramp WITH PASSWORD 'mrramp';ALTER USER mrramp WITH SUPERUSER;"
-createdb --owner=mrramp databoard_test
+createdb -U postgres -h 127.0.0.1 --owner=mrramp databoard_test
 ramp setup init
 
 echo "flask:

@@ -79,7 +79,6 @@ jobs:
         run: |
           set -e
           source activate testenv
-          python -m smtpd -n -c DebuggingServer localhost:8025 &
           bash ci_tools/actions/integration_test.sh
 
       - uses: codecov/codecov-action@v1
