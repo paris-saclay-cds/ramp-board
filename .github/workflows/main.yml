@@ -101,5 +101,5 @@ jobs:
       - name: Install dependencies
         run: pip install flake8
 
-      - name: Build sdist
+      - name: Run flake8
         run: flake8 ramp-*
