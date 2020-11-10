@@ -31,12 +31,13 @@ class BaseWorker(metaclass=ABCMeta):
     status : str
         The status of the worker. It should be one of the following state:
 
-            * 'initialized': the worker has been instanciated.
+            * 'initialized': the worker has been instantiated.
             * 'setup': the worker has been set up.
-            * 'error': setup failed / training couldn't be started
+            * 'error': setup failed / training couldn't be started.
             * 'running': the worker is training the submission.
             * 'finished': the worker finished to train the submission.
             * 'collected': the results of the training have been collected.
+            * 'retry': the worker has been interrupted (and will be retried).
             * 'killed'
     """
     def __init__(self, config, submission):
@@ -62,6 +63,11 @@ class BaseWorker(metaclass=ABCMeta):
         self.status = 'killed'
 
     @abstractmethod
+    def _is_submission_interrupted(self):
+        """Check if submission has been interrupted."""
+        pass
+
+    @abstractmethod
     def _is_submission_finished(self):
         """Indicate the status of submission"""
         pass
@@ -71,7 +77,9 @@ class BaseWorker(metaclass=ABCMeta):
         status = self._status
         if status == 'running':
             self._status_running_check_time = datetime.utcnow()
-            if self._is_submission_finished():
+            if self._is_submission_interrupted():
+                self._status = 'retry'
+            elif self._is_submission_finished():
                 self._status = 'finished'
         return self._status
 

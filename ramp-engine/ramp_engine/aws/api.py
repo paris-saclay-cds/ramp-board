@@ -5,6 +5,7 @@ import logging
 import subprocess
 import re
 import codecs
+from datetime import datetime, timedelta
 
 # amazon api
 import botocore  # noqa
@@ -41,6 +42,7 @@ AMI_IMAGE_ID_FIELD = 'ami_image_id'
 AMI_IMAGE_NAME_FIELD = 'ami_image_name'
 AMI_USER_NAME_FIELD = 'ami_user_name'
 INSTANCE_TYPE_FIELD = 'instance_type'
+USE_SPOT_INSTANCE_FIELD = 'use_spot_instance'
 KEY_PATH_FIELD = 'key_path'
 KEY_NAME_FIELD = 'key_name'
 SECURITY_GROUP_FIELD = 'security_group'
@@ -71,6 +73,7 @@ ALL_FIELDS = [
     AMI_IMAGE_NAME_FIELD,
     AMI_USER_NAME_FIELD,
     INSTANCE_TYPE_FIELD,
+    USE_SPOT_INSTANCE_FIELD,
     KEY_PATH_FIELD,
     KEY_NAME_FIELD,
     SECURITY_GROUP_FIELD,
@@ -113,6 +116,7 @@ def launch_ec2_instances(config, nb=1):
     """
     Launch new ec2 instance(s)
     """
+    use_spot_instance = config.get(USE_SPOT_INSTANCE_FIELD)
     ami_image_id = config.get(AMI_IMAGE_ID_FIELD)
     ami_name = config.get(AMI_IMAGE_NAME_FIELD)
     if ami_image_id and ami_name:
@@ -140,21 +144,81 @@ def launch_ec2_instances(config, nb=1):
     sess = _get_boto_session(config)
     client = sess.client('ec2')
     resource = sess.resource('ec2')
-    instances = resource.create_instances(
-        ImageId=ami_image_id,
-        MinCount=nb,
-        MaxCount=nb,
-        InstanceType=instance_type,
-        KeyName=key_name,
-        TagSpecifications=tags,
-        SecurityGroups=[security_group],
-    )
-    # Wait until AMI is okay
-    waiter = client.get_waiter('instance_status_ok')
-    try:
-        waiter.wait(InstanceIds=[instance.id for instance in instances])
-    except botocore.exceptions.WaiterError:
-        return None
+
+    if use_spot_instance:
+        logger.info('Attempting to use spot instance.')
+        now = datetime.utcnow() + timedelta(seconds=3)
+        request_wait = timedelta(minutes=10)
+        response = client.request_spot_instances(
+            AvailabilityZoneGroup=config[REGION_NAME_FIELD],
+            InstanceCount=nb,
+            LaunchSpecification={
+                'SecurityGroups': [security_group],
+                'ImageId': ami_image_id,
+                'InstanceType': instance_type,
+                'KeyName': key_name,
+            },
+            Type='one-time',
+            ValidFrom=now,
+            ValidUntil=(now + request_wait),
+        )
+
+        # Wait until request fulfilled
+        waiter = client.get_waiter('spot_instance_request_fulfilled')
+        request_id = \
+            response['SpotInstanceRequests'][0]['SpotInstanceRequestId']
+        on_demand = False
+        try:
+            waiter.wait(SpotInstanceRequestIds=[request_id, ])
+        except botocore.exceptions.WaiterError:
+            logger.info('Spot instance request failed due to time out. Using '
+                        'on-demand instance instead')
+            on_demand = True
+            client.cancel_spot_instance_requests(
+                SpotInstanceRequestIds=[request_id, ]
+            )
+        else:
+            logger.info('Spot instance request fulfilled.')
+            # Small wait before getting instance ID
+            time.sleep(1)
+            # Get instance ID
+            response_updated = client.describe_spot_instance_requests(
+                SpotInstanceRequestIds=[request_id]
+            )
+            instance_id = \
+                response_updated['SpotInstanceRequests'][0]['InstanceId']
+            # Create EC2.Instance class
+            instance = resource.Instance(instance_id)
+            instance.create_tags(
+                Resources=[instance_id, ],
+                Tags=[
+                    {
+                        'Key': RAMP_AWS_BACKEND_TAG,
+                        'Value': '1'
+                    },
+                ])
+            instances = [instance, ]
+            instance_ids = [instance_id, ]
+
+    if on_demand or not use_spot_instance:
+        logger.info('Using on-demand instance.')
+        instances = resource.create_instances(
+            ImageId=ami_image_id,
+            MinCount=nb,
+            MaxCount=nb,
+            InstanceType=instance_type,
+            KeyName=key_name,
+            TagSpecifications=tags,
+            SecurityGroups=[security_group],
+        )
+        instance_ids = [instance.id for instance in instances]
+        # Wait until instance is okay
+        waiter = client.get_waiter('instance_status_ok')
+        try:
+            waiter.wait(InstanceIds=instance_ids)
+        except botocore.exceptions.WaiterError:
+            return None
+
     return instances
 
 
@@ -841,3 +905,28 @@ def validate_config(config):
                 raise ValueError(
                     'Invalid hook name : {}, hooks should be one of '
                     'these : {}'.format(hook_name, hook_names))
+
+
+def is_spot_terminated(config, instance_id):
+    """Check if there is an 'instance-action' item present in instance
+    metatdata. If a spot instance is marked to be terminated an
+    'instance-action' will be present."""
+    cmd = "curl http://169.254.169.254/latest/meta-data/instance-action"
+    out = _run(config, instance_id, cmd, return_output=True)
+    out = out.decode('utf-8')
+    if out == 'none':
+        terminated = False
+    else:
+        logger.info(f'An instance-action is present on {instance_id}, '
+                    'indicating that this spot instance is marked for '
+                    'termination.')
+        terminated = True
+    return terminated
+
+
+def check_instance_status(config, instance_id):
+    """Return the status of an instance."""
+    sess = _get_boto_session(config)
+    client = sess.client('ec2')
+    response = client.describe_instance_status(InstanceIds=[instance_id, ])
+    return response['InstanceStatuses'][0]['InstanceState']['Name']

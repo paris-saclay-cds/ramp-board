@@ -173,3 +173,31 @@ def test_dispatcher_timeout(session_toy, Worker, dask_scheduler):
         session_toy, event_config['ramp']['event_name'], 'training_error'
     )
     assert len(submissions) >= 2
+
+
+def test_dispatcher_worker_retry(session_toy):
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_config_template())
+    dispatcher = Dispatcher(config=config,
+                            event_config=event_config,
+                            worker=CondaEnvWorker, n_workers=10,
+                            hunger_policy='exit')
+
+    dispatcher.fetch_from_db(session_toy)
+    dispatcher.launch_workers(session_toy)
+
+    # Get one worker and set status to 'retry'
+    worker, (submission_id, submission_name) = \
+        dispatcher._processing_worker_queue.get()
+    setattr(worker, 'status', 'retry')
+    assert worker.status == 'retry'
+    # Add back to queue
+    dispatcher._processing_worker_queue.put_nowait(
+        (worker, (submission_id, submission_name))
+    )
+
+    while not dispatcher._processing_worker_queue.empty():
+        dispatcher.collect_result(session_toy)
+
+    submissions = get_submissions(session_toy, 'iris_test', 'new')
+    assert submission_name in [sub[1] for sub in submissions]
