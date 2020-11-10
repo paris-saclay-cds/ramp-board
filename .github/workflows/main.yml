@@ -15,15 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: actions/setup-python@v2
-        name: Install Python
-        with:
-          python-version: ${{  matrix.python }}
       - name: Setup conda
         uses: s-weigand/setup-conda@v1
         with:
           update-conda: true
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
           conda-channels: anaconda #, conda-forge
 
       - name: Create envs and install ramp-board
@@ -34,7 +30,7 @@ jobs:
           conda activate testenv
           make inplace
         env:
-          PYTHON_VERSION: ${{ matrix.python-version }}
+          PYTHON_VERSION: ${{ matrix.python }}
 
       - name: Test ramp-frontend
         run: |
