@@ -1,4 +1,4 @@
-name: test
+name: main
 
 on: [push, pull_request]
 
@@ -19,8 +19,9 @@ jobs:
         uses: s-weigand/setup-conda@v1
         with:
           update-conda: true
+          activate-conda: false
           python-version: ${{ matrix.python }}
-          conda-channels: anaconda #, conda-forge
+          conda-channels: anaconda
 
       - name: Create envs install ramp-board
         run: |
@@ -39,20 +40,25 @@ jobs:
 
       - name: Test ramp-frontend
         run: |
+          source activate testenv
           bash ci_tools/travis/test_ramp_frontend.sh
 
       - name: Test ramp-engine
         run: |
+          source activate testenv
           bash ci_tools/travis/test_ramp_engine.sh
 
       - name: Test ramp-database
         run: |
+          source activate testenv
           bash ci_tools/travis/test_ramp_database.sh
 
       - name: Test ramp-utils
         run: |
+          source activate testenv
           bash ci_tools/travis/test_ramp_utils.sh
 
       - name: Test integration
         run: |
+          source activate testenv
           bash ci_tools/travis/integration_test.sh
