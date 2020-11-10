@@ -5,7 +5,7 @@ on: [push, pull_request]
 
 jobs:
   main:
-    name: ${{ matrix.os }}
+    name: test-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -54,6 +54,7 @@ jobs:
         run: |
           set -e
           source activate testenv
+          python -m smtpd -n -c DebuggingServer localhost:8025 &
           pytest -rvsl ramp-frontend --cov=ramp_frontend --cov-report=term-missing --cov-append
 
       - name: Test ramp-engine
@@ -78,7 +79,13 @@ jobs:
         run: |
           set -e
           source activate testenv
+          python -m smtpd -n -c DebuggingServer localhost:8025 &
           bash ci_tools/travis/integration_test.sh
+
+      - uses: codecov/codecov-action@v1
+        with:
+          fail_ci_if_error: true
+          verbose: true
 
   lint:
     name: lint
