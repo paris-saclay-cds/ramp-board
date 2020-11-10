@@ -181,6 +181,11 @@ class DaskWorker(BaseWorker):
         self.check_timeout()
         return self._proc.done()
 
+    def _is_submission_interrupted(self):
+        """Check if submission has been interrupted."""
+        # This is only used in the AWS worker
+        return False
+
     def check_timeout(self):
         """Check the submission for timeout."""
         if not hasattr(self, "_start_date"):
