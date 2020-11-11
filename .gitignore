@@ -25,9 +25,6 @@ test_submissions/submission*
 *.egg-info
 databoard.db
 db_engine.yml
-<<<<<<< HEAD
 prof
 dask-worker-space/
-=======
 coverage.xml
->>>>>>> upstream/master
