@@ -360,6 +360,7 @@ RAMP Workers
 
    base.BaseWorker
    local.CondaEnvWorker
+   remote.DaskWorker
    aws.AWSWorker
 
 RAMP frontend

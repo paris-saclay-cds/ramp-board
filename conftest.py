@@ -2,6 +2,7 @@ import contextlib
 import os
 import pytest
 import smtpd
+import warnings
 from sqlalchemy import create_engine, exc
 from threading import Thread
 from ramp_utils.testing import database_config_template
@@ -31,8 +32,8 @@ def database_connection():
         connection.execute(f"""CREATE USER {username}
                               WITH PASSWORD '{username}';
                               ALTER USER {username} WITH SUPERUSER""")
-    except exc.ProgrammingError as e:
-        raise ValueError(f'user {username} already exists') from e
+    except exc.ProgrammingError:
+        warnings.warn(f'user {username} already exists')
 
     try:
         connection.execute(f'CREATE DATABASE {database_name} OWNER {username}')
@@ -49,3 +50,14 @@ def database_connection():
     connection.execute(f'DROP DATABASE {database_name}')
     connection.execute(f'DROP USER {username}')
     print(f"deleted database 'databoard_test' and removed user '{username}'")
+
+
+@pytest.fixture(scope='session')
+def dask_scheduler():
+    try:
+        from dask.distributed import LocalCluster
+        cluster = LocalCluster(n_workers=4)
+        yield cluster.scheduler_address
+        cluster.close()
+    except ImportError:
+        yield None

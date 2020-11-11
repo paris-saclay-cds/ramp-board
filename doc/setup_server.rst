@@ -1,3 +1,4 @@
+.. _setup_server:
 Set up your own server to run RAMP
 ==================================
 
