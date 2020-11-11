@@ -59,7 +59,9 @@ def generate_ramp_config(event_config, database_config=None):
                 'configuration, you need to provide the filename of the '
                 'database as well, by assigning "database_config".'
             )
-        config = read_config(event_config, filter_section='ramp')
+        event_config = read_config(event_config)
+        config = event_config['ramp']
+
         path_config = os.path.dirname(
             os.path.abspath(database_config)
         )
@@ -109,4 +111,11 @@ def generate_ramp_config(event_config, database_config=None):
     ramp_config['ramp_kit_submissions_dir'] = os.path.join(
         ramp_config['ramp_kit_dir'], 'submissions'
     )
+
+    # parameters only used with DaskWorker
+    if event_config.get('worker', {}).get('worker_type', None) == 'dask':
+        ramp_config['dask_scheduler'] = ramp_config.get(
+            'worker', {}
+        ).get('dask_scheduler', None)
+
     return ramp_config
