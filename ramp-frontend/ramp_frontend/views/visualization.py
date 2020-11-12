@@ -164,7 +164,7 @@ def score_plot(session, event):
         pareto_df, event.official_score_type.is_lower_the_better)
     source_pareto = ColumnDataSource(pareto_df)
 
-    tools = ['pan,wheel_zoom,box_zoom,reset,previewsave,tap']
+    tools = ['pan,wheel_zoom,box_zoom,reset,save,tap']
     p = figure(plot_width=900, plot_height=600, tools=tools, title='Scores')
 
     p.circle(
