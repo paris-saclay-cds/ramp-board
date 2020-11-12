@@ -48,7 +48,7 @@ def test_launch_ec2_instances(boto_session_cls, use_spot_instance):
     describe_images = client.describe_images
     images = {"Images": [{"ImageId": 1}]}
     describe_images.return_value = images
-    config = read_config(os.path.join(HERE, 'config.yml'))
+    config = read_config(os.path.join(HERE, '_config.yml'))
 
     config['worker']['use_spot_instance'] = use_spot_instance
     launch_ec2_instances(config['worker'])
