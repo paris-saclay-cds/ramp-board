@@ -107,10 +107,10 @@
   <script>
     var training_time = {
       x: {{ timestamp_submissions| safe }},
-    y: { { training_sec } },
+    y: {{ training_sec }},
     mode: 'markers',
       type: 'scatter',
-        text: { { name_submissions | tojson | safe } },
+        text: {{ name_submissions | tojson | safe }},
     marker: {
       color: "#e84b3a",
         size: 12
@@ -119,9 +119,9 @@
   };
     var cum_submissions = {
       x: {{ timestamp_submissions| safe }},
-    y: { { cumulated_submissions | safe } },
+    y: {{ cumulated_submissions | safe }},
     type: 'scatter',
-      text: { { name_submissions | tojson | safe } },
+      text: {{ name_submissions | tojson | safe }},
     marker: {
       color: "#e3a712",
         size: 12
