@@ -12,12 +12,14 @@ import pytest
 
 from ramp_database.tools.submission import get_submissions
 from ramp_engine import Dispatcher, AWSWorker
+from ramp_engine.aws.api import launch_ec2_instances
 from ramp_utils import generate_worker_config, read_config
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
 
 from .test_dispatcher import session_toy  # noqa
 
+from unittest import mock
 
 HERE = os.path.dirname(__file__)
 
@@ -31,6 +33,25 @@ logging.basicConfig(
 def add_empty_dir(dir_name):
     if not os.path.exists(dir_name):
         os.mkdir(dir_name)
+
+
+@pytest.mark.parametrize(
+    "use_spot_instance",
+    [None, True, False]
+    )
+@mock.patch("boto3.session.Session")
+def test_launch_ec2_instances(boto_session_cls, use_spot_instance):
+    ''' 'use_spot_instance' settings run through if True or False'''
+    # dummy mock session
+    session = boto_session_cls.return_value
+    client = session.client.return_value
+    describe_images = client.describe_images
+    images = {"Images": [{"ImageId": 1}]}
+    describe_images.return_value = images
+    config = read_config(os.path.join(HERE, 'config.yml'))
+
+    config['worker']['use_spot_instance'] = use_spot_instance
+    launch_ec2_instances(config['worker'])
 
 
 def test_aws_worker():
