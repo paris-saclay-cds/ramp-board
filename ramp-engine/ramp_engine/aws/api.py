@@ -172,6 +172,7 @@ def launch_ec2_instances(config, nb=1):
                     ValidFrom=now,
                     ValidUntil=(now + request_wait),
                 )
+                break
             except botocore.exceptions.ClientError as e:
                 n_try += 1
                 if n_try < max_tries_to_connect:
