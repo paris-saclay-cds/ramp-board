@@ -28,6 +28,7 @@ logger = logging.getLogger('RAMP-FRONTEND')
 
 SORTING_COLUMN_INDEX = 2
 
+
 @mod.route("/events/<event_name>/my_submissions")
 @flask_login.login_required
 def my_submissions(event_name):
@@ -68,7 +69,6 @@ def my_submissions(event_name):
         sorting_direction = 'asc'
     else:
         sorting_direction = 'desc'
-    print(leaderboard_html)
 
     return render_template('leaderboard.html',
                            leaderboard_title='Trained submissions',
