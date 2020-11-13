@@ -56,7 +56,7 @@ TRAIN_LOOP_INTERVAL_SECS_FIELD = 'train_loop_interval_secs'
 MEMORY_PROFILING_FIELD = 'memory_profiling'
 
 # how long to wait for connections
-WAIT_MINUTES = 10
+WAIT_MINUTES = 0.03
 MAX_TRIES_TO_CONNECT = 6
 
 HOOKS_SECTION = 'hooks'
@@ -179,8 +179,8 @@ def launch_ec2_instances(config, nb=1):
                     logger.warning('Not enough instances available: I am going'
                                    f' to wait for {wait_minutes} minutes'
                                    ' before trying again (this was'
-                                   f' {n_try}/{max_tries_to_connect} tries to'
-                                   ' connect)')
+                                   f' {n_try} out of {max_tries_to_connect}'
+                                   ' tries to connect)')
                     time.sleep(wait_minutes*60)
                 else:
                     logger.error(f'Not enough instances available: {e}')
