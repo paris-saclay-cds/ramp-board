@@ -20,7 +20,7 @@ from ramp_utils.testing import ramp_config_template
 
 from .test_dispatcher import session_toy  # noqa
 
-from unittest import mock, assertLogs
+from unittest import mock
 
 HERE = os.path.dirname(__file__)
 
@@ -40,8 +40,9 @@ def add_empty_dir(dir_name):
 @mock.patch("ramp_engine.aws.api.WAIT_MINUTES", 0.03)
 @mock.patch("ramp_engine.aws.api.MAX_TRIES_TO_CONNECT", 4)
 @mock.patch("boto3.session.Session")
-def test_too_many_instances(boto_session_cls, mock_logger):
+def test_too_many_instances(boto_session_cls, caplog):
     ''' test launching more instances than limit on AWS enabled'''
+    # info: caplog is a pytest fixture to collect logging info
     # dummy mock session
     # test that the following error is caught:
     # botocore.exceptions.ClientError: An error occurred
@@ -63,38 +64,33 @@ def test_too_many_instances(boto_session_cls, mock_logger):
     request_spot_instances = client.request_spot_instances
     error_max_instances = botocore.exceptions.ClientError(
         error, "MaxSpotInstanceCountExceeded")
-    error_unhandled = botocore.exceptions.ParamValidationError(report='temp')
-    correct_response = {'SpotInstanceRequests': [{'SpotInstanceRequestId': ['temp']}]}
+    error_unhandled = botocore.exceptions.ParamValidationError(report='this is temporary message')
+    correct_response = {'SpotInstanceRequests':
+                        [{'SpotInstanceRequestId': ['temp']}]
+                        }
 
     # test 1
     aws_response = [error_max_instances, error_max_instances,
                     error_max_instances, error_max_instances]
 
     request_spot_instances.side_effect = aws_response
-
     instance, = launch_ec2_instances(config['worker'])
-    mock_logger.error.assert_called_with("Not enough instances available")
-
-
-
-
-
-
-    assert 'Error' in instance
+    assert instance is None
+    assert 'MaxSpotInstanceCountExceeded' in caplog.text
 
     # test 2
     aws_response = [error_unhandled]
     request_spot_instances.side_effect = aws_response
     instance, = launch_ec2_instances(config['worker'])
     assert instance is None
-    assert 'temp' in str(message)
-    
+    assert 'this is temporary message' in caplog.text
+
     # test 3
     aws_response = [error_max_instances, error_max_instances, correct_response]
     request_spot_instances.side_effect = aws_response
     instance, = launch_ec2_instances(config['worker'])
     assert instance is not None
-    # assert message is None
+    assert 'this is temporary message' in caplog.text
 
 
 
