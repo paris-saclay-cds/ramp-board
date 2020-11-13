@@ -47,7 +47,7 @@ def add_empty_dir(dir_name):
 @mock.patch("ramp_engine.aws.api.WAIT_MINUTES", 0.03)
 @mock.patch("ramp_engine.aws.api.MAX_TRIES_TO_CONNECT", 4)
 @mock.patch("boto3.session.Session")
-def test_too_many_instances(boto_session_cls, caplog,
+def test_creating_instances(boto_session_cls, caplog,
                             aws_msg_type, result_none, log_msg):
     ''' test launching more instances than limit on AWS enabled'''
     # info: caplog is a pytest fixture to collect logging info
