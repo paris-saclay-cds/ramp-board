@@ -157,7 +157,7 @@ def launch_ec2_instances(config, nb=1):
         request_wait = timedelta(minutes=wait_minutes)
         n_try = 0
         response = None
-        for n_try in range(max_tries_to_connect):
+        while not(response) and (n_try < max_tries_to_connect):
             try:
                 response = client.request_spot_instances(
                     AvailabilityZoneGroup=config[REGION_NAME_FIELD],
@@ -172,23 +172,23 @@ def launch_ec2_instances(config, nb=1):
                     ValidFrom=now,
                     ValidUntil=(now + request_wait),
                 )
-                break
             except botocore.exceptions.ClientError as e:
-                # wait before you try again
-                logger.warning('Not enough instances available: I am going'
-                               f' to wait for {wait_minutes} minutes'
-                               ' before trying again (this was'
-                               f' {n_try} out of {max_tries_to_connect}'
-                               ' tries to connect)')
-                time.sleep(wait_minutes*60)
+                n_try += 1
+                if n_try < max_tries_to_connect:
+                    # wait before you try again
+                    logger.warning('Not enough instances available: I am going'
+                                   f' to wait for {wait_minutes} minutes'
+                                   ' before trying again (this was'
+                                   f' {n_try} out of {max_tries_to_connect}'
+                                   ' tries to connect)')
+                    time.sleep(wait_minutes*60)
+                else:
+                    logger.error(f'Not enough instances available: {e}')
+                    return None,
             except Exception as e:
                 # unknown error
                 logger.error(f'AWS worker error: {e}')
                 return None,
-        else:
-            # reached max retries
-            logger.error(f'Not enough instances available: {e}')
-            return None,
         # Wait until request fulfilled
         waiter = client.get_waiter('spot_instance_request_fulfilled')
         request_id = \
