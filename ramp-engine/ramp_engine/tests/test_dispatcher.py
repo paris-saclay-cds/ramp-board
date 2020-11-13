@@ -43,12 +43,11 @@ def test_something(mock_method):
     Dispatcher.launch_workers().returvalue = None
     mock_method.assert_called_with()
 
-# ramp_database.tools.submission
-#@mock.patch("ramp_engine.dispatcher.set_submission_state", side_effect=None)
+
 def test_error_handling_on_aws_worker_setup_error(session_toy, caplog):
     # make sure the error on the worker.setup is dealt with correctly
-    # set mock AWSworker
-    class AWSWorker_mock():
+    # set mock worker
+    class Worker_mock():
         def __init__(self, *args, **kwargs):
             self.state = None
 
@@ -58,9 +57,9 @@ def test_error_handling_on_aws_worker_setup_error(session_toy, caplog):
     config = read_config(database_config_template())
     event_config = read_config(ramp_config_template())
 
-    worker = AWSWorker_mock()
+    worker = Worker_mock()
     dispatcher = Dispatcher(
-        config=config, event_config=event_config, worker=AWSWorker_mock,
+        config=config, event_config=event_config, worker=Worker_mock,
         n_workers=-1, hunger_policy='exit'
     )
 
