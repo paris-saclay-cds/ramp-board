@@ -51,11 +51,7 @@ def test_too_many_instances(boto_session_cls, caplog,
                             aws_msg_type, result_none, log_msg):
     ''' test launching more instances than limit on AWS enabled'''
     # info: caplog is a pytest fixture to collect logging info
-    # dummy mock session
-    # test that the following error is caught:
-    # botocore.exceptions.ClientError: An error occurred
-    # (MaxSpotInstanceCountExceeded) when calling the
-    # RequestSpotInstances operation: Max spot instance count exceeded
+    # dummy mock session of AWS
     session = boto_session_cls.return_value
     client = session.client.return_value
     describe_images = client.describe_images
