@@ -2,7 +2,6 @@ import shutil
 import os
 
 import pytest
-from unittest import mock
 
 from ramp_utils import read_config
 from ramp_utils.testing import database_config_template
@@ -36,12 +35,6 @@ def session_toy(database_connection):
         shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
-
-
-@mock.patch.object(Dispatcher, 'launch_workers')
-def test_something(mock_method):
-    Dispatcher.launch_workers().returvalue = None
-    mock_method.assert_called_with()
 
 
 def test_error_handling_worker_setup_error(session_toy, caplog):
