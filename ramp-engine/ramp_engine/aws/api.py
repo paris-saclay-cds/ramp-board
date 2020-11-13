@@ -176,6 +176,11 @@ def launch_ec2_instances(config, nb=1):
                 n_try += 1
                 if n_try < max_tries_to_connect:
                     # wait before you try again
+                    logger.warning('Not enough instances available: I am going'
+                                   f' to wait for {wait_minutes} minutes'
+                                   ' before trying again (this was'
+                                   f' {n_try}/{max_tries_to_connect} tries to'
+                                   ' connect)')
                     time.sleep(wait_minutes*60)
                 else:
                     logger.error(f'Not enough instances available: {e}')
