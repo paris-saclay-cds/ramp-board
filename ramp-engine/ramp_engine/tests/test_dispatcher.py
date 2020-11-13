@@ -44,7 +44,7 @@ def test_something(mock_method):
     mock_method.assert_called_with()
 
 
-def test_error_handling_on_aws_worker_setup_error(session_toy, caplog):
+def test_error_handling_worker_setup_error(session_toy, caplog):
     # make sure the error on the worker.setup is dealt with correctly
     # set mock worker
     class Worker_mock():
