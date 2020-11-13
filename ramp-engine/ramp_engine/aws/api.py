@@ -56,7 +56,7 @@ TRAIN_LOOP_INTERVAL_SECS_FIELD = 'train_loop_interval_secs'
 MEMORY_PROFILING_FIELD = 'memory_profiling'
 
 # how long to wait for connections
-WAIT_MINUTES = 0.03
+WAIT_MINUTES = 10
 MAX_TRIES_TO_CONNECT = 6
 
 HOOKS_SECTION = 'hooks'
