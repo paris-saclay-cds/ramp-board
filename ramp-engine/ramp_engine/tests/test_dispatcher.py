@@ -20,6 +20,9 @@ from ramp_engine.local import CondaEnvWorker
 from ramp_engine.dispatcher import Dispatcher
 
 
+HERE = os.path.dirname(__file__)
+
+
 @pytest.fixture
 def session_toy(database_connection):
     database_config = read_config(database_config_template())
@@ -32,6 +35,34 @@ def session_toy(database_connection):
         shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
+
+
+def test_error_handling_worker_setup_error(session_toy, caplog):
+    # make sure the error on the worker.setup is dealt with correctly
+    # set mock worker
+    class Worker_mock():
+        def __init__(self, *args, **kwargs):
+            self.state = None
+
+        def setup(self):
+            raise Exception('Test error')
+
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_config_template())
+
+    worker = Worker_mock()
+    dispatcher = Dispatcher(
+        config=config, event_config=event_config, worker=Worker_mock,
+        n_workers=-1, hunger_policy='exit'
+    )
+
+    dispatcher.launch()
+    submissions = get_submissions(
+        session_toy, event_config['ramp']['event_name'], 'checking_error'
+    )
+    assert len(submissions) == 6
+    worker.status = 'error'
+    assert 'Test error' in caplog.text
 
 
 def test_integration_dispatcher(session_toy):
