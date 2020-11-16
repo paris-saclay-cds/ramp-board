@@ -121,7 +121,7 @@ class Dispatcher:
                     )
             for lib in ('OMP', 'MKL', 'OPENBLAS'):
                 os.environ[lib + '_NUM_THREADS'] = str(self.n_threads)
-        self._logger = logger.getChild(event_config['name'])
+        self._logger = logger.getChild(self._ramp_config['event_name'])
 
     def fetch_from_db(self, session):
         """Fetch the submission from the database and create the workers."""
