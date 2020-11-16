@@ -231,7 +231,7 @@ def private_leaderboard(event_name):
         'leaderboard.html',
         leaderboard_title='Leaderboard',
         leaderboard=leaderboard_html,
-        sorting_column_index=SORTING_COLUMN_INDEX,
+        sorting_column_index=SORTING_COLUMN_INDEX+1,
         sorting_direction=sorting_direction,
         event=event,
         private=True,
