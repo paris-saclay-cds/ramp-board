@@ -911,8 +911,18 @@ def is_spot_terminated(config, instance_id):
     """Check if there is an 'instance-action' item present in instance
     metatdata. If a spot instance is marked to be terminated an
     'instance-action' will be present."""
-    cmd = "curl http://169.254.169.254/latest/meta-data/instance-action"
+    cmd_timeout = 1
+    n_retry = 5
+    #cmd = "curl http://169.254.169.254/latest/meta-data/instance-action" # -m cmd_timeout --retry n_retry
+    #try:
     out = _run(config, instance_id, cmd, return_output=True)
+    # except subprocess.CalledProcessError:
+    #     logger.error('Unable to run curl: {e}')
+    #    terminated = False
+    #except Exception as e:
+    #    logger.error('Unhandled exception happend when checking if there'
+    #                 f' is an instance action: {e}')
+    #    terminated = False
     out = out.decode('utf-8')
     if out == 'none':
         terminated = False
