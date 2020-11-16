@@ -8,11 +8,12 @@ import botocore
 import logging
 import os
 import shutil
+import subprocess
 
 import pytest
 
 from ramp_database.tools.submission import get_submissions
-from ramp_engine.aws.api import launch_ec2_instances
+from ramp_engine.aws.api import is_spot_terminated, launch_ec2_instances
 from ramp_engine import Dispatcher, AWSWorker
 from ramp_utils import generate_worker_config, read_config
 from ramp_utils.testing import database_config_template
@@ -34,6 +35,15 @@ logging.basicConfig(
 def add_empty_dir(dir_name):
     if not os.path.exists(dir_name):
         os.mkdir(dir_name)
+
+
+@mock.patch('ramp_engine.aws.api._run')
+def test_is_spot_terminated_with_CalledProcessError(test_run, caplog):
+    test_run.side_effect = subprocess.CalledProcessError(28, 'test')
+    config = read_config(os.path.join(HERE, '_config.yml'))
+    instance_id = 0
+    is_spot_terminated(config, instance_id)
+    assert 'Unable to run curl' in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -88,7 +98,7 @@ def test_creating_instances(boto_session_cls, caplog,
     assert (instance is None) == result_none
     assert log_msg in caplog.text
 
-
+'''
 def test_aws_worker():
     if not os.path.isfile(os.path.join(HERE, 'config.yml')):
         pytest.skip("Only for local tests for now")
@@ -149,3 +159,4 @@ def test_aws_dispatcher(session_toy):  # noqa
         session_toy, event_config['ramp']['event_name'], 'training_error'
     )
     assert len(submission) == 2
+'''

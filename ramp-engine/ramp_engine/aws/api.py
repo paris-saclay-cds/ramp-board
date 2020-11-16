@@ -940,17 +940,20 @@ def is_spot_terminated(config, instance_id):
     'instance-action' will be present."""
     cmd_timeout = 1
     n_retry = 5
-    #cmd = "curl http://169.254.169.254/latest/meta-data/instance-action" # -m cmd_timeout --retry n_retry
-    #try:
-    out = _run(config, instance_id, cmd, return_output=True)
-    # except subprocess.CalledProcessError:
-    #     logger.error('Unable to run curl: {e}')
-    #    terminated = False
-    #except Exception as e:
-    #    logger.error('Unhandled exception happend when checking if there'
-    #                 f' is an instance action: {e}')
-    #    terminated = False
-    out = out.decode('utf-8')
+    cmd = ("curl http://169.254.169.254/latest/meta-data/instance-action"
+           f" -m {cmd_timeout} --retry {n_retry}")
+
+    try:
+        out = _run(config, instance_id, cmd, return_output=True)
+        out = out.decode('utf-8')
+    except subprocess.CalledProcessError:
+        logger.error('Unable to run curl: {e}')
+        return False
+    except Exception as e:
+        logger.error('Unhandled exception happend when checking if there'
+                     f' is an instance action: {e}')
+        return False
+
     if out == 'none':
         terminated = False
     else:
