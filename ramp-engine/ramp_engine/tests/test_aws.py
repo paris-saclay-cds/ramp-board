@@ -37,6 +37,25 @@ def add_empty_dir(dir_name):
 
 
 @pytest.mark.parametrize(
+    "use_spot_instance",
+    [None, True, False]
+    )
+@mock.patch("boto3.session.Session")
+def test_launch_ec2_instances(boto_session_cls, use_spot_instance):
+    ''' Check 'use_spot_instance' config with None, True and False'''
+    # dummy mock session
+    session = boto_session_cls.return_value
+    client = session.client.return_value
+    describe_images = client.describe_images
+    images = {"Images": [{"ImageId": 1}]}
+    describe_images.return_value = images
+    config = read_config(os.path.join(HERE, '_config.yml'))
+
+    config['worker']['use_spot_instance'] = use_spot_instance
+    launch_ec2_instances(config['worker'])
+
+
+@pytest.mark.parametrize(
     'aws_msg_type, result_none, log_msg',
     [('max_spot', True, 'MaxSpotInstanceCountExceeded'),
      ('unhandled', True, 'this is temporary message'),
