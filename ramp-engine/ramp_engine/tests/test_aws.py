@@ -98,7 +98,7 @@ def test_creating_instances(boto_session_cls, caplog,
     assert (instance is None) == result_none
     assert log_msg in caplog.text
 
-'''
+
 def test_aws_worker():
     if not os.path.isfile(os.path.join(HERE, 'config.yml')):
         pytest.skip("Only for local tests for now")
@@ -159,4 +159,3 @@ def test_aws_dispatcher(session_toy):  # noqa
         session_toy, event_config['ramp']['event_name'], 'training_error'
     )
     assert len(submission) == 2
-'''
