@@ -42,7 +42,7 @@ def add_empty_dir(dir_name):
     )
 @mock.patch("boto3.session.Session")
 def test_launch_ec2_instances(boto_session_cls, use_spot_instance):
-    ''' 'use_spot_instance' settings run through if True or False'''
+    ''' Check 'use_spot_instance' config with None, True and False'''
     # dummy mock session
     session = boto_session_cls.return_value
     client = session.client.return_value

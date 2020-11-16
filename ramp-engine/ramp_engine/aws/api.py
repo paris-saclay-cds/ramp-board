@@ -147,7 +147,7 @@ def launch_ec2_instances(config, nb=1):
     sess = _get_boto_session(config)
     client = sess.client('ec2')
     resource = sess.resource('ec2')
-    on_demand = False
+    switch_to_on_demand = False
 
     if use_spot_instance:
         logger.info('Attempting to use spot instance.')
@@ -199,7 +199,7 @@ def launch_ec2_instances(config, nb=1):
         except botocore.exceptions.WaiterError:
             logger.info('Spot instance request failed due to time out. Using '
                         'on-demand instance instead')
-            on_demand = True
+            switch_to_on_demand = True
             client.cancel_spot_instance_requests(
                 SpotInstanceRequestIds=[request_id, ]
             )
@@ -226,7 +226,7 @@ def launch_ec2_instances(config, nb=1):
             instances = [instance, ]
             instance_ids = [instance_id, ]
 
-    if on_demand or not use_spot_instance:
+    if switch_to_on_demand or not use_spot_instance:
         logger.info('Using on-demand instance.')
         instances = resource.create_instances(
             ImageId=ami_image_id,
