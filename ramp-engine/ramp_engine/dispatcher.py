@@ -153,11 +153,15 @@ class Dispatcher:
             worker, (submission_id, submission_name) = \
                 self._awaiting_worker_queue.get()
             logger.info('Starting worker: {}'.format(worker))
-            worker.setup()
-            if worker.status == 'error':
-                set_submission_state(session, submission_id, 'checking_error')
-                continue
-            worker.launch_submission()
+
+            try:
+                worker.setup()
+                if worker.status != "error":
+                    worker.launch_submission()
+            except Exception as e:
+                logger.error('Worker finished with unhandled exception:'
+                             f' {e}')
+                worker.status = 'error'
             if worker.status == 'error':
                 set_submission_state(session, submission_id, 'checking_error')
                 continue

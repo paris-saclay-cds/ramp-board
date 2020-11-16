@@ -55,6 +55,10 @@ LOCAL_LOG_FOLDER_FIELD = 'logs_dir'
 TRAIN_LOOP_INTERVAL_SECS_FIELD = 'train_loop_interval_secs'
 MEMORY_PROFILING_FIELD = 'memory_profiling'
 
+# how long to wait for connections
+WAIT_MINUTES = 2
+MAX_TRIES_TO_CONNECT = 5
+
 HOOKS_SECTION = 'hooks'
 HOOK_START_TRAINING = 'start_training'
 HOOK_SUCCESSFUL_TRAINING = 'successful_training'
@@ -148,21 +152,44 @@ def launch_ec2_instances(config, nb=1):
     if use_spot_instance:
         logger.info('Attempting to use spot instance.')
         now = datetime.utcnow() + timedelta(seconds=3)
-        request_wait = timedelta(minutes=10)
-        response = client.request_spot_instances(
-            AvailabilityZoneGroup=config[REGION_NAME_FIELD],
-            InstanceCount=nb,
-            LaunchSpecification={
-                'SecurityGroups': [security_group],
-                'ImageId': ami_image_id,
-                'InstanceType': instance_type,
-                'KeyName': key_name,
-            },
-            Type='one-time',
-            ValidFrom=now,
-            ValidUntil=(now + request_wait),
-        )
-
+        wait_minutes = WAIT_MINUTES
+        max_tries_to_connect = MAX_TRIES_TO_CONNECT
+        request_wait = timedelta(minutes=wait_minutes)
+        n_try = 0
+        response = None
+        while not(response) and (n_try < max_tries_to_connect):
+            try:
+                response = client.request_spot_instances(
+                    AvailabilityZoneGroup=config[REGION_NAME_FIELD],
+                    InstanceCount=nb,
+                    LaunchSpecification={
+                        'SecurityGroups': [security_group],
+                        'ImageId': ami_image_id,
+                        'InstanceType': instance_type,
+                        'KeyName': key_name,
+                    },
+                    Type='one-time',
+                    ValidFrom=now,
+                    ValidUntil=(now + request_wait),
+                )
+                break
+            except botocore.exceptions.ClientError as e:
+                n_try += 1
+                if n_try < max_tries_to_connect:
+                    # wait before you try again
+                    logger.warning('Not enough instances available: I am going'
+                                   f' to wait for {wait_minutes} minutes'
+                                   ' before trying again (this was'
+                                   f' {n_try} out of {max_tries_to_connect}'
+                                   ' tries to connect)')
+                    time.sleep(wait_minutes*60)
+                else:
+                    logger.error(f'Not enough instances available: {e}')
+                    return None,
+            except Exception as e:
+                # unknown error
+                logger.error(f'AWS worker error: {e}')
+                return None,
         # Wait until request fulfilled
         waiter = client.get_waiter('spot_instance_request_fulfilled')
         request_id = \
@@ -216,7 +243,7 @@ def launch_ec2_instances(config, nb=1):
         try:
             waiter.wait(InstanceIds=instance_ids)
         except botocore.exceptions.WaiterError:
-            return None
+            return None,
 
     return instances
 
