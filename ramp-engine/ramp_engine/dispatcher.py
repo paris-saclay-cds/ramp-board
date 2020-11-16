@@ -248,7 +248,7 @@ class Dispatcher:
                 self._processed_submission_queue.get_nowait()
             if 'error' in get_submission_state(session, submission_id):
                 continue
-            self.logger.info(
+            self._logger.info(
                 f'Write info in database for submission {submission_name}'
             )
             path_predictions = os.path.join(
