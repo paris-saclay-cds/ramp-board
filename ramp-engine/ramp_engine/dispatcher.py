@@ -275,7 +275,7 @@ class Dispatcher:
         submissions = get_submissions(session, even_name, state=None)
         for submission_id, _, _ in submissions:
             submission_state = get_submission_state(session, submission_id)
-            if submission_state in ('training', 'send_to_training'):
+            if submission_state in ('training', 'sent_to_training'):
                 set_submission_state(session, submission_id, 'new')
 
     def launch(self):
