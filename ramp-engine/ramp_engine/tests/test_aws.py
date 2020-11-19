@@ -14,6 +14,7 @@ import pytest
 
 from ramp_database.tools.submission import get_submissions
 from ramp_engine.aws.api import is_spot_terminated, launch_ec2_instances
+from ramp_engine.aws.api import download_predictions
 from ramp_engine import Dispatcher, AWSWorker
 from ramp_utils import generate_worker_config, read_config
 from ramp_utils.testing import database_config_template
@@ -35,6 +36,15 @@ logging.basicConfig(
 def add_empty_dir(dir_name):
     if not os.path.exists(dir_name):
         os.mkdir(dir_name)
+
+
+@mock.patch('ramp_engine.aws.api._rsync')
+def test_rsync_fails(test_rsync):
+    test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
+    config = read_config(os.path.join(HERE, '_config.yml'))['worker']
+    instance_id = 0
+    submission_name = 'test_submission'
+    download_predictions(config, instance_id, submission_name, folder=None)
 
 
 @mock.patch('ramp_engine.aws.api._run')
