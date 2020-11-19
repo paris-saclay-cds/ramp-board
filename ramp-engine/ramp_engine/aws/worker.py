@@ -135,19 +135,44 @@ class AWSWorker(BaseWorker):
                              "'running' or 'finished'")
 
         logger.info("Collecting submission '{}'".format(self.submission))
-        aws.download_log(self.config, self.instance.id, self.submission)
-
-        if aws._training_successful(
-                self.config, self.instance.id, self.submission):
-            _ = aws.download_predictions(  # noqa
-                self.config, self.instance.id, self.submission)
-            self.status = 'collected'
-            exit_status, error_msg = 0, ''
-        else:
-            error_msg = _get_traceback(
-                aws._get_log_content(self.config, self.submission))
-            self.status = 'collected'
+        try:
+            _ = aws.download_log(self.config,
+                                 self.instance.id, self.submission)
+        except Exception as e:
+            logger.error("Error happend when downloading the logs"
+                         f" from the submission: {e}")
             exit_status = 1
+            error_msg = str(e)
+            self.status = 'error'
+        if exit_status == 0:
+            if aws._training_successful(
+                    self.config, self.instance.id, self.submission):
+                for _ in range(5):
+                    # try downloading the submission a few times
+                    exit_status = aws.download_predictions(
+                        self.config, self.instance.id, self.submission)
+                    if exit_status == 0:
+                        self.status = 'collected'
+                        exit_status, error_msg = 0, ''
+                        break
+                    else:
+                        logger.info("Downloading the prediction failed,"
+                                    " retrying ...")
+                else:
+                    logger.error('Cannot download prediction for'
+                                 ' submission"{}"'
+                                 ', an error occured'.format(
+                                     self.submission))
+                self.status = 'error'
+
+                #_ = aws.download_predictions(  # noqa
+                #    self.config, self.instance.id, self.submission)
+
+            else:
+                error_msg = _get_traceback(
+                    aws._get_log_content(self.config, self.submission))
+                self.status = 'collected'
+                exit_status = 1
         logger.info(repr(self))
         return exit_status, error_msg
 

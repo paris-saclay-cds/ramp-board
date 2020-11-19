@@ -56,31 +56,34 @@ def test_aws_worker_upload_error(test_launch_ec2_instances, test_rsync):
     worker = AWSWorker(event_config, submission='starting_kit_local')
     worker.config = event_config
 
-    # worker will now through an CalledProcessError
+    # CalledProcessError is thrown inside
     worker.setup()
 
 
 @mock.patch('ramp_engine.aws.api._rsync')
-@mock.patch('ramp_engine.aws.api.launch_ec2_instances')
-def test_aws_worker_download_error(test_launch_ec2_instances, test_rsync,
-                                   caplog):
+@mock.patch("ramp_engine.base.BaseWorker.collect_results")
+def test_aws_worker_download_log_error(superclass, test_rsync,
+                                       caplog):
     # mock dummy AWS instance
     class DummyInstance:
-        id = 1
+        id = 'test'
 
-    test_launch_ec2_instances.return_value = (DummyInstance(),)
-    # mock the called proecess error
     test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
 
     # setup the AWS worker
+    superclass.return_value = True
     event_config = read_config(os.path.join(HERE, '_config.yml'))['worker']
 
     worker = AWSWorker(event_config, submission='starting_kit_local')
     worker.config = event_config
-
+    worker.status = 'finished'
+    worker.instance = DummyInstance
     # worker will now through an CalledProcessError
-    worker.setup()
-    assert 'Unable to connect during log' in caplog.text
+    exit_status, error_msg = worker.collect_results()
+    assert 'Error happend when downloading the logs' in caplog.text
+    assert 'Trying to download the log once again' in caplog.text
+    assert exit_status == 1
+    assert 'test' in error_msg
 
 
 @mock.patch('ramp_engine.aws.api._rsync')
@@ -96,7 +99,6 @@ def test_rsync_download_predictions(test_rsync):
 @mock.patch('ramp_engine.aws.api._rsync')
 def test_rsync_download_log(test_rsync, caplog):
     error = subprocess.CalledProcessError(255, 'test')
-    
     config = read_config(os.path.join(HERE, '_config.yml'))['worker']
     instance_id = 0
     submission_name = 'test_submission'
