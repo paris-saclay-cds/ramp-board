@@ -118,12 +118,25 @@ def test_aws_worker_download_prediction_error(superclass, test_download_log,
 
 @mock.patch('ramp_engine.aws.api._rsync')
 def test_rsync_download_predictions(test_rsync, caplog):
-    test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
+    error = subprocess.CalledProcessError(255, 'test')
     config = read_config(os.path.join(HERE, '_config.yml'))['worker']
     instance_id = 0
     submission_name = 'test_submission'
-    download_predictions(config, instance_id, submission_name, folder=None)
-    assert "Unknown error occured when downloading" in caplog.text
+
+    # test for 2 errors by rsync followed by a log output
+    test_rsync.side_effect = [error, error, 'test_log']
+    out = download_predictions(config, instance_id,
+                               submission_name, folder=None)
+    assert 'Trying to download the prediction' in caplog.text
+    assert 'test_submission' in out
+
+    # test for 3 errors by rsync followed by a log output
+    test_rsync.side_effect = [error, error, error]
+    with pytest.raises(subprocess.CalledProcessError):
+        out = download_predictions(config, instance_id, submission_name,
+                                   folder=None)
+    assert 'Trying to download the prediction' in caplog.text
+    assert 'error occured when downloading prediction' in caplog.text
 
 
 @mock.patch('ramp_engine.aws.api._rsync')
@@ -239,7 +252,6 @@ def test_creating_instances(boto_session_cls, caplog,
     assert log_msg in caplog.text
 
 
-'''
 def test_aws_worker():
     if not os.path.isfile(os.path.join(HERE, 'config.yml')):
         pytest.skip("Only for local tests for now")
@@ -300,4 +312,3 @@ def test_aws_dispatcher(session_toy):  # noqa
         session_toy, event_config['ramp']['event_name'], 'training_error'
     )
     assert len(submission) == 2
-'''
