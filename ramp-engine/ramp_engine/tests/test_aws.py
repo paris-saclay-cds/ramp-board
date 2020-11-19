@@ -14,7 +14,7 @@ import pytest
 
 from ramp_database.tools.submission import get_submissions
 from ramp_engine.aws.api import is_spot_terminated, launch_ec2_instances
-from ramp_engine.aws.api import download_predictions
+from ramp_engine.aws.api import download_predictions, upload_submission
 from ramp_engine import Dispatcher, AWSWorker
 from ramp_utils import generate_worker_config, read_config
 from ramp_utils.testing import database_config_template
@@ -39,12 +39,44 @@ def add_empty_dir(dir_name):
 
 
 @mock.patch('ramp_engine.aws.api._rsync')
-def test_rsync_fails(test_rsync):
+@mock.patch('ramp_engine.aws.api.launch_ec2_instances')
+def test_aws_worker_download_error(test_launch_ec2_instances, test_rsync):
+    # mock dummy AWS instance
+    class DummyInstance:
+        id = 1
+
+    test_launch_ec2_instances.return_value = (DummyInstance(),)
+    # mock the called proecess error
+    test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
+
+    # setup the AWS worker
+    event_config = read_config(os.path.join(HERE, '_config.yml'))['worker']
+
+    worker = AWSWorker(event_config, submission='starting_kit_local')
+    worker.config = event_config
+
+    # worker will now through an CalledProcessError
+    worker.setup()
+
+
+@mock.patch('ramp_engine.aws.api._rsync')
+def test_rsync_download_fails(test_rsync):
     test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
     config = read_config(os.path.join(HERE, '_config.yml'))['worker']
     instance_id = 0
     submission_name = 'test_submission'
     download_predictions(config, instance_id, submission_name, folder=None)
+
+
+@mock.patch('ramp_engine.aws.api._rsync')
+def test_rsync_upload_fails(test_rsync):
+    test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
+    config = read_config(os.path.join(HERE, '_config.yml'))['worker']
+    instance_id = 0
+    submission_name = 'test_submission'
+    submissions_dir = 'temp'
+    upload_submission(config, instance_id, submission_name,
+                      submissions_dir)
 
 
 @mock.patch('ramp_engine.aws.api._run')
@@ -128,6 +160,7 @@ def test_creating_instances(boto_session_cls, caplog,
     assert log_msg in caplog.text
 
 
+'''
 def test_aws_worker():
     if not os.path.isfile(os.path.join(HERE, 'config.yml')):
         pytest.skip("Only for local tests for now")
@@ -188,3 +221,4 @@ def test_aws_dispatcher(session_toy):  # noqa
         session_toy, event_config['ramp']['event_name'], 'training_error'
     )
     assert len(submission) == 2
+'''
