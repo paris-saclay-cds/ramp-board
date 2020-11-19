@@ -87,13 +87,43 @@ def test_aws_worker_download_log_error(superclass, test_rsync,
 
 
 @mock.patch('ramp_engine.aws.api._rsync')
-def test_rsync_download_predictions(test_rsync):
+@mock.patch('ramp_engine.aws.api._training_successful')
+@mock.patch('ramp_engine.aws.api.download_log')
+@mock.patch("ramp_engine.base.BaseWorker.collect_results")
+def test_aws_worker_download_prediction_error(superclass, test_download_log,
+                                              test_train, test_rsync, caplog):
+    # mock dummy AWS instance
+    class DummyInstance:
+        id = 'test'
+
+    test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
+
+    test_download_log.return_value = (0,)
+    # setup the AWS worker
+    superclass.return_value = True
+    test_train.return_value = True
+    event_config = read_config(os.path.join(HERE, '_config.yml'))['worker']
+
+    worker = AWSWorker(event_config, submission='starting_kit_local')
+    worker.config = event_config
+    worker.status = 'finished'
+    worker.instance = DummyInstance
+    # worker will now through an CalledProcessError
+    exit_status, error_msg = worker.collect_results()
+    assert 'Downloading the prediction failed with' in caplog.text
+    assert 'Trying to download the prediction once again' in caplog.text
+    assert exit_status == 1
+    assert 'test' in error_msg
+
+
+@mock.patch('ramp_engine.aws.api._rsync')
+def test_rsync_download_predictions(test_rsync, caplog):
     test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
     config = read_config(os.path.join(HERE, '_config.yml'))['worker']
     instance_id = 0
     submission_name = 'test_submission'
     download_predictions(config, instance_id, submission_name, folder=None)
-    # download_log(config, instance_id, submission_name)
+    assert "Unknown error occured when downloading" in caplog.text
 
 
 @mock.patch('ramp_engine.aws.api._rsync')

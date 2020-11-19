@@ -135,6 +135,7 @@ class AWSWorker(BaseWorker):
                              "'running' or 'finished'")
 
         logger.info("Collecting submission '{}'".format(self.submission))
+        exit_status = 0
         try:
             _ = aws.download_log(self.config,
                                  self.instance.id, self.submission)
@@ -147,32 +148,24 @@ class AWSWorker(BaseWorker):
         if exit_status == 0:
             if aws._training_successful(
                     self.config, self.instance.id, self.submission):
-                for _ in range(5):
-                    # try downloading the submission a few times
-                    exit_status = aws.download_predictions(
-                        self.config, self.instance.id, self.submission)
-                    if exit_status == 0:
-                        self.status = 'collected'
-                        exit_status, error_msg = 0, ''
-                        break
-                    else:
-                        logger.info("Downloading the prediction failed,"
-                                    " retrying ...")
+
+                try:
+                    _ = aws.download_predictions(self.config,
+                                                 self.instance.id,
+                                                 self.submission)
+                except Exception as e:
+                    logger.error("Downloading the prediction failed with"
+                                 f"error {e}")
+                    self.status = 'error'
+                    exit_status, error_msg = 1, str(e)
                 else:
-                    logger.error('Cannot download prediction for'
-                                 ' submission"{}"'
-                                 ', an error occured'.format(
-                                     self.submission))
-                self.status = 'error'
-
-                #_ = aws.download_predictions(  # noqa
-                #    self.config, self.instance.id, self.submission)
-
+                    self.status = 'collected'
+                    exit_status, error_msg = 0, ''
             else:
                 error_msg = _get_traceback(
                     aws._get_log_content(self.config, self.submission))
                 self.status = 'collected'
-                exit_status = 1
+                exit_status, error_msg = 1, ""
         logger.info(repr(self))
         return exit_status, error_msg
 

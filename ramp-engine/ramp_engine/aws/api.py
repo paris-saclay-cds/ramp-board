@@ -552,8 +552,18 @@ def download_predictions(config, instance_id, submission_name, folder=None):
         os.makedirs(os.path.dirname(dest_path))
     except OSError:
         pass
-    _download(config, instance_id, source_path, dest_path)
-    return dest_path
+    n_tries = 3
+    for n_try in range(n_tries):
+        try:
+            _download(config, instance_id, source_path, dest_path)
+            return dest_path
+        except Exception as e:
+            logger.error('Unknown error occured when downloading prediction'
+                         f' e: {str(e)}')
+            if n_try == n_tries-1:
+                raise(e)
+            else:
+                logger.error('Trying to download the prediction once again')
 
 
 def _get_remote_training_output_folder(config, instance_id, submission_name):
