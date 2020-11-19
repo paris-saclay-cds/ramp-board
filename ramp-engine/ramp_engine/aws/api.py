@@ -420,16 +420,17 @@ def download_log(config, instance_id, submission_name, folder=None):
         pass
 
     # try connecting few times
-    for n_try in range(3):
+    n_tries = 3
+    for n_try in range(n_tries):
         try:
             out = _download(config, instance_id, source_path, dest_path)
             return out
-        except subprocess.CalledProcessError as e:
-            logger.error(f'Unable to connect during log download: {e}')
         except Exception as e:
             logger.error(f'Unknown error occured during log download: {e}')
-        logger.error('Trying to download the log once again')
-    return False
+            if n_try == n_tries-1:
+                raise(e)
+            else:
+                logger.error('Trying to download the log once again')
 
 
 def _get_log_content(config, submission_name):

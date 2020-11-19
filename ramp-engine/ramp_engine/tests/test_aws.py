@@ -14,7 +14,8 @@ import pytest
 
 from ramp_database.tools.submission import get_submissions
 from ramp_engine.aws.api import is_spot_terminated, launch_ec2_instances
-from ramp_engine.aws.api import download_predictions, upload_submission
+from ramp_engine.aws.api import download_log, download_predictions
+from ramp_engine.aws.api import upload_submission
 from ramp_engine import Dispatcher, AWSWorker
 from ramp_utils import generate_worker_config, read_config
 from ramp_utils.testing import database_config_template
@@ -40,7 +41,7 @@ def add_empty_dir(dir_name):
 
 @mock.patch('ramp_engine.aws.api._rsync')
 @mock.patch('ramp_engine.aws.api.launch_ec2_instances')
-def test_aws_worker_download_error(test_launch_ec2_instances, test_rsync):
+def test_aws_worker_upload_error(test_launch_ec2_instances, test_rsync):
     # mock dummy AWS instance
     class DummyInstance:
         id = 1
@@ -60,12 +61,57 @@ def test_aws_worker_download_error(test_launch_ec2_instances, test_rsync):
 
 
 @mock.patch('ramp_engine.aws.api._rsync')
-def test_rsync_download_fails(test_rsync):
+@mock.patch('ramp_engine.aws.api.launch_ec2_instances')
+def test_aws_worker_download_error(test_launch_ec2_instances, test_rsync,
+                                   caplog):
+    # mock dummy AWS instance
+    class DummyInstance:
+        id = 1
+
+    test_launch_ec2_instances.return_value = (DummyInstance(),)
+    # mock the called proecess error
+    test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
+
+    # setup the AWS worker
+    event_config = read_config(os.path.join(HERE, '_config.yml'))['worker']
+
+    worker = AWSWorker(event_config, submission='starting_kit_local')
+    worker.config = event_config
+
+    # worker will now through an CalledProcessError
+    worker.setup()
+    assert 'Unable to connect during log' in caplog.text
+
+
+@mock.patch('ramp_engine.aws.api._rsync')
+def test_rsync_download_predictions(test_rsync):
     test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
     config = read_config(os.path.join(HERE, '_config.yml'))['worker']
     instance_id = 0
     submission_name = 'test_submission'
     download_predictions(config, instance_id, submission_name, folder=None)
+    # download_log(config, instance_id, submission_name)
+
+
+@mock.patch('ramp_engine.aws.api._rsync')
+def test_rsync_download_log(test_rsync, caplog):
+    error = subprocess.CalledProcessError(255, 'test')
+    
+    config = read_config(os.path.join(HERE, '_config.yml'))['worker']
+    instance_id = 0
+    submission_name = 'test_submission'
+
+    # test for 2 errors by rsync followed by a log output
+    test_rsync.side_effect = [error, error, 'test_log']
+    out = download_log(config, instance_id, submission_name)
+    assert 'Trying to download the log' in caplog.text
+    assert out == 'test_log'
+
+    # test for 3 errors by rsync followed by a log output
+    test_rsync.side_effect = [error, error, error]
+    with pytest.raises(subprocess.CalledProcessError):
+        out = download_log(config, instance_id, submission_name)
+    assert 'Trying to download the log' in caplog.text
 
 
 @mock.patch('ramp_engine.aws.api._rsync')
@@ -75,8 +121,9 @@ def test_rsync_upload_fails(test_rsync):
     instance_id = 0
     submission_name = 'test_submission'
     submissions_dir = 'temp'
-    upload_submission(config, instance_id, submission_name,
-                      submissions_dir)
+    out = upload_submission(config, instance_id, submission_name,
+                            submissions_dir)
+    assert out == 1  # error ocurred and it was caught
 
 
 @mock.patch('ramp_engine.aws.api._run')
