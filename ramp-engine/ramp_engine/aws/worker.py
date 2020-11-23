@@ -140,7 +140,7 @@ class AWSWorker(BaseWorker):
             _ = aws.download_log(self.config,
                                  self.instance.id, self.submission)
         except Exception as e:
-            logger.error("Error happend when downloading the logs"
+            logger.error("Error occurred when downloading the logs"
                          f" from the submission: {e}")
             exit_status = 1
             error_msg = str(e)

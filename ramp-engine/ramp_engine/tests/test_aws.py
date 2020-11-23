@@ -1,6 +1,6 @@
 """
 For testing the Amazon worker locally, you need to:
-copy the _config.yml file and rename it config.yml, then update it using the
+copy the _aws_config.yml file and rename it config.yml, then update it using the
 credentials to interact with Amazon
 
 """
@@ -51,7 +51,7 @@ def test_aws_worker_upload_error(test_launch_ec2_instances, test_rsync):
     test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
 
     # setup the AWS worker
-    event_config = read_config(os.path.join(HERE, '_config.yml'))['worker']
+    event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
 
     worker = AWSWorker(event_config, submission='starting_kit_local')
     worker.config = event_config
@@ -72,7 +72,7 @@ def test_aws_worker_download_log_error(superclass, test_rsync,
 
     # setup the AWS worker
     superclass.return_value = True
-    event_config = read_config(os.path.join(HERE, '_config.yml'))['worker']
+    event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
 
     worker = AWSWorker(event_config, submission='starting_kit_local')
     worker.config = event_config
@@ -80,7 +80,7 @@ def test_aws_worker_download_log_error(superclass, test_rsync,
     worker.instance = DummyInstance
     # worker will now through an CalledProcessError
     exit_status, error_msg = worker.collect_results()
-    assert 'Error happend when downloading the logs' in caplog.text
+    assert 'Error occurred when downloading the logs' in caplog.text
     assert 'Trying to download the log once again' in caplog.text
     assert exit_status == 1
     assert 'test' in error_msg
@@ -102,7 +102,7 @@ def test_aws_worker_download_prediction_error(superclass, test_download_log,
     # setup the AWS worker
     superclass.return_value = True
     test_train.return_value = True
-    event_config = read_config(os.path.join(HERE, '_config.yml'))['worker']
+    event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
 
     worker = AWSWorker(event_config, submission='starting_kit_local')
     worker.config = event_config
@@ -119,7 +119,7 @@ def test_aws_worker_download_prediction_error(superclass, test_download_log,
 @mock.patch('ramp_engine.aws.api._rsync')
 def test_rsync_download_predictions(test_rsync, caplog):
     error = subprocess.CalledProcessError(255, 'test')
-    config = read_config(os.path.join(HERE, '_config.yml'))['worker']
+    config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
     instance_id = 0
     submission_name = 'test_submission'
 
@@ -142,7 +142,7 @@ def test_rsync_download_predictions(test_rsync, caplog):
 @mock.patch('ramp_engine.aws.api._rsync')
 def test_rsync_download_log(test_rsync, caplog):
     error = subprocess.CalledProcessError(255, 'test')
-    config = read_config(os.path.join(HERE, '_config.yml'))['worker']
+    config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
     instance_id = 0
     submission_name = 'test_submission'
 
@@ -162,7 +162,7 @@ def test_rsync_download_log(test_rsync, caplog):
 @mock.patch('ramp_engine.aws.api._rsync')
 def test_rsync_upload_fails(test_rsync):
     test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
-    config = read_config(os.path.join(HERE, '_config.yml'))['worker']
+    config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
     instance_id = 0
     submission_name = 'test_submission'
     submissions_dir = 'temp'
@@ -174,7 +174,7 @@ def test_rsync_upload_fails(test_rsync):
 @mock.patch('ramp_engine.aws.api._run')
 def test_is_spot_terminated_with_CalledProcessError(test_run, caplog):
     test_run.side_effect = subprocess.CalledProcessError(28, 'test')
-    config = read_config(os.path.join(HERE, '_config.yml'))
+    config = read_config(os.path.join(HERE, '_aws_config.yml'))
     instance_id = 0
     is_spot_terminated(config, instance_id)
     assert 'Unable to run curl' in caplog.text
@@ -193,7 +193,7 @@ def test_launch_ec2_instances(boto_session_cls, use_spot_instance):
     describe_images = client.describe_images
     images = {"Images": [{"ImageId": 1}]}
     describe_images.return_value = images
-    config = read_config(os.path.join(HERE, '_config.yml'))
+    config = read_config(os.path.join(HERE, '_aws_config.yml'))
 
     config['worker']['use_spot_instance'] = use_spot_instance
     launch_ec2_instances(config['worker'])
@@ -226,7 +226,7 @@ def test_creating_instances(boto_session_cls, caplog,
             "Code": "Max spot instance count exceeded"
         }
     }
-    config = read_config(os.path.join(HERE, '_config.yml'))
+    config = read_config(os.path.join(HERE, '_aws_config.yml'))
     config['worker']['use_spot_instance'] = True
     request_spot_instances = client.request_spot_instances
 
