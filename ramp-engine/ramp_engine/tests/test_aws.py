@@ -1,7 +1,7 @@
 """
 For testing the Amazon worker locally, you need to:
-copy the _aws_config.yml file and rename it config.yml, then update it using the
-credentials to interact with Amazon
+copy the _aws_config.yml file and rename it config.yml, then update it using
+the credentials to interact with Amazon
 
 """
 import botocore
