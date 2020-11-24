@@ -105,7 +105,7 @@ class AWSWorker(BaseWorker):
                 self.config, self.instance.id, self.submission)
         except Exception as e:
             logger.error(f'Unknown error occurred: {e}')
-            self.status = 'error'
+            exit_status = 1
 
         if exit_status != 0:
             logger.error(

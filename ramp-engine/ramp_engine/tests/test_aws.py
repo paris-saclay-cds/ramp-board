@@ -201,23 +201,29 @@ def test_launch_ec2_instances(boto_session_cls, use_spot_instance):
 
 @mock.patch('ramp_engine.aws.api._rsync')
 @mock.patch('ramp_engine.aws.api.launch_train')
-def test_aws_worker_launch_train_error(launch_train, test_rsync):
+def test_aws_worker_launch_train_error(launch_train, test_rsync, caplog):
     # mock dummy AWS instance
     class DummyInstance:
         id = 1
 
     launch_train.side_effect = subprocess.CalledProcessError(255, 'test')
     # mock the called proecess error
-    test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
+    # test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
 
     # setup the AWS worker
     event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
 
     worker = AWSWorker(event_config, submission='starting_kit_local')
     worker.config = event_config
+    worker.submission = 'dummy submissions'
+    worker.instance = DummyInstance
 
     # CalledProcessError is thrown inside
-    worker.launch_submission()
+    status = worker.launch_submission()
+    assert 'test' in caplog.text
+    assert 'Cannot start training of submission' in caplog.text
+    assert worker.status == 'error'
+    assert status == 1
 
 
 @pytest.mark.parametrize(
