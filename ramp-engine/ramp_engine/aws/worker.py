@@ -140,19 +140,37 @@ class AWSWorker(BaseWorker):
                              "'running' or 'finished'")
 
         logger.info("Collecting submission '{}'".format(self.submission))
-        aws.download_log(self.config, self.instance.id, self.submission)
-
-        if aws._training_successful(
-                self.config, self.instance.id, self.submission):
-            _ = aws.download_predictions(  # noqa
-                self.config, self.instance.id, self.submission)
-            self.status = 'collected'
-            exit_status, error_msg = 0, ''
-        else:
-            error_msg = _get_traceback(
-                aws._get_log_content(self.config, self.submission))
-            self.status = 'collected'
+        exit_status = 0
+        try:
+            _ = aws.download_log(self.config,
+                                 self.instance.id, self.submission)
+        except Exception as e:
+            logger.error("Error occurred when downloading the logs"
+                         f" from the submission: {e}")
             exit_status = 1
+            error_msg = str(e)
+            self.status = 'error'
+        if exit_status == 0:
+            if aws._training_successful(
+                    self.config, self.instance.id, self.submission):
+
+                try:
+                    _ = aws.download_predictions(self.config,
+                                                 self.instance.id,
+                                                 self.submission)
+                except Exception as e:
+                    logger.error("Downloading the prediction failed with"
+                                 f"error {e}")
+                    self.status = 'error'
+                    exit_status, error_msg = 1, str(e)
+                else:
+                    self.status = 'collected'
+                    exit_status, error_msg = 0, ''
+            else:
+                error_msg = _get_traceback(
+                    aws._get_log_content(self.config, self.submission))
+                self.status = 'collected'
+                exit_status, error_msg = 1, ""
         logger.info(repr(self))
         return exit_status, error_msg
 

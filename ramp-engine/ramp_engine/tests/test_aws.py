@@ -1,7 +1,7 @@
 """
 For testing the Amazon worker locally, you need to:
-copy the _config.yml file and rename it config.yml, then update it using the
-credentials to interact with Amazon
+copy the _aws_config.yml file and rename it config.yml, then update it using
+the credentials to interact with Amazon
 
 """
 import botocore
@@ -14,6 +14,8 @@ import pytest
 
 from ramp_database.tools.submission import get_submissions
 from ramp_engine.aws.api import is_spot_terminated, launch_ec2_instances
+from ramp_engine.aws.api import download_log, download_predictions
+from ramp_engine.aws.api import upload_submission
 from ramp_engine import Dispatcher, AWSWorker
 from ramp_utils import generate_worker_config, read_config
 from ramp_utils.testing import database_config_template
@@ -37,10 +39,142 @@ def add_empty_dir(dir_name):
         os.mkdir(dir_name)
 
 
+@mock.patch('ramp_engine.aws.api._rsync')
+@mock.patch('ramp_engine.aws.api.launch_ec2_instances')
+def test_aws_worker_upload_error(test_launch_ec2_instances, test_rsync):
+    # mock dummy AWS instance
+    class DummyInstance:
+        id = 1
+
+    test_launch_ec2_instances.return_value = (DummyInstance(),)
+    # mock the called proecess error
+    test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
+
+    # setup the AWS worker
+    event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+
+    worker = AWSWorker(event_config, submission='starting_kit_local')
+    worker.config = event_config
+
+    # CalledProcessError is thrown inside
+    worker.setup()
+
+
+@mock.patch('ramp_engine.aws.api._rsync')
+@mock.patch("ramp_engine.base.BaseWorker.collect_results")
+def test_aws_worker_download_log_error(superclass, test_rsync,
+                                       caplog):
+    # mock dummy AWS instance
+    class DummyInstance:
+        id = 'test'
+
+    test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
+
+    # setup the AWS worker
+    superclass.return_value = True
+    event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+
+    worker = AWSWorker(event_config, submission='starting_kit_local')
+    worker.config = event_config
+    worker.status = 'finished'
+    worker.instance = DummyInstance
+    # worker will now through an CalledProcessError
+    exit_status, error_msg = worker.collect_results()
+    assert 'Error occurred when downloading the logs' in caplog.text
+    assert 'Trying to download the log once again' in caplog.text
+    assert exit_status == 1
+    assert 'test' in error_msg
+
+
+@mock.patch('ramp_engine.aws.api._rsync')
+@mock.patch('ramp_engine.aws.api._training_successful')
+@mock.patch('ramp_engine.aws.api.download_log')
+@mock.patch("ramp_engine.base.BaseWorker.collect_results")
+def test_aws_worker_download_prediction_error(superclass, test_download_log,
+                                              test_train, test_rsync, caplog):
+    # mock dummy AWS instance
+    class DummyInstance:
+        id = 'test'
+
+    test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
+
+    test_download_log.return_value = (0,)
+    # setup the AWS worker
+    superclass.return_value = True
+    test_train.return_value = True
+    event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+
+    worker = AWSWorker(event_config, submission='starting_kit_local')
+    worker.config = event_config
+    worker.status = 'finished'
+    worker.instance = DummyInstance
+    # worker will now through an CalledProcessError
+    exit_status, error_msg = worker.collect_results()
+    assert 'Downloading the prediction failed with' in caplog.text
+    assert 'Trying to download the prediction once again' in caplog.text
+    assert exit_status == 1
+    assert 'test' in error_msg
+
+
+@mock.patch('ramp_engine.aws.api._rsync')
+def test_rsync_download_predictions(test_rsync, caplog):
+    error = subprocess.CalledProcessError(255, 'test')
+    config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+    instance_id = 0
+    submission_name = 'test_submission'
+
+    # test for 2 errors by rsync followed by a log output
+    test_rsync.side_effect = [error, error, 'test_log']
+    out = download_predictions(config, instance_id,
+                               submission_name, folder=None)
+    assert 'Trying to download the prediction' in caplog.text
+    assert 'test_submission' in out
+
+    # test for 3 errors by rsync followed by a log output
+    test_rsync.side_effect = [error, error, error]
+    with pytest.raises(subprocess.CalledProcessError):
+        out = download_predictions(config, instance_id, submission_name,
+                                   folder=None)
+    assert 'Trying to download the prediction' in caplog.text
+    assert 'error occured when downloading prediction' in caplog.text
+
+
+@mock.patch('ramp_engine.aws.api._rsync')
+def test_rsync_download_log(test_rsync, caplog):
+    error = subprocess.CalledProcessError(255, 'test')
+    config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+    instance_id = 0
+    submission_name = 'test_submission'
+
+    # test for 2 errors by rsync followed by a log output
+    test_rsync.side_effect = [error, error, 'test_log']
+    out = download_log(config, instance_id, submission_name)
+    assert 'Trying to download the log' in caplog.text
+    assert out == 'test_log'
+
+    # test for 3 errors by rsync followed by a log output
+    test_rsync.side_effect = [error, error, error]
+    with pytest.raises(subprocess.CalledProcessError):
+        out = download_log(config, instance_id, submission_name)
+    assert 'Trying to download the log' in caplog.text
+
+
+@mock.patch('ramp_engine.aws.api._rsync')
+def test_rsync_upload_fails(test_rsync):
+    test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
+    config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+    instance_id = 0
+    submission_name = 'test_submission'
+    submissions_dir = 'temp'
+    out = upload_submission(config, instance_id, submission_name,
+                            submissions_dir)
+    assert out == 1  # error ocurred and it was caught
+
+
 @mock.patch('ramp_engine.aws.api._run')
 def test_is_spot_terminated_with_CalledProcessError(test_run, caplog):
     test_run.side_effect = subprocess.CalledProcessError(28, 'test')
-    config = read_config(os.path.join(HERE, '_config.yml'))
+    config = read_config(os.path.join(HERE, '_aws_config.yml'))
     instance_id = 0
     is_spot_terminated(config, instance_id)
     assert 'Unable to run curl' in caplog.text
@@ -59,7 +193,7 @@ def test_launch_ec2_instances(boto_session_cls, use_spot_instance):
     describe_images = client.describe_images
     images = {"Images": [{"ImageId": 1}]}
     describe_images.return_value = images
-    config = read_config(os.path.join(HERE, '_config.yml'))
+    config = read_config(os.path.join(HERE, '_aws_config.yml'))
 
     config['worker']['use_spot_instance'] = use_spot_instance
     launch_ec2_instances(config['worker'])
@@ -113,7 +247,7 @@ def test_creating_instances(boto_session_cls, caplog,
             "Code": "Max spot instance count exceeded"
         }
     }
-    config = read_config(os.path.join(HERE, '_config.yml'))
+    config = read_config(os.path.join(HERE, '_aws_config.yml'))
     config['worker']['use_spot_instance'] = True
     request_spot_instances = client.request_spot_instances
 

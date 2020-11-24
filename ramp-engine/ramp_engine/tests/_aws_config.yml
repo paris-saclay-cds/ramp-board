@@ -5,9 +5,6 @@ ramp:
     event_is_public: true
     data_dir: ramp-board/ramp_deployment/ramp-data/iris
     kit_dir: ramp-board/ramp-engine/ramp_engine/tests/kits
-    submissions_dir: ramp-board/ramp-engine/ramp_engine/tests/kits/iris/submissions
-    predictions_dir: ramp-board/ramp-engine/ramp_engine/tests/kits/iris/predictions
-    logs_dir: ramp-board/ramp-engine/ramp_engine/tests/kits/iris/logs
     sandbox_dir: starting_kit
 worker:
     worker_type: aws
@@ -22,6 +19,9 @@ worker:
     key_path: <path to pem file corresponding to user name, eg my_path/iris_key.pem>
     remote_ramp_kit_folder: /home/ec2-user/ramp-kits/iris
     memory_profiling: false
+    submissions_dir: ramp-board/ramp-engine/ramp_engine/tests/kits/iris/submissions
+    predictions_dir: ramp-board/ramp-engine/ramp_engine/tests/kits/iris/predictions
+    logs_dir: ramp-board/ramp-engine/ramp_engine/tests/kits/iris/logs
 dispatcher:
     hunger_policy: sleep
     # n_workers: (number of RAMP workers launched in parallel. Default: # CPUs)
