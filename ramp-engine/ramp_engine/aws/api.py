@@ -252,7 +252,7 @@ def _get_image_id(config, image_name):
     sess = _get_boto_session(config)
     client = sess.client('ec2')
 
-    # get all the images with the given imange_name in the name
+    # get all the images with the given image_name in the name
     result = client.describe_images(Filters=[
         {
             'Name': 'name',
@@ -269,8 +269,8 @@ def _get_image_id(config, image_name):
     # get only the newest image if there are more than one
     image = sorted(images, key=lambda x: x['CreationDate'],
                    reverse=True)[0]
-    image_id = image['ImageId']
-    return image_id
+
+    return image_id['ImageId']
 
 
 def terminate_ec2_instance(config, instance_id):
