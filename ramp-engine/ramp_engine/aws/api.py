@@ -269,8 +269,7 @@ def _get_image_id(config, image_name):
     # get only the newest image if there are more than one
     image = sorted(images, key=lambda x: x['CreationDate'],
                    reverse=True)[0]
-
-    return image_id['ImageId']
+    return image['ImageId']
 
 
 def terminate_ec2_instance(config, instance_id):
