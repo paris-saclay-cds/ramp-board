@@ -100,8 +100,13 @@ class AWSWorker(BaseWorker):
                                "started")
         if self.status == 'error':
             raise RuntimeError("Cannot launch submission: the setup failed")
-        exit_status = aws.launch_train(
-            self.config, self.instance.id, self.submission)
+        try:
+            exit_status = aws.launch_train(
+                self.config, self.instance.id, self.submission)
+        except Exception as e:
+            logger.error(f'Unknown error occurred: {e}')
+            self.status = 'error'
+
         if exit_status != 0:
             logger.error(
                 'Cannot start training of submission "{}"'
