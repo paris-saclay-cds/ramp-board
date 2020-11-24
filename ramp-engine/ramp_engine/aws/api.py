@@ -372,7 +372,16 @@ def upload_submission(config, instance_id, submission_name,
     submission_path = os.path.join(submissions_dir, submission_name)
     ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
     dest_folder = os.path.join(ramp_kit_folder, SUBMISSIONS_FOLDER)
-    return _upload(config, instance_id, submission_path, dest_folder)
+
+    # catch an error when uploading if they happen
+    try:
+        out = _upload(config, instance_id, submission_path, dest_folder)
+        return out
+    except subprocess.CalledProcessError as e:
+        logger.error(f'Unable to connect during log download: {e}')
+    except Exception as e:
+        logger.error(f'Unknown error occured during log download: {e}')
+    return 1
 
 
 def download_log(config, instance_id, submission_name, folder=None):
@@ -409,7 +418,19 @@ def download_log(config, instance_id, submission_name, folder=None):
         os.makedirs(os.path.dirname(dest_path))
     except OSError:
         pass
-    return _download(config, instance_id, source_path, dest_path)
+
+    # try connecting few times
+    n_tries = 3
+    for n_try in range(n_tries):
+        try:
+            out = _download(config, instance_id, source_path, dest_path)
+            return out
+        except Exception as e:
+            logger.error(f'Unknown error occured during log download: {e}')
+            if n_try == n_tries-1:
+                raise(e)
+            else:
+                logger.error('Trying to download the log once again')
 
 
 def _get_log_content(config, submission_name):
@@ -531,8 +552,18 @@ def download_predictions(config, instance_id, submission_name, folder=None):
         os.makedirs(os.path.dirname(dest_path))
     except OSError:
         pass
-    _download(config, instance_id, source_path, dest_path)
-    return dest_path
+    n_tries = 3
+    for n_try in range(n_tries):
+        try:
+            _download(config, instance_id, source_path, dest_path)
+            return dest_path
+        except Exception as e:
+            logger.error('Unknown error occured when downloading prediction'
+                         f' e: {str(e)}')
+            if n_try == n_tries-1:
+                raise(e)
+            else:
+                logger.error('Trying to download the prediction once again')
 
 
 def _get_remote_training_output_folder(config, instance_id, submission_name):
