@@ -251,26 +251,25 @@ def launch_ec2_instances(config, nb=1):
 def _get_image_id(config, image_name):
     sess = _get_boto_session(config)
     client = sess.client('ec2')
+
+    # get all the images with the given image_name in the name
     result = client.describe_images(Filters=[
         {
             'Name': 'name',
-            'Values': [
-                image_name
-            ]
+            'Values': [f'{image_name}*'
+                       ],
         }
     ])
+
     images = result['Images']
     if len(images) == 0:
         raise ValueError(
             'No image corresponding to the name "{}"'.format(image_name))
-    elif len(images) > 1:
-        raise ValueError(
-            'Multiple images corresponding to the name "{}".'
-            ' Please fix that'.format(image_name))
-    else:
-        image = images[0]
-        image_id = image['ImageId']
-        return image_id
+
+    # get only the newest image if there are more than one
+    image = sorted(images, key=lambda x: x['CreationDate'],
+                   reverse=True)[0]
+    return image['ImageId']
 
 
 def terminate_ec2_instance(config, instance_id):
