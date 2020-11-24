@@ -256,7 +256,7 @@ def _get_image_id(config, image_name):
     result = client.describe_images(Filters=[
         {
             'Name': 'name',
-            'Values': [image_name+'*'
+            'Values': [f'{image_name}*'
                        ],
         }
     ])
@@ -265,12 +265,10 @@ def _get_image_id(config, image_name):
     if len(images) == 0:
         raise ValueError(
             'No image corresponding to the name "{}"'.format(image_name))
-    elif len(images) > 1:
-        # get only the newest image if there are more than one
-        image = sorted(images, key=lambda x: x['CreationDate'],
-                       reverse=True)[0]
-    else:
-        image = images[0]
+
+    # get only the newest image if there are more than one
+    image = sorted(images, key=lambda x: x['CreationDate'],
+                   reverse=True)[0]
     image_id = image['ImageId']
     return image_id
 
