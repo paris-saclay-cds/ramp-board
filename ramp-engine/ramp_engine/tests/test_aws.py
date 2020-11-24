@@ -199,16 +199,12 @@ def test_launch_ec2_instances(boto_session_cls, use_spot_instance):
     launch_ec2_instances(config['worker'])
 
 
-@mock.patch('ramp_engine.aws.api._rsync')
 @mock.patch('ramp_engine.aws.api.launch_train')
-def test_aws_worker_launch_train_error(launch_train, test_rsync, caplog):
+def test_aws_worker_launch_train_error(launch_train, caplog):
     # mock dummy AWS instance
     class DummyInstance:
         id = 1
-
     launch_train.side_effect = subprocess.CalledProcessError(255, 'test')
-    # mock the called proecess error
-    # test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
 
     # setup the AWS worker
     event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
