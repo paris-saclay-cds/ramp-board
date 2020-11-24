@@ -225,7 +225,7 @@ class Dispatcher:
                     else:
                         self._logger.info(
                             f'Worker {worker} killed due to an error '
-                            'during training'
+                            f'during training: {stderr}'
                         )
                     submission_status = 'training_error'
                 else:

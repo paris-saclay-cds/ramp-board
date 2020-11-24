@@ -140,11 +140,13 @@ def train_loop(config, event_name):
                     actual_nb_folds = get_event_nb_folds(
                         config, submission.event.name
                     )
-                    if _training_successful(
-                            conf_aws,
-                            instance_id,
-                            submission_name,
-                            actual_nb_folds):
+                    all_fine = True
+                    is_training_successful = _training_successful(
+                                             conf_aws,
+                                             instance_id,
+                                             submission_name,
+                                             actual_nb_folds)
+                    if is_training_successful:
                         logger.info('Training of "{}" was successful'
                                     .format(label))
                         if conf_aws.get(MEMORY_PROFILING_FIELD):
@@ -164,13 +166,17 @@ def train_loop(config, event_name):
 
                         logger.info('Downloading the predictions of "{}"'
                                     .format(label))
-                        path = download_predictions(
-                            conf_aws, instance_id, submission_name)
+                        try:
+                            path = download_predictions(
+                                conf_aws, instance_id, submission_name)
+                        except Exception as e:
+                            label = str(e)
+                            all_fine = False
                         set_predictions(config, submission_id, path)
                         set_time(config, submission_id, path)
                         set_scores(config, submission_id, path)
                         set_submission_state(config, submission_id, 'tested')
-                    else:
+                    if not is_training_successful or not all_fine:
                         logger.info('Training of "{}" failed'.format(label))
                         set_submission_state(
                             config, submission_id, 'training_error')
