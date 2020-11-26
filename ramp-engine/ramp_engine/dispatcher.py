@@ -168,6 +168,11 @@ class Dispatcher:
                 worker.status = 'error'
             if worker.status == 'error':
                 set_submission_state(session, submission_id, 'checking_error')
+                worker.teardown()  # kill the worker
+                self._logger.info(
+                            f'Worker {worker} killed due to an error '
+                            f'during training'
+                        )
                 continue
             set_submission_state(session, submission_id, 'training')
             submission = get_submission_by_id(session, submission_id)
@@ -228,6 +233,7 @@ class Dispatcher:
                             f'during training: {stderr}'
                         )
                     submission_status = 'training_error'
+                    worker.teardown()
                 else:
                     submission_status = 'tested'
 
