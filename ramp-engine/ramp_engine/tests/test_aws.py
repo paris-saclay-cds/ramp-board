@@ -191,7 +191,7 @@ def test_launch_ec2_instances(boto_session_cls, use_spot_instance):
     session = boto_session_cls.return_value
     client = session.client.return_value
     describe_images = client.describe_images
-    images = {"Images": [{"ImageId": 1}]}
+    images = {"Images": [{"ImageId": 1, "CreationDate": 123}]}
     describe_images.return_value = images
     config = read_config(os.path.join(HERE, '_aws_config.yml'))
 
@@ -241,7 +241,7 @@ def test_creating_instances(boto_session_cls, caplog,
     session = boto_session_cls.return_value
     client = session.client.return_value
     describe_images = client.describe_images
-    images = {"Images": [{"ImageId": 1}]}
+    images = {"Images": [{"ImageId": 1, "CreationDate": 123}]}
     describe_images.return_value = images
 
     error = {
