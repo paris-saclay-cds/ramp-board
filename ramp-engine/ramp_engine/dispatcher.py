@@ -233,7 +233,6 @@ class Dispatcher:
                             f'during training: {stderr}'
                         )
                     submission_status = 'training_error'
-                    worker.teardown()
                 else:
                     submission_status = 'tested'
 
