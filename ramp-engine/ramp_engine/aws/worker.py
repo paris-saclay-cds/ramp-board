@@ -64,9 +64,9 @@ class AWSWorker(BaseWorker):
 
         if not _instances:
             if status == 'retry':
-                # there was a timeout error, put back in the queue and try
-                # again
-                logger.worning("Unable to launch instance for submission "
+                # there was a timeout error, put this submission back in the
+                # queue and try again later
+                logger.warning("Unable to launch instance for submission "
                                f"{self.submission}. Adding it back to the "
                                "queue and will try again later")
                 self.status = 'retry'
@@ -78,7 +78,7 @@ class AWSWorker(BaseWorker):
         else:
             logger.info("Instance launched for submission '{}'".format(
                         self.submission))
-            self.instances, = _instances
+            self.instance, = _instances
 
         for _ in range(5):
             # try uploading the submission a few times, as this regularly fails
