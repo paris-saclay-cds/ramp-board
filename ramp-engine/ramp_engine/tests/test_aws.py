@@ -39,17 +39,13 @@ def add_empty_dir(dir_name):
         os.mkdir(dir_name)
 
 
-# @mock.patch('ramp_engine.aws.api._rsync')
 @mock.patch('ramp_engine.aws.api.launch_ec2_instances')
 def test_launch_ec2_instances_put_back_into_queue(test_launch_ec2_instances,
-                                                  # test_rsync
                                                   caplog):
     ''' checks if the retry status and the correct log is added if the
         api returns None instances and status retry '''
 
     test_launch_ec2_instances.return_value = None, 'retry'
-    # mock the called proecess error
-    # test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
 
     # setup the AWS worker
     event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
@@ -63,15 +59,10 @@ def test_launch_ec2_instances_put_back_into_queue(test_launch_ec2_instances,
     assert 'Adding it back to the queue and will try again' in caplog.text
 
 
-@mock.patch('ramp_engine.aws.api.launch_ec2_instances')
-def test_launch_ec2_instances_error():
-    # test_launch_ec2_instances.return_value = None, unknown_error
-    pass
-
-
 @mock.patch('ramp_engine.aws.api._rsync')
 @mock.patch('ramp_engine.aws.api.launch_ec2_instances')
-def test_aws_worker_upload_error(test_launch_ec2_instances, test_rsync):
+def test_aws_worker_upload_error(test_launch_ec2_instances, test_rsync,
+                                 caplog):
     # mock dummy AWS instance
     class DummyInstance:
         id = 1
@@ -88,6 +79,8 @@ def test_aws_worker_upload_error(test_launch_ec2_instances, test_rsync):
 
     # CalledProcessError is thrown inside
     worker.setup()
+    assert worker.status == 'error'
+    assert 'Unable to connect during log download' in caplog.text
 
 
 @mock.patch('ramp_engine.aws.api._rsync')
