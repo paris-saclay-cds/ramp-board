@@ -17,7 +17,7 @@ from ramp_engine.aws.api import is_spot_terminated, launch_ec2_instances
 from ramp_engine.aws.api import download_log, download_predictions
 from ramp_engine.aws.api import upload_submission
 from ramp_engine import Dispatcher, AWSWorker
-from ramp_utils import generate_worker_config, read_config
+from ramp_utils import read_config
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
 
@@ -39,6 +39,36 @@ def add_empty_dir(dir_name):
         os.mkdir(dir_name)
 
 
+# @mock.patch('ramp_engine.aws.api._rsync')
+@mock.patch('ramp_engine.aws.api.launch_ec2_instances')
+def test_launch_ec2_instances_put_back_into_queue(test_launch_ec2_instances,
+                                                  # test_rsync
+                                                  caplog):
+    ''' checks if the retry status and the correct log is added if the
+        api returns None instances and status retry '''
+
+    test_launch_ec2_instances.return_value = None, 'retry'
+    # mock the called proecess error
+    # test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
+
+    # setup the AWS worker
+    event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+
+    worker = AWSWorker(event_config, submission='starting_kit_local')
+    worker.config = event_config
+
+    # worker should be put back into the queue
+    worker.setup()
+    assert worker.status == 'retry'
+    assert 'Adding it back to the queue and will try again' in caplog.text
+
+
+@mock.patch('ramp_engine.aws.api.launch_ec2_instances')
+def test_launch_ec2_instances_error():
+    # test_launch_ec2_instances.return_value = None, unknown_error
+    pass
+
+
 @mock.patch('ramp_engine.aws.api._rsync')
 @mock.patch('ramp_engine.aws.api.launch_ec2_instances')
 def test_aws_worker_upload_error(test_launch_ec2_instances, test_rsync):
@@ -46,7 +76,7 @@ def test_aws_worker_upload_error(test_launch_ec2_instances, test_rsync):
     class DummyInstance:
         id = 1
 
-    test_launch_ec2_instances.return_value = (DummyInstance(),)
+    test_launch_ec2_instances.return_value = (DummyInstance(),), 0
     # mock the called proecess error
     test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
 
@@ -247,7 +277,7 @@ def test_creating_instances(boto_session_cls, caplog,
         aws_response = [error_max_instances, correct_response]
 
     request_spot_instances.side_effect = aws_response
-    instance, = launch_ec2_instances(config['worker'])
+    instance, status = launch_ec2_instances(config['worker'])
     assert (instance is None) == result_none
     assert log_msg in caplog.text
 
@@ -258,7 +288,7 @@ def test_aws_worker():
 
     ramp_kit_dir = os.path.join(HERE, 'kits', 'iris')
 
-    # make sure predictio and log dirs exist, if not, add them
+    # make sure prediction and log dirs exist, if not, add them
     add_empty_dir(os.path.join(ramp_kit_dir, 'predictions'))
     add_empty_dir(os.path.join(ramp_kit_dir, 'logs'))
 
@@ -270,8 +300,7 @@ def test_aws_worker():
         if os.path.isdir(subdir):
             shutil.rmtree(subdir)
 
-    config = read_config(os.path.join(HERE, 'config.yml'))
-    worker_config = generate_worker_config(config)
+    worker_config = read_config(os.path.join(HERE, 'config.yml'))['worker']
     worker = AWSWorker(worker_config, submission='starting_kit_local')
     worker.setup()
     assert worker.status == 'setup'
