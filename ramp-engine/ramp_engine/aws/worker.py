@@ -60,16 +60,25 @@ class AWSWorker(BaseWorker):
 
         logger.info("Setting up AWSWorker for submission '{}'".format(
             self.submission))
-        self.instance, = aws.launch_ec2_instances(self.config)
+        _instances, status = aws.launch_ec2_instances(self.config)
 
-        if self.instance:
-            logger.info("Instance launched for submission '{}'".format(
-                self.submission))
-        else:
-            logger.error("Unable to launch instance for submission "
-                         "'{}'".format(self.submission))
-            self.status = 'error'
+        if not _instances:
+            if status == 'retry':
+                # there was a timeout error, put back in the queue and try
+                # again
+                logger.worning("Unable to launch instance for submission "
+                               f"{self.submission}. Adding it back to the "
+                               "queue and will try again later")
+                self.status = 'retry'
+            else:
+                logger.error("Unable to launch instance for submission "
+                             f"{self.submission}. An error occured: {status}")
+                self.status = 'error'
             return
+        else:
+            logger.info("Instance launched for submission '{}'".format(
+                        self.submission))
+            self.instances, = _instances
 
         for _ in range(5):
             # try uploading the submission a few times, as this regularly fails
