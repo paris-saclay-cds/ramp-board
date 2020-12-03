@@ -47,6 +47,9 @@ def test_error_handling_worker_setup_error(session_toy, caplog):
         def setup(self):
             raise Exception('Test error')
 
+        def teardown(self):
+            pass
+
     config = read_config(database_config_template())
     event_config = read_config(ramp_config_template())
 
