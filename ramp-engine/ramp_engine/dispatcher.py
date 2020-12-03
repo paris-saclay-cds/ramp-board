@@ -170,9 +170,18 @@ class Dispatcher:
                 set_submission_state(session, submission_id, 'checking_error')
                 worker.teardown()  # kill the worker
                 self._logger.info(
-                            f'Worker {worker} killed due to an error '
-                            f'during training'
-                        )
+                    f'Worker {worker} killed due to an error '
+                    f'during training'
+                )
+                stderr = ("There was a problem with sending your submission"
+                          " for training. This problem is on RAMP side"
+                          " and most likely it is not related to your"
+                          " code. If this happened for the first time"
+                          " to this submission you might"
+                          " consider submitting the same code once again."
+                          " Else, please contact the event organizers."
+                          )
+                set_submission_error_msg(session, submission_id, stderr)
                 continue
             set_submission_state(session, submission_id, 'training')
             submission = get_submission_by_id(session, submission_id)
