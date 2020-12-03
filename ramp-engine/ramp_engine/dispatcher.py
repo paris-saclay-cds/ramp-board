@@ -168,6 +168,11 @@ class Dispatcher:
                 worker.status = 'error'
             if worker.status == 'error':
                 set_submission_state(session, submission_id, 'checking_error')
+                worker.teardown()  # kill the worker
+                self._logger.info(
+                    f'Worker {worker} killed due to an error '
+                    f'during training'
+                )
                 stderr = ("There was a problem with sending your submission"
                           " for training. This problem is on RAMP side"
                           " and most likely it is not related to your"
