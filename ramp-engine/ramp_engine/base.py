@@ -1,19 +1,25 @@
 import logging
+from logging.handlers import RotatingFileHandler
+import os
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 
+log_dir = "logs"
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
 logger = logging.getLogger('RAMP-WORKER')
 
-log_file = "worker.log"
+log_file = os.path.join(log_dir, "worker.log")
 formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')  # noqa
-fileHandler = logging.FileHandler(log_file, mode='a')
-fileHandler.setFormatter(formatter)
-streamHandler = logging.StreamHandler()
-streamHandler.setFormatter(formatter)
+file_handler = RotatingFileHandler(log_file, maxBytes=1000, backupCount=2)
+file_handler.setFormatter(formatter)
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
 
 logger.setLevel(logging.DEBUG)
-logger.addHandler(fileHandler)
-logger.addHandler(streamHandler)
+logger.addHandler(file_handler)
+logger.addHandler(stream_handler)
 
 
 class BaseWorker(metaclass=ABCMeta):
