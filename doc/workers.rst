@@ -68,9 +68,22 @@ Running submissions on Amazon Web Services (AWS)
 
 The AWS worker will train and evaluate the submissions on an AWS instance,
 which can be useful if the server itself has not much resources or if you need
-specific resources (e.g. GPU's).
+specific resources (e.g. GPU's). To this end you need to prepare an image based
+on which RAMP can launch an instance for each submission.
 
-Summary of steps:
+There are two ways supported by RAMP to do so: you can either make an image
+following the steps below or make a pipeline with a recipe to create an image.
+The latter option has an advantage if you forsee that the image might
+need to be updated during the course of the running challenge (e.g.
+participants demand installing additional Python packages). The first option
+will require altering the image manually while the latter will update the image
+by rerunning the pipeline (RAMP will always select the newest version of the
+image `ami_image_name` (base name of the image) set in the `config.yml` file.
+If you wish to create a pipeline please follow the
+`AWS guidelines
+<https://docs.aws.amazon.com/imagebuilder/latest/userguide/how-image-builder-works.html#image-builder-components>`_
+
+Otherwise please follow the summary steps:
 
 1. Launch AWS instance and connect to it.
 2. Prepare the instance for running submissions.
