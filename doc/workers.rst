@@ -73,11 +73,11 @@ on which RAMP can launch an instance for each submission.
 
 There are two ways supported by RAMP to do so: you can either make an image
 following the steps below or make a pipeline with a recipe to create an image.
-The latter option has an advantage if you forsee that the image might
-need to be updated during the course of the running challenge (e.g.
-participants demand installing additional Python packages). The first option
-will require altering the image manually while the latter will update the image
-by rerunning the pipeline (RAMP will always select the newest version of the
+The latter option has an advantage if you forsee that the image will be updated
+during the course of the running challenge (e.g. participants demand installing
+additional Python packages). The first option will require altering the image
+manually while the latter will update the image automatically by rerunning
+the pipeline (RAMP will always select the newest version of the
 image `ami_image_name` (base name of the image) set in the `config.yml` file.
 If you wish to create a pipeline please follow the
 `AWS guidelines
