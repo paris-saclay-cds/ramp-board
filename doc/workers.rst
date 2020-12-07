@@ -81,7 +81,7 @@ the pipeline (RAMP will always select the newest version of the
 image `ami_image_name` (base name of the image) set in the `config.yml` file.
 If you wish to create a pipeline please follow the
 `AWS guidelines
-<https://docs.aws.amazon.com/imagebuilder/latest/userguide/how-image-builder-works.html#image-builder-components>`_
+<https://docs.aws.amazon.com/imagebuilder/latest/userguide/how-image-builder-works.html>`_
 
 Otherwise please follow the summary steps:
 
