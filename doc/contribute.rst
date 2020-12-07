@@ -320,29 +320,29 @@ Patch/bug fix release process
 
 1. Checkout the tag for the last minor release, e.g.,
    `git checkout 0.5.X`.
-   note: X is part of the name, not a number to substitute.
-   note2: you can type `git fetch --all --tags` to fetch available tags.
+   **note**: X is part of the name, not a number to substitute.
+   **note2**: you can type `git fetch --all --tags` to fetch available tags.
 2. There are two ways to continue. If you only want to release a couple of
    commits we recommend that you go with '3a', otherwise the easier will be
    to continue with '3b'.
 
-**3a: release only a few commits**
+3a: release only a few commits
 
 - Find the commit(s) hash of the bug fix commit you wish to back port using
   `git log`.
 - Append the bug fix commit(s) to the branch using `git cherry-pick <hash>`.
 
-**3b: release multiple commits**
+3b: release multiple commits
 
 - being on the `0.5.X` checkout a branch:
-  `git checkout -b release-0.5.no master` where 'no' is the number on your bug
-  release.
+  `git checkout -b release-0.5.<number> master` where 'number' is the number of
+  your bug release.
 - commit your desired changes by typing: `git rebase -i master`.
   You should now see the list of all the commits since the last release.
   Indicate which commits you want to release by typing 'pick' on their lefthand
   side, and 'drop' if you do not want to keep it. Make sure to drop the commit
   with previous bumpversion. It's usefult to have a copy of the `git rebase -i`
-  log in the PR to PR to help others understand what's included.
+  log in the PR to help others understand what's included.
 - make a PR to the master. Once it is merged continue to the next step.
 
 4. Bump the version number with `bumpversion patch`. This will bump the
