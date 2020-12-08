@@ -967,28 +967,34 @@ def is_spot_terminated(config, instance_id):
     """Check if there is an 'instance-action' item present in instance
     metatdata. If a spot instance is marked to be terminated an
     'instance-action' will be present."""
-    cmd_timeout = 1
-    n_retry = 9
-    cmd = ("curl http://169.254.169.254/latest/meta-data/instance-action"
-           f" -m {cmd_timeout} --retry {n_retry}")
+    # Ensure the instance is still running before checking for instance-action
+    instance_status = check_instance_status(config, instance_id)
+    if instance_status == 'running':
+        cmd_timeout = 1
+        n_retry = 9
+        cmd = ("curl http://169.254.169.254/latest/meta-data/instance-action"
+            f" -m {cmd_timeout} --retry {n_retry}")
 
-    try:
-        out = _run(config, instance_id, cmd, return_output=True)
-        out = out.decode('utf-8')
-    except subprocess.CalledProcessError:
-        logger.error('Unable to run curl: {e}')
-        return False
-    except Exception as e:
-        logger.error('Unhandled exception occurred when checking for'
-                     f' instance action: {e}')
-        return False
+        try:
+            out = _run(config, instance_id, cmd, return_output=True)
+            out = out.decode('utf-8')
+        except subprocess.CalledProcessError:
+            logger.error('Unable to run curl: {e}')
+            return False
+        except Exception as e:
+            logger.error('Unhandled exception occurred when checking for'
+                         f' instance action: {e}')
+            return False
 
-    if out == 'none':
-        terminated = False
+        if out == 'none':
+            terminated = False
+        else:
+            logger.info(f'An instance-action is present on {instance_id}, '
+                        'indicating that this spot instance is marked for '
+                        'termination.')
+            terminated = True
+    # If instance not running, add back to queue
     else:
-        logger.info(f'An instance-action is present on {instance_id}, '
-                    'indicating that this spot instance is marked for '
-                    'termination.')
         terminated = True
     return terminated
 
