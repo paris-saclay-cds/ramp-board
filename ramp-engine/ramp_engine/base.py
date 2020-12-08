@@ -1,6 +1,7 @@
 import logging
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
+import subprocess
 
 logger = logging.getLogger('RAMP-WORKER')
 
@@ -75,12 +76,18 @@ class BaseWorker(metaclass=ABCMeta):
     @property
     def status(self):
         status = self._status
-        if status == 'running':
-            self._status_running_check_time = datetime.utcnow()
-            if self._is_submission_interrupted():
-                self._status = 'retry'
-            elif self._is_submission_finished():
-                self._status = 'finished'
+        try:
+            if status == 'running':
+                self._status_running_check_time = datetime.utcnow()
+                if self._is_submission_interrupted():
+                    self._status = 'retry'
+                elif self._is_submission_finished():
+                    self._status = 'finished'
+        except subprocess.CalledProcessError:
+            # there was a problem while connecting to the worker
+            # if you are using AWS it might be that an instance was terminated
+            # from outside. retry the submission
+            self._status = 'retry'
         return self._status
 
     @status.setter
