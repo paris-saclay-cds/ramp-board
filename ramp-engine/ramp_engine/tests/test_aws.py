@@ -68,7 +68,7 @@ def test_aws_worker_upload_error(test_launch_ec2_instances, test_rsync,
         id = 1
 
     test_launch_ec2_instances.return_value = (DummyInstance(),), 0
-    # mock the called proecess error
+    # mock the called process error
     test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
 
     # setup the AWS worker
@@ -296,6 +296,40 @@ def test_creating_instances(boto_session_cls, caplog,
     instance, status = launch_ec2_instances(config['worker'])
     assert (instance is None) == result_none
     assert log_msg in caplog.text
+
+
+@mock.patch('ramp_engine.aws.api.is_spot_terminated')
+@mock.patch('ramp_engine.aws.api.launch_train')
+@mock.patch('ramp_engine.aws.api._training_finished')
+def test_restart_on_sudden_instance_termination(training_finished,
+                                                launch_train, spot_terminated,
+                                                caplog):
+    class DummyInstance:
+        id = 1
+    launch_train.return_value = 0
+
+    # setup the AWS worker
+    event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+
+    worker = AWSWorker(event_config, submission='starting_kit_local')
+    worker.config = event_config
+    worker.submission = 'dummy submissions'
+    worker.instance = DummyInstance
+
+    # set the submission did not yet finish training
+    training_finished.return_value = False
+    spot_terminated.return_value = False
+
+    worker.launch_submission()
+    assert worker.status == 'running'
+    assert caplog.text == ''
+
+    # call CalledProcessError on checking if submission was finished
+    training_finished.side_effect = subprocess.CalledProcessError(255, 'test')
+    # make sure that the worker status is set to 'retry'
+    assert worker.status == 'retry'
+    assert 'Unable to connect to the instance' in caplog.text
+    assert 'Adding the submission back to the queue' in caplog.text
 
 
 def test_aws_worker():
