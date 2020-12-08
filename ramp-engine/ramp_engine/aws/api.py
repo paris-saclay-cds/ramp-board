@@ -973,7 +973,7 @@ def is_spot_terminated(config, instance_id):
         cmd_timeout = 1
         n_retry = 9
         cmd = ("curl http://169.254.169.254/latest/meta-data/instance-action"
-            f" -m {cmd_timeout} --retry {n_retry}")
+               f" -m {cmd_timeout} --retry {n_retry}")
 
         try:
             out = _run(config, instance_id, cmd, return_output=True)
