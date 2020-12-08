@@ -1,4 +1,5 @@
 import logging
+import subprocess
 
 from ..base import BaseWorker, _get_traceback
 from . import api as aws
@@ -126,8 +127,16 @@ class AWSWorker(BaseWorker):
         return exit_status
 
     def _is_submission_finished(self):
-        return aws._training_finished(
-            self.config, self.instance.id, self.submission)
+        try:
+            return aws._training_finished(
+                self.config, self.instance.id, self.submission)
+        except subprocess.CalledProcessError as e:
+            # it is no longer possible to connect to the instance
+            # possibly it was terminated from outside. restart the submission
+            logger.warning("Unable to connect to the instance for submission "
+                           f"{self.submission}. Adding the submission back to"
+                           " the queue and will try again later")
+            raise e
 
     def _is_submission_interrupted(self):
         """Check if spot instance has been marked as to be terminated by
