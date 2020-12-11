@@ -19,7 +19,7 @@ from ramp_engine.aws.api import upload_submission
 from ramp_engine import Dispatcher, AWSWorker
 from ramp_utils import read_config
 from ramp_utils.testing import database_config_template
-from ramp_utils.testing import ramp_config_template
+from ramp_utils.testing import ramp_aws_config_template, ramp_config_template
 
 from .test_dispatcher import session_toy  # noqa
 
@@ -48,7 +48,7 @@ def test_launch_ec2_instances_put_back_into_queue(test_launch_ec2_instances,
     test_launch_ec2_instances.return_value = None, 'retry'
 
     # setup the AWS worker
-    event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+    event_config = read_config(ramp_aws_config_template())['worker']
 
     worker = AWSWorker(event_config, submission='starting_kit_local')
     worker.config = event_config
@@ -72,7 +72,7 @@ def test_aws_worker_upload_error(test_launch_ec2_instances, test_rsync,
     test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
 
     # setup the AWS worker
-    event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+    event_config = read_config(ramp_aws_config_template())['worker']
 
     worker = AWSWorker(event_config, submission='starting_kit_local')
     worker.config = event_config
@@ -95,7 +95,7 @@ def test_aws_worker_download_log_error(superclass, test_rsync,
 
     # setup the AWS worker
     superclass.return_value = True
-    event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+    event_config = read_config(ramp_aws_config_template())['worker']
 
     worker = AWSWorker(event_config, submission='starting_kit_local')
     worker.config = event_config
@@ -125,7 +125,7 @@ def test_aws_worker_download_prediction_error(superclass, test_download_log,
     # setup the AWS worker
     superclass.return_value = True
     test_train.return_value = True
-    event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+    event_config = read_config(ramp_aws_config_template())['worker']
 
     worker = AWSWorker(event_config, submission='starting_kit_local')
     worker.config = event_config
@@ -142,13 +142,13 @@ def test_aws_worker_download_prediction_error(superclass, test_download_log,
 @mock.patch('ramp_engine.aws.api._rsync')
 def test_rsync_download_predictions(test_rsync, caplog):
     error = subprocess.CalledProcessError(255, 'test')
-    config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+    event_config = read_config(ramp_aws_config_template())['worker']
     instance_id = 0
     submission_name = 'test_submission'
 
     # test for 2 errors by rsync followed by a log output
     test_rsync.side_effect = [error, error, 'test_log']
-    out = download_predictions(config, instance_id,
+    out = download_predictions(event_config, instance_id,
                                submission_name, folder=None)
     assert 'Trying to download the prediction' in caplog.text
     assert 'test_submission' in out
@@ -156,7 +156,7 @@ def test_rsync_download_predictions(test_rsync, caplog):
     # test for 3 errors by rsync followed by a log output
     test_rsync.side_effect = [error, error, error]
     with pytest.raises(subprocess.CalledProcessError):
-        out = download_predictions(config, instance_id, submission_name,
+        out = download_predictions(event_config, instance_id, submission_name,
                                    folder=None)
     assert 'Trying to download the prediction' in caplog.text
     assert 'error occured when downloading prediction' in caplog.text
@@ -165,31 +165,31 @@ def test_rsync_download_predictions(test_rsync, caplog):
 @mock.patch('ramp_engine.aws.api._rsync')
 def test_rsync_download_log(test_rsync, caplog):
     error = subprocess.CalledProcessError(255, 'test')
-    config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+    event_config = read_config(ramp_aws_config_template())['worker']
     instance_id = 0
     submission_name = 'test_submission'
 
     # test for 2 errors by rsync followed by a log output
     test_rsync.side_effect = [error, error, 'test_log']
-    out = download_log(config, instance_id, submission_name)
+    out = download_log(event_config, instance_id, submission_name)
     assert 'Trying to download the log' in caplog.text
     assert out == 'test_log'
 
     # test for 3 errors by rsync followed by a log output
     test_rsync.side_effect = [error, error, error]
     with pytest.raises(subprocess.CalledProcessError):
-        out = download_log(config, instance_id, submission_name)
+        out = download_log(event_config, instance_id, submission_name)
     assert 'Trying to download the log' in caplog.text
 
 
 @mock.patch('ramp_engine.aws.api._rsync')
 def test_rsync_upload_fails(test_rsync):
     test_rsync.side_effect = subprocess.CalledProcessError(255, 'test')
-    config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+    event_config = read_config(ramp_aws_config_template())['worker']
     instance_id = 0
     submission_name = 'test_submission'
     submissions_dir = 'temp'
-    out = upload_submission(config, instance_id, submission_name,
+    out = upload_submission(event_config, instance_id, submission_name,
                             submissions_dir)
     assert out == 1  # error ocurred and it was caught
 
@@ -197,9 +197,9 @@ def test_rsync_upload_fails(test_rsync):
 @mock.patch('ramp_engine.aws.api._run')
 def test_is_spot_terminated_with_CalledProcessError(test_run, caplog):
     test_run.side_effect = subprocess.CalledProcessError(28, 'test')
-    config = read_config(os.path.join(HERE, '_aws_config.yml'))
+    event_config = read_config(ramp_aws_config_template())['worker']
     instance_id = 0
-    is_spot_terminated(config, instance_id)
+    is_spot_terminated(event_config, instance_id)
     assert 'Unable to run curl' in caplog.text
 
 
@@ -216,10 +216,10 @@ def test_launch_ec2_instances(boto_session_cls, use_spot_instance):
     describe_images = client.describe_images
     images = {"Images": [{"ImageId": 1, "CreationDate": 123}]}
     describe_images.return_value = images
-    config = read_config(os.path.join(HERE, '_aws_config.yml'))
+    event_config = read_config(ramp_aws_config_template())['worker']
 
-    config['worker']['use_spot_instance'] = use_spot_instance
-    launch_ec2_instances(config['worker'])
+    event_config['use_spot_instance'] = use_spot_instance
+    launch_ec2_instances(event_config)
 
 
 @mock.patch('ramp_engine.aws.api.launch_train')
@@ -230,7 +230,7 @@ def test_aws_worker_launch_train_error(launch_train, caplog):
     launch_train.side_effect = subprocess.CalledProcessError(255, 'test')
 
     # setup the AWS worker
-    event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+    event_config = read_config(ramp_aws_config_template())['worker']
 
     worker = AWSWorker(event_config, submission='starting_kit_local')
     worker.config = event_config
@@ -272,8 +272,8 @@ def test_creating_instances(boto_session_cls, caplog,
             "Code": "Max spot instance count exceeded"
         }
     }
-    config = read_config(os.path.join(HERE, '_aws_config.yml'))
-    config['worker']['use_spot_instance'] = True
+    event_config = read_config(ramp_aws_config_template())['worker']
+    event_config['use_spot_instance'] = True
     request_spot_instances = client.request_spot_instances
 
     error_max_instances = botocore.exceptions.ClientError(
@@ -293,7 +293,7 @@ def test_creating_instances(boto_session_cls, caplog,
         aws_response = [error_max_instances, correct_response]
 
     request_spot_instances.side_effect = aws_response
-    instance, status = launch_ec2_instances(config['worker'])
+    instance, status = launch_ec2_instances(event_config)
     assert (instance is None) == result_none
     assert log_msg in caplog.text
 
@@ -309,7 +309,7 @@ def test_restart_on_sudden_instance_termination(training_finished,
     launch_train.return_value = 0
 
     # setup the AWS worker
-    event_config = read_config(os.path.join(HERE, '_aws_config.yml'))['worker']
+    event_config = read_config(ramp_aws_config_template())['worker']
 
     worker = AWSWorker(event_config, submission='starting_kit_local')
     worker.config = event_config

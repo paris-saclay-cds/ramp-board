@@ -23,3 +23,14 @@ def ramp_config_template():
         The RAMP configuration filename.
     """
     return os.path.join(HERE, 'template', 'ramp_config.yml')
+
+
+def ramp_aws_config_template():
+    """Return the path a template RAMP configuration AWS file.
+
+    Returns
+    -------
+    filename : str
+        The RAMP configuration on AWS filename.
+    """
+    return os.path.join(HERE, 'template', 'ramp_config_aws.yml')
