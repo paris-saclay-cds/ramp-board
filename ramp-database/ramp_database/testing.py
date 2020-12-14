@@ -106,7 +106,6 @@ def setup_toy_db(session):
     ramp_config : dict
         The configuration file containing the information about a RAMP event.
     """
-
     add_users(session)
     add_problems(session)
     add_events(session)
