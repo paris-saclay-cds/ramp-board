@@ -171,7 +171,7 @@ class Dispatcher:
                 worker.teardown()  # kill the worker
                 self._logger.info(
                     f'Worker {worker} killed due to an error '
-                    f'during training'
+                    f'while connecting to AWS worker'
                 )
                 stderr = ("There was a problem with sending your submission"
                           " for training. This problem is on RAMP side"

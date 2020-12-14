@@ -129,7 +129,10 @@ def launch_ec2_instances(config, nb=1):
             'specified at the same time. Please specify either ami_image_id'
             'or ami_image_name')
     if ami_name:
-        ami_image_id = _get_image_id(config, ami_name)
+        try:
+            ami_image_id = _get_image_id(config, ami_name)
+        except botocore.exceptions.ClientError as e:
+            return None, e
     instance_type = config[INSTANCE_TYPE_FIELD]
     key_name = config[KEY_NAME_FIELD]
     security_group = config[SECURITY_GROUP_FIELD]

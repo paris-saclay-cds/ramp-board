@@ -48,6 +48,7 @@ class AWSWorker(BaseWorker):
     def __init__(self, config, submission):
         super().__init__(config, submission)
         self.submissions_path = self.config['submissions_dir']
+        self.instance = None
 
     def setup(self):
         """Set up the worker.
@@ -58,7 +59,6 @@ class AWSWorker(BaseWorker):
         # sanity check for the configuration variable
         for required_param in ('instance_type', 'access_key_id'):
             self._check_config_name(self.config, required_param)
-
         logger.info("Setting up AWSWorker for submission '{}'".format(
             self.submission))
         _instances, status = aws.launch_ec2_instances(self.config)
@@ -116,7 +116,6 @@ class AWSWorker(BaseWorker):
         except Exception as e:
             logger.error(f'Unknown error occurred: {e}')
             exit_status = 1
-
         if exit_status != 0:
             logger.error(
                 'Cannot start training of submission "{}"'
@@ -124,6 +123,7 @@ class AWSWorker(BaseWorker):
             self.status = 'error'
         else:
             self.status = 'running'
+
         return exit_status
 
     def _is_submission_finished(self):
@@ -195,9 +195,10 @@ class AWSWorker(BaseWorker):
     def teardown(self):
         """Terminate the Amazon instance"""
         # Only terminate if instance is running
-        instance_status = aws.check_instance_status(
-            self.config, self.instance.id
-        )
-        if instance_status == 'running':
-            aws.terminate_ec2_instance(self.config, self.instance.id)
+        if self.instance:
+            instance_status = aws.check_instance_status(
+                self.config, self.instance.id
+            )
+            if instance_status == 'running':
+                aws.terminate_ec2_instance(self.config, self.instance.id)
         super().teardown()
