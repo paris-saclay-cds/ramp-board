@@ -59,6 +59,7 @@ class AWSWorker(BaseWorker):
         # sanity check for the configuration variable
         for required_param in ('instance_type', 'access_key_id'):
             self._check_config_name(self.config, required_param)
+
         logger.info("Setting up AWSWorker for submission '{}'".format(
             self.submission))
         _instances, status = aws.launch_ec2_instances(self.config)
@@ -116,6 +117,7 @@ class AWSWorker(BaseWorker):
         except Exception as e:
             logger.error(f'Unknown error occurred: {e}')
             exit_status = 1
+
         if exit_status != 0:
             logger.error(
                 'Cannot start training of submission "{}"'
@@ -123,7 +125,6 @@ class AWSWorker(BaseWorker):
             self.status = 'error'
         else:
             self.status = 'running'
-
         return exit_status
 
     def _is_submission_finished(self):
