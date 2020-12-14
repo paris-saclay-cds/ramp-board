@@ -17,6 +17,7 @@ from ramp_database.tools.submission import get_submissions
 from ramp_database.tools.submission import get_submission_by_id
 
 from ramp_engine.local import CondaEnvWorker
+from ramp_engine.aws import AWSWorker
 from ramp_engine.dispatcher import Dispatcher
 
 
@@ -41,9 +42,8 @@ def session_toy(database_connection):
 def session_toy_aws(database_connection):
     database_config = read_config(database_config_template())
     ramp_config_aws = ramp_aws_config_template()
-    deployment_dir = create_toy_db(database_config, ramp_config_aws)
     try:
-        #deployment_dir = create_toy_db(database_config, ramp_config_aws)
+        deployment_dir = create_toy_db(database_config, ramp_config_aws)
         with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
@@ -233,6 +233,21 @@ def test_dispatcher_worker_retry(session_toy):
     assert submission_name in [sub[1] for sub in submissions]
 
 
-def test_dispatcher_aws_training_error(session_toy_aws):
+def test_dispatcher_aws_not_launching(session_toy_aws, caplog):
+    # given the test config file the instance should not be able to launch
+    # on authentication error
+    # after unsuccessful try the worker should teardown
     config = read_config(database_config_template())
     event_config = read_config(ramp_aws_config_template())
+
+    dispatcher = Dispatcher(config=config,
+                            event_config=event_config,
+                            worker=AWSWorker, n_workers=10,
+                            hunger_policy='exit')
+    dispatcher.fetch_from_db(session_toy_aws)
+    dispatcher.launch_workers(session_toy_aws)
+    assert 'AuthFailure' in caplog.text
+    # training should not have started
+    assert 'training' not in caplog.text
+    num_running_workers = dispatcher._processing_worker_queue.qsize()
+    assert num_running_workers == 0
