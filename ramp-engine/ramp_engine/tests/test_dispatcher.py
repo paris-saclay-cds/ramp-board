@@ -5,7 +5,7 @@ import pytest
 
 from ramp_utils import read_config
 from ramp_utils.testing import database_config_template
-from ramp_utils.testing import ramp_config_template
+from ramp_utils.testing import ramp_aws_config_template, ramp_config_template
 
 from ramp_database.model import Model
 from ramp_database.utils import setup_db
@@ -35,6 +35,21 @@ def session_toy(database_connection):
         shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
+
+
+@pytest.fixture
+def session_toy_aws(database_connection):
+    database_config = read_config(database_config_template())
+    ramp_config_aws = ramp_aws_config_template()
+    deployment_dir = create_toy_db(database_config, ramp_config_aws)
+    try:
+        #deployment_dir = create_toy_db(database_config, ramp_config_aws)
+        with session_scope(database_config['sqlalchemy']) as session:
+            yield session
+    finally:
+        db, _ = setup_db(database_config['sqlalchemy'])
+        Model.metadata.drop_all(db)
+        shutil.rmtree(deployment_dir, ignore_errors=True)
 
 
 def test_error_handling_worker_setup_error(session_toy, caplog):
@@ -216,3 +231,8 @@ def test_dispatcher_worker_retry(session_toy):
 
     submissions = get_submissions(session_toy, 'iris_test', 'new')
     assert submission_name in [sub[1] for sub in submissions]
+
+
+def test_dispatcher_aws_training_error(session_toy_aws):
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_aws_config_template())
