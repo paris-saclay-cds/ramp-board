@@ -106,6 +106,7 @@ def setup_toy_db(session):
     ramp_config : dict
         The configuration file containing the information about a RAMP event.
     """
+
     add_users(session)
     add_problems(session)
     add_events(session)
@@ -297,12 +298,13 @@ def add_events(session):
     """
     ramp_configs = {
         'iris': read_config(ramp_config_iris()),
+        'iris_aws': read_config(ramp_config_aws_iris()),
         'boston_housing': read_config(ramp_config_boston_housing())
     }
     for problem_name, ramp_config in ramp_configs.items():
         ramp_config_problem = generate_ramp_config(ramp_config)
         add_event(
-            session, problem_name=problem_name,
+            session, problem_name=ramp_config_problem['problem_name'],
             event_name=ramp_config_problem['event_name'],
             event_title=ramp_config_problem['event_title'],
             ramp_sandbox_name=ramp_config_problem['sandbox_name'],
@@ -334,7 +336,7 @@ def sign_up_teams_to_events(session):
     Be aware that :func:`add_users`, :func:`add_problems`,
     and :func:`add_events` need to be called before.
     """
-    for event_name in ['iris_test', 'boston_housing_test']:
+    for event_name in ['iris_test', 'iris_aws_test', 'boston_housing_test']:
         sign_up_team(session, event_name, 'test_user')
         sign_up_team(session, event_name, 'test_user_2')
 
@@ -349,6 +351,7 @@ def submit_all_starting_kits(session):
     """
     ramp_configs = {
         'iris': read_config(ramp_config_iris()),
+        'iris_aws': read_config(ramp_config_aws_iris()),
         'boston_housing': read_config(ramp_config_boston_housing())
     }
     for problem_name, ramp_config in ramp_configs.items():
@@ -364,6 +367,17 @@ def submit_all_starting_kits(session):
             session, ramp_config_problem['event_name'], 'test_user_2',
             path_submissions
         )
+
+
+def ramp_config_aws_iris():
+    """Return the path to a RAMP configuration file for the iris kit.
+
+    Returns
+    -------
+    filename : str
+        The RAMP configuration filename for the iris kit.
+    """
+    return os.path.join(HERE, 'tests', 'data', 'ramp_config_aws_iris.yml')
 
 
 def ramp_config_iris():
