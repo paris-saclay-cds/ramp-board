@@ -261,7 +261,7 @@ def test_submission_file_model_property(session_scope_module):
     assert submission_file.f_name == 'estimator.py'
     assert re.match('/.*estimator.py', submission_file.link)
     submission_name = 'submission_00000000' + str(ID_SUBMISSION)
-    assert re.match('.*submissions.*' + submission_name + '.*estimator.py',
+    assert re.match(f'.*submissions.*{submission_name}.*estimator.py',
                     submission_file.path)
     assert re.match('<a href=".*estimator.py">.*estimator</a>',
                     submission_file.name_with_link)
