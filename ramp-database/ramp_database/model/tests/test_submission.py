@@ -314,8 +314,7 @@ def test_submission_on_cv_fold_model_property(session_scope_module):
                              .filter(
                                  SubmissionOnCVFold.submission_id ==
                                  ID_SUBMISSION
-                             )
-                             .first())
+                             ).first())
     cv_fold.state = 'scored'
     cv_fold.contributivity = 0.2
     assert repr(cv_fold) == 'state = scored, c = 0.2, best = False'
@@ -345,8 +344,7 @@ def test_submission_on_cv_fold_model_is_public_leaderboard(
                              .filter(
                                  SubmissionOnCVFold.submission_id ==
                                  ID_SUBMISSION
-                             )
-                             .first())
+                             ).first())
     cv_fold.state = state_set
     assert cv_fold.is_public_leaderboard is expected_state
 
@@ -373,8 +371,7 @@ def test_submission_on_cv_fold_model_is_trained(session_scope_module,
                              .filter(
                                  SubmissionOnCVFold.submission_id ==
                                  ID_SUBMISSION
-                             )
-                             .first())
+                             ).first())
     cv_fold.state = state_set
     assert cv_fold.is_trained is expected_state
 
@@ -401,8 +398,7 @@ def test_submission_on_cv_fold_model_is_validated(session_scope_module,
                              .filter(
                                  SubmissionOnCVFold.submission_id ==
                                  ID_SUBMISSION
-                             )
-                             .first())
+                             ).first())
     cv_fold.state = state_set
     assert cv_fold.is_validated is expected_state
 
@@ -429,8 +425,7 @@ def test_submission_on_cv_fold_model_is_tested(session_scope_module,
                              .filter(
                                  SubmissionOnCVFold.submission_id ==
                                  ID_SUBMISSION
-                             )
-                             .first())
+                             ).first())
     cv_fold.state = state_set
     assert cv_fold.is_tested is expected_state
 
@@ -457,8 +452,7 @@ def test_submission_on_cv_fold_model_is_error(session_scope_module,
                              .filter(
                                  SubmissionOnCVFold.submission_id ==
                                  ID_SUBMISSION
-                             )
-                             .first())
+                             ).first())
     cv_fold.state = state_set
     assert cv_fold.is_error is expected_state
 
