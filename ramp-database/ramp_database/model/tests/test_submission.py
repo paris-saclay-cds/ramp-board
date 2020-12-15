@@ -35,9 +35,9 @@ from ramp_database.testing import create_toy_db
 
 from ramp_database.tools.submission import get_submission_by_id
 
-
-ID_SUBMISSION = 7  # id for the test submission with user=test_user and
-                   # event=iris_test
+# id for the test submission with user=test_user and
+# event=iris_test
+ID_SUBMISSION = 7
 
 
 @pytest.fixture(scope='module')
