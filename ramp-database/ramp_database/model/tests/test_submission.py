@@ -373,7 +373,7 @@ def test_submission_on_cv_fold_model_is_trained(session_scope_module,
                              .filter(
                                  SubmissionOnCVFold.submission_id ==
                                  ID_SUBMISSION
-                                 )
+                             )
                              .first())
     cv_fold.state = state_set
     assert cv_fold.is_trained is expected_state
