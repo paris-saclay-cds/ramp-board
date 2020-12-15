@@ -314,7 +314,7 @@ def test_submission_on_cv_fold_model_property(session_scope_module):
                              .filter(
                                  SubmissionOnCVFold.submission_id ==
                                  ID_SUBMISSION
-                                 )
+                             )
                              .first())
     cv_fold.state = 'scored'
     cv_fold.contributivity = 0.2
