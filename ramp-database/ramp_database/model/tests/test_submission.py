@@ -428,7 +428,8 @@ def test_submission_on_cv_fold_model_is_tested(session_scope_module,
         (session_scope_module.query(SubmissionOnCVFold)
                              .filter(
                                  SubmissionOnCVFold.submission_id ==
-                                 ID_SUBMISSION)
+                                 ID_SUBMISSION
+                             )
                              .first())
     cv_fold.state = state_set
     assert cv_fold.is_tested is expected_state
