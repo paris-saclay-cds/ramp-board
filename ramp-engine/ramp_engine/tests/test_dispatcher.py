@@ -235,7 +235,7 @@ def test_dispatcher_worker_retry(session_toy):
 
 def test_dispatcher_aws_not_launching(session_toy_aws, caplog):
     # given the test config file the instance should not be able to launch
-    # on authentication error
+    # due to authentication error
     # after unsuccessful try the worker should teardown
     config = read_config(database_config_template())
     event_config = read_config(ramp_aws_config_template())
