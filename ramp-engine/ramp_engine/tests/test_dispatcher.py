@@ -245,9 +245,15 @@ def test_dispatcher_aws_not_launching(session_toy_aws, caplog):
                             worker=AWSWorker, n_workers=10,
                             hunger_policy='exit')
     dispatcher.fetch_from_db(session_toy_aws)
+    submissions = get_submissions(session_toy_aws, 'iris_aws_test', 'new')
+
     dispatcher.launch_workers(session_toy_aws)
     assert 'AuthFailure' in caplog.text
     # training should not have started
     assert 'training' not in caplog.text
     num_running_workers = dispatcher._processing_worker_queue.qsize()
     assert num_running_workers == 0
+
+    submissions2 = get_submissions(session_toy_aws, 'iris_aws_test', 'new')
+    # assert that all the submissions are still in the 'new' state
+    assert len(submissions) == len(submissions2)
