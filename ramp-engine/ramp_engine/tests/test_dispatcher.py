@@ -42,14 +42,8 @@ def session_toy(database_connection):
 def session_toy_aws(database_connection):
     database_config = read_config(database_config_template())
     ramp_config_aws = ramp_aws_config_template()
-<<<<<<< HEAD
-    deployment_dir = create_toy_db(database_config, ramp_config_aws)
-    try:
-        # deployment_dir = create_toy_db(database_config, ramp_config_aws)
-=======
     try:
         deployment_dir = create_toy_db(database_config, ramp_config_aws)
->>>>>>> f7211c491193fb2f634dc7316b7b67548183da75
         with session_scope(database_config['sqlalchemy']) as session:
             yield session
     finally:
