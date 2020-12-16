@@ -344,7 +344,7 @@ def test_set_submission_state(make_toy_db):
     runner = CliRunner()
     result = runner.invoke(main, ['set-submission-state',
                                   '--config', database_config_template(),
-                                  '--submission-id', 3,
+                                  '--submission-id', 5,
                                   '--state', 'scored'],
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output

@@ -48,6 +48,7 @@ class AWSWorker(BaseWorker):
     def __init__(self, config, submission):
         super().__init__(config, submission)
         self.submissions_path = self.config['submissions_dir']
+        self.instance = None
 
     def setup(self):
         """Set up the worker.
@@ -195,9 +196,10 @@ class AWSWorker(BaseWorker):
     def teardown(self):
         """Terminate the Amazon instance"""
         # Only terminate if instance is running
-        instance_status = aws.check_instance_status(
-            self.config, self.instance.id
-        )
-        if instance_status == 'running':
-            aws.terminate_ec2_instance(self.config, self.instance.id)
+        if self.instance:
+            instance_status = aws.check_instance_status(
+                self.config, self.instance.id
+            )
+            if instance_status == 'running':
+                aws.terminate_ec2_instance(self.config, self.instance.id)
         super().teardown()

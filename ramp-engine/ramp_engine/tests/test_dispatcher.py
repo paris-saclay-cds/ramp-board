@@ -5,7 +5,7 @@ import pytest
 
 from ramp_utils import read_config
 from ramp_utils.testing import database_config_template
-from ramp_utils.testing import ramp_config_template
+from ramp_utils.testing import ramp_aws_config_template, ramp_config_template
 
 from ramp_database.model import Model
 from ramp_database.utils import setup_db
@@ -17,6 +17,7 @@ from ramp_database.tools.submission import get_submissions
 from ramp_database.tools.submission import get_submission_by_id
 
 from ramp_engine.local import CondaEnvWorker
+from ramp_engine.aws import AWSWorker
 from ramp_engine.dispatcher import Dispatcher
 
 
@@ -35,6 +36,20 @@ def session_toy(database_connection):
         shutil.rmtree(deployment_dir, ignore_errors=True)
         db, _ = setup_db(database_config['sqlalchemy'])
         Model.metadata.drop_all(db)
+
+
+@pytest.fixture
+def session_toy_aws(database_connection):
+    database_config = read_config(database_config_template())
+    ramp_config_aws = ramp_aws_config_template()
+    try:
+        deployment_dir = create_toy_db(database_config, ramp_config_aws)
+        with session_scope(database_config['sqlalchemy']) as session:
+            yield session
+    finally:
+        db, _ = setup_db(database_config['sqlalchemy'])
+        Model.metadata.drop_all(db)
+        shutil.rmtree(deployment_dir, ignore_errors=True)
 
 
 def test_error_handling_worker_setup_error(session_toy, caplog):
@@ -216,3 +231,29 @@ def test_dispatcher_worker_retry(session_toy):
 
     submissions = get_submissions(session_toy, 'iris_test', 'new')
     assert submission_name in [sub[1] for sub in submissions]
+
+
+def test_dispatcher_aws_not_launching(session_toy_aws, caplog):
+    # given the test config file the instance should not be able to launch
+    # due to authentication error
+    # after unsuccessful try the worker should teardown
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_aws_config_template())
+
+    dispatcher = Dispatcher(config=config,
+                            event_config=event_config,
+                            worker=AWSWorker, n_workers=10,
+                            hunger_policy='exit')
+    dispatcher.fetch_from_db(session_toy_aws)
+    submissions = get_submissions(session_toy_aws, 'iris_aws_test', 'new')
+
+    dispatcher.launch_workers(session_toy_aws)
+    assert 'AuthFailure' in caplog.text
+    # training should not have started
+    assert 'training' not in caplog.text
+    num_running_workers = dispatcher._processing_worker_queue.qsize()
+    assert num_running_workers == 0
+
+    submissions2 = get_submissions(session_toy_aws, 'iris_aws_test', 'new')
+    # assert that all the submissions are still in the 'new' state
+    assert len(submissions) == len(submissions2)

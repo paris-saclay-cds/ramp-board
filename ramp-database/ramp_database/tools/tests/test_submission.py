@@ -65,6 +65,7 @@ from ramp_database.tools.submission import score_submission
 from ramp_database.tools.submission import submit_starting_kits
 
 HERE = os.path.dirname(__file__)
+ID_SUBMISSION = 7
 
 
 @pytest.fixture
@@ -148,7 +149,7 @@ def test_add_submission_create_new_submission(base_db):
     submission_file = submission.files[0]
     assert submission_file.name == 'estimator'
     assert submission_file.extension == 'py'
-    assert (os.path.join('submission_000000005',
+    assert (os.path.join('submission_00000000' + str(ID_SUBMISSION),
                          'estimator.py') in submission_file.path)
 
 
@@ -208,7 +209,7 @@ def test_make_submission_resubmission(base_db):
     add_submission(session, event_name, username, submission_name,
                    path_submission,)
     # mock that we scored the submission
-    set_submission_state(session, 5, 'scored')
+    set_submission_state(session, ID_SUBMISSION, 'scored')
     # second submission
     err_msg = ('Submission "random_forest_10_10" of team "test_user" at event '
                '"iris_test" exists already')
@@ -219,11 +220,11 @@ def test_make_submission_resubmission(base_db):
     # a resubmission can take place if it is tagged as "new" or failed
 
     # mock that the submission failed during the training
-    set_submission_state(session, 5, 'training_error')
+    set_submission_state(session, ID_SUBMISSION, 'training_error')
     add_submission(session, event_name, username, submission_name,
                    path_submission)
     # mock that the submissions are new submissions
-    set_submission_state(session, 5, 'new')
+    set_submission_state(session, ID_SUBMISSION, 'new')
     add_submission(session, event_name, username, submission_name,
                    path_submission)
 
@@ -286,10 +287,10 @@ def test_submit_starting_kits(base_db):
 
 @pytest.mark.parametrize(
     "state, expected_id",
-    [('new', [2, 5, 6, 7, 8, 9, 10]),
+    [('new', [2, 7, 8, 9, 10, 11, 12]),
      ('trained', [1]),
      ('tested', []),
-     (None, [1, 2, 5, 6, 7, 8, 9, 10])]
+     (None, [1, 2, 7, 8, 9, 10, 11, 12])]
 )
 def test_get_submissions(session_scope_module, state, expected_id):
     submissions = get_submissions(session_scope_module, 'iris_test',
