@@ -166,7 +166,7 @@ class AWSWorker(BaseWorker):
         except Exception as e:
             logger.error("Error occurred when downloading the logs"
                          f" from the submission: {e}")
-            exit_status = 1
+            exit_status = 2
             error_msg = str(e)
             self.status = 'error'
         if exit_status == 0:
@@ -189,7 +189,7 @@ class AWSWorker(BaseWorker):
                 error_msg = _get_traceback(
                     aws._get_log_content(self.config, self.submission))
                 self.status = 'collected'
-                exit_status, error_msg = 1, ""
+                exit_status = 1
         logger.info(repr(self))
         return exit_status, error_msg
 
