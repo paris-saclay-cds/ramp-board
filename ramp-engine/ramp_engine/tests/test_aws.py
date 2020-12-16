@@ -105,8 +105,9 @@ def test_aws_worker_download_log_error(superclass, test_rsync,
     exit_status, error_msg = worker.collect_results()
     assert 'Error occurred when downloading the logs' in caplog.text
     assert 'Trying to download the log once again' in caplog.text
-    assert exit_status == 1
+    assert exit_status == 2
     assert 'test' in error_msg
+    assert worker.status == 'error'
 
 
 @mock.patch('ramp_engine.aws.api._rsync')

@@ -63,7 +63,6 @@ class AWSWorker(BaseWorker):
         logger.info("Setting up AWSWorker for submission '{}'".format(
             self.submission))
         _instances, status = aws.launch_ec2_instances(self.config)
-
         if not _instances:
             if status == 'retry':
                 # there was a timeout error, put this submission back in the
@@ -117,7 +116,6 @@ class AWSWorker(BaseWorker):
         except Exception as e:
             logger.error(f'Unknown error occurred: {e}')
             exit_status = 1
-
         if exit_status != 0:
             logger.error(
                 'Cannot start training of submission "{}"'
@@ -166,9 +164,10 @@ class AWSWorker(BaseWorker):
         except Exception as e:
             logger.error("Error occurred when downloading the logs"
                          f" from the submission: {e}")
-            exit_status = 1
+            exit_status = 2
             error_msg = str(e)
             self.status = 'error'
+
         if exit_status == 0:
             if aws._training_successful(
                     self.config, self.instance.id, self.submission):
@@ -189,7 +188,7 @@ class AWSWorker(BaseWorker):
                 error_msg = _get_traceback(
                     aws._get_log_content(self.config, self.submission))
                 self.status = 'collected'
-                exit_status, error_msg = 1, ""
+                exit_status = 1
         logger.info(repr(self))
         return exit_status, error_msg
 
