@@ -237,7 +237,7 @@ class Dispatcher:
                         self._logger.info(
                             f'Worker {worker} killed due to timeout.'
                         )
-                        submission_status = 'checking_error'
+                        submission_status = 'training_error'
                     elif returncode == 2:
                         # Error occurred when downloading the logs
                         submission_status = 'checking_error'
