@@ -797,6 +797,7 @@ def _training_finished(config, instance_id, submission_name):
     """
     Return True if a submission has finished training
     """
+    # TODO: check if bagged score is saved
     return not _has_screen(config, instance_id, submission_name)
 
 

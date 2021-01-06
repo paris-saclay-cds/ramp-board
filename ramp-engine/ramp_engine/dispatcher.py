@@ -276,6 +276,10 @@ class Dispatcher:
             # database. Since they require too much space, we stop to store
             # them in the database and instead, keep it onto the disk.
             # set_predictions(session, submission_id, path_predictions)
+
+            # TODO: here the AWS dispatcher is failing at times because of:
+            # 1. missing bagged scores.csv
+            # 2. train_time not found
             set_time(session, submission_id, path_predictions)
             set_scores(session, submission_id, path_predictions)
             set_bagged_scores(session, submission_id, path_predictions)
