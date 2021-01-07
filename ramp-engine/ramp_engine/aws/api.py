@@ -796,8 +796,7 @@ def _is_ready(config, instance_id):
 def _training_finished(config, instance_id, submission_name):
     """
     Return True if a submission has finished training (if the screen no longer
-    exists on the ec2 instance and if the bagged_scores.csv file is saved on
-    the instance)
+    exists on the ec2 instance and if the bagged_scores.csv file was saved)
     """
     has_screen = _has_screen(config, instance_id, submission_name)
     has_score_file = _has_score_file(config, instance_id, submission_name)
