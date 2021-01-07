@@ -795,10 +795,13 @@ def _is_ready(config, instance_id):
 
 def _training_finished(config, instance_id, submission_name):
     """
-    Return True if a submission has finished training
+    Return True if a submission has finished training (if the screen no longer
+    exists on the ec2 instance and if the bagged_scores.csv file is saved on
+    the instance)
     """
-    # TODO: check if bagged score is saved
-    return not _has_screen(config, instance_id, submission_name)
+    has_screen = _has_screen(config, instance_id, submission_name)
+    has_score_file = _has_score_file(config, instance_id, submission_name)
+    return not has_screen and has_score_file
 
 
 def _training_successful(config, instance_id, submission_name,
@@ -843,6 +846,17 @@ def _has_screen(config, instance_id, screen_name):
     cmd = cmd.format(screen_name)
     nb = int(_run(config, instance_id, cmd, return_output=True))
     return nb > 0
+
+
+def _has_score_file(config, instance_id, screen_name):
+    """
+    Return True if a 'bagged_scores.csv' file exists on the ec2 instance
+    """
+    cmd = "find {} -name bagged_scores.csv"
+    cmd = cmd.format(config['remote_ramp_kit_folder'])
+    score_path = _run(config, instance_id, cmd, return_output=True)
+
+    return len(score_path) > 0
 
 
 def _tag_instance_by_submission(config, instance_id, submission_name):
