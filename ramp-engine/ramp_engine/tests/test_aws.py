@@ -336,7 +336,7 @@ def test_restart_on_sudden_instance_termination(training_finished,
 @mock.patch('ramp_engine.aws.api.is_spot_terminated')
 @mock.patch('ramp_engine.aws.api.launch_train')
 @mock.patch('ramp_engine.aws.api._has_screen')
-@mock.patch('ramp_engine.aws.api._has_log_or_score_file')
+@mock.patch('ramp_engine.aws.api._has_error_or_score_file')
 def test_not_finished_until_bagged_or_log_saved(has_score_file, has_screen,
                                                 launch_train,
                                                 spot_terminated,

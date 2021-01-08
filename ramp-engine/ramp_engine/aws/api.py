@@ -800,7 +800,7 @@ def _training_finished(config, instance_id, submission_name):
     """
     has_screen = _has_screen(config, instance_id, submission_name)
     # this can only work if the training was successful
-    has_score_file = _has_log_or_score_file(
+    has_score_file = _has_error_or_score_file(
         config, instance_id, submission_name)
     return not has_screen and has_score_file
 
@@ -849,7 +849,7 @@ def _has_screen(config, instance_id, screen_name):
     return nb > 0
 
 
-def _has_log_or_score_file(config, instance_id, screen_name):
+def _has_error_or_score_file(config, instance_id, screen_name):
     """
     Return True if a 'bagged_scores.csv' file exists (submission terminated
     with a success) or if log file (submisssion terminated with error) exists
