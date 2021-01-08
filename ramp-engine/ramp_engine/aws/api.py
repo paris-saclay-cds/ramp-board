@@ -858,12 +858,10 @@ def _has_log_or_score_file(config, instance_id, screen_name):
     """
     submission_path = os.path.join(
         config['remote_ramp_kit_folder'],
-        'submissions',
-        screen_name)
+        'submissions', screen_name, 'training_output')
     cmd = ("bash -c '"
-           f"if [ -f {submission_path}/training_output/bagged_scores.csv ] || "
-           f"[[ -f {submission_path}/log  && "
-           f" ! -d {submission_path}/training_output/fold_0 ]]; "
+           f"if [ -f {submission_path}/bagged_scores.csv ] || "
+           f"[ -f {submission_path}/fold_*/error.txt ]; "
            "then echo 1; else echo 0; fi'")
     is_log_or_score = _run(config, instance_id, cmd, return_output=True)
 
