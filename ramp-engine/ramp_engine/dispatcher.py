@@ -276,7 +276,6 @@ class Dispatcher:
             # database. Since they require too much space, we stop to store
             # them in the database and instead, keep it onto the disk.
             # set_predictions(session, submission_id, path_predictions)
-
             set_time(session, submission_id, path_predictions)
             set_scores(session, submission_id, path_predictions)
             set_bagged_scores(session, submission_id, path_predictions)
