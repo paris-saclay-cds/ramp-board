@@ -265,6 +265,43 @@ def _compute_competition_leaderboard(session, submissions, leaderboard_type,
     return df
 
 
+def get_leaderboard_all_info(session, event_name):
+    """gets the info on the leaderboard for all the submissions and returns it
+       in a form of a pandas Dataframe
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name = str, the event name.
+
+    Returns
+    -------
+    leaderboard : DataFrame
+        The dataframe of the current leaderboard with the following
+        information:
+        Username (teamname),
+    """
+    q = (session.query(Submission)
+                .filter(Event.id == EventTeam.event_id)
+                .filter(Team.id == EventTeam.team_id)
+                .filter(Event.name == event_name))
+    '''
+    submission_filter = {'public': 'is_public_leaderboard',
+                         'private': 'is_private_leaderboard',
+                         'failed': 'is_error',
+                         'new': 'is_new',
+                         'public competition': 'is_in_competition',
+                         'private competition': 'is_in_competition'}
+    '''
+    submissions = q.all()
+    submissions = [sub for sub in submissions
+                   if sub.is_not_sandbox]
+
+    if not submissions:
+        return None
+    import pdb; pdb.set_trace()
+
+
 def get_leaderboard(session, leaderboard_type, event_name, user_name=None,
                     with_links=True):
     """Get a leaderboard.
