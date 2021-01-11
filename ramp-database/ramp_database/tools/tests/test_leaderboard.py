@@ -20,6 +20,7 @@ from ramp_database.tools.event import get_event
 from ramp_database.tools.team import get_event_team_by_name
 
 from ramp_database.tools.leaderboard import get_leaderboard
+from ramp_database.tools.leaderboard import get_leaderboard_all_info
 from ramp_database.tools.leaderboard import update_all_user_leaderboards
 from ramp_database.tools.leaderboard import update_leaderboards
 from ramp_database.tools.leaderboard import update_user_leaderboards
@@ -144,6 +145,7 @@ def test_get_leaderboard_only_new_submissions(session_toy_db, leaderboard_type,
 
 
 def test_get_leaderboard(session_toy_db):
+    """ this test assumes that all the submissions in the database are 'new'"""
     leaderboard_new = get_leaderboard(session_toy_db, 'new', 'iris_test')
     assert leaderboard_new.count('<tr>') == 6
     leaderboard_new = get_leaderboard(session_toy_db, 'new', 'iris_test',
@@ -260,3 +262,20 @@ def test_get_leaderboard(session_toy_db):
       <th>validation time [s]</th>
       <th>test time [s]</th>
       <th>submitted at (UTC)</th>""" in competition_private
+
+
+@pytest.mark.parametrize(
+    'event_name, expected_size',
+    [('iris_test', 2),
+     ('iris_aws_test', 0),
+     ('boston_housing_test', 0)]
+)
+def test_download_leaderboard_to_dataframe(session_toy_db,
+                                           event_name, expected_size):
+    """ this test assumes that all the submissions related to the event
+    iris_test are already run through, ie
+    test test_get_leaderboard already run """
+
+    leaderboard = get_leaderboard_all_info(session_toy_db, event_name)
+    # assert only submissions with the event_name
+    assert leaderboard.shape[0] == expected_size

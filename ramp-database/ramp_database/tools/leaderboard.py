@@ -6,14 +6,14 @@ import pandas as pd
 
 from ..model.event import Event
 from ..model.event import EventTeam
-from ..model.submission import Submission
+from ..model.submission import Submission, SubmissionScore
 from ..model.team import Team
 
 from .team import get_event_team_by_name
 
 from .submission import get_bagged_scores
 from .submission import get_scores
-from .submission import get_submission_max_ram
+from .submission import get_submission_max_ram, get_submissions
 from .submission import get_time
 
 width = -1 if LooseVersion(pd.__version__) < LooseVersion("1.0.0") else None
@@ -268,6 +268,9 @@ def _compute_competition_leaderboard(session, submissions, leaderboard_type,
 def get_leaderboard_all_info(session, event_name):
     """gets the info on the leaderboard for all the submissions and returns it
        in a form of a pandas Dataframe
+
+       If the submissions are in the state 'new' they will not be taken into
+       account
     Parameters
     ----------
     session : :class:`sqlalchemy.orm.Session`
@@ -281,25 +284,31 @@ def get_leaderboard_all_info(session, event_name):
         information:
         Username (teamname),
     """
-    q = (session.query(Submission)
-                .filter(Event.id == EventTeam.event_id)
-                .filter(Team.id == EventTeam.team_id)
-                .filter(Event.name == event_name))
-    '''
-    submission_filter = {'public': 'is_public_leaderboard',
-                         'private': 'is_private_leaderboard',
-                         'failed': 'is_error',
-                         'new': 'is_new',
-                         'public competition': 'is_in_competition',
-                         'private competition': 'is_in_competition'}
-    '''
-    submissions = q.all()
-    submissions = [sub for sub in submissions
-                   if sub.is_not_sandbox]
-
+    submissions = (session.query(Submission)
+                   .filter(Event.name == event_name)
+                   .filter(Event.id == EventTeam.event_id)
+                   .filter(EventTeam.id == Submission.event_team_id)
+                   .filter(Submission.state == 'scored')).all()
     if not submissions:
-        return None
-    import pdb; pdb.set_trace()
+        return pd.DataFrame()
+
+    private_leaderboard = _compute_competition_leaderboard(session,
+                                                           submissions,
+                                                           'private',
+                                                           event_name)
+    private_leaderboard = private_leaderboard.set_index(['team', 'submission'])
+    public_leaderboard = _compute_competition_leaderboard(session,
+                                                          submissions,
+                                                          'public',
+                                                          event_name)
+    public_leaderboard = public_leaderboard.set_index(['team', 'submission'])
+
+    # join private and public data
+    joined_leaderboard = private_leaderboard.join(public_leaderboard,
+                                                  on=['team', 'submission'],
+                                                  lsuffix='-private',
+                                                  rsuffix='_-public')
+    return joined_leaderboard
 
 
 def get_leaderboard(session, leaderboard_type, event_name, user_name=None,
