@@ -163,7 +163,6 @@ def launch_ec2_instances(config, nb=1):
         while not(response) and (n_try < max_tries_to_connect):
             try:
                 response = client.request_spot_instances(
-                    AvailabilityZoneGroup=config[REGION_NAME_FIELD],
                     InstanceCount=nb,
                     LaunchSpecification={
                         'SecurityGroups': [security_group],
