@@ -6,14 +6,14 @@ import pandas as pd
 
 from ..model.event import Event
 from ..model.event import EventTeam
-from ..model.submission import Submission, SubmissionScore
+from ..model.submission import Submission
 from ..model.team import Team
 
 from .team import get_event_team_by_name
 
 from .submission import get_bagged_scores
 from .submission import get_scores
-from .submission import get_submission_max_ram, get_submissions
+from .submission import get_submission_max_ram
 from .submission import get_time
 
 width = -1 if LooseVersion(pd.__version__) < LooseVersion("1.0.0") else None
@@ -284,6 +284,8 @@ def get_leaderboard_all_info(session, event_name):
         information:
         Username (teamname),
     """
+    update_all_user_leaderboards(session, event_name, new_only=False)
+
     submissions = (session.query(Submission)
                    .filter(Event.name == event_name)
                    .filter(Event.id == EventTeam.event_id)
@@ -292,22 +294,22 @@ def get_leaderboard_all_info(session, event_name):
     if not submissions:
         return pd.DataFrame()
 
-    private_leaderboard = _compute_competition_leaderboard(session,
-                                                           submissions,
-                                                           'private',
-                                                           event_name)
+    private_leaderboard = _compute_leaderboard(session, submissions,
+                                               'private', event_name,
+                                               with_links=False)
     private_leaderboard = private_leaderboard.set_index(['team', 'submission'])
-    public_leaderboard = _compute_competition_leaderboard(session,
-                                                          submissions,
-                                                          'public',
-                                                          event_name)
+    public_leaderboard = _compute_leaderboard(session, submissions,
+                                              'public', event_name,
+                                              with_links=False)
     public_leaderboard = public_leaderboard.set_index(['team', 'submission'])
 
     # join private and public data
     joined_leaderboard = private_leaderboard.join(public_leaderboard,
                                                   on=['team', 'submission'],
                                                   lsuffix='-private',
-                                                  rsuffix='_-public')
+                                                  rsuffix='-public')
+    # TODO: need to assert that joined_leaderboard has the same number of rows
+    # as no of submissions
     return joined_leaderboard
 
 
