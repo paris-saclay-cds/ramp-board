@@ -43,7 +43,7 @@ def download_leaderboards(config, event, path):
                 event))
         else:
             data.to_csv(path)
-            click.echo('Data saved to {}'.format(event))
+            click.echo('Data saved to {}'.format(path))
 
 
 @main.command()
@@ -90,18 +90,6 @@ def approve_user(config, login):
     config = read_config(config)
     with session_scope(config['sqlalchemy']) as session:
         user_module.approve_user(session, login)
-
-
-@main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option('--login', help="User's login to be made admin")
-def make_user_admin(config, login):
-    """Make a user a RAMP admin."""
-    config = read_config(config)
-    with session_scope(config['sqlalchemy']) as session:
-        user_module.make_user_admin(session, login)
 
 
 @main.command()
