@@ -266,7 +266,7 @@ def test_get_leaderboard(session_toy_db):
 
 @pytest.mark.parametrize(
     'event_name, expected_size',
-    [('iris_test', 2),
+    [('iris_test', 4),
      ('iris_aws_test', 0),
      ('boston_housing_test', 0)]
 )
