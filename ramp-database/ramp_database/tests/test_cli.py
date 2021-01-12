@@ -15,7 +15,7 @@ from ramp_database.utils import setup_db
 from ramp_database.model import Model
 from ramp_database.testing import create_toy_db
 
-from ramp_database.cli import main, download_leaderboards
+from ramp_database.cli import main
 
 from ramp_utils.cli import main as main_utils
 
