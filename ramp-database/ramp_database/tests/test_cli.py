@@ -15,7 +15,7 @@ from ramp_database.utils import setup_db
 from ramp_database.model import Model
 from ramp_database.testing import create_toy_db
 
-from ramp_database.cli import main
+from ramp_database.cli import main, download_leaderboards
 
 from ramp_utils.cli import main as main_utils
 
@@ -376,3 +376,13 @@ def test_update_all_user_leaderboards(make_toy_db):
                                   '--event', 'iris_test'],
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output
+
+
+def test_download_submissions(make_toy_db):
+    runner = CliRunner()
+    result = runner.invoke(main, ['download-leaderboards',
+                                  '--config', database_config_template(),
+                                  '--event', 'iris_test',
+                                  '--path', 'test.csv'],
+                           catch_exceptions=False)
+    assert result.exit_code == 0
