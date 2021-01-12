@@ -8,6 +8,9 @@ Changelog
 
 `ramp-database`
 ...............
+- Add possibility to download the leaderboards (private and public) as .csv
+file using command line
+  :pr:`507` by :user:`Maria Telenczuk <maikia>`.
 
 `ramp-engine`
 .............
