@@ -308,8 +308,6 @@ def get_leaderboard_all_info(session, event_name):
                                                   on=['team', 'submission'],
                                                   lsuffix='-private',
                                                   rsuffix='-public')
-    # TODO: need to assert that joined_leaderboard has the same number of rows
-    # as no of submissions
     return joined_leaderboard
 
 
