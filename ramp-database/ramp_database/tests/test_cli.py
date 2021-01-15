@@ -14,7 +14,6 @@ from ramp_utils.testing import ramp_config_template
 from ramp_database.utils import setup_db
 from ramp_database.model import Model
 from ramp_database.testing import create_toy_db
-from ramp_database.testing import setup_toy_db
 
 from ramp_database.cli import main
 
