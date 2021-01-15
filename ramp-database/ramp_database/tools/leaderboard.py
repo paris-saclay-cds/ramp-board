@@ -16,7 +16,6 @@ from .submission import get_scores
 from .submission import get_submission_max_ram
 from .submission import get_time
 
-from sqlalchemy.orm.exc import NoResultFound
 
 width = -1 if LooseVersion(pd.__version__) < LooseVersion("1.0.0") else None
 pd.set_option('display.max_colwidth', width)
