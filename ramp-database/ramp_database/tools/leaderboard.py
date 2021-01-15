@@ -276,7 +276,7 @@ def get_leaderboard_all_info(session, event_name):
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
-    event_name = str, the event name.
+        event_name = str, the event name.
 
     Returns
     -------
