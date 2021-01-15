@@ -487,10 +487,6 @@ def update_all_user_leaderboards(session, event_name, new_only=False):
         submissions. You can turn this option to True when adding a new
         submission in the database.
     """
-    try:
-        event = session.query(Event).filter_by(name=event_name).one()
-    except NoResultFound:
-        return []
 
     event_teams = session.query(EventTeam).filter_by(event=event).all()
     for event_team in event_teams:
