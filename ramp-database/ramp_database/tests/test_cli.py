@@ -14,6 +14,7 @@ from ramp_utils.testing import ramp_config_template
 from ramp_database.utils import setup_db
 from ramp_database.model import Model
 from ramp_database.testing import create_toy_db
+from ramp_database.testing import setup_toy_db
 
 from ramp_database.cli import main
 
@@ -379,6 +380,7 @@ def test_update_all_user_leaderboards(make_toy_db):
 
 
 def test_download_submissions(make_toy_db):
+    # when there are no submissions to save
     runner = CliRunner()
     result = runner.invoke(main, ['download-leaderboards',
                                   '--config', database_config_template(),
@@ -386,3 +388,4 @@ def test_download_submissions(make_toy_db):
                                   '--path', 'test.csv'],
                            catch_exceptions=False)
     assert result.exit_code == 0
+    assert 'No score was found on the' in result.output

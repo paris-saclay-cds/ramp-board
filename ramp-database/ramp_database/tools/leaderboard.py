@@ -16,6 +16,8 @@ from .submission import get_scores
 from .submission import get_submission_max_ram
 from .submission import get_time
 
+from sqlalchemy.orm.exc import NoResultFound
+
 width = -1 if LooseVersion(pd.__version__) < LooseVersion("1.0.0") else None
 pd.set_option('display.max_colwidth', width)
 
@@ -485,7 +487,11 @@ def update_all_user_leaderboards(session, event_name, new_only=False):
         submissions. You can turn this option to True when adding a new
         submission in the database.
     """
-    event = session.query(Event).filter_by(name=event_name).one()
+    try:
+        event = session.query(Event).filter_by(name=event_name).one()
+    except NoResultFound:
+        return []
+
     event_teams = session.query(EventTeam).filter_by(event=event).all()
     for event_team in event_teams:
         user_name = event_team.team.name
