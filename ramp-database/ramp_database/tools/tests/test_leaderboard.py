@@ -8,14 +8,15 @@ from ramp_utils.testing import ramp_config_template
 
 from ramp_engine.dispatcher import Dispatcher
 
+from ramp_database.model import EventTeam
 from ramp_database.model import Model
+from ramp_database.model.submission import Submission
 
 from ramp_database.utils import setup_db
 from ramp_database.utils import session_scope
 from ramp_database.testing import create_toy_db
 
-from ramp_database.model import EventTeam
-
+from ramp_database.model.event import Event
 from ramp_database.tools.event import get_event
 from ramp_database.tools.team import get_event_team_by_name
 
@@ -272,10 +273,23 @@ def test_get_leaderboard(session_toy_db):
 )
 def test_download_leaderboard_to_dataframe(session_toy_db,
                                            event_name, expected_size):
-    """ this test assumes that all the submissions related to the event
-    iris_test are already run through, ie
+    """ it will run iris_test if it was not run previously, ie
     test test_get_leaderboard already run """
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_config_template())
+    dispatcher = Dispatcher(
+        config, event_config, n_workers=-1, hunger_policy='exit'
+    )
+    dispatcher.launch()
+    session_toy_db.commit()
 
     leaderboard = get_leaderboard_all_info(session_toy_db, event_name)
     # assert only submissions with the event_name
     assert leaderboard.shape[0] == expected_size
+
+    submissions = (session_toy_db.query(Submission)
+                   .filter(Event.name == event_name)
+                   .filter(Event.id == EventTeam.event_id)
+                   .filter(EventTeam.id == Submission.event_team_id)
+                   .filter(Submission.state == 'scored')).all()
+    assert len(submissions) == leaderboard.shape[0]
