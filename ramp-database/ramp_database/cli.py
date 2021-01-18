@@ -33,8 +33,8 @@ def main():
               help='The name of the event')
 @click.option('--path', help='path to the .csv file where to save '
                              'the submissions and their score')
-def download_leaderboards(config, event, path):
-    """Download all the scored submissions."""
+def export_leaderboards(config, event, path):
+    """Export all the scored submissions."""
     config = read_config(config)
     with session_scope(config['sqlalchemy']) as session:
         data = leaderboard_module.get_leaderboard_all_info(session, event)

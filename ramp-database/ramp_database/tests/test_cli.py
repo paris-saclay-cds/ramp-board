@@ -378,10 +378,10 @@ def test_update_all_user_leaderboards(make_toy_db):
     assert result.exit_code == 0, result.output
 
 
-def test_download_submissions(make_toy_db):
+def test_export_submissions(make_toy_db):
     # when there are no submissions to save
     runner = CliRunner()
-    result = runner.invoke(main, ['download-leaderboards',
+    result = runner.invoke(main, ['export-leaderboards',
                                   '--config', database_config_template(),
                                   '--event', 'iris_test',
                                   '--path', 'test.csv'],
