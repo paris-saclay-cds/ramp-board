@@ -272,7 +272,7 @@ def test_get_leaderboard(session_toy_db):
      ('boston_housing_test', 0)]
 )
 def test_export_leaderboard_to_dataframe(session_toy_db,
-                                           event_name, expected_size):
+                                         event_name, expected_size):
     """ it will run iris_test if it was not run previously, ie
     test test_get_leaderboard already run """
     config = read_config(database_config_template())
