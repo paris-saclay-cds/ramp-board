@@ -267,16 +267,19 @@ def _compute_competition_leaderboard(session, submissions, leaderboard_type,
 
 
 def get_leaderboard_all_info(session, event_name):
-    """gets the info on the leaderboard for all the submissions and returns it
-       in a form of a pandas Dataframe
+    """Get the info on the leaderboard for all the submissions.
 
-       If the submissions are in the state 'new' they will not be taken into
-       account
+    Result is returned as a pandas Dataframe
+
+    If the submissions are in the state 'new' they will not be taken into
+    account
+
     Parameters
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
-    event_name = str, the event name.
+    event_name : str
+        The event name.
 
     Returns
     -------
@@ -313,14 +316,14 @@ def get_leaderboard_all_info(session, event_name):
 
 def get_leaderboard(session, leaderboard_type, event_name, user_name=None,
                     with_links=True):
-    """Get a leaderboard.
+    r"""Get a leaderboard.
 
     Parameters
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
     leaderboard_type : {'public', 'private', 'failed', 'new', \
-'public competition', 'private competition'}
+            'public competition', 'private competition'}
         The type of leaderboard to generate.
     event_name : str
         The event name.
