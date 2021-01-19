@@ -8,18 +8,20 @@ from ramp_utils.testing import ramp_config_template
 
 from ramp_engine.dispatcher import Dispatcher
 
+from ramp_database.model import EventTeam
 from ramp_database.model import Model
+from ramp_database.model.submission import Submission
 
 from ramp_database.utils import setup_db
 from ramp_database.utils import session_scope
 from ramp_database.testing import create_toy_db
 
-from ramp_database.model import EventTeam
-
+from ramp_database.model.event import Event
 from ramp_database.tools.event import get_event
 from ramp_database.tools.team import get_event_team_by_name
 
 from ramp_database.tools.leaderboard import get_leaderboard
+from ramp_database.tools.leaderboard import get_leaderboard_all_info
 from ramp_database.tools.leaderboard import update_all_user_leaderboards
 from ramp_database.tools.leaderboard import update_leaderboards
 from ramp_database.tools.leaderboard import update_user_leaderboards
@@ -144,6 +146,7 @@ def test_get_leaderboard_only_new_submissions(session_toy_db, leaderboard_type,
 
 
 def test_get_leaderboard(session_toy_db):
+    """ this test assumes that all the submissions in the database are 'new'"""
     leaderboard_new = get_leaderboard(session_toy_db, 'new', 'iris_test')
     assert leaderboard_new.count('<tr>') == 6
     leaderboard_new = get_leaderboard(session_toy_db, 'new', 'iris_test',
@@ -260,3 +263,33 @@ def test_get_leaderboard(session_toy_db):
       <th>validation time [s]</th>
       <th>test time [s]</th>
       <th>submitted at (UTC)</th>""" in competition_private
+
+
+@pytest.mark.parametrize(
+    'event_name, expected_size',
+    [('iris_test', 4),
+     ('iris_aws_test', 0),
+     ('boston_housing_test', 0)]
+)
+def test_export_leaderboard_to_dataframe(session_toy_db,
+                                         event_name, expected_size):
+    """ it will run iris_test if it was not run previously, ie
+    test test_get_leaderboard already run """
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_config_template())
+    dispatcher = Dispatcher(
+        config, event_config, n_workers=-1, hunger_policy='exit'
+    )
+    dispatcher.launch()
+    session_toy_db.commit()
+
+    leaderboard = get_leaderboard_all_info(session_toy_db, event_name)
+    # assert only submissions with the event_name
+    assert leaderboard.shape[0] == expected_size
+
+    submissions = (session_toy_db.query(Submission)
+                   .filter(Event.name == event_name)
+                   .filter(Event.id == EventTeam.event_id)
+                   .filter(EventTeam.id == Submission.event_team_id)
+                   .filter(Submission.state == 'scored')).all()
+    assert len(submissions) == leaderboard.shape[0]
