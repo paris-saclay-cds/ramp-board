@@ -71,7 +71,7 @@ This config file should look like::
         password: <user_password>
         host: localhost
         port: 5432
-        database: <db_name>
+        /database: <db_name>
 
 You will need to change the information regarding the database and the mail
 information.
@@ -94,6 +94,10 @@ configuration directly in the `flask` section of the above config file as::
           root:
             level: 'INFO'
             handlers: ['wsgi']
+
+
+You can also :ref:`personnalize your RAMP instance <personnalize_instance>`,
+for instance with a privacy page, and custom sign up instructions.
 
 Create an admin user
 --------------------
