@@ -71,7 +71,7 @@ This config file should look like::
         password: <user_password>
         host: localhost
         port: 5432
-        /database: <db_name>
+        database: <db_name>
 
 You will need to change the information regarding the database and the mail
 information.
