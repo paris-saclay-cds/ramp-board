@@ -95,6 +95,10 @@ configuration directly in the `flask` section of the above config file as::
             level: 'INFO'
             handlers: ['wsgi']
 
+
+You can also :ref:`personnalize your RAMP instance <personnalize_instance>`,
+for instance with a privacy page, and custom sign up instructions.
+
 Create an admin user
 --------------------
 
