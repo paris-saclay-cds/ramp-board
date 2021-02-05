@@ -35,6 +35,10 @@ from ramp_database.testing import create_toy_db
 
 from ramp_database.tools.submission import get_submission_by_id
 
+# id for the test submission with user=test_user and
+# event=iris_test
+ID_SUBMISSION = 7
+
 
 @pytest.fixture(scope='module')
 def session_scope_module(database_connection):
@@ -52,7 +56,7 @@ def session_scope_module(database_connection):
 
 def test_submission_model_property(session_scope_module):
     # check that the property of Submission
-    submission = get_submission_by_id(session_scope_module, 5)
+    submission = get_submission_by_id(session_scope_module, ID_SUBMISSION)
     assert re.match(r'Submission\(iris_test/test_user/.*\)',
                     str(submission))
     assert re.match(r'Submission\(event_name.*\)', repr(submission))
@@ -68,10 +72,11 @@ def test_submission_model_property(session_scope_module):
     assert submission.is_error is False
     assert submission.is_public_leaderboard is False
     assert submission.is_private_leaderboard is False
-    assert (os.path.join('submissions', 'submission_000000005') in
-            submission.path)
-    assert submission.basename == 'submission_000000005'
-    assert "submissions.submission_000000005" in submission.module
+    submission_str = 'submission_00000000' + str(ID_SUBMISSION)
+    assert (os.path.join('submissions', submission_str)
+            in submission.path)
+    assert submission.basename == submission_str
+    assert "submissions." + submission_str in submission.module
     assert len(submission.f_names) == 1
     assert submission.f_names[0] == 'estimator.py'
     assert submission.link == '/' + os.path.join(submission.hash_,
@@ -92,7 +97,7 @@ def test_submission_model_property(session_scope_module):
 
 
 def test_submission_model_set_state(session_scope_module):
-    submission = get_submission_by_id(session_scope_module, 5)
+    submission = get_submission_by_id(session_scope_module, ID_SUBMISSION)
     submission.set_state('sent_to_training')
     assert submission.state == 'sent_to_training'
     assert (
@@ -112,7 +117,7 @@ def test_submission_model_set_state(session_scope_module):
 
 
 def test_submission_model_reset(session_scope_module):
-    submission = get_submission_by_id(session_scope_module, 5)
+    submission = get_submission_by_id(session_scope_module, ID_SUBMISSION)
     for score in submission.ordered_scores(score_names=['acc', 'error']):
         assert isinstance(score, SubmissionScore)
         # set the score to later test the reset function
@@ -136,7 +141,7 @@ def test_submission_model_reset(session_scope_module):
 
 
 def test_submission_model_set_error(session_scope_module):
-    submission = get_submission_by_id(session_scope_module, 5)
+    submission = get_submission_by_id(session_scope_module, ID_SUBMISSION)
     error = 'training_error'
     error_msg = 'simulate an error'
     submission.set_error(error, error_msg)
@@ -153,7 +158,7 @@ def test_submission_model_set_error(session_scope_module):
 )
 def test_submission_model_set_contributivity(session_scope_module, state,
                                              expected_contributivity):
-    submission = get_submission_by_id(session_scope_module, 5)
+    submission = get_submission_by_id(session_scope_module, ID_SUBMISSION)
     # set the state of the submission such that the contributivity
     submission.set_state(state)
     # set the fold contributivity to non-default
@@ -174,7 +179,7 @@ def test_submission_model_set_contributivity(session_scope_module, state,
 )
 def test_submission_model_backref(session_scope_module, backref,
                                   expected_type):
-    submission = get_submission_by_id(session_scope_module, 5)
+    submission = get_submission_by_id(session_scope_module, ID_SUBMISSION)
     backref_attr = getattr(submission, backref)
     assert isinstance(backref_attr, list)
     # only check if the list is not empty
@@ -197,7 +202,7 @@ def test_submission_model_backref(session_scope_module, backref,
 def test_submission_model_set_state_after_training(session_scope_module,
                                                    state_cv_folds,
                                                    expected_state):
-    submission = get_submission_by_id(session_scope_module, 5)
+    submission = get_submission_by_id(session_scope_module, ID_SUBMISSION)
     # set the state of the each fold
     for cv_fold, fold_state in zip(submission.on_cv_folds, state_cv_folds):
         cv_fold.state = fold_state
@@ -211,7 +216,9 @@ def test_submission_score_model_property(session_scope_module):
     # score
     submission_score = \
         (session_scope_module.query(SubmissionScore)
-                             .filter(SubmissionScore.submission_id == 5)
+                             .filter(
+                                 SubmissionScore.submission_id == ID_SUBMISSION
+                                 )
                              .first())
     assert submission_score.score_name == 'acc'
     assert callable(submission_score.score_function)
@@ -226,7 +233,9 @@ def test_submission_score_model_backref(session_scope_module, backref,
                                         expected_type):
     submission_score = \
         (session_scope_module.query(SubmissionScore)
-                             .filter(SubmissionScore.submission_id == 5)
+                             .filter(
+                                 SubmissionScore.submission_id == ID_SUBMISSION
+                                 )
                              .first())
     backref_attr = getattr(submission_score, backref)
     assert isinstance(backref_attr, list)
@@ -239,7 +248,9 @@ def test_submission_file_model_property(session_scope_module):
     # get the submission file of an iris submission with only a estimator file
     submission_file = \
         (session_scope_module.query(SubmissionFile)
-                             .filter(SubmissionFile.submission_id == 5)
+                             .filter(
+                                 SubmissionFile.submission_id == ID_SUBMISSION
+                                 )
                              .first())
     assert re.match('SubmissionFile(.*)',
                     repr(submission_file))
@@ -249,7 +260,8 @@ def test_submission_file_model_property(session_scope_module):
     assert submission_file.name == 'estimator'
     assert submission_file.f_name == 'estimator.py'
     assert re.match('/.*estimator.py', submission_file.link)
-    assert re.match('.*submissions.*submission_000000005.*estimator.py',
+    submission_name = 'submission_00000000' + str(ID_SUBMISSION)
+    assert re.match(f'.*submissions.*{submission_name}.*estimator.py',
                     submission_file.path)
     assert re.match('<a href=".*estimator.py">.*estimator</a>',
                     submission_file.name_with_link)
@@ -288,7 +300,7 @@ def test_submission_score_on_cv_fold_model_property(session_scope_module):
                 SubmissionScore.id)                             # noqa
         .filter(SubmissionScore.event_score_type_id ==          # noqa
                 EventScoreType.id)                              # noqa
-        .filter(SubmissionScore.submission_id == 5)             # noqa
+        .filter(SubmissionScore.submission_id == ID_SUBMISSION)  # noqa
         .filter(EventScoreType.name == 'acc')                   # noqa
         .first())                                               # noqa
     assert cv_fold_score.name == 'acc'
@@ -299,8 +311,10 @@ def test_submission_score_on_cv_fold_model_property(session_scope_module):
 def test_submission_on_cv_fold_model_property(session_scope_module):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
-                             .first())
+                             .filter(
+                                 SubmissionOnCVFold.submission_id ==
+                                 ID_SUBMISSION
+                             ).first())
     cv_fold.state = 'scored'
     cv_fold.contributivity = 0.2
     assert repr(cv_fold) == 'state = scored, c = 0.2, best = False'
@@ -327,8 +341,10 @@ def test_submission_on_cv_fold_model_is_public_leaderboard(
         session_scope_module, state_set, expected_state):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
-                             .first())
+                             .filter(
+                                 SubmissionOnCVFold.submission_id ==
+                                 ID_SUBMISSION
+                             ).first())
     cv_fold.state = state_set
     assert cv_fold.is_public_leaderboard is expected_state
 
@@ -352,8 +368,10 @@ def test_submission_on_cv_fold_model_is_trained(session_scope_module,
                                                 state_set, expected_state):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
-                             .first())
+                             .filter(
+                                 SubmissionOnCVFold.submission_id ==
+                                 ID_SUBMISSION
+                             ).first())
     cv_fold.state = state_set
     assert cv_fold.is_trained is expected_state
 
@@ -377,8 +395,10 @@ def test_submission_on_cv_fold_model_is_validated(session_scope_module,
                                                   state_set, expected_state):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
-                             .first())
+                             .filter(
+                                 SubmissionOnCVFold.submission_id ==
+                                 ID_SUBMISSION
+                             ).first())
     cv_fold.state = state_set
     assert cv_fold.is_validated is expected_state
 
@@ -402,8 +422,10 @@ def test_submission_on_cv_fold_model_is_tested(session_scope_module,
                                                state_set, expected_state):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
-                             .first())
+                             .filter(
+                                 SubmissionOnCVFold.submission_id ==
+                                 ID_SUBMISSION
+                             ).first())
     cv_fold.state = state_set
     assert cv_fold.is_tested is expected_state
 
@@ -427,8 +449,10 @@ def test_submission_on_cv_fold_model_is_error(session_scope_module,
                                               state_set, expected_state):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
-                             .first())
+                             .filter(
+                                 SubmissionOnCVFold.submission_id ==
+                                 ID_SUBMISSION
+                             ).first())
     cv_fold.state = state_set
     assert cv_fold.is_error is expected_state
 
@@ -436,7 +460,8 @@ def test_submission_on_cv_fold_model_is_error(session_scope_module,
 def test_submission_on_cv_fold_model_predictions(session_scope_module):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
+                             .filter(SubmissionOnCVFold.submission_id ==
+                                     ID_SUBMISSION)
                              .first())
     # Set fake predictions to check the prediction properties
     cv_fold.full_train_y_pred = np.empty((120, 3))
@@ -454,7 +479,8 @@ def test_submission_on_cv_fold_model_predictions(session_scope_module):
 def test_submission_on_cv_fold_model_reset(session_scope_module):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
+                             .filter(SubmissionOnCVFold.submission_id ==
+                                     ID_SUBMISSION)
                              .first())
     # set to non-default values]
     cv_fold.full_train_y_pred = np.empty((120, 3))
@@ -497,7 +523,8 @@ def test_submission_on_cv_fold_model_reset(session_scope_module):
 def test_submission_on_cv_fold_model_error(session_scope_module):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
+                             .filter(SubmissionOnCVFold.submission_id ==
+                                     ID_SUBMISSION)
                              .first())
     error = 'training_error'
     error_msg = 'simulate an error'
@@ -510,7 +537,8 @@ def test_submission_on_cv_fold_model_error(session_scope_module):
 def test_submission_on_cv_fold_model_train_scores(session_scope_module):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
+                             .filter(SubmissionOnCVFold.submission_id ==
+                                     ID_SUBMISSION)
                              .first())
     # Set fake predictions to compute the score
     cv_fold.state = 'trained'
@@ -534,7 +562,8 @@ def test_submission_on_cv_fold_model_train_scores(session_scope_module):
 def test_submission_on_cv_fold_model_valid_scores(session_scope_module):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
+                             .filter(SubmissionOnCVFold.submission_id ==
+                                     ID_SUBMISSION)
                              .first())
     # Set fake predictions to compute the score
     cv_fold.state = 'validated'
@@ -558,7 +587,8 @@ def test_submission_on_cv_fold_model_valid_scores(session_scope_module):
 def test_submission_on_cv_fold_model_test_scores(session_scope_module):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
+                             .filter(SubmissionOnCVFold.submission_id ==
+                                     ID_SUBMISSION)
                              .first())
     # Set fake predictions to compute the score
     cv_fold.state = 'scored'
@@ -581,7 +611,8 @@ def test_submission_on_cv_fold_model_test_scores(session_scope_module):
 def test_submission_on_cv_fold_model_update(session_scope_module):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
+                             .filter(SubmissionOnCVFold.submission_id ==
+                                     ID_SUBMISSION)
                              .first())
 
     detached_cv_fold = DetachedSubmissionOnCVFold(cv_fold)
@@ -609,7 +640,8 @@ def test_submission_on_cv_fold_model_backref(session_scope_module, backref,
                                              expected_type):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
+                             .filter(SubmissionOnCVFold.submission_id ==
+                                     ID_SUBMISSION)
                              .first())
     backref_attr = getattr(cv_fold, backref)
     assert isinstance(backref_attr, list)
@@ -621,7 +653,8 @@ def test_submission_on_cv_fold_model_backref(session_scope_module, backref,
 def test_detached_submission_on_cv_fold_model(session_scope_module):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id == 5)
+                             .filter(SubmissionOnCVFold.submission_id ==
+                                     ID_SUBMISSION)
                              .first())
 
     detached_cv_fold = DetachedSubmissionOnCVFold(cv_fold)
