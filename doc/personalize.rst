@@ -39,7 +39,9 @@ You can add an optional Privacy Policy page, setting the following in the main
         privacy_policy_page: "<path.html>"
 
 Where the ``privacy_policy_page`` can be either a path to an HTML file, or
-directly the HTML contents of that page. See an example in `privacy_policy_template.html <https://github.com/paris-saclay-cds/ramp-board/tree/master/ramp-frontend/ramp_frontend/templates/privacy_policy_template.html>`_.
+directly the HTML contents of that page. See an example in
+`privacy_policy_template.html
+<https://github.com/paris-saclay-cds/ramp-board/tree/master/ramp-frontend/ramp_frontend/templates/privacy_policy_template.html>`_.
 
 This will enable the ``/privacy_policy`` endpoint, and will add it to the footer
 menu.
