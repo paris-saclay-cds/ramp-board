@@ -71,8 +71,13 @@ which can be useful if the server itself has not much resources or if you need
 specific resources (e.g. GPU's). To this end you need to prepare an image based
 on which RAMP can launch an instance for each submission.
 
-There are two ways supported by RAMP to do so: you can either make an image
-following the steps below or make a pipeline with a recipe to create an image.
+There are two ways supported by RAMP to do so (steps to follow are described
+below):
+1. you can either make an image (see
+  :ref:`prepare_AWS_image`)or
+2. make a pipeline with a recipe to create an image
+  (see :ref:`prepare_AWS_pipeline`).
+
 The latter option has an advantage if you forsee that the image will be updated
 during the course of the running challenge (e.g. participants demand installing
 additional Python packages). The first option will require altering the image
@@ -83,7 +88,12 @@ If you wish to create a pipeline please follow the
 `AWS guidelines
 <https://docs.aws.amazon.com/imagebuilder/latest/userguide/how-image-builder-works.html>`_
 
-Otherwise please follow the summary steps:
+.. _prepare_AWS_image:
+
+Prepare AWS image
+^^^^^^^^^^^^^^^^^
+
+Please follow the summary steps:
 
 1. Launch AWS instance and connect to it.
 2. Prepare the instance for running submissions.
@@ -93,7 +103,7 @@ Otherwise please follow the summary steps:
 .. _launch_aws:
 
 Launching AWS instance
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""
 
 Follow `AWS getting started
 <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html>`_
@@ -119,7 +129,7 @@ Full connection details can be found in the `AWS guide
 .. _prepare_instance:
 
 Prepare the instance
-^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""
 
 To prepare the instance you need to download the starting kit, data and all
 required packages to run submissions. This can be saved as an AMI (image) and
@@ -176,6 +186,12 @@ Next, save the instance as an AMI. Starting from the instance tab:
 Actions -> Image -> Create image. See `Create an AMI from an Amazon EC2
 instance <https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/tkv-create-ami-from-instance.html>`_
 for more details.
+
+.. _prepare_AWS_pipeline:
+
+Prepare AWS Pipeline
+^^^^^^^^^^^^^^^^^^^^
+
 
 Event configuration
 ^^^^^^^^^^^^^^^^^^^
