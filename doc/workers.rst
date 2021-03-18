@@ -192,6 +192,91 @@ for more details.
 Prepare AWS Pipeline
 ^^^^^^^^^^^^^^^^^^^^
 
+```
+name: CreateRampWoker
+description: Install necessary tools to run ramp-test for a challenge.
+schemaVersion: 1.0
+
+constants:
+  - Home:
+      type: string
+      value: /home/ubuntu
+  - Challenge:
+      type: string
+      value: $CHALLENGE_NAME
+  - OSF_username:
+      type: string
+      value: $USERNAME
+  - OSF_password:
+      type: string
+      value: $PASSWORD
+
+phases:
+  - name: build
+    steps:
+      - name: install_conda
+        action: ExecuteBash
+        inputs:
+          commands:
+            - |
+              set -e
+              wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+              bash ./miniconda.sh -b -p {{ Home }}/miniconda
+              export PATH={{ Home }}/miniconda/bin:$PATH
+              conda init
+              conda update --yes --quiet conda
+              conda install --quiet python==3.8 pip
+
+      - name: install_challenge
+        action: ExecuteBash
+        inputs:
+          commands:
+            - |
+              set -e
+              export PATH={{ Home }}/miniconda/bin:$PATH
+              git clone https://github.com/ramp-kits/{{ Challenge }}.git {{ Home }}/{{ Challenge }}
+              # conda env update --name base --file {{ Home }}/{{ Challenge }}/environment.yml
+              pip install -r {{ Home }}/{{ Challenge }}/requirements.txt
+              pip install -r {{ Home }}/{{ Challenge }}/extra_libraries.txt
+              
+              # Download public data for now
+              cd {{ Home }}/{{ Challenge }}
+              python download_data.py --private --username {{ OSF_username }} --password {{ OSF_password }}
+            
+              # Make sure everything is owned by
+              chown -R ubuntu {{ Home }}
+              echo "Installing done!"
+
+      - name: add_conda_to_path
+        action: ExecuteBash
+        inputs:
+          commands:
+            - |
+              set -e
+              
+              # Always run .bashrc for bash even when it is not interactive
+              sed -e '/# If not running interactively,/,+5d' -i {{ Home }}/.bashrc
+              # Run conda init to allow using conda in the bash
+              sudo -u ubuntu bash -c 'export PATH={{ Home }}/miniconda/bin:$PATH && conda init'
+              echo "Added conda in PATH for user ubuntu"
+
+  - name: test
+    steps:
+      - name: test_ramp_install
+        action: ExecuteBash
+        inputs:
+          commands:
+            - |
+              set -e
+              echo "Test ramp install"
+              echo "User: '$USER'"
+              cd {{ Home }}/{{ Challenge }}
+              sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'conda info'
+              # Run a ramp-test for the starting kit to make sure everything is running properly
+              sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'ramp-test
+              --submission starting_kit --quick-test'
+              ```
+
 
 Event configuration
 ^^^^^^^^^^^^^^^^^^^
