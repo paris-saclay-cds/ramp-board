@@ -192,6 +192,23 @@ for more details.
 Prepare AWS Pipeline
 ^^^^^^^^^^^^^^^^^^^^
 
+To prepare the AMI Image AWS Pipeline log in into your AWS account.
+
+We advise to follow the three steps:
+
+1. create a components
+2. create a image recipe
+3. create a pipeline
+
+Ad. 1 To create a component search for image pipelines and navigate to the
+`Components` tab on the menu bar on the left hand side. Click a button 'Create
+component'. Then select:
+
+- 'Build' as component type
+- type the name of the component
+- component version 1.0.0
+- Define document content. Here is the template of what you might want to use:
+
 ```
 name: CreateRampWoker
 description: Install necessary tools to run ramp-test for a challenge.
@@ -226,6 +243,15 @@ phases:
               conda init
               conda update --yes --quiet conda
               conda install --quiet python==3.8 pip
+
+      - name: install_gcc
+        action: ExecuteBash
+        inputs:
+          commands:
+            - |
+              apt-get update
+              apt-get install -y gcc python3-dev
+              apt-get install nvidia-driver-460
 
       - name: install_challenge
         action: ExecuteBash
@@ -275,7 +301,53 @@ phases:
               # Run a ramp-test for the starting kit to make sure everything is running properly
               sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'ramp-test
               --submission starting_kit --quick-test'
-              ```
+  ```
+
+where you should exchange '$CHALLENGE_NAME' for the name of your challenge kept
+stored in startking_kits repository, and '$USERNAME' and '$PASSWORD' for your
+credentials on OSF where you stored the data for the challenge. Of course this
+is just a suggestion. Feel free to make your own, custom file.
+
+Once you successfully created the component it is the time to make Image
+recipes.
+
+Ad 2. Select the tab 'Image recipes' and then click the button 'Create image
+recipe'. Fill in the name, version and optionally the description for this
+recipe. Then select:
+
+- Select managed Images
+- Ubuntu (you might prefer to choose different operationg system, but keep
+in mind that the default user my differ. For ubuntu it is 'ubuntu' for Linux it
+is 'ec2-user')
+- quick start (Amazon-managed)
+- Ubuntu Server 20 LTS x86
+- Use latest available OS version
+- working directory path: '/tmp'
+
+Next, choose the component. Fromo the drop down list select 'Owned by me' and
+select the component you created in the previous step.
+
+Scroll down and click the button 'Create recipe'.
+
+Ad 3. Select 'Image pipelines' from the left side menu bar. Click the button
+'Create image pipeline'. Next:
+
+- Choose the name for your pipeline and optionally the description
+- Enable enhanced metadata collection
+- Build schedule: Manual
+- click 'Next'
+- select 'Use existing recipe' and choose your recipe from the drop down menu
+- click 'Next'
+- Create infrastructure configuration using service defaults
+- click 'Next'
+- click 'Next'
+- review your pipeline and press 'Create pipeline'
+
+Congratulations! You have just created a pipeline for your ramp event.
+Now, to create an image select your pipeline and from 'Actions' select 'Run
+pipeline'. You can also select 'View details' to follow creation of the
+pipeline. Relax, it might take a while.
+
 
 
 Event configuration
