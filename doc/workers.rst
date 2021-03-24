@@ -348,6 +348,16 @@ Now, to create an image select your pipeline and from 'Actions' select 'Run
 pipeline'. You can also select 'View details' to follow creation of the
 pipeline. Relax, it might take a while.
 
+Once your pipeline is successfully created you can search for 'EC2'. There, in
+the menu on your left-hand side you will find 'AMIs' tab. Click on it.
+
+There, you should be able to find all your available images, also the one just
+created if successful. Note that if you run the same pipeline next time the new
+AMI will appear with the same name but of different version. Ramp always
+searches for the newest version of the image as long as you specify the correct
+base name in the config.yml file. The advantage of this is that when you are
+running the pipeline, you are loading the latest version of your github
+starting kit.
 
 
 Event configuration
