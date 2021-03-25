@@ -197,7 +197,7 @@ To prepare the AMI Image AWS Pipeline log in into your AWS account.
 We advise to follow the three steps:
 
 1. create a components
-2. create a image recipe
+2. create an image recipe
 3. create a pipeline
 
 Ad. 1 To create a component search for image pipelines and navigate to the
@@ -206,7 +206,7 @@ component'. Then select:
 
 - 'Build' as component type
 - type the name of the component
-- component version 1.0.0
+- component version (e.g. 1.0.0)
 - Define document content. Here is the template of what you might want to use:
 
 ```
@@ -265,7 +265,7 @@ phases:
               pip install -r {{ Home }}/{{ Challenge }}/requirements.txt
               pip install -r {{ Home }}/{{ Challenge }}/extra_libraries.txt
               
-              # Download public data for now
+              # Download private data
               cd {{ Home }}/{{ Challenge }}
               python download_data.py --private --username {{ OSF_username }} --password {{ OSF_password }}
             
@@ -303,12 +303,13 @@ phases:
               --submission starting_kit --quick-test'
   ```
 
-where you should exchange '$CHALLENGE_NAME' for the name of your challenge kept
-stored in startking_kits repository, and '$USERNAME' and '$PASSWORD' for your
+where you should exchange '$CHALLENGE_NAME' for the name of the challenge you
+wish to use (here we are pointing to repositories stored on the ramp-kits
+github repository), and '$USERNAME' and '$PASSWORD' for your
 credentials on OSF where you stored the data for the challenge. Of course this
 is just a suggestion. Feel free to make your own, custom file.
 
-Once you successfully created the component it is the time to make Image
+Once you successfully created the component it is the time to make an Image
 recipes.
 
 Ad 2. Select the tab 'Image recipes' and then click the button 'Create image
@@ -316,21 +317,22 @@ recipe'. Fill in the name, version and optionally the description for this
 recipe. Then select:
 
 - Select managed Images
-- Ubuntu (you might prefer to choose different operationg system, but keep
+- Ubuntu (you might prefer to choose different operating system, but keep
 in mind that the default user my differ. For ubuntu it is 'ubuntu' for Linux it
 is 'ec2-user')
 - quick start (Amazon-managed)
 - Ubuntu Server 20 LTS x86
 - Use latest available OS version
 - working directory path: '/tmp'
+- if you have a large dataset consider increasing the memory, eg to 16 GiB
 
-Next, choose the component. Fromo the drop down list select 'Owned by me' and
+Next, choose the component. From the drop down list select 'Owned by me' and
 select the component you created in the previous step.
 
 Scroll down and click the button 'Create recipe'.
 
-Ad 3. Select 'Image pipelines' from the left side menu bar. Click the button
-'Create image pipeline'. Next:
+Ad 3. Select 'Image pipelines' from the left-hand side menu bar. Click the
+button 'Create image pipeline'. Next:
 
 - Choose the name for your pipeline and optionally the description
 - Enable enhanced metadata collection
@@ -343,20 +345,25 @@ Ad 3. Select 'Image pipelines' from the left side menu bar. Click the button
 - click 'Next'
 - review your pipeline and press 'Create pipeline'
 
-Congratulations! You have just created a pipeline for your ramp event.
-Now, to create an image select your pipeline and from 'Actions' select 'Run
+Congratulations! You have just created a pipeline for your ramp event. Let's
+now create an image and make sure that everything works as expected.
+
+To create an image select your pipeline and from 'Actions' select 'Run
 pipeline'. You can also select 'View details' to follow creation of the
 pipeline. Relax, it might take a while.
 
-Once your pipeline is successfully created you can search for 'EC2'. There, in
+In case you run into errors and there is a failure when running your pipeline
+you can search for logs on cloudwatch to view more precisely what has happened.
+
+Once your pipeline is successfully created you search for 'EC2'. There, in
 the menu on your left-hand side you will find 'AMIs' tab. Click on it.
 
 There, you should be able to find all your available images, also the one just
 created if successful. Note that if you run the same pipeline next time the new
 AMI will appear with the same name but of different version. Ramp always
-searches for the newest version of the image as long as you specify the correct
-base name in the config.yml file. The advantage of this is that when you are
-running the pipeline, you are loading the latest version of your github
+searches for the newest version of the image (as long as you specify the
+correct base name in the config.yml file). The advantage of this is that when
+you are running the pipeline, you are loading the latest version of your github
 starting kit.
 
 
