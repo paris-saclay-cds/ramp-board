@@ -366,6 +366,12 @@ correct base name in the config.yml file). The advantage of this is that when
 you are running the pipeline, you are loading the latest version of your github
 starting kit.
 
+To make sure that everything works as expected it is advised that you create an
+instance from that image and connect to it through ssh.
+Check if all the expected files are there and that you can run the ramp-test
+without issues. Also, if you wish to be able to use GPU make sure that your
+python code recognizes them.
+
 
 Event configuration
 ^^^^^^^^^^^^^^^^^^^
