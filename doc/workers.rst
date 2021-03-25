@@ -309,6 +309,19 @@ github repository), and '$USERNAME' and '$PASSWORD' for your
 credentials on OSF where you stored the data for the challenge. Of course this
 is just a suggestion. Feel free to make your own, custom file.
 
+Note: If you prefer using S3 from AWS to store and load your data you can
+follow the instructions on how to do that here:
+https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html
+You will need to create a new AMI user with the rights to access S1 and then
+exchange the lines for download in your .yml file with:
+
+```
+export AWS_ACCESS_KEY_ID=key_received_on_creating_a_user
+export AWS_SECRET_ACCESS_KEY=key_received_on_creating_a_user
+export AWS_DEFAULT_REGION=the_zone_you_use  # eg eu-west-1
+aws s3 cp --recursive s3://your_bucket_name_on_S3/
+```
+
 Once you successfully created the component it is the time to make an Image
 recipes.
 
