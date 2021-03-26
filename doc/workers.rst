@@ -71,10 +71,11 @@ which can be useful if the server itself has not much resources or if you need
 specific resources (e.g. GPU's). To this end you need to prepare an image based
 on which RAMP can launch an instance for each submission.
 
-There are two ways supported by RAMP to do so (steps to follow are described
-below):
-1. you can either make an image (see
-  :ref:`prepare_AWS_image`)or
+You can do so:
+
+1. you can either create an AWS EC2 instance manually, install everything and
+load the data and make an image from that instance (see
+  :ref:`prepare_AWS_image`), or
 2. make a pipeline with a recipe to create an image
   (see :ref:`prepare_AWS_pipeline`).
 
@@ -83,10 +84,8 @@ during the course of the running challenge (e.g. participants demand installing
 additional Python packages). The first option will require altering the image
 manually while the latter will update the image automatically by rerunning
 the pipeline (RAMP will always select the newest version of the
-image `ami_image_name` (base name of the image) set in the `config.yml` file.
-If you wish to create a pipeline please follow the
-`AWS guidelines
-<https://docs.aws.amazon.com/imagebuilder/latest/userguide/how-image-builder-works.html>`_
+image 'ami_image_name' (base name of the image) set in the `config.yml` file of
+the event.
 
 .. _prepare_AWS_image:
 
@@ -192,9 +191,12 @@ for more details.
 Prepare AWS Pipeline
 ^^^^^^^^^^^^^^^^^^^^
 
+Reference: `AWS guidelines
+<https://docs.aws.amazon.com/imagebuilder/latest/userguide/how-image-builder-works.html>`_
+
 To prepare the AMI Image AWS Pipeline log in into your AWS account.
 
-We advise to follow the three steps:
+Follow the three steps:
 
 1. create a components
 2. create an image recipe
@@ -207,101 +209,91 @@ component'. Then select:
 - 'Build' as component type
 - type the name of the component
 - component version (e.g. 1.0.0)
-- Define document content. Here is the template of what you might want to use:
+- Define document content. Here is the template of what you might want to use::
 
-```
-name: CreateRampWoker
-description: Install necessary tools to run ramp-test for a challenge.
-schemaVersion: 1.0
+    constants:
+      - Home:
+        type: string
+        value: /home/ubuntu
+      - Challenge:
+        type: string
+        value: $CHALLENGE_NAME
+      - OSF_username:
+        type: string
+        value: $USERNAME
+      - OSF_password:
+        type: string
+        value: $PASSWORD
+    phases:
+      - name: build
+        steps:
+          - name: install_conda
+            action: ExecuteBash
+            inputs:
+              commands:
+                - |
+                  set -e
+                  wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+                  bash ./miniconda.sh -b -p {{ Home }}/miniconda
+                  export PATH={{ Home }}/miniconda/bin:$PATH
+                  conda init
+                  conda update --yes --quiet conda
+                  conda install --quiet python==3.8 pip
 
-constants:
-  - Home:
-      type: string
-      value: /home/ubuntu
-  - Challenge:
-      type: string
-      value: $CHALLENGE_NAME
-  - OSF_username:
-      type: string
-      value: $USERNAME
-  - OSF_password:
-      type: string
-      value: $PASSWORD
-
-phases:
-  - name: build
-    steps:
-      - name: install_conda
-        action: ExecuteBash
-        inputs:
-          commands:
-            - |
-              set -e
-              wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-              bash ./miniconda.sh -b -p {{ Home }}/miniconda
-              export PATH={{ Home }}/miniconda/bin:$PATH
-              conda init
-              conda update --yes --quiet conda
-              conda install --quiet python==3.8 pip
-
-      - name: install_gcc
-        action: ExecuteBash
-        inputs:
-          commands:
-            - |
-              apt-get update
-              apt-get install -y gcc python3-dev
-              apt-get install nvidia-driver-460
-
-      - name: install_challenge
-        action: ExecuteBash
-        inputs:
-          commands:
-            - |
-              set -e
-              export PATH={{ Home }}/miniconda/bin:$PATH
-              git clone https://github.com/ramp-kits/{{ Challenge }}.git {{ Home }}/{{ Challenge }}
-              # conda env update --name base --file {{ Home }}/{{ Challenge }}/environment.yml
-              pip install -r {{ Home }}/{{ Challenge }}/requirements.txt
-              pip install -r {{ Home }}/{{ Challenge }}/extra_libraries.txt
-              
-              # Download private data
-              cd {{ Home }}/{{ Challenge }}
-              python download_data.py --private --username {{ OSF_username }} --password {{ OSF_password }}
-            
-              # Make sure everything is owned by
-              chown -R ubuntu {{ Home }}
-              echo "Installing done!"
-
-      - name: add_conda_to_path
-        action: ExecuteBash
-        inputs:
-          commands:
-            - |
-              set -e
-              
-              # Always run .bashrc for bash even when it is not interactive
-              sed -e '/# If not running interactively,/,+5d' -i {{ Home }}/.bashrc
-              # Run conda init to allow using conda in the bash
-              sudo -u ubuntu bash -c 'export PATH={{ Home }}/miniconda/bin:$PATH && conda init'
-              echo "Added conda in PATH for user ubuntu"
-
-  - name: test
-    steps:
-      - name: test_ramp_install
-        action: ExecuteBash
-        inputs:
-          commands:
-            - |
-              set -e
-              echo "Test ramp install"
-              echo "User: '$USER'"
-              cd {{ Home }}/{{ Challenge }}
-              sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'conda info'
-              # Run a ramp-test for the starting kit to make sure everything is running properly
-              sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'ramp-test
-              --submission starting_kit --quick-test'
-  ```
+          - name: install_challenge
+            action: ExecuteBash
+            inputs:
+              commands:
+                - |
+                  set -e
+                  export PATH={{ Home }}/miniconda/bin:$PATH
+                  git clone https://github.com/ramp-kits/{{ Challenge }}.git {{ Home }}/{{ Challenge }}
+                  # next step is important if you want to use GPUs
+                  sudo apt install --yes nvidia-utils-440  # you might want to use differnt version
+                  conda env update --name base --file {{ Home }}/{{ Challenge }}/environment.yml
+                  pip install -r {{ Home }}/{{ Challenge }}/requirements.txt
+                  pip install -r {{ Home }}/{{ Challenge }}/extra_libraries.txt
+                  conda install -c anaconda cudatoolkit
+          - name: download_data
+            action: ExecuteBash
+            timeoutSeconds: 7200
+            inputs:
+              commands:
+                - |
+                  export PATH={{ Home }}/miniconda/bin:$PATH
+                  cd {{ Home }}/{{ Challenge }}
+                  # Download private data from osf
+                  cd {{ Home }}/{{ Challenge }}
+                  python download_data.py --private --username {{ OSF_username }} --password {{ OSF_password }}
+                  # Make sure everything is owned by
+                  chown -R ubuntu {{ Home }}
+                  echo "Installing done!"
+          - name: add_conda_to_path
+            action: ExecuteBash
+            inputs:
+              commands:
+                - |
+                  set -e
+                  # Always run .bashrc for bash even when it is not interactive
+                  sed -e '/# If not running interactively,/,+5d' -i {{ Home }}/.bashrc
+                  # Run conda init to allow using conda in the bash
+                  sudo -u ubuntu bash -c 'export PATH={{ Home }}/miniconda/bin:$PATH && conda init'
+                  echo "Added conda in PATH for user ubuntu"
+      - name: test
+        steps:
+          - name: test_ramp_install
+            action: ExecuteBash
+            inputs:
+              commands:
+                - |
+                  set -e
+                  echo "Test ramp install"
+                  echo "User: '$USER'"
+                  cd {{ Home }}/{{ Challenge }}
+                  sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'conda info'
+                  # Run a ramp-test for the starting kit to make sure everything is running properly
+                  sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'ramp-test --submission sample --quick-test'
+                  echo "test end"
 
 where you should exchange '$CHALLENGE_NAME' for the name of the challenge you
 wish to use (here we are pointing to repositories stored on the ramp-kits
@@ -311,19 +303,19 @@ is just a suggestion. Feel free to make your own, custom file.
 
 Note: If you prefer using S3 from AWS to store and load your data you can
 follow the instructions on how to do that here:
-https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html
-You will need to create a new AMI user with the rights to access S1 and then
-exchange the lines for download in your .yml file with:
+`AWS configure envvars docs
+<https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html>`_
 
-```
-export AWS_ACCESS_KEY_ID=key_received_on_creating_a_user
-export AWS_SECRET_ACCESS_KEY=key_received_on_creating_a_user
-export AWS_DEFAULT_REGION=the_zone_you_use  # eg eu-west-1
-aws s3 cp --recursive s3://your_bucket_name_on_S3/
-```
+You will need to create a new IAM user with the rights to access S1 and then
+exchange the lines for download in your .yml file with::
 
-Once you successfully created the component it is the time to make an Image
-recipes.
+    export AWS_ACCESS_KEY_ID=key_received_on_creating_a_user
+    export AWS_SECRET_ACCESS_KEY=key_received_on_creating_a_user
+    export AWS_DEFAULT_REGION=the_zone_you_use  # eg eu-west-1
+    aws S3 cp --recursive s3://your_bucket_name_on_S3/
+
+
+Once you have the component ready we progress to Image recipe:
 
 Ad 2. Select the tab 'Image recipes' and then click the button 'Create image
 recipe'. Fill in the name, version and optionally the description for this
@@ -331,8 +323,9 @@ recipe. Then select:
 
 - Select managed Images
 - Ubuntu (you might prefer to choose different operating system, but keep
-in mind that the default user my differ. For ubuntu it is 'ubuntu' for Linux it
-is 'ec2-user')
+  in mind that the default user may differ. For ubuntu it is 'ubuntu' for Linux
+  it is 'ec2-user'. You will need to know your default user when writing the
+  `config.yml` file for your event and/or to ssh to your instance)
 - quick start (Amazon-managed)
 - Ubuntu Server 20 LTS x86
 - Use latest available OS version
@@ -359,31 +352,33 @@ button 'Create image pipeline'. Next:
 - review your pipeline and press 'Create pipeline'
 
 Congratulations! You have just created a pipeline for your ramp event. Let's
-now create an image and make sure that everything works as expected.
+now run it making sure that everything works as expected.
 
 To create an image select your pipeline and from 'Actions' select 'Run
 pipeline'. You can also select 'View details' to follow creation of the
-pipeline. Relax, it might take a while.
+pipeline. Relax, it will take a while.
 
-In case you run into errors and there is a failure when running your pipeline
-you can search for logs on cloudwatch to view more precisely what has happened.
+In case there is a failure when running your pipeline
+you can search for logs on CloudWatch to view more precisely what has happened.
 
-Once your pipeline is successfully created you search for 'EC2'. There, in
+Once your pipeline is successfully created you can search for 'EC2'. There, in
 the menu on your left-hand side you will find 'AMIs' tab. Click on it.
 
-There, you should be able to find all your available images, also the one just
-created if successful. Note that if you run the same pipeline next time the new
+You should be able to find all your available images, also the one just
+created. Note that if you run the same pipeline next time the new
 AMI will appear with the same name but of different version. Ramp always
 searches for the newest version of the image (as long as you specify the
-correct base name in the config.yml file). The advantage of this is that when
-you are running the pipeline, you are loading the latest version of your github
-starting kit.
+correct base name in the config.yml file).
 
 To make sure that everything works as expected it is advised that you create an
 instance from that image and connect to it through ssh.
 Check if all the expected files are there and that you can run the ramp-test
 without issues. Also, if you wish to be able to use GPU make sure that your
-python code recognizes them.
+python code recognizes them, you can aslo use the command::
+
+  nvidia-smi -l 3
+
+To make sure that your nvidia driver is correctly installed
 
 
 Event configuration
