@@ -251,7 +251,6 @@ component'. Then select:
                   # next step is important if you want to use GPUs
                   sudo apt install --yes nvidia-driver-440
                   sudo apt install --yes nvidia-utils-440  # you might want to use differnt version
-                  sudo modprobe nvidia
                   conda env update --name base --file {{ Home }}/{{ Challenge }}/environment.yml
                   pip install -r {{ Home }}/{{ Challenge }}/requirements.txt
                   pip install -r {{ Home }}/{{ Challenge }}/extra_libraries.txt
