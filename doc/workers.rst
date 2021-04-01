@@ -399,11 +399,11 @@ The setup steps are then as follows,
 **Security considerations**
 
 By default communications between dask distributed schedulers and workers is
-neither encrypted not authentificated which poses security risks. Dask
+neither encrypted not authenticated which poses security risks. Dask
 distributed supports TLS/SSL certifications, however these are not currently
 supported in DaskWorker in RAMP.
 
-A workaround for authentification could be to configure a firewall, such as
+A workaround for authentication could be to configure a firewall, such as
 `UFW <https://help.ubuntu.com/community/UFW>`_ to deny connections to dask
 related ports, except from pre-defined IPs of dask worker/scheduler.
 
