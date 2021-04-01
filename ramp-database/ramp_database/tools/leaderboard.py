@@ -16,6 +16,7 @@ from .submission import get_scores
 from .submission import get_submission_max_ram
 from .submission import get_time
 
+
 width = -1 if LooseVersion(pd.__version__) < LooseVersion("1.0.0") else None
 pd.set_option('display.max_colwidth', width)
 
@@ -265,16 +266,64 @@ def _compute_competition_leaderboard(session, submissions, leaderboard_type,
     return df
 
 
+def get_leaderboard_all_info(session, event_name):
+    """Get the info on the leaderboard for all the submissions.
+
+    Result is returned as a pandas Dataframe
+
+    If the submissions are in the state 'new' they will not be taken into
+    account
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str
+        The event name.
+
+    Returns
+    -------
+    leaderboard : DataFrame
+        The dataframe of the current leaderboard with the information on the
+        private and public score per each successfully finished submission.
+    """
+    update_all_user_leaderboards(session, event_name, new_only=False)
+
+    submissions = (session.query(Submission)
+                   .filter(Event.name == event_name)
+                   .filter(Event.id == EventTeam.event_id)
+                   .filter(EventTeam.id == Submission.event_team_id)
+                   .filter(Submission.state == 'scored')).all()
+    if not submissions:
+        return pd.DataFrame()
+
+    private_leaderboard = _compute_leaderboard(session, submissions,
+                                               'private', event_name,
+                                               with_links=False)
+    private_leaderboard = private_leaderboard.set_index(['team', 'submission'])
+    public_leaderboard = _compute_leaderboard(session, submissions,
+                                              'public', event_name,
+                                              with_links=False)
+    public_leaderboard = public_leaderboard.set_index(['team', 'submission'])
+
+    # join private and public data
+    joined_leaderboard = private_leaderboard.join(public_leaderboard,
+                                                  on=['team', 'submission'],
+                                                  lsuffix='-private',
+                                                  rsuffix='-public')
+    return joined_leaderboard
+
+
 def get_leaderboard(session, leaderboard_type, event_name, user_name=None,
                     with_links=True):
-    """Get a leaderboard.
+    r"""Get a leaderboard.
 
     Parameters
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
     leaderboard_type : {'public', 'private', 'failed', 'new', \
-'public competition', 'private competition'}
+            'public competition', 'private competition'}
         The type of leaderboard to generate.
     event_name : str
         The event name.

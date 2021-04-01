@@ -3,9 +3,12 @@ ramp:
     event_name: iris_aws_test
     event_title: "iris aws"
     event_is_public: true
-    data_dir: ramp-board/ramp_deployment/ramp-data/iris
-    kit_dir: ramp-board/ramp-engine/ramp_engine/tests/kits
+    data_dir: /tmp/databoard_test/ramp-data/iris
+    kit_dir: /tmp/databoard_test/ramp-kits/iris
     sandbox_dir: starting_kit
+    submissions_dir: /tmp/databoard_test/submissions
+    predictions_dir: /tmp/databoard_test/preds
+    logs_dir: /tmp/databoard_test/log
 worker:
     worker_type: aws
     access_key_id: <aws_access_key_id for boto3 Session>

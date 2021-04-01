@@ -37,8 +37,10 @@ def test_daemon_error_init():
 
 
 def test_daemon(session_toy):
-    # close one of the event
+    # close both iris events: conda and aws
     event = session_toy.query(Event).filter_by(name="iris_test").one()
+    event.closing_timestamp = datetime.datetime.utcnow()
+    event = session_toy.query(Event).filter_by(name="iris_aws_test").one()
     event.closing_timestamp = datetime.datetime.utcnow()
     session_toy.commit()
 

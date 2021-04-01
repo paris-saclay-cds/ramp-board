@@ -168,6 +168,20 @@ class Dispatcher:
                 worker.status = 'error'
             if worker.status == 'error':
                 set_submission_state(session, submission_id, 'checking_error')
+                worker.teardown()  # kill the worker
+                self._logger.info(
+                    f'Worker {worker} killed due to an error '
+                    f'while connecting to AWS worker'
+                )
+                stderr = ("There was a problem with sending your submission"
+                          " for training. This problem is on RAMP side"
+                          " and most likely it is not related to your"
+                          " code. If this happened for the first time"
+                          " to this submission you might"
+                          " consider submitting the same code once again."
+                          " Else, please contact the event organizers."
+                          )
+                set_submission_error_msg(session, submission_id, stderr)
                 continue
             set_submission_state(session, submission_id, 'training')
             submission = get_submission_by_id(session, submission_id)
@@ -198,7 +212,7 @@ class Dispatcher:
         for worker, (submission_id, submission_name) in zip(workers,
                                                             submissions):
             dt = worker.time_since_last_status_check()
-            if dt is not None and dt < self.time_between_collection:
+            if (dt is not None) and (dt < self.time_between_collection):
                 self._processing_worker_queue.put_nowait(
                     (worker, (submission_id, submission_name)))
                 time.sleep(0)
@@ -217,20 +231,24 @@ class Dispatcher:
             else:
                 self._logger.info(f'Collecting results from worker {worker}')
                 returncode, stderr = worker.collect_results()
+
                 if returncode:
                     if returncode == 124:
                         self._logger.info(
                             f'Worker {worker} killed due to timeout.'
                         )
+                        submission_status = 'training_error'
+                    elif returncode == 2:
+                        # Error occurred when downloading the logs
+                        submission_status = 'checking_error'
                     else:
                         self._logger.info(
                             f'Worker {worker} killed due to an error '
                             f'during training: {stderr}'
                         )
-                    submission_status = 'training_error'
+                        submission_status = 'training_error'
                 else:
                     submission_status = 'tested'
-
                 set_submission_state(
                     session, submission_id, submission_status
                 )

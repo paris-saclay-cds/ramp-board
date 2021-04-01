@@ -60,12 +60,9 @@
           Forgot your password? <a href="/reset_password">Reset it!</a>
         </div>
       </form>
-      <p>
-        Consider joining our
-        <a href="https://ramp-studio.slack.com/shared_invite/MTg1NDUxNDAyNDk2LTE0OTUzOTcwMDQtMThlOWY1NWU0Mg"><strong>slack
-            team</strong></a>
-        if you would like to be part of the growing community of rampers.
-      </p>
+      <div class="login-page-instructions">
+	{{ config['LOGIN_INSTRUCTIONS'] | safe }}
+      </div>
     </div>
   </div>
 </div>

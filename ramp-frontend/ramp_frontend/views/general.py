@@ -1,5 +1,7 @@
+import flask  # noqa
 from flask import Blueprint
 from flask import render_template
+from flask import current_app as app
 import flask_login
 import os as os
 
@@ -69,3 +71,11 @@ def keywords(keyword_name):
         return render_template('keyword.html', keyword=keyword)
     return redirect_to_user('Keyword {} does not exist.'
                             .format(keyword_name), is_error=True)
+
+
+@mod.route("/privacy_policy")
+def privacy_policy():
+    if not app.config['PRIVACY_POLICY_PAGE']:
+        flask.abort(404)
+
+    return render_template('privacy_policy.html')

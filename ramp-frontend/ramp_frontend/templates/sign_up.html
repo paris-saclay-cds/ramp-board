@@ -79,15 +79,18 @@
           {% endfor %}
         </div>
         <div class="checkbox">
-          {{ form.is_want_news(placeholder="is_want_news", checked=True) }}
+          {{ form.is_want_news(placeholder="is_want_news", checked=False) }}
           <label>I would like to receive news about future RAMP events</label>
           {% for error in form.is_want_news.errors %}
           <span style="color: red;">[{{ error }}]</span>
           {% endfor %}
         </div>
-        Consider joining our <a
-          href="https://ramp-studio.slack.com/shared_invite/MTg1NDUxNDAyNDk2LTE0OTUzOTcwMDQtMThlOWY1NWU0Mg"><strong>slack
-            team</strong></a> if you would like to be part of the growing community of rampers.</font><br>
+        <div class="login-page-instructions">
+          {{ config['SIGN_UP_INSTRUCTIONS'] | safe}}
+        </div>
+
+	{% if config['SIGN_UP_ASK_SOCIAL_MEDIA'] %}
+         <br>
         <p> The following fields are not mandatory, but the more we know about you, the more likely we will
           approve your sign-up application.</p>
         <div class="form-group">
@@ -139,6 +142,7 @@
           <span style="color: red;">[{{ error }}]</span>
           {% endfor %}
         </div>
+	{% endif %}
         <input type="submit" value="Sign up" class="ui submit button">
     </div>
     </form>

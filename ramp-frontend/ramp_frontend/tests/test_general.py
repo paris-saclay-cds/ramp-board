@@ -26,7 +26,7 @@ def client_session(database_connection):
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False
         with session_scope(database_config['sqlalchemy']) as session:
-            yield app.test_client(), session
+            yield app.test_client(), session, app
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)
         try:
@@ -40,7 +40,7 @@ def client_session(database_connection):
 
 
 def test_index(client_session):
-    client, _ = client_session
+    client, _, _ = client_session
     rv = client.get('/')
     assert rv.status_code == 200
     assert (b'RAMP: collaborative data science challenges' in
@@ -48,7 +48,7 @@ def test_index(client_session):
 
 
 def test_ramp(client_session):
-    client, _ = client_session
+    client, _, _ = client_session
     rv = client.get('/description')
     assert rv.status_code == 200
     assert (b'The RAMP software packages were developed by the' in
@@ -56,7 +56,7 @@ def test_ramp(client_session):
 
 
 def test_domain(client_session):
-    client, session = client_session
+    client, session, _ = client_session
     rv = client.get('/data_domains')
     assert rv.status_code == 200
     assert b'Scientific data domains' in rv.data
@@ -65,7 +65,7 @@ def test_domain(client_session):
 
 
 def test_teaching(client_session):
-    client, _ = client_session
+    client, _, _ = client_session
     rv = client.get('/teaching')
     assert rv.status_code == 200
     assert b'RAMP challenges begin with an interesting supervised prediction' \
@@ -73,7 +73,7 @@ def test_teaching(client_session):
 
 
 def test_data_science_themes(client_session):
-    client, _ = client_session
+    client, _, _ = client_session
     rv = client.get('/data_science_themes')
     assert rv.status_code == 200
     assert b'boston_housing_theme' in rv.data
@@ -81,9 +81,23 @@ def test_data_science_themes(client_session):
 
 
 def test_keywords(client_session):
-    client, _ = client_session
+    client, _, _ = client_session
     rv = client.get('/keywords/boston_housing')
     assert rv.status_code == 200
     assert b'Related problems' in rv.data
     assert b'boston_housing' in rv.data
     assert b'Boston housing price regression' in rv.data
+
+
+def test_privacy_policy(client_session, monkeypatch):
+    client, _, app = client_session
+    rv = client.get('/privacy_policy')
+    # By default privacy policy is not defined in the config.
+    # i.e. config['privacy_policy'] = None
+    assert rv.status_code == 404
+
+    msg = 'Some HTML code'
+    monkeypatch.setitem(app.config, 'PRIVACY_POLICY_PAGE', msg)
+    rv = client.get('/privacy_policy')
+    assert rv.status_code == 200
+    assert msg in rv.data.decode('utf-8')

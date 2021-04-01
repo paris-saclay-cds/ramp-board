@@ -57,7 +57,7 @@ MEMORY_PROFILING_FIELD = 'memory_profiling'
 
 # how long to wait for connections
 WAIT_MINUTES = 2
-MAX_TRIES_TO_CONNECT = 5
+MAX_TRIES_TO_CONNECT = 1
 
 HOOKS_SECTION = 'hooks'
 HOOK_START_TRAINING = 'start_training'
@@ -129,7 +129,10 @@ def launch_ec2_instances(config, nb=1):
             'specified at the same time. Please specify either ami_image_id'
             'or ami_image_name')
     if ami_name:
-        ami_image_id = _get_image_id(config, ami_name)
+        try:
+            ami_image_id = _get_image_id(config, ami_name)
+        except botocore.exceptions.ClientError as e:
+            return None, e
     instance_type = config[INSTANCE_TYPE_FIELD]
     key_name = config[KEY_NAME_FIELD]
     security_group = config[SECURITY_GROUP_FIELD]
@@ -160,7 +163,6 @@ def launch_ec2_instances(config, nb=1):
         while not(response) and (n_try < max_tries_to_connect):
             try:
                 response = client.request_spot_instances(
-                    AvailabilityZoneGroup=config[REGION_NAME_FIELD],
                     InstanceCount=nb,
                     LaunchSpecification={
                         'SecurityGroups': [security_group],
@@ -185,11 +187,11 @@ def launch_ec2_instances(config, nb=1):
                     time.sleep(wait_minutes*60)
                 else:
                     logger.error(f'Not enough instances available: {e}')
-                    return None,
+                    return None, 'retry'
             except Exception as e:
                 # unknown error
                 logger.error(f'AWS worker error: {e}')
-                return None,
+                return None, e
         # Wait until request fulfilled
         waiter = client.get_waiter('spot_instance_request_fulfilled')
         request_id = \
@@ -242,10 +244,10 @@ def launch_ec2_instances(config, nb=1):
         waiter = client.get_waiter('instance_status_ok')
         try:
             waiter.wait(InstanceIds=instance_ids)
-        except botocore.exceptions.WaiterError:
-            return None,
+        except botocore.exceptions.WaiterError as e:
+            return None, e
 
-    return instances
+    return instances, 0
 
 
 def _get_image_id(config, image_name):
