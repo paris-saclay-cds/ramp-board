@@ -280,8 +280,8 @@ The following explain the main steps to release `ramp-board`:
    (e.g., `git commit -am "bumpversion 0.5.0"`).
 3. Create a branch for this version (e.g.,
    `git checkout -b 0.<version number>.X`).
-4. Push the new branch into the upstream remote ramp-board repository.
-5. Create a GitHub release by clicking 'Draft a new release' `here
+4*. Push the new branch into the upstream remote ramp-board repository.
+5*. Create a GitHub release by clicking 'Draft a new release' `here
    <https://github.com/paris-saclay-cds/ramp-board/releases>`_. Copy the
    release notes from `whats_new
    <https://paris-saclay-cds.github.io/ramp-docs/ramp-board/dev/whats_new.html>`_.
@@ -294,7 +294,7 @@ The following explain the main steps to release `ramp-board`:
    this was performed correctly, ensure that `ramp-board/stable
    <https://github.com/paris-saclay-cds/ramp-docs/blob/master/ramp-board/stable>`_
    has the new version number.
-7. `cd` back into the `ramp-board` code repository and ensure you are in the
+7*. `cd` back into the `ramp-board` code repository and ensure you are in the
    release branch (e.g., branch `0.5.X`). Remove unnecessary files
    with `make clean-dist` then push on PyPI with `make upload-pypi`.
 8. Switch to `master` branch and run `bumpversion minor`, commit and push on
@@ -312,17 +312,39 @@ The following explain the main steps to release `ramp-board`:
     and `.. include::` this new file in `doc/whats_new.rst
     <https://github.com/paris-saclay-cds/ramp-board/blob/master/doc/whats_new.rst>`_.
 
-Note that the steps 4, 5 and 7 should be performed while in the release
+* Note that the steps 4, 5 and 7 should be performed while in the release
 branch, e.g. branch `0.5.X`.
 
 Patch/bug fix release process
 -----------------------------
 
-1. Find the commit(s) hash of the bug fix commit you wish to back port
-   using `git log`.
-2. Checkout the branch for the lastest release, e.g.,
+1. Checkout the tag for the last minor release, e.g.,
    `git checkout 0.5.X`.
-3. Append the bug fix commit(s) to the branch using `git cherry-pick <hash>`.
+   **note**: X is part of the name, not a number to substitute.
+   **note2**: you can type `git fetch --all --tags` to fetch available tags.
+2. There are two ways to continue. If you only want to release a couple of
+   commits we recommend that you go with '3a', if you want to release many commits '3b'
+   would be easier.
+
+3a: release only a few commits
+
+- Find the commit(s) hash of the bug fix commit you wish to back port using
+  `git log`.
+- Append the bug fix commit(s) to the branch using `git cherry-pick <hash>`.
+
+3b: release multiple commits
+
+- checkout the `0.5.X` branch:
+  `git checkout -b release-0.5.<number> master` where 'number' is the number of
+  your bug release.
+- commit your desired changes by typing: `git rebase -i master`.
+  You should now see the list of all the commits since the last release.
+  Indicate which commits you want to release by typing 'pick' on their lefthand
+  side, and 'drop' if you do not want to keep it. Make sure to drop the commit
+  with previous bumpversion. It's useful to have a copy of the `git rebase -i`
+  log in the PR to help others understand what's included.
+- make a PR to the release branch. Once it is merged continue to the next step.
+
 4. Bump the version number with `bumpversion patch`. This will bump the
    patch version, for example from 0.5.0 to 0.5.1.dev0.
 5. Mark the current version as a release version (as opposed to 'dev' version)
@@ -333,7 +355,10 @@ Patch/bug fix release process
    `git push <upstream remote> <release branch>`. For minor version 0.5
    'release branch' would be '0.5.X'
 8. Remove unnecessary files with `make clean-dist` then push on PyPI with
-   `make upload-pypi`.
+   `make upload-pypi` (you need to have the rights on PyPI to do so).
 9. Create a GitHub release by clicking 'Draft a new release' `here
    <https://github.com/paris-saclay-cds/ramp-board/releases>`_. Note down the
    bug fixes added in the patch.
+
+Note: If you are updating version of ramp on ramp.studio consider reading:
+`those docs <https://github.com/paris-saclay-cds/ramp-server-config#ramp-board---ramp-workflow>`_.
