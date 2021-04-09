@@ -47,7 +47,7 @@ jobs:
         run: |
           source activate testenv
           if [ "$PYTHON_VERSION" == "3.8" ]; then
-              pip install "dask[distributed]"
+              python -m pip install "dask[distributed]==2021.4.0"
           fi
           make inplace
         env:
