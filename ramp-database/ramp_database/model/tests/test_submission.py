@@ -454,6 +454,7 @@ def test_submission_on_cv_fold_model_is_error(session_scope_module,
     cv_fold.state = state_set
     assert cv_fold.is_error is expected_state
 
+
 def test_submission_on_cv_fold_model_reset(session_scope_module):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
