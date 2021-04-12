@@ -4,7 +4,6 @@ import shutil
 from datetime import datetime
 
 import numpy as np
-from numpy.testing import assert_allclose
 import pytest
 
 from ramp_utils import read_config
