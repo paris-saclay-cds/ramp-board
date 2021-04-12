@@ -27,6 +27,11 @@ Available workers:
   ``worker_type: aws``, and for more details on the setup and configuration,
   see below.
 
+* The :class:`ramp_engine.remote.DaskWorker` will send the submission to Dask
+  cluster, which can be local or remote, and copy back the results. This
+  worker is specified as ``worker_type: dask``. For more details on the setup
+  and configuration, see below.
+
 .. _conda_env_worker:
 
 Running submissions in a Conda environment
@@ -258,6 +263,166 @@ Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
   If the time between checks is too small, the repetitive SSH requests may be
   potentially blocked by the cloud provider. We advise to set this
   configuration to at least 60 seconds.
+
+Running submissions with Dask
+-----------------------------
+
+:class:`ramp_engine.remote.DaskWorker` allows to run submissions on a Dask
+distributed cluster which can be either remote or local.
+
+To setup this worker please follow the instructions below.
+
+DaskWorker setup of the main server
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1. Setup the :ref:`ramp_frontend server <setup_server>` and
+   :ref:`deploy the RAMP event <deploy-ramp-event>`.
+2. Install dask.distributed,
+
+   .. code:: bash
+
+       $ pip install "dask[distributed]"
+
+2. Start a dask.distributed scheduler,
+
+   .. code:: bash
+
+       $ dask-scheduler
+
+
+   See `dask.distributed documentation
+   <https://docs.dask.org/en/latest/setup/cli.html#command-line>`_
+   for more information.
+
+3. Specify the worker in the event configuration as follows,
+
+   .. code:: yaml
+
+     worker:
+       worker_type: dask
+       conda_env: ramp-iris
+       dask_scheduler: "tcp://127.0.0.1:8786"   # or another URL to the dask scheduler
+       n_workers: 4  # (number of RAMP workers launched in parallel. Must be smaller
+                     #  than the number of dask.distributed workers)
+
+4. Launch the :ref:`RAMP dispatcher <launch_dispatcher>`.
+
+DaskWorker setup with a local cluster
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To start a local dask.distributed cluster, run
+
+.. code:: bash
+
+   $ dask-worker --nprocs 10  # or any appropriate number of workers.
+
+See `dask.distributed documentation
+<https://docs.dask.org/en/latest/setup/cli.html#command-line>`_
+for more information.
+
+.. note::
+
+   The number of dask.distributed workers (as specified by the `--nprocs`
+   argument) must be larger, ideally by 50% or so, than the number of RAMP
+   workers specified in the event configuration. For instance, on a machine
+   having 16 physical CPUs, you can start 16 RAMP workers, and 32
+   dask.distributed workers.
+
+   This is necessary as some dask.distributed workers will be used for running
+   the submission, while others manage data and state sychronization.
+
+
+DaskWorker setup with a remote cluster
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To use a remote dask.distributed cluster, following pre-requisites must be verified.
+
+- the remote machine must have a `ramp_deployment`
+  folder with the same absolute path as on the main server
+- it must have a `base` (or `ramp-board`) environment  with the same versions of installed
+  packages as on the main server. Including the same version of `dask[distributed]`.
+
+
+The setup steps are then as follows,
+
+1. Create the conda environment for running event submissions (same name as on
+   the main server).
+2. Copy `ramp-kit` and `ramp-data` of the event from the main server, to the
+   identical paths under the `ramp_deployment` folder.
+3. Start the dask[distributed] workers,
+
+   .. code:: bash
+
+       $ dask-worker --nprocs 10  # or any appropriate number of workers.
+
+
+   .. note::
+
+      If the Dask scheduler is not in the same local network as the Dask workers,
+      you would need to start workers as,
+
+      .. code:: bash
+
+          dask-worker tcp://<scheduler-public-ip>:8786 --listen-address "tcp://0.0.0.0:<port>" --contact-address "tcp://<worker-public-ip>:<port>
+
+
+      This however only works with one dask worker at the time. To start more,
+      you can use the following bash script,
+
+
+      .. code:: bash
+
+          # Select the number of dask workers to start.
+          # Better to start at idx=10, to keep the number of digits
+          # (mapped to the port) constant.
+          for idx in {10..28}
+          do
+              # start dask worker in the background
+              dask-worker tcp://<scheduler-public-ip>:8786 --listen-address "tcp://0.0.0.0:416${idx}"   --contact-address "tcp://<worker-public-ip>:416${idx}" --nthreads 4  &
+              sleep 0.5
+          done
+
+          echo "Sleeping"
+          while [ 1 ]
+          do
+              sleep 1
+          done
+
+          # On exit kill all children processes (i.e. all workers)
+          trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+
+
+      which in particular allows to kill all workers with `Ctrl+C` when interrupting this script.
+
+
+
+**Security considerations**
+
+By default communications between dask distributed schedulers and workers is
+neither encrypted not authenticated which poses security risks. Dask
+distributed supports TLS/SSL certifications, however these are not currently
+supported in DaskWorker in RAMP.
+
+A workaround for authentication could be to configure a firewall, such as
+`UFW <https://help.ubuntu.com/community/UFW>`_ to deny connections to dask
+related ports, except from pre-defined IPs of dask worker/scheduler.
+
+.. warning::
+
+   Do not run the following command without understanding what they do. You
+   could lose SSH access to you machine.
+
+For instance with the UFW firewall on the main server,
+
+.. code::
+
+   sudo ufw allow 22/tcp   # allow SSH
+   sudo ufw allow 80
+   sudo ufw allow 443      # allow access to ramp_frontend server over HTTP and HTTPS
+   sudo ufw allow from <remote-worker-ip>  # allow access to any port from a given IP
+   sudo ufw enable
+   sudo ufw status
+
 
 Create your own worker
 ----------------------

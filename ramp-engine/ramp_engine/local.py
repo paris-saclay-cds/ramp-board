@@ -1,11 +1,11 @@
-import json
 import logging
 import os
 import shutil
-import subprocess
 from datetime import datetime
 
 from .base import BaseWorker, _get_traceback
+from .conda import _conda_info_envs, _get_conda_env_path
+from .conda import _conda_ramp_test_submission
 
 logger = logging.getLogger('RAMP-WORKER')
 
@@ -62,34 +62,10 @@ class CondaEnvWorker(BaseWorker):
             self._check_config_name(self.config, required_param)
         # find the path to the conda environment
         env_name = self.config.get('conda_env', 'base')
-        proc = subprocess.Popen(
-            ["conda", "info", "--envs", "--json"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
-        )
-        stdout, _ = proc.communicate()
-        conda_info = json.loads(stdout)
+        conda_info = _conda_info_envs()
 
-        if env_name == 'base':
-            self._python_bin_path = os.path.join(conda_info['envs'][0], 'bin')
-        else:
-            envs_path = conda_info['envs'][1:]
-            if not envs_path:
-                self.status = 'error'
-                raise ValueError('Only the conda base environment exist. You '
-                                 'need to create the "{}" conda environment '
-                                 'to use it.'.format(env_name))
-            is_env_found = False
-            for env in envs_path:
-                if env_name == os.path.split(env)[-1]:
-                    is_env_found = True
-                    self._python_bin_path = os.path.join(env, 'bin')
-                    break
-            if not is_env_found:
-                self.status = 'error'
-                raise ValueError('The specified conda environment {} does not '
-                                 'exist. You need to create it.'
-                                 .format(env_name))
+        self._python_bin_path = _get_conda_env_path(conda_info, env_name, self)
+
         super(CondaEnvWorker, self).setup()
 
     def teardown(self):
@@ -143,19 +119,12 @@ class CondaEnvWorker(BaseWorker):
             raise ValueError('Wait that the submission is processed before to '
                              'launch a new one.')
         self._log_dir = os.path.join(self.config['logs_dir'], self.submission)
-        if not os.path.exists(self._log_dir):
-            os.makedirs(self._log_dir)
-        self._log_file = open(os.path.join(self._log_dir, 'log'), 'wb+')
-        self._proc = subprocess.Popen(
-            [cmd_ramp,
-             '--submission', self.submission,
-             '--ramp-kit-dir', self.config['kit_dir'],
-             '--ramp-data-dir', self.config['data_dir'],
-             '--ramp-submission-dir', self.config['submissions_dir'],
-             '--save-output',
-             '--ignore-warning'],
-            stdout=self._log_file,
-            stderr=self._log_file,
+        self._proc, self._log_file = _conda_ramp_test_submission(
+            self.config,
+            self.submission,
+            cmd_ramp,
+            self._log_dir,
+            wait=False,
         )
         super().launch_submission()
         self._start_date = datetime.utcnow()
