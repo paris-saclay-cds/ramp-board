@@ -111,7 +111,7 @@ class DaskWorker(BaseWorker):
     status : str
         The status of the worker. It should be one of the following state:
 
-            * 'initialized': the worker has been instanciated.
+            * 'initialized': the worker has been instantiated.
             * 'setup': the worker has been set up.
             * 'error': setup failed / training couldn't be started
             * 'running': the worker is training the submission.

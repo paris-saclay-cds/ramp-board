@@ -120,6 +120,7 @@ class Dispatcher:
                     )
             for lib in ('OMP', 'MKL', 'OPENBLAS'):
                 os.environ[lib + '_NUM_THREADS'] = str(self.n_threads)
+        self._logger = logger.getChild(self._ramp_config['event_name'])
 
     def fetch_from_db(self, session):
         """Fetch the submission from the database and create the workers."""
@@ -142,8 +143,10 @@ class Dispatcher:
             )
             self._awaiting_worker_queue.put_nowait((worker, (submission_id,
                                                              submission_name)))
-            logger.info('Submission {} added to the queue of submission to be '
-                        'processed'.format(submission_name))
+            self._logger.info(
+                f'Submission {submission_name} added to the queue of '
+                'submission to be processed'
+            )
 
     def launch_workers(self, session):
         """Launch the awaiting workers if possible."""
@@ -151,14 +154,33 @@ class Dispatcher:
                not self._awaiting_worker_queue.empty()):
             worker, (submission_id, submission_name) = \
                 self._awaiting_worker_queue.get()
-            logger.info('Starting worker: {}'.format(worker))
-            worker.setup()
+            self._logger.info(f'Starting worker: {worker}')
+
+            try:
+                worker.setup()
+                if worker.status != "error":
+                    worker.launch_submission()
+            except Exception as e:
+                self._logger.error(
+                    f'Worker finished with unhandled exception:\n {e}'
+                )
+                worker.status = 'error'
             if worker.status == 'error':
                 set_submission_state(session, submission_id, 'checking_error')
-                continue
-            worker.launch_submission()
-            if worker.status == 'error':
-                set_submission_state(session, submission_id, 'checking_error')
+                worker.teardown()  # kill the worker
+                self._logger.info(
+                    f'Worker {worker} killed due to an error '
+                    f'while connecting to AWS worker'
+                )
+                stderr = ("There was a problem with sending your submission"
+                          " for training. This problem is on RAMP side"
+                          " and most likely it is not related to your"
+                          " code. If this happened for the first time"
+                          " to this submission you might"
+                          " consider submitting the same code once again."
+                          " Else, please contact the event organizers."
+                          )
+                set_submission_error_msg(session, submission_id, stderr)
                 continue
             set_submission_state(session, submission_id, 'training')
             submission = get_submission_by_id(session, submission_id)
@@ -168,8 +190,9 @@ class Dispatcher:
             )
             self._processing_worker_queue.put_nowait(
                 (worker, (submission_id, submission_name)))
-            logger.info('Store the worker {} into the processing queue'
-                        .format(worker))
+            self._logger.info(
+                f'Store the worker {worker} into the processing queue'
+            )
 
     def collect_result(self, session):
         """Collect result from processed workers."""
@@ -188,7 +211,7 @@ class Dispatcher:
         for worker, (submission_id, submission_name) in zip(workers,
                                                             submissions):
             dt = worker.time_since_last_status_check()
-            if dt is not None and dt < self.time_between_collection:
+            if (dt is not None) and (dt < self.time_between_collection):
                 self._processing_worker_queue.put_nowait(
                     (worker, (submission_id, submission_name)))
                 time.sleep(0)
@@ -199,27 +222,32 @@ class Dispatcher:
                 time.sleep(0)
             elif worker.status == 'retry':
                 set_submission_state(session, submission_id, 'new')
-                logging.info(f'Submission: {submission_id} has been '
-                             'interrupted. It will be added to queue again '
-                             'and retried.')
+                self._logger.info(
+                    f'Submission: {submission_id} has been interrupted. '
+                    'It will be added to queue again and retried.'
+                )
                 worker.teardown()
             else:
-                logger.info(f'Collecting results from worker {worker}')
+                self._logger.info(f'Collecting results from worker {worker}')
                 returncode, stderr = worker.collect_results()
+
                 if returncode:
                     if returncode == 124:
-                        logger.info(
+                        self._logger.info(
                             f'Worker {worker} killed due to timeout.'
                         )
+                        submission_status = 'training_error'
+                    elif returncode == 2:
+                        # Error occurred when downloading the logs
+                        submission_status = 'checking_error'
                     else:
-                        logger.info(
+                        self._logger.info(
                             f'Worker {worker} killed due to an error '
-                            'during training'
+                            f'during training: {stderr}'
                         )
-                    submission_status = 'training_error'
+                        submission_status = 'training_error'
                 else:
                     submission_status = 'tested'
-
                 set_submission_state(
                     session, submission_id, submission_status
                 )
@@ -237,8 +265,9 @@ class Dispatcher:
                 self._processed_submission_queue.get_nowait()
             if 'error' in get_submission_state(session, submission_id):
                 continue
-            logger.info('Write info in database for submission {}'
-                        .format(submission_name))
+            self._logger.info(
+                f'Write info in database for submission {submission_name}'
+            )
             path_predictions = os.path.join(
                 self._worker_config['predictions_dir'], submission_name
             )
@@ -248,25 +277,26 @@ class Dispatcher:
             set_submission_state(session, submission_id, 'scored')
 
         if make_update_leaderboard:
-            logger.info('Update all leaderboards')
+            self._logger.info('Update all leaderboards')
             update_leaderboards(session, self._ramp_config['event_name'])
             update_all_user_leaderboards(session,
                                          self._ramp_config['event_name'])
+            self._logger.info('Leaderboards updated')
 
     @staticmethod
     def _reset_submission_after_failure(session, even_name):
         submissions = get_submissions(session, even_name, state=None)
         for submission_id, _, _ in submissions:
             submission_state = get_submission_state(session, submission_id)
-            if submission_state in ('training', 'send_to_training'):
+            if submission_state in ('training', 'sent_to_training'):
                 set_submission_state(session, submission_id, 'new')
 
     def launch(self):
         """Launch the dispatcher."""
-        logger.info('Starting the RAMP dispatcher')
+        self._logger.info('Starting the RAMP dispatcher')
         with session_scope(self._database_config) as session:
-            logger.info('Open a session to the database')
-            logger.info(
+            self._logger.info('Open a session to the database')
+            self._logger.info(
                 'Reset unfinished trained submission from previous session'
             )
             self._reset_submission_after_failure(
@@ -284,4 +314,4 @@ class Dispatcher:
                 self._reset_submission_after_failure(
                     session, self._ramp_config['event_name']
                 )
-            logger.info('Dispatcher killed by the poison pill')
+            self._logger.info('Dispatcher killed by the poison pill')

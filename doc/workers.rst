@@ -147,7 +147,7 @@ need to install git.
         ~ $ conda env update --name base --file $environment
         ~ $ conda list
 
-  - Get the data and copy public data to ``ramp-kits/<project>/data/``.
+  - Get the data and copy private data to ``ramp-kits/<project>/data/``.
     Note: depending on how ``prepare_data.py`` structures the data files,
     the last command may differ::
 
@@ -157,7 +157,7 @@ need to install git.
         ~ $ git clone $data_url $data_dir
         ~ $ cd $data_dir
         ~ $ python prepare_data.py
-        ~ $ cp data/public/* $kit_dir/data/
+        ~ $ cp data/private/* $kit_dir/data/
 
   - Test the kit::
 
@@ -399,11 +399,11 @@ The setup steps are then as follows,
 **Security considerations**
 
 By default communications between dask distributed schedulers and workers is
-neither encrypted not authentificated which poses security risks. Dask
+neither encrypted not authenticated which poses security risks. Dask
 distributed supports TLS/SSL certifications, however these are not currently
 supported in DaskWorker in RAMP.
 
-A workaround for authentification could be to configure a firewall, such as
+A workaround for authentication could be to configure a firewall, such as
 `UFW <https://help.ubuntu.com/community/UFW>`_ to deny connections to dask
 related ports, except from pre-defined IPs of dask worker/scheduler.
 

@@ -55,6 +55,10 @@ LOCAL_LOG_FOLDER_FIELD = 'logs_dir'
 TRAIN_LOOP_INTERVAL_SECS_FIELD = 'train_loop_interval_secs'
 MEMORY_PROFILING_FIELD = 'memory_profiling'
 
+# how long to wait for connections
+WAIT_MINUTES = 2
+MAX_TRIES_TO_CONNECT = 1
+
 HOOKS_SECTION = 'hooks'
 HOOK_START_TRAINING = 'start_training'
 HOOK_SUCCESSFUL_TRAINING = 'successful_training'
@@ -125,8 +129,10 @@ def launch_ec2_instances(config, nb=1):
             'specified at the same time. Please specify either ami_image_id'
             'or ami_image_name')
     if ami_name:
-        ami_image_id = _get_image_id(config, ami_name)
-
+        try:
+            ami_image_id = _get_image_id(config, ami_name)
+        except botocore.exceptions.ClientError as e:
+            return None, e
     instance_type = config[INSTANCE_TYPE_FIELD]
     key_name = config[KEY_NAME_FIELD]
     security_group = config[SECURITY_GROUP_FIELD]
@@ -144,36 +150,58 @@ def launch_ec2_instances(config, nb=1):
     sess = _get_boto_session(config)
     client = sess.client('ec2')
     resource = sess.resource('ec2')
+    switch_to_on_demand = False
 
     if use_spot_instance:
         logger.info('Attempting to use spot instance.')
         now = datetime.utcnow() + timedelta(seconds=3)
-        request_wait = timedelta(minutes=10)
-        response = client.request_spot_instances(
-            AvailabilityZoneGroup=config[REGION_NAME_FIELD],
-            InstanceCount=nb,
-            LaunchSpecification={
-                'SecurityGroups': [security_group],
-                'ImageId': ami_image_id,
-                'InstanceType': instance_type,
-                'KeyName': key_name,
-            },
-            Type='one-time',
-            ValidFrom=now,
-            ValidUntil=(now + request_wait),
-        )
-
+        wait_minutes = WAIT_MINUTES
+        max_tries_to_connect = MAX_TRIES_TO_CONNECT
+        request_wait = timedelta(minutes=wait_minutes)
+        n_try = 0
+        response = None
+        while not(response) and (n_try < max_tries_to_connect):
+            try:
+                response = client.request_spot_instances(
+                    InstanceCount=nb,
+                    LaunchSpecification={
+                        'SecurityGroups': [security_group],
+                        'ImageId': ami_image_id,
+                        'InstanceType': instance_type,
+                        'KeyName': key_name,
+                    },
+                    Type='one-time',
+                    ValidFrom=now,
+                    ValidUntil=(now + request_wait),
+                )
+                break
+            except botocore.exceptions.ClientError as e:
+                n_try += 1
+                if n_try < max_tries_to_connect:
+                    # wait before you try again
+                    logger.warning('Not enough instances available: I am going'
+                                   f' to wait for {wait_minutes} minutes'
+                                   ' before trying again (this was'
+                                   f' {n_try} out of {max_tries_to_connect}'
+                                   ' tries to connect)')
+                    time.sleep(wait_minutes*60)
+                else:
+                    logger.error(f'Not enough instances available: {e}')
+                    return None, 'retry'
+            except Exception as e:
+                # unknown error
+                logger.error(f'AWS worker error: {e}')
+                return None, e
         # Wait until request fulfilled
         waiter = client.get_waiter('spot_instance_request_fulfilled')
         request_id = \
             response['SpotInstanceRequests'][0]['SpotInstanceRequestId']
-        on_demand = False
         try:
             waiter.wait(SpotInstanceRequestIds=[request_id, ])
         except botocore.exceptions.WaiterError:
             logger.info('Spot instance request failed due to time out. Using '
                         'on-demand instance instead')
-            on_demand = True
+            switch_to_on_demand = True
             client.cancel_spot_instance_requests(
                 SpotInstanceRequestIds=[request_id, ]
             )
@@ -200,7 +228,7 @@ def launch_ec2_instances(config, nb=1):
             instances = [instance, ]
             instance_ids = [instance_id, ]
 
-    if on_demand or not use_spot_instance:
+    if switch_to_on_demand or not use_spot_instance:
         logger.info('Using on-demand instance.')
         instances = resource.create_instances(
             ImageId=ami_image_id,
@@ -216,35 +244,34 @@ def launch_ec2_instances(config, nb=1):
         waiter = client.get_waiter('instance_status_ok')
         try:
             waiter.wait(InstanceIds=instance_ids)
-        except botocore.exceptions.WaiterError:
-            return None
+        except botocore.exceptions.WaiterError as e:
+            return None, e
 
-    return instances
+    return instances, 0
 
 
 def _get_image_id(config, image_name):
     sess = _get_boto_session(config)
     client = sess.client('ec2')
+
+    # get all the images with the given image_name in the name
     result = client.describe_images(Filters=[
         {
             'Name': 'name',
-            'Values': [
-                image_name
-            ]
+            'Values': [f'{image_name}*'
+                       ],
         }
     ])
+
     images = result['Images']
     if len(images) == 0:
         raise ValueError(
             'No image corresponding to the name "{}"'.format(image_name))
-    elif len(images) > 1:
-        raise ValueError(
-            'Multiple images corresponding to the name "{}".'
-            ' Please fix that'.format(image_name))
-    else:
-        image = images[0]
-        image_id = image['ImageId']
-        return image_id
+
+    # get only the newest image if there are more than one
+    image = sorted(images, key=lambda x: x['CreationDate'],
+                   reverse=True)[0]
+    return image['ImageId']
 
 
 def terminate_ec2_instance(config, instance_id):
@@ -346,7 +373,16 @@ def upload_submission(config, instance_id, submission_name,
     submission_path = os.path.join(submissions_dir, submission_name)
     ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
     dest_folder = os.path.join(ramp_kit_folder, SUBMISSIONS_FOLDER)
-    return _upload(config, instance_id, submission_path, dest_folder)
+
+    # catch an error when uploading if they happen
+    try:
+        out = _upload(config, instance_id, submission_path, dest_folder)
+        return out
+    except subprocess.CalledProcessError as e:
+        logger.error(f'Unable to connect during log download: {e}')
+    except Exception as e:
+        logger.error(f'Unknown error occured during log download: {e}')
+    return 1
 
 
 def download_log(config, instance_id, submission_name, folder=None):
@@ -383,7 +419,19 @@ def download_log(config, instance_id, submission_name, folder=None):
         os.makedirs(os.path.dirname(dest_path))
     except OSError:
         pass
-    return _download(config, instance_id, source_path, dest_path)
+
+    # try connecting few times
+    n_tries = 3
+    for n_try in range(n_tries):
+        try:
+            out = _download(config, instance_id, source_path, dest_path)
+            return out
+        except Exception as e:
+            logger.error(f'Unknown error occured during log download: {e}')
+            if n_try == n_tries-1:
+                raise(e)
+            else:
+                logger.error('Trying to download the log once again')
 
 
 def _get_log_content(config, submission_name):
@@ -505,8 +553,18 @@ def download_predictions(config, instance_id, submission_name, folder=None):
         os.makedirs(os.path.dirname(dest_path))
     except OSError:
         pass
-    _download(config, instance_id, source_path, dest_path)
-    return dest_path
+    n_tries = 3
+    for n_try in range(n_tries):
+        try:
+            _download(config, instance_id, source_path, dest_path)
+            return dest_path
+        except Exception as e:
+            logger.error('Unknown error occured when downloading prediction'
+                         f' e: {str(e)}')
+            if n_try == n_tries-1:
+                raise(e)
+            else:
+                logger.error('Trying to download the prediction once again')
 
 
 def _get_remote_training_output_folder(config, instance_id, submission_name):
@@ -911,9 +969,22 @@ def is_spot_terminated(config, instance_id):
     """Check if there is an 'instance-action' item present in instance
     metatdata. If a spot instance is marked to be terminated an
     'instance-action' will be present."""
-    cmd = "curl http://169.254.169.254/latest/meta-data/instance-action"
-    out = _run(config, instance_id, cmd, return_output=True)
-    out = out.decode('utf-8')
+    cmd_timeout = 1
+    n_retry = 9
+    cmd = ("curl http://169.254.169.254/latest/meta-data/instance-action"
+           f" -m {cmd_timeout} --retry {n_retry}")
+
+    try:
+        out = _run(config, instance_id, cmd, return_output=True)
+        out = out.decode('utf-8')
+    except subprocess.CalledProcessError:
+        logger.error('Unable to run curl: {e}')
+        return False
+    except Exception as e:
+        logger.error('Unhandled exception occurred when checking for'
+                     f' instance action: {e}')
+        return False
+
     if out == 'none':
         terminated = False
     else:

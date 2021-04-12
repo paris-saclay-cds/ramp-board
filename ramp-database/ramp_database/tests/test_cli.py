@@ -344,7 +344,7 @@ def test_set_submission_state(make_toy_db):
     runner = CliRunner()
     result = runner.invoke(main, ['set-submission-state',
                                   '--config', database_config_template(),
-                                  '--submission-id', 3,
+                                  '--submission-id', 5,
                                   '--state', 'scored'],
                            catch_exceptions=False)
     assert result.exit_code == 0, result.output
@@ -405,3 +405,15 @@ def test_compute_contributivity(make_toy_db):
                '--config-event', event_config],
         catch_exceptions=False)
     assert result.exit_code == 0, result.output
+
+
+def test_export_submissions(make_toy_db):
+    # when there are no submissions to save
+    runner = CliRunner()
+    result = runner.invoke(main, ['export-leaderboards',
+                                  '--config', database_config_template(),
+                                  '--event', 'iris_test',
+                                  '--path', 'test.csv'],
+                           catch_exceptions=False)
+    assert result.exit_code == 0
+    assert 'No score was found on the' in result.output

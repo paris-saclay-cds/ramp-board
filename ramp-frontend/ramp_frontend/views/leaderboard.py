@@ -26,6 +26,8 @@ from .redirect import redirect_to_user
 mod = Blueprint('leaderboard', __name__)
 logger = logging.getLogger('RAMP-FRONTEND')
 
+SORTING_COLUMN_INDEX = 2
+
 
 @mod.route("/events/<event_name>/my_submissions")
 @flask_login.login_required
@@ -67,12 +69,13 @@ def my_submissions(event_name):
         sorting_direction = 'asc'
     else:
         sorting_direction = 'desc'
+
     return render_template('leaderboard.html',
                            leaderboard_title='Trained submissions',
                            leaderboard=leaderboard_html,
                            failed_leaderboard=failed_leaderboard_html,
                            new_leaderboard=new_leaderboard_html,
-                           sorting_column_index=2,
+                           sorting_column_index=SORTING_COLUMN_INDEX,
                            sorting_direction=sorting_direction,
                            event=event,
                            admin=admin)
@@ -115,7 +118,7 @@ def leaderboard(event_name):
     leaderboard_kwargs = dict(
         leaderboard=leaderboard_html,
         leaderboard_title='Leaderboard',
-        sorting_column_index=2,
+        sorting_column_index=SORTING_COLUMN_INDEX,
         sorting_direction=sorting_direction,
         event=event
     )
@@ -228,7 +231,7 @@ def private_leaderboard(event_name):
         'leaderboard.html',
         leaderboard_title='Leaderboard',
         leaderboard=leaderboard_html,
-        sorting_column_index=3,
+        sorting_column_index=SORTING_COLUMN_INDEX+1,
         sorting_direction=sorting_direction,
         event=event,
         private=True,

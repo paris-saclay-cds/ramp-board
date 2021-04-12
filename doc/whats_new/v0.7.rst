@@ -6,14 +6,45 @@ Version 0.7
 Changelog
 ---------
 
+Maintenance
+...........
+
+- Add support for Python 3.8.
+  :pr:`375` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- Add `email_validator` in requirements.
+  :pr:`448` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- Move CI to github action.
+  :pr:`460` by :user:`Roman Yurchak <rth>`.
+
 `ramp-database`
 ...............
 
 `ramp-engine`
 .............
 
+- Add support for spot instance in AWS.
+  :pr:`455` by :user:`Lucy Leeow <lucyleeow>`.
+
+- Fix bug in AWS to handle worker errors.
+  :pr:`465` by :user:`Maria Telenczuk <maikia>`.
+  
+- Fix bug in dispatcher to handle workers errors.
+  :pr:`464` by :user:`Maria Telenczuk <maikia>`.
+
+- Add timeout for `curl` request in AWS worker and handle the
+  subsequent SSH error.
+  :pr:`467` by :user:`Maria Telenczuk <maikia>`.
+
+- Improve the logging in the dispatcher.
+  :pr:`468` by :user:`Thomas Moreau <tommoral>`.
+      
 `ramp-frontend`
 ...............
+
+- Fix sorting index for score in the leaderboards.
+  :pr:`566` by :user:`Maria Telenczuk <maikia>`.
 
 `ramp-utils`
 ............

@@ -30,6 +30,27 @@ def main():
 @click.option("--config", default='config.yml', show_default=True,
               help='Configuration file YAML format containing the database '
               'information')
+@click.option("--event",
+              help='The name of the event')
+@click.option('--path', help='path to the .csv file where to save '
+                             'the submissions and their score')
+def export_leaderboards(config, event, path):
+    """Export all the scored submissions."""
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        data = leaderboard_module.get_leaderboard_all_info(session, event)
+        if not len(data):
+            click.echo('No score was found on the submission {}'.format(
+                event))
+        else:
+            data.to_csv(path)
+            click.echo('Data saved to {}'.format(path))
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
 @click.option('--login', help='Login')
 @click.option('--password', help='Password')
 @click.option('--lastname', help="User's last name")

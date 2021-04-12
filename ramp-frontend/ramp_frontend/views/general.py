@@ -1,4 +1,4 @@
-import flask
+import flask  # noqa
 from flask import Blueprint
 from flask import render_template
 from flask import current_app as app
