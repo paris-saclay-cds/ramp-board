@@ -4,6 +4,7 @@ import shutil
 from datetime import datetime
 
 import numpy as np
+from numpy.testing import assert_allclose
 import pytest
 
 from ramp_utils import read_config
@@ -597,30 +598,6 @@ def test_submission_on_cv_fold_model_test_scores(session_scope_module):
             assert score.test_score == pytest.approx(0)
 
 
-def test_submission_on_cv_fold_model_update(session_scope_module):
-    cv_fold = \
-        (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id ==
-                                     ID_SUBMISSION)
-                             .first())
-
-    detached_cv_fold = DetachedSubmissionOnCVFold(cv_fold)
-    detached_cv_fold.state = 'scored'
-    detached_cv_fold.train_time = 1
-    detached_cv_fold.valid_time = 2
-    detached_cv_fold.full_train_y_pred = np.zeros((120, 3))
-    detached_cv_fold.test_time = 3
-    detached_cv_fold.test_y_pred = np.zeros((30, 3))
-
-    cv_fold.update(detached_cv_fold)
-    assert cv_fold.state == 'scored'
-    assert cv_fold.train_time == 1
-    assert cv_fold.valid_time == 2
-    assert cv_fold.test_time == 3
-    assert_allclose(cv_fold.full_train_y_pred, np.zeros((120, 3)))
-    assert_allclose(cv_fold.test_y_pred, np.zeros((30, 3)))
-
-
 @pytest.mark.parametrize(
     'backref, expected_type',
     [('scores', SubmissionScoreOnCVFold)]
@@ -637,17 +614,6 @@ def test_submission_on_cv_fold_model_backref(session_scope_module, backref,
     # only check if the list is not empty
     if backref_attr:
         assert isinstance(backref_attr[0], expected_type)
-
-
-def test_detached_submission_on_cv_fold_model(session_scope_module):
-    cv_fold = \
-        (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id ==
-                                     ID_SUBMISSION)
-                             .first())
-
-    detached_cv_fold = DetachedSubmissionOnCVFold(cv_fold)
-    assert re.match('Submission(.*).*', repr(detached_cv_fold))
 
 
 @pytest.mark.parametrize(
