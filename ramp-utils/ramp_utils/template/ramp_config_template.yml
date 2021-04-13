@@ -9,10 +9,6 @@ ramp:
     # predictions_dir: (absolute path where to store predictions. Default: <deployment_dir>/events/event_name>/predictions)
     # logs_dir: (absolute path where to store logs. Default: <deployment_dir>/events/<event_name>/logs)
     # sandbox_dir: (name of the default submissions. Default: starting_kit)
-    # privacy_policy_page: (path or HTML contents of the privacy policy page. Default: None)
-    # login_instructions: (path or HTML contents of custom instuctions to add to the login page. Default: None)
-    # sign_up_instructions: (path or HTML contents of custom instuctions to add to the login page. Default: None)
-    # sign_up_ask_social_media: (whether add folm field to ask for social media accounts on the sign up page. Default: False)
 worker:
     worker_type: <conda or aws>
     ...
