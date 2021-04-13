@@ -974,22 +974,29 @@ class SubmissionOnCVFold(Model):
         """bool: Whether or not the submission failed at one of the stage."""
         return 'error' in self.state
 
-    # TODO: untested, doesn't work but never used in the current setup
+    # TODO: the following 8 properties are never used and not tested.
+    #       They are present for historical reasons and should likely be
+    #       removed in a follow up refactoring.
     @property
     def path_predictions(self):
+        """Return the path to the folder with predictions"""
         return os.path.join(
             self.submission.event.path_ramp_submissions,
             self.submission.name,
             'training_output', 'fold_{}'.format(self.cv_fold_id))
 
-    # prediction on the full training set, including train and valid points
     @property
     def full_train_y_pred(self):
+        """Load predictions on the full training set
+
+        including train and valid points.
+        """
         return np.load(
             os.path.join(self.path_predictions, 'y_pred_train.npz'))['y_pred']
 
     @property
     def test_y_pred(self):
+        """Load predictions on the test set"""
         return np.load(
             os.path.join(self.path_predictions, 'y_pred_test.npz'))['y_pred']
 
