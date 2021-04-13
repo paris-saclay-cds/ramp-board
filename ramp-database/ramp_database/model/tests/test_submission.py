@@ -4,7 +4,6 @@ import shutil
 from datetime import datetime
 
 import numpy as np
-from numpy.testing import assert_allclose
 import pytest
 
 from ramp_utils import read_config
@@ -13,7 +12,6 @@ from ramp_utils.testing import ramp_config_template
 
 from rampwf.prediction_types.base import BasePrediction
 
-from ramp_database.model import DetachedSubmissionOnCVFold
 from ramp_database.model import Event
 from ramp_database.model import EventScoreType
 from ramp_database.model import Extension
@@ -457,25 +455,6 @@ def test_submission_on_cv_fold_model_is_error(session_scope_module,
     assert cv_fold.is_error is expected_state
 
 
-def test_submission_on_cv_fold_model_predictions(session_scope_module):
-    cv_fold = \
-        (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id ==
-                                     ID_SUBMISSION)
-                             .first())
-    # Set fake predictions to check the prediction properties
-    cv_fold.full_train_y_pred = np.empty((120, 3))
-    cv_fold.full_train_y_pred[:, 0] = 1
-    cv_fold.full_train_y_pred[:, 1:] = 0
-    cv_fold.test_y_pred = np.empty((30, 3))
-    cv_fold.test_y_pred[:, 0] = 1
-    cv_fold.test_y_pred[:, 1:] = 0
-    assert isinstance(cv_fold.full_train_predictions, BasePrediction)
-    assert isinstance(cv_fold.train_predictions, BasePrediction)
-    assert isinstance(cv_fold.valid_predictions, BasePrediction)
-    assert isinstance(cv_fold.test_predictions, BasePrediction)
-
-
 def test_submission_on_cv_fold_model_reset(session_scope_module):
     cv_fold = \
         (session_scope_module.query(SubmissionOnCVFold)
@@ -483,13 +462,6 @@ def test_submission_on_cv_fold_model_reset(session_scope_module):
                                      ID_SUBMISSION)
                              .first())
     # set to non-default values]
-    cv_fold.full_train_y_pred = np.empty((120, 3))
-    cv_fold.full_train_y_pred[:, 0] = 1
-    cv_fold.full_train_y_pred[:, 1:] = 0
-    cv_fold.test_y_pred = np.ones(30)
-    cv_fold.test_y_pred = np.empty((30, 3))
-    cv_fold.test_y_pred[:, 0] = 1
-    cv_fold.test_y_pred[:, 1:] = 0
     cv_fold.contributivity = 0.3
     cv_fold.best = True
     cv_fold.train_time = 1
@@ -506,8 +478,6 @@ def test_submission_on_cv_fold_model_reset(session_scope_module):
     cv_fold.reset()
     assert cv_fold.contributivity == pytest.approx(0)
     assert cv_fold.best is False
-    assert cv_fold.full_train_y_pred is None
-    assert cv_fold.test_y_pred is None
     assert cv_fold.train_time == pytest.approx(0)
     assert cv_fold.valid_time == pytest.approx(0)
     assert cv_fold.test_time == pytest.approx(0)
@@ -533,105 +503,6 @@ def test_submission_on_cv_fold_model_error(session_scope_module):
     assert cv_fold.error_msg == error_msg
 
 
-@pytest.mark.filterwarnings('ignore:F-score is ill-defined and being set to')
-def test_submission_on_cv_fold_model_train_scores(session_scope_module):
-    cv_fold = \
-        (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id ==
-                                     ID_SUBMISSION)
-                             .first())
-    # Set fake predictions to compute the score
-    cv_fold.state = 'trained'
-    cv_fold.full_train_y_pred = np.empty((120, 3))
-    cv_fold.full_train_y_pred[:, 0] = 1
-    cv_fold.full_train_y_pred[:, 1:] = 0
-    cv_fold.compute_train_scores()
-    for score in cv_fold.scores:
-        if score.name == 'acc':
-            assert score.train_score == pytest.approx(0.3333333333333333)
-
-    # simulate that the training did not complete
-    cv_fold.state = 'training'
-    cv_fold.compute_train_scores()
-    for score in cv_fold.scores:
-        if score.name == 'acc':
-            assert score.train_score == pytest.approx(0)
-
-
-@pytest.mark.filterwarnings('ignore:F-score is ill-defined and being set to')
-def test_submission_on_cv_fold_model_valid_scores(session_scope_module):
-    cv_fold = \
-        (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id ==
-                                     ID_SUBMISSION)
-                             .first())
-    # Set fake predictions to compute the score
-    cv_fold.state = 'validated'
-    cv_fold.full_train_y_pred = np.empty((120, 3))
-    cv_fold.full_train_y_pred[:, 0] = 1
-    cv_fold.full_train_y_pred[:, 1:] = 0
-    cv_fold.compute_valid_scores()
-    for score in cv_fold.scores:
-        if score.name == 'acc':
-            assert score.valid_score == pytest.approx(0.3333333333333333)
-
-    # simulate that the training did not complete
-    cv_fold.state = 'training'
-    cv_fold.compute_valid_scores()
-    for score in cv_fold.scores:
-        if score.name == 'acc':
-            assert score.valid_score == pytest.approx(0)
-
-
-@pytest.mark.filterwarnings('ignore:F-score is ill-defined and being set to')
-def test_submission_on_cv_fold_model_test_scores(session_scope_module):
-    cv_fold = \
-        (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id ==
-                                     ID_SUBMISSION)
-                             .first())
-    # Set fake predictions to compute the score
-    cv_fold.state = 'scored'
-    cv_fold.test_y_pred = np.empty((30, 3))
-    cv_fold.test_y_pred[:, 0] = 1
-    cv_fold.test_y_pred[:, 1:] = 0
-    cv_fold.compute_test_scores()
-    for score in cv_fold.scores:
-        if score.name == 'acc':
-            assert score.test_score == pytest.approx(0.3333333333333333)
-
-    # simulate that the training did not complete
-    cv_fold.state = 'training'
-    cv_fold.compute_test_scores()
-    for score in cv_fold.scores:
-        if score.name == 'acc':
-            assert score.test_score == pytest.approx(0)
-
-
-def test_submission_on_cv_fold_model_update(session_scope_module):
-    cv_fold = \
-        (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id ==
-                                     ID_SUBMISSION)
-                             .first())
-
-    detached_cv_fold = DetachedSubmissionOnCVFold(cv_fold)
-    detached_cv_fold.state = 'scored'
-    detached_cv_fold.train_time = 1
-    detached_cv_fold.valid_time = 2
-    detached_cv_fold.full_train_y_pred = np.zeros((120, 3))
-    detached_cv_fold.test_time = 3
-    detached_cv_fold.test_y_pred = np.zeros((30, 3))
-
-    cv_fold.update(detached_cv_fold)
-    assert cv_fold.state == 'scored'
-    assert cv_fold.train_time == 1
-    assert cv_fold.valid_time == 2
-    assert cv_fold.test_time == 3
-    assert_allclose(cv_fold.full_train_y_pred, np.zeros((120, 3)))
-    assert_allclose(cv_fold.test_y_pred, np.zeros((30, 3)))
-
-
 @pytest.mark.parametrize(
     'backref, expected_type',
     [('scores', SubmissionScoreOnCVFold)]
@@ -648,17 +519,6 @@ def test_submission_on_cv_fold_model_backref(session_scope_module, backref,
     # only check if the list is not empty
     if backref_attr:
         assert isinstance(backref_attr[0], expected_type)
-
-
-def test_detached_submission_on_cv_fold_model(session_scope_module):
-    cv_fold = \
-        (session_scope_module.query(SubmissionOnCVFold)
-                             .filter(SubmissionOnCVFold.submission_id ==
-                                     ID_SUBMISSION)
-                             .first())
-
-    detached_cv_fold = DetachedSubmissionOnCVFold(cv_fold)
-    assert re.match('Submission(.*).*', repr(detached_cv_fold))
 
 
 @pytest.mark.parametrize(

@@ -7,8 +7,6 @@ import shutil
 import numpy as np
 import pandas as pd
 
-from sqlalchemy.orm import defer
-
 from ..exceptions import DuplicateSubmissionError
 from ..exceptions import MissingExtensionError
 from ..exceptions import MissingSubmissionFileError
@@ -378,33 +376,6 @@ def get_submission_state(session, submission_id):
     return submission.state
 
 
-def get_predictions(session, submission_id):
-    """Get the predictions from the database of a submission.
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-    submission_id : int
-        The id of the submission.
-
-    Returns
-    -------
-    predictions : pd.DataFrame
-        A pandas dataframe containing the predictions on each fold.
-    """
-    results = defaultdict(list)
-    all_cv_folds = (session.query(SubmissionOnCVFold)
-                           .filter_by(submission_id=submission_id)
-                           .all())
-    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
-    for fold_id, cv_fold in enumerate(all_cv_folds):
-        results['fold'].append(fold_id)
-        results['y_pred_train'].append(cv_fold.full_train_y_pred)
-        results['y_pred_test'].append(cv_fold.test_y_pred)
-    return pd.DataFrame(results).set_index('fold')
-
-
 def get_time(session, submission_id):
     """Get the computation time for each fold of a submission.
 
@@ -423,8 +394,6 @@ def get_time(session, submission_id):
     results = defaultdict(list)
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
-                           .options(defer("full_train_y_pred"),
-                                    defer("test_y_pred"))
                            .all())
     all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
@@ -453,8 +422,6 @@ def get_scores(session, submission_id):
     index = []
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
-                           .options(defer("full_train_y_pred"),
-                                    defer("test_y_pred"))
                            .all())
     all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
@@ -627,36 +594,6 @@ def set_submission_state(session, submission_id, state):
     session.commit()
 
 
-def set_predictions(session, submission_id, path_predictions):
-    """Set the predictions in the database.
-
-    Parameters
-    ----------
-    config : dict
-        Configuration file containing the information to connect to the
-        dataset. If you are using the configuration provided by ramp, it
-        corresponds to the the `sqlalchemy` key.
-    submission_id : int
-        The id of the submission.
-    path_predictions : str
-        The path where the results files are located.
-    """
-    all_cv_folds = (session.query(SubmissionOnCVFold)
-                           .filter_by(submission_id=submission_id)
-                           .options(defer("full_train_y_pred"),
-                                    defer("test_y_pred"))
-                           .all())
-    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
-    for fold_id, cv_fold in enumerate(all_cv_folds):
-        path_results = os.path.join(path_predictions,
-                                    'fold_{}'.format(fold_id))
-        cv_fold.full_train_y_pred = np.load(
-            os.path.join(path_results, 'y_pred_train.npz'))['y_pred']
-        cv_fold.test_y_pred = np.load(
-            os.path.join(path_results, 'y_pred_test.npz'))['y_pred']
-    session.commit()
-
-
 def set_time(session, submission_id, path_predictions):
     """Set the timing information in the database.
 
@@ -671,8 +608,6 @@ def set_time(session, submission_id, path_predictions):
     """
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
-                           .options(defer("full_train_y_pred"),
-                                    defer("test_y_pred"))
                            .all())
     all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
@@ -702,8 +637,6 @@ def set_scores(session, submission_id, path_predictions):
     """
     all_cv_folds = (session.query(SubmissionOnCVFold)
                            .filter_by(submission_id=submission_id)
-                           .options(defer("full_train_y_pred"),
-                                    defer("test_y_pred"))
                            .all())
     all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
@@ -783,71 +716,6 @@ def set_submission_error_msg(session, submission_id, error_msg):
     """
     submission = select_submission_by_id(session, submission_id)
     submission.error_msg = error_msg
-    session.commit()
-
-
-# Computing functions: old style functions when it was using some functionality
-#  from the database itself.
-def score_submission(session, submission_id):
-    """Score a submission and change its state to 'scored'
-
-    Parameters
-    ----------
-    session : :class:`sqlalchemy.orm.Session`
-        The session to directly perform the operation on the database.
-    submission_id : int
-        submission id
-
-    Raises
-    ------
-    ValueError :
-        when the state of the submission is not 'tested'
-        (only a submission with state 'tested' can be scored)
-    """
-    submission = select_submission_by_id(session, submission_id)
-    if submission.state != 'tested':
-        raise ValueError('Submission state must be "tested"'
-                         ' to score, not "{}"'.format(submission.state))
-
-    # We are conservative:
-    # only score if all stages (train, test, validation)
-    # were completed. submission_on_cv_fold compute scores can be called
-    # manually if needed for submission in various error states.
-    all_cv_folds = (session.query(SubmissionOnCVFold)
-                           .filter_by(submission_id=submission_id)
-                           .options(defer("full_train_y_pred"),
-                                    defer("test_y_pred"))
-                           .all())
-    all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
-    for submission_on_cv_fold in all_cv_folds:
-        submission_on_cv_fold.session = session
-        submission_on_cv_fold.compute_train_scores()
-        submission_on_cv_fold.compute_valid_scores()
-        submission_on_cv_fold.compute_test_scores()
-        submission_on_cv_fold.state = 'scored'
-    session.commit()
-    # TODO: We are not managing the bagged score.
-    # submission.compute_test_score_cv_bag(session)
-    # submission.compute_valid_score_cv_bag(session)
-    # Means and stds were constructed on demand by fetching fold times.
-    # It was slow because submission_on_folds contain also possibly large
-    # predictions. If postgres solves this issue (which can be tested on
-    # the mean and std scores on the private leaderbaord), the
-    # corresponding columns (which are now redundant) can be deleted in
-    # Submission and this computation can also be deleted.
-    submission.train_time_cv_mean = np.mean(
-        [ts.train_time for ts in all_cv_folds])
-    submission.valid_time_cv_mean = np.mean(
-        [ts.valid_time for ts in all_cv_folds])
-    submission.test_time_cv_mean = np.mean(
-        [ts.test_time for ts in all_cv_folds])
-    submission.train_time_cv_std = np.std(
-        [ts.train_time for ts in all_cv_folds])
-    submission.valid_time_cv_std = np.std(
-        [ts.valid_time for ts in all_cv_folds])
-    submission.test_time_cv_std = np.std(
-        [ts.test_time for ts in all_cv_folds])
-    submission.state = 'scored'
     session.commit()
 
 
