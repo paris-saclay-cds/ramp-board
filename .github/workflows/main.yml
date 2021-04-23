@@ -22,7 +22,9 @@ jobs:
         include:
           - os: ubuntu-18.04
             python: 3.8
-            ramp-workflow-version: master
+            # the following has no effect with manual trigger
+            # where the ramp-workflow is specified anyway
+            ramp_workflow_version: master
 
 
     services:
