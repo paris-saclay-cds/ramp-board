@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       ramp_workflow_url:
-        description: 'ramp-workflow repo URL'
+        description: 'pip installable ramp-workflow repo URL'
         required: true
-        default: 'https://github.com/paris-saclay-cds/ramp-workflow.git'
+        default: 'https://github.com/paris-saclay-cds/ramp-workflow/archive/refs/heads/master.zip'
 
 
 jobs:
@@ -65,7 +65,7 @@ jobs:
               python -m pip install "dask[distributed]==2021.4.0"
           fi
           if [ "${{ matrix.ramp_workflow_version }}" == "master" ]; then
-             pip install https://github.com/paris-saclay-cds/ramp-workflow.git
+             pip install https://github.com/paris-saclay-cds/ramp-workflow/archive/refs/heads/master.zip
           fi
           if [ "${{ github.event.inputs.ramp_workflow_url }}" != "" ]; then
              pip install "${{ github.event.inputs.ramp_workflow_url }}"
