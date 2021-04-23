@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-18.04]
-        python: [3.6, 3.7, 3.8]
+        python: [3.6, 3.7, 3.8, 3.9]
         include:
           - os: ubuntu-18.04
             python: 3.8
@@ -62,10 +62,10 @@ jobs:
           if [ "$PYTHON_VERSION" == "3.8" ]; then
               python -m pip install "dask[distributed]==2021.4.0"
           fi
-          if [ "${{ matrix.ramp_workflow_version }}" == "master" ]
+          if [ "${{ matrix.ramp_workflow_version }}" == "master" ]; then
              pip install https://github.com/paris-saclay-cds/ramp-workflow.git
           fi
-          if [ "${{ github.event.inputs.ramp_workflow_url }}" != "" ]
+          if [ "${{ github.event.inputs.ramp_workflow_url }}" != "" ]; then
              pip install "${{ github.event.inputs.ramp_workflow_url }}"
           fi
           make inplace
