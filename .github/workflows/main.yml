@@ -1,6 +1,14 @@
 name: main
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      ramp_workflow_url:
+        description: 'ramp-workflow repo URL'
+        required: true
+        default: 'https://github.com/paris-saclay-cds/ramp-workflow.git'
 
 
 jobs:
@@ -11,6 +19,11 @@ jobs:
       matrix:
         os: [ubuntu-18.04]
         python: [3.6, 3.7, 3.8]
+        include:
+          - os: ubuntu-18.04
+            python: 3.8
+            ramp-workflow-version: master
+
 
     services:
       postgres:
@@ -48,6 +61,12 @@ jobs:
           source activate testenv
           if [ "$PYTHON_VERSION" == "3.8" ]; then
               python -m pip install "dask[distributed]==2021.4.0"
+          fi
+          if [ "${{ matrix.ramp_workflow_version }}" == "master" ]
+             pip install https://github.com/paris-saclay-cds/ramp-workflow.git
+          fi
+          if [ "${{ github.event.inputs.ramp_workflow_url }}" != "" ]
+             pip install "${{ github.event.inputs.ramp_workflow_url }}"
           fi
           make inplace
         env:
