@@ -62,7 +62,7 @@ jobs:
         run: |
           source activate testenv
           if [ "$PYTHON_VERSION" == "3.8" ]; then
-              python -m pip install "dask==2021.4.1 distributed==2021.4.1"
+              python -m pip install "dask==2021.4.1" "distributed==2021.4.1"
           fi
           if [ "${{ matrix.ramp_workflow_version }}" == "master" ]; then
              pip install https://github.com/paris-saclay-cds/ramp-workflow/archive/refs/heads/master.zip
