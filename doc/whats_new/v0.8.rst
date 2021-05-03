@@ -10,12 +10,17 @@ Changelog
 ...............
 - Add possibility to export the leaderboards (private and public) as .csv
   file using command line (:pr:`507` by :user:`Maria Telenczuk <maikia>`).
+- adds a CLI subcommand ``compute_contributivity`` to compute contributivity
+  (:pr:`517`)
 
 `ramp-engine`
 .............
 
 `ramp-frontend`
 ...............
+
+- Add `TRACK_CREDIT` global configuration option (with default to False) to
+  track credit for submissions (:pr:`517`)
 
 `ramp-utils`
 ............
