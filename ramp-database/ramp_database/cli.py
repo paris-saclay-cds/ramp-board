@@ -13,6 +13,7 @@ from .utils import session_scope
 from .tools import event as event_module
 from .tools import leaderboard as leaderboard_module
 from .tools import submission as submission_module
+from .tools import contributivity as contributivity_module
 from .tools import team as team_module
 from .tools import user as user_module
 
@@ -380,6 +381,32 @@ def update_all_users_leaderboards(config, event):
     config = read_config(config)
     with session_scope(config['sqlalchemy']) as session:
         leaderboard_module.update_all_user_leaderboards(session, event)
+
+
+@main.command()
+@click.option("--config", default='config.yml', show_default=True,
+              help='Configuration file YAML format containing the database '
+              'information')
+@click.option("--config-event", required=True,
+              help='The event config file name.')
+@click.option("--min-improvement", default='0.0',
+              help='The minimum score improvement '
+              'to continue building the ensemble')
+def compute_contributivity(config, config_event, min_improvement):
+    """Blend submissions, compute combined score and contributivities."""
+    config_event = generate_ramp_config(config_event, config)
+    event_name = config_event['event_name']
+    config = read_config(config)
+    with session_scope(config['sqlalchemy']) as session:
+        contributivity_module.compute_contributivity(
+            session, event_name, config_event['ramp_kit_dir'],
+            config_event['ramp_data_dir'],
+            config_event['ramp_predictions_dir'], float(min_improvement))
+        contributivity_module.compute_historical_contributivity(
+                session, event_name
+        )
+        leaderboard_module.update_leaderboards(session, event_name)
+        leaderboard_module.update_all_user_leaderboards(session, event_name)
 
 
 def start():
