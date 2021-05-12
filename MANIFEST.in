@@ -3,4 +3,3 @@ include LICENSE
 include Makefile
 include .gitignore
 include environment.yml
-include requirements.txt

@@ -46,11 +46,8 @@ Installation
       conda activate testenv
       ```
 
-    - with `pip`
+    - with `pip` dependencies will be automatically installed in the next step.
 
-      ```bash
-      pip install -r requirements.txt
-      ```
 
 3. Install all the elements at once
 

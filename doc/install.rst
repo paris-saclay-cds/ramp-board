@@ -19,44 +19,11 @@ Install from sources
 Prerequisites
 -------------
 
-The dependencies required by the RAMP bundle are the following:
+if you use ``pip`` requirements will be automatically installed when you
+install the ``ramp-*`` packages.
 
-1. ``ramp-database``:
-    * bcrypt
-    * click
-    * gitpython
-    * nbconvert
-    * numpy
-    * pandas
-    * psycopg2-binary
-    * sqlalchemy
-2. ``ramp-engine``:
-    * click
-    * numpy
-    * psycopg2-binary
-    * sqlalchemy
-3. ``ramp-frontend``:
-    * bokeh
-    * click
-    * Flask
-    * Flask-Login
-    * Flask-Mail
-    * Flask-SQLAlchemy
-    * Flask-WTF
-    * numpy
-    * pandas
-4. ``ramp-utils``:
-    * click
-    * pandas
-    * pyyaml
-
-You can install those requirements through ``pip``, using the
-``requirements.txt`` file present in the root folder of the ``ramp-board``
-repository::
-
-    pip install -r requirements.txt
-
-You can use ``conda`` instead of ``pip`` using the ``environment.yml`` file::
+If you use ``conda`` requirements can be manually installed from the
+``environment.yml`` file::
 
     conda env update --file environment.yml --name <your_env>
 

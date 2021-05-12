@@ -1,30 +1,30 @@
 # This is the testing environment.
 name: testenv
 dependencies:
-  - bcrypt
-  - bokeh
-  - boto3
-  - click
-  - flake8
-  - Flask
-  - Flask-Login
-  - Flask-SQLAlchemy
-  - gitpython
-  - itsdangerous
+  - bcrypt=3.2.*
+  - bokeh=2.3.*
+  - boto3=1.17.*
+  - click=7.1.*
+  - flake8=3.9.*
+  - Flask=1.1.*
+  - Flask-Login=0.5.*
+  - Flask-SQLAlchemy=2.5.*
+  - gitpython=3.1.*
+  - itsdangerous=1.1.*
   - nbconvert
-  - numpy
-  - pandas
+  - numpy=1.20.*
+  - pandas=1.2.*
   - pip
-  - pyyaml
+  - pyyaml=5.4.*
   - pytest
   - pytest-cov
-  - scikit-image
-  - sqlalchemy
+  - scikit-image=0.18.*
+  - sqlalchemy=1.4.*
   - pip:
     - codecov
     - ramp-workflow
-    - psycopg2-binary
-    - Flask-Mail
-    - Flask-Wtf  # install from conda default channel when 0.14.3 is available
-    - wtforms[email]
-    - email_validator
+    - psycopg2-binary~=2.8.6
+    - Flask-Mail~=0.9.1
+    - Flask-Wtf~=0.14.3  # install from conda default channel when 0.14.3 is available
+    - wtforms[email]~=2.3.3
+    - email_validator~=1.1.2
