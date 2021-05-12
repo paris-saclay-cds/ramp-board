@@ -16,3 +16,4 @@ User Guide
    workers.rst
    frontend.rst
    running_challenge.rst
+   server-maintenance.rst
