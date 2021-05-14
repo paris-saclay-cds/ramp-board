@@ -40,6 +40,7 @@ INSTALL_REQUIRES = [
     'Flask-Mail~=0.9.1',
     'Flask-SQLAlchemy~=2.5.0',
     'Flask-WTF~=0.14.3',
+    'email_validator~=1.1.2',
     'itsdangerous~=1.1.0',
     'numpy~=1.20.0',
     'pandas~=1.2.0',
