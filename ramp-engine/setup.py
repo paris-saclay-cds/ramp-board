@@ -32,7 +32,12 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Programming Language :: Python :: 3.6',
                'Programming Language :: Python :: 3.7',
                'Programming Language :: Python :: 3.8']
-INSTALL_REQUIRES = ['click', 'numpy', 'psycopg2-binary', 'sqlalchemy']
+INSTALL_REQUIRES = [
+    'click~=7.1.0',
+    'numpy~=1.20.0',
+    'psycopg2-binary~=2.8.6',
+    'sqlalchemy~=1.4.0',
+]
 EXTRAS_REQUIRE = {
     'tests': ['pytest', 'pytest-cov'],
     'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc']

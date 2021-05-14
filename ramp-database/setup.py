@@ -32,8 +32,16 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Programming Language :: Python :: 3.6',
                'Programming Language :: Python :: 3.7',
                'Programming Language :: Python :: 3.8']
-INSTALL_REQUIRES = ['bcrypt', 'click', 'gitpython', 'nbconvert', 'numpy',
-                    'pandas', 'psycopg2-binary', 'sqlalchemy']
+INSTALL_REQUIRES = [
+    'bcrypt~=3.2.0',
+    'click~=7.1.0',
+    'gitpython~=3.1.0',
+    'nbconvert',
+    'numpy~=1.20.0',
+    'pandas~=1.2.0',
+    'psycopg2-binary~=2.8.6',
+    'sqlalchemy~=1.4.0',
+]
 EXTRAS_REQUIRE = {
     'tests': ['pytest', 'pytest-cov'],
     'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc']

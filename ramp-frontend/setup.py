@@ -32,9 +32,18 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Programming Language :: Python :: 3.6',
                'Programming Language :: Python :: 3.7',
                'Programming Language :: Python :: 3.8']
-INSTALL_REQUIRES = ['bokeh', 'click', 'Flask', 'Flask-Login', 'Flask-Mail',
-                    'Flask-SQLAlchemy', 'Flask-WTF', 'itsdangerous', 'numpy',
-                    'pandas']
+INSTALL_REQUIRES = [
+    'bokeh~=2.3.0',
+    'click~=7.1.0',
+    'Flask~=1.1.0',
+    'Flask-Login~=0.5.0',
+    'Flask-Mail~=0.9.1',
+    'Flask-SQLAlchemy~=2.5.0',
+    'Flask-WTF~=0.14.3',
+    'itsdangerous~=1.1.0',
+    'numpy~=1.20.0',
+    'pandas~=1.2.0',
+]
 EXTRAS_REQUIRE = {
     'tests': ['pytest', 'pytest-cov'],
     'docs': ['sphinx', 'sphinx_rtd_theme', 'numpydoc']
