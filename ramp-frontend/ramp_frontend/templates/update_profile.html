@@ -132,14 +132,38 @@
         <input type="submit" value="Update" class="ui submit button">
     </div>
     </form>
-  </div>
+   </div>
+   <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+	<div class="title">Privacy</div>
+      </div>
+    </div>
+    <div class="card-body">
+    <input type="submit" value="Delete Account" class="ui submit button", id="delete-account-btn">
+   </div>
+   </div>
 </div>
 </div>
 {% endblock %}
 {% block scripts %}
 <script>
   $(function () {
-    $('#formerror').modal('toggle')
+    $('#formerror').modal('toggle');
+
+    $('#delete-account-btn').click(() => {
+      if (confirm(`
+	     WARNING: You are about to delete your RAMP account.
+	     This action is not reversible.
+	     Note that all your personal information will be removed, however
+	     your submissions will remain on the RAMP platform.
+
+	     Are you sure?
+        `) === true) {
+	window.location.href = '/delete_profile';
+     }
+    });
   });
+
 </script>
 {% endblock %}

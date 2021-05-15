@@ -13,6 +13,7 @@ from ramp_database.testing import create_toy_db
 from ramp_database.utils import setup_db
 from ramp_database.utils import session_scope
 from ramp_database.utils import check_password
+from ramp_database.tools.user import add_user
 
 from ramp_database.tools.user import get_user_by_name
 from ramp_database.tools.user import get_user_by_name_or_email
@@ -148,6 +149,38 @@ def test_logout(client_session):
     login(client, 'test_user', 'test')
     rv = client.get('/logout', follow_redirects=True)
     assert rv.status_code == 200
+
+
+def test_delete_profile(client_session):
+    client, session = client_session
+
+    # try to delete profile without previous login
+    rv = client.get('/delete_profile')
+    assert rv.status_code == 302
+    assert rv.location == 'http://localhost/login?next=%2Fdelete_profile'
+    rv = client.get('/delete_profile', follow_redirects=True)
+    assert rv.status_code == 200
+
+    # delete profile from a previous login
+    user = add_user(session, name='test_user_tmp',
+                    password='password', lastname='lastname',
+                    firstname='firstname', email='test_user_tmp@email.com',
+                    access_level='asked', github_url="some")
+    user_id = user.id
+    user_password = user.hashed_password
+    login(client, 'test_user_tmp', 'password')
+    rv = client.get('/delete_profile', follow_redirects=False)
+    assert rv.status_code == 302
+    assert rv.location == 'http://localhost/'
+    session.refresh(user)
+    assert not user.is_authenticated
+    assert user.firstname == "deleted"
+    assert user.lastname == "deleted"
+    assert user.email == f"{user_id}@deleted.com"
+    assert user.github_url == ""
+    assert user.hashed_password != user_password
+    assert len(user.admined_teams) == 1
+    assert user.admined_teams[0].name == f"deleted_{user_id}"
 
 
 @pytest.mark.parametrize("request_function", ['get', 'post'])

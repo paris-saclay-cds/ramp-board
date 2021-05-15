@@ -1,5 +1,6 @@
 """Blueprint for all authentication functions for the RAMP frontend."""
 import logging
+import uuid
 
 import flask_login
 
@@ -23,7 +24,7 @@ from ramp_database.tools.user import add_user_interaction
 from ramp_database.tools.user import get_user_by_name_or_email
 from ramp_database.tools.user import set_user_by_instance
 
-from ramp_database.model import User
+from ramp_database.model import User, Team
 
 from ramp_database.exceptions import NameClashError
 
@@ -209,6 +210,35 @@ def update_profile():
     form.bio.data = flask_login.current_user.bio
     form.is_want_news.data = flask_login.current_user.is_want_news
     return render_template('update_profile.html', form=form)
+
+
+@mod.route("/delete_profile", methods=['GET'])
+@flask_login.login_required
+def delete_profile():
+    user = flask_login.current_user
+    user_id = user.id
+    user_name = user.name
+    session['logged_in'] = False
+    user.name = f"deleted_{user_id}"
+    user.is_authenticated = False
+    user.hashed_password = uuid.uuid4().hex
+
+    query = db.session.query(Team).filter(Team.admin_id == user_id)
+    query.update({Team.name: f"deleted_{user_id}"})
+
+    # Reinitialize all the remaining User fields to defaults.
+    # session.commit is done inside the following function
+    set_user_by_instance(
+        db.session,
+        user=user,
+        email=f"{user_id}@deleted.com",
+        lastname="deleted",
+        firstname="deleted",
+    )
+    logger.info(f'User {user_name} profile is deleted.')
+    flask_login.logout_user()
+
+    return redirect('/')
 
 
 @mod.route('/reset_password', methods=["GET", "POST"])
