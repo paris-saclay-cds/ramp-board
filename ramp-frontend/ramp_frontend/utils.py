@@ -3,12 +3,24 @@ The :mod:`ramp_frontend.utils` provides utilities to ease sending email.
 """
 
 import logging
+from functools import wraps
+from threading import Thread
 
+from flask import current_app
 from flask_mail import Message
 
 from ramp_frontend import mail
 
 logger = logging.getLogger('RAMP-FRONTEND')
+
+
+def async_task(f):
+    """ Takes a function and runs it in a thread """
+    @wraps(f)
+    def _decorated(*args, **kwargs):
+        thr = Thread(target=f, args=args, kwargs=kwargs)
+        thr.start()
+    return _decorated
 
 
 def body_formatter_user(user):
@@ -55,10 +67,24 @@ def send_mail(to, subject, body):
     body : str
         The body of the email.
     """
+    app = current_app._get_current_object()
     try:
         msg = Message(subject)
         msg.body = body
         msg.add_recipient(to)
-        mail.send(msg)
+        _send_async_email(app, msg)
     except Exception as e:
         logger.error('Mailing error: {}'.format(e))
+
+
+@async_task
+def _send_async_email(flask_app, msg):
+    """ Sends an send_email asynchronously
+    Args:
+        flask_app (flask.Flask): Current flask instance
+        msg (Message): Message to send
+    Returns:
+        None
+    """
+    with flask_app.app_context():
+        mail.send(msg)
