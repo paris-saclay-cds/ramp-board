@@ -18,6 +18,7 @@ dependencies:
   - pyyaml
   - pytest
   - pytest-cov
+  - python <3.8
   - scikit-image
   - sqlalchemy
   - pip:
