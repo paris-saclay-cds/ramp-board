@@ -10,7 +10,7 @@ export PATH="$MINICONDA_PATH/bin:$PATH"
 conda update --yes --quiet conda
 
 # create the environment
-conda env create --file environment.yml python==3.8
+conda env create --file environment.yml python<3.8
 source activate testenv
 conda install --yes sphinx sphinx_rtd_theme numpydoc graphviz
 pip install eralchemy sphinx-click
