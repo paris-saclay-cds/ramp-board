@@ -33,7 +33,7 @@ Installation
     cd ramp-board
     ```
 
-2. Install Python dependencies using `conda` or `pip`
+2. Install Python 3.7+ and dependencies using `conda` or `pip`:
 
     - with `conda`
 
