@@ -7,6 +7,8 @@ Install
 Install from PyPI
 =================
 
+Ramp-board requires Python 3.7+.
+
 The RAMP bundle is available in PyPI and can be installed via `pip`::
 
     pip install ramp-database ramp-engine ramp-frontend ramp-utils

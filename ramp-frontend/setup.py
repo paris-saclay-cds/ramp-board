@@ -72,6 +72,7 @@ setup(
     package_data=PACKAGE_DATA,
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
+    python_requires=">=3.7",
     entry_points={
         'console_scripts': ['ramp-frontend = ramp_frontend.cli:start']
     }
