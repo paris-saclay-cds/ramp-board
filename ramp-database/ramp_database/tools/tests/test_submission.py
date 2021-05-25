@@ -478,7 +478,8 @@ def test_compute_contributivity(session_scope_module):
     ramp_submission_dir = ramp_config['ramp_submissions_dir']
     ramp_predictions_dir = ramp_config['ramp_predictions_dir']
 
-    submission_id = 9
+    submission = get_submission_by_name(session_scope_module, 'iris_test',
+                                        'test_user', 'starting_kit')
 
     # for testing blending, we need to train a submission
     # ouputting predictions into the submission directory
@@ -486,12 +487,12 @@ def test_compute_contributivity(session_scope_module):
         ramp_kit_dir=ramp_kit_dir,
         ramp_data_dir=ramp_data_dir,
         ramp_submission_dir=ramp_submission_dir,
-        submission='submission_00000000{}'.format(submission_id),
+        submission=submission.basename,
         save_output=True)
 
     # Mark the submission as scored in the DB
     sub = (session.query(Submission)
-                  .filter(Submission.id == submission_id)
+                  .filter(Submission.id == submission.id)
                   .first())
     sub.set_state('scored')
     session.commit()
