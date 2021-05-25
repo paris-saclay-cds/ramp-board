@@ -21,6 +21,8 @@ Changelog
 
 - Add `TRACK_CREDIT` global configuration option (with default to False) to
   track credit for submissions (:pr:`517`)
+- Add button to delete user account under the ``/update_profile`` endpoint.
+  (:pr:`527`)
 
 `ramp-utils`
 ............
