@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}List of users{% endblock %}
+
+{% block head %}
+    {{ super() }}
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"
+{% endblock %}
+
+{% block content %}
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Login Error</h4>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message">
+          {% for message in messages %}
+          {{ message }}
+          {% endfor %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endwith %}
+
+<div class="container">
+  <div class="row">
+    <form method="post">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="title">List of all users<br />
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm-12 col-lg-12">
+	      <table id="user-table" class="display" style="width:100%">
+              <thead>
+                  <tr>
+                      <th>id</th>
+                      <th>Username</th>
+                      <th>First name</th>
+                      <th>Last name</th>
+                      <th>Email</th>
+                      <th>Access level</th>
+                      <th>University</th>
+                      <th>Graduation date</th>
+                      <th>Country</th>
+                  </tr>
+              </thead>	      
+              <tbody>
+                  {% for user in all_users %}
+	          <tr>
+		      <td>{{ user.id }}</td>
+		      <td>{{ user.name }}</td>
+		      <td>{{ user.firstname }}</td>
+		      <td>{{ user.lastname }}</td>
+		      <td>{{ user.email }}</td>
+		      <td>{{ user.access_level }}</td>
+		      <td>{{ user.university.name or "" }}</td>
+		      <td>{{ user.graduation_year or ""}}</td>
+		      <td>{{ user.university.country or "" }}</td>
+		  </tr>
+              {% endfor %}
+	      </table>
+            </div>
+          </div>
+        </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(document).ready( function () {
+	    $('#user-table').DataTable();
+  } );
+</script>
+{% endblock %}

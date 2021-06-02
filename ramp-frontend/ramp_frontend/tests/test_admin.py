@@ -52,6 +52,7 @@ def client_session(database_connection):
 @pytest.mark.parametrize(
     "page",
     ["/approve_users",
+     "/manage_users",
      "/sign_up/test_user",
      "/events/iris_test/sign_up/test_user",
      "/events/iris_test/update",
@@ -71,6 +72,7 @@ def test_check_login_required(client_session, page):
 @pytest.mark.parametrize(
     "page, request_function",
     [("/approve_users", ["get", "post"]),
+     ('/manage_users', ['get']),
      ("/sign_up/test_user", ["get"]),
      ("/events/iris_test/sign_up/test_user", ["get"]),
      ("/events/iris_test/update", ["get", "post"]),
@@ -241,6 +243,22 @@ def test_approve_sign_up_for_event(client_session):
         with client.session_transaction() as cs:
             flash_message = dict(cs['_flashes'])
         assert "is signed up for Event" in flash_message['Successful sign-up']
+
+
+def test_manage_users(client_session):
+    client, session = client_session
+
+    # create 2 new users
+    add_user(session, 'xx', 'xx', 'xx', 'xx', 'xx', access_level='user')
+    add_user(session, 'yy', 'yy', 'yy', 'yy', 'yy', access_level='asked')
+    # ask for sign up for an event for the first user
+    _, _, event_team = ask_sign_up_team(session, 'iris_test', 'xx')
+
+    with login_scope(client, 'test_iris_admin', 'test') as client:
+        # GET check that we get all users
+        rv = client.get('/manage_users')
+        assert rv.status_code == 200
+        # assert b'yy yy - yy' in rv.data
 
 
 def test_update_event(client_session):
