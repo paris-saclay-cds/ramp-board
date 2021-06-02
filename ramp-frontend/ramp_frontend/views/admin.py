@@ -126,7 +126,7 @@ def manage_users():
         )
     all_users = (
         User.query
-        .order_by(User.update_timestamp.desc())
+        .order_by(User.signup_timestamp.desc())
         .all()
     )
     return render_template('manage_users.html',
