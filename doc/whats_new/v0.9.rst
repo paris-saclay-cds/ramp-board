@@ -1,0 +1,23 @@
+.. _changes_0_9:
+
+Version 0.8 (ongoing)
+=====================
+
+Changelog
+---------
+
+
+`ramp-database`
+...............
+
+
+`ramp-engine`
+.............
+
+
+`ramp-frontend`
+...............
+
+
+`ramp-utils`
+............
