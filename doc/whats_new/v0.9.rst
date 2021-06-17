@@ -10,6 +10,8 @@ Changelog
 `ramp-database`
 ...............
 
+- Don't pre-select all users by default on the approval page :pr:`536`
+
 
 `ramp-engine`
 .............
