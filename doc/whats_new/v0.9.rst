@@ -18,6 +18,8 @@ Changelog
 `ramp-frontend`
 ...............
 
+- Add a ``/manage_users`` admin page with a list of all users, and a search input :pr:`538`
+
 
 `ramp-utils`
 ............
