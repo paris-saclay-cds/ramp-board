@@ -249,8 +249,8 @@ def test_manage_users(client_session):
     client, session = client_session
 
     # create 2 new users
-    add_user(session, 'xx', 'xx', 'xx', 'xx', 'xx', access_level='user')
-    add_user(session, 'yy', 'yy', 'yy', 'yy', 'yy', access_level='asked')
+    add_user(session, 'ff', 'ff', 'ff', 'ff', 'ff', access_level='user')
+    add_user(session, 'll', 'll', 'll', 'll', 'll', access_level='asked')
     # ask for sign up for an event for the first user
     _, _, event_team = ask_sign_up_team(session, 'iris_test', 'xx')
 
