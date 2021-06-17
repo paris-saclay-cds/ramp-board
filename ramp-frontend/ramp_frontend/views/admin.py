@@ -120,8 +120,8 @@ def manage_users():
     """Get a list of users"""
     if not flask_login.current_user.access_level == 'admin':
         return redirect_to_user(
-            'Sorry {}, you do not have admin rights'
-            .format(flask_login.current_user.firstname),
+            (f'Sorry {flask_login.current_user.firstname}, '
+             f'you do not have admin rights'),
             is_error=True
         )
     all_users = (
