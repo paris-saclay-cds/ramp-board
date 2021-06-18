@@ -10,3 +10,9 @@ repos:
     hooks:
     -   id: flake8
         types: [file, python]
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.901
+    hooks:
+    -   id: mypy
+        types: [file, python]
+        additional_dependencies: [types-PyYAML, types-click, types-itsdangerous, types-Flask, types-Werkzeug]
