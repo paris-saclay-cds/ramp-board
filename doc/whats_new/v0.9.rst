@@ -10,8 +10,8 @@ Changelog
 `ramp-database`
 ...............
 
+- Don't pre-select all users by default on the approval page :pr:`536`
 - Add `User.update_timestamp` database field :pr:`537`
-
 
 `ramp-engine`
 .............
