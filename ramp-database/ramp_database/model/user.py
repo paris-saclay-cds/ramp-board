@@ -8,6 +8,7 @@ from sqlalchemy import Integer
 from sqlalchemy import Boolean
 from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
+from sqlalchemy import sql
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
@@ -132,6 +133,8 @@ class User(Model):
         default='asked'
     )
     signup_timestamp = Column(DateTime, nullable=False)
+    update_timestamp = Column(DateTime, onupdate=sql.func.now(),
+                              server_default=sql.func.now())
 
     # Flask-Login fields
     is_authenticated = Column(Boolean, default=False)
