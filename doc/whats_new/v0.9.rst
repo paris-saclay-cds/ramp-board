@@ -1,6 +1,6 @@
 .. _changes_0_9:
 
-Version 0.8 (ongoing)
+Version 0.9 (ongoing)
 =====================
 
 Changelog
@@ -10,6 +10,8 @@ Changelog
 `ramp-database`
 ...............
 
+- Add `User.update_timestamp` database field :pr:`537`
+
 
 `ramp-engine`
 .............
@@ -17,6 +19,8 @@ Changelog
 
 `ramp-frontend`
 ...............
+
+- The list of users to approve are sorted by newest first :pr:`537`
 
 
 `ramp-utils`
