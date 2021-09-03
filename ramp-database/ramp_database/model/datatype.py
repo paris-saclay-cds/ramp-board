@@ -6,11 +6,12 @@ import numpy as np
 from sqlalchemy import LargeBinary
 from sqlalchemy import TypeDecorator
 
-__all__ = ['NumpyType']
+__all__ = ["NumpyType"]
 
 
 class NumpyType(TypeDecorator):
     """Storing zipped numpy arrays."""
+
     impl = LargeBinary
 
     def process_bind_param(self, value, dialect):

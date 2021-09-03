@@ -5,11 +5,11 @@ from ..base import BaseWorker, _get_traceback
 from . import api as aws
 
 
-logger = logging.getLogger('RAMP-AWS')
+logger = logging.getLogger("RAMP-AWS")
 
-log_file = 'aws_worker.log'
-formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')  # noqa
-fileHandler = logging.FileHandler(log_file, mode='a')
+log_file = "aws_worker.log"
+formatter = logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s")  # noqa
+fileHandler = logging.FileHandler(log_file, mode="a")
 fileHandler.setFormatter(formatter)
 streamHandler = logging.StreamHandler()
 streamHandler.setFormatter(formatter)
@@ -47,7 +47,7 @@ class AWSWorker(BaseWorker):
 
     def __init__(self, config, submission):
         super().__init__(config, submission)
-        self.submissions_path = self.config['submissions_dir']
+        self.submissions_path = self.config["submissions_dir"]
         self.instance = None
 
     def setup(self):
@@ -57,36 +57,41 @@ class AWSWorker(BaseWorker):
         to the instance.
         """
         # sanity check for the configuration variable
-        for required_param in ('instance_type', 'access_key_id'):
+        for required_param in ("instance_type", "access_key_id"):
             self._check_config_name(self.config, required_param)
 
-        logger.info("Setting up AWSWorker for submission '{}'".format(
-            self.submission))
+        logger.info("Setting up AWSWorker for submission '{}'".format(self.submission))
         _instances, status = aws.launch_ec2_instances(self.config)
 
         if not _instances:
-            if status == 'retry':
+            if status == "retry":
                 # there was a timeout error, put this submission back in the
                 # queue and try again later
-                logger.warning("Unable to launch instance for submission "
-                               f"{self.submission}. Adding it back to the "
-                               "queue and will try again later")
-                self.status = 'retry'
+                logger.warning(
+                    "Unable to launch instance for submission "
+                    f"{self.submission}. Adding it back to the "
+                    "queue and will try again later"
+                )
+                self.status = "retry"
             else:
-                logger.error("Unable to launch instance for submission "
-                             f"{self.submission}. An error occured: {status}")
-                self.status = 'error'
+                logger.error(
+                    "Unable to launch instance for submission "
+                    f"{self.submission}. An error occured: {status}"
+                )
+                self.status = "error"
             return
         else:
-            logger.info("Instance launched for submission '{}'".format(
-                        self.submission))
-            self.instance, = _instances
+            logger.info("Instance launched for submission '{}'".format(self.submission))
+            (self.instance,) = _instances
 
         for _ in range(5):
             # try uploading the submission a few times, as this regularly fails
             exit_status = aws.upload_submission(
-                self.config, self.instance.id, self.submission,
-                self.submissions_path)
+                self.config,
+                self.instance.id,
+                self.submission,
+                self.submissions_path,
+            )
             if exit_status == 0:
                 break
             else:
@@ -94,11 +99,12 @@ class AWSWorker(BaseWorker):
         if exit_status != 0:
             logger.error(
                 'Cannot upload submission "{}"'
-                ', an error occured'.format(self.submission))
-            self.status = 'error'
+                ", an error occured".format(self.submission)
+            )
+            self.status = "error"
         else:
             logger.info("Uploaded submission '{}'".format(self.submission))
-            self.status = 'setup'
+            self.status = "setup"
 
     def launch_submission(self):
         """Launch the submission.
@@ -106,37 +112,41 @@ class AWSWorker(BaseWorker):
         Basically, this runs ``ramp_test_submission`` inside the
         Amazon instance.
         """
-        if self.status == 'running':
-            raise RuntimeError("Cannot launch submission: one is already "
-                               "started")
-        if self.status == 'error':
+        if self.status == "running":
+            raise RuntimeError("Cannot launch submission: one is already " "started")
+        if self.status == "error":
             raise RuntimeError("Cannot launch submission: the setup failed")
         try:
             exit_status = aws.launch_train(
-                self.config, self.instance.id, self.submission)
+                self.config, self.instance.id, self.submission
+            )
         except Exception as e:
-            logger.error(f'Unknown error occurred: {e}')
+            logger.error(f"Unknown error occurred: {e}")
             exit_status = 1
 
         if exit_status != 0:
             logger.error(
                 'Cannot start training of submission "{}"'
-                ', an error occured.'.format(self.submission))
-            self.status = 'error'
+                ", an error occured.".format(self.submission)
+            )
+            self.status = "error"
         else:
-            self.status = 'running'
+            self.status = "running"
         return exit_status
 
     def _is_submission_finished(self):
         try:
             return aws._training_finished(
-                self.config, self.instance.id, self.submission)
+                self.config, self.instance.id, self.submission
+            )
         except subprocess.CalledProcessError as e:
             # it is no longer possible to connect to the instance
             # possibly it was terminated from outside. restart the submission
-            logger.warning("Unable to connect to the instance for submission "
-                           f"{self.submission}. Adding the submission back to"
-                           " the queue and will try again later")
+            logger.warning(
+                "Unable to connect to the instance for submission "
+                f"{self.submission}. Adding the submission back to"
+                " the queue and will try again later"
+            )
             raise e
 
     def _is_submission_interrupted(self):
@@ -150,45 +160,46 @@ class AWSWorker(BaseWorker):
         # with dispatcher).
         # The event config: 'check_finished_training_interval_secs'
         # is used here, but again only when worker used alone.
-        if self.status == 'running':
+        if self.status == "running":
             aws._wait_until_train_finished(
-                self.config, self.instance.id, self.submission)
-            self.status = 'finished'
-        if self.status != 'finished':
-            raise ValueError("Cannot collect results if worker is not"
-                             "'running' or 'finished'")
+                self.config, self.instance.id, self.submission
+            )
+            self.status = "finished"
+        if self.status != "finished":
+            raise ValueError(
+                "Cannot collect results if worker is not" "'running' or 'finished'"
+            )
 
         logger.info("Collecting submission '{}'".format(self.submission))
         exit_status = 0
         try:
-            _ = aws.download_log(self.config,
-                                 self.instance.id, self.submission)
+            _ = aws.download_log(self.config, self.instance.id, self.submission)
         except Exception as e:
-            logger.error("Error occurred when downloading the logs"
-                         f" from the submission: {e}")
+            logger.error(
+                "Error occurred when downloading the logs" f" from the submission: {e}"
+            )
             exit_status = 2
             error_msg = str(e)
-            self.status = 'error'
+            self.status = "error"
         if exit_status == 0:
-            if aws._training_successful(
-                    self.config, self.instance.id, self.submission):
+            if aws._training_successful(self.config, self.instance.id, self.submission):
 
                 try:
-                    _ = aws.download_predictions(self.config,
-                                                 self.instance.id,
-                                                 self.submission)
+                    _ = aws.download_predictions(
+                        self.config, self.instance.id, self.submission
+                    )
                 except Exception as e:
-                    logger.error("Downloading the prediction failed with"
-                                 f"error {e}")
-                    self.status = 'error'
+                    logger.error("Downloading the prediction failed with" f"error {e}")
+                    self.status = "error"
                     exit_status, error_msg = 1, str(e)
                 else:
-                    self.status = 'collected'
-                    exit_status, error_msg = 0, ''
+                    self.status = "collected"
+                    exit_status, error_msg = 0, ""
             else:
                 error_msg = _get_traceback(
-                    aws._get_log_content(self.config, self.submission))
-                self.status = 'collected'
+                    aws._get_log_content(self.config, self.submission)
+                )
+                self.status = "collected"
                 exit_status = 1
         logger.info(repr(self))
         return exit_status, error_msg
@@ -197,9 +208,7 @@ class AWSWorker(BaseWorker):
         """Terminate the Amazon instance"""
         # Only terminate if instance is running
         if self.instance:
-            instance_status = aws.check_instance_status(
-                self.config, self.instance.id
-            )
-            if instance_status == 'running':
+            instance_status = aws.check_instance_status(self.config, self.instance.id)
+            if instance_status == "running":
                 aws.terminate_ec2_instance(self.config, self.instance.id)
         super().teardown()

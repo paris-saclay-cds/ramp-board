@@ -16,8 +16,8 @@ from .base import Model
 from .event import EventTeam
 
 __all__ = [
-    'User',
-    'UserInteraction',
+    "User",
+    "UserInteraction",
 ]
 
 
@@ -111,7 +111,8 @@ class User(Model):
     admined_teams : list of :class:`ramp_database.model.Team`
         A back-reference to the teams administrated by the user.
     """
-    __tablename__ = 'users'
+
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
     name = Column(String(20), nullable=False, unique=True)
@@ -129,20 +130,35 @@ class User(Model):
     bio = Column(String(1024), default=None)
     is_want_news = Column(Boolean, default=True)
     access_level = Column(
-        Enum('admin', 'user', 'asked', 'not_confirmed', name='access_level'),
-        default='asked'
+        Enum("admin", "user", "asked", "not_confirmed", name="access_level"),
+        default="asked",
     )
     signup_timestamp = Column(DateTime, nullable=False)
-    update_timestamp = Column(DateTime, onupdate=sql.func.now(),
-                              server_default=sql.func.now())
+    update_timestamp = Column(
+        DateTime, onupdate=sql.func.now(), server_default=sql.func.now()
+    )
 
     # Flask-Login fields
     is_authenticated = Column(Boolean, default=False)
 
-    def __init__(self, name, hashed_password, lastname, firstname, email,
-                 access_level='user', hidden_notes='', linkedin_url='',
-                 twitter_url='', facebook_url='', google_url='', github_url='',
-                 website_url='', bio='', is_want_news=True):
+    def __init__(
+        self,
+        name,
+        hashed_password,
+        lastname,
+        firstname,
+        email,
+        access_level="user",
+        hidden_notes="",
+        linkedin_url="",
+        twitter_url="",
+        facebook_url="",
+        google_url="",
+        github_url="",
+        website_url="",
+        bio="",
+        is_want_news=True,
+    ):
         self.name = name
         self.hashed_password = hashed_password
         self.lastname = lastname
@@ -175,36 +191,42 @@ class User(Model):
         return str(self.id)
 
     def __str__(self):
-        return 'User({})'.format(self.name)
+        return "User({})".format(self.name)
 
     def __repr__(self):
-        return ("User(name={}, lastname={}, firstname={}, email={}, "
-                "admined_teams={})"
-                .format(self.name, self.lastname, self.firstname,
-                        self.email, self.admined_teams))
+        return (
+            "User(name={}, lastname={}, firstname={}, email={}, "
+            "admined_teams={})".format(
+                self.name,
+                self.lastname,
+                self.firstname,
+                self.email,
+                self.admined_teams,
+            )
+        )
 
 
 user_interaction_type = Enum(
-    'copy',
-    'download',
-    'giving credit',
-    'landing',
-    'login',
-    'logout',
-    'looking at error',
-    'looking at event',
-    'looking at problem',
-    'looking at problems',
-    'looking at leaderboard',
-    'looking at my_submissions',
-    'looking at private leaderboard',
-    'looking at submission',
-    'looking at user',
-    'save',
-    'signing up at event',
-    'submit',
-    'upload',
-    name='user_interaction_type'
+    "copy",
+    "download",
+    "giving credit",
+    "landing",
+    "login",
+    "logout",
+    "looking at error",
+    "looking at event",
+    "looking at problem",
+    "looking at problems",
+    "looking at leaderboard",
+    "looking at my_submissions",
+    "looking at private leaderboard",
+    "looking at submission",
+    "looking at user",
+    "save",
+    "signing up at event",
+    "submit",
+    "upload",
+    name="user_interaction_type",
 )
 
 
@@ -279,7 +301,8 @@ default is None
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
     """
-    __tablename__ = 'user_interactions'
+
+    __tablename__ = "user_interactions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, nullable=False)
@@ -289,35 +312,50 @@ default is None
     submission_file_similarity = Column(Float, default=None)
     ip = Column(String, default=None)
 
-    user_id = Column(
-        Integer, ForeignKey('users.id'))
-    user = relationship('User',
-                        backref=backref('user_interactions',
-                                        cascade='all, delete-orphan'))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    user = relationship(
+        "User",
+        backref=backref("user_interactions", cascade="all, delete-orphan"),
+    )
 
-    problem_id = Column(
-        Integer, ForeignKey('problems.id'))
-    problem = relationship('Problem', backref=backref(
-        'user_interactions', cascade='all, delete-orphan'))
+    problem_id = Column(Integer, ForeignKey("problems.id"))
+    problem = relationship(
+        "Problem",
+        backref=backref("user_interactions", cascade="all, delete-orphan"),
+    )
 
-    event_team_id = Column(
-        Integer, ForeignKey('event_teams.id'))
-    event_team = relationship('EventTeam', backref=backref(
-        'user_interactions', cascade='all, delete-orphan'))
+    event_team_id = Column(Integer, ForeignKey("event_teams.id"))
+    event_team = relationship(
+        "EventTeam",
+        backref=backref("user_interactions", cascade="all, delete-orphan"),
+    )
 
-    submission_id = Column(
-        Integer, ForeignKey('submissions.id'))
-    submission = relationship('Submission', backref=backref(
-        'user_interactions', cascade='all, delete-orphan'))
+    submission_id = Column(Integer, ForeignKey("submissions.id"))
+    submission = relationship(
+        "Submission",
+        backref=backref("user_interactions", cascade="all, delete-orphan"),
+    )
 
-    submission_file_id = Column(
-        Integer, ForeignKey('submission_files.id'))
-    submission_file = relationship('SubmissionFile', backref=backref(
-        'user_interactions', cascade='all, delete-orphan'))
+    submission_file_id = Column(Integer, ForeignKey("submission_files.id"))
+    submission_file = relationship(
+        "SubmissionFile",
+        backref=backref("user_interactions", cascade="all, delete-orphan"),
+    )
 
-    def __init__(self, interaction=None, user=None, problem=None, event=None,
-                 ip=None, note=None, submission=None, submission_file=None,
-                 diff=None, similarity=None, session=None):
+    def __init__(
+        self,
+        interaction=None,
+        user=None,
+        problem=None,
+        event=None,
+        ip=None,
+        note=None,
+        submission=None,
+        submission_file=None,
+        diff=None,
+        similarity=None,
+        session=None,
+    ):
         self.timestamp = datetime.datetime.utcnow()
         self.interaction = interaction
         self.user = user
@@ -328,13 +366,15 @@ default is None
             # The current code works only if each user admins a single team.
             if session is None:
                 self.event_team = EventTeam.query.filter_by(
-                    event=event, team=user.admined_teams[0]).one_or_none()
+                    event=event, team=user.admined_teams[0]
+                ).one_or_none()
             else:
-                self.event_team = \
-                    (session.query(EventTeam)
-                            .filter(EventTeam.event == event)
-                            .filter(EventTeam.team == user.admined_teams[0])
-                            .one_or_none())
+                self.event_team = (
+                    session.query(EventTeam)
+                    .filter(EventTeam.event == event)
+                    .filter(EventTeam.team == user.admined_teams[0])
+                    .one_or_none()
+                )
         self.ip = ip
         self.note = note
         self.submission = submission
@@ -342,9 +382,9 @@ default is None
         self.submission_file_diff = diff
         self.submission_file_similarity = similarity
 
-# The following function was implemented to handle user interaction dump
-# but it turned out that the db insertion was not the CPU sink. Keep it
-# for a while if the site is still slow.
+    # The following function was implemented to handle user interaction dump
+    # but it turned out that the db insertion was not the CPU sink. Keep it
+    # for a while if the site is still slow.
 
     # def __init__(self, line=None, interaction=None, user=None, event=None,
     #              ip=None, note=None, submission=None, submission_file=None,
@@ -381,13 +421,22 @@ default is None
     #         self.submission_file_id = eval(tokens[9])
 
     def __repr__(self):
-        return "; ".join(repr(member)
-                         for member in (self.timestamp, self.interaction,
-                                        self.note, self.submission_file_diff,
-                                        self.submission_file_similarity,
-                                        self.ip, self.user, self.problem,
-                                        self.event_team, self.submission,
-                                        self.submission_file))
+        return "; ".join(
+            repr(member)
+            for member in (
+                self.timestamp,
+                self.interaction,
+                self.note,
+                self.submission_file_diff,
+                self.submission_file_similarity,
+                self.ip,
+                self.user,
+                self.problem,
+                self.event_team,
+                self.submission,
+                self.submission_file,
+            )
+        )
 
     @property
     def event(self):

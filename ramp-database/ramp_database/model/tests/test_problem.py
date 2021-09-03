@@ -20,32 +20,33 @@ from ramp_database.testing import create_toy_db
 from ramp_database.tools.event import get_problem
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def session_scope_module(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:
         deployment_dir = create_toy_db(database_config, ramp_config)
-        with session_scope(database_config['sqlalchemy']) as session:
+        with session_scope(database_config["sqlalchemy"]) as session:
             yield session
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)
-        db, _ = setup_db(database_config['sqlalchemy'])
+        db, _ = setup_db(database_config["sqlalchemy"])
         Model.metadata.drop_all(db)
 
 
 def test_problem_model(session_scope_module):
-    problem = get_problem(session_scope_module, 'iris')
+    problem = get_problem(session_scope_module, "iris")
 
-    assert (repr(problem) ==
-            "Problem({})\nWorkflow(Estimator)\n\tWorkflow(Estimator): "
-            "WorkflowElement(estimator)".format('iris'))
+    assert repr(problem) == (
+        "Problem(iris)\nWorkflow(Estimator)\n\tWorkflow(Estimator): "
+        "WorkflowElement(estimator)"
+    )
 
     # check that we can access the problem module and that we have one of the
     # expected function there.
-    assert hasattr(problem.module, 'get_train_data')
+    assert hasattr(problem.module, "get_train_data")
 
-    assert problem.title == 'Iris classification'
+    assert problem.title == "Iris classification"
     assert issubclass(problem.Predictions, BasePrediction)
     X_train, y_train = problem.get_train_data()
     assert X_train.shape == (120, 4)
@@ -54,25 +55,23 @@ def test_problem_model(session_scope_module):
     assert X_test.shape == (30, 4)
     assert y_test.shape == (30,)
     gt_train = problem.ground_truths_train()
-    assert hasattr(gt_train, 'label_names')
+    assert hasattr(gt_train, "label_names")
     assert gt_train.y_pred.shape == (120, 3)
     gt_test = problem.ground_truths_test()
-    assert hasattr(gt_test, 'label_names')
+    assert hasattr(gt_test, "label_names")
     assert gt_test.y_pred.shape == (30, 3)
     gt_valid = problem.ground_truths_valid([0, 1, 2])
-    assert hasattr(gt_valid, 'label_names')
+    assert hasattr(gt_valid, "label_names")
     assert gt_valid.y_pred.shape == (3, 3)
 
     assert isinstance(problem.workflow_object, Estimator)
 
 
 @pytest.mark.parametrize(
-    'backref, expected_type',
-    [('events', Event),
-     ('keywords', ProblemKeyword)]
+    "backref, expected_type", [("events", Event), ("keywords", ProblemKeyword)]
 )
 def test_problem_model_backref(session_scope_module, backref, expected_type):
-    problem = get_problem(session_scope_module, 'iris')
+    problem = get_problem(session_scope_module, "iris")
     backref_attr = getattr(problem, backref)
     assert isinstance(backref_attr, list)
     # only check if the list is not empty

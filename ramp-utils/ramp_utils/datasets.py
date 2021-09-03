@@ -4,10 +4,7 @@ import json
 import os
 from urllib import request
 
-OSFRemoteMetaData = namedtuple(
-    "OSFRemoteMetaData",
-    ["filename", "id", "revision"]
-)
+OSFRemoteMetaData = namedtuple("OSFRemoteMetaData", ["filename", "id", "revision"])
 
 
 def _sha256(path):
@@ -42,16 +39,13 @@ def fetch_from_osf(path_data, metadata, token=None):
     if not os.path.exists(path_data):
         os.makedirs(path_data)
     for file_info in metadata:
-        file_info_url = (
-            f"https://api.osf.io/v2/files/{file_info.id}/"
-        )
+        file_info_url = f"https://api.osf.io/v2/files/{file_info.id}/"
         req = request.Request(file_info_url)
         if token is not None:
             req.add_header("Authorization", f"Bearer {token}")
         response = request.urlopen(req)
         info = json.loads(response.read())
-        original_checksum = \
-            info["data"]["attributes"]["extra"]["hashes"]["sha256"]
+        original_checksum = info["data"]["attributes"]["extra"]["hashes"]["sha256"]
         filename = os.path.join(path_data, file_info.filename)
         if os.path.exists(filename):
             if _sha256(filename) == original_checksum:
@@ -59,8 +53,7 @@ def fetch_from_osf(path_data, metadata, token=None):
                 continue
 
         osf_url = (
-            f"https://osf.io/download/"
-            f"{file_info.id}/?revision={file_info.revision}"
+            f"https://osf.io/download/" f"{file_info.id}/?revision={file_info.revision}"
         )
         req = request.Request(osf_url)
         if token is not None:
@@ -70,5 +63,6 @@ def fetch_from_osf(path_data, metadata, token=None):
             raise RuntimeError(response.read())
         with open(filename, "wb") as fid:
             fid.write(response.read())
-        assert _sha256(filename) == original_checksum, \
-            f"{filename} was corrupted during download"
+        assert (
+            _sha256(filename) == original_checksum
+        ), f"{filename} was corrupted during download"

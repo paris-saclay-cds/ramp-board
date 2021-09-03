@@ -15,13 +15,27 @@ from ._query import select_team_by_name
 from ._query import select_user_by_email
 from ._query import select_user_by_name
 
-logger = logging.getLogger('RAMP-DATABASE')
+logger = logging.getLogger("RAMP-DATABASE")
 
 
-def add_user(session, name, password, lastname, firstname, email,
-             access_level='user', hidden_notes='', linkedin_url='',
-             twitter_url='', facebook_url='', google_url='', github_url='',
-             website_url='', bio='', is_want_news=True):
+def add_user(
+    session,
+    name,
+    password,
+    lastname,
+    firstname,
+    email,
+    access_level="user",
+    hidden_notes="",
+    linkedin_url="",
+    twitter_url="",
+    facebook_url="",
+    google_url="",
+    github_url="",
+    website_url="",
+    bio="",
+    is_want_news=True,
+):
     """Add a new user in the database.
 
     Parameters
@@ -68,13 +82,23 @@ def add_user(session, name, password, lastname, firstname, email,
     # String
     hashed_password = hash_password(password).decode()
     lower_case_email = email.lower()
-    user = User(name=name, hashed_password=hashed_password,
-                lastname=lastname, firstname=firstname, email=lower_case_email,
-                access_level=access_level, hidden_notes=hidden_notes,
-                linkedin_url=linkedin_url, twitter_url=twitter_url,
-                facebook_url=facebook_url, google_url=google_url,
-                github_url=github_url, website_url=website_url, bio=bio,
-                is_want_news=is_want_news)
+    user = User(
+        name=name,
+        hashed_password=hashed_password,
+        lastname=lastname,
+        firstname=firstname,
+        email=lower_case_email,
+        access_level=access_level,
+        hidden_notes=hidden_notes,
+        linkedin_url=linkedin_url,
+        twitter_url=twitter_url,
+        facebook_url=facebook_url,
+        google_url=google_url,
+        github_url=github_url,
+        website_url=website_url,
+        bio=bio,
+        is_want_news=is_want_news,
+    )
 
     # Creating default team with the same name as the user
     # user is admin of his/her own team
@@ -85,22 +109,22 @@ def add_user(session, name, password, lastname, firstname, email,
         session.commit()
     except IntegrityError as e:
         session.rollback()
-        message = ''
+        message = ""
         if select_user_by_name(session, name) is not None:
-            message += 'username is already in use'
+            message += "username is already in use"
         elif select_team_by_name(session, name) is not None:
             # We only check for team names if username is not in db
-            message += 'username is already in use as a team name'
+            message += "username is already in use as a team name"
         if select_user_by_email(session, lower_case_email) is not None:
             if message:
-                message += ' and '
-            message += 'email is already in use'
+                message += " and "
+            message += "email is already in use"
         if message:
             raise NameClashError(message)
         else:
             raise e
-    logger.info('Creating {}'.format(user))
-    logger.info('Creating {}'.format(team))
+    logger.info("Creating {}".format(user))
+    logger.info("Creating {}".format(team))
     return user
 
 
@@ -130,7 +154,7 @@ def make_user_admin(session, name):
         The name of the user.
     """
     user = select_user_by_name(session, name)
-    user.access_level = 'admin'
+    user.access_level = "admin"
     user.is_authenticated = True
     session.commit()
 
@@ -155,9 +179,19 @@ def set_user_access_level(session, name, access_level="user"):
     session.commit()
 
 
-def add_user_interaction(session, interaction=None, user=None, problem=None,
-                         event=None, ip=None, note=None, submission=None,
-                         submission_file=None, diff=None, similarity=None):
+def add_user_interaction(
+    session,
+    interaction=None,
+    user=None,
+    problem=None,
+    event=None,
+    ip=None,
+    note=None,
+    submission=None,
+    submission_file=None,
+    diff=None,
+    similarity=None,
+):
     """Add a user interaction in the database.
 
     Parameters
@@ -188,9 +222,17 @@ default is None
         The similarity of the submission.
     """
     user_interaction = UserInteraction(
-        session=session, interaction=interaction, user=user, problem=problem,
-        ip=ip, note=note, submission=submission, event=event,
-        submission_file=submission_file, diff=diff, similarity=similarity
+        session=session,
+        interaction=interaction,
+        user=user,
+        problem=problem,
+        ip=ip,
+        note=note,
+        submission=submission,
+        event=event,
+        submission_file=submission_file,
+        diff=diff,
+        similarity=similarity,
     )
     session.add(user_interaction)
     session.commit()
@@ -207,8 +249,8 @@ def approve_user(session, name):
         The name of the user.
     """
     user = select_user_by_name(session, name)
-    if user.access_level == 'asked':
-        user.access_level = 'user'
+    if user.access_level == "asked":
+        user.access_level = "user"
     user.is_authenticated = True
     session.commit()
 
@@ -249,8 +291,7 @@ def get_user_by_name_or_email(session, name):
 :class:`ramp_database.model.User`
         The queried user.
     """
-    return (select_user_by_email(session, name) or
-            select_user_by_name(session, name))
+    return select_user_by_email(session, name) or select_user_by_name(session, name)
 
 
 def get_team_by_name(session, name):
@@ -272,8 +313,7 @@ def get_team_by_name(session, name):
     return select_team_by_name(session, name)
 
 
-def get_user_interactions_by_name(session, name=None,
-                                  output_format='dataframe'):
+def get_user_interactions_by_name(session, name=None, output_format="dataframe"):
     """Get the user interactions.
 
     Parameters
@@ -296,45 +336,68 @@ def get_user_interactions_by_name(session, name=None,
     if name is None:
         user_interactions = user_interactions.all()
     else:
-        user_interactions = \
-            (user_interactions.filter(UserInteraction.user_id == User.id)
-                              .filter(User.name == name)
-                              .all())
+        user_interactions = (
+            user_interactions.filter(UserInteraction.user_id == User.id)
+            .filter(User.name == name)
+            .all()
+        )
 
     map_columns_attributes = defaultdict(list)
     for ui in user_interactions:
-        map_columns_attributes['timestamp (UTC)'].append(ui.timestamp)
-        map_columns_attributes['IP'].append(ui.ip)
-        map_columns_attributes['interaction'].append(ui.interaction)
-        map_columns_attributes['user'].append(getattr(ui.user, 'name', None))
-        map_columns_attributes['event'].append(getattr(
-            getattr(ui.event_team, 'event', None), 'name', None))
-        map_columns_attributes['team'].append(getattr(
-            getattr(ui.event_team, 'team', None), 'name', None))
-        map_columns_attributes['submission_id'].append(ui.submission_id)
-        map_columns_attributes['submission'].append(
-            getattr(ui.submission, 'name_with_link', None))
-        map_columns_attributes['file'].append(
-            getattr(ui.submission_file, 'name_with_link', None))
-        map_columns_attributes['code similarity'].append(
-            ui.submission_file_similarity)
-        map_columns_attributes['diff'].append(
-            None if ui.submission_file_diff is None
-            else '<a href="{}">diff</a>'.format(
-                ui.submission_file_diff))
-    df = (pd.DataFrame(map_columns_attributes)
-            .sort_values('timestamp (UTC)', ascending=False)
-            .set_index('timestamp (UTC)'))
-    if output_format == 'html':
-        return df.to_html(escape=False, index=False, max_cols=None,
-                          max_rows=None, justify='left')
+        map_columns_attributes["timestamp (UTC)"].append(ui.timestamp)
+        map_columns_attributes["IP"].append(ui.ip)
+        map_columns_attributes["interaction"].append(ui.interaction)
+        map_columns_attributes["user"].append(getattr(ui.user, "name", None))
+        map_columns_attributes["event"].append(
+            getattr(getattr(ui.event_team, "event", None), "name", None)
+        )
+        map_columns_attributes["team"].append(
+            getattr(getattr(ui.event_team, "team", None), "name", None)
+        )
+        map_columns_attributes["submission_id"].append(ui.submission_id)
+        map_columns_attributes["submission"].append(
+            getattr(ui.submission, "name_with_link", None)
+        )
+        map_columns_attributes["file"].append(
+            getattr(ui.submission_file, "name_with_link", None)
+        )
+        map_columns_attributes["code similarity"].append(ui.submission_file_similarity)
+        map_columns_attributes["diff"].append(
+            None
+            if ui.submission_file_diff is None
+            else '<a href="{}">diff</a>'.format(ui.submission_file_diff)
+        )
+    df = (
+        pd.DataFrame(map_columns_attributes)
+        .sort_values("timestamp (UTC)", ascending=False)
+        .set_index("timestamp (UTC)")
+    )
+    if output_format == "html":
+        return df.to_html(
+            escape=False,
+            index=False,
+            max_cols=None,
+            max_rows=None,
+            justify="left",
+        )
     return df
 
 
-def set_user_by_instance(session, user, lastname, firstname, email,
-                         linkedin_url='', twitter_url='', facebook_url='',
-                         google_url='', github_url='', website_url='', bio='',
-                         is_want_news=True):
+def set_user_by_instance(
+    session,
+    user,
+    lastname,
+    firstname,
+    email,
+    linkedin_url="",
+    twitter_url="",
+    facebook_url="",
+    google_url="",
+    github_url="",
+    website_url="",
+    bio="",
+    is_want_news=True,
+):
     """Set the information of a user.
 
     Parameters
@@ -368,22 +431,35 @@ def set_user_by_instance(session, user, lastname, firstname, email,
     """
     logger.info('Update the profile of "{}"'.format(user))
 
-    for field in ('lastname', 'firstname', 'linkedin_url', 'twitter_url',
-                  'facebook_url', 'google_url', 'github_url', 'website_url',
-                  'bio', 'email', 'is_want_news'):
+    for field in (
+        "lastname",
+        "firstname",
+        "linkedin_url",
+        "twitter_url",
+        "facebook_url",
+        "google_url",
+        "github_url",
+        "website_url",
+        "bio",
+        "email",
+        "is_want_news",
+    ):
         local_attr = locals()[field]
-        if field == 'email':
+        if field == "email":
             local_attr = local_attr.lower()
         if getattr(user, field) != local_attr:
-            logger.info('Update the "{}" field from {} to {}'
-                        .format(field, getattr(user, field), local_attr))
+            logger.info(
+                'Update the "{}" field from {} to {}'.format(
+                    field, getattr(user, field), local_attr
+                )
+            )
             setattr(user, field, local_attr)
     try:
         session.commit()
     except IntegrityError as e:
         session.rollback()
         if select_user_by_email(session, user.email) is not None:
-            message = 'email is already in use'
+            message = "email is already in use"
 
             logger.error(message)
             raise NameClashError(message)

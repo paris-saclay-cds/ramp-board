@@ -10,8 +10,10 @@ from ramp_utils.testing import ramp_config_template
 
 @pytest.mark.parametrize(
     "config_func, partial_path",
-    [(database_config_template, join('template', 'database_config.yml')),
-     (ramp_config_template, join('template', 'ramp_config.yml'))]
+    [
+        (database_config_template, join("template", "database_config.yml")),
+        (ramp_config_template, join("template", "ramp_config.yml")),
+    ],
 )
 def test_path_configuration(config_func, partial_path):
     path = config_func()
