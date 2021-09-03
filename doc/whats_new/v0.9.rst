@@ -21,6 +21,7 @@ Changelog
 ...............
 
 - The list of users to approve are sorted by newest first :pr:`537`
+- Add a ``/manage_users`` admin page with a list of all users, and a search input :pr:`538`
 
 
 `ramp-utils`

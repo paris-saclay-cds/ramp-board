@@ -119,6 +119,26 @@ def approve_users():
         )
 
 
+@mod.route("/manage_users", methods=['GET'])
+@flask_login.login_required
+def manage_users():
+    """Get a list of users"""
+    if not flask_login.current_user.access_level == 'admin':
+        return redirect_to_user(
+            (f'Sorry {flask_login.current_user.firstname}, '
+             f'you do not have admin rights'),
+            is_error=True
+        )
+    all_users = (
+        User.query
+        .order_by(User.signup_timestamp.desc())
+        .all()
+    )
+    return render_template('manage_users.html',
+                           all_users=all_users,
+                           admin=True)
+
+
 @mod.route("/sign_up/<user_name>")
 @flask_login.login_required
 def approve_single_user(user_name):
