@@ -12,7 +12,7 @@ from subprocess import Popen
 
 class RAMPParser(argparse.ArgumentParser):
 
-    @property
+    @property  # type: ignore
     def epilog(self):
         """Add subcommands to epilog on request
 

@@ -54,7 +54,12 @@ def approve_users():
         )
     if request.method == 'GET':
         # TODO: replace by some get_functions
-        asked_users = User.query.filter_by(access_level='asked').all()
+        asked_users = (
+            User.query
+            .filter_by(access_level='asked')
+            .order_by(User.id.desc())
+            .all()
+        )
         asked_sign_up = EventTeam.query.filter_by(approved=False).all()
         return render_template('approve.html',
                                asked_users=asked_users,
