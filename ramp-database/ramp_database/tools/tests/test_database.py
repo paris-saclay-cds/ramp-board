@@ -30,16 +30,16 @@ def session_scope_function(database_connection):
     ramp_config = ramp_config_template()
     try:
         deployment_dir = create_test_db(database_config, ramp_config)
-        with session_scope(database_config['sqlalchemy']) as session:
+        with session_scope(database_config["sqlalchemy"]) as session:
             yield session
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)
-        db, _ = setup_db(database_config['sqlalchemy'])
+        db, _ = setup_db(database_config["sqlalchemy"])
         Model.metadata.drop_all(db)
 
 
 def test_check_extension(session_scope_function):
-    extension_name = 'cpp'
+    extension_name = "cpp"
     add_extension(session_scope_function, extension_name)
     extension = get_extension(session_scope_function, extension_name)
     assert extension.name == extension_name
@@ -50,11 +50,10 @@ def test_check_extension(session_scope_function):
 
 
 def test_check_submission_file_type(session_scope_function):
-    name = 'my own type'
+    name = "my own type"
     is_editable = False
     max_size = 10 ** 5
-    add_submission_file_type(session_scope_function, name, is_editable,
-                             max_size)
+    add_submission_file_type(session_scope_function, name, is_editable, max_size)
     sub_file_type = get_submission_file_type(session_scope_function, name)
     assert sub_file_type.name == name
     assert sub_file_type.is_editable is is_editable
@@ -67,24 +66,25 @@ def test_check_submission_file_type(session_scope_function):
 
 def test_check_submission_file_type_extension(session_scope_function):
     # create a new type and extension
-    extension_name = 'cpp'
+    extension_name = "cpp"
     add_extension(session_scope_function, extension_name)
-    type_name = 'my own type'
+    type_name = "my own type"
     is_editable = False
     max_size = 10 ** 5
-    add_submission_file_type(session_scope_function, type_name, is_editable,
-                             max_size)
+    add_submission_file_type(session_scope_function, type_name, is_editable, max_size)
 
-    add_submission_file_type_extension(session_scope_function, type_name,
-                                       extension_name)
-    sub_ext_type = get_submission_file_type_extension(session_scope_function,
-                                                      type_name,
-                                                      extension_name)
+    add_submission_file_type_extension(
+        session_scope_function, type_name, extension_name
+    )
+    sub_ext_type = get_submission_file_type_extension(
+        session_scope_function, type_name, extension_name
+    )
     assert sub_ext_type.file_type == type_name
     assert sub_ext_type.extension_name == extension_name
     assert isinstance(sub_ext_type, SubmissionFileTypeExtension)
 
-    sub_ext_type = get_submission_file_type_extension(session_scope_function,
-                                                      None, None)
+    sub_ext_type = get_submission_file_type_extension(
+        session_scope_function, None, None
+    )
     assert len(sub_ext_type) == 5
     assert isinstance(sub_ext_type, list)

@@ -31,13 +31,12 @@ from ._query import select_submission_file_type_by_name
 from ._query import select_team_by_name
 
 STATES = submission_states.enums
-logger = logging.getLogger('RAMP-DATABASE')
+logger = logging.getLogger("RAMP-DATABASE")
 
 
 # Add functions: add information to the database
 # TODO: move the queries in "_query"
-def add_submission(session, event_name, team_name, submission_name,
-                   submission_path):
+def add_submission(session, event_name, team_name, submission_name, submission_path):
     """Create a submission in the database and returns an handle.
 
     Parameters
@@ -63,80 +62,102 @@ def add_submission(session, event_name, team_name, submission_name,
     event = select_event_by_name(session, event_name)
     team = select_team_by_name(session, team_name)
     event_team = select_event_team_by_name(session, event_name, team_name)
-    submission = (session.query(Submission)
-                         .filter(Submission.name == submission_name)
-                         .filter(Submission.event_team == event_team)
-                         .first())
+    submission = (
+        session.query(Submission)
+        .filter(Submission.name == submission_name)
+        .filter(Submission.event_team == event_team)
+        .first()
+    )
 
     # create a new submission
     if submission is None:
-        all_submissions = (session.query(Submission)
-                                  .filter(Submission.event_team == event_team)
-                                  .order_by(Submission.submission_timestamp)
-                                  .all())
+        all_submissions = (
+            session.query(Submission)
+            .filter(Submission.event_team == event_team)
+            .order_by(Submission.submission_timestamp)
+            .all()
+        )
         last_submission = None if not all_submissions else all_submissions[-1]
         # check for non-admin user if they wait enough to make a new submission
-        if (team.admin.access_level != 'admin' and last_submission is not None
-                and last_submission.is_not_sandbox):
-            time_to_last_submission = (datetime.datetime.utcnow() -
-                                       last_submission.submission_timestamp)
+        if (
+            team.admin.access_level != "admin"
+            and last_submission is not None
+            and last_submission.is_not_sandbox
+        ):
+            time_to_last_submission = (
+                datetime.datetime.utcnow() - last_submission.submission_timestamp
+            )
             min_resubmit_time = datetime.timedelta(
-                seconds=event.min_duration_between_submissions)
-            awaiting_time = int((min_resubmit_time - time_to_last_submission)
-                                .total_seconds())
+                seconds=event.min_duration_between_submissions
+            )
+            awaiting_time = int(
+                (min_resubmit_time - time_to_last_submission).total_seconds()
+            )
             if awaiting_time > 0:
                 raise TooEarlySubmissionError(
-                    'You need to wait {} more seconds until next submission'
-                    .format(awaiting_time))
+                    "You need to wait {} more seconds until next submission".format(
+                        awaiting_time
+                    )
+                )
 
         submission = Submission(
             name=submission_name, event_team=event_team, session=session
         )
         for cv_fold in event.cv_folds:
-            submission_on_cv_fold = SubmissionOnCVFold(submission=submission,
-                                                       cv_fold=cv_fold)
+            submission_on_cv_fold = SubmissionOnCVFold(
+                submission=submission, cv_fold=cv_fold
+            )
             session.add(submission_on_cv_fold)
         session.add(submission)
 
     # the submission already exist
     else:
         # We allow resubmit for new or failing submissions
-        if (submission.is_not_sandbox and
-                (submission.state == 'new' or submission.is_error)):
-            submission.set_state('new', session)
+        if submission.is_not_sandbox and (
+            submission.state == "new" or submission.is_error
+        ):
+            submission.set_state("new", session)
             submission.submission_timestamp = datetime.datetime.utcnow()
-            all_cv_folds = (session.query(SubmissionOnCVFold)
-                                   .filter_by(submission_id=submission.id)
-                                   .all())
+            all_cv_folds = (
+                session.query(SubmissionOnCVFold)
+                .filter_by(submission_id=submission.id)
+                .all()
+            )
             all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
             for submission_on_cv_fold in all_cv_folds:
                 submission_on_cv_fold.reset()
         else:
-            error_msg = ('Submission "{}" of team "{}" at event "{}" exists '
-                         'already'
-                         .format(submission_name, team_name, event_name))
+            error_msg = (
+                'Submission "{}" of team "{}" at event "{}" exists '
+                "already".format(submission_name, team_name, event_name)
+            )
             raise DuplicateSubmissionError(error_msg)
 
     # filter the files which contain an extension
-    files_type_extension = [filename.split('.', maxsplit=1)
-                            for filename in os.listdir(submission_path)
-                            if len(filename.split('.')) > 1]
+    files_type_extension = [
+        filename.split(".", maxsplit=1)
+        for filename in os.listdir(submission_path)
+        if len(filename.split(".")) > 1
+    ]
 
     for workflow_element in event.problem.workflow.elements:
         try:
             desposited_types, deposited_extensions = zip(
-                *[(filename, extension)
-                  for filename, extension in files_type_extension
-                  if filename == workflow_element.name]
+                *[
+                    (filename, extension)
+                    for filename, extension in files_type_extension
+                    if filename == workflow_element.name
+                ]
             )
         except ValueError as e:
             session.rollback()
-            if 'values to unpack' in str(e):
+            if "values to unpack" in str(e):
                 # no file matching the workflow element
                 raise MissingSubmissionFileError(
-                    'No file corresponding to the workflow element "{}"'
-                    .format(workflow_element)
+                    'No file corresponding to the workflow element "{}"'.format(
+                        workflow_element
                     )
+                )
             raise
 
         # check that files have the correct extension ...
@@ -148,32 +169,33 @@ def add_submission(session, event_name, team_name, submission_name,
         else:
             session.rollback()
             raise MissingExtensionError(
-                'All extensions "{}" are unknown for the submission "{}".'
-                .format(", ".join(deposited_extensions), submission_name)
+                'All extensions "{}" are unknown for the submission "{}".'.format(
+                    ", ".join(deposited_extensions), submission_name
+                )
             )
 
         # check if it is a resubmission
-        submission_file = (session.query(SubmissionFile)
-                                  .filter(SubmissionFile.workflow_element ==
-                                          workflow_element)
-                                  .filter(SubmissionFile.submission ==
-                                          submission)
-                                  .one_or_none())
+        submission_file = (
+            session.query(SubmissionFile)
+            .filter(SubmissionFile.workflow_element == workflow_element)
+            .filter(SubmissionFile.submission == submission)
+            .one_or_none()
+        )
         # TODO: handle if resubmitted file changed extension
         if submission_file is None:
             submission_file_type = select_submission_file_type_by_name(
                 session, workflow_element.file_type
             )
-            type_extension = \
-                (session.query(SubmissionFileTypeExtension)
-                        .filter(SubmissionFileTypeExtension.type ==
-                                submission_file_type)
-                        .filter(SubmissionFileTypeExtension.extension ==
-                                extension)
-                        .one())
+            type_extension = (
+                session.query(SubmissionFileTypeExtension)
+                .filter(SubmissionFileTypeExtension.type == submission_file_type)
+                .filter(SubmissionFileTypeExtension.extension == extension)
+                .one()
+            )
             submission_file = SubmissionFile(
-                submission=submission, workflow_element=workflow_element,
-                submission_file_type_extension=type_extension
+                submission=submission,
+                workflow_element=workflow_element,
+                submission_file_type_extension=type_extension,
             )
             session.add(submission_file)
             event.set_n_submissions()
@@ -200,13 +222,21 @@ def add_submission(session, event_name, team_name, submission_name,
 
     from .leaderboard import update_leaderboards
     from .leaderboard import update_user_leaderboards
+
     update_leaderboards(session, event_name, new_only=True)
     update_user_leaderboards(session, event_name, team.name, new_only=True)
     return submission
 
 
-def add_submission_similarity(session, credit_type, user, source_submission,
-                              target_submission, similarity, timestamp):
+def add_submission_similarity(
+    session,
+    credit_type,
+    user,
+    source_submission,
+    target_submission,
+    similarity,
+    timestamp,
+):
     """Add submission similarity entry.
 
     Parameters
@@ -227,16 +257,19 @@ def add_submission_similarity(session, credit_type, user, source_submission,
         The date and time of the creation of the similarity.
     """
     submission_similarity = SubmissionSimilarity(
-        type=credit_type, user=user, source_submission=source_submission,
-        target_submission=target_submission, similarity=similarity,
-        timestamp=timestamp
+        type=credit_type,
+        user=user,
+        source_submission=source_submission,
+        target_submission=target_submission,
+        similarity=similarity,
+        timestamp=timestamp,
     )
     session.add(submission_similarity)
     session.commit()
 
 
 # Getter functions: get information from the database
-def get_submissions(session, event_name, state='new'):
+def get_submissions(session, event_name, state="new"):
     """Get information about submissions from an event with a specific state
     optionally.
 
@@ -334,8 +367,7 @@ def get_submission_by_name(session, event_name, team_name, name):
     ramp_database.tools.get_submissions : Get submissions information.
     ramp_database.tools.get_submission_by_id : Get a submission using an id.
     """
-    submission = select_submission_by_name(session, event_name, team_name,
-                                           name)
+    submission = select_submission_by_name(session, event_name, team_name, name)
     submission.event.name
     submission.team.name
     return submission
@@ -392,15 +424,15 @@ def get_time(session, submission_id):
         A pandas dataframe containing the computation time of each fold.
     """
     results = defaultdict(list)
-    all_cv_folds = (session.query(SubmissionOnCVFold)
-                           .filter_by(submission_id=submission_id)
-                           .all())
+    all_cv_folds = (
+        session.query(SubmissionOnCVFold).filter_by(submission_id=submission_id).all()
+    )
     all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
-        results['fold'].append(fold_id)
-        for step in ('train', 'valid', 'test'):
-            results[step].append(getattr(cv_fold, '{}_time'.format(step)))
-    return pd.DataFrame(results).set_index('fold')
+        results["fold"].append(fold_id)
+        for step in ("train", "valid", "test"):
+            results[step].append(getattr(cv_fold, "{}_time".format(step)))
+    return pd.DataFrame(results).set_index("fold")
 
 
 def get_scores(session, submission_id):
@@ -420,16 +452,16 @@ def get_scores(session, submission_id):
     """
     results = defaultdict(list)
     index = []
-    all_cv_folds = (session.query(SubmissionOnCVFold)
-                           .filter_by(submission_id=submission_id)
-                           .all())
+    all_cv_folds = (
+        session.query(SubmissionOnCVFold).filter_by(submission_id=submission_id).all()
+    )
     all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
-        for step in ('train', 'valid', 'test'):
+        for step in ("train", "valid", "test"):
             index.append((fold_id, step))
             for score in cv_fold.scores:
-                results[score.name].append(getattr(score, step + '_score'))
-    multi_index = pd.MultiIndex.from_tuples(index, names=['fold', 'step'])
+                results[score.name].append(getattr(score, step + "_score"))
+    multi_index = pd.MultiIndex.from_tuples(index, names=["fold", "step"])
     scores = pd.DataFrame(results, index=multi_index)
     return scores
 
@@ -451,19 +483,21 @@ def get_bagged_scores(session, submission_id):
     """
     submission = select_submission_by_id(session, submission_id)
     bagged_scores = {}
-    for step in ('test', 'valid'):
+    for step in ("test", "valid"):
         score_dict = {}
         for score in submission.scores:
-            score_all_bags = getattr(score, '{}_score_cv_bags'.format(step))
+            score_all_bags = getattr(score, "{}_score_cv_bags".format(step))
             if score_all_bags is None:
                 continue
-            score_dict[score.score_name] = \
-                {n: sc for n, sc in enumerate(score_all_bags)}
+            score_dict[score.score_name] = {
+                n: sc for n, sc in enumerate(score_all_bags)
+            }
         bagged_scores[step] = score_dict
-    bagged_scores = pd.concat({step: pd.DataFrame(scores)
-                               for step, scores in bagged_scores.items()})
-    bagged_scores.columns = bagged_scores.columns.rename('scores')
-    bagged_scores.index = bagged_scores.index.rename(['step', 'n_bag'])
+    bagged_scores = pd.concat(
+        {step: pd.DataFrame(scores) for step, scores in bagged_scores.items()}
+    )
+    bagged_scores.columns = bagged_scores.columns.rename("scores")
+    bagged_scores.index = bagged_scores.index.rename(["step", "n_bag"])
     return bagged_scores
 
 
@@ -541,22 +575,28 @@ def get_source_submissions(session, submission_id):
         List of the submissions connected with the submission to be trained.
     """
     submission = select_submission_by_id(session, submission_id)
-    submissions = (session.query(Submission)
-                          .filter_by(event_team=submission.event_team)
-                          .all())
+    submissions = (
+        session.query(Submission).filter_by(event_team=submission.event_team).all()
+    )
     # there is for the moment a single admin
     users = [submission.team.admin]
     for user in users:
-        user_interactions = \
-            (session.query(UserInteraction)
-                    .filter_by(user=user, interaction='looking at submission')
-                    .all())
-        submissions += [user_interaction.submission
-                        for user_interaction in user_interactions
-                        if user_interaction.event == submission.event]
+        user_interactions = (
+            session.query(UserInteraction)
+            .filter_by(user=user, interaction="looking at submission")
+            .all()
+        )
+        submissions += [
+            user_interaction.submission
+            for user_interaction in user_interactions
+            if user_interaction.event == submission.event
+        ]
     submissions = list(set(submissions))
-    submissions = [s for s in submissions
-                   if s.submission_timestamp < submission.submission_timestamp]
+    submissions = [
+        s
+        for s in submissions
+        if s.submission_timestamp < submission.submission_timestamp
+    ]
     submissions.sort(key=lambda x: x.submission_timestamp, reverse=True)
     return submissions
 
@@ -606,17 +646,16 @@ def set_time(session, submission_id, path_predictions):
     path_predictions : str
         The path where the results files are located.
     """
-    all_cv_folds = (session.query(SubmissionOnCVFold)
-                           .filter_by(submission_id=submission_id)
-                           .all())
+    all_cv_folds = (
+        session.query(SubmissionOnCVFold).filter_by(submission_id=submission_id).all()
+    )
     all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
-        path_results = os.path.join(path_predictions,
-                                    'fold_{}'.format(fold_id))
+        path_results = os.path.join(path_predictions, "fold_{}".format(fold_id))
         results = {}
-        for step in ('train', 'valid', 'test'):
-            results[step + '_time'] = np.loadtxt(
-                os.path.join(path_results, step + '_time')
+        for step in ("train", "valid", "test"):
+            results[step + "_time"] = np.loadtxt(
+                os.path.join(path_results, step + "_time")
             ).item()
         for key, value in results.items():
             setattr(cv_fold, key, value)
@@ -635,20 +674,19 @@ def set_scores(session, submission_id, path_predictions):
     path_predictions : str
         The path where the results files are located.
     """
-    all_cv_folds = (session.query(SubmissionOnCVFold)
-                           .filter_by(submission_id=submission_id)
-                           .all())
+    all_cv_folds = (
+        session.query(SubmissionOnCVFold).filter_by(submission_id=submission_id).all()
+    )
     all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
     for fold_id, cv_fold in enumerate(all_cv_folds):
-        path_results = os.path.join(path_predictions,
-                                    'fold_{}'.format(fold_id))
+        path_results = os.path.join(path_predictions, "fold_{}".format(fold_id))
         scores_update = pd.read_csv(
-            os.path.join(path_results, 'scores.csv'), index_col=0
+            os.path.join(path_results, "scores.csv"), index_col=0
         )
         for score in cv_fold.scores:
             for step in scores_update.index:
                 value = scores_update.loc[step, score.name]
-                setattr(score, step + '_score', value)
+                setattr(score, step + "_score", value)
     session.commit()
 
 
@@ -665,22 +703,21 @@ def set_bagged_scores(session, submission_id, path_predictions):
         The path where the results files are located.
     """
     submission = select_submission_by_id(session, submission_id)
-    df = pd.read_csv(os.path.join(path_predictions, 'bagged_scores.csv'),
-                     index_col=[0, 1])
-    df_steps = df.index.get_level_values('step').unique().tolist()
+    df = pd.read_csv(
+        os.path.join(path_predictions, "bagged_scores.csv"), index_col=[0, 1]
+    )
+    df_steps = df.index.get_level_values("step").unique().tolist()
     for score in submission.scores:
-        for step in ('valid', 'test'):
-            highest_n_bag = df.index.get_level_values('n_bag').max()
+        for step in ("valid", "test"):
+            highest_n_bag = df.index.get_level_values("n_bag").max()
             if step in df_steps:
-                score_last_bag = df.loc[(step, highest_n_bag),
-                                        score.score_name]
-                score_all_bags = (df.loc[(step, slice(None)), score.score_name]
-                                    .tolist())
+                score_last_bag = df.loc[(step, highest_n_bag), score.score_name]
+                score_all_bags = df.loc[(step, slice(None)), score.score_name].tolist()
             else:
                 score_last_bag = float(score.event_score_type.worst)
                 score_all_bags = None
-            setattr(score, '{}_score_cv_bag'.format(step), score_last_bag)
-            setattr(score, '{}_score_cv_bags'.format(step), score_all_bags)
+            setattr(score, "{}_score_cv_bag".format(step), score_last_bag)
+            setattr(score, "{}_score_cv_bags".format(step), score_all_bags)
     session.commit()
 
 
@@ -747,13 +784,20 @@ def submit_starting_kits(session, event_name, team_name, path_submission):
         from_submission_path = os.path.join(path_submission, submission_name)
         # one of the starting kit is usually used a sandbox and we need to
         # change the name to not have any duplicate
-        submission_name = (submission_name
-                           if submission_name != event.ramp_sandbox_name
-                           else submission_name + '_test')
-        submission = add_submission(session, event_name, team_name,
-                                    submission_name, from_submission_path)
-        logger.info('Copying the submission files into the deployment folder')
-        logger.info('Adding {}'.format(submission))
+        submission_name = (
+            submission_name
+            if submission_name != event.ramp_sandbox_name
+            else submission_name + "_test"
+        )
+        submission = add_submission(
+            session,
+            event_name,
+            team_name,
+            submission_name,
+            from_submission_path,
+        )
+        logger.info("Copying the submission files into the deployment folder")
+        logger.info("Adding {}".format(submission))
     # revert the minimum duration between two submissions
     event.min_duration_between_submissions = min_duration_between_submissions
     session.commit()

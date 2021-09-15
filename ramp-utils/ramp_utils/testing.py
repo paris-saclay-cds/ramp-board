@@ -11,7 +11,7 @@ def database_config_template():
     filename : str
         The database configuration filename.
     """
-    return os.path.join(HERE, 'template', 'database_config.yml')
+    return os.path.join(HERE, "template", "database_config.yml")
 
 
 def ramp_config_template():
@@ -22,7 +22,7 @@ def ramp_config_template():
     filename : str
         The RAMP configuration filename.
     """
-    return os.path.join(HERE, 'template', 'ramp_config.yml')
+    return os.path.join(HERE, "template", "ramp_config.yml")
 
 
 def ramp_aws_config_template():
@@ -33,4 +33,4 @@ def ramp_aws_config_template():
     filename : str
         The RAMP configuration on AWS filename.
     """
-    return os.path.join(HERE, 'template', 'ramp_config_aws.yml')
+    return os.path.join(HERE, "template", "ramp_config_aws.yml")

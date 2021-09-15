@@ -27,10 +27,11 @@ def login(client, username, password):
     response : :class:`flask.wrappers.Response`
         The response of the client.
     """
-    return client.post('/login', data=dict(
-        user_name=username,
-        password=password
-    ), follow_redirects=True)
+    return client.post(
+        "/login",
+        data=dict(user_name=username, password=password),
+        follow_redirects=True,
+    )
 
 
 def logout(client):
@@ -49,7 +50,7 @@ def logout(client):
     response : :class:`flask.wrappers.Response`
         The response of the client.
     """
-    return client.get('/logout', follow_redirects=True)
+    return client.get("/logout", follow_redirects=True)
 
 
 @contextmanager

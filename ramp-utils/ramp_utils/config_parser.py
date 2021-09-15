@@ -2,10 +2,16 @@ import os
 import yaml
 
 REQUIRED_KEYS = {
-    'sqlalchemy': {'drivername', 'username', 'password', 'host', 'port',
-                   'database'},
-    'ramp': {'problem_name', 'event_name', 'event_title', 'event_is_public'},
-    'worker': {'worker_type'}
+    "sqlalchemy": {
+        "drivername",
+        "username",
+        "password",
+        "host",
+        "port",
+        "database",
+    },
+    "ramp": {"problem_name", "event_name", "event_title", "event_is_public"},
+    "worker": {"worker_type"},
 }
 
 
@@ -31,7 +37,7 @@ def read_config(config_file, filter_section=None, check_requirements=True):
     config : dict
         Configuration parsed as a dictionary.
     """
-    with open(config_file, 'r') as f:
+    with open(config_file, "r") as f:
         config = yaml.safe_load(f)
 
     # if a single string is given, we will later unpack remove the first layer
@@ -45,25 +51,28 @@ def read_config(config_file, filter_section=None, check_requirements=True):
             if sec not in config:
                 raise ValueError(
                     'The section "{}" is not in the "{}" file. Got these '
-                    'sections instead {}.'
-                    .format(sec, os.path.basename(config_file),
-                            list(config.keys()))
+                    "sections instead {}.".format(
+                        sec, os.path.basename(config_file), list(config.keys())
+                    )
                 )
-    config = {key: value
-              for key, value in config.items()
-              if filter_section is None or key in filter_section}
+    config = {
+        key: value
+        for key, value in config.items()
+        if filter_section is None or key in filter_section
+    }
 
     if check_requirements:
         for section_name, required_field in REQUIRED_KEYS.items():
             if section_name in config:
-                missing_parameters = required_field.difference(
-                    config[section_name])
+                missing_parameters = required_field.difference(config[section_name])
                 if missing_parameters:
                     raise ValueError(
                         'The section "{}" in the "{}" file is missing the '
-                        'required parameters {}.'
-                        .format(section_name, os.path.basename(config_file),
-                                missing_parameters)
+                        "required parameters {}.".format(
+                            section_name,
+                            os.path.basename(config_file),
+                            missing_parameters,
+                        )
                     )
 
     if unpack:

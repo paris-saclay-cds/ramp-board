@@ -21,15 +21,15 @@ from wtforms.widgets import ListWidget
 
 
 def _space_check(form, field):
-    if ' ' in field.data:
-        raise ValidationError('Field cannot contain space.')
+    if " " in field.data:
+        raise ValidationError("Field cannot contain space.")
 
 
 def _ascii_check(form, field):
     try:
-        field.data.encode('ascii')
+        field.data.encode("ascii")
     except Exception:
-        raise ValidationError('Field cannot contain non-ascii characters.')
+        raise ValidationError("Field cannot contain non-ascii characters.")
 
 
 class LoginForm(FlaskForm):
@@ -42,8 +42,9 @@ class LoginForm(FlaskForm):
     password : str
         The user password.
     """
-    user_name = StringField('user_name', [validators.DataRequired()])
-    password = PasswordField('password', [validators.DataRequired()])
+
+    user_name = StringField("user_name", [validators.DataRequired()])
+    password = PasswordField("password", [validators.DataRequired()])
 
 
 class UserUpdateProfileForm(FlaskForm):
@@ -76,19 +77,25 @@ class UserUpdateProfileForm(FlaskForm):
     is_want_news : bool, default is True
         Whether the user want some info from us.
     """
-    user_name = StringField('user_name', [
-        validators.DataRequired(), validators.Length(min=1, max=20),
-        _space_check])
-    firstname = StringField('firstname', [validators.DataRequired()])
-    lastname = StringField('lastname', [validators.DataRequired()])
-    email = StringField('email', [validators.DataRequired()])
-    linkedin_url = StringField('linkedin_url')
-    twitter_url = StringField('twitter_url')
-    facebook_url = StringField('facebook_url')
-    google_url = StringField('google_url')
-    github_url = StringField('github_url')
-    website_url = StringField('website_url')
-    bio = StringField('bio')
+
+    user_name = StringField(
+        "user_name",
+        [
+            validators.DataRequired(),
+            validators.Length(min=1, max=20),
+            _space_check,
+        ],
+    )
+    firstname = StringField("firstname", [validators.DataRequired()])
+    lastname = StringField("lastname", [validators.DataRequired()])
+    email = StringField("email", [validators.DataRequired()])
+    linkedin_url = StringField("linkedin_url")
+    twitter_url = StringField("twitter_url")
+    facebook_url = StringField("facebook_url")
+    google_url = StringField("google_url")
+    github_url = StringField("github_url")
+    website_url = StringField("website_url")
+    bio = StringField("bio")
     is_want_news = BooleanField()
 
 
@@ -124,7 +131,8 @@ class UserCreateProfileForm(UserUpdateProfileForm):
     is_want_news : bool, default is True
         Whether the user want some info from us.
     """
-    password = PasswordField('password', [validators.DataRequired()])
+
+    password = PasswordField("password", [validators.DataRequired()])
 
 
 class CodeForm(FlaskForm):
@@ -138,6 +146,7 @@ class CodeForm(FlaskForm):
         The place holder containing the name of the submission file and the
         code associated.
     """
+
     names_codes: List[Tuple[str, int]] = []
 
 
@@ -152,8 +161,10 @@ class SubmitForm(FlaskForm):
     submission_name : str
         The name of the submission.
     """
-    submission_name = StringField('submission_name',
-                                  [validators.DataRequired(), _space_check])
+
+    submission_name = StringField(
+        "submission_name", [validators.DataRequired(), _space_check]
+    )
 
 
 class UploadForm(FlaskForm):
@@ -167,7 +178,8 @@ class UploadForm(FlaskForm):
     file : file
         File to be uploaded and loaded into the sandbox code form.
     """
-    file = FileField('file')
+
+    file = FileField("file")
 
 
 class EventUpdateProfileForm(FlaskForm):
@@ -198,8 +210,9 @@ class EventUpdateProfileForm(FlaskForm):
     public_opening_timestamp : datetime
         The date and time when the public phase of the event is opening.
     """
+
     title = StringField(
-        'event_title', [validators.DataRequired(), validators.Length(max=80)]
+        "event_title", [validators.DataRequired(), validators.Length(max=80)]
     )
     is_send_trained_mails = BooleanField()
     is_send_submitted_mails = BooleanField()
@@ -207,34 +220,36 @@ class EventUpdateProfileForm(FlaskForm):
     is_controled_signup = BooleanField()
     is_competitive = BooleanField()
     min_duration_between_submissions_hour = IntegerField(
-        'min_h', [validators.NumberRange(min=0)]
+        "min_h", [validators.NumberRange(min=0)]
     )
     min_duration_between_submissions_minute = IntegerField(
-        'min_m', [validators.NumberRange(min=0, max=59)]
+        "min_m", [validators.NumberRange(min=0, max=59)]
     )
     min_duration_between_submissions_second = IntegerField(
-        'min_s', [validators.NumberRange(min=0, max=59)]
+        "min_s", [validators.NumberRange(min=0, max=59)]
     )
     opening_timestamp = DateTimeField(
-        'opening_timestamp', [], format='%Y-%m-%d %H:%M:%S'
+        "opening_timestamp", [], format="%Y-%m-%d %H:%M:%S"
     )
     closing_timestamp = DateTimeField(
-        'closing_timestamp', [], format='%Y-%m-%d %H:%M:%S'
+        "closing_timestamp", [], format="%Y-%m-%d %H:%M:%S"
     )
     public_opening_timestamp = DateTimeField(
-        'public_opening_timestamp', [], format='%Y-%m-%d %H:%M:%S'
+        "public_opening_timestamp", [], format="%Y-%m-%d %H:%M:%S"
     )
 
 
 class MultiCheckboxField(SelectMultipleField):
     """A form containing multiple checkboxes."""
+
     widget = ListWidget(prefix_label=False)
     option_widget = CheckboxInput()
 
 
 class ImportForm(FlaskForm):
     """The form allowing to select which model to view."""
-    selected_f_names = MultiCheckboxField('selected_f_names')
+
+    selected_f_names = MultiCheckboxField("selected_f_names")
 
 
 class CreditForm(FlaskForm):
@@ -252,8 +267,9 @@ class CreditForm(FlaskForm):
     name_credits : list
         The name for the credits.
     """
-    note = StringField('submission_name')
-    self_credit = StringField('self credit')
+
+    note = StringField("submission_name")
+    self_credit = StringField("self credit")
     name_credits: List[str] = []
 
 
@@ -279,43 +295,45 @@ class AskForEventForm(FlaskForm):
     closing_timestamp : datetime
         The date and time when the event is closing.
     """
+
     suffix = StringField(
-        'event_suffix',
-        [validators.DataRequired(), validators.Length(max=20), _ascii_check,
-         _space_check]
+        "event_suffix",
+        [
+            validators.DataRequired(),
+            validators.Length(max=20),
+            _ascii_check,
+            _space_check,
+        ],
     )
     title = StringField(
-        'event_title',
-        [validators.DataRequired(), validators.Length(max=80)]
+        "event_title", [validators.DataRequired(), validators.Length(max=80)]
     )
     n_students = IntegerField(
-        'n_students',
-        [validators.DataRequired(), validators.NumberRange(min=0)]
+        "n_students",
+        [validators.DataRequired(), validators.NumberRange(min=0)],
     )
     min_duration_between_submissions_hour = IntegerField(
-        'min_h', [validators.NumberRange(min=0)]
+        "min_h", [validators.NumberRange(min=0)]
     )
     min_duration_between_submissions_minute = IntegerField(
-        'min_m', [validators.NumberRange(min=0, max=59)]
+        "min_m", [validators.NumberRange(min=0, max=59)]
     )
     min_duration_between_submissions_second = IntegerField(
-        'min_s', [validators.NumberRange(min=0, max=59)]
+        "min_s", [validators.NumberRange(min=0, max=59)]
     )
     opening_date = DateField(
-        'opening_date', [validators.DataRequired()], format='%Y-%m-%d'
+        "opening_date", [validators.DataRequired()], format="%Y-%m-%d"
     )
     closing_date = DateField(
-        'closing_date', [validators.DataRequired()], format='%Y-%m-%d'
+        "closing_date", [validators.DataRequired()], format="%Y-%m-%d"
     )
 
 
 class EmailForm(FlaskForm):
     email = StringField(
-        'Email', validators=[validators.DataRequired(), validators.Email()]
+        "Email", validators=[validators.DataRequired(), validators.Email()]
     )
 
 
 class PasswordForm(FlaskForm):
-    password = PasswordField(
-        'Password', validators=[validators.DataRequired()]
-    )
+    password = PasswordField("Password", validators=[validators.DataRequired()])

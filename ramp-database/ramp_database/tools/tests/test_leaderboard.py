@@ -27,17 +27,17 @@ from ramp_database.tools.leaderboard import update_leaderboards
 from ramp_database.tools.leaderboard import update_user_leaderboards
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def session_toy_db(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
     try:
         deployment_dir = create_toy_db(database_config, ramp_config)
-        with session_scope(database_config['sqlalchemy']) as session:
+        with session_scope(database_config["sqlalchemy"]) as session:
             yield session
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)
-        db, _ = setup_db(database_config['sqlalchemy'])
+        db, _ = setup_db(database_config["sqlalchemy"])
         Model.metadata.drop_all(db)
 
 
@@ -47,23 +47,29 @@ def session_toy_function(database_connection):
     ramp_config = ramp_config_template()
     try:
         deployment_dir = create_toy_db(database_config, ramp_config)
-        with session_scope(database_config['sqlalchemy']) as session:
+        with session_scope(database_config["sqlalchemy"]) as session:
             yield session
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)
-        db, _ = setup_db(database_config['sqlalchemy'])
+        db, _ = setup_db(database_config["sqlalchemy"])
         Model.metadata.drop_all(db)
 
 
 def test_update_leaderboard_functions(session_toy_function):
-    event_name = 'iris_test'
-    user_name = 'test_user'
-    for leaderboard_type in ['public', 'private', 'failed',
-                             'public competition', 'private competition']:
-        leaderboard = get_leaderboard(session_toy_function, leaderboard_type,
-                                      event_name)
+    event_name = "iris_test"
+    user_name = "test_user"
+    for leaderboard_type in [
+        "public",
+        "private",
+        "failed",
+        "public competition",
+        "private competition",
+    ]:
+        leaderboard = get_leaderboard(
+            session_toy_function, leaderboard_type, event_name
+        )
         assert leaderboard is None
-    leaderboard = get_leaderboard(session_toy_function, 'new', event_name)
+    leaderboard = get_leaderboard(session_toy_function, "new", event_name)
     assert leaderboard
 
     event = get_event(session_toy_function, event_name)
@@ -75,15 +81,12 @@ def test_update_leaderboard_functions(session_toy_function):
     assert event.private_competition_leaderboard_html is None
     assert event.new_leaderboard_html
 
-    event_team = get_event_team_by_name(session_toy_function, event_name,
-                                        user_name)
+    event_team = get_event_team_by_name(session_toy_function, event_name, user_name)
     assert event_team.leaderboard_html is None
     assert event_team.failed_leaderboard_html is None
     assert event_team.new_leaderboard_html
 
-    event_teams = (session_toy_function.query(EventTeam)
-                                       .filter_by(event=event)
-                                       .all())
+    event_teams = session_toy_function.query(EventTeam).filter_by(event=event).all()
     for et in event_teams:
         assert et.leaderboard_html is None
         assert et.failed_leaderboard_html is None
@@ -92,9 +95,7 @@ def test_update_leaderboard_functions(session_toy_function):
     # run the dispatcher to process the different submissions
     config = read_config(database_config_template())
     event_config = read_config(ramp_config_template())
-    dispatcher = Dispatcher(
-        config, event_config, n_workers=-1, hunger_policy='exit'
-    )
+    dispatcher = Dispatcher(config, event_config, n_workers=-1, hunger_policy="exit")
     dispatcher.launch()
     session_toy_function.commit()
 
@@ -109,16 +110,13 @@ def test_update_leaderboard_functions(session_toy_function):
     assert event.new_leaderboard_html is None
 
     update_user_leaderboards(session_toy_function, event_name, user_name)
-    event_team = get_event_team_by_name(session_toy_function, event_name,
-                                        user_name)
+    event_team = get_event_team_by_name(session_toy_function, event_name, user_name)
     assert event_team.leaderboard_html
     assert event_team.failed_leaderboard_html
     assert event_team.new_leaderboard_html is None
 
     update_all_user_leaderboards(session_toy_function, event_name)
-    event_teams = (session_toy_function.query(EventTeam)
-                                       .filter_by(event=event)
-                                       .all())
+    event_teams = session_toy_function.query(EventTeam).filter_by(event=event).all()
     for et in event_teams:
         assert et.leaderboard_html
         assert et.failed_leaderboard_html
@@ -126,80 +124,87 @@ def test_update_leaderboard_functions(session_toy_function):
 
 
 @pytest.mark.parametrize(
-    'leaderboard_type, expected_html',
-    [('new', not None),
-     ('public', None),
-     ('private', None),
-     ('failed', None),
-     ('public competition', None),
-     ('private competition', None)]
+    "leaderboard_type, expected_html",
+    [
+        ("new", not None),
+        ("public", None),
+        ("private", None),
+        ("failed", None),
+        ("public competition", None),
+        ("private competition", None),
+    ],
 )
-def test_get_leaderboard_only_new_submissions(session_toy_db, leaderboard_type,
-                                              expected_html):
+def test_get_leaderboard_only_new_submissions(
+    session_toy_db, leaderboard_type, expected_html
+):
     # only check that the submission should be shown as new when the
     # dispatcher was not started.
     if expected_html is not None:
-        assert get_leaderboard(session_toy_db, leaderboard_type, 'iris_test')
+        assert get_leaderboard(session_toy_db, leaderboard_type, "iris_test")
     else:
-        assert (get_leaderboard(
-            session_toy_db, leaderboard_type, 'iris_test') is expected_html)
+        assert (
+            get_leaderboard(session_toy_db, leaderboard_type, "iris_test")
+            is expected_html
+        )
 
 
 def test_get_leaderboard(session_toy_db):
-    """ this test assumes that all the submissions in the database are 'new'"""
-    leaderboard_new = get_leaderboard(session_toy_db, 'new', 'iris_test')
-    assert leaderboard_new.count('<tr>') == 6
-    leaderboard_new = get_leaderboard(session_toy_db, 'new', 'iris_test',
-                                      'test_user')
-    assert leaderboard_new.count('<tr>') == 3
+    """this test assumes that all the submissions in the database are 'new'"""
+    leaderboard_new = get_leaderboard(session_toy_db, "new", "iris_test")
+    assert leaderboard_new.count("<tr>") == 6
+    leaderboard_new = get_leaderboard(session_toy_db, "new", "iris_test", "test_user")
+    assert leaderboard_new.count("<tr>") == 3
 
     # run the dispatcher to process the different submissions
     config = read_config(database_config_template())
     event_config = read_config(ramp_config_template())
-    dispatcher = Dispatcher(
-        config, event_config, n_workers=-1, hunger_policy='exit'
-    )
+    dispatcher = Dispatcher(config, event_config, n_workers=-1, hunger_policy="exit")
     dispatcher.launch()
     session_toy_db.commit()
 
-    assert get_leaderboard(session_toy_db, 'new', 'iris_test') is None
+    assert get_leaderboard(session_toy_db, "new", "iris_test") is None
     # the iris dataset has a single submission which is failing
-    leaderboard_failed = get_leaderboard(session_toy_db, 'failed', 'iris_test')
-    assert leaderboard_failed.count('<tr>') == 2
-    leaderboard_failed = get_leaderboard(session_toy_db, 'failed', 'iris_test',
-                                         'test_user')
-    assert leaderboard_failed.count('<tr>') == 1
+    leaderboard_failed = get_leaderboard(session_toy_db, "failed", "iris_test")
+    assert leaderboard_failed.count("<tr>") == 2
+    leaderboard_failed = get_leaderboard(
+        session_toy_db, "failed", "iris_test", "test_user"
+    )
+    assert leaderboard_failed.count("<tr>") == 1
 
     # the remaining submission should be successful
-    leaderboard_public = get_leaderboard(session_toy_db, 'public', 'iris_test')
-    assert leaderboard_public.count('<tr>') == 4
-    leaderboard_public = get_leaderboard(session_toy_db, 'public', 'iris_test',
-                                         'test_user')
-    assert leaderboard_public.count('<tr>') == 2
+    leaderboard_public = get_leaderboard(session_toy_db, "public", "iris_test")
+    assert leaderboard_public.count("<tr>") == 4
+    leaderboard_public = get_leaderboard(
+        session_toy_db, "public", "iris_test", "test_user"
+    )
+    assert leaderboard_public.count("<tr>") == 2
 
-    leaderboard_private = get_leaderboard(session_toy_db, 'private',
-                                          'iris_test')
-    assert leaderboard_private.count('<tr>') == 4
-    leaderboard_private = get_leaderboard(session_toy_db, 'private',
-                                          'iris_test', 'test_user')
-    assert leaderboard_private.count('<tr>') == 2
+    leaderboard_private = get_leaderboard(session_toy_db, "private", "iris_test")
+    assert leaderboard_private.count("<tr>") == 4
+    leaderboard_private = get_leaderboard(
+        session_toy_db, "private", "iris_test", "test_user"
+    )
+    assert leaderboard_private.count("<tr>") == 2
 
     # the competition leaderboard will have the best solution for each user
-    competition_public = get_leaderboard(session_toy_db, 'public competition',
-                                         'iris_test')
-    assert competition_public.count('<tr>') == 2
-    competition_private = get_leaderboard(session_toy_db,
-                                          'private competition', 'iris_test')
-    assert competition_private.count('<tr>') == 2
+    competition_public = get_leaderboard(
+        session_toy_db, "public competition", "iris_test"
+    )
+    assert competition_public.count("<tr>") == 2
+    competition_private = get_leaderboard(
+        session_toy_db, "private competition", "iris_test"
+    )
+    assert competition_private.count("<tr>") == 2
 
     # check the difference between the public and private leaderboard
-    assert leaderboard_private.count('<td>') > leaderboard_public.count('<td>')
-    for private_term in ['bag', 'mean', 'std', 'private']:
+    assert leaderboard_private.count("<td>") > leaderboard_public.count("<td>")
+    for private_term in ["bag", "mean", "std", "private"]:
         assert private_term not in leaderboard_public
         assert private_term in leaderboard_private
 
     # check the column name in each leaderboard
-    assert """<th>submission ID</th>
+    assert (
+        """<th>submission ID</th>
       <th>team</th>
       <th>submission</th>
       <th>bag public acc</th>
@@ -230,8 +235,11 @@ def test_get_leaderboard(session_toy_db):
       <th>validation time [s]</th>
       <th>test time [s]</th>
       <th>max RAM [MB]</th>
-      <th>submitted at (UTC)</th>""" in leaderboard_private
-    assert """<th>team</th>
+      <th>submitted at (UTC)</th>"""
+        in leaderboard_private
+    )
+    assert (
+        """<th>team</th>
       <th>submission</th>
       <th>acc</th>
       <th>error</th>
@@ -240,21 +248,30 @@ def test_get_leaderboard(session_toy_db):
       <th>train time [s]</th>
       <th>validation time [s]</th>
       <th>max RAM [MB]</th>
-      <th>submitted at (UTC)</th>""" in leaderboard_public
-    assert """<th>team</th>
+      <th>submitted at (UTC)</th>"""
+        in leaderboard_public
+    )
+    assert (
+        """<th>team</th>
       <th>submission</th>
       <th>submitted at (UTC)</th>
-      <th>error</th>""" in leaderboard_failed
+      <th>error</th>"""
+        in leaderboard_failed
+    )
 
     # check the same for the competition leaderboard
-    assert """<th>rank</th>
+    assert (
+        """<th>rank</th>
       <th>team</th>
       <th>submission</th>
       <th>acc</th>
       <th>train time [s]</th>
       <th>validation time [s]</th>
-      <th>submitted at (UTC)</th>""" in competition_public
-    assert """<th>rank</th>
+      <th>submitted at (UTC)</th>"""
+        in competition_public
+    )
+    assert (
+        """<th>rank</th>
       <th>move</th>
       <th>team</th>
       <th>submission</th>
@@ -262,24 +279,21 @@ def test_get_leaderboard(session_toy_db):
       <th>train time [s]</th>
       <th>validation time [s]</th>
       <th>test time [s]</th>
-      <th>submitted at (UTC)</th>""" in competition_private
+      <th>submitted at (UTC)</th>"""
+        in competition_private
+    )
 
 
 @pytest.mark.parametrize(
-    'event_name, expected_size',
-    [('iris_test', 4),
-     ('iris_aws_test', 0),
-     ('boston_housing_test', 0)]
+    "event_name, expected_size",
+    [("iris_test", 4), ("iris_aws_test", 0), ("boston_housing_test", 0)],
 )
-def test_export_leaderboard_to_dataframe(session_toy_db,
-                                         event_name, expected_size):
-    """ it will run iris_test if it was not run previously, ie
-    test test_get_leaderboard already run """
+def test_export_leaderboard_to_dataframe(session_toy_db, event_name, expected_size):
+    """it will run iris_test if it was not run previously, ie
+    test test_get_leaderboard already run"""
     config = read_config(database_config_template())
     event_config = read_config(ramp_config_template())
-    dispatcher = Dispatcher(
-        config, event_config, n_workers=-1, hunger_policy='exit'
-    )
+    dispatcher = Dispatcher(config, event_config, n_workers=-1, hunger_policy="exit")
     dispatcher.launch()
     session_toy_db.commit()
 
@@ -287,9 +301,11 @@ def test_export_leaderboard_to_dataframe(session_toy_db,
     # assert only submissions with the event_name
     assert leaderboard.shape[0] == expected_size
 
-    submissions = (session_toy_db.query(Submission)
-                   .filter(Event.name == event_name)
-                   .filter(Event.id == EventTeam.event_id)
-                   .filter(EventTeam.id == Submission.event_team_id)
-                   .filter(Submission.state == 'scored')).all()
+    submissions = (
+        session_toy_db.query(Submission)
+        .filter(Event.name == event_name)
+        .filter(Event.id == EventTeam.event_id)
+        .filter(EventTeam.id == Submission.event_team_id)
+        .filter(Submission.state == "scored")
+    ).all()
     assert len(submissions) == leaderboard.shape[0]

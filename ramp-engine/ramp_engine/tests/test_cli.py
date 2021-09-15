@@ -24,32 +24,36 @@ def make_toy_db(database_connection):
         yield
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)
-        db, _ = setup_db(database_config['sqlalchemy'])
+        db, _ = setup_db(database_config["sqlalchemy"])
         Model.metadata.drop_all(db)
 
 
-@pytest.mark.parametrize(
-    "verbose_params", [None, "--verbose", "-vv"]
-)
+@pytest.mark.parametrize("verbose_params", [None, "--verbose", "-vv"])
 def test_dispatcher(verbose_params, make_toy_db):
     runner = CliRunner()
-    cmd = ["dispatcher",
-           "--config", database_config_template(),
-           "--event-config", ramp_config_template()]
+    cmd = [
+        "dispatcher",
+        "--config",
+        database_config_template(),
+        "--event-config",
+        ramp_config_template(),
+    ]
     if verbose_params is not None:
         cmd += [verbose_params]
     result = runner.invoke(main, cmd)
     assert result.exit_code == 0, result.output
 
 
-@pytest.mark.parametrize(
-    "verbose_params", [None, "--verbose", "-vv"]
-)
+@pytest.mark.parametrize("verbose_params", [None, "--verbose", "-vv"])
 def test_worker(verbose_params, make_toy_db):
     runner = CliRunner()
-    cmd = ["worker",
-           "--event-config", ramp_config_template(),
-           "--submission", "starting_kit"]
+    cmd = [
+        "worker",
+        "--event-config",
+        ramp_config_template(),
+        "--submission",
+        "starting_kit",
+    ]
     if verbose_params is not None:
         cmd += [verbose_params]
     result = runner.invoke(main, cmd)

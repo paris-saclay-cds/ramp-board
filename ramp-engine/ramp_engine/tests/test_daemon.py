@@ -23,17 +23,17 @@ def session_toy(database_connection):
     ramp_config = ramp_config_template()
     try:
         deployment_dir = create_toy_db(database_config, ramp_config)
-        with session_scope(database_config['sqlalchemy']) as session:
+        with session_scope(database_config["sqlalchemy"]) as session:
             yield session
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)
-        db, _ = setup_db(database_config['sqlalchemy'])
+        db, _ = setup_db(database_config["sqlalchemy"])
         Model.metadata.drop_all(db)
 
 
 def test_daemon_error_init():
     with pytest.raises(ValueError, match="The path xxx is not existing"):
-        Daemon(config=database_config_template(), events_dir='xxx')
+        Daemon(config=database_config_template(), events_dir="xxx")
 
 
 def test_daemon(session_toy):
@@ -44,7 +44,7 @@ def test_daemon(session_toy):
     event.closing_timestamp = datetime.datetime.utcnow()
     session_toy.commit()
 
-    events_dir = os.path.join(os.path.dirname(__file__), 'events')
+    events_dir = os.path.join(os.path.dirname(__file__), "events")
     daemon = Daemon(config=database_config_template(), events_dir=events_dir)
 
     try:

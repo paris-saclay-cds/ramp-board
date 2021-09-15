@@ -10,7 +10,7 @@ from sqlalchemy.orm import relationship
 
 from .base import Model
 
-__all__ = ['Team']
+__all__ = ["Team"]
 
 
 class Team(Model):
@@ -48,25 +48,26 @@ class Team(Model):
     team_events : :class:`ramp_database.model.EventTeam`
         A back-reference to the events to which the team is enroll.
     """
-    __tablename__ = 'teams'
+
+    __tablename__ = "teams"
 
     id = Column(Integer, primary_key=True)
     name = Column(String(20), nullable=False, unique=True)
 
-    admin_id = Column(Integer, ForeignKey('users.id'))
-    admin = relationship('User',
-                         backref=backref('admined_teams',
-                                         cascade="all, delete"))
-
-    # initiator asks for merge, acceptor accepts
-    initiator_id = Column(Integer, ForeignKey('teams.id'), default=None)
-    initiator = relationship(
-        'Team', primaryjoin=('Team.initiator_id == Team.id'), uselist=False
+    admin_id = Column(Integer, ForeignKey("users.id"))
+    admin = relationship(
+        "User", backref=backref("admined_teams", cascade="all, delete")
     )
 
-    acceptor_id = Column(Integer, ForeignKey('teams.id'), default=None)
+    # initiator asks for merge, acceptor accepts
+    initiator_id = Column(Integer, ForeignKey("teams.id"), default=None)
+    initiator = relationship(
+        "Team", primaryjoin=("Team.initiator_id == Team.id"), uselist=False
+    )
+
+    acceptor_id = Column(Integer, ForeignKey("teams.id"), default=None)
     acceptor = relationship(
-        'Team', primaryjoin=('Team.acceptor_id == Team.id'), uselist=False
+        "Team", primaryjoin=("Team.acceptor_id == Team.id"), uselist=False
     )
 
     creation_timestamp = Column(DateTime, nullable=False)
@@ -79,9 +80,9 @@ class Team(Model):
         self.creation_timestamp = datetime.datetime.utcnow()
 
     def __str__(self):
-        return 'Team({})'.format(self.name)
+        return "Team({})".format(self.name)
 
     def __repr__(self):
-        return ('Team(name={}, admin_name={}, initiator={}, acceptor={})'
-                .format(self.name, self.admin.name,
-                        self.initiator, self.acceptor))
+        return "Team(name={}, admin_name={}, initiator={}, acceptor={})".format(
+            self.name, self.admin.name, self.initiator, self.acceptor
+        )

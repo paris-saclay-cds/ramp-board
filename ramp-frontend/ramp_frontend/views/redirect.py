@@ -4,10 +4,10 @@ from flask import flash
 from flask import redirect
 from flask import url_for
 
-logger = logging.getLogger('RAMP-FRONTEND')
+logger = logging.getLogger("RAMP-FRONTEND")
 
 
-def redirect_to_user(message_str, is_error=True, category='message'):
+def redirect_to_user(message_str, is_error=True, category="message"):
     """Redirect the page to the problem landing page.
 
     Parameters
@@ -25,7 +25,7 @@ def redirect_to_user(message_str, is_error=True, category='message'):
         logger.error(message_str)
     else:
         logger.info(message_str)
-    return redirect(url_for('ramp.problems'))
+    return redirect(url_for("ramp.problems"))
 
 
 def redirect_to_sandbox(event, message_str, is_error=True, category=None):
@@ -45,11 +45,10 @@ def redirect_to_sandbox(event, message_str, is_error=True, category=None):
         logger.error(message_str)
     else:
         logger.info(message_str)
-    return redirect('/events/{}/sandbox'.format(event.name))
+    return redirect("/events/{}/sandbox".format(event.name))
 
 
-def redirect_to_credit(submission_hash, message_str, is_error=True,
-                       category=None):
+def redirect_to_credit(submission_hash, message_str, is_error=True, category=None):
     """Redirect the page to the credit landing page.
 
     Parameters
@@ -68,4 +67,4 @@ def redirect_to_credit(submission_hash, message_str, is_error=True,
         logger.error(message_str)
     else:
         logger.info(message_str)
-    return redirect('/credit/{}'.format(submission_hash))
+    return redirect("/credit/{}".format(submission_hash))

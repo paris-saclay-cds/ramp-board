@@ -6,7 +6,7 @@ from sqlalchemy import Boolean
 
 from .base import Model
 
-__all__ = ['ScoreType']
+__all__ = ["ScoreType"]
 
 
 # XXX: Should probably be addressed at some point?
@@ -39,7 +39,8 @@ class ScoreType(Model):
     events : list of :class:`ramp_database.model.EventScoreType`
         A back-reference to the event using the score.
     """
-    __tablename__ = 'score_types'
+
+    __tablename__ = "score_types"
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, unique=True)
@@ -54,4 +55,4 @@ class ScoreType(Model):
         self.maximum = maximum
 
     def __repr__(self):
-        return 'ScoreType(name={})'.format(self.name)
+        return "ScoreType(name={})".format(self.name)

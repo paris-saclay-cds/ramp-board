@@ -13,88 +13,89 @@ import boto3
 
 
 __all__ = [
-    'launch_ec2_instances',
-    'terminate_ec2_instance',
-    'list_ec2_instance_ids',
-    'status_of_ec2_instance',
-    'upload_submission',
-    'download_log',
-    'download_predictions',
-    'launch_train',
-    'abort_training',
+    "launch_ec2_instances",
+    "terminate_ec2_instance",
+    "list_ec2_instance_ids",
+    "status_of_ec2_instance",
+    "upload_submission",
+    "download_log",
+    "download_predictions",
+    "launch_train",
+    "abort_training",
 ]
 
 
 # we disable the boto3 loggers because they are too verbose
-for k in (logging.Logger.manager.loggerDict.keys()):
-    if 'boto' in k:
+for k in logging.Logger.manager.loggerDict.keys():
+    if "boto" in k:
         logging.getLogger(k).disabled = True
 
-logger = logging.getLogger('RAMP-AWS')
+logger = logging.getLogger("RAMP-AWS")
 
 # configuration fields
-AWS_CONFIG_SECTION = 'aws'
-PROFILE_NAME_FIELD = 'profile_name'
-ACCESS_KEY_ID_FIELD = 'access_key_id'
-SECRET_ACCESS_KEY_FIELD = 'secret_access_key'
-REGION_NAME_FIELD = 'region_name'
-AMI_IMAGE_ID_FIELD = 'ami_image_id'
-AMI_IMAGE_NAME_FIELD = 'ami_image_name'
-AMI_USER_NAME_FIELD = 'ami_user_name'
-INSTANCE_TYPE_FIELD = 'instance_type'
-USE_SPOT_INSTANCE_FIELD = 'use_spot_instance'
-KEY_PATH_FIELD = 'key_path'
-KEY_NAME_FIELD = 'key_name'
-SECURITY_GROUP_FIELD = 'security_group'
-REMOTE_RAMP_KIT_FOLDER_FIELD = 'remote_ramp_kit_folder'
-LOCAL_PREDICTIONS_FOLDER_FIELD = 'predictions_dir'
-CHECK_STATUS_INTERVAL_SECS_FIELD = 'check_status_interval_secs'
-CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD = (
-    'check_finished_training_interval_secs')
-LOCAL_LOG_FOLDER_FIELD = 'logs_dir'
-TRAIN_LOOP_INTERVAL_SECS_FIELD = 'train_loop_interval_secs'
-MEMORY_PROFILING_FIELD = 'memory_profiling'
+AWS_CONFIG_SECTION = "aws"
+PROFILE_NAME_FIELD = "profile_name"
+ACCESS_KEY_ID_FIELD = "access_key_id"
+SECRET_ACCESS_KEY_FIELD = "secret_access_key"
+REGION_NAME_FIELD = "region_name"
+AMI_IMAGE_ID_FIELD = "ami_image_id"
+AMI_IMAGE_NAME_FIELD = "ami_image_name"
+AMI_USER_NAME_FIELD = "ami_user_name"
+INSTANCE_TYPE_FIELD = "instance_type"
+USE_SPOT_INSTANCE_FIELD = "use_spot_instance"
+KEY_PATH_FIELD = "key_path"
+KEY_NAME_FIELD = "key_name"
+SECURITY_GROUP_FIELD = "security_group"
+REMOTE_RAMP_KIT_FOLDER_FIELD = "remote_ramp_kit_folder"
+LOCAL_PREDICTIONS_FOLDER_FIELD = "predictions_dir"
+CHECK_STATUS_INTERVAL_SECS_FIELD = "check_status_interval_secs"
+CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD = "check_finished_training_interval_secs"
+LOCAL_LOG_FOLDER_FIELD = "logs_dir"
+TRAIN_LOOP_INTERVAL_SECS_FIELD = "train_loop_interval_secs"
+MEMORY_PROFILING_FIELD = "memory_profiling"
 
 # how long to wait for connections
 WAIT_MINUTES = 2
 MAX_TRIES_TO_CONNECT = 1
 
-HOOKS_SECTION = 'hooks'
-HOOK_START_TRAINING = 'start_training'
-HOOK_SUCCESSFUL_TRAINING = 'successful_training'
-HOOK_FAILED_TRAINING = 'failed_training'
+HOOKS_SECTION = "hooks"
+HOOK_START_TRAINING = "start_training"
+HOOK_SUCCESSFUL_TRAINING = "successful_training"
+HOOK_FAILED_TRAINING = "failed_training"
 HOOKS = [
     HOOK_START_TRAINING,
     HOOK_SUCCESSFUL_TRAINING,
     HOOK_FAILED_TRAINING,
 ]
-ALL_FIELDS = set([
-    PROFILE_NAME_FIELD,
-    ACCESS_KEY_ID_FIELD,
-    SECRET_ACCESS_KEY_FIELD,
-    REGION_NAME_FIELD,
-    AMI_IMAGE_ID_FIELD,
-    AMI_IMAGE_NAME_FIELD,
-    AMI_USER_NAME_FIELD,
-    INSTANCE_TYPE_FIELD,
-    USE_SPOT_INSTANCE_FIELD,
-    KEY_PATH_FIELD,
-    KEY_NAME_FIELD,
-    SECURITY_GROUP_FIELD,
-    REMOTE_RAMP_KIT_FOLDER_FIELD,
-    LOCAL_PREDICTIONS_FOLDER_FIELD,
-    CHECK_STATUS_INTERVAL_SECS_FIELD,
-    CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD,
-    LOCAL_LOG_FOLDER_FIELD,
-    TRAIN_LOOP_INTERVAL_SECS_FIELD,
-    MEMORY_PROFILING_FIELD,
-    HOOKS_SECTION,
-])
+ALL_FIELDS = set(
+    [
+        PROFILE_NAME_FIELD,
+        ACCESS_KEY_ID_FIELD,
+        SECRET_ACCESS_KEY_FIELD,
+        REGION_NAME_FIELD,
+        AMI_IMAGE_ID_FIELD,
+        AMI_IMAGE_NAME_FIELD,
+        AMI_USER_NAME_FIELD,
+        INSTANCE_TYPE_FIELD,
+        USE_SPOT_INSTANCE_FIELD,
+        KEY_PATH_FIELD,
+        KEY_NAME_FIELD,
+        SECURITY_GROUP_FIELD,
+        REMOTE_RAMP_KIT_FOLDER_FIELD,
+        LOCAL_PREDICTIONS_FOLDER_FIELD,
+        CHECK_STATUS_INTERVAL_SECS_FIELD,
+        CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD,
+        LOCAL_LOG_FOLDER_FIELD,
+        TRAIN_LOOP_INTERVAL_SECS_FIELD,
+        MEMORY_PROFILING_FIELD,
+        HOOKS_SECTION,
+    ]
+)
 REQUIRED_FIELDS = ALL_FIELDS - {HOOKS_SECTION}
 
 # constants
-RAMP_AWS_BACKEND_TAG = 'ramp_aws_backend_instance'
-SUBMISSIONS_FOLDER = 'submissions'
+RAMP_AWS_BACKEND_TAG = "ramp_aws_backend_instance"
+SUBMISSIONS_FOLDER = "submissions"
 
 
 def _wait_until_train_finished(config, instance_id, submission_name):
@@ -104,15 +105,17 @@ def _wait_until_train_finished(config, instance_id, submission_name):
     the screen is still active. If the screen is not active anymore,
     then we consider that the training has either finished or failed.
     """
-    logger.info('Wait until training of submission "{}" is '
-                'finished on instance "{}"...'.format(submission_name,
-                                                      instance_id))
+    logger.info(
+        'Wait until training of submission "{}" is '
+        'finished on instance "{}"...'.format(submission_name, instance_id)
+    )
     secs = int(config[CHECK_FINISHED_TRAINING_INTERVAL_SECS_FIELD])
     while not _training_finished(config, instance_id, submission_name):
         time.sleep(secs)
-    logger.info('Training of submission "{}" is '
-                'finished on instance "{}".'.format(submission_name,
-                                                    instance_id))
+    logger.info(
+        'Training of submission "{}" is '
+        'finished on instance "{}".'.format(submission_name, instance_id)
+    )
 
 
 def launch_ec2_instances(config, nb=1):
@@ -124,9 +127,10 @@ def launch_ec2_instances(config, nb=1):
     ami_name = config.get(AMI_IMAGE_NAME_FIELD)
     if ami_image_id and ami_name:
         raise ValueError(
-            'The fields ami_image_id and ami_image_name cannot be both'
-            'specified at the same time. Please specify either ami_image_id'
-            'or ami_image_name')
+            "The fields ami_image_id and ami_image_name cannot be both"
+            "specified at the same time. Please specify either ami_image_id"
+            "or ami_image_name"
+        )
     if ami_name:
         try:
             ami_image_id = _get_image_id(config, ami_name)
@@ -136,40 +140,42 @@ def launch_ec2_instances(config, nb=1):
     key_name = config[KEY_NAME_FIELD]
     security_group = config[SECURITY_GROUP_FIELD]
 
-    logger.info('Launching {} new ec2 instance(s)...'.format(nb))
+    logger.info("Launching {} new ec2 instance(s)...".format(nb))
 
     # tag all instances using RAMP_AWS_BACKEND_TAG to be able
     # to list all instances later
-    tags = [{
-        'ResourceType': 'instance',
-        'Tags': [
-            {'Key': RAMP_AWS_BACKEND_TAG, 'Value': '1'},
-        ]
-    }]
+    tags = [
+        {
+            "ResourceType": "instance",
+            "Tags": [
+                {"Key": RAMP_AWS_BACKEND_TAG, "Value": "1"},
+            ],
+        }
+    ]
     sess = _get_boto_session(config)
-    client = sess.client('ec2')
-    resource = sess.resource('ec2')
+    client = sess.client("ec2")
+    resource = sess.resource("ec2")
     switch_to_on_demand = False
 
     if use_spot_instance:
-        logger.info('Attempting to use spot instance.')
+        logger.info("Attempting to use spot instance.")
         now = datetime.utcnow() + timedelta(seconds=3)
         wait_minutes = WAIT_MINUTES
         max_tries_to_connect = MAX_TRIES_TO_CONNECT
         request_wait = timedelta(minutes=wait_minutes)
         n_try = 0
         response = None
-        while not(response) and (n_try < max_tries_to_connect):
+        while not (response) and (n_try < max_tries_to_connect):
             try:
                 response = client.request_spot_instances(
                     InstanceCount=nb,
                     LaunchSpecification={
-                        'SecurityGroups': [security_group],
-                        'ImageId': ami_image_id,
-                        'InstanceType': instance_type,
-                        'KeyName': key_name,
+                        "SecurityGroups": [security_group],
+                        "ImageId": ami_image_id,
+                        "InstanceType": instance_type,
+                        "KeyName": key_name,
                     },
-                    Type='one-time',
+                    Type="one-time",
                     ValidFrom=now,
                     ValidUntil=(now + request_wait),
                 )
@@ -178,57 +184,69 @@ def launch_ec2_instances(config, nb=1):
                 n_try += 1
                 if n_try < max_tries_to_connect:
                     # wait before you try again
-                    logger.warning('Not enough instances available: I am going'
-                                   f' to wait for {wait_minutes} minutes'
-                                   ' before trying again (this was'
-                                   f' {n_try} out of {max_tries_to_connect}'
-                                   ' tries to connect)')
-                    time.sleep(wait_minutes*60)
+                    logger.warning(
+                        "Not enough instances available: I am going"
+                        f" to wait for {wait_minutes} minutes"
+                        " before trying again (this was"
+                        f" {n_try} out of {max_tries_to_connect}"
+                        " tries to connect)"
+                    )
+                    time.sleep(wait_minutes * 60)
                 else:
-                    logger.error(f'Not enough instances available: {e}')
-                    return None, 'retry'
+                    logger.error(f"Not enough instances available: {e}")
+                    return None, "retry"
             except Exception as e:
                 # unknown error
-                logger.error(f'AWS worker error: {e}')
+                logger.error(f"AWS worker error: {e}")
                 return None, e
         # Wait until request fulfilled
-        waiter = client.get_waiter('spot_instance_request_fulfilled')
-        request_id = \
-            response['SpotInstanceRequests'][0]['SpotInstanceRequestId']
+        waiter = client.get_waiter("spot_instance_request_fulfilled")
+        request_id = response["SpotInstanceRequests"][0]["SpotInstanceRequestId"]
         try:
-            waiter.wait(SpotInstanceRequestIds=[request_id, ])
+            waiter.wait(
+                SpotInstanceRequestIds=[
+                    request_id,
+                ]
+            )
         except botocore.exceptions.WaiterError:
-            logger.info('Spot instance request failed due to time out. Using '
-                        'on-demand instance instead')
+            logger.info(
+                "Spot instance request failed due to time out. Using "
+                "on-demand instance instead"
+            )
             switch_to_on_demand = True
             client.cancel_spot_instance_requests(
-                SpotInstanceRequestIds=[request_id, ]
+                SpotInstanceRequestIds=[
+                    request_id,
+                ]
             )
         else:
-            logger.info('Spot instance request fulfilled.')
+            logger.info("Spot instance request fulfilled.")
             # Small wait before getting instance ID
             time.sleep(1)
             # Get instance ID
             response_updated = client.describe_spot_instance_requests(
                 SpotInstanceRequestIds=[request_id]
             )
-            instance_id = \
-                response_updated['SpotInstanceRequests'][0]['InstanceId']
+            instance_id = response_updated["SpotInstanceRequests"][0]["InstanceId"]
             # Create EC2.Instance class
             instance = resource.Instance(instance_id)
             instance.create_tags(
-                Resources=[instance_id, ],
+                Resources=[
+                    instance_id,
+                ],
                 Tags=[
-                    {
-                        'Key': RAMP_AWS_BACKEND_TAG,
-                        'Value': '1'
-                    },
-                ])
-            instances = [instance, ]
-            instance_ids = [instance_id, ]
+                    {"Key": RAMP_AWS_BACKEND_TAG, "Value": "1"},
+                ],
+            )
+            instances = [
+                instance,
+            ]
+            instance_ids = [
+                instance_id,
+            ]
 
     if switch_to_on_demand or not use_spot_instance:
-        logger.info('Using on-demand instance.')
+        logger.info("Using on-demand instance.")
         instances = resource.create_instances(
             ImageId=ami_image_id,
             MinCount=nb,
@@ -240,7 +258,7 @@ def launch_ec2_instances(config, nb=1):
         )
         instance_ids = [instance.id for instance in instances]
         # Wait until instance is okay
-        waiter = client.get_waiter('instance_status_ok')
+        waiter = client.get_waiter("instance_status_ok")
         try:
             waiter.wait(InstanceIds=instance_ids)
         except botocore.exceptions.WaiterError as e:
@@ -251,26 +269,25 @@ def launch_ec2_instances(config, nb=1):
 
 def _get_image_id(config, image_name):
     sess = _get_boto_session(config)
-    client = sess.client('ec2')
+    client = sess.client("ec2")
 
     # get all the images with the given image_name in the name
-    result = client.describe_images(Filters=[
-        {
-            'Name': 'name',
-            'Values': [f'{image_name}*'
-                       ],
-        }
-    ])
+    result = client.describe_images(
+        Filters=[
+            {
+                "Name": "name",
+                "Values": [f"{image_name}*"],
+            }
+        ]
+    )
 
-    images = result['Images']
+    images = result["Images"]
     if len(images) == 0:
-        raise ValueError(
-            'No image corresponding to the name "{}"'.format(image_name))
+        raise ValueError('No image corresponding to the name "{}"'.format(image_name))
 
     # get only the newest image if there are more than one
-    image = sorted(images, key=lambda x: x['CreationDate'],
-                   reverse=True)[0]
-    return image['ImageId']
+    image = sorted(images, key=lambda x: x["CreationDate"], reverse=True)[0]
+    return image["ImageId"]
 
 
 def terminate_ec2_instance(config, instance_id):
@@ -287,8 +304,8 @@ def terminate_ec2_instance(config, instance_id):
         instance id
     """
     sess = _get_boto_session(config)
-    resource = sess.resource('ec2')
-    logger.info('Killing the instance {}...'.format(instance_id))
+    resource = sess.resource("ec2")
+    logger.info("Killing the instance {}...".format(instance_id))
     return resource.instances.filter(InstanceIds=[instance_id]).terminate()
 
 
@@ -308,16 +325,15 @@ def list_ec2_instance_ids(config):
     list of str
     """
     sess = _get_boto_session(config)
-    client = sess.client('ec2')
+    client = sess.client("ec2")
     instances = client.describe_instances(
         Filters=[
-            {'Name': 'tag:' + RAMP_AWS_BACKEND_TAG, 'Values': ['1']},
-            {'Name': 'instance-state-name', 'Values': ['running']},
+            {"Name": "tag:" + RAMP_AWS_BACKEND_TAG, "Values": ["1"]},
+            {"Name": "instance-state-name", "Values": ["running"]},
         ]
     )
     instance_ids = [
-        inst['Instances'][0]['InstanceId']
-        for inst in instances['Reservations']
+        inst["Instances"][0]["InstanceId"] for inst in instances["Reservations"]
     ]
     return instance_ids
 
@@ -343,17 +359,17 @@ def status_of_ec2_instance(config, instance_id):
     not even ready to give the status.
     """
     sess = _get_boto_session(config)
-    client = sess.client('ec2')
-    responses = client.describe_instance_status(
-        InstanceIds=[instance_id])['InstanceStatuses']
+    client = sess.client("ec2")
+    responses = client.describe_instance_status(InstanceIds=[instance_id])[
+        "InstanceStatuses"
+    ]
     if len(responses) == 1:
         return responses[0]
     else:
         return None
 
 
-def upload_submission(config, instance_id, submission_name,
-                      submissions_dir):
+def upload_submission(config, instance_id, submission_name, submissions_dir):
     """
     Upload a submission on an ec2 instance
 
@@ -378,9 +394,9 @@ def upload_submission(config, instance_id, submission_name,
         out = _upload(config, instance_id, submission_path, dest_folder)
         return out
     except subprocess.CalledProcessError as e:
-        logger.error(f'Unable to connect during log download: {e}')
+        logger.error(f"Unable to connect during log download: {e}")
     except Exception as e:
-        logger.error(f'Unknown error occured during log download: {e}')
+        logger.error(f"Unknown error occured during log download: {e}")
     return 1
 
 
@@ -408,10 +424,10 @@ def download_log(config, instance_id, submission_name, folder=None):
     """
     ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
     source_path = os.path.join(
-        ramp_kit_folder, SUBMISSIONS_FOLDER, submission_name, 'log')
+        ramp_kit_folder, SUBMISSIONS_FOLDER, submission_name, "log"
+    )
     if folder is None:
-        dest_path = os.path.join(
-            config[LOCAL_LOG_FOLDER_FIELD], submission_name, 'log')
+        dest_path = os.path.join(config[LOCAL_LOG_FOLDER_FIELD], submission_name, "log")
     else:
         dest_path = folder
     try:
@@ -426,11 +442,11 @@ def download_log(config, instance_id, submission_name, folder=None):
             out = _download(config, instance_id, source_path, dest_path)
             return out
         except Exception as e:
-            logger.error(f'Unknown error occured during log download: {e}')
-            if n_try == n_tries-1:
-                raise(e)
+            logger.error(f"Unknown error occured during log download: {e}")
+            if n_try == n_tries - 1:
+                raise (e)
             else:
-                logger.error('Trying to download the log once again')
+                logger.error("Trying to download the log once again")
 
 
 def _get_log_content(config, submission_name):
@@ -444,24 +460,23 @@ def _get_log_content(config, submission_name):
 
     a str with the content of the log file
     """
-    path = os.path.join(
-        config[LOCAL_LOG_FOLDER_FIELD],
-        submission_name,
-        'log')
+    path = os.path.join(config[LOCAL_LOG_FOLDER_FIELD], submission_name, "log")
     try:
-        content = codecs.open(path, encoding='utf-8').read()
+        content = codecs.open(path, encoding="utf-8").read()
         content = _filter_colors(content)
         return content
     except IOError:
-        logger.error('Could not open log file of "{}" when trying to get '
-                     'log content'.format(submission_name))
-        return ''
+        logger.error(
+            'Could not open log file of "{}" when trying to get '
+            "log content".format(submission_name)
+        )
+        return ""
 
 
 def _filter_colors(content):
     # filter linux colors from a string
     # check (https://pypi.org/project/colored/)
-    return re.sub(r'(\x1b\[)([\d]+;[\d]+;)?[\d]+m', '', content)
+    return re.sub(r"(\x1b\[)([\d]+;[\d]+;)?[\d]+m", "", content)
 
 
 def download_mprof_data(config, instance_id, submission_name, folder=None):
@@ -491,24 +506,22 @@ def download_mprof_data(config, instance_id, submission_name, folder=None):
     """
     ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
     source_path = os.path.join(
-        ramp_kit_folder,
-        SUBMISSIONS_FOLDER,
-        submission_name,
-        'mprof.dat')
+        ramp_kit_folder, SUBMISSIONS_FOLDER, submission_name, "mprof.dat"
+    )
     if folder is None:
-        dest_path = os.path.join(
-            config[LOCAL_LOG_FOLDER_FIELD], submission_name) + os.sep
+        dest_path = (
+            os.path.join(config[LOCAL_LOG_FOLDER_FIELD], submission_name) + os.sep
+        )
     else:
         dest_path = folder
     return _download(config, instance_id, source_path, dest_path)
 
 
 def _get_submission_max_ram(config, submission_name):
-    dest_path = os.path.join(
-        config[LOCAL_LOG_FOLDER_FIELD], submission_name)
-    filename = os.path.join(dest_path, 'mprof.dat')
-    max_mem = 0.
-    for line in codecs.open(filename, encoding='utf-8').readlines()[1:]:
+    dest_path = os.path.join(config[LOCAL_LOG_FOLDER_FIELD], submission_name)
+    filename = os.path.join(dest_path, "mprof.dat")
+    max_mem = 0.0
+    for line in codecs.open(filename, encoding="utf-8").readlines()[1:]:
         _, mem, _ = line.split()
         max_mem = max(max_mem, float(mem))
     return max_mem
@@ -541,11 +554,13 @@ def download_predictions(config, instance_id, submission_name, folder=None):
 
     path of the folder of `training_output` containing the predictions
     """
-    source_path = _get_remote_training_output_folder(
-        config, instance_id, submission_name) + '/'
+    source_path = (
+        _get_remote_training_output_folder(config, instance_id, submission_name) + "/"
+    )
     if folder is None:
         dest_path = os.path.join(
-            config[LOCAL_PREDICTIONS_FOLDER_FIELD], submission_name)
+            config[LOCAL_PREDICTIONS_FOLDER_FIELD], submission_name
+        )
     else:
         dest_path = folder
     try:
@@ -558,12 +573,13 @@ def download_predictions(config, instance_id, submission_name, folder=None):
             _download(config, instance_id, source_path, dest_path)
             return dest_path
         except Exception as e:
-            logger.error('Unknown error occured when downloading prediction'
-                         f' e: {str(e)}')
-            if n_try == n_tries-1:
-                raise(e)
+            logger.error(
+                "Unknown error occured when downloading prediction" f" e: {str(e)}"
+            )
+            if n_try == n_tries - 1:
+                raise (e)
             else:
-                logger.error('Trying to download the prediction once again')
+                logger.error("Trying to download the prediction once again")
 
 
 def _get_remote_training_output_folder(config, instance_id, submission_name):
@@ -573,8 +589,9 @@ def _get_remote_training_output_folder(config, instance_id, submission_name):
     ~/ramp-kits/iris/submissions/submission_000001/training_output.
     """
     ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
-    path = os.path.join(ramp_kit_folder, SUBMISSIONS_FOLDER,
-                        submission_name, 'training_output')
+    path = os.path.join(
+        ramp_kit_folder, SUBMISSIONS_FOLDER, submission_name, "training_output"
+    )
     return path
 
 
@@ -596,36 +613,40 @@ def launch_train(config, instance_id, submission_name):
     """
     ramp_kit_folder = config[REMOTE_RAMP_KIT_FOLDER_FIELD]
     values = {
-        'ramp_kit_folder': ramp_kit_folder,
-        'submission': submission_name,
-        'submission_folder': os.path.join(ramp_kit_folder, SUBMISSIONS_FOLDER,
-                                          submission_name),
-        'log': os.path.join(ramp_kit_folder, SUBMISSIONS_FOLDER,
-                            submission_name, 'log')
+        "ramp_kit_folder": ramp_kit_folder,
+        "submission": submission_name,
+        "submission_folder": os.path.join(
+            ramp_kit_folder, SUBMISSIONS_FOLDER, submission_name
+        ),
+        "log": os.path.join(
+            ramp_kit_folder, SUBMISSIONS_FOLDER, submission_name, "log"
+        ),
     }
     # we use python -u so that standard input/output are flushed
     # and thus we can retrieve the log file live during training
     # without waiting for the process to finish.
     # We use an espace character around "$" because it is interpreted
     # before being run remotely and leads to an empty string
-    run_cmd = (r"python -u \$(which ramp_test_submission) "
-               r"--submission {submission} --save-y-preds ")
+    run_cmd = (
+        r"python -u \$(which ramp_test_submission) "
+        r"--submission {submission} --save-y-preds "
+    )
     if config.get(MEMORY_PROFILING_FIELD):
         run_cmd = (
             "mprof run --output={submission_folder}/mprof.dat "
-            "--include-children " + run_cmd)
+            "--include-children " + run_cmd
+        )
     cmd = (
         "screen -dm -S {submission} sh -c '. ~/.profile;"
         "cd {ramp_kit_folder};"
         "rm -fr {submission_folder}/training_output;"
         "rm -f {submission_folder}/log;"
-        "rm -f {submission_folder}/mprof.dat;"
-        + run_cmd + ">{log} 2>&1'"
+        "rm -f {submission_folder}/mprof.dat;" + run_cmd + ">{log} 2>&1'"
     )
     cmd = cmd.format(**values)
     # tag the ec2 instance with info about submission
     _tag_instance_by_submission(config, instance_id, submission_name)
-    logger.info('Launch training of {}..'.format(submission_name))
+    logger.info("Launch training of {}..".format(submission_name))
     return _run(config, instance_id, cmd)
 
 
@@ -644,7 +665,7 @@ def abort_training(config, instance_id, submission_name):
     submission_id : int
         submission id
     """
-    cmd = 'screen -S {} -X quit'.format(submission_name)
+    cmd = "screen -S {} -X quit".format(submission_name)
     return _run(config, instance_id, cmd)
 
 
@@ -664,7 +685,7 @@ def _upload(config, instance_id, source, dest):
     dest : str
         remote file or folder
     """
-    dest = '{user}@{ip}:' + dest
+    dest = "{user}@{ip}:" + dest
     return _rsync(config, instance_id, source, dest)
 
 
@@ -685,7 +706,7 @@ def _download(config, instance_id, source, dest):
         local file or folder
 
     """
-    source = '{user}@{ip}:' + source
+    source = "{user}@{ip}:" + source
     return _rsync(config, instance_id, source, dest)
 
 
@@ -713,18 +734,18 @@ def _rsync(config, instance_id, source, dest):
     ami_username = config[AMI_USER_NAME_FIELD]
 
     sess = _get_boto_session(config)
-    resource = sess.resource('ec2')
+    resource = sess.resource("ec2")
     inst = resource.Instance(instance_id)
     ip = inst.public_ip_address
-    fmt = {'user': ami_username, 'ip': ip}
+    fmt = {"user": ami_username, "ip": ip}
     values = {
-        'user': ami_username,
-        'ip': ip,
-        'cmd': "ssh -o 'StrictHostKeyChecking no' -i " + key_path,
-        'source': source.format(**fmt),
-        'dest': dest.format(**fmt),
+        "user": ami_username,
+        "ip": ip,
+        "cmd": "ssh -o 'StrictHostKeyChecking no' -i " + key_path,
+        "source": source.format(**fmt),
+        "dest": dest.format(**fmt),
     }
-    cmd = "rsync -e \"{cmd}\" -avzP {source} {dest}".format(**values)
+    cmd = 'rsync -e "{cmd}" -avzP {source} {dest}'.format(**values)
     logger.debug(cmd)
     return subprocess.call(cmd, shell=True)
 
@@ -762,16 +783,16 @@ def _run(config, instance_id, cmd, return_output=False):
     ami_username = config[AMI_USER_NAME_FIELD]
 
     sess = _get_boto_session(config)
-    resource = sess.resource('ec2')
+    resource = sess.resource("ec2")
     inst = resource.Instance(instance_id)
     ip = inst.public_ip_address
     values = {
-        'user': ami_username,
-        'ip': ip,
-        'ssh': "ssh -o 'StrictHostKeyChecking no' -i " + key_path,
-        'cmd': cmd,
+        "user": ami_username,
+        "ip": ip,
+        "ssh": "ssh -o 'StrictHostKeyChecking no' -i " + key_path,
+        "cmd": cmd,
     }
-    cmd = "{ssh} {user}@{ip} \"{cmd}\"".format(**values)
+    cmd = '{ssh} {user}@{ip} "{cmd}"'.format(**values)
     logger.debug(cmd)
     if return_output:
         return subprocess.check_output(cmd, shell=True)
@@ -785,8 +806,8 @@ def _is_ready(config, instance_id):
     """
     st = status_of_ec2_instance(config, instance_id)
     if st:
-        check = st['InstanceStatus']['Details'][0]['Status']
-        return check == 'passed'
+        check = st["InstanceStatus"]["Details"][0]["Status"]
+        return check == "passed"
     else:
         return False
 
@@ -798,15 +819,13 @@ def _training_finished(config, instance_id, submission_name):
     return not _has_screen(config, instance_id, submission_name)
 
 
-def _training_successful(config, instance_id, submission_name,
-                         actual_nb_folds=None):
+def _training_successful(config, instance_id, submission_name, actual_nb_folds=None):
     """
     Return True if a finished submission have been trained successfully.
     If the folder training_output exists and each fold directory contains
     .npz prediction files we consider that the training was successful.
     """
-    folder = _get_remote_training_output_folder(
-        config, instance_id, submission_name)
+    folder = _get_remote_training_output_folder(config, instance_id, submission_name)
 
     cmd = "ls -l {}|grep fold_|wc -l".format(folder)
     nb_folds = int(_run(config, instance_id, cmd, return_output=True))
@@ -857,34 +876,32 @@ def _tag_instance_by_submission(config, instance_id, submission_name):
     #     config, instance_id, 'team_name', submission.team.name)
     # name = _get_submission_label(submission)
     # _add_or_update_tag(config, instance_id, 'Name', name)
-    _add_or_update_tag(config, instance_id, 'Name', submission_name)
+    _add_or_update_tag(config, instance_id, "Name", submission_name)
 
 
 def _add_or_update_tag(config, instance_id, key, value):
     sess = _get_boto_session(config)
-    client = sess.client('ec2')
+    client = sess.client("ec2")
     tags = [
-        {'Key': key, 'Value': value},
+        {"Key": key, "Value": value},
     ]
     return client.create_tags(Resources=[instance_id], Tags=tags)
 
 
 def _get_tags(config, instance_id):
     sess = _get_boto_session(config)
-    client = sess.client('ec2')
-    filters = [
-        {'Name': 'resource-id', 'Values': [instance_id]}
-    ]
+    client = sess.client("ec2")
+    filters = [{"Name": "resource-id", "Values": [instance_id]}]
     response = client.describe_tags(Filters=filters)
-    for t in response['Tags']:
-        t['Key'], t['Value']
-    return {t['Key']: t['Value'] for t in response['Tags']}
+    for t in response["Tags"]:
+        t["Key"], t["Value"]
+    return {t["Key"]: t["Value"] for t in response["Tags"]}
 
 
 def _delete_tag(config, instance_id, key):
     sess = _get_boto_session(config)
-    client = sess.client('ec2')
-    tags = [{'Key': key}]
+    client = sess.client("ec2")
+    tags = [{"Key": key}]
     return client.delete_tags(Resources=[instance_id], Tags=tags)
 
 
@@ -905,8 +922,11 @@ def _get_boto_session(config):
     else:
         raise ValueError(
             'Please specify either "{}" or both of "{}" and "{}"'.format(
-                PROFILE_NAME_FIELD, ACCESS_KEY_ID_FIELD,
-                SECRET_ACCESS_KEY_FIELD))
+                PROFILE_NAME_FIELD,
+                ACCESS_KEY_ID_FIELD,
+                SECRET_ACCESS_KEY_FIELD,
+            )
+        )
 
 
 def validate_config(config):
@@ -915,8 +935,7 @@ def validate_config(config):
     raises ValueError if it is not correct.
     """
     if AWS_CONFIG_SECTION not in config:
-        raise ValueError(
-            'Expects "{}" section in config'.format(AWS_CONFIG_SECTION))
+        raise ValueError('Expects "{}" section in config'.format(AWS_CONFIG_SECTION))
     conf = config[AWS_CONFIG_SECTION]
     for k in conf.keys():
         if k not in ALL_FIELDS:
@@ -930,38 +949,47 @@ def validate_config(config):
     }
     for k in required_fields_:
         if k not in conf:
-            raise ValueError(
-                'Required field "{}" missing from config'.format(k))
+            raise ValueError('Required field "{}" missing from config'.format(k))
     if AMI_IMAGE_NAME_FIELD in conf and AMI_IMAGE_ID_FIELD in conf:
         raise ValueError(
             'The fields "{}" and "{}" cannot be both '
-            'specified at the same time. Please specify only '
-            'one of them'.format(AMI_IMAGE_NAME_FIELD, AMI_IMAGE_ID_FIELD))
+            "specified at the same time. Please specify only "
+            "one of them".format(AMI_IMAGE_NAME_FIELD, AMI_IMAGE_ID_FIELD)
+        )
     if AMI_IMAGE_NAME_FIELD not in conf and AMI_IMAGE_ID_FIELD not in conf:
         raise ValueError(
             'Please specify either  "{}" or "{}" in config.'.format(
-                AMI_IMAGE_NAME_FIELD, AMI_IMAGE_ID_FIELD))
-    if (PROFILE_NAME_FIELD in conf
-            and (ACCESS_KEY_ID_FIELD in conf
-                 or SECRET_ACCESS_KEY_FIELD in conf)):
+                AMI_IMAGE_NAME_FIELD, AMI_IMAGE_ID_FIELD
+            )
+        )
+    if PROFILE_NAME_FIELD in conf and (
+        ACCESS_KEY_ID_FIELD in conf or SECRET_ACCESS_KEY_FIELD in conf
+    ):
         raise ValueError(
             'Please specify either "{}" or both of "{}" and "{}"'.format(
-                PROFILE_NAME_FIELD, ACCESS_KEY_ID_FIELD,
-                SECRET_ACCESS_KEY_FIELD))
-    if (PROFILE_NAME_FIELD not in conf
-            and not (ACCESS_KEY_ID_FIELD in conf
-                     and SECRET_ACCESS_KEY_FIELD in conf)):
-        raise ValueError('Please specify both "{}" and "{}"'.format(
-            ACCESS_KEY_ID_FIELD, SECRET_ACCESS_KEY_FIELD,
-        ))
+                PROFILE_NAME_FIELD,
+                ACCESS_KEY_ID_FIELD,
+                SECRET_ACCESS_KEY_FIELD,
+            )
+        )
+    if PROFILE_NAME_FIELD not in conf and not (
+        ACCESS_KEY_ID_FIELD in conf and SECRET_ACCESS_KEY_FIELD in conf
+    ):
+        raise ValueError(
+            'Please specify both "{}" and "{}"'.format(
+                ACCESS_KEY_ID_FIELD,
+                SECRET_ACCESS_KEY_FIELD,
+            )
+        )
     hooks = conf.get(HOOKS_SECTION)
     if hooks:
         for hook_name in hooks.keys():
             if hook_name not in HOOKS:
-                hook_names = ','.join(HOOKS)
+                hook_names = ",".join(HOOKS)
                 raise ValueError(
-                    'Invalid hook name : {}, hooks should be one of '
-                    'these : {}'.format(hook_name, hook_names))
+                    "Invalid hook name : {}, hooks should be one of "
+                    "these : {}".format(hook_name, hook_names)
+                )
 
 
 def is_spot_terminated(config, instance_id):
@@ -970,26 +998,31 @@ def is_spot_terminated(config, instance_id):
     'instance-action' will be present."""
     cmd_timeout = 1
     n_retry = 9
-    cmd = ("curl http://169.254.169.254/latest/meta-data/instance-action"
-           f" -m {cmd_timeout} --retry {n_retry}")
+    cmd = (
+        "curl http://169.254.169.254/latest/meta-data/instance-action"
+        f" -m {cmd_timeout} --retry {n_retry}"
+    )
 
     try:
         out = _run(config, instance_id, cmd, return_output=True)
-        out = out.decode('utf-8')
+        out = out.decode("utf-8")
     except subprocess.CalledProcessError:
-        logger.error('Unable to run curl: {e}')
+        logger.error("Unable to run curl: {e}")
         return False
     except Exception as e:
-        logger.error('Unhandled exception occurred when checking for'
-                     f' instance action: {e}')
+        logger.error(
+            "Unhandled exception occurred when checking for" f" instance action: {e}"
+        )
         return False
 
-    if out == 'none':
+    if out == "none":
         terminated = False
     else:
-        logger.info(f'An instance-action is present on {instance_id}, '
-                    'indicating that this spot instance is marked for '
-                    'termination.')
+        logger.info(
+            f"An instance-action is present on {instance_id}, "
+            "indicating that this spot instance is marked for "
+            "termination."
+        )
         terminated = True
     return terminated
 
@@ -997,6 +1030,10 @@ def is_spot_terminated(config, instance_id):
 def check_instance_status(config, instance_id):
     """Return the status of an instance."""
     sess = _get_boto_session(config)
-    client = sess.client('ec2')
-    response = client.describe_instance_status(InstanceIds=[instance_id, ])
-    return response['InstanceStatuses'][0]['InstanceState']['Name']
+    client = sess.client("ec2")
+    response = client.describe_instance_status(
+        InstanceIds=[
+            instance_id,
+        ]
+    )
+    return response["InstanceStatuses"][0]["InstanceState"]["Name"]

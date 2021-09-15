@@ -30,7 +30,7 @@ from .tools.user import add_user
 from .tools.team import sign_up_team
 from .tools.submission import submit_starting_kits
 
-logger = logging.getLogger('RAMP-DATABASE')
+logger = logging.getLogger("RAMP-DATABASE")
 
 HERE = os.path.dirname(__file__)
 
@@ -53,7 +53,7 @@ def create_test_db(database_config, ramp_config):
     deployment_dir : str
         The deployment directory for the RAMP components (kits, data, etc.).
     """
-    database_config = database_config['sqlalchemy']
+    database_config = database_config["sqlalchemy"]
     # we can automatically setup the database from the config file used for the
     # tests.
     ramp_config = generate_ramp_config(read_config(ramp_config))
@@ -61,11 +61,11 @@ def create_test_db(database_config, ramp_config):
     # FIXME: we are recreating the deployment directory but it should be
     # replaced by an temporary creation of folder.
     deployment_dir = os.path.commonpath(
-        [ramp_config['ramp_kit_dir'], ramp_config['ramp_data_dir']]
+        [ramp_config["ramp_kit_dir"], ramp_config["ramp_data_dir"]]
     )
 
     shutil.rmtree(deployment_dir, ignore_errors=True)
-    os.makedirs(ramp_config['ramp_submissions_dir'])
+    os.makedirs(ramp_config["ramp_submissions_dir"])
     db, _ = setup_db(database_config)
     Model.metadata.drop_all(db)
     Model.metadata.create_all(db)
@@ -90,7 +90,7 @@ def create_toy_db(database_config, ramp_config):
         The deployment directory for the RAMP components (kits, data, etc.).
     """
     deployment_dir = create_test_db(database_config, ramp_config)
-    with session_scope(database_config['sqlalchemy']) as session:
+    with session_scope(database_config["sqlalchemy"]) as session:
         setup_toy_db(session)
     return deployment_dir
 
@@ -123,8 +123,13 @@ def _delete_line_from_file(f_name, line_to_delete):
         f.truncate()
 
 
-def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False,
-                             depth=None, mock_html_conversion=False):
+def setup_ramp_kit_ramp_data(
+    ramp_config,
+    problem_name,
+    force=False,
+    depth=None,
+    mock_html_conversion=False,
+):
     """Clone ramp-kit and ramp-data repository and setup it up.
 
     Parameters
@@ -145,29 +150,29 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False,
         Whether we should call `nbconvert` to create the HTML notebook. If
         `True`, the file created will be an almost empty html file.
     """
-    problem_kit_path = ramp_config['ramp_kit_dir']
+    problem_kit_path = ramp_config["ramp_kit_dir"]
     if os.path.exists(problem_kit_path):
         if not force:
             raise ValueError(
-                'The RAMP kit repository was previously cloned. To replace '
+                "The RAMP kit repository was previously cloned. To replace "
                 'it, you need to set "force=True".'
             )
         shutil.rmtree(problem_kit_path, ignore_errors=True)
-    ramp_kit_url = 'https://github.com/ramp-kits/{}.git'.format(problem_name)
+    ramp_kit_url = "https://github.com/ramp-kits/{}.git".format(problem_name)
     kwargs = {}
     if depth is not None:
-        kwargs['depth'] = depth
+        kwargs["depth"] = depth
     Repo.clone_from(ramp_kit_url, problem_kit_path, **kwargs)
 
-    problem_data_path = ramp_config['ramp_data_dir']
+    problem_data_path = ramp_config["ramp_data_dir"]
     if os.path.exists(problem_data_path):
         if not force:
             raise ValueError(
-                'The RAMP data repository was previously cloned. To replace '
+                "The RAMP data repository was previously cloned. To replace "
                 'it, you need to set "force=True".'
             )
         shutil.rmtree(problem_data_path, ignore_errors=True)
-    ramp_data_url = 'https://github.com/ramp-data/{}.git'.format(problem_name)
+    ramp_data_url = "https://github.com/ramp-data/{}.git".format(problem_name)
     Repo.clone_from(ramp_data_url, problem_data_path, **kwargs)
 
     current_directory = os.getcwd()
@@ -177,17 +182,19 @@ def setup_ramp_kit_ramp_data(ramp_config, problem_name, force=False,
     filename_notebook_ipynb = "{}_starting_kit.ipynb".format(problem_name)
     filename_notebook_html = "{}_starting_kit.html".format(problem_name)
     if not mock_html_conversion:
-        subprocess.check_output([
-            "jupyter", "nbconvert", "--to", "html", filename_notebook_ipynb
-        ])
+        subprocess.check_output(
+            ["jupyter", "nbconvert", "--to", "html", filename_notebook_ipynb]
+        )
         # delete this line since it trigger in the front-end
         # (try to open execute "custom.css".)
-        _delete_line_from_file(filename_notebook_html,
-                               '<link rel="stylesheet" href="custom.css">\n')
+        _delete_line_from_file(
+            filename_notebook_html,
+            '<link rel="stylesheet" href="custom.css">\n',
+        )
     else:
         # create an almost empty html file
         filename = os.path.join(problem_kit_path, filename_notebook_html)
-        with open(filename, mode='w+b') as f:
+        with open(filename, mode="w+b") as f:
             f.write(b"RAMP on iris")
 
     os.chdir(current_directory)
@@ -204,23 +211,23 @@ def setup_files_extension_type(session):
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.
     """
-    extension_names = ['py', 'R', 'txt', 'csv']
+    extension_names = ["py", "R", "txt", "csv"]
     for name in extension_names:
         add_extension(session, name)
 
     submission_file_types = [
-        ('code', True, 10 ** 5),
-        ('text', True, 10 ** 5),
-        ('data', False, 10 ** 8)
+        ("code", True, 10 ** 5),
+        ("text", True, 10 ** 5),
+        ("data", False, 10 ** 8),
     ]
     for name, is_editable, max_size in submission_file_types:
         add_submission_file_type(session, name, is_editable, max_size)
 
     submission_file_type_extensions = [
-        ('code', 'py'),
-        ('code', 'R'),
-        ('text', 'txt'),
-        ('data', 'csv')
+        ("code", "py"),
+        ("code", "R"),
+        ("text", "txt"),
+        ("data", "csv"),
     ]
     for type_name, extension_name in submission_file_type_extensions:
         add_submission_file_type_extension(session, type_name, extension_name)
@@ -236,19 +243,34 @@ def add_users(session):
         The session to directly perform the operation on the database.
     """
     add_user(
-        session, name='test_user', password='test',
-        lastname='Test', firstname='User',
-        email='test.user@gmail.com', access_level='asked')
-    approve_user(session, 'test_user')
+        session,
+        name="test_user",
+        password="test",
+        lastname="Test",
+        firstname="User",
+        email="test.user@gmail.com",
+        access_level="asked",
+    )
+    approve_user(session, "test_user")
     add_user(
-        session, name='test_user_2', password='test',
-        lastname='Test_2', firstname='User_2',
-        email='test.user.2@gmail.com', access_level='user')
-    approve_user(session, 'test_user_2')
+        session,
+        name="test_user_2",
+        password="test",
+        lastname="Test_2",
+        firstname="User_2",
+        email="test.user.2@gmail.com",
+        access_level="user",
+    )
+    approve_user(session, "test_user_2")
     add_user(
-        session, name='test_iris_admin', password='test',
-        lastname='Admin', firstname='Iris',
-        email='iris.admin@gmail.com', access_level='admin')
+        session,
+        name="test_iris_admin",
+        password="test",
+        lastname="Admin",
+        firstname="Iris",
+        email="iris.admin@gmail.com",
+        access_level="admin",
+    )
 
 
 def add_problems(session):
@@ -261,26 +283,38 @@ def add_problems(session):
         The session to directly perform the operation on the database.
     """
     ramp_configs = {
-        'iris': read_config(ramp_config_iris()),
-        'boston_housing': read_config(ramp_config_boston_housing())
+        "iris": read_config(ramp_config_iris()),
+        "boston_housing": read_config(ramp_config_boston_housing()),
     }
     for problem_name, ramp_config in ramp_configs.items():
         internal_ramp_config = generate_ramp_config(ramp_config)
         setup_ramp_kit_ramp_data(
-            internal_ramp_config, problem_name, depth=1,
-            mock_html_conversion=True
+            internal_ramp_config,
+            problem_name,
+            depth=1,
+            mock_html_conversion=True,
         )
-        add_problem(session, problem_name,
-                    internal_ramp_config['ramp_kit_dir'],
-                    internal_ramp_config['ramp_data_dir'])
-        add_keyword(session, problem_name, 'data_domain',
-                    category='scientific data')
-        add_problem_keyword(session, problem_name=problem_name,
-                            keyword_name=problem_name)
-        add_keyword(session, problem_name + '_theme', 'data_science_theme',
-                    category='classification')
-        add_problem_keyword(session, problem_name=problem_name,
-                            keyword_name=problem_name + '_theme')
+        add_problem(
+            session,
+            problem_name,
+            internal_ramp_config["ramp_kit_dir"],
+            internal_ramp_config["ramp_data_dir"],
+        )
+        add_keyword(session, problem_name, "data_domain", category="scientific data")
+        add_problem_keyword(
+            session, problem_name=problem_name, keyword_name=problem_name
+        )
+        add_keyword(
+            session,
+            problem_name + "_theme",
+            "data_science_theme",
+            category="classification",
+        )
+        add_problem_keyword(
+            session,
+            problem_name=problem_name,
+            keyword_name=problem_name + "_theme",
+        )
 
 
 def add_events(session):
@@ -296,28 +330,31 @@ def add_events(session):
     Be aware that :func:`add_problems` needs to be called before.
     """
     ramp_configs = {
-        'iris': read_config(ramp_config_iris()),
-        'iris_aws': read_config(ramp_config_aws_iris()),
-        'boston_housing': read_config(ramp_config_boston_housing())
+        "iris": read_config(ramp_config_iris()),
+        "iris_aws": read_config(ramp_config_aws_iris()),
+        "boston_housing": read_config(ramp_config_boston_housing()),
     }
     for problem_name, ramp_config in ramp_configs.items():
         ramp_config_problem = generate_ramp_config(ramp_config)
         add_event(
-            session, problem_name=ramp_config_problem['problem_name'],
-            event_name=ramp_config_problem['event_name'],
-            event_title=ramp_config_problem['event_title'],
-            ramp_sandbox_name=ramp_config_problem['sandbox_name'],
-            ramp_submissions_path=ramp_config_problem['ramp_submissions_dir'],
-            is_public=True, force=False
+            session,
+            problem_name=ramp_config_problem["problem_name"],
+            event_name=ramp_config_problem["event_name"],
+            event_title=ramp_config_problem["event_title"],
+            ramp_sandbox_name=ramp_config_problem["sandbox_name"],
+            ramp_submissions_path=ramp_config_problem["ramp_submissions_dir"],
+            is_public=True,
+            force=False,
         )
         # create an empty event archive
         archive_dir = os.path.join(
-            ramp_config_problem['ramp_kit_dir'], 'events_archived',
+            ramp_config_problem["ramp_kit_dir"],
+            "events_archived",
         )
         if not os.path.isdir(archive_dir):
             os.makedirs(archive_dir)
         archive_file = os.path.join(
-            archive_dir, ramp_config_problem['event_name'] + '.zip'
+            archive_dir, ramp_config_problem["event_name"] + ".zip"
         )
         Path(archive_file).touch()
 
@@ -335,9 +372,9 @@ def sign_up_teams_to_events(session):
     Be aware that :func:`add_users`, :func:`add_problems`,
     and :func:`add_events` need to be called before.
     """
-    for event_name in ['iris_test', 'iris_aws_test', 'boston_housing_test']:
-        sign_up_team(session, event_name, 'test_user')
-        sign_up_team(session, event_name, 'test_user_2')
+    for event_name in ["iris_test", "iris_aws_test", "boston_housing_test"]:
+        sign_up_team(session, event_name, "test_user")
+        sign_up_team(session, event_name, "test_user_2")
 
 
 def submit_all_starting_kits(session):
@@ -349,22 +386,26 @@ def submit_all_starting_kits(session):
         The session to directly perform the operation on the database.
     """
     ramp_configs = {
-        'iris': read_config(ramp_config_iris()),
-        'iris_aws': read_config(ramp_config_aws_iris()),
-        'boston_housing': read_config(ramp_config_boston_housing())
+        "iris": read_config(ramp_config_iris()),
+        "iris_aws": read_config(ramp_config_aws_iris()),
+        "boston_housing": read_config(ramp_config_boston_housing()),
     }
     for problem_name, ramp_config in ramp_configs.items():
         ramp_config_problem = generate_ramp_config(ramp_config)
         path_submissions = os.path.join(
-            ramp_config_problem['ramp_kit_dir'], 'submissions'
+            ramp_config_problem["ramp_kit_dir"], "submissions"
         )
         submit_starting_kits(
-            session, ramp_config_problem['event_name'], 'test_user',
-            path_submissions
+            session,
+            ramp_config_problem["event_name"],
+            "test_user",
+            path_submissions,
         )
         submit_starting_kits(
-            session, ramp_config_problem['event_name'], 'test_user_2',
-            path_submissions
+            session,
+            ramp_config_problem["event_name"],
+            "test_user_2",
+            path_submissions,
         )
 
 
@@ -376,7 +417,7 @@ def ramp_config_aws_iris():
     filename : str
         The RAMP configuration filename for the iris kit.
     """
-    return os.path.join(HERE, 'tests', 'data', 'ramp_config_aws_iris.yml')
+    return os.path.join(HERE, "tests", "data", "ramp_config_aws_iris.yml")
 
 
 def ramp_config_iris():
@@ -387,7 +428,7 @@ def ramp_config_iris():
     filename : str
         The RAMP configuration filename for the iris kit.
     """
-    return os.path.join(HERE, 'tests', 'data', 'ramp_config_iris.yml')
+    return os.path.join(HERE, "tests", "data", "ramp_config_iris.yml")
 
 
 def ramp_config_boston_housing():
@@ -398,6 +439,4 @@ def ramp_config_boston_housing():
     filename : str
         The RAMP configuration filename for the boston housing kit.
     """
-    return os.path.join(
-        HERE, 'tests', 'data', 'ramp_config_boston_housing.yml'
-    )
+    return os.path.join(HERE, "tests", "data", "ramp_config_boston_housing.yml")
