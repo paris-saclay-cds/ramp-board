@@ -15,7 +15,7 @@ from ramp_database.utils import session_scope
 from ramp_frontend import create_app
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def client_session(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
@@ -23,81 +23,79 @@ def client_session(database_connection):
         deployment_dir = create_toy_db(database_config, ramp_config)
         flask_config = generate_flask_config(database_config)
         app = create_app(flask_config)
-        app.config['TESTING'] = True
-        app.config['WTF_CSRF_ENABLED'] = False
-        with session_scope(database_config['sqlalchemy']) as session:
+        app.config["TESTING"] = True
+        app.config["WTF_CSRF_ENABLED"] = False
+        with session_scope(database_config["sqlalchemy"]) as session:
             yield app.test_client(), session, app
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)
         try:
             # In case of failure we should close the global flask engine
             from ramp_frontend import db as db_flask
+
             db_flask.session.close()
         except RuntimeError:
             pass
-        db, _ = setup_db(database_config['sqlalchemy'])
+        db, _ = setup_db(database_config["sqlalchemy"])
         Model.metadata.drop_all(db)
 
 
 def test_index(client_session):
     client, _, _ = client_session
-    rv = client.get('/')
+    rv = client.get("/")
     assert rv.status_code == 200
-    assert (b'RAMP: collaborative data science challenges' in
-            rv.data)
+    assert b"RAMP: collaborative data science challenges" in rv.data
 
 
 def test_ramp(client_session):
     client, _, _ = client_session
-    rv = client.get('/description')
+    rv = client.get("/description")
     assert rv.status_code == 200
-    assert (b'The RAMP software packages were developed by the' in
-            rv.data)
+    assert b"The RAMP software packages were developed by the" in rv.data
 
 
 def test_domain(client_session):
     client, session, _ = client_session
-    rv = client.get('/data_domains')
+    rv = client.get("/data_domains")
     assert rv.status_code == 200
-    assert b'Scientific data domains' in rv.data
-    assert b'boston_housing' in rv.data
-    assert b'Boston housing price regression' in rv.data
+    assert b"Scientific data domains" in rv.data
+    assert b"boston_housing" in rv.data
+    assert b"Boston housing price regression" in rv.data
 
 
 def test_teaching(client_session):
     client, _, _ = client_session
-    rv = client.get('/teaching')
+    rv = client.get("/teaching")
     assert rv.status_code == 200
-    assert b'RAMP challenges begin with an interesting supervised prediction' \
-        in rv.data
+    assert b"RAMP challenges begin with an interesting supervised prediction" in rv.data
 
 
 def test_data_science_themes(client_session):
     client, _, _ = client_session
-    rv = client.get('/data_science_themes')
+    rv = client.get("/data_science_themes")
     assert rv.status_code == 200
-    assert b'boston_housing_theme' in rv.data
-    assert b'iris_theme' in rv.data
+    assert b"boston_housing_theme" in rv.data
+    assert b"iris_theme" in rv.data
 
 
 def test_keywords(client_session):
     client, _, _ = client_session
-    rv = client.get('/keywords/boston_housing')
+    rv = client.get("/keywords/boston_housing")
     assert rv.status_code == 200
-    assert b'Related problems' in rv.data
-    assert b'boston_housing' in rv.data
-    assert b'Boston housing price regression' in rv.data
+    assert b"Related problems" in rv.data
+    assert b"boston_housing" in rv.data
+    assert b"Boston housing price regression" in rv.data
 
 
 def test_privacy_policy(client_session, monkeypatch):
     client, _, app = client_session
-    rv = client.get('/privacy_policy')
+    rv = client.get("/privacy_policy")
     # By default privacy policy is not defined in the config.
     # i.e. config['privacy_policy'] = None
     assert rv.status_code == 404
 
-    msg = 'Some HTML code'
-    monkeypatch.setitem(app.config, 'PRIVACY_POLICY_PAGE', msg)
-    rv = client.get('/privacy_policy')
+    msg = "Some HTML code"
+    monkeypatch.setitem(app.config, "PRIVACY_POLICY_PAGE", msg)
+    rv = client.get("/privacy_policy")
     assert rv.status_code == 200
-    assert msg in rv.data.decode('utf-8')
+    assert msg in rv.data.decode("utf-8")

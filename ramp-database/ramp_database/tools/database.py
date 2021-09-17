@@ -8,7 +8,7 @@ from ._query import select_extension_by_name
 from ._query import select_submission_file_type_by_name
 from ._query import select_submission_type_extension_by_name
 
-logger = logging.getLogger('RAMP-DATABASE')
+logger = logging.getLogger("RAMP-DATABASE")
 
 
 # Add functions: add entries in the database
@@ -25,7 +25,7 @@ def add_extension(session, name):
     extension = select_extension_by_name(session, name)
     if extension is None:
         extension = Extension(name=name)
-        logger.info('Adding {}'.format(extension))
+        logger.info("Adding {}".format(extension))
         session.add(extension)
         session.commit()
 
@@ -51,8 +51,9 @@ def add_submission_file_type(session, name, is_editable, max_size):
     submission_file_type = select_submission_file_type_by_name(session, name)
     if submission_file_type is None:
         submission_file_type = SubmissionFileType(
-            name=name, is_editable=is_editable, max_size=max_size)
-        logger.info('Adding {}'.format(submission_file_type))
+            name=name, is_editable=is_editable, max_size=max_size
+        )
+        logger.info("Adding {}".format(submission_file_type))
         session.add(submission_file_type)
         session.commit()
 
@@ -77,14 +78,12 @@ def add_submission_file_type_extension(session, type_name, extension_name):
         session, type_name, extension_name
     )
     if type_extension is None:
-        submission_file_type = select_submission_file_type_by_name(session,
-                                                                   type_name)
+        submission_file_type = select_submission_file_type_by_name(session, type_name)
         extension = select_extension_by_name(session, extension_name)
         type_extension = SubmissionFileTypeExtension(
-            type=submission_file_type,
-            extension=extension
+            type=submission_file_type, extension=extension
         )
-        logger.info('Adding {}'.format(type_extension))
+        logger.info("Adding {}".format(type_extension))
         session.add(type_extension)
         session.commit()
 
@@ -150,6 +149,4 @@ def get_submission_file_type_extension(session, type_name, extension_name):
 list of :class:`ramp_database.model.SubmissionFileTypeExtension`
         The queried submission file type.
     """
-    return select_submission_type_extension_by_name(
-        session, type_name, extension_name
-    )
+    return select_submission_type_extension_by_name(session, type_name, extension_name)

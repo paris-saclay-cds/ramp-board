@@ -16,10 +16,10 @@ from .workflow import Workflow
 
 
 __all__ = [
-    'Problem',
-    'HistoricalContributivity',
-    'Keyword',
-    'ProblemKeyword',
+    "Problem",
+    "HistoricalContributivity",
+    "Keyword",
+    "ProblemKeyword",
 ]
 
 
@@ -60,13 +60,14 @@ class Problem(Model):
     keywords : list of :class:`ramp_database.model.ProblemKeyword`
         A back-reference to the keywords associated with the problem.
     """
-    __tablename__ = 'problems'
+
+    __tablename__ = "problems"
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, unique=True)
 
-    workflow_id = Column(Integer, ForeignKey('workflows.id'), nullable=False)
-    workflow = relationship('Workflow', backref=backref('problems'))
+    workflow_id = Column(Integer, ForeignKey("workflows.id"), nullable=False)
+    workflow = relationship("Workflow", backref=backref("problems"))
 
     # XXX: big change in the database
     path_ramp_kit = Column(String, nullable=False, unique=False)
@@ -79,28 +80,28 @@ class Problem(Model):
         self.reset(session)
 
     def __repr__(self):
-        return 'Problem({})\n{}'.format(self.name, self.workflow)
+        return "Problem({})\n{}".format(self.name, self.workflow)
 
     def reset(self, session):
         """Reset the workflow."""
         if session is not None:
-            self.workflow = \
-                (session.query(Workflow)
-                        .filter(Workflow.name ==                      # noqa
-                                type(self.module.workflow).__name__)  # noqa
-                        .one())
+            self.workflow = (
+                session.query(Workflow)
+                .filter(
+                    Workflow.name == type(self.module.workflow).__name__  # noqa
+                )  # noqa
+                .one()
+            )
         else:
-            self.workflow = \
-                (Workflow.query
-                         .filter_by(name=type(self.module.workflow).__name__)
-                         .one())
+            self.workflow = Workflow.query.filter_by(
+                name=type(self.module.workflow).__name__
+            ).one()
 
     @property
     def module(self):
         """module: Get the problem module."""
         return import_module_from_source(
-            os.path.join(self.path_ramp_kit, 'problem.py'),
-            'problem'
+            os.path.join(self.path_ramp_kit, "problem.py"), "problem"
         )
 
     @property
@@ -157,14 +158,16 @@ class HistoricalContributivity(Model):
     historical_contributivity : float
         The historical contributivity.
     """
-    __tablename__ = 'historical_contributivity'
+
+    __tablename__ = "historical_contributivity"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, nullable=False)
-    submission_id = Column(Integer, ForeignKey('submissions.id'))
-    submission = relationship('Submission',
-                              backref=backref('historical_contributivitys',
-                                              cascade='all, delete-orphan'))
+    submission_id = Column(Integer, ForeignKey("submissions.id"))
+    submission = relationship(
+        "Submission",
+        backref=backref("historical_contributivitys", cascade="all, delete-orphan"),
+    )
 
     contributivity = Column(Float, default=0.0)
     historical_contributivity = Column(Float, default=0.0)
@@ -188,7 +191,8 @@ class Keyword(Model):
     problems : list of :class:`ramp_database.model.ProblemKeyword`
         A back-reference to the problems associated with the keyword.
     """
-    __tablename__ = 'keywords'
+
+    __tablename__ = "keywords"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(), nullable=False, unique=True)
@@ -219,17 +223,18 @@ class ProblemKeyword(Model):
     keyword : :class:`ramp_database.model.Keyword`
         The keyword instance.
     """
-    __tablename__ = 'problem_keywords'
+
+    __tablename__ = "problem_keywords"
 
     id = Column(Integer, primary_key=True)
     description = Column(String)
 
-    problem_id = Column(Integer, ForeignKey('problems.id'), nullable=False)
-    problem = relationship('Problem',
-                           backref=backref('keywords',
-                                           cascade='all, delete-orphan'))
+    problem_id = Column(Integer, ForeignKey("problems.id"), nullable=False)
+    problem = relationship(
+        "Problem", backref=backref("keywords", cascade="all, delete-orphan")
+    )
 
-    keyword_id = Column(Integer, ForeignKey('keywords.id'), nullable=False)
-    keyword = relationship('Keyword',
-                           backref=backref('problems',
-                                           cascade='all, delete-orphan'))
+    keyword_id = Column(Integer, ForeignKey("keywords.id"), nullable=False)
+    keyword = relationship(
+        "Keyword", backref=backref("problems", cascade="all, delete-orphan")
+    )

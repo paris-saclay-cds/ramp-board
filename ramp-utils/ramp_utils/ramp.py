@@ -2,8 +2,14 @@ import os
 
 from .config_parser import read_config
 
-MANDATORY_DICT_PARAMS = ('kit_dir', 'data_dir', 'submissions_dir',
-                         'sandbox_dir', 'predictions_dir', 'logs_dir')
+MANDATORY_DICT_PARAMS = (
+    "kit_dir",
+    "data_dir",
+    "submissions_dir",
+    "sandbox_dir",
+    "predictions_dir",
+    "logs_dir",
+)
 
 
 def _create_defaults(config, key, path_config):
@@ -11,22 +17,16 @@ def _create_defaults(config, key, path_config):
     already.
     """
     default_mapping = {
-        'kit_dir': os.path.join(
-            path_config, 'ramp-kits', config['problem_name']
+        "kit_dir": os.path.join(path_config, "ramp-kits", config["problem_name"]),
+        "data_dir": os.path.join(path_config, "ramp-data", config["problem_name"]),
+        "submissions_dir": os.path.join(
+            path_config, "events", config["event_name"], "submissions"
         ),
-        'data_dir': os.path.join(
-            path_config, 'ramp-data', config['problem_name']
+        "predictions_dir": os.path.join(
+            path_config, "events", config["event_name"], "predictions"
         ),
-        'submissions_dir': os.path.join(
-            path_config, 'events', config['event_name'], 'submissions'
-        ),
-        'predictions_dir': os.path.join(
-            path_config, 'events', config['event_name'], 'predictions'
-        ),
-        'logs_dir': os.path.join(
-            path_config, 'events', config['event_name'], 'logs'
-        ),
-        'sandbox_dir': 'starting_kit'
+        "logs_dir": os.path.join(path_config, "events", config["event_name"], "logs"),
+        "sandbox_dir": "starting_kit",
     }
     if key not in config:
         return default_mapping[key]
@@ -52,70 +52,59 @@ def generate_ramp_config(event_config, database_config=None):
         The configuration for the RAMP worker.
     """
     if isinstance(event_config, str):
-        if (database_config is None or
-                not isinstance(database_config, str)):
+        if database_config is None or not isinstance(database_config, str):
             raise ValueError(
                 'When "event_config" corresponds to the filename of the '
-                'configuration, you need to provide the filename of the '
+                "configuration, you need to provide the filename of the "
                 'database as well, by assigning "database_config".'
             )
         event_config = read_config(event_config)
-        config = event_config['ramp']
+        config = event_config["ramp"]
 
-        path_config = os.path.dirname(
-            os.path.abspath(database_config)
-        )
+        path_config = os.path.dirname(os.path.abspath(database_config))
     else:
-        if 'ramp' in event_config.keys():
-            config = event_config['ramp']
+        if "ramp" in event_config.keys():
+            config = event_config["ramp"]
         else:
             config = event_config
         if not all([key in config.keys() for key in MANDATORY_DICT_PARAMS]):
             raise ValueError(
                 'When "event_config" is a dictionary, you need to provide all '
-                'following keys: {}'.format(MANDATORY_DICT_PARAMS)
+                "following keys: {}".format(MANDATORY_DICT_PARAMS)
             )
-        path_config = ''
+        path_config = ""
 
     ramp_config = {}
     # mandatory parameters
-    ramp_config['problem_name'] = config['problem_name']
-    ramp_config['event_name'] = config['event_name']
-    ramp_config['event_title'] = config['event_title']
-    ramp_config['event_is_public'] = config['event_is_public']
+    ramp_config["problem_name"] = config["problem_name"]
+    ramp_config["event_name"] = config["event_name"]
+    ramp_config["event_title"] = config["event_title"]
+    ramp_config["event_is_public"] = config["event_is_public"]
 
     # parameters which can be built by default if given a string
-    ramp_config['ramp_kit_dir'] = _create_defaults(
-        config, 'kit_dir', path_config
+    ramp_config["ramp_kit_dir"] = _create_defaults(config, "kit_dir", path_config)
+    ramp_config["ramp_data_dir"] = _create_defaults(config, "data_dir", path_config)
+    ramp_config["ramp_submissions_dir"] = _create_defaults(
+        config, "submissions_dir", path_config
     )
-    ramp_config['ramp_data_dir'] = _create_defaults(
-        config, 'data_dir', path_config
+    ramp_config["sandbox_name"] = _create_defaults(config, "sandbox_dir", "")
+    ramp_config["ramp_predictions_dir"] = _create_defaults(
+        config, "predictions_dir", path_config
     )
-    ramp_config['ramp_submissions_dir'] = _create_defaults(
-        config, 'submissions_dir', path_config
-    )
-    ramp_config['sandbox_name'] = _create_defaults(
-        config, 'sandbox_dir', ''
-    )
-    ramp_config['ramp_predictions_dir'] = _create_defaults(
-        config, 'predictions_dir', path_config
-    )
-    ramp_config['ramp_logs_dir'] = _create_defaults(
-        config, 'logs_dir', path_config
-    )
+    ramp_config["ramp_logs_dir"] = _create_defaults(config, "logs_dir", path_config)
 
     # parameters inferred from the previous one
-    ramp_config['ramp_sandbox_dir'] = os.path.join(
-        ramp_config['ramp_kit_dir'], 'submissions', ramp_config['sandbox_name']
+    ramp_config["ramp_sandbox_dir"] = os.path.join(
+        ramp_config["ramp_kit_dir"], "submissions", ramp_config["sandbox_name"]
     )
-    ramp_config['ramp_kit_submissions_dir'] = os.path.join(
-        ramp_config['ramp_kit_dir'], 'submissions'
+    ramp_config["ramp_kit_submissions_dir"] = os.path.join(
+        ramp_config["ramp_kit_dir"], "submissions"
     )
 
     # parameters only used with DaskWorker
-    if event_config.get('worker', {}).get('worker_type', None) == 'dask':
-        ramp_config['dask_scheduler'] = ramp_config.get(
-            'worker', {}
-        ).get('dask_scheduler', None)
+    if event_config.get("worker", {}).get("worker_type", None) == "dask":
+        ramp_config["dask_scheduler"] = ramp_config.get("worker", {}).get(
+            "dask_scheduler", None
+        )
 
     return ramp_config

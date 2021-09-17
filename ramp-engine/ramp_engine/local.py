@@ -7,7 +7,7 @@ from .base import BaseWorker, _get_traceback
 from .conda import _conda_info_envs, _get_conda_env_path
 from .conda import _conda_ramp_test_submission
 
-logger = logging.getLogger('RAMP-WORKER')
+logger = logging.getLogger("RAMP-WORKER")
 
 
 class CondaEnvWorker(BaseWorker):
@@ -47,6 +47,7 @@ class CondaEnvWorker(BaseWorker):
             * 'finished': the worker finished to train the submission.
             * 'collected': the results of the training have been collected.
     """
+
     def __init__(self, config, submission):
         super().__init__(config=config, submission=submission)
 
@@ -57,11 +58,16 @@ class CondaEnvWorker(BaseWorker):
         the configuration passed when instantiating the worker.
         """
         # sanity check for the configuration variable
-        for required_param in ('kit_dir', 'data_dir', 'submissions_dir',
-                               'logs_dir', 'predictions_dir'):
+        for required_param in (
+            "kit_dir",
+            "data_dir",
+            "submissions_dir",
+            "logs_dir",
+            "predictions_dir",
+        ):
             self._check_config_name(self.config, required_param)
         # find the path to the conda environment
-        env_name = self.config.get('conda_env', 'base')
+        env_name = self.config.get("conda_env", "base")
         conda_info = _conda_info_envs()
 
         self._python_bin_path = _get_conda_env_path(conda_info, env_name, self)
@@ -70,11 +76,14 @@ class CondaEnvWorker(BaseWorker):
 
     def teardown(self):
         """Remove the predictions stores within the submission."""
-        if self.status not in ('collected', 'retry'):
+        if self.status not in ("collected", "retry"):
             raise ValueError("Collect the results before to kill the worker.")
-        output_training_dir = os.path.join(self.config['kit_dir'],
-                                           'submissions', self.submission,
-                                           'training_output')
+        output_training_dir = os.path.join(
+            self.config["kit_dir"],
+            "submissions",
+            self.submission,
+            "training_output",
+        )
         if os.path.exists(output_training_dir):
             shutil.rmtree(output_training_dir)
         super().teardown()
@@ -105,7 +114,7 @@ class CondaEnvWorker(BaseWorker):
 
     @property
     def timeout(self):
-        return self.config.get('timeout', 7200)
+        return self.config.get("timeout", 7200)
 
     def launch_submission(self):
         """Launch the submission.
@@ -114,11 +123,12 @@ class CondaEnvWorker(BaseWorker):
         environment given in the configuration. The submission is launched in
         a subprocess to free to not lock the Python main process.
         """
-        cmd_ramp = os.path.join(self._python_bin_path, 'ramp-test')
-        if self.status == 'running':
-            raise ValueError('Wait that the submission is processed before to '
-                             'launch a new one.')
-        self._log_dir = os.path.join(self.config['logs_dir'], self.submission)
+        cmd_ramp = os.path.join(self._python_bin_path, "ramp-test")
+        if self.status == "running":
+            raise ValueError(
+                "Wait that the submission is processed before to " "launch a new one."
+            )
+        self._log_dir = os.path.join(self.config["logs_dir"], self.submission)
         self._proc, self._log_file = _conda_ramp_test_submission(
             self.config,
             self.submission,
@@ -138,35 +148,36 @@ class CondaEnvWorker(BaseWorker):
         beforehand.
         """
         super().collect_results()
-        if self.status in ['finished', 'running', 'timeout']:
+        if self.status in ["finished", "running", "timeout"]:
             # communicate() will wait for the process to be completed
             self._proc.communicate()
             self._log_file.close()
-            with open(os.path.join(self._log_dir, 'log'), 'rb') as f:
+            with open(os.path.join(self._log_dir, "log"), "rb") as f:
                 log_output = f.read()
-            error_msg = _get_traceback(log_output.decode('utf-8'))
-            if self.status == 'timeout':
-                error_msg += ('\nWorker killed due to timeout after {}s.'
-                              .format(self.timeout))
-            if self.status == 'timeout':
+            error_msg = _get_traceback(log_output.decode("utf-8"))
+            if self.status == "timeout":
+                error_msg += "\nWorker killed due to timeout after {}s.".format(
+                    self.timeout
+                )
+            if self.status == "timeout":
                 returncode = 124
             else:
                 returncode = self._proc.returncode
-            pred_dir = os.path.join(
-                self.config['predictions_dir'], self.submission
-            )
+            pred_dir = os.path.join(self.config["predictions_dir"], self.submission)
             output_training_dir = os.path.join(
-                self.config['submissions_dir'], self.submission,
-                'training_output')
+                self.config["submissions_dir"],
+                self.submission,
+                "training_output",
+            )
             if os.path.exists(pred_dir):
                 shutil.rmtree(pred_dir)
             if returncode:
                 if os.path.exists(output_training_dir):
                     shutil.rmtree(output_training_dir)
-                self.status = 'collected'
+                self.status = "collected"
                 return (returncode, error_msg)
             # copy the predictions into the disk
             # no need to create the directory, it will be handle by copytree
             shutil.copytree(output_training_dir, pred_dir)
-            self.status = 'collected'
+            self.status = "collected"
             return (returncode, error_msg)

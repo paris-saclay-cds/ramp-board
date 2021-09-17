@@ -29,14 +29,10 @@ class Daemon:
 
     def __init__(self, config, events_dir):
         self.config = config
-        self._database_config = read_config(
-            config, filter_section="sqlalchemy"
-        )
+        self._database_config = read_config(config, filter_section="sqlalchemy")
         self.events_dir = os.path.abspath(events_dir)
         if not os.path.isdir(self.events_dir):
-            raise ValueError(
-                "The path {} is not existing.".format(events_dir)
-            )
+            raise ValueError("The path {} is not existing.".format(events_dir))
         self._proc = deque()
         signal.signal(signal.SIGINT, self.kill_dispatcher)
         signal.signal(signal.SIGTERM, self.kill_dispatcher)
@@ -45,14 +41,15 @@ class Daemon:
     def launch_dispatchers(self, session):
         events = [e for e in session.query(Event).all() if e.is_open]
         for e in events:
-            event_config = os.path.join(
-                self.events_dir, e.name, "config.yml"
-            )
+            event_config = os.path.join(self.events_dir, e.name, "config.yml")
             cmd_dispatcher = [
-                "ramp-launch", "dispatcher",
-                "--config", self.config,
-                "--event-config", event_config,
-                "--verbose"
+                "ramp-launch",
+                "dispatcher",
+                "--config",
+                self.config,
+                "--event-config",
+                event_config,
+                "--verbose",
             ]
             proc = subprocess.Popen(
                 cmd_dispatcher,
@@ -60,17 +57,13 @@ class Daemon:
                 stderr=subprocess.PIPE,
             )
             self._proc.append((e.name, proc))
-            logger.info(
-                "Launch dispatcher for the event {}".format(e.name)
-            )
+            logger.info("Launch dispatcher for the event {}".format(e.name))
 
     def kill_dispatcher(self, signum, frame):
         while len(self._proc) != 0:
             event, proc = self._proc.pop()
             proc.kill()
-            logger.info(
-                "Kill dispatcher for the event {}".format(event)
-            )
+            logger.info("Kill dispatcher for the event {}".format(event))
         self._poison_pill = True
 
     def launch(self):

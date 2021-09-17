@@ -72,7 +72,7 @@ def session_scope(config):
 
 
 def _encode_string(text):
-    return bytes(text, 'utf-8') if isinstance(text, str) else text
+    return bytes(text, "utf-8") if isinstance(text, str) else text
 
 
 def hash_password(password):
@@ -106,6 +106,4 @@ def check_password(password, hashed_password):
     is_same_password : bool
         Return True if the two passwords are identical.
     """
-    return bcrypt.checkpw(
-        _encode_string(password), _encode_string(hashed_password)
-    )
+    return bcrypt.checkpw(_encode_string(password), _encode_string(hashed_password))
