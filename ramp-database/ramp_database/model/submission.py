@@ -1,6 +1,7 @@
 import os
 import hashlib
 import datetime
+import numpy as np
 
 from sqlalchemy import Enum
 from sqlalchemy import Float
@@ -21,39 +22,39 @@ from .event import EventScoreType
 from .datatype import NumpyType
 
 __all__ = [
-    'Submission',
-    'SubmissionScore',
-    'SubmissionFile',
-    'SubmissionFileType',
-    'SubmissionFileTypeExtension',
-    'Extension',
-    'SubmissionScoreOnCVFold',
-    'SubmissionOnCVFold',
-    'DetachedSubmissionOnCVFold',
-    'SubmissionSimilarity',
+    "Submission",
+    "SubmissionScore",
+    "SubmissionFile",
+    "SubmissionFileType",
+    "SubmissionFileTypeExtension",
+    "Extension",
+    "SubmissionScoreOnCVFold",
+    "SubmissionOnCVFold",
+    "SubmissionSimilarity",
 ]
 
 # evaluate right after train/test, so no need for 'scored' states
 submission_states = Enum(
-    'new',               # submitted by user to frontend server
-    'checked',           # not used, checking is part of the workflow now
-    'checking_error',    # not used, checking is part of the workflow now
-    'trained',           # training finished normally on the backend server
-    'training_error',    # training finished abnormally on the backend server
-    'validated',         # validation finished normally on the backend server
-    'validating_error',  # validation finished abnormally on the backend server
-    'tested',            # testing finished normally on the backend server
-    'testing_error',     # testing finished abnormally on the backend server
-    'training',          # training is running normally on the backend server
-    'sent_to_training',  # frontend server sent submission to backend server
-    'scored',            # submission scored on the frontend server.Final state
-    name='submission_states')
+    "new",  # submitted by user to frontend server
+    "checked",  # not used, checking is part of the workflow now
+    "checking_error",  # not used, checking is part of the workflow now
+    "trained",  # training finished normally on the backend server
+    "training_error",  # training finished abnormally on the backend server
+    "validated",  # validation finished normally on the backend server
+    "validating_error",  # validation finished abnormally on the backend server
+    "tested",  # testing finished normally on the backend server
+    "testing_error",  # testing finished abnormally on the backend server
+    "training",  # training is running normally on the backend server
+    "sent_to_training",  # frontend server sent submission to backend server
+    "scored",  # submission scored on the frontend server.Final state
+    name="submission_states",
+)
 
-submission_types = Enum('live', 'test', name='submission_types')
+submission_types = Enum("live", "test", name="submission_types")
 
 
 def _encode_string(text):
-    return bytes(text, 'utf-8') if isinstance(text, str) else text
+    return bytes(text, "utf-8") if isinstance(text, str) else text
 
 
 class Submission(Model):
@@ -136,15 +137,16 @@ class Submission(Model):
     on_cv_folds : list of :class:`ramp_database.model.SubmissionOnCVFold`
         A back-reference of the CV fold for this submission.
     """
-    __tablename__ = 'submissions'
+
+    __tablename__ = "submissions"
 
     id = Column(Integer, primary_key=True)
 
-    event_team_id = Column(Integer, ForeignKey('event_teams.id'),
-                           nullable=False)
-    event_team = relationship('EventTeam',
-                              backref=backref('submissions',
-                                              cascade='all, delete-orphan'))
+    event_team_id = Column(Integer, ForeignKey("event_teams.id"), nullable=False)
+    event_team = relationship(
+        "EventTeam",
+        backref=backref("submissions", cascade="all, delete-orphan"),
+    )
 
     name = Column(String(20), nullable=False)
     hash_ = Column(String, nullable=False, index=True, unique=True)
@@ -154,12 +156,12 @@ class Submission(Model):
 
     contributivity = Column(Float, default=0.0)
     historical_contributivity = Column(Float, default=0.0)
-
-    type = Column(submission_types, default='live')
-    state = Column(String, default='new')
+  
+    type = Column(submission_types, default="live")
+    state = Column(String, default="new")
     queue_position = Column(Integer, default=-1)
     # TODO: hide absolute path in error
-    error_msg = Column(String, default='')
+    error_msg = Column(String, default="")
     # user can delete but we keep
     is_valid = Column(Boolean, default=True)
     # We can forget bad models.
@@ -169,7 +171,7 @@ class Submission(Model):
     # with which they want to participate in the competition
     is_in_competition = Column(Boolean, default=True)
 
-    notes = Column(String, default='')  # eg, why is it disqualified
+    notes = Column(String, default="")  # eg, why is it disqualified
 
     train_time_cv_mean = Column(Float, default=0.0)
     valid_time_cv_mean = Column(Float, default=0.0)
@@ -180,7 +182,7 @@ class Submission(Model):
     # the maximum memory size used when training/testing, in MB
     max_ram = Column(Float, default=0.0)
     # later also ramp_id
-    UniqueConstraint(event_team_id, name, name='ts_constraint')
+    UniqueConstraint(event_team_id, name, name="ts_constraint")
 
     def __init__(self, name, event_team, session=None):
         self.name = name
@@ -192,31 +194,38 @@ class Submission(Model):
         sha_hasher.update(_encode_string(self.name))
         # We considered using the id, but then it will be given away in the
         # url which is maybe not a good idea.
-        self.hash_ = '{}'.format(sha_hasher.hexdigest())
+        self.hash_ = "{}".format(sha_hasher.hexdigest())
         self.submission_timestamp = datetime.datetime.utcnow()
         if session is None:
-            event_score_types = \
-                (EventScoreType.query.filter_by(event=event_team.event))
+            event_score_types = EventScoreType.query.filter_by(event=event_team.event)
         else:
-            event_score_types = (session.query(EventScoreType)
-                                        .filter(EventScoreType.event ==
-                                                event_team.event)
-                                        .all())
+            event_score_types = (
+                session.query(EventScoreType)
+                .filter(EventScoreType.event == event_team.event)
+                .all()
+            )
         for event_score_type in event_score_types:
             submission_score = SubmissionScore(
-                submission=self, event_score_type=event_score_type)
+                submission=self, event_score_type=event_score_type
+            )
             self.session.add(submission_score)
         self.reset()
 
     def __str__(self):
-        return 'Submission({}/{}/{})'.format(
-            self.event.name, self.team.name, self.name)
+        return "Submission({}/{}/{})".format(self.event.name, self.team.name, self.name)
 
     def __repr__(self):
-        return ('Submission(event_name={}, team_name={}, name={}, files={}, '
-                'state={}, train_time={})'
-                .format(self.event.name, self.team.name, self.name,
-                        self.files, self.state, self.train_time_cv_mean))
+        return (
+            "Submission(event_name={}, team_name={}, name={}, files={}, "
+            "state={}, train_time={})".format(
+                self.event.name,
+                self.team.name,
+                self.name,
+                self.files,
+                self.state,
+                self.train_time_cv_mean,
+            )
+        )
 
     @hybrid_property
     def team(self):
@@ -266,25 +275,25 @@ class Submission(Model):
     @hybrid_property
     def is_error(self):
         """bool: Whether the training of the submission failed."""
-        return 'error' in self.state
+        return "error" in self.state
 
     @hybrid_property
     def is_new(self):
         """bool: Whether the submission is a new submission."""
-        return (self.state in ['new', 'training', 'sent_to_training'] and
-                self.is_not_sandbox)
+        return (
+            self.state in ["new", "training", "sent_to_training"]
+            and self.is_not_sandbox
+        )
 
     @hybrid_property
     def is_public_leaderboard(self):
         """bool: Whether the submission is part of the public leaderboard."""
-        return (self.is_not_sandbox and self.is_valid and
-                (self.state == 'scored'))
+        return self.is_not_sandbox and self.is_valid and (self.state == "scored")
 
     @hybrid_property
     def is_private_leaderboard(self):
         """bool: Whether the submission is part of the private leaderboard."""
-        return (self.is_not_sandbox and self.is_valid and
-                (self.state == 'scored'))
+        return self.is_not_sandbox and self.is_valid and (self.state == "scored")
 
     @property
     def path(self):
@@ -294,12 +303,12 @@ class Submission(Model):
     @property
     def basename(self):
         """str: The base name of the submission."""
-        return 'submission_' + '{:09d}'.format(self.id)
+        return "submission_" + "{:09d}".format(self.id)
 
     @property
     def module(self):
         """str: Path of the submission as a module."""
-        return self.path.lstrip('./').replace('/', '.')
+        return self.path.lstrip("./").replace("/", ".")
 
     @property
     def f_names(self):
@@ -319,8 +328,9 @@ class Submission(Model):
         The hyperlink forward to the first submission file while the text
         corresponds to the event, team, and submission name.
         """
-        return '<a href={}>{}/{}/{}</a>'.format(
-            self.link, self.event.name, self.team.name, self.name[:20])
+        return "<a href={}>{}/{}/{}</a>".format(
+            self.link, self.event.name, self.team.name, self.name[:20]
+        )
 
     @property
     def name_with_link(self):
@@ -330,13 +340,14 @@ class Submission(Model):
         The hyperlink forward to the first submission file while the text
         corresponds to submission name.
         """
-        return '<a href={}>{}</a>'.format(self.link, self.name[:20])
+        return "<a href={}>{}</a>".format(self.link, self.name[:20])
 
     @property
     def state_with_link(self):
         """str: HTML hyperlink to the state file to report error."""
-        return '<a href=/{}>{}</a>'.format(
-            os.path.join(self.hash_, 'error.txt'), self.state)
+        return "<a href=/{}>{}</a>".format(
+            os.path.join(self.hash_, "error.txt"), self.state
+        )
 
     def ordered_scores(self, score_names):
         """Generator yielding :class:`ramp_database.model.SubmissionScore`.
@@ -408,9 +419,9 @@ class Submission(Model):
         if session is None:
             all_cv_folds = self.on_cv_folds
         else:
-            all_cv_folds = (session.query(SubmissionOnCVFold)
-                                   .filter_by(submission_id=self.id)
-                                   .all())
+            all_cv_folds = (
+                session.query(SubmissionOnCVFold).filter_by(submission_id=self.id).all()
+            )
             all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
         for submission_on_cv_fold in all_cv_folds:
             submission_on_cv_fold.state = state
@@ -422,8 +433,8 @@ class Submission(Model):
         values.
         """
         self.contributivity = 0.0
-        self.state = 'new'
-        self.error_msg = ''
+        self.state = "new"
+        self.error_msg = ""
         for score in self.scores:
             score.valid_score_cv_bag = score.event_score_type.worst
             score.test_score_cv_bag = score.event_score_type.worst
@@ -450,9 +461,9 @@ class Submission(Model):
         if session is None:
             all_cv_folds = self.on_cv_folds
         else:
-            all_cv_folds = (session.query(SubmissionOnCVFold)
-                                   .filter_by(submission_id=self.id)
-                                   .all())
+            all_cv_folds = (
+                session.query(SubmissionOnCVFold).filter_by(submission_id=self.id).all()
+            )
             all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
         for submission_on_cv_fold in all_cv_folds:
             submission_on_cv_fold.set_error(error, error_msg)
@@ -472,14 +483,17 @@ class Submission(Model):
             if session is None:
                 all_cv_folds = self.on_cv_folds
             else:
-                all_cv_folds = (session.query(SubmissionOnCVFold)
-                                       .filter_by(submission_id=self.id)
-                                       .all())
+                all_cv_folds = (
+                    session.query(SubmissionOnCVFold)
+                    .filter_by(submission_id=self.id)
+                    .all()
+                )
                 all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
-            unit_contributivity = 1. / len(all_cv_folds)
+            unit_contributivity = 1.0 / len(all_cv_folds)
             for submission_on_cv_fold in all_cv_folds:
-                self.contributivity += (unit_contributivity *
-                                        submission_on_cv_fold.contributivity)
+                self.contributivity += (
+                    unit_contributivity * submission_on_cv_fold.contributivity
+                )
 
     def set_state_after_training(self, session=None):
         """Set the state of a submission depending of the state of the fold
@@ -489,33 +503,31 @@ class Submission(Model):
         if session is None:
             all_cv_folds = self.on_cv_folds
         else:
-            all_cv_folds = (session.query(SubmissionOnCVFold)
-                                   .filter_by(submission_id=self.id)
-                                   .all())
+            all_cv_folds = (
+                session.query(SubmissionOnCVFold).filter_by(submission_id=self.id).all()
+            )
             all_cv_folds = sorted(all_cv_folds, key=lambda x: x.id)
-        states = [submission_on_cv_fold.state
-                  for submission_on_cv_fold in all_cv_folds]
-        if all(state == 'tested' for state in states):
-            self.state = 'tested'
-        elif all(state in ['tested', 'validated'] for state in states):
-            self.state = 'validated'
-        elif all(state in ['tested', 'validated', 'trained']
-                 for state in states):
-            self.state = 'trained'
-        elif any(state == 'training_error' for state in states):
-            self.state = 'training_error'
-            i = states.index('training_error')
+        states = [submission_on_cv_fold.state for submission_on_cv_fold in all_cv_folds]
+        if all(state == "tested" for state in states):
+            self.state = "tested"
+        elif all(state in ["tested", "validated"] for state in states):
+            self.state = "validated"
+        elif all(state in ["tested", "validated", "trained"] for state in states):
+            self.state = "trained"
+        elif any(state == "training_error" for state in states):
+            self.state = "training_error"
+            i = states.index("training_error")
             self.error_msg = all_cv_folds[i].error_msg
-        elif any(state == 'validating_error' for state in states):
-            self.state = 'validating_error'
-            i = states.index('validating_error')
+        elif any(state == "validating_error" for state in states):
+            self.state = "validating_error"
+            i = states.index("validating_error")
             self.error_msg = all_cv_folds[i].error_msg
-        elif any(state == 'testing_error' for state in states):
-            self.state = 'testing_error'
-            i = states.index('testing_error')
+        elif any(state == "testing_error" for state in states):
+            self.state = "testing_error"
+            i = states.index("testing_error")
             self.error_msg = all_cv_folds[i].error_msg
-        if 'error' not in self.state:
-            self.error_msg = ''
+        if "error" not in self.state:
+            self.error_msg = ""
 
 
 class SubmissionScore(Model):
@@ -544,19 +556,19 @@ class SubmissionScore(Model):
     on_cv_folds : list of :class:`ramp_database.model.SubmissionScoreOnCVFold`
         A back-reference the CV fold associated with the score.
     """
-    __tablename__ = 'submission_scores'
+
+    __tablename__ = "submission_scores"
 
     id = Column(Integer, primary_key=True)
-    submission_id = Column(Integer, ForeignKey('submissions.id'),
-                           nullable=False)
-    submission = relationship('Submission',
-                              backref=backref('scores',
-                                              cascade='all, delete-orphan'))
+    submission_id = Column(Integer, ForeignKey("submissions.id"), nullable=False)
+    submission = relationship(
+        "Submission", backref=backref("scores", cascade="all, delete-orphan")
+    )
 
-    event_score_type_id = Column(Integer, ForeignKey('event_score_types.id'),
-                                 nullable=False)
-    event_score_type = relationship('EventScoreType',
-                                    backref=backref('submissions'))
+    event_score_type_id = Column(
+        Integer, ForeignKey("event_score_types.id"), nullable=False
+    )
+    event_score_type = relationship("EventScoreType", backref=backref("submissions"))
 
     # These are cv-bagged scores. Individual scores are found in
     # SubmissionToTrain
@@ -614,35 +626,40 @@ class SubmissionFile(Model):
 :class:`ramp_database.model.SubmissionFileTypeExtension`
         The associated submission file type extension instance.
     """
-    __tablename__ = 'submission_files'
+
+    __tablename__ = "submission_files"
 
     id = Column(Integer, primary_key=True)
-    submission_id = Column(Integer, ForeignKey('submissions.id'),
-                           nullable=False)
-    submission = relationship('Submission',
-                              backref=backref('files',
-                                              cascade='all, delete-orphan'))
+    submission_id = Column(Integer, ForeignKey("submissions.id"), nullable=False)
+    submission = relationship(
+        "Submission", backref=backref("files", cascade="all, delete-orphan")
+    )
 
-    workflow_element_id = Column(Integer, ForeignKey('workflow_elements.id'),
-                                 nullable=False)
-    workflow_element = relationship('WorkflowElement',
-                                    backref=backref('submission_files'))
+    workflow_element_id = Column(
+        Integer, ForeignKey("workflow_elements.id"), nullable=False
+    )
+    workflow_element = relationship(
+        "WorkflowElement", backref=backref("submission_files")
+    )
 
     submission_file_type_extension_id = Column(
-        Integer, ForeignKey('submission_file_type_extensions.id'),
-        nullable=False
+        Integer,
+        ForeignKey("submission_file_type_extensions.id"),
+        nullable=False,
     )
     submission_file_type_extension = relationship(
-        'SubmissionFileTypeExtension', backref=backref('submission_files')
+        "SubmissionFileTypeExtension", backref=backref("submission_files")
     )
 
     def __repr__(self):
-        return ('SubmissionFile(name={}, type={}, extension={}, path={})'
-                .format(self.name, self.type, self.extension, self.path))
+        return "SubmissionFile(name={}, type={}, extension={}, path={})".format(
+            self.name, self.type, self.extension, self.path
+        )
 
     @property
     def is_editable(self):
-        """bool: Whether the submission file is from an editable format."""
+        """bool: Whether the submission file is from an editable format on the
+        frontend."""
         return self.workflow_element.is_editable
 
     @property
@@ -663,13 +680,13 @@ class SubmissionFile(Model):
     @property
     def f_name(self):
         """str: The corresponding file name."""
-        return self.type + '.' + self.extension
+        return self.type + "." + self.extension
 
     @property
     def link(self):
         """str: A unique link to the file. The hash is generated by the
         Submission instance."""
-        return '/' + os.path.join(self.submission.hash_, self.f_name)
+        return "/" + os.path.join(self.submission.hash_, self.f_name)
 
     @property
     def path(self):
@@ -679,7 +696,7 @@ class SubmissionFile(Model):
     @property
     def name_with_link(self):
         """str: The HTML hyperlink of the name of the submission file."""
-        return '<a href="' + self.link + '">' + self.name + '</a>'
+        return '<a href="' + self.link + '">' + self.name + "</a>"
 
     def get_code(self):
         """str: Get the content of the file."""
@@ -695,8 +712,7 @@ class SubmissionFile(Model):
         code : str
             The code to write into the submission file.
         """
-        code.encode('ascii')  # to raise an exception if code is not ascii
-        with open(self.path, 'w') as f:
+        with open(self.path, "w") as f:
             f.write(code)
 
 
@@ -722,19 +738,18 @@ class SubmissionFileTypeExtension(Model):
 :class:`ramp_database.model.SubmissionFileTypeExtension`
         A back-reference to the submission files related to the type extension.
     """
-    __tablename__ = 'submission_file_type_extensions'
+
+    __tablename__ = "submission_file_type_extensions"
 
     id = Column(Integer, primary_key=True)
 
-    type_id = Column(Integer, ForeignKey('submission_file_types.id'),
-                     nullable=False)
-    type = relationship('SubmissionFileType', backref=backref('extensions'))
+    type_id = Column(Integer, ForeignKey("submission_file_types.id"), nullable=False)
+    type = relationship("SubmissionFileType", backref=backref("extensions"))
 
-    extension_id = Column(Integer, ForeignKey('extensions.id'), nullable=False)
-    extension = relationship('Extension',
-                             backref=backref('submission_file_types'))
+    extension_id = Column(Integer, ForeignKey("extensions.id"), nullable=False)
+    extension = relationship("Extension", backref=backref("submission_file_types"))
 
-    UniqueConstraint(type_id, extension_id, name='we_constraint')
+    UniqueConstraint(type_id, extension_id, name="we_constraint")
 
     @property
     def file_type(self):
@@ -757,7 +772,7 @@ class SubmissionFileType(Model):
     name : str
         The name of the submission file type.
     is_editable : bool
-        Whether or not this type of file is editable.
+        Whether or not this type of file is editable on the frontend.
     max_size : int
         The maximum size of this file type.
     workflow_element_types : list of \
@@ -765,7 +780,8 @@ class SubmissionFileType(Model):
         A back-reference to the workflow element type for this submission file
         type.
     """
-    __tablename__ = 'submission_file_types'
+
+    __tablename__ = "submission_file_types"
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, unique=True)
@@ -786,7 +802,8 @@ class Extension(Model):
 :class:`ramp_database.model.SubmissionFileTypeExtension`
         A back-reference to the submission file types for this extension.
     """
-    __tablename__ = 'extensions'
+
+    __tablename__ = "extensions"
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, unique=True)
@@ -814,22 +831,24 @@ class SubmissionScoreOnCVFold(Model):
     test_score : float
         The testing score on the fold.
     """
-    __tablename__ = 'submission_score_on_cv_folds'
+
+    __tablename__ = "submission_score_on_cv_folds"
 
     id = Column(Integer, primary_key=True)
     submission_on_cv_fold_id = Column(
-        Integer, ForeignKey('submission_on_cv_folds.id'), nullable=False
+        Integer, ForeignKey("submission_on_cv_folds.id"), nullable=False
     )
     submission_on_cv_fold = relationship(
-        'SubmissionOnCVFold',
-        backref=backref('scores', cascade='all, delete-orphan')
+        "SubmissionOnCVFold",
+        backref=backref("scores", cascade="all, delete-orphan"),
     )
 
-    submission_score_id = Column(Integer, ForeignKey('submission_scores.id'),
-                                 nullable=False)
+    submission_score_id = Column(
+        Integer, ForeignKey("submission_scores.id"), nullable=False
+    )
     submission_score = relationship(
-        'SubmissionScore',
-        backref=backref('on_cv_folds', cascade='all, delete-orphan')
+        "SubmissionScore",
+        backref=backref("on_cv_folds", cascade="all, delete-orphan"),
     )
 
     train_score = Column(Float)
@@ -837,7 +856,8 @@ class SubmissionScoreOnCVFold(Model):
     test_score = Column(Float)
 
     UniqueConstraint(
-        submission_on_cv_fold_id, submission_score_id, name='ss_constraint')
+        submission_on_cv_fold_id, submission_score_id, name="ss_constraint"
+    )
 
     @property
     def name(self):
@@ -885,10 +905,6 @@ class SubmissionOnCVFold(Model):
         The contributivity of the submission.
     best : bool
         Whether or not the submission is the best.
-    full_train_y_pred : ndarray
-        Predictions on the full training set.
-    test_y_pred : ndarray
-        Predictions on the testing set.
     train_time : float
         Computation time for the training set.
     valid_time : float
@@ -911,20 +927,20 @@ class SubmissionOnCVFold(Model):
     predictions. In a sense substituting CPU time for storage.
     """
 
-    __tablename__ = 'submission_on_cv_folds'
+    __tablename__ = "submission_on_cv_folds"
 
     id = Column(Integer, primary_key=True)
 
-    submission_id = Column(Integer, ForeignKey('submissions.id'),
-                           nullable=False)
-    submission = relationship('Submission',
-                              backref=backref('on_cv_folds',
-                                              cascade="all, delete-orphan"))
+    submission_id = Column(Integer, ForeignKey("submissions.id"), nullable=False)
+    submission = relationship(
+        "Submission",
+        backref=backref("on_cv_folds", cascade="all, delete-orphan"),
+    )
 
-    cv_fold_id = Column(Integer, ForeignKey('cv_folds.id'), nullable=False)
-    cv_fold = relationship('CVFold',
-                           backref=backref('submissions',
-                                           cascade="all, delete-orphan"))
+    cv_fold_id = Column(Integer, ForeignKey("cv_folds.id"), nullable=False)
+    cv_fold = relationship(
+        "CVFold", backref=backref("submissions", cascade="all, delete-orphan")
+    )
 
     # filled by cv_fold.get_combined_predictions
     contributivity = Column(Float, default=0.0)
@@ -932,15 +948,13 @@ class SubmissionOnCVFold(Model):
 
     # prediction on the full training set, including train and valid points
     # properties train_predictions and valid_predictions will make the slicing
-    full_train_y_pred = Column(NumpyType, default=None)
-    test_y_pred = Column(NumpyType, default=None)
     train_time = Column(Float, default=0.0)
     valid_time = Column(Float, default=0.0)
     test_time = Column(Float, default=0.0)
-    state = Column(submission_states, default='new')
-    error_msg = Column(String, default='')
+    state = Column(submission_states, default="new")
+    error_msg = Column(String, default="")
 
-    UniqueConstraint(submission_id, cv_fold_id, name='sc_constraint')
+    UniqueConstraint(submission_id, cv_fold_id, name="sc_constraint")
 
     def __init__(self, submission, cv_fold):
         self.submission = submission
@@ -948,40 +962,76 @@ class SubmissionOnCVFold(Model):
         self.session = inspect(submission).session
         for score in submission.scores:
             submission_score_on_cv_fold = SubmissionScoreOnCVFold(
-                submission_on_cv_fold=self, submission_score=score)
+                submission_on_cv_fold=self, submission_score=score
+            )
             self.session.add(submission_score_on_cv_fold)
         self.reset()
 
     def __repr__(self):
-        return ('state = {}, c = {}, best = {}'
-                .format(self.state, self.contributivity, self.best))
+        return "state = {}, c = {}, best = {}".format(
+            self.state, self.contributivity, self.best
+        )
 
     @hybrid_property
     def is_public_leaderboard(self):
         """bool: Whether or not the submission is scored and ready to be on
         the public leaderboard."""
-        return self.state == 'scored'
+        return self.state == "scored"
 
     @hybrid_property
     def is_trained(self):
         """bool: Whether or not the submission was trained."""
-        return self.state in ('trained', 'validated', 'tested',
-                              'validating_error', 'testing_error', 'scored')
+        return self.state in (
+            "trained",
+            "validated",
+            "tested",
+            "validating_error",
+            "testing_error",
+            "scored",
+        )
 
     @hybrid_property
     def is_validated(self):
         """bool: Whether or not the submission was validated."""
-        return self.state in ('validated', 'tested', 'testing_error', 'scored')
+        return self.state in ("validated", "tested", "testing_error", "scored")
 
     @hybrid_property
     def is_tested(self):
         """bool: Whether or not the submission was tested."""
-        return self.state in ('tested', 'scored')
+        return self.state in ("tested", "scored")
 
     @hybrid_property
     def is_error(self):
         """bool: Whether or not the submission failed at one of the stage."""
-        return 'error' in self.state
+        return "error" in self.state
+
+    # TODO: the following 8 properties are never used and not tested.
+    #       They are present for historical reasons and should likely be
+    #       removed in a follow up refactoring.
+    @property
+    def path_predictions(self):
+        """Return the path to the folder with predictions"""
+        return os.path.join(
+            self.submission.event.path_ramp_submissions,
+            self.submission.name,
+            "training_output",
+            "fold_{}".format(self.cv_fold_id),
+        )
+
+    @property
+    def full_train_y_pred(self):
+        """Load predictions on the full training set
+
+        including train and valid points.
+        """
+        return np.load(os.path.join(self.path_predictions, "y_pred_train.npz"))[
+            "y_pred"
+        ]
+
+    @property
+    def test_y_pred(self):
+        """Load predictions on the test set"""
+        return np.load(os.path.join(self.path_predictions, "y_pred_test.npz"))["y_pred"]
 
     # The following four functions are converting the stored numpy arrays
     # <>_y_pred into Prediction instances
@@ -996,14 +1046,16 @@ class SubmissionOnCVFold(Model):
         """:class:`rampwf.prediction_types.Predictions`: Training
         predictions."""
         return self.submission.Predictions(
-            y_pred=self.full_train_y_pred[self.cv_fold.train_is])
+            y_pred=self.full_train_y_pred[self.cv_fold.train_is]
+        )
 
     @property
     def valid_predictions(self):
         """:class:`rampwf.prediction_types.Predictions`: Validation
         predictions."""
         return self.submission.Predictions(
-            y_pred=self.full_train_y_pred[self.cv_fold.test_is])
+            y_pred=self.full_train_y_pred[self.cv_fold.test_is]
+        )
 
     @property
     def test_predictions(self):
@@ -1027,13 +1079,11 @@ class SubmissionOnCVFold(Model):
         """
         self.contributivity = 0.0
         self.best = False
-        self.full_train_y_pred = None
-        self.test_y_pred = None
         self.train_time = 0.0
         self.valid_time = 0.0
         self.test_time = 0.0
-        self.state = 'new'
-        self.error_msg = ''
+        self.state = "new"
+        self.error_msg = ""
         for score in self.scores:
             score.train_score = score.event_score_type.worst
             score.valid_score = score.event_score_type.worst
@@ -1057,108 +1107,12 @@ class SubmissionOnCVFold(Model):
         self.state = error
         self.error_msg = error_msg
 
-    def compute_train_scores(self):
-        """Compute all training scores."""
-        if self.is_trained:
-            true_full_train_predictions = \
-                self.submission.event.problem.ground_truths_train()
-            for score in self.scores:
-                score.train_score = float(score.score_function(
-                    true_full_train_predictions,
-                    self.full_train_predictions,
-                    self.cv_fold.train_is))
-        else:
-            for score in self.scores:
-                score.train_score = score.event_score_type.worst
-
-    def compute_valid_scores(self):
-        """Compute all validating scores."""
-        if self.is_validated:
-            true_full_train_predictions = \
-                self.submission.event.problem.ground_truths_train()
-            for score in self.scores:
-                score.valid_score = float(score.score_function(
-                    true_full_train_predictions,
-                    self.full_train_predictions,
-                    self.cv_fold.test_is))
-        else:
-            for score in self.scores:
-                score.valid_score = score.event_score_type.worst
-
-    def compute_test_scores(self):
-        """Compute all testing scores."""
-        if self.is_tested:
-            true_test_predictions = \
-                self.submission.event.problem.ground_truths_test()
-            for score in self.scores:
-                score.test_score = float(score.score_function(
-                    true_test_predictions,
-                    self.test_predictions))
-        else:
-            for score in self.scores:
-                score.test_score = score.event_score_type.worst
-
-    def update(self, detached_submission_on_cv_fold):
-        """Update the submission on CV Fold from a detached submission.
-
-        Parameters
-        ----------
-        detached_submission_on_cv_fold : \
-:class:`ramp_database.model.DetachedSubmissionOnCVFold`
-            The detached submission from which we will update the current
-            submission.
-        """
-        self.state = detached_submission_on_cv_fold.state
-        if self.is_error:
-            self.error_msg = detached_submission_on_cv_fold.error_msg
-        else:
-            if self.is_trained:
-                self.train_time = detached_submission_on_cv_fold.train_time
-            if self.is_validated:
-                self.valid_time = detached_submission_on_cv_fold.valid_time
-                self.full_train_y_pred = \
-                    detached_submission_on_cv_fold.full_train_y_pred
-            if self.is_tested:
-                self.test_time = detached_submission_on_cv_fold.test_time
-                self.test_y_pred = detached_submission_on_cv_fold.test_y_pred
-
-
-class DetachedSubmissionOnCVFold:
-    """Copy of SubmissionOnCVFold, all the fields we need in train and test.
-
-    It's because SQLAlchemy objects don't persist through
-    multiprocessing jobs. Maybe eliminated if we do the parallelization
-    differently, though I doubt it.
-    """
-
-    def __init__(self, submission_on_cv_fold):
-        self.train_is = submission_on_cv_fold.cv_fold.train_is
-        self.test_is = submission_on_cv_fold.cv_fold.test_is
-        self.full_train_y_pred = submission_on_cv_fold.full_train_y_pred
-        self.test_y_pred = submission_on_cv_fold.test_y_pred
-        self.state = submission_on_cv_fold.state
-        self.name = (submission_on_cv_fold.submission.event.name + '/' +
-                     submission_on_cv_fold.submission.team.name + '/' +
-                     submission_on_cv_fold.submission.name)
-        self.path = submission_on_cv_fold.submission.path
-        self.error_msg = submission_on_cv_fold.error_msg
-        self.train_time = submission_on_cv_fold.train_time
-        self.valid_time = submission_on_cv_fold.valid_time
-        self.test_time = submission_on_cv_fold.test_time
-        self.trained_submission = None
-        self.workflow = \
-            submission_on_cv_fold.submission.event.problem.workflow_object
-
-    def __repr__(self):
-        return ('Submission({}) on fold {}'
-                .format(self.name, str(self.train_is)[:10]))
-
 
 submission_similarity_type = Enum(
-    'target_credit',  # credit given by one of the authors of target
-    'source_credit',  # credit given by one of the authors of source
-    'thirdparty_credit',  # credit given by an independent user
-    name='submission_similarity_type'
+    "target_credit",  # credit given by one of the authors of target
+    "source_credit",  # credit given by one of the authors of source
+    "thirdparty_credit",  # credit given by an independent user
+    name="submission_similarity_type",
 )
 
 
@@ -1190,7 +1144,8 @@ class SubmissionSimilarity(Model):
     target_submission : :class:`ramp_database.model.Submission`
         The target submission instance.
     """
-    __tablename__ = 'submission_similaritys'
+
+    __tablename__ = "submission_similaritys"
 
     id = Column(Integer, primary_key=True)
     type = Column(submission_similarity_type, nullable=False)
@@ -1198,28 +1153,32 @@ class SubmissionSimilarity(Model):
     timestamp = Column(DateTime, default=datetime.datetime.utcnow())
     similarity = Column(Float, default=0.0)
 
-    user_id = Column(Integer, ForeignKey('users.id'))
-    user = relationship('User',
-                        backref=backref('submission_similaritys',
-                                        cascade='all, delete-orphan'))
-
-    source_submission_id = Column(Integer, ForeignKey('submissions.id'))
-    source_submission = relationship(
-        'Submission', primaryjoin=(
-            'SubmissionSimilarity.source_submission_id == Submission.id'),
-        backref=backref('sources', cascade='all, delete-orphan')
+    user_id = Column(Integer, ForeignKey("users.id"))
+    user = relationship(
+        "User",
+        backref=backref("submission_similaritys", cascade="all, delete-orphan"),
     )
 
-    target_submission_id = Column(Integer, ForeignKey('submissions.id'))
+    source_submission_id = Column(Integer, ForeignKey("submissions.id"))
+    source_submission = relationship(
+        "Submission",
+        primaryjoin=("SubmissionSimilarity.source_submission_id == Submission.id"),
+        backref=backref("sources", cascade="all, delete-orphan"),
+    )
+
+    target_submission_id = Column(Integer, ForeignKey("submissions.id"))
     target_submission = relationship(
-        'Submission', primaryjoin=(
-            'SubmissionSimilarity.target_submission_id == Submission.id'),
-        backref=backref('targets', cascade='all, delete-orphan'))
+        "Submission",
+        primaryjoin=("SubmissionSimilarity.target_submission_id == Submission.id"),
+        backref=backref("targets", cascade="all, delete-orphan"),
+    )
 
     def __repr__(self):
-        text = ('type={}, user={}, source={}, target={} '
-                .format(self.type, self.user, self.source_submission,
-                        self.target_submission))
-        text += 'similarity={}, timestamp={}'.format(self.similarity,
-                                                     self.timestamp)
+        text = "type={}, user={}, source={}, target={} ".format(
+            self.type,
+            self.user,
+            self.source_submission,
+            self.target_submission,
+        )
+        text += "similarity={}, timestamp={}".format(self.similarity, self.timestamp)
         return text

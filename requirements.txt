@@ -3,6 +3,7 @@ bokeh
 boto3
 click
 codecov
+email_validator
 flake8
 Flask
 Flask-Login
@@ -14,10 +15,10 @@ ipykernel
 jupyter
 numpy
 pandas
+ramp-workflow
 scikit-image
 pytest
 pytest-cov
 pyyaml
-psycopg2
+psycopg2-binary
 sqlalchemy
-git+https://github.com/paris-saclay-cds/ramp-workflow

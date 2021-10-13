@@ -1,10 +1,10 @@
 #!/bin/bash
-set -e
+set -ex
 cd $HOME
 mkdir ramp_deployment
 cd ramp_deployment
-psql -U postgres -c "CREATE USER mrramp WITH PASSWORD 'mrramp';ALTER USER mrramp WITH SUPERUSER;"
-createdb --owner=mrramp databoard_test
+psql -U postgres -h 127.0.0.1 -c "CREATE USER mrramp WITH PASSWORD 'mrramp';ALTER USER mrramp WITH SUPERUSER;"
+createdb -U postgres -h 127.0.0.1 --owner=mrramp databoard_test
 ramp setup init
 
 echo "flask:
@@ -34,7 +34,9 @@ echo "ramp:
     event_is_public: true
 worker:
     worker_type: conda
-    conda_env: ramp-iris" > events/iris_test/config.yml
+    conda_env: ramp-iris
+dispatcher:
+    hunger_policy: exit" > events/iris_test/config.yml
 ramp setup deploy-event --event-config events/iris_test/config.yml
 ramp-database approve-user --login admin_user
 ramp-database sign-up-team --event iris_test --team admin_user

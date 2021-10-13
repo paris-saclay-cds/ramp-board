@@ -30,7 +30,7 @@ from ..model import Workflow
 from ..model import WorkflowElement
 from ..model import WorkflowElementType
 
-logger = logging.getLogger('RAMP-DATABASE')
+logger = logging.getLogger("RAMP-DATABASE")
 
 
 # Delete functions: remove from the database some information
@@ -46,8 +46,9 @@ def delete_problem(session, problem_name):
     """
     problem = select_problem_by_name(session, problem_name)
     if problem is None:
-        raise NoResultFound('No result found for "{}" in Problem table'
-                            .format(problem_name))
+        raise NoResultFound(
+            'No result found for "{}" in Problem table'.format(problem_name)
+        )
     for event in problem.events:
         delete_event(session, event.name)
     session.delete(problem)
@@ -118,22 +119,22 @@ def add_workflow(session, workflow_object):
         session.add(Workflow(name=workflow_name))
         workflow = select_workflow_by_name(session, workflow_name)
     for element_name in workflow_object.element_names:
-        tokens = element_name.split('.')
+        tokens = element_name.split(".")
         element_filename = tokens[0]
         # inferring that file is code if there is no extension
-        element_file_extension_name = ('.'.join(tokens[1:])
-                                       if len(tokens) > 1 else 'py')
-        extension = select_extension_by_name(session,
-                                             element_file_extension_name)
+        element_file_extension_name = ".".join(tokens[1:]) if len(tokens) > 1 else "py"
+        extension = select_extension_by_name(session, element_file_extension_name)
         if extension is None:
-            raise ValueError('Unknown extension {}.'
-                             .format(element_file_extension_name))
+            raise ValueError(
+                "Unknown extension {}.".format(element_file_extension_name)
+            )
         type_extension = select_submission_type_extension_by_extension(
             session, extension
         )
         if type_extension is None:
-            raise ValueError('Unknown file type {}.'
-                             .format(element_file_extension_name))
+            raise ValueError(
+                "Unknown file type {}.".format(element_file_extension_name)
+            )
 
         workflow_element_type = select_workflow_element_type_by_name(
             session, element_filename
@@ -142,18 +143,18 @@ def add_workflow(session, workflow_object):
             workflow_element_type = WorkflowElementType(
                 name=element_filename, type=type_extension.type
             )
-            logger.info('Adding {}'.format(workflow_element_type))
+            logger.info("Adding {}".format(workflow_element_type))
             session.add(workflow_element_type)
         workflow_element = select_workflow_element_by_workflow_and_type(
-            session, workflow=workflow,
-            workflow_element_type=workflow_element_type
+            session,
+            workflow=workflow,
+            workflow_element_type=workflow_element_type,
         )
         if workflow_element is None:
             workflow_element = WorkflowElement(
-                workflow=workflow,
-                workflow_element_type=workflow_element_type
+                workflow=workflow, workflow_element_type=workflow_element_type
             )
-            logger.info('Adding {}'.format(workflow_element))
+            logger.info("Adding {}".format(workflow_element))
             session.add(workflow_element)
     session.commit()
 
@@ -183,26 +184,40 @@ def add_problem(session, problem_name, kit_dir, data_dir, force=False):
     problem_kit_path = kit_dir
     if problem is not None:
         if not force:
-            raise ValueError('Attempting to overwrite a problem and '
-                             'delete all linked events. Use"force=True" '
-                             'if you want to overwrite the problem and '
-                             'delete the events.')
+            raise ValueError(
+                "Attempting to overwrite a problem and "
+                'delete all linked events. Use"force=True" '
+                "if you want to overwrite the problem and "
+                "delete the events."
+            )
         delete_problem(session, problem_name)
 
     # load the module to get the type of workflow used for the problem
     problem_module = import_module_from_source(
-        os.path.join(problem_kit_path, 'problem.py'), 'problem')
+        os.path.join(problem_kit_path, "problem.py"), "problem"
+    )
     add_workflow(session, problem_module.workflow)
-    problem = Problem(name=problem_name, path_ramp_kit=kit_dir,
-                      path_ramp_data=data_dir, session=session)
-    logger.info('Adding {}'.format(problem))
+    problem = Problem(
+        name=problem_name,
+        path_ramp_kit=kit_dir,
+        path_ramp_data=data_dir,
+        session=session,
+    )
+    logger.info("Adding {}".format(problem))
     session.add(problem)
     session.commit()
 
 
-def add_event(session, problem_name, event_name, event_title,
-              ramp_sandbox_name, ramp_submissions_path, is_public=False,
-              force=False):
+def add_event(
+    session,
+    problem_name,
+    event_name,
+    event_title,
+    ramp_sandbox_name,
+    ramp_submissions_path,
+    is_public=False,
+    force=False,
+):
     """Add a RAMP event in the database.
 
     Event file should be set up in ``databoard/specific/events/<event_name>``.
@@ -242,41 +257,44 @@ def add_event(session, problem_name, event_name, event_title,
     event = select_event_by_name(session, event_name)
     if event is not None:
         if not force:
-            raise ValueError("Attempting to overwrite existing event. "
-                             "Use force=True to overwrite.")
+            raise ValueError(
+                "Attempting to overwrite existing event. "
+                "Use force=True to overwrite."
+            )
         delete_event(session, event_name)
 
-    if event_name[:len(problem_name)+1] != (problem_name + '_'):
+    if event_name[: len(problem_name) + 1] != (problem_name + "_"):
         raise ValueError(
             "The event name should start with the problem name: '{}_'. Please "
-            "edit the entry <event_name> of the event configuration file "
-            .format(problem_name)
+            "edit the entry <event_name> of the event configuration file ".format(
+                problem_name
+            )
         )
 
-    event = Event(name=event_name, problem_name=problem_name,
-                  event_title=event_title,
-                  ramp_sandbox_name=ramp_sandbox_name,
-                  path_ramp_submissions=ramp_submissions_path,
-                  session=session)
+    event = Event(
+        name=event_name,
+        problem_name=problem_name,
+        event_title=event_title,
+        ramp_sandbox_name=ramp_sandbox_name,
+        path_ramp_submissions=ramp_submissions_path,
+        session=session,
+    )
     event.is_public = is_public
     event.is_send_submitted_mails = False
     event.is_send_trained_mails = False
-    logger.info('Adding {}'.format(event))
+    logger.info("Adding {}".format(event))
     session.add(event)
     session.commit()
 
     X_train, y_train = event.problem.get_train_data()
     cv = event.problem.module.get_cv(X_train, y_train)
     for train_indices, test_indices in cv:
-        cv_fold = CVFold(event=event,
-                         train_is=train_indices,
-                         test_is=test_indices)
+        cv_fold = CVFold(event=event, train_is=train_indices, test_is=test_indices)
         session.add(cv_fold)
 
     score_types = event.problem.module.score_types
     for score_type in score_types:
-        event_score_type = EventScoreType(event=event,
-                                          score_type_object=score_type)
+        event_score_type = EventScoreType(event=event, score_type_object=score_type)
         session.add(event_score_type)
     event.official_score_name = score_types[0].name
     session.commit()
@@ -303,8 +321,9 @@ def add_event_admin(session, event_name, user_name):
         session.commit()
 
 
-def add_keyword(session, name, keyword_type, category=None, description=None,
-                force=False):
+def add_keyword(
+    session, name, keyword_type, category=None, description=None, force=False
+):
     """Add a keyword to the database.
 
     Parameters
@@ -327,20 +346,25 @@ def add_keyword(session, name, keyword_type, category=None, description=None,
         if not force:
             raise ValueError(
                 'Attempting to update an existing keyword. Use "force=True"'
-                'to overwrite the keyword.'
+                "to overwrite the keyword."
             )
         keyword.type = keyword_type
         keyword.category = category
         keyword.description = description
     else:
-        keyword = Keyword(name=name, type=keyword_type, category=category,
-                          description=description)
+        keyword = Keyword(
+            name=name,
+            type=keyword_type,
+            category=category,
+            description=description,
+        )
         session.add(keyword)
     session.commit()
 
 
-def add_problem_keyword(session, problem_name, keyword_name, description=None,
-                        force=False):
+def add_problem_keyword(
+    session, problem_name, keyword_name, description=None, force=False
+):
     """Add relationship between a keyword and a problem.
 
     Parameters
@@ -358,15 +382,17 @@ def add_problem_keyword(session, problem_name, keyword_name, description=None,
     """
     problem = select_problem_by_name(session, problem_name)
     keyword = get_keyword_by_name(session, keyword_name)
-    problem_keyword = (session.query(ProblemKeyword)
-                              .filter_by(problem=problem, keyword=keyword)
-                              .one_or_none())
+    problem_keyword = (
+        session.query(ProblemKeyword)
+        .filter_by(problem=problem, keyword=keyword)
+        .one_or_none()
+    )
     if problem_keyword is not None:
         if not force:
             raise ValueError(
-                'Attempting to update an existing problem-keyword '
+                "Attempting to update an existing problem-keyword "
                 'relationship. Use "force=True" if you want to overwrite the '
-                'relationship.'
+                "relationship."
             )
         problem_keyword.description = description
     else:
@@ -438,6 +464,44 @@ list of :class:`ramp_database.model.Event`
     return select_event_by_name(session, event_name)
 
 
+def get_cv_fold_by_event(session, event):
+    """Get ScoreType from the database
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str or None
+        The event class to query.
+
+    Returns
+    -------
+    cv fold : : list of all cv folds of this event
+    """
+    return session.query(CVFold).filter(EventScoreType.event_id == event.id).all()
+
+
+def get_score_type_by_event(session, event):
+    """Get ScoreType from the database
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to directly perform the operation on the database.
+    event_name : str or None
+        The event class to query
+
+    Returns
+    -------
+    score type : :class:`ramp_database.model.ScoreType` or \
+    list of list of :class:`ramp_database.model.ScoreType`
+        The queried problem.
+    """
+    return (
+        session.query(EventScoreType).filter(EventScoreType.event_id == event.id).all()
+    )
+
+
 def get_event_admin(session, event_name, user_name):
     """Get an administrator event.
 
@@ -501,6 +565,8 @@ def get_problem_keyword_by_name(session, problem_name, keyword_name):
     """
     problem = select_problem_by_name(session, problem_name)
     keyword = session.query(Keyword).filter_by(name=keyword_name).one_or_none()
-    return (session.query(ProblemKeyword)
-                   .filter_by(problem=problem, keyword=keyword)
-                   .one_or_none())
+    return (
+        session.query(ProblemKeyword)
+        .filter_by(problem=problem, keyword=keyword)
+        .one_or_none()
+    )

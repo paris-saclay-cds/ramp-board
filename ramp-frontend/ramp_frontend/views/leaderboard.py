@@ -23,8 +23,10 @@ from ramp_frontend import db
 
 from .redirect import redirect_to_user
 
-mod = Blueprint('leaderboard', __name__)
-logger = logging.getLogger('RAMP-FRONTEND')
+mod = Blueprint("leaderboard", __name__)
+logger = logging.getLogger("RAMP-FRONTEND")
+
+SORTING_COLUMN_INDEX = 2
 
 
 @mod.route("/events/<event_name>/my_submissions")
@@ -38,44 +40,50 @@ def my_submissions(event_name):
         The name of the event.
     """
     event = get_event(db.session, event_name)
-    if not is_accessible_event(db.session, event_name,
-                               flask_login.current_user.name):
+    if not is_accessible_event(db.session, event_name, flask_login.current_user.name):
         return redirect_to_user(
-            '{}: no event named "{}"'
-            .format(flask_login.current_user.firstname, event_name)
+            '{}: no event named "{}"'.format(
+                flask_login.current_user.firstname, event_name
+            )
         )
-    if app.config['TRACK_USER_INTERACTION']:
+    if app.config["TRACK_USER_INTERACTION"]:
         add_user_interaction(
-            db.session, interaction='looking at my_submissions',
-            user=flask_login.current_user, event=event
+            db.session,
+            interaction="looking at my_submissions",
+            user=flask_login.current_user,
+            event=event,
         )
-    if not is_accessible_code(db.session, event_name,
-                              flask_login.current_user.name):
-        error_str = ('No access to my submissions for event {}. If you have '
-                     'already signed up, please wait for approval.'
-                     .format(event.name))
+    if not is_accessible_code(db.session, event_name, flask_login.current_user.name):
+        error_str = (
+            "No access to my submissions for event {}. If you have "
+            "already signed up, please wait for approval.".format(event.name)
+        )
         return redirect_to_user(error_str)
 
     # Doesn't work if team mergers are allowed
-    event_team = get_event_team_by_name(db.session, event_name,
-                                        flask_login.current_user.name)
+    event_team = get_event_team_by_name(
+        db.session, event_name, flask_login.current_user.name
+    )
     leaderboard_html = event_team.leaderboard_html
     failed_leaderboard_html = event_team.failed_leaderboard_html
     new_leaderboard_html = event_team.new_leaderboard_html
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     if event.official_score_type.is_lower_the_better:
-        sorting_direction = 'asc'
+        sorting_direction = "asc"
     else:
-        sorting_direction = 'desc'
-    return render_template('leaderboard.html',
-                           leaderboard_title='Trained submissions',
-                           leaderboard=leaderboard_html,
-                           failed_leaderboard=failed_leaderboard_html,
-                           new_leaderboard=new_leaderboard_html,
-                           sorting_column_index=4,
-                           sorting_direction=sorting_direction,
-                           event=event,
-                           admin=admin)
+        sorting_direction = "desc"
+
+    return render_template(
+        "leaderboard.html",
+        leaderboard_title="Trained submissions",
+        leaderboard=leaderboard_html,
+        failed_leaderboard=failed_leaderboard_html,
+        new_leaderboard=new_leaderboard_html,
+        sorting_column_index=SORTING_COLUMN_INDEX,
+        sorting_direction=sorting_direction,
+        event=event,
+        admin=admin,
+    )
 
 
 @mod.route("/events/<event_name>/leaderboard")
@@ -89,51 +97,49 @@ def leaderboard(event_name):
         The name of the event.
     """
     event = get_event(db.session, event_name)
-    if not is_accessible_event(db.session, event_name,
-                               flask_login.current_user.name):
+    if not is_accessible_event(db.session, event_name, flask_login.current_user.name):
         return redirect_to_user(
-            '{}: no event named "{}"'
-            .format(flask_login.current_user.firstname, event_name))
-    if app.config['TRACK_USER_INTERACTION']:
+            '{}: no event named "{}"'.format(
+                flask_login.current_user.firstname, event_name
+            )
+        )
+    if app.config["TRACK_USER_INTERACTION"]:
         add_user_interaction(
             db.session,
-            interaction='looking at leaderboard',
+            interaction="looking at leaderboard",
             user=flask_login.current_user,
-            event=event
+            event=event,
         )
 
-    if is_accessible_leaderboard(db.session, event_name,
-                                 flask_login.current_user.name):
+    if is_accessible_leaderboard(db.session, event_name, flask_login.current_user.name):
         leaderboard_html = event.public_leaderboard_html_with_links
     else:
         leaderboard_html = event.public_leaderboard_html_no_links
     if event.official_score_type.is_lower_the_better:
-        sorting_direction = 'asc'
+        sorting_direction = "asc"
     else:
-        sorting_direction = 'desc'
+        sorting_direction = "desc"
 
     leaderboard_kwargs = dict(
         leaderboard=leaderboard_html,
-        leaderboard_title='Leaderboard',
-        sorting_column_index=4,
+        leaderboard_title="Leaderboard",
+        sorting_column_index=SORTING_COLUMN_INDEX,
         sorting_direction=sorting_direction,
-        event=event
+        event=event,
     )
 
     if is_admin(db.session, event_name, flask_login.current_user.name):
         failed_leaderboard_html = event.failed_leaderboard_html
         new_leaderboard_html = event.new_leaderboard_html
         template = render_template(
-            'leaderboard.html',
+            "leaderboard.html",
             failed_leaderboard=failed_leaderboard_html,
             new_leaderboard=new_leaderboard_html,
             admin=True,
-            **leaderboard_kwargs
+            **leaderboard_kwargs,
         )
     else:
-        template = render_template(
-            'leaderboard.html', **leaderboard_kwargs
-        )
+        template = render_template("leaderboard.html", **leaderboard_kwargs)
 
     return template
 
@@ -149,37 +155,35 @@ def competition_leaderboard(event_name):
         The event name.
     """
     event = get_event(db.session, event_name)
-    if not is_accessible_event(db.session, event_name,
-                               flask_login.current_user.name):
+    if not is_accessible_event(db.session, event_name, flask_login.current_user.name):
         return redirect_to_user(
-            '{}: no event named "{}"'
-            .format(flask_login.current_user.firstname, event_name)
+            '{}: no event named "{}"'.format(
+                flask_login.current_user.firstname, event_name
+            )
         )
-    if app.config['TRACK_USER_INTERACTION']:
+    if app.config["TRACK_USER_INTERACTION"]:
         add_user_interaction(
             db.session,
-            interaction='looking at leaderboard',
+            interaction="looking at leaderboard",
             user=flask_login.current_user,
-            event=event
+            event=event,
         )
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
-    approved = is_user_signed_up(
-        db.session, event_name, flask_login.current_user.name
-    )
+    approved = is_user_signed_up(db.session, event_name, flask_login.current_user.name)
     asked = approved
     leaderboard_html = event.public_competition_leaderboard_html
     leaderboard_kwargs = dict(
         leaderboard=leaderboard_html,
-        leaderboard_title='Leaderboard',
+        leaderboard_title="Leaderboard",
         sorting_column_index=0,
-        sorting_direction='asc',
+        sorting_direction="asc",
         event=event,
         admin=admin,
         asked=asked,
-        approved=approved
+        approved=approved,
     )
 
-    return render_template('leaderboard.html', **leaderboard_kwargs)
+    return render_template("leaderboard.html", **leaderboard_kwargs)
 
 
 @mod.route("/events/<event_name>/private_leaderboard")
@@ -193,48 +197,47 @@ def private_leaderboard(event_name):
         The event name.
     """
     if not flask_login.current_user.is_authenticated:
-        return redirect(url_for('auth.login'))
+        return redirect(url_for("auth.login"))
     event = get_event(db.session, event_name)
-    if not is_accessible_event(db.session, event_name,
-                               flask_login.current_user.name):
+    if not is_accessible_event(db.session, event_name, flask_login.current_user.name):
         return redirect_to_user(
-            '{}: no event named "{}"'
-            .format(flask_login.current_user.firstname, event_name)
+            '{}: no event named "{}"'.format(
+                flask_login.current_user.firstname, event_name
+            )
         )
-    if (not is_admin(db.session, event_name, flask_login.current_user.name) and
-            (event.closing_timestamp is None or
-             event.closing_timestamp > datetime.datetime.utcnow())):
-        return redirect(url_for('ramp.problems'))
+    if not is_admin(db.session, event_name, flask_login.current_user.name) and (
+        event.closing_timestamp is None
+        or event.closing_timestamp > datetime.datetime.utcnow()
+    ):
+        return redirect(url_for("ramp.problems"))
 
-    if app.config['TRACK_USER_INTERACTION']:
+    if app.config["TRACK_USER_INTERACTION"]:
         add_user_interaction(
             db.session,
-            interaction='looking at private leaderboard',
+            interaction="looking at private leaderboard",
             user=flask_login.current_user,
-            event=event
+            event=event,
         )
     leaderboard_html = event.private_leaderboard_html
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
     if event.official_score_type.is_lower_the_better:
-        sorting_direction = 'asc'
+        sorting_direction = "asc"
     else:
-        sorting_direction = 'desc'
+        sorting_direction = "desc"
 
-    approved = is_user_signed_up(
-        db.session, event_name, flask_login.current_user.name
-    )
+    approved = is_user_signed_up(db.session, event_name, flask_login.current_user.name)
     asked = approved
     template = render_template(
-        'leaderboard.html',
-        leaderboard_title='Leaderboard',
+        "leaderboard.html",
+        leaderboard_title="Leaderboard",
         leaderboard=leaderboard_html,
-        sorting_column_index=5,
+        sorting_column_index=SORTING_COLUMN_INDEX + 1,
         sorting_direction=sorting_direction,
         event=event,
         private=True,
         admin=admin,
         asked=asked,
-        approved=approved
+        approved=approved,
     )
 
     return template
@@ -251,43 +254,42 @@ def private_competition_leaderboard(event_name):
         The event name.
     """
     if not flask_login.current_user.is_authenticated:
-        return redirect(url_for('auth.login'))
+        return redirect(url_for("auth.login"))
     event = get_event(db.session, event_name)
-    if not is_accessible_event(db.session, event_name,
-                               flask_login.current_user.name):
+    if not is_accessible_event(db.session, event_name, flask_login.current_user.name):
         return redirect_to_user(
-            '{}: no event named "{}"'
-            .format(flask_login.current_user.firstname, event_name)
+            '{}: no event named "{}"'.format(
+                flask_login.current_user.firstname, event_name
+            )
         )
-    if (not is_admin(db.session, event_name, flask_login.current_user.name) and
-            (event.closing_timestamp is None or
-             event.closing_timestamp > datetime.datetime.utcnow())):
-        return redirect(url_for('ramp.problems'))
+    if not is_admin(db.session, event_name, flask_login.current_user.name) and (
+        event.closing_timestamp is None
+        or event.closing_timestamp > datetime.datetime.utcnow()
+    ):
+        return redirect(url_for("ramp.problems"))
 
-    if app.config['TRACK_USER_INTERACTION']:
+    if app.config["TRACK_USER_INTERACTION"]:
         add_user_interaction(
             db.session,
-            interaction='looking at private leaderboard',
+            interaction="looking at private leaderboard",
             user=flask_login.current_user,
-            event=event
+            event=event,
         )
 
     admin = is_admin(db.session, event_name, flask_login.current_user.name)
-    approved = is_user_signed_up(
-        db.session, event_name, flask_login.current_user.name
-    )
+    approved = is_user_signed_up(db.session, event_name, flask_login.current_user.name)
     asked = approved
     leaderboard_html = event.private_competition_leaderboard_html
 
     leaderboard_kwargs = dict(
         leaderboard=leaderboard_html,
-        leaderboard_title='Leaderboard',
+        leaderboard_title="Leaderboard",
         sorting_column_index=0,
-        sorting_direction='asc',
+        sorting_direction="asc",
         event=event,
         admin=admin,
         asked=asked,
-        approved=approved
+        approved=approved,
     )
 
-    return render_template('leaderboard.html', **leaderboard_kwargs)
+    return render_template("leaderboard.html", **leaderboard_kwargs)

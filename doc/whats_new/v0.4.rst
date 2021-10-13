@@ -1,0 +1,35 @@
+.. _changes_0_4:
+
+Version 0.4
+===========
+
+Changelog
+---------
+
+`ramp-database`
+...............
+
+- Bug: fix a bug which was always doing a symlink of the external data.
+Instead, we now always copy the file.
+:pr:`413` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+`ramp-engine`
+.............
+
+`ramp-frontend`
+...............
+
+- Bug: fix a bug for which it was impossible to download a submission
+  via the frontend.
+  :pr:`397` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- Bug: fix a bug for which a user could not check their own code in
+  "My submission" menu.
+  :pr:`408` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- Bug: fix a bug which was not showing modal box during sign-in due to lack
+  of redirection.
+  :pr:`412` by :user:`Maria Telenczuk <maikia>`.
+
+`ramp-utils`
+............

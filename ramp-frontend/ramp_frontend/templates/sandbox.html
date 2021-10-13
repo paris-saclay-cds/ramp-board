@@ -1,46 +1,142 @@
 {% extends "base.html" %}
 {% block head %}
-    {{ super() }}
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/codemirror.min.css" type="text/css" rel="stylesheet" />
-    <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/theme/railscasts.min.css" type="text/css" rel="stylesheet" /> -->
-    <style type="text/css">
-    /*XXX : hack to match pretty much the colors from prettify.js */
-    .cm-s-railscasts.CodeMirror {background: rgba(0,0,0,.8); color: #f4f1ed;}
-        .cm-s-railscasts div.CodeMirror-selected {background: #D86B3F !important;}
-        .cm-s-railscasts .CodeMirror-gutters {background: #2b2b2b; border-right: 0px;}
-        .cm-s-railscasts .CodeMirror-linenumber {color: #AEAEAE;}
-        .cm-s-railscasts .CodeMirror-cursor {border-left: 1px solid #d4cfc9 !important;}
+{{ super() }}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/codemirror.min.css" type="text/css"
+  rel="stylesheet" />
+<!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/theme/railscasts.min.css" type="text/css" rel="stylesheet" /> -->
+<style type="text/css">
+  /*XXX : hack to match pretty much the colors from prettify.js */
+  .cm-s-railscasts.CodeMirror {
+    background: rgba(0, 0, 0, .8);
+    color: #f4f1ed;
+  }
 
-        .cm-s-railscasts span.cm-comment {color: #bc9458;}
-        .cm-s-railscasts span.cm-atom {color: #b6b3eb;}
-        .cm-s-railscasts span.cm-number {color: #3387CC;}
+  .cm-s-railscasts div.CodeMirror-selected {
+    background: #D86B3F !important;
+  }
 
-        .cm-s-railscasts span.cm-property, .cm-s-railscasts span.cm-attribute {color: #fff;}
-        .cm-s-railscasts span.cm-keyword {color: #E28964;}
-        .cm-s-railscasts span.cm-string {color: #ffc66d;}
+  .cm-s-railscasts .CodeMirror-gutters {
+    background: #2b2b2b;
+    border-right: 0px;
+  }
 
-        .cm-s-railscasts span.cm-variable {color: #89bdff;}
-        .cm-s-railscasts span.cm-variable-2 {color: #E28964;}
-        .cm-s-railscasts span.cm-def {color: #89bdff;}
-        .cm-s-railscasts span.cm-error {background: #da4939; color: #d4cfc9;}
-        .cm-s-railscasts span.cm-bracket {color: #f4f1ed;}
-        .cm-s-railscasts span.cm-tag {color: #da4939;}
-        .cm-s-railscasts span.cm-link {color: #b6b3eb;}
+  .cm-s-railscasts .CodeMirror-linenumber {
+    color: #AEAEAE;
+  }
 
-        .cm-s-railscasts .CodeMirror-matchingbracket { text-decoration: underline; color: white !important;}
-        .cm-s-railscasts .CodeMirror-activeline-background { background: #303040; }
+  .cm-s-railscasts .CodeMirror-cursor {
+    border-left: 1px solid #d4cfc9 !important;
+  }
 
-        .CodeMirror {
-          height: 30em;
-        }
+  .cm-s-railscasts span.cm-comment {
+    color: #bc9458;
+  }
 
-    </style>
-    <script type="text/javascript"
-    src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/codemirror.min.js"></script>
-    <script type="text/javascript"
-    src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/mode/python/python.min.js"></script>
-    <script type="text/javascript"
-    src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/addon/selection/active-line.min.js"></script>
+  .cm-s-railscasts span.cm-atom {
+    color: #b6b3eb;
+  }
+
+  .cm-s-railscasts span.cm-number {
+    color: #3387CC;
+  }
+
+  .cm-s-railscasts span.cm-property,
+  .cm-s-railscasts span.cm-attribute {
+    color: #fff;
+  }
+
+  .cm-s-railscasts span.cm-keyword {
+    color: #E28964;
+  }
+
+  .cm-s-railscasts span.cm-string {
+    color: #ffc66d;
+  }
+
+  .cm-s-railscasts span.cm-variable {
+    color: #89bdff;
+  }
+
+  .cm-s-railscasts span.cm-variable-2 {
+    color: #E28964;
+  }
+
+  .cm-s-railscasts span.cm-def {
+    color: #89bdff;
+  }
+
+  .cm-s-railscasts span.cm-error {
+    background: #da4939;
+    color: #d4cfc9;
+  }
+
+  .cm-s-railscasts span.cm-bracket {
+    color: #f4f1ed;
+  }
+
+  .cm-s-railscasts span.cm-tag {
+    color: #da4939;
+  }
+
+  .cm-s-railscasts span.cm-link {
+    color: #b6b3eb;
+  }
+
+  .cm-s-railscasts .CodeMirror-matchingbracket {
+    text-decoration: underline;
+    color: white !important;
+  }
+
+  .cm-s-railscasts .CodeMirror-activeline-background {
+    background: #303040;
+  }
+
+  .CodeMirror-sizer {
+    width: 100%;
+  }
+
+  .CodeMirror {
+    height: 30em;
+  }
+
+  .CodeMirror pre {
+    font-size: 16px;
+  }
+
+  @media (max-width: 768px) {
+    .CodeMirror {
+      height: 20em;
+    }
+
+    .CodeMirror pre {
+      font-size: 10px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .CodeMirror pre {
+      font-size: 10px;
+    }
+  }
+
+  @media (min-width: 992px) {
+    .CodeMirror pre {
+      font-size: 12px;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    .CodeMirror pre {
+      font-size: 16px;
+    }
+  }
+</style>
+<script type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/codemirror.min.js"></script>
+<script type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/mode/python/python.min.js"></script>
+<script type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.10.0/addon/selection/active-line.min.js"></script>
 {% endblock %}
 {% block title %}Sandbox{% endblock %}
 {% block content %}
@@ -48,116 +144,128 @@
 {% with messages = get_flashed_messages(with_categories=true) %}
 
 {% if messages %}
-    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    {% for category, message in messages %}
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
-                </div>
-                <div class="modal-body">
-                	{{ message }}
-				</div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                </div>
-            </div>
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  {% for category, message in messages %}
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message">
+          {{ message }}
         </div>
-	{% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+      </div>
     </div>
+  </div>
+  {% endfor %}
+</div>
 {% endif %}
 {% endwith %}
 
-<div class="page-title">
-    <span class="title">Sandbox</span>
-    <div class="description">You can either edit and save the code in the left column or upload the files in the right column. You can also import code from other submissions when the <a href="/events/{{ event.name }}/leaderboard">leaderboard</a> links are open.</div>
-</div>
-
-<div class="col-xs-8">
+<div class="row>">
   <div class="card">
     <div class="card-header">
       <div class="card-title">
-          <div class="title">
-              Edit your submission
-          </div>
+        <div class="title">Sandbox</div>
       </div>
-    </div>
-    <div class="card-body">
-      <form class="ui form" method="post" action="" name="save" id="save">
-            {{ code_form.hidden_tag() }}
-            <div>
-                {% for name_code in code_form.names_codes %}
-                    <div class="sub-title">{{ name_code[0] }}</div>
-                    <div>
-                    <textarea cols="80" id="{{ name_code[0] }}" name="{{ name_code[0] }}">{{ name_code[1] }}</textarea>
-                    </div>
-                {% endfor %}
-				&nbsp; <br>
-                <center><p><strong>Save your submission for later</strong></p></center>
-                <center><input type="submit" value="Save" class="ui submit button"></center>
-            </div>
-      </form>
     </div>
   </div>
 </div>
-<div class="col-xs-4">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">
-          <div class="title">
-              Upload your files!
-          </div>
-      </div>
-    </div>
-	<div class="card-body">
-      <div class="sub-title"> File list</div>
-          {% for f in submission_names %}
-            <div class="panel fresh-color panel-info">
-              <div class="panel-heading">
-                <i class="fa fa-file"></i> {{ f }}
-              </div>
-            </div>
-          {% endfor %}
-      <div class="sub-title"> Upload file</div>
-        <div class="text-indent">
-          <form class="ui form" action="" method="post" enctype="multipart/form-data">
-              {{ upload_form.hidden_tag() }}
-              <input type="file" name="file" class="ui submit button">
-              <input type="submit" value="Upload" class="ui upload button">
-          </form>
-        </div>
-    </div>
-  </div>
-</div>
-
-<div class="row">
-  <div class="col-xs-12">
+<div class="row>">
+  <div class="col-sm-8">
     <div class="card">
       <div class="card-header">
         <div class="card-title">
-            <div class="title">
-                {{ event_status["msg"] | safe}}
-                
-                <!-- Submit your code! -->
-            </div>
+          <div class="subtitle">Edit your submission</div>
         </div>
       </div>
-	  <div class="card-body">
-        <form class="ui form" method="post" action="" name="submit" id="formSubmit">
-        {{ submit_form.hidden_tag() }}
-    	<center>
-            <div class="required field">
-                <label>Submission name (between 4 and 20 characters)</label>
-                {{ submit_form.submission_name }}
+      <div class="card-body">
+        <form class="ui form" method="post" , name="submit" , id="formSubmit">
+          {{ code_form.hidden_tag() }}
+          {{ submit_form.hidden_tag() }}
+          <div>{% for name_code in code_form.names_codes %}
+            <div class="sub-title">{{ name_code[0] }}</div>
+            <div>
+              <textarea cols="80" id="{{ name_code[0] }}" name="{{ name_code[0] }}">{{ name_code[1] }}</textarea>
             </div>
-            {% if event_status["state"] == 'close' %}
-                <input button type="button" value="Submit" class="btn btn-secondary disabled" >
-            {% else %}
-                <input type="submit" value="Submit" class="ui submit button" id="checksave">
-            {% endif %}
-    	</center>
+            {% endfor %}
+          </div>
+          <br />
+          <div class="sandbox">
+            <div class="title">
+              {{ event_status["msg"] | safe}}
+            </div>
+          </div>
+          <br />
+          <div class="row">
+            <div class="col-sm-6 text-center">
+              <input type="submit" value="Save for later" class="ui submit button btn btn-default" , name="saving">
+            </div>
+            <div class="col-sm-6 text-center">
+              {% if event_status["state"] == 'close' %}
+              <input button type="button" value="Submit now" class="btn btn-secondary disabled">
+              {% else %}
+              <button type="button" class="ui submit button btn btn-default" data-toggle="modal"
+                data-target="#submit_Modal">Submit now</button>
+              <!-- Modal -->
+              <div class="modal fade" id="submit_Modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h3 class="modal-title submission-title" id="exampleModalLabel"></i>Submit code</h3>
+                    </div>
+                    <div class="required field">
+                      <label>Submission name (between 4 and 20 characters)</label><br />
+                      {{ submit_form.submission_name }}
+                    </div>
+                    <div class="modal-footer">
+                      <button type="submit" class="btn btn-primary" data-dismiss="modal" id="entered">Cancel</button>
+                      <input type="submit" value="Submit now" class="ui submit button btn btn-default"
+                        name="submission">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-4">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="subtitle">Upload your files!</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="sub-title"> File list</div>
+        {% for f in submission_names %}
+        <div class="panel fresh-color panel-info">
+          <div class="panel-heading">
+            <i class="fa fa-file"></i> {{ f }}
+          </div>
+        </div>
+        {% endfor %}
+        <div class="sub-title"> Upload file</div>
+        <div class="text-indent">
+          <form class="ui form" action="" method="post" enctype="multipart/form-data">
+            {{ upload_form.hidden_tag() }}
+            <input type="file" name="file" class="ui submit button">
+            <input type="submit" value="Upload" class="ui upload button btn btn-default">
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -166,34 +274,19 @@
 {% endblock %}
 {% block scripts %}
 {% for name_code in code_form.names_codes %}
-  <script>
-    var editor_{{ name_code[0] }} = CodeMirror.fromTextArea(document.getElementById("{{ name_code[0] }}"), {
-      lineNumbers: true,
-      mode: "python",
-      theme: "railscasts",
-      styleActiveLine: true
-    });
-  </script>
+<script>
+  var editor_{{ name_code[0] }} = CodeMirror.fromTextArea(document.getElementById("{{ name_code[0] }}"), {
+    lineNumbers: true,
+    mode: "python",
+    theme: "railscasts",
+    styleActiveLine: true
+  });
+</script>
 {% endfor %}
 
 <script>
-  $('#formSubmit').submit(function() {
-	var modif = 0;
-	{% for name_code in code_form.names_codes %}
-	    var origin_code = document.getElementById(id="{{ name_code[0] }}").innerHTML;
-            if (editor_{{ name_code[0] }}.getValue() != origin_code) {
-                modif = 1;
-	    }
-	{% endfor %}
-	if (modif == 1) {
-    $('#save').submit();
-    $('#formSubmit').submit()
-  }
+  $(function () {
+    $('#formerror').modal('toggle')
   });
-</script>
-<script>
-$(function () {
-   $('#formerror').modal('toggle')
-});
 </script>
 {% endblock %}

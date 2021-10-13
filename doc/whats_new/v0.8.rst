@@ -1,0 +1,63 @@
+.. _changes_0_8:
+
+Version 0.8.1
+=============
+*October 6, 2021*
+
+Changelog
+---------
+
+`ramp-database`
+...............
+- Don't pre-select all users by default on the approval page :pr:`536`
+
+`ramp-frontend`
+...............
+- The list of users to approve are sorted by newest first :pr:`537`
+- Add a /manage_users admin page with a list of all users, and a search input :pr:`538`
+- Improve button colors on the approval page :pr:`539`
+
+
+Version 0.8
+===========
+*June 8, 2021*
+
+Changelog
+---------
+
+- Support for Python 3.6 was dropped and all ``ramp-*`` packages now require
+  Python 3.7+ (:pr:`532`)
+
+
+`ramp-database`
+...............
+- Add possibility to export the leaderboards (private and public) as .csv
+  file using command line (:pr:`507` by :user:`Maria Telenczuk <maikia>`).
+- Add a CLI subcommand ``compute_contributivity`` to compute contributivity
+  (:pr:`517`)
+- Remove predictions from the database (:pr:`513`)
+
+`ramp-engine`
+.............
+
+- Fix error in the name of the submission state (:pr:`469`)
+- Catch ssh errors in the AWS Worker (:pr:`470`)
+- Many reliability improvements for the AWS Worker
+  (:pr:`472`, :pr:`481`, :pr:`480`, :pr:`484`, :pr:`473`, :pr:`491`,
+   :pr:`494`, :pr:`495`, :pr:`506`)
+- Add DaskWorker (:pr:`476`)
+
+`ramp-frontend`
+...............
+
+- Add `TRACK_CREDIT` global configuration option (with default to False) to
+  track credit for submissions (:pr:`517`)
+- Add button to delete user account under the ``/update_profile`` endpoint.
+  (:pr:`527`)
+- Fix Bokeh plot in the admin dashboard (:pr:`477`)
+- Add customization mechanism for the sign up instructions and for a privacy page
+  (:pr:`478`)
+- Add UI to delete accounts (:pr:`526`)
+
+`ramp-utils`
+............

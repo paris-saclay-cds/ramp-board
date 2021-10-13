@@ -12,3 +12,5 @@ ramp:
 worker:
     worker_type: conda
     conda_env: ramp-iris
+dispatcher:
+    hunger_policy: exit

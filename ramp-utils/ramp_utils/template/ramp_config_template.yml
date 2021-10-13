@@ -12,3 +12,8 @@ ramp:
 worker:
     worker_type: <conda or aws>
     ...
+dispatcher:
+    hunger_policy: sleep
+    # n_workers: (number of RAMP workers launched in parallel. Default: # CPUs)
+    # n_threads: (number of threads used by a RAMP worker. Default: # CPUs)
+    # time_between_collection: (how long to wait before re-checking if submission finished. Default: 1s)

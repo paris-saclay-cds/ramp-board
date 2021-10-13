@@ -41,19 +41,19 @@ if [ -z ${USERNAME+x} ]; then echo "USERNAME is unset"; fi
 if [ "$CIRCLE_BRANCH" = "master" ]
 then
     # Changes are made to dev/ directory
-    DIR=dev
+    DIR="ramp-board/dev"
     doc_clone_commit
     git push origin $DOC_BRANCH
     echo "Push complete"
 elif [[ "$CIRCLE_BRANCH" =~ ^[0-9]+\.[0-9]+\.X$ ]]
 then
     # Strip off .X from branch name, so changes will go to 0.1/, 91.235/, etc
-    DIR="${CIRCLE_BRANCH::-2}"
+    DIR="ramp-board/${CIRCLE_BRANCH::-2}"
     doc_clone_commit
     git push origin $DOC_BRANCH
     echo "Push complete"
 else
-    DIR=dev
+    DIR="ramp-board/dev"
     doc_clone_commit
     echo "Test complete, changes NOT pushed"
 fi

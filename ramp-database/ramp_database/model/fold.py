@@ -9,11 +9,11 @@ from .base import Model
 from .datatype import NumpyType
 
 __all__ = [
-    'CVFold',
+    "CVFold",
 ]
 
 
-cv_fold_types = Enum('live', 'test', name='cv_fold_types')
+cv_fold_types = Enum("live", "test", name="cv_fold_types")
 
 
 class CVFold(Model):
@@ -41,29 +41,28 @@ class CVFold(Model):
         A back-reference to the submission linked with this fold.
     """
 
-    __tablename__ = 'cv_folds'
+    __tablename__ = "cv_folds"
 
     id = Column(Integer, primary_key=True)
-    type = Column(cv_fold_types, default='live')
+    type = Column(cv_fold_types, default="live")
 
     train_is = Column(NumpyType, nullable=False)
     test_is = Column(NumpyType, nullable=False)
 
-    event_id = Column(Integer, ForeignKey('events.id'), nullable=False)
-    event = relationship('Event',
-                         backref=backref('cv_folds',
-                                         cascade='all, delete-orphan'))
+    event_id = Column(Integer, ForeignKey("events.id"), nullable=False)
+    event = relationship(
+        "Event", backref=backref("cv_folds", cascade="all, delete-orphan")
+    )
 
     @staticmethod
     def _pretty_printing(array):
         """Make pretty printing of an array by skipping portion when it is too
         large."""
         if array.size > 10:
-            return 'fold {} ... {}'.format(str(array[:5])[:-1],
-                                           str(array[-5:])[1:])
-        return 'fold {}'.format(array)
+            return "fold {} ... {}".format(str(array[:5])[:-1], str(array[-5:])[1:])
+        return "fold {}".format(array)
 
     def __repr__(self):
         train_repr = self._pretty_printing(self.train_is)
         test_repr = self._pretty_printing(self.test_is)
-        return 'train ' + train_repr + '\n' + ' test ' + test_repr
+        return "train " + train_repr + "\n" + " test " + test_repr

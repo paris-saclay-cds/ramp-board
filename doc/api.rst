@@ -206,7 +206,6 @@ Submission-related database tools
    :toctree: generated/
    :template: function.rst
 
-   tools.submission.score_submission
    tools.submission.submit_starting_kits
 
 **Functions to add new entries in the database**
@@ -229,7 +228,6 @@ Submission-related database tools
 
    tools.submission.get_event_nb_folds
    tools.database.get_extension
-   tools.submission.get_predictions
    tools.submission.get_scores
    tools.submission.get_source_submissions
    tools.submission.get_submissions
@@ -248,7 +246,6 @@ Submission-related database tools
    :template: function.rst
 
    tools.submission.set_bagged_scores
-   tools.submission.set_predictions
    tools.submission.set_scores
    tools.submission.set_submission_error_msg
    tools.submission.set_submission_max_ram
@@ -336,7 +333,9 @@ RAMP engine
 ===========
 
 The RAMP engine is made of a dispatcher to orchestrate the training and
-evaluation of submissions which are processed using workers.
+evaluation of submissions which are processed using workers. Since there is
+a dispatcher for each RAMP event, we provide a daemon which will start
+dispatcher for each open event.
 
 RAMP Dispatcher
 ---------------
@@ -347,6 +346,7 @@ RAMP Dispatcher
    :toctree: generated/
    :template: class.rst
 
+   daemon.Daemon
    dispatcher.Dispatcher
 
 RAMP Workers
@@ -360,6 +360,7 @@ RAMP Workers
 
    base.BaseWorker
    local.CondaEnvWorker
+   remote.DaskWorker
    aws.AWSWorker
 
 RAMP frontend
@@ -560,6 +561,23 @@ Configuration utilities
    read_config
    testing.database_config_template
    testing.ramp_config_template
+
+Datasets utilities
+------------------
+
+.. currentmodule:: ramp_utils
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   datasets.fetch_from_osf
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   datasets.OSFRemoteMetaData
 
 Deployment utilities
 --------------------

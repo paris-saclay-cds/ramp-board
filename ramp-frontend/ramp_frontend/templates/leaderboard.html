@@ -1,112 +1,124 @@
 {% extends "base.html" %}
+{% block head %}
+{{ super() }}
+{% endblock %}
 {% block title %}Leaderboards{% endblock %}
 {% block content %}
-
-
 {% with messages = get_flashed_messages(with_categories=true) %}
-
-{% if messages %}
-    <div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    {% for category, message in messages %}
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
-                </div>
-                <div class="modal-body">
-                    {{ message }}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                </div>
-            </div>
+{%if messages %}
+<div class="modal fade modal-warning" id="formerror" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  {% for category, message in messages %}
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel">{{ category }}</h4>
+      </div>
+      <div class="modal-body">
+        <div class="modal-message">
+          {{ message }}
         </div>
-    {% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal">
+          Close
+        </button>
+      </div>
     </div>
+  </div>
+  {% endfor %}
+</div>
 {% endif %}
-
 {% endwith %}
 
-<div class="page-title">
-    <span class="title">{{ event.name }}</span>
+<div class="row">
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="title">{{ event.title }}</div>
+          <br />
+          <div class="subtitle">{{ leaderboard_title }}</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h4>
+          <font color="#F17670">
+            {% if event.combined_combined_valid_score_str and event.is_open %}
+            Combined score: {{ event.combined_combined_valid_score_str }} {%
+            endif %} {% if event.combined_combined_test_score_str and
+            (event.is_closed or private) %}
+            <br />Combined test score: {{ event.combined_combined_test_score_str
+            }} {% endif %}
+          </font>
+        </h4>
+
+        <table id="leaderboard" class="display table-leaderboard" cellspacing="0" width="100%">
+          {{ leaderboard | safe}}
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div class="col-xs-12 col-lg-12">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">
-          <div class="title">
-              {{ leaderboard_title }}
-          </div>
-      </div>
-    </div>
-    <div class="card-body">
-        <h4><font color="#F17670">
-        {% if event.combined_combined_valid_score_str and event.is_open %}
-            Combined score: {{ event.combined_combined_valid_score_str }}
-        {% endif %}
-        {% if event.combined_combined_test_score_str and (event.is_closed or private) %}
-            <BR>Combined test score: {{ event.combined_combined_test_score_str }}
-        {% endif %}
-        </font></h4>
-		
-        <table id="leaderboard" class="display" cellspacing="0" width="100%">
-          {{ leaderboard | safe}} 
-	    </table>
-    </div>
-  </div>
-</div>
 
-{% if new_leaderboard %}
-<div class="col-xs-6">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">
-          <div class="title">
-              New submissions (pending training) 
+<div class="row">
+  <div class="col-sm-6">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="subtitle">
+            New submissions
           </div>
+        </div>
       </div>
+      {% if new_leaderboard %}
+      <div class="card-body">
+        <div class="table-leaderboard">
+          <table class="table table-bordered">
+            {{ new_leaderboard | safe}}
+          </table>
+        </div>
+      </div>
+      {% endif %}
     </div>
-    <div class="card-body">
-        <table class="table table-bordered">
-          {{ new_leaderboard | safe}} 
-	    </table>
+  </div>
+  <div class="col-sm-6">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="subtitle">
+            Failed submissions
+          </div>
+        </div>
+      </div>
+      {% if failed_leaderboard %}
+      <div class="card-body">
+        <div class="table-leaderboard">
+          <table class="table table-bordered">
+            {{ failed_leaderboard | safe}}
+          </table>
+        </div>
+      </div>
+      {% endif %}
     </div>
   </div>
 </div>
-{% endif %}
-{% if failed_leaderboard %}
-<div class="col-xs-6">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">
-          <div class="title">
-              Failed submissions  
-          </div>
-      </div>
-    </div>
-    <div class="card-body">
-        <table class="table table-bordered">
-          {{ failed_leaderboard | safe}} 
-	    </table>
-    </div>
-  </div>
-</div>
-{% endif %}
 {% endblock %}
-
 {% block scripts %}
 <script>
-$(function () {
-       $('#formerror').modal('toggle')
-});
+  $(function () {
+    $('#formerror').modal('toggle')
+  });
 
-$(document).ready(function() {
-        $('#leaderboard').DataTable({
-             "order": [[ {{ sorting_column_index }}, "{{ sorting_direction }}" ]],
-             "scrollX": true
-             });
-} );
+  $(document).ready(function () {
+    $('#leaderboard').DataTable({
+      "order": [[{{ sorting_column_index }}, "{{ sorting_direction }}" ]],
+      "scrollX": true
+               });
+  } );
 </script>
 {% endblock %}

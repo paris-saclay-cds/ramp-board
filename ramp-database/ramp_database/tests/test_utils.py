@@ -26,13 +26,13 @@ def database(database_connection):
         yield
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)
-        db, _ = setup_db(database_config['sqlalchemy'])
+        db, _ = setup_db(database_config["sqlalchemy"])
         Model.metadata.drop_all(db)
 
 
 def test_setup_db(database):
     database_config = read_config(
-        database_config_template(), filter_section='sqlalchemy'
+        database_config_template(), filter_section="sqlalchemy"
     )
     db, Session = setup_db(database_config)
     with db.connect() as conn:
@@ -43,7 +43,7 @@ def test_setup_db(database):
 
 def test_session_scope(database):
     database_config = read_config(
-        database_config_template(), filter_section='sqlalchemy'
+        database_config_template(), filter_section="sqlalchemy"
     )
     with session_scope(database_config) as session:
         file_type = session.query(SubmissionFileType).all()

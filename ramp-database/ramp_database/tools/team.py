@@ -9,7 +9,7 @@ from ._query import select_event_by_name
 from ._query import select_event_team_by_name
 from ._query import select_team_by_name
 
-logger = logging.getLogger('RAMP-DATABASE')
+logger = logging.getLogger("RAMP-DATABASE")
 
 
 def ask_sign_up_team(session, event_name, team_name):
@@ -61,14 +61,19 @@ def sign_up_team(session, event_name, team_name):
     """
     event, team, event_team = ask_sign_up_team(session, event_name, team_name)
     # setup the sandbox
-    path_sandbox_submission = os.path.join(event.problem.path_ramp_kit,
-                                           'submissions',
-                                           event.ramp_sandbox_name)
+    path_sandbox_submission = os.path.join(
+        event.problem.path_ramp_kit, "submissions", event.ramp_sandbox_name
+    )
     submission_name = event.ramp_sandbox_name
-    submission = add_submission(session, event_name, team_name,
-                                submission_name, path_sandbox_submission)
-    logger.info('Copying the submission files into the deployment folder')
-    logger.info('Adding {}'.format(submission))
+    submission = add_submission(
+        session,
+        event_name,
+        team_name,
+        submission_name,
+        path_sandbox_submission,
+    )
+    logger.info("Copying the submission files into the deployment folder")
+    logger.info("Adding {}".format(submission))
     event_team.approved = True
     session.commit()
 

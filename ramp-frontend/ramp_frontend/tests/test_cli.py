@@ -24,18 +24,25 @@ def make_toy_db(database_connection):
         yield
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)
-        db, _ = setup_db(database_config['sqlalchemy'])
+        db, _ = setup_db(database_config["sqlalchemy"])
         Model.metadata.drop_all(db)
 
 
 def test_test_launch(make_toy_db):
     # pass environment to subprocess
-    cmd = ['python', '-m']
-    cmd += ["ramp_frontend.cli", "test-launch",
-            "--config", database_config_template()]
+    cmd = ["python", "-m"]
+    cmd += [
+        "ramp_frontend.cli",
+        "test-launch",
+        "--config",
+        database_config_template(),
+    ]
     proc = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        env=os.environ.copy())
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=os.environ.copy(),
+    )
     # wait for 5 seconds before to terminate the server
     time.sleep(5)
     proc.send_signal(signal.SIGINT)

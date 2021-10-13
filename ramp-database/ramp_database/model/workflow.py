@@ -8,9 +8,9 @@ from sqlalchemy.orm import relationship
 from .base import Model
 
 __all__ = [
-    'Workflow',
-    'WorkflowElement',
-    'WorkflowElementType',
+    "Workflow",
+    "WorkflowElement",
+    "WorkflowElementType",
 ]
 
 
@@ -30,7 +30,8 @@ class WorkflowElementType(Model):
     workflows : list of :class:`ramp_database.model.WorkflowElement`
         A back-reference to the workflows linked with the workflow element.
     """
-    __tablename__ = 'workflow_element_types'
+
+    __tablename__ = "workflow_element_types"
 
     id = Column(Integer, primary_key=True)
     # file name without extension
@@ -38,16 +39,17 @@ class WorkflowElementType(Model):
     name = Column(String, nullable=False, unique=True)
 
     # eg, code, text, data
-    type_id = Column(Integer, ForeignKey('submission_file_types.id'),
-                     nullable=False)
-    type = relationship('SubmissionFileType',
-                        backref=backref('workflow_element_types'))
+    type_id = Column(Integer, ForeignKey("submission_file_types.id"), nullable=False)
+    type = relationship("SubmissionFileType", backref=backref("workflow_element_types"))
 
     def __repr__(self):
         return (
-            'WorkflowElementType(name={}, type={} is_editable={}, max_size={})'
-            .format(self.name, self.type.name, self.type.is_editable,
-                    self.type.max_size)
+            "WorkflowElementType(name={}, type={} is_editable={}, max_size={})".format(
+                self.name,
+                self.type.name,
+                self.type.is_editable,
+                self.type.max_size,
+            )
         )
 
     @property
@@ -57,7 +59,8 @@ class WorkflowElementType(Model):
 
     @property
     def is_editable(self):
-        """bool: Whether or not the submission file is an editable type."""
+        """bool: Whether or not the submission file is an editable type on the
+        frontend."""
         return self.type.is_editable
 
     @property
@@ -91,7 +94,8 @@ class Workflow(Model):
     elements : list of :class:`ramp_database.model.WorkflowElement`
         A back-reference to the elements of the workflow.
     """
-    __tablename__ = 'workflows'
+
+    __tablename__ = "workflows"
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, unique=True)
@@ -100,9 +104,9 @@ class Workflow(Model):
         self.name = name
 
     def __repr__(self):
-        text = 'Workflow({})'.format(self.name)
+        text = "Workflow({})".format(self.name)
         for workflow_element in self.elements:
-            text += '\n\t' + str(workflow_element)
+            text += "\n\t" + str(workflow_element)
         return text
 
 
@@ -140,7 +144,8 @@ class WorkflowElement(Model):
         A back-reference to the submission file associated with the workflow
         element.
     """
-    __tablename__ = 'workflow_elements'
+
+    __tablename__ = "workflow_elements"
 
     id = Column(Integer, primary_key=True)
     # Normally name will be the same as workflow_element_type.type.name,
@@ -149,24 +154,27 @@ class WorkflowElement(Model):
     # refer to workflow_element_type.type.name
     name = Column(String, nullable=False)
 
-    workflow_id = Column(Integer, ForeignKey('workflows.id'))
-    workflow = relationship('Workflow', backref=backref('elements'))
+    workflow_id = Column(Integer, ForeignKey("workflows.id"))
+    workflow = relationship("Workflow", backref=backref("elements"))
 
-    workflow_element_type_id = Column(Integer,
-                                      ForeignKey('workflow_element_types.id'),
-                                      nullable=False)
-    workflow_element_type = relationship('WorkflowElementType',
-                                         backref=backref('workflows'))
+    workflow_element_type_id = Column(
+        Integer, ForeignKey("workflow_element_types.id"), nullable=False
+    )
+    workflow_element_type = relationship(
+        "WorkflowElementType", backref=backref("workflows")
+    )
 
     def __init__(self, workflow, workflow_element_type, name_in_workflow=None):
         self.workflow = workflow
         self.workflow_element_type = workflow_element_type
-        self.name = (self.workflow_element_type.name
-                     if name_in_workflow is None else name_in_workflow)
+        self.name = (
+            self.workflow_element_type.name
+            if name_in_workflow is None
+            else name_in_workflow
+        )
 
     def __repr__(self):
-        return 'Workflow({}): WorkflowElement({})'.format(self.workflow.name,
-                                                          self.name)
+        return "Workflow({}): WorkflowElement({})".format(self.workflow.name, self.name)
 
     @property
     def type(self):
@@ -180,7 +188,8 @@ class WorkflowElement(Model):
 
     @property
     def is_editable(self):
-        """bool: Whether or not the submission file is an editable type."""
+        """bool: Whether or not the submission file is an editable type on the
+        frontend."""
         return self.workflow_element_type.is_editable
 
     @property

@@ -21,7 +21,7 @@ def is_admin(session, event_name, user_name):
     """
     event = select_event_by_name(session, event_name)
     user = select_user_by_name(session, user_name)
-    if user.access_level == 'admin':
+    if user.access_level == "admin":
         return True
     event_admin = select_event_admin_by_instance(session, event, user)
     if event_admin is None:
@@ -46,7 +46,7 @@ def is_accessible_event(session, event_name, user_name):
     user = select_user_by_name(session, user_name)
     if event is None:
         return False
-    if user.access_level == 'asked':
+    if user.access_level == "asked":
         return False
     if event.is_public or is_admin(session, event_name, user_name):
         return True
@@ -84,8 +84,7 @@ def is_accessible_leaderboard(session, event_name, user_name):
     return False
 
 
-def is_accessible_code(session, event_name, user_name,
-                       submission_id=None):
+def is_accessible_code(session, event_name, user_name, submission_id=None):
     """Whether or not the user can look at the code submission.
 
     Parameters
@@ -121,9 +120,7 @@ def is_accessible_code(session, event_name, user_name,
             session, event_name, user_name, event.ramp_sandbox_name
         )
     else:
-        submission = (session.query(Submission)
-                             .filter_by(id=submission_id)
-                             .one_or_none())
+        submission = session.query(Submission).filter_by(id=submission_id).one_or_none()
     if submission is not None and user == submission.event_team.team.admin:
         return True
     return False
@@ -147,8 +144,7 @@ def is_user_signed_up(session, event_name, user_name):
         Whether or not the user is signed up for the event.
     """
     event_team = select_event_team_by_name(session, event_name, user_name)
-    if (event_team is not None and
-            (event_team.is_active and event_team.approved)):
+    if event_team is not None and (event_team.is_active and event_team.approved):
         return True
     return False
 
@@ -171,7 +167,6 @@ def is_user_sign_up_requested(session, event_name, user_name):
         Whether or not the user had asked to join event or not.
     """
     event_team = select_event_team_by_name(session, event_name, user_name)
-    if (event_team is not None and
-            (event_team.is_active and not event_team.approved)):
+    if event_team is not None and (event_team.is_active and not event_team.approved):
         return True
     return False

@@ -21,7 +21,7 @@ from ramp_frontend.utils import send_mail
 from ramp_frontend.testing import _fail_no_smtp_server
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def client_session(database_connection):
     database_config = read_config(database_config_template())
     ramp_config = ramp_config_template()
@@ -29,19 +29,20 @@ def client_session(database_connection):
         deployment_dir = create_toy_db(database_config, ramp_config)
         flask_config = generate_flask_config(database_config)
         app = create_app(flask_config)
-        app.config['TESTING'] = True
-        app.config['WTF_CSRF_ENABLED'] = False
-        with session_scope(database_config['sqlalchemy']) as session:
+        app.config["TESTING"] = True
+        app.config["WTF_CSRF_ENABLED"] = False
+        with session_scope(database_config["sqlalchemy"]) as session:
             yield app.test_client(), session
     finally:
         shutil.rmtree(deployment_dir, ignore_errors=True)
         try:
             # In case of failure we should close the global flask engine
             from ramp_frontend import db as db_flask
+
             db_flask.session.close()
         except RuntimeError:
             pass
-        db, _ = setup_db(database_config['sqlalchemy'])
+        db, _ = setup_db(database_config["sqlalchemy"])
         Model.metadata.drop_all(db)
 
 
@@ -50,16 +51,25 @@ def test_send_mail(client_session):
     client, _ = client_session
     with client.application.app_context():
         with mail.record_messages() as outbox:
-            send_mail('xx@gmail.com', 'subject', 'body')
+            send_mail("xx@gmail.com", "subject", "body")
             assert len(outbox) == 1
-            assert outbox[0].subject == 'subject'
-            assert outbox[0].body == 'body'
-            assert outbox[0].recipients == ['xx@gmail.com']
+            assert outbox[0].subject == "subject"
+            assert outbox[0].body == "body"
+            assert outbox[0].recipients == ["xx@gmail.com"]
 
 
 def test_body_formatter_user(client_session):
     _, session = client_session
-    user = get_user_by_name(session, 'test_user')
-    for word in ['test_user', 'User', 'Test', 'linkedin', 'twitter',
-                 'facebook', 'github', 'notes', 'bio']:
+    user = get_user_by_name(session, "test_user")
+    for word in [
+        "test_user",
+        "User",
+        "Test",
+        "linkedin",
+        "twitter",
+        "facebook",
+        "github",
+        "notes",
+        "bio",
+    ]:
         assert word in body_formatter_user(user)

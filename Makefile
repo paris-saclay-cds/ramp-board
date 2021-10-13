@@ -38,3 +38,15 @@ test-frontend:
 
 code-analysis:
 	flake8 . --ignore=E501,E211,E265 | grep -v __init__ | grep -v external
+
+upload-pypi:
+	cd ramp-frontend && python setup.py sdist bdist_wheel && twine upload dist/* && cd ..
+	cd ramp-database && python setup.py sdist bdist_wheel && twine upload dist/* && cd ..
+	cd ramp-engine && python setup.py sdist bdist_wheel && twine upload dist/* && cd ..
+	cd ramp-utils && python setup.py sdist bdist_wheel && twine upload dist/* && cd ..
+
+clean-dist:
+	rm -r ramp-frontend/dist
+	rm -r ramp-database/dist
+	rm -r ramp-engine/dist
+	rm -r ramp-utils/dist

@@ -36,11 +36,13 @@ def select_submissions_by_state(session, event_name, state):
     submissions : list of :class:`ramp_database.model.Submission`
         The queried list of submissions.
     """
-    q = (session.query(Submission)
-                .filter(Event.name == event_name)
-                .filter(Event.id == EventTeam.event_id)
-                .filter(EventTeam.id == Submission.event_team_id)
-                .order_by(Submission.submission_timestamp))
+    q = (
+        session.query(Submission)
+        .filter(Event.name == event_name)
+        .filter(Event.id == EventTeam.event_id)
+        .filter(EventTeam.id == Submission.event_team_id)
+        .order_by(Submission.submission_timestamp)
+    )
     if state is None:
         return q.all()
     return q.filter(Submission.state == state).all()
@@ -61,9 +63,7 @@ def select_submission_by_id(session, submission_id):
     submission : :class:`ramp_database.model.Submission`
         The queried submission.
     """
-    return (session.query(Submission)
-                   .filter(Submission.id == submission_id)
-                   .first())
+    return session.query(Submission).filter(Submission.id == submission_id).first()
 
 
 def select_submission_by_name(session, event_name, team_name, name):
@@ -85,15 +85,17 @@ def select_submission_by_name(session, event_name, team_name, name):
     submission : :class:`ramp_database.model.Submission`
         The queried submission.
     """
-    return (session.query(Submission)
-                   .filter(Event.name == event_name)
-                   .filter(Event.id == EventTeam.event_id)
-                   .filter(Team.name == team_name)
-                   .filter(Team.id == EventTeam.team_id)
-                   .filter(EventTeam.id == Submission.event_team_id)
-                   .filter(Submission.name == name)
-                   .order_by(Submission.submission_timestamp)
-                   .one_or_none())
+    return (
+        session.query(Submission)
+        .filter(Event.name == event_name)
+        .filter(Event.id == EventTeam.event_id)
+        .filter(Team.name == team_name)
+        .filter(Team.id == EventTeam.team_id)
+        .filter(EventTeam.id == Submission.event_team_id)
+        .filter(Submission.name == name)
+        .order_by(Submission.submission_timestamp)
+        .one_or_none()
+    )
 
 
 def select_event_by_name(session, event_name):
@@ -135,10 +137,12 @@ def select_event_team_by_name(session, event_name, team_name):
     """
     event = select_event_by_name(session, event_name)
     team = select_team_by_name(session, team_name)
-    return (session.query(EventTeam)
-                   .filter(EventTeam.event == event)
-                   .filter(EventTeam.team == team)
-                   .one_or_none())
+    return (
+        session.query(EventTeam)
+        .filter(EventTeam.event == event)
+        .filter(EventTeam.team == team)
+        .one_or_none()
+    )
 
 
 def select_user_by_name(session, user_name):
@@ -216,9 +220,7 @@ def select_problem_by_name(session, problem_name):
     """
     if problem_name is None:
         return session.query(Problem).all()
-    return (session.query(Problem)
-                   .filter(Problem.name == problem_name)
-                   .one_or_none())
+    return session.query(Problem).filter(Problem.name == problem_name).one_or_none()
 
 
 def select_similarities_by_target(session, target_submission):
@@ -237,10 +239,11 @@ def select_similarities_by_target(session, target_submission):
 :class:`ramp_database.model.SubmissionSimilarity`
         The queried submission similarity.
     """
-    return (session.query(SubmissionSimilarity)
-                   .filter(SubmissionSimilarity.target_submission ==
-                           target_submission)
-                   .all())
+    return (
+        session.query(SubmissionSimilarity)
+        .filter(SubmissionSimilarity.target_submission == target_submission)
+        .all()
+    )
 
 
 def select_similarities_by_source(session, source_submission):
@@ -259,10 +262,11 @@ def select_similarities_by_source(session, source_submission):
 :class:`ramp_database.model.SubmissionSimilarity`
         The queried submission similarity.
     """
-    return (session.query(SubmissionSimilarity)
-                   .filter(SubmissionSimilarity.source_submission ==
-                           source_submission)
-                   .all())
+    return (
+        session.query(SubmissionSimilarity)
+        .filter(SubmissionSimilarity.source_submission == source_submission)
+        .all()
+    )
 
 
 def select_workflow_by_name(session, workflow_name):
@@ -282,9 +286,7 @@ def select_workflow_by_name(session, workflow_name):
     """
     if workflow_name is None:
         return session.query(Workflow).all()
-    return (session.query(Workflow)
-                   .filter(Workflow.name == workflow_name)
-                   .one_or_none())
+    return session.query(Workflow).filter(Workflow.name == workflow_name).one_or_none()
 
 
 def select_extension_by_name(session, extension_name):
@@ -304,9 +306,9 @@ def select_extension_by_name(session, extension_name):
     """
     if extension_name is None:
         return session.query(Extension).all()
-    return (session.query(Extension)
-                   .filter(Extension.name == extension_name)
-                   .one_or_none())
+    return (
+        session.query(Extension).filter(Extension.name == extension_name).one_or_none()
+    )
 
 
 def select_submission_file_type_by_name(session, type_name):
@@ -327,13 +329,14 @@ def select_submission_file_type_by_name(session, type_name):
     """
     if type_name is None:
         return session.query(SubmissionFileType).all()
-    return (session.query(SubmissionFileType)
-                   .filter(SubmissionFileType.name == type_name)
-                   .one_or_none())
+    return (
+        session.query(SubmissionFileType)
+        .filter(SubmissionFileType.name == type_name)
+        .one_or_none()
+    )
 
 
-def select_submission_type_extension_by_name(session, type_name,
-                                             extension_name):
+def select_submission_type_extension_by_name(session, type_name, extension_name):
     """Query the submission file type extension given its extension.
 
     Parameters
@@ -358,8 +361,7 @@ def select_submission_type_extension_by_name(session, type_name,
         return session.query(SubmissionFileTypeExtension).all()
     q = session.query(SubmissionFileTypeExtension)
     if type_name is not None:
-        submission_file_type = select_submission_file_type_by_name(session,
-                                                                   type_name)
+        submission_file_type = select_submission_file_type_by_name(session, type_name)
         q = q.filter(SubmissionFileTypeExtension.type == submission_file_type)
     if extension_name is not None:
         extension = select_extension_by_name(session, extension_name)
@@ -387,9 +389,11 @@ def select_submission_type_extension_by_extension(session, extension):
     """
     if extension is None:
         return session.query(SubmissionFileTypeExtension).all()
-    return (session.query(SubmissionFileTypeExtension)
-                   .filter(SubmissionFileTypeExtension.extension == extension)
-                   .one_or_none())
+    return (
+        session.query(SubmissionFileTypeExtension)
+        .filter(SubmissionFileTypeExtension.extension == extension)
+        .one_or_none()
+    )
 
 
 def select_workflow_element_type_by_name(session, workflow_element_type_name):
@@ -407,14 +411,16 @@ def select_workflow_element_type_by_name(session, workflow_element_type_name):
     workflow_element_type : :class:`ramp_database.model.WorkflowElementType`
         The queried workflow element type.
     """
-    return (session.query(WorkflowElementType)
-                   .filter(WorkflowElementType.name ==
-                           workflow_element_type_name)
-                   .one_or_none())
+    return (
+        session.query(WorkflowElementType)
+        .filter(WorkflowElementType.name == workflow_element_type_name)
+        .one_or_none()
+    )
 
 
-def select_workflow_element_by_workflow_and_type(session, workflow,
-                                                 workflow_element_type):
+def select_workflow_element_by_workflow_and_type(
+    session, workflow, workflow_element_type
+):
     """Query the workflow element given the workflow and the workflow element
     type.
 
@@ -432,11 +438,12 @@ def select_workflow_element_by_workflow_and_type(session, workflow,
     workflow_element : :class:`ramp_database.model.WorkflowElement`
         The queried workflow element.
     """
-    return (session.query(WorkflowElement)
-                   .filter(WorkflowElement.workflow == workflow)
-                   .filter(WorkflowElement.workflow_element_type ==
-                           workflow_element_type)
-                   .one_or_none())
+    return (
+        session.query(WorkflowElement)
+        .filter(WorkflowElement.workflow == workflow)
+        .filter(WorkflowElement.workflow_element_type == workflow_element_type)
+        .one_or_none()
+    )
 
 
 def select_event_admin_by_instance(session, event, user):
@@ -456,7 +463,9 @@ def select_event_admin_by_instance(session, event, user):
     event_admin : :class:`ramp_database.model.EventAdmin` or None
         The queried event/admin instance.
     """
-    return (session.query(EventAdmin)
-                   .filter(EventAdmin.event == event)
-                   .filter(EventAdmin.admin == user)
-                   .one_or_none())
+    return (
+        session.query(EventAdmin)
+        .filter(EventAdmin.event == event)
+        .filter(EventAdmin.admin == user)
+        .one_or_none()
+    )

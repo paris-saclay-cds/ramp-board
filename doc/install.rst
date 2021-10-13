@@ -1,11 +1,25 @@
 .. _install:
 
-########################
+#######
 Install
-########################
+#######
+
+Install from PyPI
+=================
+
+Ramp-board requires Python 3.7+.
+
+The RAMP bundle is available in PyPI and can be installed via `pip`::
+
+    pip install ramp-database ramp-engine ramp-frontend ramp-utils
+
+All dependencies will be installed automatically.
+
+Install from sources
+====================
 
 Prerequisites
-=============
+-------------
 
 The dependencies required by the RAMP bundle are the following:
 
@@ -16,12 +30,12 @@ The dependencies required by the RAMP bundle are the following:
     * nbconvert
     * numpy
     * pandas
-    * psycopg2
+    * psycopg2-binary
     * sqlalchemy
 2. ``ramp-engine``:
     * click
     * numpy
-    * psycopg2
+    * psycopg2-binary
     * sqlalchemy
 3. ``ramp-frontend``:
     * bokeh
@@ -35,6 +49,7 @@ The dependencies required by the RAMP bundle are the following:
     * pandas
 4. ``ramp-utils``:
     * click
+    * pandas
     * pyyaml
 
 You can install those requirements through ``pip``, using the
@@ -58,7 +73,7 @@ you need to remember to ``conda activate testenv`` each time when interacting
 with ramp or the database.
 
 Install
-=======
+-------
 
 You can install the RAMP bundle of packages by::
 

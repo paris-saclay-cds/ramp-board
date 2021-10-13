@@ -1,14 +1,14 @@
 .. _contribute:
 
-########################
+######################
 Develop and contribute
-########################
+######################
 
 Welcome to the RAMP team. We are always happy to have new RAMP developers.
 
-You can contribute to this code by making a `Pull Request 
-<https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_ 
-on Github_. Please, make sure that your code is coming with unit tests to 
+You can contribute to this code by making a `Pull Request
+<https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_
+on Github_. Please, make sure that your code is coming with unit tests to
 ensure full coverage and continuous integration in the API.
 
 
@@ -17,16 +17,16 @@ ensure full coverage and continuous integration in the API.
 
 Install for development
 -----------------------
-To install RAMP please fallow :ref:`install guideline <install>` making sure 
+To install RAMP please fallow :ref:`install guideline <install>` making sure
 that you use the ``make inplace`` option to install RAMP in developer mode.
 
 
 Prepare database engine
 -----------------------
-Testing RAMP requires a database cluster, you need to create it similarly as 
-described in :ref:`create database <set_database>` section. 
+Testing RAMP requires a database cluster, you need to create it similarly as
+described in :ref:`create database <set_database>` section.
 
-If you haven't done so already create the ``Postgres database cluster`` 
+If you haven't done so already create the ``Postgres database cluster``
 using the command::
 
     ~ $ initdb postgres_dbs
@@ -37,40 +37,46 @@ and then start it with::
 
 Within your database cluster `postgres` database is created automatically.
 `pytest` will use it to make and then drop the test engine. But it needs
-to know who is the owner of your `postgres` database and therefore you 
+to know who is the owner of your `postgres` database and therefore you
 need to inform RAMP tests about this.
-To do this, open the ``db_engine.yml`` file located in the ``ramp-board`` 
-directory. 
+To do this, open the ``db_engine.yml`` file located in the ``ramp-board``
+directory.
 It should look as follows::
 
     db_owner: postgres
 
-You need to change <postgres> to the owner of the `postgres` database. 
+You need to change <postgres> to the owner of the `postgres` database.
 
-If you don't know who is the owner of your `postgres` database you can 
+If you don't know who is the owner of your `postgres` database you can
 find it out by typing in your terminal::
-    
+
     ~ $ psql -l
 
-This command will list all of your databases along with their owners. 
+This command will list all of your databases along with their owners.
 
 Test
 ----
-Each time before running the tests make sure your ``Postgres database cluster`` 
-has been started. You can always start it using the command::
+In order to run your tests please create a test conda environment (you will
+need to do that only once)::
+
+    ~ $ conda env create -f ci_tools/environment_iris_kit.yml
+
+Also, before running the tests make sure your ``Postgres database cluster`` has
+been started. You can always start it using the command::
 
     ~ $ pg_ctl -D postgres_dbs -l logfile start
 
 where `postgres_dbs` is the database cluster you created in the previous steps.
 
 In addition, you might want to start an SMTP server to run all the tests.
-If you don't run the server, some of the tests will fail because they cannot 
-be run. To launch the server, execute the following 
+If you don't run the server, some of the tests will fail because they cannot
+be run. To launch the server, execute the following
 command::
 
     ~ $ python -m smtpd -n -c DebuggingServer localhost:8025 &
 
-You are now ready to run the tests. You can do so using ``pytest`` from the root ``ramp-board`` directory::
+You are now ready to run the tests. You can do so using ``pytest`` from the
+root ``ramp-board`` directory::
 
     ~ $ pytest -vsl .
 
@@ -91,12 +97,13 @@ This guide is adapted from `scikit-learn contribution guide`_.
 Forking RAMP
 ============
 
-The preferred way to contribute to RAMP is to fork the `ramp-board repository`_ on GitHub:
+The preferred way to contribute to RAMP is to fork the `ramp-board repository`_
+on GitHub:
 
 .. _ramp-board repository: https://github.com/paris-saclay-cds/ramp-board
 
-1) To fork the `ramp-board repository`_ click on the 'Fork' button near the 
-   top of the page. This creates a copy of the code under your account 
+1) To fork the `ramp-board repository`_ click on the 'Fork' button near the
+   top of the page. This creates a copy of the code under your account
    on the GitHub server.
 
 2) Clone this copy to your local disk::
@@ -108,7 +115,7 @@ The preferred way to contribute to RAMP is to fork the `ramp-board repository`_ 
 
         $ git checkout -b my-feature
 
-   and start making changes. 
+   and start making changes.
 
 .. note::
     Never work in the ``master`` branch!
@@ -127,7 +134,7 @@ Finally, go to the web page of your fork of the ramp-board repo,
 and click 'Pull request' to send your changes to the maintainers for
 review. This will send an email to the committers.
 
-If any of the above seems like magic to you, then look up `Git documentation`_ 
+If any of the above seems like magic to you, then look up `Git documentation`_
 on the web.
 
 .. _Git documentation: https://git-scm.com/documentation
@@ -153,11 +160,11 @@ following rules before submitting a pull request:
 
 -  Please prefix the title of your pull request with `[MRG]` if the
    contribution is complete and should be subjected to a detailed review.
-   Incomplete contributions should be prefixed `[WIP]` to indicate a work
-   in progress (and changed to `[MRG]` when it matures). WIPs may be useful
-   to: indicate you are working on something to avoid duplicated work,
-   request broad review of functionality or API, or seek collaborators.
-   WIPs often benefit from the inclusion of a `task list`_ in the PR description.
+   Incomplete contributions should be prefixed `[WIP]` to indicate a work in
+   progress (and changed to `[MRG]` when it matures). WIPs may be useful to:
+   indicate you are working on something to avoid duplicated work, request
+   broad review of functionality or API, or seek collaborators. WIPs often
+   benefit from the inclusion of a `task list`_ in the PR description.
 
 -  All other tests pass when everything is rebuilt from scratch. On
    Unix-like systems, check with (from the toplevel source folder)::
@@ -212,8 +219,8 @@ following rules before submitting:
     import numpy; print("NumPy", numpy.__version__)
     import scipy; print("SciPy", scipy.__version__)
     import sklearn; print("Scikit-Learn", sklearn.__version__)
-   
--  Please include a reproducible_ code snippet or link to a gist_. 
+
+-  Please include a reproducible_ code snippet or link to a gist_.
    If an exception is raised, please provide the traceback.
 
 .. _Creating and highlighting code blocks: https://help.github.com/articles/creating-and-highlighting-code-blocks
@@ -237,9 +244,9 @@ documentation without the example gallery. The resulting HTML files will
 be placed in _build/html/ and are viewable in a web browser. See the
 README file in the doc/ directory for more information.
 
-For building the documentation, you will need 
+For building the documentation, you will need
 
-    - sphinx_, 
+    - sphinx_,
     - sphinx_rtd_theme_,
     - numpydoc_,
     - graphviz_,
@@ -261,3 +268,97 @@ intuition to the reader on what the algorithm does. It is best to always
 start with a small paragraph with a hand-waving explanation of what the
 method does to the data and a figure (coming from an example)
 illustrating it.
+
+
+Minor release process
+---------------------
+
+The following explain the main steps to release `ramp-board`:
+
+1. Run `bumpversion release`. It will remove the `dev0` tag.
+2. Commit the change `git commit -am "bumpversion 0.<version number>.0"`
+   (e.g., `git commit -am "bumpversion 0.5.0"`).
+3. Create a branch for this version (e.g.,
+   `git checkout -b 0.<version number>.X`).
+4*. Push the new branch into the upstream remote ramp-board repository.
+5*. Create a GitHub release by clicking 'Draft a new release' `here
+   <https://github.com/paris-saclay-cds/ramp-board/releases>`_. Copy the
+   release notes from `whats_new
+   <https://paris-saclay-cds.github.io/ramp-docs/ramp-board/dev/whats_new.html>`_.
+6. Change the symlink in the `ramp-docs
+   <https://github.com/paris-saclay-cds/ramp-docs>`_ repository such that
+   stable points to the latest release version, i.e, 0.<version number>. To do
+   this, clone the `ramp-docs` repository, `cd` into `ramp-docs/ramp-board/`
+   then run `unlink stable`, followed by
+   `ln -s 0.<version number> stable`. To check that
+   this was performed correctly, ensure that `ramp-board/stable
+   <https://github.com/paris-saclay-cds/ramp-docs/blob/master/ramp-board/stable>`_
+   has the new version number.
+7*. `cd` back into the `ramp-board` code repository and ensure you are in the
+   release branch (e.g., branch `0.5.X`). Remove unnecessary files
+   with `make clean-dist` then push on PyPI with `make upload-pypi`.
+8. Switch to `master` branch and run `bumpversion minor`, commit and push on
+   upstream.
+9. Create a GitHub release by clicking on 'Draft a new release' `here
+   <https://github.com/paris-saclay-cds/ramp-board/releases>`_. 'Tag version'
+   should be the latest version number (e.g., 0.5.0), 'Target' should be the
+   branch for that minor version (e.g., 0.5.X) and 'Release title' should
+   be 'Version <release version>' (e.g., 'Version 0.5.0'). Detail changes
+   in this release, using what's in the `doc/whats_new/
+   <https://github.com/paris-saclay-cds/ramp-board/tree/master/doc/whats_new>`_
+   file for the latest release.
+10. Add a new `v0.<version number>.rst` file in `doc/whats_new/
+    <https://github.com/paris-saclay-cds/ramp-board/tree/master/doc/whats_new>`_
+    and `.. include::` this new file in `doc/whats_new.rst
+    <https://github.com/paris-saclay-cds/ramp-board/blob/master/doc/whats_new.rst>`_.
+
+* Note that the steps 4, 5 and 7 should be performed while in the release
+branch, e.g. branch `0.5.X`.
+
+Patch/bug fix release process
+-----------------------------
+
+1. Checkout the tag for the last minor release, e.g.,
+   `git checkout 0.5.X`.
+   **note**: X is part of the name, not a number to substitute.
+   **note2**: you can type `git fetch --all --tags` to fetch available tags.
+2. There are two ways to continue. If you only want to release a couple of
+   commits we recommend that you go with '3a', if you want to release many commits '3b'
+   would be easier.
+
+3a: release only a few commits
+
+- Find the commit(s) hash of the bug fix commit you wish to back port using
+  `git log`.
+- Append the bug fix commit(s) to the branch using `git cherry-pick <hash>`.
+
+3b: release multiple commits
+
+- checkout the `0.5.X` branch:
+  `git checkout -b release-0.5.<number> master` where 'number' is the number of
+  your bug release.
+- commit your desired changes by typing: `git rebase -i master`.
+  You should now see the list of all the commits since the last release.
+  Indicate which commits you want to release by typing 'pick' on their lefthand
+  side, and 'drop' if you do not want to keep it. Make sure to drop the commit
+  with previous bumpversion. It's useful to have a copy of the `git rebase -i`
+  log in the PR to help others understand what's included.
+- make a PR to the release branch. Once it is merged continue to the next step.
+
+4. Bump the version number with `bumpversion patch`. This will bump the
+   patch version, for example from 0.5.0 to 0.5.1.dev0.
+5. Mark the current version as a release version (as opposed to 'dev' version)
+   with `bumpversion release --allow-dirty`. It will bump the version, for
+   example from 0.5.1.dev0 to 0.5.1.
+6. Commit the changes with `git commit -am 'bumpversion <new version>'`.
+7. Push the changes to the release branch in upstream, e.g.
+   `git push <upstream remote> <release branch>`. For minor version 0.5
+   'release branch' would be '0.5.X'
+8. Remove unnecessary files with `make clean-dist` then push on PyPI with
+   `make upload-pypi` (you need to have the rights on PyPI to do so).
+9. Create a GitHub release by clicking 'Draft a new release' `here
+   <https://github.com/paris-saclay-cds/ramp-board/releases>`_. Note down the
+   bug fixes added in the patch.
+
+Note: If you are updating version of ramp on ramp.studio consider reading:
+`those docs <https://github.com/paris-saclay-cds/ramp-server-config#ramp-board---ramp-workflow>`_.

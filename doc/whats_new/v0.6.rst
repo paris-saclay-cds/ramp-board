@@ -1,0 +1,23 @@
+.. _changes_0_6:
+
+Version 0.6
+===========
+
+Changelog
+---------
+
+`ramp-database`
+...............
+
+`ramp-engine`
+.............
+
+- Fix a bug that make AWS worker hang by adding a time between each
+  collection check.
+  :pr:`447` by :user:`Lucy Leeow <lucyleeow>`.
+
+`ramp-frontend`
+...............
+
+`ramp-utils`
+............

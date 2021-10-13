@@ -17,10 +17,10 @@ from .problem import Problem
 from .score import ScoreType
 
 __all__ = [
-    'Event',
-    'EventTeam',
-    'EventAdmin',
-    'EventScoreType',
+    "Event",
+    "EventTeam",
+    "EventAdmin",
+    "EventScoreType",
 ]
 
 
@@ -125,16 +125,17 @@ class Event(Model):
     cv_folds : list of :class:`ramp_database.model.CVFold`
         A back-reference to the CV folds for the event.
     """
-    __tablename__ = 'events'
+
+    __tablename__ = "events"
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, unique=True)
     title = Column(String, nullable=False)
 
-    problem_id = Column(Integer, ForeignKey('problems.id'), nullable=False)
-    problem = relationship('Problem',
-                           backref=backref('events',
-                                           cascade='all, delete-orphan'))
+    problem_id = Column(Integer, ForeignKey("problems.id"), nullable=False)
+    problem = relationship(
+        "Problem", backref=backref("events", cascade="all, delete-orphan")
+    )
 
     max_members_per_team = Column(Integer, default=1)
     # max number of submissions in Caruana's ensemble
@@ -148,13 +149,12 @@ class Event(Model):
     is_competitive = Column(Boolean, default=False)
 
     min_duration_between_submissions = Column(Integer, default=15 * 60)
-    opening_timestamp = Column(
-        DateTime, default=datetime.datetime(2000, 1, 1, 0, 0, 0))
+    opening_timestamp = Column(DateTime, default=datetime.datetime(2000, 1, 1, 0, 0, 0))
     # before links to submissions in leaderboard are not alive
     public_opening_timestamp = Column(
-        DateTime, default=datetime.datetime(2000, 1, 1, 0, 0, 0))
-    closing_timestamp = Column(
-        DateTime, default=datetime.datetime(2100, 1, 1, 0, 0, 0))
+        DateTime, default=datetime.datetime(2100, 1, 1, 0, 0, 0)
+    )
+    closing_timestamp = Column(DateTime, default=datetime.datetime(2100, 1, 1, 0, 0, 0))
 
     # the name of the score in self.event_score_types which is used for
     # ensembling and contributivity.
@@ -177,25 +177,33 @@ class Event(Model):
     private_competition_leaderboard_html = Column(String, default=None)
 
     # big change in the database
-    ramp_sandbox_name = Column(String, nullable=False, unique=False,
-                               default='starting-kit')
+    ramp_sandbox_name = Column(
+        String, nullable=False, unique=False, default="starting-kit"
+    )
     path_ramp_submissions = Column(String, nullable=False, unique=False)
 
-    def __init__(self, problem_name, name, event_title,
-                 ramp_sandbox_name, path_ramp_submissions, session=None):
+    def __init__(
+        self,
+        problem_name,
+        name,
+        event_title,
+        ramp_sandbox_name,
+        path_ramp_submissions,
+        session=None,
+    ):
         self.name = name
         self.ramp_sandbox_name = ramp_sandbox_name
         self.path_ramp_submissions = path_ramp_submissions
         if session is None:
             self.problem = Problem.query.filter_by(name=problem_name).one()
         else:
-            self.problem = (session.query(Problem)
-                                   .filter(Problem.name == problem_name)
-                                   .one())
+            self.problem = (
+                session.query(Problem).filter(Problem.name == problem_name).one()
+            )
         self.title = event_title
 
     def __repr__(self):
-        return 'Event({})'.format(self.name)
+        return "Event({})".format(self.name)
 
     def set_n_submissions(self):
         """Set the number of submissions for the current event by checking
@@ -221,10 +229,9 @@ class Event(Model):
     def official_score_type(self):
         """:class:`ramp_database.model.EventScoreType`: The score type for the
         current event."""
-        return (EventScoreType.query
-                              .filter_by(event=self,
-                                         name=self.official_score_name)
-                              .one())
+        return EventScoreType.query.filter_by(
+            event=self, name=self.official_score_name
+        ).one()
 
     def get_official_score_type(self, session):
         """Get the type of the default score used for the current event.
@@ -238,10 +245,12 @@ class Event(Model):
         event_type_score : :class:`ramp_database.model.EventTypeScore`
             The default type score for the current event.
         """
-        return (session.query(EventScoreType)
-                       .filter(EventScoreType.event == self)
-                       .filter(EventScoreType.name == self.official_score_name)
-                       .one())
+        return (
+            session.query(EventScoreType)
+            .filter(EventScoreType.event == self)
+            .filter(EventScoreType.name == self.official_score_name)
+            .one()
+        )
 
     @property
     def official_score_function(self):
@@ -251,30 +260,58 @@ class Event(Model):
     @property
     def combined_combined_valid_score_str(self):
         """str: Convert to string the combined public score for all folds."""
-        return (None if self.combined_combined_valid_score is None
-                else str(round(self.combined_combined_valid_score,
-                               self.official_score_type.precision)))
+        return (
+            None
+            if self.combined_combined_valid_score is None
+            else str(
+                round(
+                    self.combined_combined_valid_score,
+                    self.official_score_type.precision,
+                )
+            )
+        )
 
     @property
     def combined_combined_test_score_str(self):
         """str: Convert to string the combined private score for all folds."""
-        return (None if self.combined_combined_test_score is None
-                else str(round(self.combined_combined_test_score,
-                               self.official_score_type.precision)))
+        return (
+            None
+            if self.combined_combined_test_score is None
+            else str(
+                round(
+                    self.combined_combined_test_score,
+                    self.official_score_type.precision,
+                )
+            )
+        )
 
     @property
     def combined_foldwise_valid_score_str(self):
         """str: Convert to string the combined public score for each fold."""
-        return (None if self.combined_foldwise_valid_score is None
-                else str(round(self.combined_foldwise_valid_score,
-                               self.official_score_type.precision)))
+        return (
+            None
+            if self.combined_foldwise_valid_score is None
+            else str(
+                round(
+                    self.combined_foldwise_valid_score,
+                    self.official_score_type.precision,
+                )
+            )
+        )
 
     @property
     def combined_foldwise_test_score_str(self):
         """str: Convert to string the combined public score for each fold."""
-        return (None if self.combined_foldwise_test_score is None
-                else str(round(self.combined_foldwise_test_score,
-                               self.official_score_type.precision)))
+        return (
+            None
+            if self.combined_foldwise_test_score is None
+            else str(
+                round(
+                    self.combined_foldwise_test_score,
+                    self.official_score_type.precision,
+                )
+            )
+        )
 
     @property
     def is_open(self):
@@ -297,7 +334,7 @@ class Event(Model):
     @property
     def n_jobs(self):
         """int: The number of cv fold which can be used as number of jobs."""
-        return sum(1 for cv_fold in self.cv_folds if cv_fold.type == 'live')
+        return sum(1 for cv_fold in self.cv_folds if cv_fold.type == "live")
 
     @property
     def n_participants(self):
@@ -339,27 +376,27 @@ class EventScoreType(Model):
     submissions : list of :class:`ramp_database.model.SubmissionScore`
         A back-reference of the submissions for the event/score type.
     """
-    __tablename__ = 'event_score_types'
+
+    __tablename__ = "event_score_types"
 
     id = Column(Integer, primary_key=True)
     # Can be renamed, default is the same as score_type.name
     name = Column(String, nullable=False)
 
-    event_id = Column(Integer, ForeignKey('events.id'), nullable=False)
-    event = relationship('Event',
-                         backref=backref('score_types',
-                                         cascade='all, delete-orphan'))
+    event_id = Column(Integer, ForeignKey("events.id"), nullable=False)
+    event = relationship(
+        "Event", backref=backref("score_types", cascade="all, delete-orphan")
+    )
 
-    score_type_id = Column(Integer, ForeignKey('score_types.id'),
-                           nullable=False)
-    score_type = relationship('ScoreType', backref=backref('events'))
+    score_type_id = Column(Integer, ForeignKey("score_types.id"), nullable=False)
+    score_type = relationship("ScoreType", backref=backref("events"))
 
     # display precision in n_digits
     # default is the same as score_type.precision
     precision = Column(Integer)
 
-    UniqueConstraint(event_id, score_type_id, name='es_constraint')
-    UniqueConstraint(event_id, name, name='en_constraint')
+    UniqueConstraint(event_id, score_type_id, name="es_constraint")
+    UniqueConstraint(event_id, name, name="en_constraint")
 
     def __init__(self, event, score_type_object):
         self.event = event
@@ -371,7 +408,7 @@ class EventScoreType(Model):
         self.precision = score_type_object.precision
 
     def __repr__(self):
-        return '{}: {}'.format(self.name, self.event)
+        return "{}: {}".format(self.name, self.event)
 
     @property
     def score_type_object(self):
@@ -433,19 +470,20 @@ class EventAdmin(Model):
     admin : :class:`ramp_database.model.User`
         The user instance.
     """
-    __tablename__ = 'event_admins'
+
+    __tablename__ = "event_admins"
 
     id = Column(Integer, primary_key=True)
 
-    event_id = Column(Integer, ForeignKey('events.id'), nullable=False)
-    event = relationship('Event',
-                         backref=backref('event_admins',
-                                         cascade='all, delete-orphan'))
+    event_id = Column(Integer, ForeignKey("events.id"), nullable=False)
+    event = relationship(
+        "Event", backref=backref("event_admins", cascade="all, delete-orphan")
+    )
 
-    admin_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    admin = relationship('User',
-                         backref=backref('admined_events',
-                                         cascade='all, delete-orphan'))
+    admin_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    admin = relationship(
+        "User", backref=backref("admined_events", cascade="all, delete-orphan")
+    )
 
 
 class EventTeam(Model):
@@ -489,19 +527,20 @@ class EventTeam(Model):
     submissions : list of :class:`ramp_database.model.Submission`
         A back-reference to the submissions associated with this event/team.
     """
-    __tablename__ = 'event_teams'
+
+    __tablename__ = "event_teams"
 
     id = Column(Integer, primary_key=True)
 
-    event_id = Column(Integer, ForeignKey('events.id'), nullable=False)
-    event = relationship('Event',
-                         backref=backref('event_teams',
-                                         cascade='all, delete-orphan'))
+    event_id = Column(Integer, ForeignKey("events.id"), nullable=False)
+    event = relationship(
+        "Event", backref=backref("event_teams", cascade="all, delete-orphan")
+    )
 
-    team_id = Column(Integer, ForeignKey('teams.id'), nullable=False)
-    team = relationship('Team',
-                        backref=backref('team_events',
-                                        cascade='all, delete-orphan'))
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    team = relationship(
+        "Team", backref=backref("team_events", cascade="all, delete-orphan")
+    )
 
     is_active = Column(Boolean, default=True)
     last_submission_name = Column(String, default=None)
@@ -512,7 +551,7 @@ class EventTeam(Model):
     failed_leaderboard_html = Column(String, default=None)
     new_leaderboard_html = Column(String, default=None)
 
-    UniqueConstraint(event_id, team_id, name='et_constraint')
+    UniqueConstraint(event_id, team_id, name="et_constraint")
 
     def __init__(self, event, team):
         self.event = event
@@ -520,4 +559,4 @@ class EventTeam(Model):
         self.signup_timestamp = datetime.datetime.utcnow()
 
     def __repr__(self):
-        return '{}/{}'.format(self.event, self.team)
+        return "{}/{}".format(self.event, self.team)

@@ -11,13 +11,15 @@ from ramp_database.exceptions import UnknownStateError
 
 @pytest.mark.parametrize(
     "ExceptionClass",
-    [DuplicateSubmissionError,
-     MergeTeamError,
-     MissingExtensionError,
-     MissingSubmissionFileError,
-     NameClashError,
-     TooEarlySubmissionError,
-     UnknownStateError]
+    [
+        DuplicateSubmissionError,
+        MergeTeamError,
+        MissingExtensionError,
+        MissingSubmissionFileError,
+        NameClashError,
+        TooEarlySubmissionError,
+        UnknownStateError,
+    ],
 )
 def test_exceptions(ExceptionClass):
     with pytest.raises(ExceptionClass):
@@ -26,28 +28,32 @@ def test_exceptions(ExceptionClass):
 
 @pytest.mark.parametrize(
     "ExceptionClass",
-    [DuplicateSubmissionError,
-     MergeTeamError,
-     MissingExtensionError,
-     MissingSubmissionFileError,
-     NameClashError,
-     TooEarlySubmissionError,
-     UnknownStateError]
+    [
+        DuplicateSubmissionError,
+        MergeTeamError,
+        MissingExtensionError,
+        MissingSubmissionFileError,
+        NameClashError,
+        TooEarlySubmissionError,
+        UnknownStateError,
+    ],
 )
 def test_exceptions_msg(ExceptionClass):
-    with pytest.raises(ExceptionClass, match='Some error message'):
-        raise ExceptionClass('Some error message')
+    with pytest.raises(ExceptionClass, match="Some error message"):
+        raise ExceptionClass("Some error message")
 
 
 @pytest.mark.parametrize(
     "ExceptionClass",
-    [DuplicateSubmissionError,
-     MergeTeamError,
-     MissingExtensionError,
-     MissingSubmissionFileError,
-     NameClashError,
-     TooEarlySubmissionError,
-     UnknownStateError]
+    [
+        DuplicateSubmissionError,
+        MergeTeamError,
+        MissingExtensionError,
+        MissingSubmissionFileError,
+        NameClashError,
+        TooEarlySubmissionError,
+        UnknownStateError,
+    ],
 )
 def test_exceptions_obj(ExceptionClass):
     class DummyObject:
