@@ -156,7 +156,7 @@ class Submission(Model):
 
     contributivity = Column(Float, default=0.0)
     historical_contributivity = Column(Float, default=0.0)
-  
+
     type = Column(submission_types, default="live")
     state = Column(String, default="new")
     queue_position = Column(Integer, default=-1)

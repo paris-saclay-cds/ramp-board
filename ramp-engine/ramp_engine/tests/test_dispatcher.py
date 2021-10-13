@@ -158,12 +158,10 @@ def test_unit_test_dispatcher(session_toy, Worker, dask_scheduler):
     while not dispatcher._processing_worker_queue.empty():
         dispatcher.collect_result(session_toy)
 
-    assert len(get_submissions(session_toy, 'iris_test', 'new')) == 2
-    assert (len(get_submissions(session_toy, 'iris_test', 'training_error')) ==
-            1)
-    assert len(get_submissions(session_toy, 'iris_test', 'tested')) == 2
-    assert (len(get_submissions(session_toy, 'iris_test', 'sent_to_training'))
-            == 3)
+    assert len(get_submissions(session_toy, "iris_test", "new")) == 2
+    assert len(get_submissions(session_toy, "iris_test", "training_error")) == 1
+    assert len(get_submissions(session_toy, "iris_test", "tested")) == 2
+    assert len(get_submissions(session_toy, "iris_test", "sent_to_training")) == 3
     # only 3 submissions have been trained
     for idx, (sub_id, _, _) in zip([-1, -1, -1, 1, 2, 3], submissions):
         submission = get_submission_by_id(session_toy, sub_id)

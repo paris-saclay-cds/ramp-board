@@ -153,15 +153,17 @@ class Dispatcher:
                 continue
             # create the worker
             worker = self.worker(self._worker_config, submission_name)
-            set_submission_state(session, submission_id, 'sent_to_training')
+            set_submission_state(session, submission_id, "sent_to_training")
             self._awaiting_worker_queue.put_nowait(
                 (worker, (submission_id, submission_name))
             )
             self._awaiting_submission_id.append(submission_id)
-            logger.info('Submission {} added to the queue of submission to be '
-                        'processed'.format(submission_name))
+            logger.info(
+                "Submission {} added to the queue of submission to be "
+                "processed".format(submission_name)
+            )
         update_all_user_leaderboards(
-            session, self._ramp_config['event_name'], new_only=True
+            session, self._ramp_config["event_name"], new_only=True
         )
         self._set_queue_position(session)
 
@@ -205,14 +207,14 @@ class Dispatcher:
             set_submission_state(session, submission_id, "training")
             submission = get_submission_by_id(session, submission_id)
             self._processing_worker_queue.put_nowait(
-                (worker, (submission_id, submission_name)))
-            logger.info('Store the worker {} into the processing queue'
-                        .format(worker))
+                (worker, (submission_id, submission_name))
+            )
+            logger.info("Store the worker {} into the processing queue".format(worker))
             self._awaiting_submission_id.popleft()
             submission.queue_position = -1
             session.commit()
         update_all_user_leaderboards(
-            session, self._ramp_config['event_name'], new_only=True
+            session, self._ramp_config["event_name"], new_only=True
         )
         self._set_queue_position(session)
 
