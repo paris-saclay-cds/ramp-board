@@ -280,8 +280,8 @@ The following explain the main steps to release `ramp-board`:
    (e.g., `git commit -am "bumpversion 0.5.0"`).
 3. Create a branch for this version (e.g.,
    `git checkout -b 0.<version number>.X`).
-4*. Push the new branch into the upstream remote ramp-board repository.
-5*. Create a GitHub release by clicking 'Draft a new release' `here
+4. Push the new branch into the upstream remote ramp-board repository.
+5. Create a GitHub release by clicking 'Draft a new release' `here
    <https://github.com/paris-saclay-cds/ramp-board/releases>`_. Copy the
    release notes from `whats_new
    <https://paris-saclay-cds.github.io/ramp-docs/ramp-board/dev/whats_new.html>`_.
@@ -294,7 +294,7 @@ The following explain the main steps to release `ramp-board`:
    this was performed correctly, ensure that `ramp-board/stable
    <https://github.com/paris-saclay-cds/ramp-docs/blob/master/ramp-board/stable>`_
    has the new version number.
-7*. `cd` back into the `ramp-board` code repository and ensure you are in the
+7. `cd` back into the `ramp-board` code repository and ensure you are in the
    release branch (e.g., branch `0.5.X`). Remove unnecessary files
    with `make clean-dist` then push on PyPI with `make upload-pypi`.
 8. Switch to `master` branch and run `bumpversion minor`, commit and push on
