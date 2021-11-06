@@ -3,6 +3,8 @@ This module defines different queries which are later used by the API. It
 reduces the complexity of having queries and database connection in the same
 file. Then, those queries are tested through the public API.
 """
+from typing import Optional, List
+
 from ..model import Event
 from ..model import EventAdmin
 from ..model import EventTeam
@@ -14,6 +16,7 @@ from ..model import SubmissionFileTypeExtension
 from ..model import SubmissionSimilarity
 from ..model import Team
 from ..model import User
+from ..model import UserTeam
 from ..model import Workflow
 from ..model import WorkflowElement
 from ..model import WorkflowElementType
@@ -145,6 +148,57 @@ def select_event_team_by_name(session, event_name, team_name):
     )
 
 
+def select_event_team_by_user_name(
+    session, event_name: str, user_name: str
+) -> Optional[EventTeam]:
+    """Query an event-team entry given the event and user name.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    event_name : str
+        The name of the RAMP event.
+    user_name : str
+        The name of the user.
+
+    Returns
+    -------
+    event_team : :class:`ramp_database.model.EventTeam`
+        The queried event-team.
+    """
+    event = select_event_by_name(session, event_name)
+    user = select_user_by_name(session, user_name)
+    if event is None or user is None:
+        return None
+
+    event_team = (
+        session.query(EventTeam)
+        .filter(
+            EventTeam.event == event,
+            EventTeam.team_id == UserTeam.team_id,
+            UserTeam.user == user,
+            UserTeam.status == "accepted",
+        )
+        .first()
+    )
+
+    if event_team is None:
+        # No classical team found. Fall back to individual teams
+
+        event_team = (
+            session.query(EventTeam)
+            .filter(
+                EventTeam.event == event,
+                EventTeam.team_id == Team.id,
+                Team.admin == user,
+                Team.name == user.name,
+            )
+            .one_or_none()
+        )
+    return event_team
+
+
 def select_user_by_name(session, user_name):
     """Query an user given its name.
 
@@ -201,6 +255,40 @@ def select_team_by_name(session, team_name):
     if team_name is None:
         return session.query(Team).all()
     return session.query(Team).filter(Team.name == team_name).one_or_none()
+
+
+def select_team_invites_by_user_name(
+    session, event_name: str, user_name: str
+) -> List[Team]:
+    """Query a team given its name.
+
+    Parameters
+    ----------
+    session : :class:`sqlalchemy.orm.Session`
+        The session to query the database.
+    event_name : str
+        The name of the RAMP event.
+    user_name : str
+        The user name to query.
+
+    Returns
+    -------
+    teams : a list of :class:`ramp_database.model.Team`
+        A list of team invites
+    """
+    return (
+        session.query(Team)
+        .filter(
+            EventTeam.team_id == Team.id,
+            EventTeam.event_id == Event.id,
+            Team.id == UserTeam.team_id,
+            UserTeam.user_id == User.id,
+            UserTeam.status == "asked",
+            User.name == user_name,
+            Event.name == event_name,
+        )
+        .all()
+    )
 
 
 def select_problem_by_name(session, problem_name):

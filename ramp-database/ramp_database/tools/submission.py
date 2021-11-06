@@ -3,6 +3,7 @@ import datetime
 import logging
 import os
 import shutil
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -36,7 +37,14 @@ logger = logging.getLogger("RAMP-DATABASE")
 
 # Add functions: add information to the database
 # TODO: move the queries in "_query"
-def add_submission(session, event_name, team_name, submission_name, submission_path):
+def add_submission(
+    session,
+    event_name,
+    team_name,
+    submission_name,
+    submission_path,
+    user_name: Optional[str] = None,
+):
     """Create a submission in the database and returns an handle.
 
     Parameters
@@ -53,6 +61,9 @@ def add_submission(session, event_name, team_name, submission_name, submission_p
         The path of the files associated to the current submission. It will
         corresponds to the key `ramp_kit_subissions_dir` of the dictionary
         created with :func:`ramp_utils.generate_ramp_config`.
+    user_name: str, default=None
+        Optional user name to make the submission as for non
+        individual teams. This is only used for audits.
 
     Returns
     -------
@@ -101,7 +112,10 @@ def add_submission(session, event_name, team_name, submission_name, submission_p
                 )
 
         submission = Submission(
-            name=submission_name, event_team=event_team, session=session
+            name=submission_name,
+            event_team=event_team,
+            session=session,
+            user_name=user_name,
         )
         for cv_fold in event.cv_folds:
             submission_on_cv_fold = SubmissionOnCVFold(

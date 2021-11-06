@@ -4,6 +4,7 @@ import shutil
 from ramp_database.model import Model
 from ramp_database.model import User
 from ramp_database.model import Submission
+from ramp_database.model import EventTeam
 from ramp_utils import read_config
 from ramp_utils.testing import database_config_template
 from ramp_utils.testing import ramp_config_template
@@ -15,6 +16,8 @@ from ramp_database.tools._query import (
     select_submission_by_name,
     select_submission_by_id,
     select_user_by_name,
+    select_event_team_by_user_name,
+    select_team_invites_by_user_name,
 )
 
 
@@ -82,3 +85,20 @@ def test_select_submissions_by_id(session_scope_module):
 
     res = select_submission_by_id(session, 99999)
     assert res is None
+
+
+def test_select_event_team_by_user_name(session_scope_module):
+    session = session_scope_module
+
+    res = select_event_team_by_user_name(session, "iris_test", "invalid_user")
+    assert res is None
+
+    res = select_event_team_by_user_name(session, "iris_test", "test_user_2")
+    assert isinstance(res, EventTeam)
+
+
+def test_select_team_invites_by_user_name(session_scope_module):
+    session = session_scope_module
+
+    res = select_team_invites_by_user_name(session, "iris_test", "test_user_2")
+    assert res == []
