@@ -210,8 +210,11 @@ class Event(Model):
         each team."""
         self.n_submissions = 0
         for event_team in self.event_teams:
-            # substract one for starting kit
-            self.n_submissions += len(event_team.submissions) - 1
+            if event_team.team.is_individual:
+                # substract one for starting kit
+                self.n_submissions += len(event_team.submissions) - 1
+            else:
+                self.n_submissions += len(event_team.submissions)
 
     @property
     def Predictions(self):
@@ -567,3 +570,8 @@ class EventTeam(Model):
 
     def __repr__(self):
         return "{}/{}".format(self.event, self.team)
+
+    @property
+    def is_locked(self):
+        """Check if event team is locked"""
+        return len(self.submissions) > 1

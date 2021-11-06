@@ -158,7 +158,7 @@ def setup_ramp_kit_ramp_data(
                 'it, you need to set "force=True".'
             )
         shutil.rmtree(problem_kit_path, ignore_errors=True)
-    ramp_kit_url = "https://github.com/ramp-kits/{}.git".format(problem_name)
+    ramp_kit_url = f"https://github.com/ramp-kits/{problem_name}.git"
     kwargs = {}
     if depth is not None:
         kwargs["depth"] = depth
