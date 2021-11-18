@@ -159,7 +159,7 @@ def test_rsync_download_predictions(test_rsync, caplog):
             event_config, instance_id, submission_name, folder=None
         )
     assert "Trying to download the prediction" in caplog.text
-    assert "error occured when downloading prediction" in caplog.text
+    assert "error occurred when downloading prediction" in caplog.text
 
 
 @mock.patch("ramp_engine.aws.api._rsync")
@@ -190,7 +190,7 @@ def test_rsync_upload_fails(test_rsync):
     submission_name = "test_submission"
     submissions_dir = "temp"
     out = upload_submission(event_config, instance_id, submission_name, submissions_dir)
-    assert out == 1  # error ocurred and it was caught
+    assert out == 1  # error occurred and it was caught
 
 
 @mock.patch("ramp_engine.aws.api._run")

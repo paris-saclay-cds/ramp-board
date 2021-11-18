@@ -281,7 +281,7 @@ def test_update_event(client_session):
 
     with login_scope(client, "test_iris_admin", "test") as client:
 
-        # case tha the event does not exist
+        # in case that the event does not exist
         rv = client.get("/events/boston_housing/update")
         assert rv.status_code == 302
         assert rv.location == "http://localhost/problems"

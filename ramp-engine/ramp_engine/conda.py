@@ -73,7 +73,7 @@ def _conda_ramp_test_submission(
         stderr=log_file,
     )
     if wait:
-        # Wait untill process completes. In particular, we need this call
+        # Wait until process completes. In particular, we need this call
         # to be blocking with dask, since dask has another mechanism for
         # cancelling tasks.
         proc.communicate()

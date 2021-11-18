@@ -737,7 +737,7 @@ def credit(submission_hash):
         credit_form.name_credits.append(
             (s_field, str(submission_credit), source_submission.link)
         )
-    # This doesnt work, not sure why
+    # This doesn't work, not sure why
     # if not new:
     #    credit_form.self_credit.data = str(100 - sum_credit)
     if credit_form.validate_on_submit():

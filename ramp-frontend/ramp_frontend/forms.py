@@ -62,7 +62,7 @@ class UserUpdateProfileForm(FlaskForm):
         The user's email address.
     linkedin_url : str, default == ''
         The user's LinkedIn URL.
-    twitter_url : str, defaut == ''
+    twitter_url : str, default == ''
         The user's Twitter URL.
     facebook_url : str, default == ''
         The user's Facebook URL.
@@ -116,7 +116,7 @@ class UserCreateProfileForm(UserUpdateProfileForm):
         The user's email address.
     linkedin_url : str, default == ''
         The user's LinkedIn URL.
-    twitter_url : str, defaut == ''
+    twitter_url : str, default == ''
         The user's Twitter URL.
     facebook_url : str, default == ''
         The user's Facebook URL.
