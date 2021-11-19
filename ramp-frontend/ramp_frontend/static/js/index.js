@@ -44,9 +44,8 @@ $(function() {
   ctx = $('#jumbotron-bar-chart').get(0).getContext('2d');
   option_bars = {
     showScale: false,
-    scaleShowGridLines: false,
-    scaleBeginAtZero: true,
     scaleShowGridLines: true,
+    scaleBeginAtZero: true,
     scaleGridLineColor: "rgba(0,0,0,.05)",
     scaleGridLineWidth: 1,
     scaleShowHorizontalLines: false,
