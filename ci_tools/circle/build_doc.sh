@@ -3,8 +3,8 @@ set -x
 set -e
 
 # Install dependencies with miforge
-curl -L -O https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh
-bash Mambaforge-$(uname)-$(uname -m).sh -b -p $MINIFORGE_PATH
+curl -L -O https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge-$(uname)-$(uname -m).sh
+bash Miniforge-$(uname)-$(uname -m).sh -b -p $MINIFORGE_PATH
 export PATH="$MINIFORGE_PATH/bin:$PATH"
 
 # create the environment
