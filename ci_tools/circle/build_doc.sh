@@ -2,13 +2,10 @@
 set -x
 set -e
 
-# Install dependencies with miniconda
-wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-   -O miniconda.sh
-chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-export PATH="$MINICONDA_PATH/bin:$PATH"
-conda update --yes --quiet conda
-conda config --add channels conda-forge
+# Install dependencies with miforge
+curl -L -O https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh
+bash Mambaforge-$(uname)-$(uname -m).sh -b -p $MINIFORGE_PATH
+export PATH="$MINIFORGE_PATH/bin:$PATH"
 
 # create the environment
 conda create --yes -n testenv python=3.8
