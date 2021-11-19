@@ -76,7 +76,7 @@ class AWSWorker(BaseWorker):
             else:
                 logger.error(
                     "Unable to launch instance for submission "
-                    f"{self.submission}. An error occured: {status}"
+                    f"{self.submission}. An error occurred: {status}"
                 )
                 self.status = "error"
             return
@@ -99,7 +99,7 @@ class AWSWorker(BaseWorker):
         if exit_status != 0:
             logger.error(
                 'Cannot upload submission "{}"'
-                ", an error occured".format(self.submission)
+                ", an error occurred".format(self.submission)
             )
             self.status = "error"
         else:
@@ -127,7 +127,7 @@ class AWSWorker(BaseWorker):
         if exit_status != 0:
             logger.error(
                 'Cannot start training of submission "{}"'
-                ", an error occured.".format(self.submission)
+                ", an error occurred.".format(self.submission)
             )
             self.status = "error"
         else:
