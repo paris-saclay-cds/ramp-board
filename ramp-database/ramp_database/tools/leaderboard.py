@@ -68,6 +68,7 @@ def _compute_leaderboard(
 
         df_scores_mean = df_scores.groupby("step").mean()
         df_scores_std = df_scores.groupby("step").std()
+        df_scores_std.fillna(0, inplace=True)
 
         # select only the validation and testing steps and rename them to
         # public and private
