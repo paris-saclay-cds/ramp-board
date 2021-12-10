@@ -11,6 +11,7 @@ Changelog
 ...............
 
 - Add `User.update_timestamp` database field :pr:`537`
+- Allow 1-fold cross validation :pr:`552`
 
 `ramp-engine`
 .............
