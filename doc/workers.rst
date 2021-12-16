@@ -255,7 +255,7 @@ component'. Then select:
                   git clone https://github.com/ramp-kits/{{ Challenge }}.git {{ Home }}/{{ Challenge }}
                   # next step is important if you want to use GPUs
                   sudo apt install --yes nvidia-driver-440
-                  sudo apt install --yes nvidia-utils-440  # you might want to use differnt version
+                  sudo apt install --yes nvidia-utils-440  # you might want to use different version
                   conda env update --name base --file {{ Home }}/{{ Challenge }}/environment.yml
                   pip install -r {{ Home }}/{{ Challenge }}/requirements.txt
                   pip install -r {{ Home }}/{{ Challenge }}/extra_libraries.txt
@@ -380,7 +380,7 @@ To make sure that everything works as expected it is advised that you create an
 instance from that image and connect to it through ssh.
 Check if all the expected files are there and that you can run the ramp-test
 without issues. Also, if you wish to be able to use GPU make sure that your
-python code recognizes them, you can aslo use the command::
+python code recognizes them, you can also use the command::
 
   nvidia-smi -l 3
 
@@ -474,7 +474,7 @@ Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
   instances that can be run at one time. This should fall within your
   AWS instance limit.
 * ``n_threads``: The number of threads that each worker can use. This would
-  depend on the AWS instance type you have choosen.
+  depend on the AWS instance type you have chosen.
 * ``time_between_collection``: How long, in seconds, the worker should wait
   before re-checking if the submission is ready for collection. The default is
   1 second. For AWS workers the check for collection will be done through SSH.
@@ -547,7 +547,7 @@ for more information.
    dask.distributed workers.
 
    This is necessary as some dask.distributed workers will be used for running
-   the submission, while others manage data and state sychronization.
+   the submission, while others manage data and state synchronization.
 
 
 DaskWorker setup with a remote cluster

@@ -77,7 +77,7 @@
         </div>
         Check if event admins control sign up. If not checked, any RAMP user can sign up.
         <div class="form-group">
-          <label>controled signup</label>
+          <label>controlled signup</label>
           {{ form.is_controled_signup() }}
           {% for error in form.is_controled_signup.errors %}
           <span style="color: red;">[{{ error }}]</span>

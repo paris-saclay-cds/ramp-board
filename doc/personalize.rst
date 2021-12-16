@@ -59,7 +59,7 @@ following to the main `config.yml`,
         ...
         login_instructions: "instructions A"
         sign_up_instructions: "instructions A"
-        sign_up_ask_social_media: True    # ask for social media acounts (optional)
+        sign_up_ask_social_media: True    # ask for social media accounts (optional)
 
 where ``login_instructions`` and ``sign_up_instructions`` can be either a path to an HTML
 file, or directly the HTML contents.

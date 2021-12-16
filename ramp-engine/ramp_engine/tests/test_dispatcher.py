@@ -323,7 +323,7 @@ def test_info_on_training_error(
 ):
     # make sure that the Python error from the solution is passed to the
     # dispatcher
-    # everything shoud be mocked as correct output from AWS instances
+    # everything should be mocked as correct output from AWS instances
     # on setting up the instance and loading the submission
     # mock dummy AWS instance
     class DummyInstance:

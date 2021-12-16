@@ -17,7 +17,7 @@ ensure full coverage and continuous integration in the API.
 
 Install for development
 -----------------------
-To install RAMP please fallow :ref:`install guideline <install>` making sure
+To install RAMP please follow :ref:`install guideline <install>` making sure
 that you use the ``make inplace`` option to install RAMP in developer mode.
 
 
@@ -211,7 +211,7 @@ following rules before submitting:
 
 -  Please include your operating system type and version number, as well
    as your Python, scikit-learn, numpy, and scipy versions. This information
-   can be found by runnning the following code snippet::
+   can be found by running the following code snippet::
 
     python
     import platform; print(platform.platform())

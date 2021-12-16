@@ -187,7 +187,7 @@ def _get_traceback(content):
     # was like commented line above in ramp-board
     # but there is no ---> in logs when we use
     # ramp_test_submission, so we just search for the
-    # first occurence of 'Traceback'.
+    # first occurrence of 'Traceback'.
     cut_exception_text = content.find("Traceback")
     if cut_exception_text > 0:
         content = content[cut_exception_text:]

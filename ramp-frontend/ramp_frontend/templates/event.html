@@ -81,7 +81,7 @@ messages = get_flashed_messages(with_categories=true) %} {% if messages %}
 
       <div class="iframe-container">
         <iframe src="{{ url_for('ramp.notebook', problem_name=event.problem.name) }}" name="iframe_content" ,
-          scolling="no" , onload="AdjustIframeHeightOnLoad()"></iframe>
+          scrolling="no" , onload="AdjustIframeHeightOnLoad()"></iframe>
       </div>
     </div>
   </div>

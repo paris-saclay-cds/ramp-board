@@ -547,7 +547,7 @@ def test_compute_contributivity(session_scope_module):
     )
 
     # for testing blending, we need to train a submission
-    # ouputting predictions into the submission directory
+    # outputting predictions into the submission directory
     assert_submission(
         ramp_kit_dir=ramp_kit_dir,
         ramp_data_dir=ramp_data_dir,

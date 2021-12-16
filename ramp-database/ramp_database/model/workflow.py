@@ -70,7 +70,7 @@ class WorkflowElementType(Model):
 
 
 # training and test code now belongs to the workflow, not the workflow
-# element. This latter would requre to carefully define workflow element
+# element. This latter would require to carefully define workflow element
 # interfaces. Eg, a dilemma: classifier + calibrator needs to handled at the
 # workflow level (since calibrator needs held out data). Eventually we should
 # have both workflow-level and workflow-element-level code to avoid code
