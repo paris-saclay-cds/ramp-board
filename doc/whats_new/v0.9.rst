@@ -11,6 +11,7 @@ Changelog
 ...............
 
 - Add `User.update_timestamp` database field :pr:`537`
+- Convert bagged scores to float in submission.py :pr:`555`
 
 `ramp-engine`
 .............
