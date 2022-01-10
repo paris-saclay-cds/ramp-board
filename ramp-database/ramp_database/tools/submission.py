@@ -672,10 +672,8 @@ def set_bagged_scores(session, submission_id, path_predictions):
         for step in ('valid', 'test'):
             highest_n_bag = df.index.get_level_values('n_bag').max()
             if step in df_steps:
-                score_last_bag = df.loc[(step, highest_n_bag),
-                                        score.score_name]
-                score_all_bags = (df.loc[(step, slice(None)), score.score_name]
-                                    .tolist())
+                score_last_bag = float(df.loc[(step, highest_n_bag), score.score_name])
+                score_all_bags = df.loc[(step, slice(None)), score.score_name].tolist()
             else:
                 score_last_bag = float(score.event_score_type.worst)
                 score_all_bags = None
