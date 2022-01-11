@@ -10,8 +10,8 @@ flask:
     # mail_server: smtp.gmail.com
     # mail_port: 587
     # mail_default_sender: ['RAMP admin', 'rampmailer@gmail.com']
-    # mail_username: user
-    # mail_password: password
+    mail_username: user
+    mail_password: password
     # mail_recipients: []
     # mail_use_tls: false
     # mail_use_ssl: false
