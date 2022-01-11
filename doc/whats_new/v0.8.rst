@@ -1,5 +1,19 @@
 .. _changes_0_8_1:
 
+Version 0.8.2
+=============
+*January 10, 2021*
+
+Changelog
+---------
+
+
+`ramp-database`
+...............
+
+- Convert bagged scores to float in submission.py :pr:`555`
+
+
 Version 0.8.1
 =============
 *October 6, 2021*
