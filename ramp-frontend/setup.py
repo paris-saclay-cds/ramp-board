@@ -39,7 +39,7 @@ INSTALL_REQUIRES = [
     "click",
     "Flask",
     "Flask-Login",
-    "Flask-Mailing @ https://api.github.com/repos/agramfort/flask-mailing/zipball/fix_Literal_py36",
+    "Flask-Mailing @ https://api.github.com/repos/agramfort/flask-mailing/zipball/fix_Literal_py36",  # noqa
     "Flask-SQLAlchemy",
     "Flask-WTF",
     "itsdangerous",
