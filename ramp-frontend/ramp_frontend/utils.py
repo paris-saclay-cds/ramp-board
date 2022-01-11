@@ -4,7 +4,7 @@ The :mod:`ramp_frontend.utils` provides utilities to ease sending email.
 
 import logging
 
-from flask_mail import Message
+from flask_mailing import Message
 
 from ramp_frontend import mail
 
@@ -51,7 +51,7 @@ def body_formatter_user(user):
     return body
 
 
-def send_mail(to, subject, body):
+async def send_mail(to, subject, body):
     """Send email using Flask Mail.
 
     Parameters
@@ -64,9 +64,11 @@ def send_mail(to, subject, body):
         The body of the email.
     """
     try:
-        msg = Message(subject)
-        msg.body = body
-        msg.add_recipient(to)
-        mail.send(msg)
+        msg = Message(
+            subject=subject,
+            body=body,
+            recipients=[to]
+        )
+        await mail.send_message(msg)
     except Exception as e:
         logger.error("Mailing error: {}".format(e))

@@ -243,9 +243,9 @@ def user_event(event_name):
     )
 
 
-@mod.route("/events/<event_name>/sign_up")
 @flask_login.login_required
-def sign_up_for_event(event_name):
+@mod.route("/events/<event_name>/sign_up")
+async def sign_up_for_event(event_name):
     """Landing page to sign-up to a specific RAMP event.
 
     Parameters
@@ -299,9 +299,9 @@ def sign_up_for_event(event_name):
     )
 
 
-@mod.route("/events/<event_name>/sandbox", methods=["GET", "POST"])
 @flask_login.login_required
-def sandbox(event_name):
+@mod.route("/events/<event_name>/sandbox", methods=["GET", "POST"])
+async def sandbox(event_name):
     """Landing page for the user's sandbox.
 
     Parameters
@@ -625,9 +625,9 @@ def sandbox(event_name):
     )
 
 
-@mod.route("/problems/<problem_name>/ask_for_event", methods=["GET", "POST"])
 @flask_login.login_required
-def ask_for_event(problem_name):
+@mod.route("/problems/<problem_name>/ask_for_event", methods=["GET", "POST"])
+async def ask_for_event(problem_name):
     problem = Problem.query.filter_by(name=problem_name).one_or_none()
     if problem is None:
         return redirect_to_user(

@@ -117,7 +117,7 @@ def logout():
 
 
 @mod.route("/sign_up", methods=["GET", "POST"])
-def sign_up():
+async def sign_up():
     """Sign-up request."""
     if flask_login.current_user.is_authenticated:
         session["logged_in"] = True
@@ -236,7 +236,7 @@ def delete_profile():
 
 
 @mod.route("/reset_password", methods=["GET", "POST"])
-def reset_password():
+async def reset_password():
     """Reset password of a RAMP user."""
     form = EmailForm()
     error = ""
@@ -303,7 +303,7 @@ def reset_with_token(token):
 
 
 @mod.route("/confirm_email/<token>", methods=["GET", "POST"])
-def user_confirm_email(token):
+async def user_confirm_email(token):
     """Confirm a user account using his email address and a token to approve.
 
     Parameters

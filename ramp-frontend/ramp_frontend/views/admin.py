@@ -42,9 +42,9 @@ mod = Blueprint("admin", __name__)
 logger = logging.getLogger("RAMP-FRONTEND")
 
 
-@mod.route("/approve_users", methods=["GET", "POST"])
 @flask_login.login_required
-def approve_users():
+@mod.route("/approve_users", methods=["GET", "POST"])
+async def approve_users():
     """Approve new user to log-in and sign-up to events."""
     if not flask_login.current_user.access_level == "admin":
         return redirect_to_user(

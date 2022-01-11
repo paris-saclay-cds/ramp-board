@@ -3,7 +3,7 @@ import os
 
 from flask import Flask
 from flask_login import LoginManager
-from flask_mail import Mail
+from flask_mailing import Mail
 from flask_sqlalchemy import SQLAlchemy
 
 from ramp_database.model import Model
