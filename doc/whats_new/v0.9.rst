@@ -1,26 +1,15 @@
 .. _changes_0_9:
 
-Version 0.9 (ongoing)
-=====================
+Version 0.9
+===========
+
+January 2022
 
 Changelog
 ---------
-
 
 `ramp-database`
 ...............
 
 - Add `User.update_timestamp` database field :pr:`537`
 - Convert bagged scores to float in submission.py :pr:`555`
-
-`ramp-engine`
-.............
-
-
-`ramp-frontend`
-...............
-
-
-
-`ramp-utils`
-............
