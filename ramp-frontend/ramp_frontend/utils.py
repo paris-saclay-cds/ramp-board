@@ -64,11 +64,7 @@ async def send_mail(to, subject, body):
         The body of the email.
     """
     try:
-        msg = Message(
-            subject=subject,
-            body=body,
-            recipients=[to]
-        )
+        msg = Message(subject=subject, body=body, recipients=[to])
         await mail.send_message(msg)
     except Exception as e:
         logger.error("Mailing error: {}".format(e))
