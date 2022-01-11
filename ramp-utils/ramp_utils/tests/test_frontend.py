@@ -24,7 +24,7 @@ def test_generate_flask_config(config):
         "TESTING": False,
         "MAIL_SERVER": "localhost",
         "MAIL_PORT": 8025,
-        "MAIL_DEFAULT_SENDER": ["RAMP admin", "rampmailer@localhost.com"],
+        "MAIL_DEFAULT_SENDER": "rampmailer@localhost.com",
         "SIGN_UP_ASK_SOCIAL_MEDIA": False,
         "SIGN_UP_INSTRUCTIONS": None,
         "SQLALCHEMY_TRACK_MODIFICATIONS": False,

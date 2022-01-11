@@ -6,7 +6,7 @@ flask:
     # we give an example to use SMTP and gmail client
     mail_server: localhost
     mail_port: 8025
-    mail_default_sender: ['RAMP admin', 'rampmailer@localhost.com']
+    mail_default_sender: 'rampmailer@localhost.com'
     # mail_server: smtp.gmail.com
     # mail_port: 587
     # mail_default_sender: ['RAMP admin', 'rampmailer@gmail.com']

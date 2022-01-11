@@ -59,7 +59,7 @@ This config file should look like::
         secret_key: abcdefghijkl
         mail_server: smtp.gmail.com
         mail_port: 587
-        mail_default_sender: ['RAMP admin', 'rampmailer@gmail.com']
+        mail_default_sender: 'rampmailer@gmail.com'
         mail_username: user
         mail_password: password
         mail_recipients: []
