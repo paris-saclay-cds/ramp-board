@@ -4,6 +4,7 @@ The :mod:`ramp_frontend.utils` provides utilities to ease sending email.
 
 import logging
 
+from flask import copy_current_request_context, current_app
 from flask_mail import Message
 
 from ramp_frontend import mail
@@ -67,6 +68,6 @@ def send_mail(to, subject, body):
         msg = Message(subject)
         msg.body = body
         msg.add_recipient(to)
-        mail.send(msg)
+        current_app.pool.submit(copy_current_request_context(mail.send), msg)
     except Exception as e:
         logger.error("Mailing error: {}".format(e))

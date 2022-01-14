@@ -1,5 +1,6 @@
 from logging.config import dictConfig
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 from flask import Flask
 from flask_login import LoginManager
@@ -58,6 +59,8 @@ def create_app(config):
 
     app = Flask("ramp-frontend", root_path=HERE)
     app.config.update(config)
+
+    app.pool = ThreadPoolExecutor(max_workers=2)  # XXX config max_workers
 
     with app.app_context():
         db.init_app(app)
