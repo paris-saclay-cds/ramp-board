@@ -64,10 +64,16 @@ def send_mail(to, subject, body):
     body : str
         The body of the email.
     """
-    try:
-        msg = Message(subject)
-        msg.body = body
-        msg.add_recipient(to)
-        current_app.pool.submit(copy_current_request_context(mail.send), msg)
-    except Exception as e:
-        logger.error("Mailing error: {}".format(e))
+    msg = Message(subject)
+    msg.body = body
+    msg.add_recipient(to)
+
+    def send(msg):
+        try:
+            mail.send(msg)
+        except Exception as e:
+            logger.error("Mailing error: {}".format(e))
+
+    current_app.pool.submit(
+        copy_current_request_context(send), msg
+    )
