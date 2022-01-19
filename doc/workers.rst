@@ -68,6 +68,66 @@ You can update an existing environment with the following::
 
       ~/ramp_deployment $ ramp setup update-conda-env --event-config events/iris_test/config.yml
 
+Event configuration
+^^^^^^^^^^^^^^^^^^^
+
+Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
+'worker' section, which should look something like::
+
+      ramp:
+          problem_name: iris
+          event_name: iris_ramp_test
+          event_title: "Iris classification challenge"
+          event_is_public: true
+      worker:
+          worker_type: conda
+          conda_env: ramp-iris
+          kit_dir: /home/ramp/ramp_deployment/ramp-kits/iris
+          data_dir: /home/ramp/ramp_deployment/ramp-data/iris/data
+          submissions_dir: /home/ramp/ramp_deployment/events/iris/submissions
+          logs_dir: /home/ramp/ramp_deployment/events/iris/logs
+          predictions_dir: /home/ramp/ramp_deployment/events/iris/predictions
+          timeout: 14400
+      dispatcher:
+          hunger_policy: sleep
+          n_workers: 2
+          n_threads: 2
+          time_between_collection: 1
+
+**Worker configuration**
+
+* ``conda_env``: the name of the conda environment to use. If not specified,
+  the base environment will be used.
+* ``kit_dir``: path to the directory of the RAMP kit.
+* ``data_dir``: path to the directory of the data.
+* ``submissions_dir``: path to the directory containing the submissions.
+* ``logs_dir``: path to the directory where the log of the submission 
+  will be stored.
+* ``predictions_dir``: path to the directory where the predictions of the 
+  submission will be stored.
+* ``timeout``: timeout after a given number of seconds when running the worker.
+  If not provided, a default of 7200 is used.
+
+.. _conda_dispatcher:
+
+**dispatcher configuration**
+
+* ``hunger_policy``: Policy to apply in case that there is no anymore workers
+  to be processed. One of `None`, 'sleep' or 'exit', default is `None`:
+
+    * if `None`: the dispatcher will work without interruption;
+    * if 'sleep': the dispatcher will sleep for 5 seconds before to check
+      for new submission;
+    * if 'exit': the dispatcher will stop after collecting the results of
+      the last submissions.
+
+* ``n_workers``: Maximum number of workers that can run submissions
+  simultaneously.
+* ``n_threads``: The number of threads that each worker can use.
+* ``time_between_collection``: How long, in seconds, the worker should wait
+  before re-checking if the submission is ready for collection. The default is
+  1 second.
+
 Running submissions on Amazon Web Services (AWS)
 ------------------------------------------------
 
