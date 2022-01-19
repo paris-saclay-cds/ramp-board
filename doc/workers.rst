@@ -77,7 +77,7 @@ Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
       ramp:
           problem_name: iris
           event_name: iris_ramp_test
-          event_title: "iris ramp conda test"
+          event_title: "Iris classification challenge"
           event_is_public: true
       worker:
           worker_type: conda
