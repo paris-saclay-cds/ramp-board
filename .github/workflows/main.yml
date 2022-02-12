@@ -17,10 +17,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-18.04]
-        python: [3.7, 3.8, 3.9]
+        os: [ubuntu-20.04]
+        python: ["3.7", "3.8", "3.9", "3.10"]
         include:
-          - os: ubuntu-18.04
+          - os: ubuntu-20.04
             python: 3.8
             # the following has no effect with manual trigger
             # where the ramp-workflow is specified anyway

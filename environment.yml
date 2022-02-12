@@ -5,26 +5,25 @@ dependencies:
   - bokeh
   - boto3
   - click
+  - codecov
+  - email-validator
   - flake8
   - Flask
   - Flask-Login
+  - flask-mail
   - Flask-SQLAlchemy
+  - flask-wtf
   - gitpython
   - itsdangerous
   - nbconvert
   - numpy
   - pandas
   - pip
+  - psycopg2
   - pyyaml
   - pytest
   - pytest-cov
   - scikit-image
   - sqlalchemy
   - pip:
-    - codecov
     - ramp-workflow
-    - psycopg2-binary
-    - Flask-Mail
-    - Flask-Wtf  # install from conda default channel when 0.14.3 is available
-    - wtforms[email]
-    - email_validator

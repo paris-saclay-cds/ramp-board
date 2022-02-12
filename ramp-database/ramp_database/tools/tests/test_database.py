@@ -52,7 +52,7 @@ def test_check_extension(session_scope_function):
 def test_check_submission_file_type(session_scope_function):
     name = "my own type"
     is_editable = False
-    max_size = 10 ** 5
+    max_size = 10**5
     add_submission_file_type(session_scope_function, name, is_editable, max_size)
     sub_file_type = get_submission_file_type(session_scope_function, name)
     assert sub_file_type.name == name
@@ -70,7 +70,7 @@ def test_check_submission_file_type_extension(session_scope_function):
     add_extension(session_scope_function, extension_name)
     type_name = "my own type"
     is_editable = False
-    max_size = 10 ** 5
+    max_size = 10**5
     add_submission_file_type(session_scope_function, type_name, is_editable, max_size)
 
     add_submission_file_type_extension(
