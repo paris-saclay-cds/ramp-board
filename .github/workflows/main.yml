@@ -52,9 +52,10 @@ jobs:
 
       - name: Create envs
         run: |
-          conda create --yes -n testenv python=$PYTHON_VERSION
-          conda env update -n testenv -f environment.yml
-          conda env create -f ci_tools/environment_iris_kit.yml
+          conda install --yes mamba -n base -c conda-forge
+          mamba create --yes -n testenv python=$PYTHON_VERSION -c conda-forge
+          mamba env update -n testenv -f environment.yml -c conda-forge
+          mamba env create -f ci_tools/environment_iris_kit.yml -c conda-forge
         env:
           PYTHON_VERSION: ${{ matrix.python }}
 
