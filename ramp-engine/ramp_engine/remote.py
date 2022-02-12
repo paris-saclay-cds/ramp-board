@@ -219,7 +219,7 @@ class DaskWorker(BaseWorker):
         cmd_ramp = os.path.join(self._python_bin_path, "ramp-test")
         if self.status == "running":
             raise ValueError(
-                "Wait that the submission is processed before to " "launch a new one."
+                "Wait that the submission is processed before to launch a new one."
             )
 
         self._log_dir = os.path.join(self.config["logs_dir"], self.submission)

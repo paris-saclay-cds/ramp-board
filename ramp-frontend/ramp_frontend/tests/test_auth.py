@@ -264,7 +264,7 @@ def test_sign_up(client_session):
     _assert_flash(
         "/sign_up",
         data=user_profile,
-        message=("username is already in use " "and email is already in use"),
+        message=("username is already in use and email is already in use"),
     )
 
 
@@ -435,7 +435,7 @@ def test_reset_password(client_session):
     with client.session_transaction() as cs:
         flash_message = dict(cs["_flashes"])
     assert flash_message["message"] == (
-        "An email to reset your password has " "been sent"
+        "An email to reset your password has been sent"
     )
     assert rv.status_code == 302
     assert rv.location == "http://localhost/login"

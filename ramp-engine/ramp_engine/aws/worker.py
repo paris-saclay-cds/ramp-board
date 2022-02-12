@@ -113,7 +113,7 @@ class AWSWorker(BaseWorker):
         Amazon instance.
         """
         if self.status == "running":
-            raise RuntimeError("Cannot launch submission: one is already " "started")
+            raise RuntimeError("Cannot launch submission: one is already started")
         if self.status == "error":
             raise RuntimeError("Cannot launch submission: the setup failed")
         try:
@@ -167,7 +167,7 @@ class AWSWorker(BaseWorker):
             self.status = "finished"
         if self.status != "finished":
             raise ValueError(
-                "Cannot collect results if worker is not" "'running' or 'finished'"
+                "Cannot collect results if worker is not 'running' or 'finished'"
             )
 
         logger.info("Collecting submission '{}'".format(self.submission))
