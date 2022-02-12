@@ -104,19 +104,19 @@ def init_event(name, deployment_dir, force):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file in YAML format containing the database " "information",
+    help="Configuration file in YAML format containing the database information",
 )
 @click.option(
     "--event-config",
     default="config.yml",
     show_default=True,
-    help="Configuration file in YAML format containing the RAMP " "information",
+    help="Configuration file in YAML format containing the RAMP information",
 )
 @click.option(
     "--cloning/--no-cloning",
     default=True,
     show_default=True,
-    help="Whether or not to clone the RAMP kit and data " "repositories.",
+    help="Whether or not to clone the RAMP kit and data repositories.",
 )
 @click.option(
     "--force",
@@ -136,13 +136,13 @@ def deploy_event(config, event_config, cloning, force):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file in YAML format containing the database " "information",
+    help="Configuration file in YAML format containing the database information",
 )
 @click.option(
     "--event-config",
     default="config.yml",
     show_default=True,
-    help="Configuration file in YAML format containing the RAMP " "information",
+    help="Configuration file in YAML format containing the RAMP information",
 )
 def create_conda_env(config, event_config):
     """Create the conda environment for a specific event"""
@@ -168,7 +168,7 @@ def create_conda_env(config, event_config):
     "--event-config",
     default="config.yml",
     show_default=True,
-    help="Configuration file in YAML format containing the RAMP " "information",
+    help="Configuration file in YAML format containing the RAMP information",
 )
 def update_conda_env(event_config):
     """Update the conda environment for a specific event"""

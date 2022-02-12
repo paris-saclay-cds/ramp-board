@@ -67,7 +67,7 @@ def create_app(config):
         # register the login manager
         login_manager.init_app(app)
         login_manager.login_view = "auth.login"
-        login_manager.login_message = "Please log in or sign up to access " "this page."
+        login_manager.login_message = "Please log in or sign up to access this page."
         # register the email manager
         mail.init_app(app)
         # register our blueprint

@@ -1,6 +1,8 @@
 # This environment installed only the required packages for testing the
 # iris ramp-kit
 name: ramp-iris
+channels:
+  - conda-forge
 dependencies:
   - numpy
   - scikit-learn

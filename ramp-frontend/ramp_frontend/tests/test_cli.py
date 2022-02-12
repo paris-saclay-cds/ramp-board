@@ -47,4 +47,4 @@ def test_test_launch(make_toy_db):
     time.sleep(5)
     proc.send_signal(signal.SIGINT)
     stdout, _ = proc.communicate()
-    assert b'Serving Flask app "ramp-frontend"' in stdout
+    assert b"Serving Flask app 'ramp-frontend'" in stdout

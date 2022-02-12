@@ -289,7 +289,7 @@ def reset_with_token(token):
     if form.validate_on_submit():
         user = User.query.filter_by(email=email).one_or_none()
         if user is None:
-            logger.error("The error was deleted before resetting his/her " "password")
+            logger.error("The error was deleted before resetting his/her password")
             abort(404)
         (
             User.query.filter_by(email=email).update(

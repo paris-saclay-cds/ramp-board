@@ -33,7 +33,7 @@ def setup_db(config):
         the database.
     """
     # create the URL from the configuration
-    db_url = URL(**config)
+    db_url = URL.create(**config)
     db = create_engine(db_url)
     Session = sessionmaker(db)
     # Link the relational model to the database

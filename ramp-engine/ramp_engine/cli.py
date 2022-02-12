@@ -24,7 +24,7 @@ def main():
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file in YAML format containing the database " "information.",
+    help="Configuration file in YAML format containing the database information.",
 )
 @click.option(
     "--events-dir",
@@ -58,12 +58,12 @@ def daemon(config, events_dir, verbose):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file in YAML format containing the database " "information.",
+    help="Configuration file in YAML format containing the database information.",
 )
 @click.option(
     "--event-config",
     show_default=True,
-    help="Configuration file in YAML format containing the RAMP " "event information.",
+    help="Configuration file in YAML format containing the RAMP event information.",
 )
 @click.option("-v", "--verbose", count=True)
 def dispatcher(config, event_config, verbose):
@@ -112,7 +112,7 @@ def dispatcher(config, event_config, verbose):
     "--event-config",
     default="config.yml",
     show_default=True,
-    help="Configuration file in YAML format containing the RAMP " "event information.",
+    help="Configuration file in YAML format containing the RAMP event information.",
 )
 @click.option("--submission", help="The submission name")
 @click.option("-v", "--verbose", is_flag=True)
