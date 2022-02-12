@@ -1,5 +1,7 @@
 # This is the testing environment.
 name: testenv
+channels:
+  - conda-forge
 dependencies:
   - bcrypt
   - bokeh
