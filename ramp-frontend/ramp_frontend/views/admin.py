@@ -62,11 +62,6 @@ def approve_users():
                                asked_sign_up=asked_sign_up,
                                admin=True)
     elif request.method == 'POST':
-        users_to_be_approved = request.form.getlist('approve_users')
-        event_teams_to_be_approved = request.form.getlist(
-            'approve_event_teams'
-        )
-    elif request.method == "POST":
         send_mail_with_context = copy_current_request_context(send_mail)
         users_to_be_approved = request.form.getlist("approve_users")
         event_teams_to_be_approved = request.form.getlist("approve_event_teams")
@@ -80,9 +75,6 @@ def approve_users():
                 body = ('{}, your account has been approved. You can now '
                         'sign-up for any open RAMP event.'
                         .format(user.name))
-                send_mail(
-                    to=user.email, subject=subject, body=body
-                )
                 send_mail_with_context(to=user.email, subject=subject, body=body)
             elif request.form["submit_button"] == "Remove!":
                 delete_user(db.session, asked_user)
@@ -101,20 +93,6 @@ def approve_users():
 
                 subject = ('Signed up for the RAMP event {}'
                            .format(asked_event_team.event.name))
-                body = ('{}, you have been registered to the RAMP event {}. '
-                        'You can now proceed to your sandbox and make '
-                        'submissions.\nHave fun!!!'
-                        .format(user.name, asked_event_team.event.name))
-                send_mail(
-                    to=user.email, subject=subject, body=body
-                )
-                body = (
-                    "{}, you have been registered to the RAMP event {}. "
-                    "You can now proceed to your sandbox and make "
-                    "submissions.\nHave fun!!!".format(
-                        user.name, asked_event_team.event.name
-                    )
-                )
                 send_mail_with_context(to=user.email, subject=subject, body=body)
             elif request.form["submit_button"] == "Remove!":
                 delete_event_team(

@@ -347,6 +347,10 @@ def user_confirm_email(token):
         subject = 'Approve registration of {}'.format(
             user.name
         )
+        body = body_formatter_user(user)
+        url_approve = "http://{}/sign_up/{}".format(
+            app.config["DOMAIN_NAME"], user.name
+        )
         body += "Click on the link to approve the registration "
         body += "of this user: {}".format(url_approve)
         send_mail_with_context(admin.email, subject, body)
