@@ -2,8 +2,6 @@ import shutil
 
 import pytest
 
-from flask import copy_current_request_context
-
 from ramp_utils import generate_flask_config
 from ramp_utils import read_config
 from ramp_utils.testing import database_config_template
@@ -17,10 +15,7 @@ from ramp_database.utils import session_scope
 from ramp_database.tools.user import get_user_by_name
 
 from ramp_frontend import create_app
-from ramp_frontend import mail
 from ramp_frontend.utils import body_formatter_user
-from ramp_frontend.utils import send_mail
-from ramp_frontend.testing import _fail_no_smtp_server
 
 
 @pytest.fixture(scope="module")
