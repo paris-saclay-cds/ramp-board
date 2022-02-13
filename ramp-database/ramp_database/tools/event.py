@@ -1,6 +1,7 @@
 import logging
 import os
 
+from sqlalchemy import true
 from sqlalchemy.orm.exc import NoResultFound
 
 from ramp_utils.utils import import_module_from_source
@@ -478,7 +479,12 @@ def get_cv_fold_by_event(session, event):
     -------
     cv fold : : list of all cv folds of this event
     """
-    return session.query(CVFold).filter(EventScoreType.event_id == event.id).all()
+    return (
+        session.query(CVFold)
+        .join(EventScoreType, true())
+        .filter(EventScoreType.event_id == event.id)
+        .all()
+    )
 
 
 def get_score_type_by_event(session, event):
