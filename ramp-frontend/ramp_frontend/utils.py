@@ -33,6 +33,23 @@ def ensure_threadpoolexecutor_is_running(pool):
         return ThreadPoolExecutor(max_workers=pool._max_workers)
 
 
+def ensure_threadpoolexecutor_is_running(pool):
+    """Ensure that the threadpool executor is running.
+
+    Parameters
+    ----------
+    pool : :class:`concurrent.futures.ThreadPoolExecutor`
+        The threadpool executor.
+    """
+    try:
+        pool.submit(lambda: None)
+        return pool
+    except RuntimeError:
+        logger.info("Threadpool executor is not running")
+        pool.shutdown(wait=False)
+        return ThreadPoolExecutor(max_workers=pool._max_workers)
+
+
 def body_formatter_user(user):
     """Create the body of an email using the user information.
 
