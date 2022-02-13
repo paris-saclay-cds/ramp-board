@@ -1,12 +1,23 @@
 .. _changes_0_8_1:
 
+Version 0.8.3
+=============
+*February 13, 2021*
+
+Changelog
+---------
+
+`ramp-frontend`
+...............
+
+- Use a `ThreadPoolExecutor` to send async emails :pr:`557`
+
 Version 0.8.2
 =============
 *January 10, 2021*
 
 Changelog
 ---------
-
 
 `ramp-database`
 ...............
