@@ -2,6 +2,8 @@ import shutil
 
 import pytest
 
+from flask import copy_current_request_context
+
 from ramp_utils import generate_flask_config
 from ramp_utils import read_config
 from ramp_utils.testing import database_config_template
@@ -51,7 +53,10 @@ def test_send_mail(client_session):
     client, _ = client_session
     with client.application.app_context():
         with mail.record_messages() as outbox:
-            send_mail("xx@gmail.com", "subject", "body")
+            send_mail_with_context = copy_current_request_context(send_mail)
+            send_mail_with_context("xx@gmail.com", "subject", "body")
+            # shutdown the threadpool and wait for the future (email) to be sent
+            client.application.pool.shutdown(wait=True)
             assert len(outbox) == 1
             assert outbox[0].subject == "subject"
             assert outbox[0].body == "body"

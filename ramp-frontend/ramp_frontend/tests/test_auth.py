@@ -288,6 +288,8 @@ def test_sign_up_with_approval(client_session):
                 flash_message = dict(cs["_flashes"])
             assert "We sent a confirmation email." in flash_message["message"]
             # check that the email has been sent
+            # shutdown the threadpool and wait for the future (email) to be sent
+            client.application.pool.shutdown(wait=True)
             assert len(outbox) == 1
             assert "Click on the following link to confirm your email" in outbox[0].body
             # get the link to reset the password
@@ -316,6 +318,8 @@ def test_sign_up_with_approval(client_session):
                 in flash_message["message"]
             )
             # check that we send an email to the administrator
+            # shutdown the threadpool and wait for the future (email) to be sent
+            client.application.pool.shutdown(wait=True)
             assert len(outbox) == 1
             assert "Approve registration of new_user_1" in outbox[0].subject
             # ensure that we have the last changes
@@ -441,6 +445,8 @@ def test_reset_password(client_session):
     with client.application.app_context():
         with mail.record_messages() as outbox:
             rv = client.post("/reset_password", data={"email": user.email})
+            # shutdown the threadpool and wait for the future (email) to be sent
+            client.application.pool.shutdown(wait=True)
             assert len(outbox) == 1
             assert "click on the link to reset your password" in outbox[0].body
             # get the link to reset the password
@@ -482,6 +488,8 @@ def test_reset_token_error(client_session):
     with client.application.app_context():
         with mail.record_messages() as outbox:
             rv = client.post("/reset_password", data={"email": user.email})
+            # shutdown the threadpool and wait for the future (email) to be sent
+            client.application.pool.shutdown(wait=True)
             assert len(outbox) == 1
             assert "click on the link to reset your password" in outbox[0].body
             # get the link to reset the password

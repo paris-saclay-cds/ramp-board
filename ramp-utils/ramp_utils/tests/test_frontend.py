@@ -34,6 +34,7 @@ def test_generate_flask_config(config):
         "TRACK_USER_INTERACTION": True,
         "TRACK_CREDITS": True,
         "DOMAIN_NAME": "localhost",
+        "THREADPOOL_MAX_WORKERS": 2,
     }
     assert flask_config == expected_config
 
