@@ -2,17 +2,18 @@ from .config_parser import read_config
 
 
 DEFAULT_CONFIG = {
-    'WTF_CSRF_ENABLED': True,
-    'LOG_FILENAME': 'None',
-    'MAX_CONTENT_LENGTH': 1073741824,
-    'SQLALCHEMY_TRACK_MODIFICATIONS': False,
-    'TRACK_USER_INTERACTION': False,
-    'TRACK_CREDITS': False,
-    'DOMAIN_NAME': 'localhost',
-    'LOGIN_INSTRUCTIONS': None,
-    'SIGN_UP_INSTRUCTIONS': None,
-    'SIGN_UP_ASK_SOCIAL_MEDIA': False,
-    'PRIVACY_POLICY_PAGE': None
+    "WTF_CSRF_ENABLED": True,
+    "LOG_FILENAME": "None",
+    "MAX_CONTENT_LENGTH": 1073741824,
+    "SQLALCHEMY_TRACK_MODIFICATIONS": False,
+    "TRACK_USER_INTERACTION": False,
+    "TRACK_CREDITS": False,
+    "DOMAIN_NAME": "localhost",
+    "LOGIN_INSTRUCTIONS": None,
+    "SIGN_UP_INSTRUCTIONS": None,
+    "SIGN_UP_ASK_SOCIAL_MEDIA": False,
+    "PRIVACY_POLICY_PAGE": None,
+    "THREADPOOL_MAX_WORKERS": 2,
 }
 
 

@@ -4,6 +4,7 @@ import logging
 import flask_login
 
 from flask import Blueprint
+from flask import copy_current_request_context
 from flask import flash
 from flask import redirect
 from flask import render_template
@@ -65,6 +66,10 @@ def approve_users():
         event_teams_to_be_approved = request.form.getlist(
             'approve_event_teams'
         )
+    elif request.method == "POST":
+        send_mail_with_context = copy_current_request_context(send_mail)
+        users_to_be_approved = request.form.getlist("approve_users")
+        event_teams_to_be_approved = request.form.getlist("approve_event_teams")
         message = "{}d users:\n".format(request.form["submit_button"][:-1])
         for asked_user in users_to_be_approved:
             user = select_user_by_name(db.session, asked_user)
@@ -78,6 +83,7 @@ def approve_users():
                 send_mail(
                     to=user.email, subject=subject, body=body
                 )
+                send_mail_with_context(to=user.email, subject=subject, body=body)
             elif request.form["submit_button"] == "Remove!":
                 delete_user(db.session, asked_user)
             message += "{}\n".format(asked_user)
@@ -102,6 +108,14 @@ def approve_users():
                 send_mail(
                     to=user.email, subject=subject, body=body
                 )
+                body = (
+                    "{}, you have been registered to the RAMP event {}. "
+                    "You can now proceed to your sandbox and make "
+                    "submissions.\nHave fun!!!".format(
+                        user.name, asked_event_team.event.name
+                    )
+                )
+                send_mail_with_context(to=user.email, subject=subject, body=body)
             elif request.form["submit_button"] == "Remove!":
                 delete_event_team(
                     db.session, asked_event_team.event.name,
@@ -183,12 +197,14 @@ def approve_sign_up_for_event(event_name, user_name):
                                 .format(event_name, user_name), is_error=True)
     sign_up_team(db.session, event.name, user.name)
 
-    subject = ('Signed up for the RAMP event {}'
-               .format(event.name))
-    body = ('{}, you have been registered to the RAMP event {}. '
-            'You can now proceed to your sandbox and make submissions.'
-            '\nHave fun!!!'.format(user.name, event.name))
-    send_mail(to=user.email, subject=subject, body=body)
+    subject = "Signed up for the RAMP event {}".format(event.name)
+    body = (
+        "{}, you have been registered to the RAMP event {}. "
+        "You can now proceed to your sandbox and make submissions."
+        "\nHave fun!!!".format(user.name, event.name)
+    )
+    send_mail_with_context = copy_current_request_context(send_mail)
+    send_mail_with_context(to=user.email, subject=subject, body=body)
 
     return redirect_to_user('{} is signed up for {}.'.format(user, event),
                             is_error=False, category='Successful sign-up')

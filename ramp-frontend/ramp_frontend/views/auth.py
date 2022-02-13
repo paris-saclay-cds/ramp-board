@@ -6,6 +6,7 @@ import flask_login
 
 from flask import abort
 from flask import Blueprint
+from flask import copy_current_request_context
 from flask import current_app as app
 from flask import flash
 from flask import redirect
@@ -151,6 +152,7 @@ def sign_up():
             logger.info(str(e))
             return redirect(url_for('auth.sign_up'))
         # send an email to the participant such that he can confirm his email
+        send_mail_with_context = copy_current_request_context(send_mail)
         token = ts.dumps(user.email)
         recover_url = url_for(
             'auth.user_confirm_email', token=token, _external=True
@@ -162,11 +164,9 @@ def sign_up():
                 'administrator.\n\n'
                 .format(user.firstname))
         body += recover_url
-        body += '\n\nSee you on the RAMP website!'
-        send_mail(user.email, subject, body)
-        logger.info(
-            '{} has signed-up to RAMP'.format(user.name)
-        )
+        body += "\n\nSee you on the RAMP website!"
+        send_mail_with_context(user.email, subject, body)
+        logger.info("{} has signed-up to RAMP".format(user.name))
         flash(
             "We sent a confirmation email. Go read your email and click on "
             "the confirmation link"
@@ -258,11 +258,10 @@ def reset_password():
             body = ('Hi {}, \n\nclick on the link to reset your password:\n'
                     .format(user.firstname))
             body += recover_url
-            body += '\n\nSee you on the RAMP website!'
-            send_mail(user.email, subject, body)
-            logger.info(
-                'Password reset requested for user {}'.format(user.name)
-            )
+            body += "\n\nSee you on the RAMP website!"
+            send_mail_with_context = copy_current_request_context(send_mail)
+            send_mail_with_context(user.email, subject, body)
+            logger.info("Password reset requested for user {}".format(user.name))
             logger.info(recover_url)
             flash('An email to reset your password has been sent')
             return redirect(url_for('auth.login'))
@@ -342,17 +341,15 @@ def user_confirm_email(token):
         return redirect(url_for('general.index'))
     User.query.filter_by(email=email).update({'access_level': 'asked'})
     db.session.commit()
-    admin_users = User.query.filter_by(access_level='admin')
+    admin_users = User.query.filter_by(access_level="admin")
+    send_mail_with_context = copy_current_request_context(send_mail)
     for admin in admin_users:
         subject = 'Approve registration of {}'.format(
             user.name
         )
-        body = body_formatter_user(user)
-        url_approve = ('http://{}/sign_up/{}'
-                       .format(app.config['DOMAIN_NAME'], user.name))
-        body += 'Click on the link to approve the registration '
-        body += 'of this user: {}'.format(url_approve)
-        send_mail(admin.email, subject, body)
+        body += "Click on the link to approve the registration "
+        body += "of this user: {}".format(url_approve)
+        send_mail_with_context(admin.email, subject, body)
     flash(
         "An email has been sent to the RAMP administrator(s) who will "
         "approve your account"
