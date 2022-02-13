@@ -356,12 +356,14 @@ def test_check_time(session_scope_module):
     set_time(session_scope_module, submission_id, path_results)
     submission_time = get_time(session_scope_module, submission_id)
     expected_df = pd.DataFrame(
-        {'fold': [0, 1],
-         'train': [0.032130, 0.002414],
-         'valid': [0.000583648681640625, 0.000548362731933594],
-         'test': [0.000515460968017578, 0.000481128692626953]}
-    ).set_index('fold')
-    assert_frame_equal(submission_time, expected_df, check_less_precise=True)
+        {
+            "fold": [0, 1],
+            "train": [0.032130, 0.002414],
+            "valid": [0.000583648681640625, 0.000548362731933594],
+            "test": [0.000515460968017578, 0.000481128692626953],
+        }
+    ).set_index("fold")
+    assert_frame_equal(submission_time, expected_df)
 
 
 def test_check_scores(session_scope_module):
@@ -380,7 +382,7 @@ def test_check_scores(session_scope_module):
          'f1_70': [0.333333, 0.33333, 0.666667, 0.33333, 0.33333, 0.666667]},
         index=multi_index
     )
-    assert_frame_equal(scores, expected_df, check_less_precise=True)
+    assert_frame_equal(scores, expected_df)
 
 
 def test_check_bagged_scores(session_scope_module):
@@ -400,8 +402,8 @@ def test_check_bagged_scores(session_scope_module):
                    0.33333333333]},
         index=multi_index
     )
-    expected_df.columns = expected_df.columns.rename('scores')
-    assert_frame_equal(scores, expected_df, check_less_precise=True)
+    expected_df.columns = expected_df.columns.rename("scores")
+    assert_frame_equal(scores, expected_df)
 
 
 def test_check_submission_max_ram(session_scope_module):

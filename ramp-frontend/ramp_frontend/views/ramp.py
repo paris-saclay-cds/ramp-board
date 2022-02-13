@@ -869,9 +869,11 @@ def view_model(submission_hash, f_name):
             )
 
         return send_from_directory(
-            submission_abspath, f_name, as_attachment=True,
-            attachment_filename='{}_{}'.format(submission.hash_[:6], f_name),
-            mimetype='application/octet-stream'
+            submission_abspath,
+            f_name,
+            as_attachment=True,
+            download_name="{}_{}".format(submission.hash_[:6], f_name),
+            mimetype="application/octet-stream",
         )
 
     # Importing selected files into sandbox
@@ -1033,6 +1035,6 @@ def download_submission(submission_hash):
     file_in_memory.seek(0)
     return send_file(
         file_in_memory,
-        attachment_filename=f"submission_{submission.id}.zip",
+        download_name=f"submission_{submission.id}.zip",
         as_attachment=True,
     )

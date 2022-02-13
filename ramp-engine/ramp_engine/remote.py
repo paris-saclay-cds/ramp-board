@@ -207,10 +207,11 @@ class DaskWorker(BaseWorker):
         environment given in the configuration. The submission is launched in
         a subprocess to free to not lock the Python main process.
         """
-        cmd_ramp = os.path.join(self._python_bin_path, 'ramp-test')
-        if self.status == 'running':
-            raise ValueError('Wait that the submission is processed before to '
-                             'launch a new one.')
+        cmd_ramp = os.path.join(self._python_bin_path, "ramp-test")
+        if self.status == "running":
+            raise ValueError(
+                "Wait that the submission is processed before to launch a new one."
+            )
 
         self._log_dir = os.path.join(self.config['logs_dir'], self.submission)
         # TODO: need to copy submission to the remote folder

@@ -27,13 +27,17 @@ def main():
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option("--event",
-              help='The name of the event')
-@click.option('--path', help='path to the .csv file where to save '
-                             'the submissions and their score')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--event", help="The name of the event")
+@click.option(
+    "--path",
+    help="path to the .csv file where to save the submissions and their score",
+)
 def export_leaderboards(config, event, path):
     """Export all the scored submissions."""
     config = read_config(config)
@@ -48,20 +52,39 @@ def export_leaderboards(config, event, path):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option('--login', help='Login')
-@click.option('--password', help='Password')
-@click.option('--lastname', help="User's last name")
-@click.option('--firstname', help="User's first name")
-@click.option('--email', help="User's email")
-@click.option('--access-level', default='user', show_default=True,
-              help="User's administration rights")
-@click.option('--hidden-notes', default='', show_default=True,
-              help="User's additional hidden notes")
-def add_user(config, login, password, lastname, firstname, email,
-             access_level, hidden_notes):
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--login", help="Login")
+@click.option("--password", help="Password")
+@click.option("--lastname", help="User's last name")
+@click.option("--firstname", help="User's first name")
+@click.option("--email", help="User's email")
+@click.option(
+    "--access-level",
+    default="user",
+    show_default=True,
+    help="User's administration rights",
+)
+@click.option(
+    "--hidden-notes",
+    default="",
+    show_default=True,
+    help="User's additional hidden notes",
+)
+def add_user(
+    config,
+    login,
+    password,
+    lastname,
+    firstname,
+    email,
+    access_level,
+    hidden_notes,
+):
     """Add a new user in the database."""
     config = read_config(config)
     with session_scope(config['sqlalchemy']) as session:
@@ -70,10 +93,13 @@ def add_user(config, login, password, lastname, firstname, email,
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option('--login', help="User's login to be removed")
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--login", help="User's login to be removed")
 def delete_user(config, login):
     """Delete a user which asked to sign-up to RAMP studio."""
     config = read_config(config)
@@ -82,10 +108,13 @@ def delete_user(config, login):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option('--login', help="User's login to be approved")
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--login", help="User's login to be approved")
 def approve_user(config, login):
     """Approve a user which asked to sign-up to RAMP studio."""
     config = read_config(config)
@@ -94,10 +123,13 @@ def approve_user(config, login):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option('--login', help="User's login to be made admin")
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--login", help="User's login to be made admin")
 def make_user_admin(config, login):
     """Make a user a RAMP admin."""
     config = read_config(config)
@@ -106,13 +138,19 @@ def make_user_admin(config, login):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option('--login', help="User's login to be made admin")
-@click.option('--access-level', help="The access level to grant the user."
-              "One of {'asked', 'user', 'admin'}", default='user',
-              show_default=True)
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--login", help="User's login to be made admin")
+@click.option(
+    "--access-level",
+    help="The access level to grant the user.One of {'asked', 'user', 'admin'}",
+    default="user",
+    show_default=True,
+)
 def set_user_access_level(config, login, access_level):
     """Change the access level of a RAMP user."""
     config = read_config(config)
@@ -121,11 +159,14 @@ def set_user_access_level(config, login, access_level):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option('--event', help='Name of the event')
-@click.option('--team', help='Name of the team')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--event", help="Name of the event")
+@click.option("--team", help="Name of the team")
 def sign_up_team(config, event, team):
     """Sign-up a user (or team) for a RAMP event."""
     config = read_config(config)
@@ -134,11 +175,14 @@ def sign_up_team(config, event, team):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option('--event', help='Name of the event')
-@click.option('--team', help='Name of the team')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--event", help="Name of the event")
+@click.option("--team", help="Name of the team")
 def delete_event_team(config, event, team):
     """Delete a link between a user (or team) and a RAMP event."""
     config = read_config(config)
@@ -147,14 +191,21 @@ def delete_event_team(config, event, team):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option('--problem', help='Name of the problem')
-@click.option('--kit-dir', help='Path to the RAMP kit')
-@click.option('--data-dir', help='Path to the RAMP data')
-@click.option('--force', default=False, show_default=True,
-              help='Whether or not to overwrite the problem if it exists')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--problem", help="Name of the problem")
+@click.option("--kit-dir", help="Path to the RAMP kit")
+@click.option("--data-dir", help="Path to the RAMP data")
+@click.option(
+    "--force",
+    default=False,
+    show_default=True,
+    help="Whether or not to overwrite the problem if it exists",
+)
 def add_problem(config, problem, kit_dir, data_dir, force):
     """Add a RAMP problem in the database."""
     config = read_config(config)
@@ -163,21 +214,32 @@ def add_problem(config, problem, kit_dir, data_dir, force):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option("--problem", help='Name of the problem')
-@click.option("--event", help='Name of the event')
-@click.option("--title", help='Title of the event')
-@click.option("--sandbox", default='starting-kit', help='Name of the sandbox')
-@click.option('--submissions-dir',
-              help='Path to the deployment RAMP submissions path.')
-@click.option('--is-public', default=False, show_default=True,
-              help='Whether or not the event should be public')
-@click.option('--force', default=False, show_default=True,
-              help='Whether or not to overwrite the problem if it exists')
-def add_event(config, problem, event, title, sandbox, submissions_dir,
-              is_public, force):
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--problem", help="Name of the problem")
+@click.option("--event", help="Name of the event")
+@click.option("--title", help="Title of the event")
+@click.option("--sandbox", default="starting-kit", help="Name of the sandbox")
+@click.option("--submissions-dir", help="Path to the deployment RAMP submissions path.")
+@click.option(
+    "--is-public",
+    default=False,
+    show_default=True,
+    help="Whether or not the event should be public",
+)
+@click.option(
+    "--force",
+    default=False,
+    show_default=True,
+    help="Whether or not to overwrite the problem if it exists",
+)
+def add_event(
+    config, problem, event, title, sandbox, submissions_dir, is_public, force
+):
     """Add an event in the database."""
     config = read_config(config)
     with session_scope(config['sqlalchemy']) as session:
@@ -186,11 +248,14 @@ def add_event(config, problem, event, title, sandbox, submissions_dir,
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option("--event", help='Name of the event')
-@click.option("--user", help='Name of the user becoming event admin')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--event", help="Name of the event")
+@click.option("--user", help="Name of the user becoming event admin")
 def add_event_admin(config, event, user):
     """Make a user admin of a specific RAMP event."""
     config = read_config(config)
@@ -199,13 +264,16 @@ def add_event_admin(config, event, user):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option("--event", help='Name of the event')
-@click.option("--team", help='Name of the team')
-@click.option("--submission", help='Name of the submission')
-@click.option("--path", help='Path to the submission')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--event", help="Name of the event")
+@click.option("--team", help="Name of the team")
+@click.option("--submission", help="Name of the submission")
+@click.option("--path", help="Path to the submission")
 def add_submission(config, event, team, submission, path):
     """Add a submission to the database."""
     config = read_config(config)
@@ -215,21 +283,36 @@ def add_submission(config, event, team, submission, path):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option("--config-event", required=True,
-              help='Path to configuration file YAML format '
-              'containing the database information, eg config.yml')
-@click.option('--dry-run', is_flag=True,
-              help='Emulate the removal without taking action. Basically, '
-              'only the printing information will be shown. The deletion will '
-              'not be done.')
-@click.option('--from-disk', is_flag=True,
-              help='Flag to remove the event folder from the disk as well.')
-@click.option('--force', is_flag=True,
-              help='Flag to force a removal, even from the disk, when an '
-              'event is not in the database.')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option(
+    "--config-event",
+    required=True,
+    help="Path to configuration file YAML format "
+    "containing the database information, eg config.yml",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Emulate the removal without taking action. Basically, "
+    "only the printing information will be shown. The deletion will "
+    "not be done.",
+)
+@click.option(
+    "--from-disk",
+    is_flag=True,
+    help="Flag to remove the event folder from the disk as well.",
+)
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Flag to force a removal, even from the disk, when an "
+    "event is not in the database.",
+)
 def delete_event(config, config_event, dry_run, from_disk, force):
     """Delete event."""
     internal_config = read_config(config)
@@ -272,15 +355,24 @@ def delete_event(config, config_event, dry_run, from_disk, force):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option("--config-event", required=True,
-              help='Path to configuration file YAML format '
-              'containing the database information, eg config.yml')
-@click.option('--force', is_flag=True,
-              help='Flag to force a removal of the predictions from the disk, '
-                   'when an event is not in the database.')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option(
+    "--config-event",
+    required=True,
+    help="Path to configuration file YAML format "
+    "containing the database information, eg config.yml",
+)
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Flag to force a removal of the predictions from the disk, "
+    "when an event is not in the database.",
+)
 def delete_predictions(config, config_event, force):
     """Delete event predictions from the disk."""
     internal_config = read_config(config)
@@ -307,11 +399,14 @@ def delete_predictions(config, config_event, force):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option("--event", help='Name of the event')
-@click.option("--state", help='The state of the submissions to display')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--event", help="Name of the event")
+@click.option("--state", help="The state of the submissions to display")
 def get_submissions_by_state(config, event, state):
     """Display the list of submission for an event in a particular state."""
     config = read_config(config)
@@ -334,11 +429,14 @@ def get_submissions_by_state(config, event, state):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option("--submission-id", help='The submission ID')
-@click.option("--state", help='The state to affect to the submission')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--submission-id", help="The submission ID")
+@click.option("--state", help="The state to affect to the submission")
 def set_submission_state(config, submission_id, state):
     """Set the state of a submission."""
     config = read_config(config)
@@ -347,10 +445,13 @@ def set_submission_state(config, submission_id, state):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option("--event", help='The event name')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--event", help="The event name")
 def update_leaderboards(config, event):
     """Update the leaderboards for a given event."""
     config = read_config(config)
@@ -359,11 +460,14 @@ def update_leaderboards(config, event):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option("--event", help='The event name')
-@click.option("--user", help='The user name')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--event", help="The event name")
+@click.option("--user", help="The user name")
 def update_user_leaderboards(config, event, user):
     """Update the user leaderboards for a given event."""
     config = read_config(config)
@@ -372,10 +476,13 @@ def update_user_leaderboards(config, event, user):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option("--event", help='The event name')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--event", help="The event name")
 def update_all_users_leaderboards(config, event):
     """Update the leaderboards of all users for a given event."""
     config = read_config(config)
@@ -384,14 +491,18 @@ def update_all_users_leaderboards(config, event):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file YAML format containing the database '
-              'information')
-@click.option("--config-event", required=True,
-              help='The event config file name.')
-@click.option("--min-improvement", default='0.0',
-              help='The minimum score improvement '
-              'to continue building the ensemble')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
+@click.option("--config-event", required=True, help="The event config file name.")
+@click.option(
+    "--min-improvement",
+    default="0.0",
+    help="The minimum score improvement to continue building the ensemble",
+)
 def compute_contributivity(config, config_event, min_improvement):
     """Blend submissions, compute combined score and contributivities."""
     config_event = generate_ramp_config(config_event, config)

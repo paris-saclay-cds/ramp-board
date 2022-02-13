@@ -20,12 +20,18 @@ def main():
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file in YAML format containing the database '
-              'information.')
-@click.option("--events-dir", show_default=True,
-              help='Directory where the event config files are located.')
-@click.option('-v', '--verbose', count=True)
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file in YAML format containing the database information.",
+)
+@click.option(
+    "--events-dir",
+    show_default=True,
+    help="Directory where the event config files are located.",
+)
+@click.option("-v", "--verbose", count=True)
 def daemon(config, events_dir, verbose):
     """Launch the RAMP dispatcher.
 
@@ -47,13 +53,18 @@ def daemon(config, events_dir, verbose):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file in YAML format containing the database '
-              'information.')
-@click.option("--event-config", show_default=True,
-              help='Configuration file in YAML format containing the RAMP '
-              'event information.')
-@click.option('-v', '--verbose', count=True)
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file in YAML format containing the database information.",
+)
+@click.option(
+    "--event-config",
+    show_default=True,
+    help="Configuration file in YAML format containing the RAMP event information.",
+)
+@click.option("-v", "--verbose", count=True)
 def dispatcher(config, event_config, verbose):
     """Launch the RAMP dispatcher.
 
@@ -91,11 +102,14 @@ def dispatcher(config, event_config, verbose):
 
 
 @main.command()
-@click.option("--event-config", default='config.yml', show_default=True,
-              help='Configuration file in YAML format containing the RAMP '
-              'event information.')
-@click.option('--submission', help='The submission name')
-@click.option('-v', '--verbose', is_flag=True)
+@click.option(
+    "--event-config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file in YAML format containing the RAMP event information.",
+)
+@click.option("--submission", help="The submission name")
+@click.option("-v", "--verbose", is_flag=True)
 def worker(event_config, submission, verbose):
     """Launch a standalone RAMP worker.
 

@@ -106,10 +106,9 @@ class AWSWorker(BaseWorker):
         Basically, this runs ``ramp_test_submission`` inside the
         Amazon instance.
         """
-        if self.status == 'running':
-            raise RuntimeError("Cannot launch submission: one is already "
-                               "started")
-        if self.status == 'error':
+        if self.status == "running":
+            raise RuntimeError("Cannot launch submission: one is already started")
+        if self.status == "error":
             raise RuntimeError("Cannot launch submission: the setup failed")
         try:
             exit_status = aws.launch_train(
@@ -152,11 +151,13 @@ class AWSWorker(BaseWorker):
         # is used here, but again only when worker used alone.
         if self.status == 'running':
             aws._wait_until_train_finished(
-                self.config, self.instance.id, self.submission)
-            self.status = 'finished'
-        if self.status != 'finished':
-            raise ValueError("Cannot collect results if worker is not"
-                             "'running' or 'finished'")
+                self.config, self.instance.id, self.submission
+            )
+            self.status = "finished"
+        if self.status != "finished":
+            raise ValueError(
+                "Cannot collect results if worker is not 'running' or 'finished'"
+            )
 
         logger.info("Collecting submission '{}'".format(self.submission))
         exit_status = 0

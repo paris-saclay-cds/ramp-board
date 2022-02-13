@@ -87,18 +87,30 @@ def init_event(name, deployment_dir, force):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file in YAML format containing the database '
-              'information')
-@click.option("--event-config", default='config.yml', show_default=True,
-              help='Configuration file in YAML format containing the RAMP '
-              'information')
-@click.option("--cloning/--no-cloning", default=True, show_default=True,
-              help='Whether or not to clone the RAMP kit and data '
-              'repositories.')
-@click.option('--force', is_flag=True,
-              help='Whether or not to potentially overwrite the '
-              'repositories, problem and event in the database.')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file in YAML format containing the database information",
+)
+@click.option(
+    "--event-config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file in YAML format containing the RAMP information",
+)
+@click.option(
+    "--cloning/--no-cloning",
+    default=True,
+    show_default=True,
+    help="Whether or not to clone the RAMP kit and data repositories.",
+)
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Whether or not to potentially overwrite the "
+    "repositories, problem and event in the database.",
+)
 def deploy_event(config, event_config, cloning, force):
     """Deploy event (add problem and event to the database, optionally clone
     kit and data)
@@ -107,12 +119,18 @@ def deploy_event(config, event_config, cloning, force):
 
 
 @main.command()
-@click.option("--config", default='config.yml', show_default=True,
-              help='Configuration file in YAML format containing the database '
-              'information')
-@click.option("--event-config", default='config.yml', show_default=True,
-              help='Configuration file in YAML format containing the RAMP '
-              'information')
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file in YAML format containing the database information",
+)
+@click.option(
+    "--event-config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file in YAML format containing the RAMP information",
+)
 def create_conda_env(config, event_config):
     """Create the conda environment for a specific event"""
     conda_env_name = read_config(event_config)["worker"]["conda_env"]
@@ -131,9 +149,12 @@ def create_conda_env(config, event_config):
 
 
 @main.command()
-@click.option("--event-config", default='config.yml', show_default=True,
-              help='Configuration file in YAML format containing the RAMP '
-              'information')
+@click.option(
+    "--event-config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file in YAML format containing the RAMP information",
+)
 def update_conda_env(event_config):
     """Update the conda environment for a specific event"""
     conda_env = read_config(event_config, filter_section="worker")["conda_env"]

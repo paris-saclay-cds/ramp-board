@@ -227,20 +227,24 @@ def test_sign_up(client_session):
 
     # check that we catch a flash error if we try to sign-up with an identical
     # username
-    user_profile = {'user_name': 'xx', 'password': 'xx',
-                    'firstname': 'xx', 'lastname': 'xx',
-                    'email': 'test_user@gmail.com'}
-    _assert_flash('/sign_up', data=user_profile,
-                  message='username is already in use')
+    user_profile = {
+        "user_name": "xx",
+        "password": "xx",
+        "firstname": "xx",
+        "lastname": "xx",
+        "email": "test_user@gmail.com",
+    }
+    _assert_flash("/sign_up", data=user_profile, message="username is already in use")
 
-    user_profile.update(user_name='new', email="yy")
-    _assert_flash('/sign_up', data=user_profile,
-                  message='email is already in use')
+    user_profile.update(user_name="new", email="yy")
+    _assert_flash("/sign_up", data=user_profile, message="email is already in use")
 
-    user_profile.update(user_name='yy', email="yy")
-    _assert_flash('/sign_up', data=user_profile,
-                  message=("username is already in use "
-                           "and email is already in use"))
+    user_profile.update(user_name="yy", email="yy")
+    _assert_flash(
+        "/sign_up",
+        data=user_profile,
+        message=("username is already in use and email is already in use"),
+    )
 
 
 @_fail_no_smtp_server
@@ -395,9 +399,8 @@ def test_reset_password(client_session):
     session.commit()
     rv = client.post('/reset_password', data={'email': user.email})
     with client.session_transaction() as cs:
-        flash_message = dict(cs['_flashes'])
-    assert flash_message['message'] == ('An email to reset your password has '
-                                        'been sent')
+        flash_message = dict(cs["_flashes"])
+    assert flash_message["message"] == ("An email to reset your password has been sent")
     assert rv.status_code == 302
     assert rv.location == 'http://localhost/login'
 
