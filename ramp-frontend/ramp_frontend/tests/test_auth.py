@@ -435,13 +435,6 @@ def test_reset_password(client_session):
     # set back the account to 'user' access level
     user.access_level = "user"
     session.commit()
-    rv = client.post("/reset_password", data={"email": user.email})
-    with client.session_transaction() as cs:
-        flash_message = dict(cs["_flashes"])
-    assert flash_message["message"] == ("An email to reset your password has been sent")
-    assert rv.status_code == 302
-    assert rv.location == "http://localhost/login"
-
     with client.application.app_context():
         with mail.record_messages() as outbox:
             rv = client.post("/reset_password", data={"email": user.email})
@@ -456,6 +449,13 @@ def test_reset_password(client_session):
             reset_password_link = reset_password_link[
                 reset_password_link.find("/reset") :
             ]
+
+    rv = client.post("/reset_password", data={"email": user.email})
+    with client.session_transaction() as cs:
+        flash_message = dict(cs["_flashes"])
+    assert flash_message["message"] == ("An email to reset your password has been sent")
+    assert rv.status_code == 302
+    assert rv.location == "http://localhost/login"
 
     # check that we can reset the password using the previous link
     # GET method

@@ -48,21 +48,6 @@ def client_session(database_connection):
         Model.metadata.drop_all(db)
 
 
-@_fail_no_smtp_server
-def test_send_mail(client_session):
-    client, _ = client_session
-    with client.application.app_context():
-        with mail.record_messages() as outbox:
-            send_mail_with_context = copy_current_request_context(send_mail)
-            send_mail_with_context("xx@gmail.com", "subject", "body")
-            # shutdown the threadpool and wait for the future (email) to be sent
-            client.application.pool.shutdown(wait=True)
-            assert len(outbox) == 1
-            assert outbox[0].subject == "subject"
-            assert outbox[0].body == "body"
-            assert outbox[0].recipients == ["xx@gmail.com"]
-
-
 def test_body_formatter_user(client_session):
     _, session = client_session
     user = get_user_by_name(session, "test_user")
