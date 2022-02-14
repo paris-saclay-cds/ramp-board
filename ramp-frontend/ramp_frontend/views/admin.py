@@ -93,6 +93,13 @@ def approve_users():
 
                 subject = ('Signed up for the RAMP event {}'
                            .format(asked_event_team.event.name))
+                body = (
+                    "{}, you have been registered to the RAMP event {}. "
+                    "You can now proceed to your sandbox and make "
+                    "submissions.\nHave fun!!!".format(
+                        user.name, asked_event_team.event.name
+                    )
+                )
                 send_mail_with_context(to=user.email, subject=subject, body=body)
             elif request.form["submit_button"] == "Remove!":
                 delete_event_team(
