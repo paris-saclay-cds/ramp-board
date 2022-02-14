@@ -1,4 +1,18 @@
-.. _changes_0_8:
+.. _changes_0_8_4:
+
+Version 0.8.4
+=============
+*February 14, 2021*
+
+Changelog
+---------
+
+`ramp-frontend`
+...............
+
+- Fix a bug due to unseen merge conflicts resolution.
+
+.. _changes_0_8_3:
 
 Version 0.8.3
 =============
@@ -12,6 +26,8 @@ Changelog
 
 - Use a `ThreadPoolExecutor` to send async emails :pr:`557`
 
+.. _changes_0_8_2:
+
 Version 0.8.2
 =============
 *January 10, 2021*
@@ -24,6 +40,7 @@ Changelog
 
 - Convert bagged scores to float in submission.py :pr:`555`
 
+.. _changes_0_8_1:
 
 Version 0.8.1
 =============
@@ -42,9 +59,10 @@ Changelog
 - Add a /manage_users admin page with a list of all users, and a search input :pr:`538`
 - Improve button colors on the approval page :pr:`539`
 
+.. _changes_0_8:
 
-Version 0.8
-===========
+Version 0.8.0
+=============
 *June 8, 2021*
 
 Changelog
