@@ -198,6 +198,40 @@ def test_add_event(make_toy_db):
     assert result.exit_code == 0, result.output
 
 
+def test_delete_problem(make_toy_db):
+    runner = CliRunner()
+    ramp_config = generate_ramp_config(read_config(ramp_config_template()))
+    runner.invoke(
+        main,
+        [
+            "add-problem",
+            "--config",
+            database_config_template(),
+            "--problem",
+            "iris",
+            "--kit-dir",
+            ramp_config["ramp_kit_dir"],
+            "--data-dir",
+            ramp_config["ramp_data_dir"],
+            "--force",
+            True,
+        ],
+        catch_exceptions=False,
+    )
+    result = runner.invoke(
+        main,
+        [
+            "delete-problem",
+            "--config",
+            database_config_template(),
+            "--problem",
+            "iris",
+        ],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0, result.output
+
+
 @pytest.mark.parametrize("from_disk", [True, False])
 @pytest.mark.parametrize("force", [True, False])
 def test_delete_event_error(make_toy_db, from_disk, force):
