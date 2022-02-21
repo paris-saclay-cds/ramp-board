@@ -305,6 +305,7 @@ def add_submission(config, event, team, submission, path):
 )
 @click.option("--problem", help="Name of the problem")
 def delete_problem(config, problem):
+    """Delete problem."""
     config = read_config(config)
     with session_scope(config["sqlalchemy"]) as session:
         event_module.delete_problem(session, problem)
