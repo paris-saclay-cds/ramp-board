@@ -200,7 +200,7 @@ def test_add_event(make_toy_db):
 
 def test_delete_problem(make_toy_db):
     runner = CliRunner()
-    ramp_config = generate_ramp_config(read_config(ramp_config_template()))
+    ramp_config = read_config(ramp_config_template())
     runner.invoke(
         main,
         [
