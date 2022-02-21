@@ -6,4 +6,7 @@ Version 0.10 (ongoing)
 Changelog
 ---------
 
-TODO: specify the module before to add the desired entry.
+`ramp-database`
+...............
+
+- Add `delete-problem` command in database cli :pr:`564`
