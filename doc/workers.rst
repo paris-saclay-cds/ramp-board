@@ -292,19 +292,51 @@ component'. Then select:
     phases:
       - name: Build
         steps:
+          - name: install_system
+            action: ExecuteBash
+            inputs:
+              commands:
+                - |
+                  set -e
+                  echo "===== Updating package cache and git ====="
+
+                  sudo apt update
+                  sudo apt install --no-install-recommends --yes git
+
+                  echo "===== Done ====="
+
           - name: install_conda
             action: ExecuteBash
             inputs:
               commands:
                 - |
                   set -e
+                  echo "===== Install conda and mamba ====="
+
                   wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniconda.sh
                   bash ./miniconda.sh -b -p {{ Home }}/miniconda
                   export PATH={{ Home }}/miniconda/bin:$PATH
                   conda init
                   conda install -y --quiet python pip mamba
-                  sudo apt update
-                  sudo apt install --no-install-recommends --yes git
+
+                  echo "===== Done ====="
+
+          - name: add_conda_to_user_path
+            action: ExecuteBash
+            inputs:
+              commands:
+                - |
+                  set -e
+                  echo "===== Setup conda for user ubuntu ====="
+
+                  # Always run .bashrc for bash even when it is not interactive
+                  sed -e '/# If not running interactively,/,+5d' -i {{ Home }}/.bashrc
+                  # Run conda init to allow using conda in the bash
+                  sudo -u ubuntu bash -c 'export PATH={{ Home }}/miniconda/bin:$PATH && conda init'
+                  echo "Added conda in PATH for user ubuntu"
+
+                  echo "===== Done ====="
+
 
           - name: install_gpu_related
             action: ExecuteBash
@@ -312,11 +344,15 @@ component'. Then select:
               commands:
                 - |
                   set -e
-                  export PATH={{ Home }}/miniconda/bin:$PATH
+                  echo "===== Installing Nvidia drivers for GPUs ====="
+
                   # Install the nvidia drivers to be able to use the GPUs
                   # Use the headless version to avoid installing unrelated
                   # library related to display capabilities
+
                   sudo apt install --no-install-recommends --yes nvidia-headless-440 nvidia-utils-440
+
+                  echo "===== Done ====="
 
           - name: install_challenge
             action: ExecuteBash
@@ -324,6 +360,8 @@ component'. Then select:
               commands:
                 - |
                   set -e
+                  echo "===== Installing Dependencies ====="
+
                   export PATH={{ Home }}/miniconda/bin:$PATH
 
                   # clone the challenge files
@@ -340,37 +378,28 @@ component'. Then select:
                   pip install -r {{ Home }}/{{ Challenge }}/requirements.txt
                   pip install -r {{ Home }}/{{ Challenge }}/extra_libraries.txt
 
+                  echo "===== Done ====="
+
+
           - name: download_data
             action: ExecuteBash
             timeoutSeconds: 7200
             inputs:
               commands:
                 - |
-                  export PATH={{ Home }}/miniconda/bin:$PATH
-                  cd {{ Home }}/{{ Challenge }}
+                  set -e
+                  echo "===== Downloading Private Data ====="
 
-                  # Download private data from osf
                   cd {{ Home }}/{{ Challenge }}
+                  export PATH={{ Home }}/miniconda/bin:$PATH
                   python download_data.py --private --username {{ OSF_username }} --password {{ OSF_password }}
 
-                  # Make sure everything is owned by the instance user
+                  # Make sure everything is owned by
                   chown -R ubuntu {{ Home }}
-                  echo "Installing done!"
 
-          - name: add_conda_to_path
-            action: ExecuteBash
-            inputs:
-              commands:
-                - |
-                  set -e
-                  # Always run .bashrc for bash even when it is not interactive
-                  sed -e '/# If not running interactively,/,+5d' -i {{ Home }}/.bashrc
+                  echo "===== Done ====="
 
-                  # Run conda init to allow using conda in the bash
-                  sudo -u ubuntu bash -c 'export PATH={{ Home }}/miniconda/bin:$PATH && conda init'
-                  echo "Added conda in PATH for user ubuntu"
-
-      - name: Test
+      - name: test
         steps:
           - name: test_ramp_install
             action: ExecuteBash
@@ -378,13 +407,14 @@ component'. Then select:
               commands:
                 - |
                   set -e
-                  echo "Test ramp install"
-                  echo "User: '$USER'"
+                  echo "===== Test ramp install ====="
+
                   cd {{ Home }}/{{ Challenge }}
                   sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'conda info'
                   # Run a ramp-test for the starting kit to make sure everything is running properly
-                  sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'ramp-test --submission sample --quick-test'
-                  echo "test end"
+                  sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'ramp-test --submission starting_kit --quick-test'
+
+                  echo "====== Done ======"
 
 where you should exchange '$CHALLENGE_NAME' for the name of the challenge you
 wish to use (here we are pointing to repositories stored on the ramp-kits
