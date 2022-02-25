@@ -101,9 +101,9 @@ Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
 * ``kit_dir``: path to the directory of the RAMP kit.
 * ``data_dir``: path to the directory of the data.
 * ``submissions_dir``: path to the directory containing the submissions.
-* ``logs_dir``: path to the directory where the log of the submission 
+* ``logs_dir``: path to the directory where the log of the submission
   will be stored.
-* ``predictions_dir``: path to the directory where the predictions of the 
+* ``predictions_dir``: path to the directory where the predictions of the
   submission will be stored.
 * ``timeout``: timeout after a given number of seconds when running the worker.
   If not provided, a default of 7200 is used.
@@ -290,7 +290,7 @@ component'. Then select:
         type: string
         value: $PASSWORD
     phases:
-      - name: build
+      - name: Build
         steps:
           - name: install_conda
             action: ExecuteBash
@@ -298,12 +298,25 @@ component'. Then select:
               commands:
                 - |
                   set -e
-                  wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+                  wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniconda.sh
                   bash ./miniconda.sh -b -p {{ Home }}/miniconda
                   export PATH={{ Home }}/miniconda/bin:$PATH
                   conda init
-                  conda update --yes --quiet conda
-                  conda install --quiet python==3.8 pip
+                  conda install -y --quiet python pip mamba
+                  sudo apt update
+                  sudo apt install --no-install-recommends --yes git
+
+          - name: install_gpu_related
+            action: ExecuteBash
+            inputs:
+              commands:
+                - |
+                  set -e
+                  export PATH={{ Home }}/miniconda/bin:$PATH
+                  # Install the nvidia drivers to be able to use the GPUs
+                  # Use the headless version to avoid installing unrelated
+                  # library related to display capabilities
+                  sudo apt install --no-install-recommends --yes nvidia-headless-440 nvidia-utils-440
 
           - name: install_challenge
             action: ExecuteBash
@@ -312,14 +325,21 @@ component'. Then select:
                 - |
                   set -e
                   export PATH={{ Home }}/miniconda/bin:$PATH
+
+                  # clone the challenge files
                   git clone https://github.com/ramp-kits/{{ Challenge }}.git {{ Home }}/{{ Challenge }}
-                  # next step is important if you want to use GPUs
-                  sudo apt install --yes nvidia-driver-440
-                  sudo apt install --yes nvidia-utils-440  # you might want to use different version
-                  conda env update --name base --file {{ Home }}/{{ Challenge }}/environment.yml
+
+                  # Choose one of these options to install dependencies:
+
+                  # 1. Use the package from conda, using mamba to accelerate the
+                  # environment resolution
+                  mamba env update --name base --file {{ Home }}/{{ Challenge }}/environment.yml
+
+                  # 2. Use pip to install packages. In this case, make sure to
+                  # install all needed dependencies beforehand using apt.
                   pip install -r {{ Home }}/{{ Challenge }}/requirements.txt
                   pip install -r {{ Home }}/{{ Challenge }}/extra_libraries.txt
-                  conda install -c anaconda cudatoolkit
+
           - name: download_data
             action: ExecuteBash
             timeoutSeconds: 7200
@@ -328,12 +348,15 @@ component'. Then select:
                 - |
                   export PATH={{ Home }}/miniconda/bin:$PATH
                   cd {{ Home }}/{{ Challenge }}
+
                   # Download private data from osf
                   cd {{ Home }}/{{ Challenge }}
                   python download_data.py --private --username {{ OSF_username }} --password {{ OSF_password }}
-                  # Make sure everything is owned by
+
+                  # Make sure everything is owned by the instance user
                   chown -R ubuntu {{ Home }}
                   echo "Installing done!"
+
           - name: add_conda_to_path
             action: ExecuteBash
             inputs:
@@ -342,10 +365,12 @@ component'. Then select:
                   set -e
                   # Always run .bashrc for bash even when it is not interactive
                   sed -e '/# If not running interactively,/,+5d' -i {{ Home }}/.bashrc
+
                   # Run conda init to allow using conda in the bash
                   sudo -u ubuntu bash -c 'export PATH={{ Home }}/miniconda/bin:$PATH && conda init'
                   echo "Added conda in PATH for user ubuntu"
-      - name: test
+
+      - name: Test
         steps:
           - name: test_ramp_install
             action: ExecuteBash
