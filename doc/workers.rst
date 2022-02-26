@@ -101,9 +101,9 @@ Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
 * ``kit_dir``: path to the directory of the RAMP kit.
 * ``data_dir``: path to the directory of the data.
 * ``submissions_dir``: path to the directory containing the submissions.
-* ``logs_dir``: path to the directory where the log of the submission 
+* ``logs_dir``: path to the directory where the log of the submission
   will be stored.
-* ``predictions_dir``: path to the directory where the predictions of the 
+* ``predictions_dir``: path to the directory where the predictions of the
   submission will be stored.
 * ``timeout``: timeout after a given number of seconds when running the worker.
   If not provided, a default of 7200 is used.
@@ -290,20 +290,69 @@ component'. Then select:
         type: string
         value: $PASSWORD
     phases:
-      - name: build
+      - name: Build
         steps:
+          - name: install_system
+            action: ExecuteBash
+            inputs:
+              commands:
+                - |
+                  set -e
+                  echo "===== Updating package cache and git ====="
+
+                  sudo apt update
+                  sudo apt install --no-install-recommends --yes git
+
+                  echo "===== Done ====="
+
           - name: install_conda
             action: ExecuteBash
             inputs:
               commands:
                 - |
                   set -e
-                  wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+                  echo "===== Install conda and mamba ====="
+
+                  wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniconda.sh
                   bash ./miniconda.sh -b -p {{ Home }}/miniconda
                   export PATH={{ Home }}/miniconda/bin:$PATH
                   conda init
-                  conda update --yes --quiet conda
-                  conda install --quiet python==3.8 pip
+                  conda install -y --quiet python pip mamba
+
+                  echo "===== Done ====="
+
+          - name: add_conda_to_user_path
+            action: ExecuteBash
+            inputs:
+              commands:
+                - |
+                  set -e
+                  echo "===== Setup conda for user ubuntu ====="
+
+                  # Always run .bashrc for bash even when it is not interactive
+                  sed -e '/# If not running interactively,/,+5d' -i {{ Home }}/.bashrc
+                  # Run conda init to allow using conda in the bash
+                  sudo -u ubuntu bash -c 'export PATH={{ Home }}/miniconda/bin:$PATH && conda init'
+                  echo "Added conda in PATH for user ubuntu"
+
+                  echo "===== Done ====="
+
+
+          - name: install_gpu_related
+            action: ExecuteBash
+            inputs:
+              commands:
+                - |
+                  set -e
+                  echo "===== Installing Nvidia drivers for GPUs ====="
+
+                  # Install the nvidia drivers to be able to use the GPUs
+                  # Use the headless version to avoid installing unrelated
+                  # library related to display capabilities
+
+                  sudo apt install --no-install-recommends --yes nvidia-headless-440 nvidia-utils-440
+
+                  echo "===== Done ====="
 
           - name: install_challenge
             action: ExecuteBash
@@ -311,40 +360,45 @@ component'. Then select:
               commands:
                 - |
                   set -e
+                  echo "===== Installing Dependencies ====="
+
                   export PATH={{ Home }}/miniconda/bin:$PATH
+
+                  # clone the challenge files
                   git clone https://github.com/ramp-kits/{{ Challenge }}.git {{ Home }}/{{ Challenge }}
-                  # next step is important if you want to use GPUs
-                  sudo apt install --yes nvidia-driver-440
-                  sudo apt install --yes nvidia-utils-440  # you might want to use different version
-                  conda env update --name base --file {{ Home }}/{{ Challenge }}/environment.yml
+
+                  # Choose one of these options to install dependencies:
+
+                  # 1. Use the package from conda, using mamba to accelerate the
+                  # environment resolution
+                  mamba env update --name base --file {{ Home }}/{{ Challenge }}/environment.yml
+
+                  # 2. Use pip to install packages. In this case, make sure to
+                  # install all needed dependencies beforehand using apt.
                   pip install -r {{ Home }}/{{ Challenge }}/requirements.txt
                   pip install -r {{ Home }}/{{ Challenge }}/extra_libraries.txt
-                  conda install -c anaconda cudatoolkit
+
+                  echo "===== Done ====="
+
+
           - name: download_data
             action: ExecuteBash
             timeoutSeconds: 7200
             inputs:
               commands:
                 - |
+                  set -e
+                  echo "===== Downloading Private Data ====="
+
+                  cd {{ Home }}/{{ Challenge }}
                   export PATH={{ Home }}/miniconda/bin:$PATH
-                  cd {{ Home }}/{{ Challenge }}
-                  # Download private data from osf
-                  cd {{ Home }}/{{ Challenge }}
                   python download_data.py --private --username {{ OSF_username }} --password {{ OSF_password }}
+
                   # Make sure everything is owned by
                   chown -R ubuntu {{ Home }}
-                  echo "Installing done!"
-          - name: add_conda_to_path
-            action: ExecuteBash
-            inputs:
-              commands:
-                - |
-                  set -e
-                  # Always run .bashrc for bash even when it is not interactive
-                  sed -e '/# If not running interactively,/,+5d' -i {{ Home }}/.bashrc
-                  # Run conda init to allow using conda in the bash
-                  sudo -u ubuntu bash -c 'export PATH={{ Home }}/miniconda/bin:$PATH && conda init'
-                  echo "Added conda in PATH for user ubuntu"
+
+                  echo "===== Done ====="
+
       - name: test
         steps:
           - name: test_ramp_install
@@ -353,13 +407,14 @@ component'. Then select:
               commands:
                 - |
                   set -e
-                  echo "Test ramp install"
-                  echo "User: '$USER'"
+                  echo "===== Test ramp install ====="
+
                   cd {{ Home }}/{{ Challenge }}
                   sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'conda info'
                   # Run a ramp-test for the starting kit to make sure everything is running properly
-                  sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'ramp-test --submission sample --quick-test'
-                  echo "test end"
+                  sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'ramp-test --submission starting_kit --quick-test'
+
+                  echo "====== Done ======"
 
 where you should exchange '$CHALLENGE_NAME' for the name of the challenge you
 wish to use (here we are pointing to repositories stored on the ramp-kits
