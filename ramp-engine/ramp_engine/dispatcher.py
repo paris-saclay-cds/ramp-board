@@ -273,7 +273,7 @@ class Dispatcher:
                 worker.teardown()
 
     def update_database_results(self, session):
-        """Update the database with the results of ramp_test_submission."""
+        """Update the database with the results of ramp-test."""
         make_update_leaderboard = False
         while not self._processed_submission_queue.empty():
             make_update_leaderboard = True
