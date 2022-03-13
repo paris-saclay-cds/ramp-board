@@ -303,11 +303,26 @@ def add_submission(config, event, team, submission, path):
     show_default=True,
     help="Configuration file YAML format containing the database information",
 )
+@click.option("--problem", help="Name of the problem")
+def delete_problem(config, problem):
+    """Delete problem."""
+    config = read_config(config)
+    with session_scope(config["sqlalchemy"]) as session:
+        event_module.delete_problem(session, problem)
+
+
+@main.command()
+@click.option(
+    "--config",
+    default="config.yml",
+    show_default=True,
+    help="Configuration file YAML format containing the database information",
+)
 @click.option(
     "--config-event",
     required=True,
     help="Path to configuration file YAML format "
-    "containing the database information, eg config.yml",
+    "containing the event information, eg config.yml",
 )
 @click.option(
     "--dry-run",
@@ -380,7 +395,7 @@ def delete_event(config, config_event, dry_run, from_disk, force):
     "--config-event",
     required=True,
     help="Path to configuration file YAML format "
-    "containing the database information, eg config.yml",
+    "containing the event information, eg config.yml",
 )
 @click.option(
     "--force",
