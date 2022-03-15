@@ -609,7 +609,7 @@ def launch_train(config, instance_id, submission_name):
     # We use an espace character around "$" because it is interpreted
     # before being run remotely and leads to an empty string
     run_cmd = (r"python -u \$(which ramp-test) "
-               r"--submission {submission} --save-y-preds ")
+               r"--submission {submission} --save-output ")
     if config.get(MEMORY_PROFILING_FIELD):
         run_cmd = (
             "mprof run --output={submission_folder}/mprof.dat "
