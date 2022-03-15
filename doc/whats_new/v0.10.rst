@@ -7,3 +7,8 @@ Changelog
 ---------
 
 TODO: specify the module before to add the desired entry.
+
+`ramp-engine`
+...............
+
+- Remove `ramp_test_submission` from AWS worker as it is removed from ramp-workflow > 0.3.3 :pr:`566`
