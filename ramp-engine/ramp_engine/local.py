@@ -119,7 +119,7 @@ class CondaEnvWorker(BaseWorker):
     def launch_submission(self):
         """Launch the submission.
 
-        Basically, it comes to run ``ramp_test_submission`` using the conda
+        Basically, it comes to run ``ramp-test`` using the conda
         environment given in the configuration. The submission is launched in
         a subprocess to free to not lock the Python main process.
         """
