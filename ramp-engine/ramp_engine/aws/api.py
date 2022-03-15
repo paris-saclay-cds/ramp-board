@@ -582,7 +582,7 @@ def launch_train(config, instance_id, submission_name):
     """
     Launch the training of a submission on an ec2 instance.
     A screen named `submission_folder_name` (see below)
-    is created and within that screen `ramp_test_submission`
+    is created and within that screen `ramp-test`
     is launched.
 
     Parameters
@@ -608,7 +608,7 @@ def launch_train(config, instance_id, submission_name):
     # without waiting for the process to finish.
     # We use an espace character around "$" because it is interpreted
     # before being run remotely and leads to an empty string
-    run_cmd = (r"python -u \$(which ramp_test_submission) "
+    run_cmd = (r"python -u \$(which ramp-test) "
                r"--submission {submission} --save-y-preds ")
     if config.get(MEMORY_PROFILING_FIELD):
         run_cmd = (

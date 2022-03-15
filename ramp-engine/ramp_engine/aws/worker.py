@@ -103,7 +103,7 @@ class AWSWorker(BaseWorker):
     def launch_submission(self):
         """Launch the submission.
 
-        Basically, this runs ``ramp_test_submission`` inside the
+        Basically, this runs ``ramp-test`` inside the
         Amazon instance.
         """
         if self.status == "running":
