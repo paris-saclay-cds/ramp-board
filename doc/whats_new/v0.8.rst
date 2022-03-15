@@ -1,8 +1,22 @@
+.. _changes_0_8_5:
+
+Version 0.8.5
+=============
+*XXX, 2022*
+
+Changelog
+---------
+
+`ramp-engine`
+...............
+
+- Remove `ramp_test_submission` from AWS worker as it is removed from ramp-workflow > 0.3.3 :pr:`569`
+
 .. _changes_0_8_4:
 
 Version 0.8.4
 =============
-*February 14, 2021*
+*February 14, 2022*
 
 Changelog
 ---------
@@ -16,7 +30,7 @@ Changelog
 
 Version 0.8.3
 =============
-*February 13, 2021*
+*February 13, 2022*
 
 Changelog
 ---------
