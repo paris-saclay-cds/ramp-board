@@ -57,6 +57,9 @@ def _conda_ramp_test_submission(
     log_file = open(os.path.join(log_dir, "log"), "wb+")
     proc = subprocess.Popen(
         [
+            # Make sure the process has larger niceness than
+            # the server.
+            "nice", "-5",
             cmd_ramp,
             "--submission",
             submission,
