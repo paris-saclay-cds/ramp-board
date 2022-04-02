@@ -10,4 +10,4 @@ dependencies:
   - click=8.0.4  # workaround for ramp-workflow#307
   - pip
   - pip:
-    - ramp-workflow
+    - https://github.com/paris-saclay-cds/ramp-workflow/archive/refs/heads/master.zip
