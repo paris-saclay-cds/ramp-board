@@ -6,7 +6,7 @@ codecov
 email_validator
 flake8
 Flask
-Flask-Login
+Flask-Login==0.5.0
 Flask-Mail
 Flask-SQLAlchemy
 Flask-Wtf
