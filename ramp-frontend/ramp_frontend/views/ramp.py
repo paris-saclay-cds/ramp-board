@@ -13,6 +13,7 @@ from bokeh.embed import components
 import flask_login
 
 from flask import Blueprint
+from flask import copy_current_request_context
 from flask import current_app as app
 from flask import redirect
 from flask import render_template
@@ -271,6 +272,7 @@ def sign_up_for_event(event_name):
     ask_sign_up_team(db.session, event.name, flask_login.current_user.name)
     if event.is_controled_signup:
         admin_users = User.query.filter_by(access_level="admin")
+        send_mail_with_context = copy_current_request_context(send_mail)
         for admin in admin_users:
             subject = "Request to sign-up {} to RAMP event {}".format(
                 event.name, flask_login.current_user.name
@@ -284,7 +286,7 @@ def sign_up_for_event(event_name):
             body += "Click on this link to approve the sign-up request: {}".format(
                 url_approve
             )
-            send_mail(admin.email, subject, body)
+            send_mail_with_context(admin.email, subject, body)
         return redirect_to_user(
             "Sign-up request is sent to event admins.",
             is_error=False,
@@ -568,6 +570,7 @@ def sandbox(event_name):
             )
             if event.is_send_submitted_mails:
                 admin_users = User.query.filter_by(access_level="admin")
+                send_mail_with_context = copy_current_request_context(send_mail)
                 for admin in admin_users:
                     subject = "Submission {} sent for training".format(
                         new_submission.name
@@ -583,7 +586,7 @@ def sandbox(event_name):
                         new_submission.name,
                         new_submission.path,
                     )
-                    send_mail(admin.email, subject, body)
+                    send_mail_with_context(admin.email, subject, body)
             if app.config["TRACK_USER_INTERACTION"]:
                 add_user_interaction(
                     db.session,
@@ -648,6 +651,7 @@ def ask_for_event(problem_name):
     )
     if form.validate_on_submit():
         admin_users = User.query.filter_by(access_level="admin")
+        send_mail_with_context = copy_current_request_context(send_mail)
         for admin in admin_users:
             subject = "Request to add a new event"
             body = """User {} asked to add a new event:
@@ -668,7 +672,7 @@ def ask_for_event(problem_name):
                 form.opening_date.data,
                 form.closing_date.data,
             )
-            send_mail(admin.email, subject, body)
+            send_mail_with_context(admin.email, subject, body)
         return redirect_to_user(
             "Thank you. Your request has been sent to RAMP administrators.",
             category="Event request",
@@ -737,7 +741,7 @@ def credit(submission_hash):
         credit_form.name_credits.append(
             (s_field, str(submission_credit), source_submission.link)
         )
-    # This doesnt work, not sure why
+    # This doesn't work, not sure why
     # if not new:
     #    credit_form.self_credit.data = str(100 - sum_credit)
     if credit_form.validate_on_submit():
@@ -924,7 +928,7 @@ def view_model(submission_hash, f_name):
             submission_abspath,
             f_name,
             as_attachment=True,
-            attachment_filename="{}_{}".format(submission.hash_[:6], f_name),
+            download_name="{}_{}".format(submission.hash_[:6], f_name),
             mimetype="application/octet-stream",
         )
 
@@ -1095,6 +1099,6 @@ def download_submission(submission_hash):
     file_in_memory.seek(0)
     return send_file(
         file_in_memory,
-        attachment_filename=f"submission_{submission.id}.zip",
+        download_name=f"submission_{submission.id}.zip",
         as_attachment=True,
     )

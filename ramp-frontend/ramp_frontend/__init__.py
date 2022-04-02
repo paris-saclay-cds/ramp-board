@@ -1,5 +1,6 @@
-from logging.config import dictConfig
 import os
+from concurrent.futures import ThreadPoolExecutor
+from logging.config import dictConfig
 
 from flask import Flask
 from flask_login import LoginManager
@@ -58,13 +59,14 @@ def create_app(config):
 
     app = Flask("ramp-frontend", root_path=HERE)
     app.config.update(config)
+    app.pool = ThreadPoolExecutor(max_workers=app.config["THREADPOOL_MAX_WORKERS"])
 
     with app.app_context():
         db.init_app(app)
         # register the login manager
         login_manager.init_app(app)
         login_manager.login_view = "auth.login"
-        login_manager.login_message = "Please log in or sign up to access " "this page."
+        login_manager.login_message = "Please log in or sign up to access this page."
         # register the email manager
         mail.init_app(app)
         # register our blueprint

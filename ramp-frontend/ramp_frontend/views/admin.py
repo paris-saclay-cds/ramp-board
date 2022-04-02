@@ -4,6 +4,7 @@ import logging
 import flask_login
 
 from flask import Blueprint
+from flask import copy_current_request_context
 from flask import flash
 from flask import redirect
 from flask import render_template
@@ -66,6 +67,7 @@ def approve_users():
             admin=True,
         )
     elif request.method == "POST":
+        send_mail_with_context = copy_current_request_context(send_mail)
         users_to_be_approved = request.form.getlist("approve_users")
         event_teams_to_be_approved = request.form.getlist("approve_event_teams")
         message = "{}d users:\n".format(request.form["submit_button"][:-1])
@@ -79,7 +81,7 @@ def approve_users():
                     "{}, your account has been approved. You can now "
                     "sign-up for any open RAMP event.".format(user.name)
                 )
-                send_mail(to=user.email, subject=subject, body=body)
+                send_mail_with_context(to=user.email, subject=subject, body=body)
             elif request.form["submit_button"] == "Remove!":
                 delete_user(db.session, asked_user)
             message += "{}\n".format(asked_user)
@@ -106,7 +108,7 @@ def approve_users():
                         user.name, asked_event_team.event.name
                     )
                 )
-                send_mail(to=user.email, subject=subject, body=body)
+                send_mail_with_context(to=user.email, subject=subject, body=body)
             elif request.form["submit_button"] == "Remove!":
                 delete_event_team(
                     db.session,
@@ -197,7 +199,8 @@ def approve_sign_up_for_event(event_name, user_name):
         "You can now proceed to your sandbox and make submissions."
         "\nHave fun!!!".format(user.name, event.name)
     )
-    send_mail(to=user.email, subject=subject, body=body)
+    send_mail_with_context = copy_current_request_context(send_mail)
+    send_mail_with_context(to=user.email, subject=subject, body=body)
 
     return redirect_to_user(
         "{} is signed up for {}.".format(user, event),

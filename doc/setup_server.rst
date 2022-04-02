@@ -132,7 +132,7 @@ To launch the RAMP website, you can execute::
 
     ~/ramp_deployment $ gunicorn -w 8 --bind 0.0.0.0:8080 --access-logfile ./frontend.log 'ramp_frontend.wsgi:make_app("config.yml")'
 
-where ``config.yml`` is the path to the configuration fle created in the
+where ``config.yml`` is the path to the configuration file created in the
 ``ramp_deployment`` directory. To have more information about the Gunicorn
 options, refer to::
 

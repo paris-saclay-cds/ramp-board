@@ -76,7 +76,7 @@ class AWSWorker(BaseWorker):
             else:
                 logger.error(
                     "Unable to launch instance for submission "
-                    f"{self.submission}. An error occured: {status}"
+                    f"{self.submission}. An error occurred: {status}"
                 )
                 self.status = "error"
             return
@@ -99,7 +99,7 @@ class AWSWorker(BaseWorker):
         if exit_status != 0:
             logger.error(
                 'Cannot upload submission "{}"'
-                ", an error occured".format(self.submission)
+                ", an error occurred".format(self.submission)
             )
             self.status = "error"
         else:
@@ -109,11 +109,11 @@ class AWSWorker(BaseWorker):
     def launch_submission(self):
         """Launch the submission.
 
-        Basically, this runs ``ramp_test_submission`` inside the
+        Basically, this runs ``ramp-test`` inside the
         Amazon instance.
         """
         if self.status == "running":
-            raise RuntimeError("Cannot launch submission: one is already " "started")
+            raise RuntimeError("Cannot launch submission: one is already started")
         if self.status == "error":
             raise RuntimeError("Cannot launch submission: the setup failed")
         try:
@@ -127,7 +127,7 @@ class AWSWorker(BaseWorker):
         if exit_status != 0:
             logger.error(
                 'Cannot start training of submission "{}"'
-                ", an error occured.".format(self.submission)
+                ", an error occurred.".format(self.submission)
             )
             self.status = "error"
         else:
@@ -167,7 +167,7 @@ class AWSWorker(BaseWorker):
             self.status = "finished"
         if self.status != "finished":
             raise ValueError(
-                "Cannot collect results if worker is not" "'running' or 'finished'"
+                "Cannot collect results if worker is not 'running' or 'finished'"
             )
 
         logger.info("Collecting submission '{}'".format(self.submission))

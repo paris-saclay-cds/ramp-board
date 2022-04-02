@@ -35,7 +35,7 @@ Welcome to RAMP documentation!
 .. toctree::
    :maxdepth: 1
    :hidden:
-   :caption: Addtional Information
+   :caption: Additional Information
 
    whats_new
    about

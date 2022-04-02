@@ -25,7 +25,7 @@ def deploy_ramp_event(config, event_config, setup_ramp_repo=True, force=False):
     config : str
         The path to the YAML file containing the database information.
     event_config : str
-        The path to the YAML file containing the RAMP infomation.
+        The path to the YAML file containing the RAMP information.
     setup_ramp_repo : bool, default is True
         Whether or not to setup the RAMP kit and data repositories.
     force : bool, default is False

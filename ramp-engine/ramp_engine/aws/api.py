@@ -396,7 +396,7 @@ def upload_submission(config, instance_id, submission_name, submissions_dir):
     except subprocess.CalledProcessError as e:
         logger.error(f"Unable to connect during log download: {e}")
     except Exception as e:
-        logger.error(f"Unknown error occured during log download: {e}")
+        logger.error(f"Unknown error occurred during log download: {e}")
     return 1
 
 
@@ -442,7 +442,7 @@ def download_log(config, instance_id, submission_name, folder=None):
             out = _download(config, instance_id, source_path, dest_path)
             return out
         except Exception as e:
-            logger.error(f"Unknown error occured during log download: {e}")
+            logger.error(f"Unknown error occurred during log download: {e}")
             if n_try == n_tries - 1:
                 raise (e)
             else:
@@ -574,7 +574,7 @@ def download_predictions(config, instance_id, submission_name, folder=None):
             return dest_path
         except Exception as e:
             logger.error(
-                "Unknown error occured when downloading prediction" f" e: {str(e)}"
+                "Unknown error occurred when downloading prediction" f" e: {str(e)}"
             )
             if n_try == n_tries - 1:
                 raise (e)
@@ -599,7 +599,7 @@ def launch_train(config, instance_id, submission_name):
     """
     Launch the training of a submission on an ec2 instance.
     A screen named `submission_folder_name` (see below)
-    is created and within that screen `ramp_test_submission`
+    is created and within that screen `ramp-test`
     is launched.
 
     Parameters
@@ -625,11 +625,10 @@ def launch_train(config, instance_id, submission_name):
     # we use python -u so that standard input/output are flushed
     # and thus we can retrieve the log file live during training
     # without waiting for the process to finish.
-    # We use an espace character around "$" because it is interpreted
+    # We use an escape character around "$" because it is interpreted
     # before being run remotely and leads to an empty string
     run_cmd = (
-        r"python -u \$(which ramp_test_submission) "
-        r"--submission {submission} --save-y-preds "
+        r"python -u \$(which ramp-test) " r"--submission {submission} --save-output "
     )
     if config.get(MEMORY_PROFILING_FIELD):
         run_cmd = (
@@ -994,7 +993,7 @@ def validate_config(config):
 
 def is_spot_terminated(config, instance_id):
     """Check if there is an 'instance-action' item present in instance
-    metatdata. If a spot instance is marked to be terminated an
+    metadata. If a spot instance is marked to be terminated an
     'instance-action' will be present."""
     cmd_timeout = 1
     n_retry = 9

@@ -164,7 +164,7 @@ def set_user_access_level(session, name, access_level="user"):
 
     In addition, it will also set the user as authenticated.
 
-    Paramaters
+    Parameters
     ----------
     session : :class:`sqlalchemy.orm.Session`
         The session to directly perform the operation on the database.

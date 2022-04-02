@@ -170,7 +170,7 @@ def _get_traceback(content):
     """
     Get the traceback part from the content containing the standard
     error/output of a python process. It is used to get the traceback
-    of `ramp_test_submission` when there is an error.
+    of `ramp-test` when there is an error.
 
     Parameters
     ----------
@@ -186,8 +186,8 @@ def _get_traceback(content):
     # cut_exception_text = content.rfind('--->')
     # was like commented line above in ramp-board
     # but there is no ---> in logs when we use
-    # ramp_test_submission, so we just search for the
-    # first occurence of 'Traceback'.
+    # ramp-test, so we just search for the
+    # first occurrence of 'Traceback'.
     cut_exception_text = content.find("Traceback")
     if cut_exception_text > 0:
         content = content[cut_exception_text:]

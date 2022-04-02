@@ -382,7 +382,7 @@ def test_check_time(session_scope_module):
             "test": [0.000515460968017578, 0.000481128692626953],
         }
     ).set_index("fold")
-    assert_frame_equal(submission_time, expected_df, check_less_precise=True)
+    assert_frame_equal(submission_time, expected_df)
 
 
 def test_check_scores(session_scope_module):
@@ -424,7 +424,7 @@ def test_check_scores(session_scope_module):
         },
         index=multi_index,
     )
-    assert_frame_equal(scores, expected_df, check_less_precise=True)
+    assert_frame_equal(scores, expected_df)
 
 
 def test_check_bagged_scores(session_scope_module):
@@ -458,7 +458,7 @@ def test_check_bagged_scores(session_scope_module):
         index=multi_index,
     )
     expected_df.columns = expected_df.columns.rename("scores")
-    assert_frame_equal(scores, expected_df, check_less_precise=True)
+    assert_frame_equal(scores, expected_df)
 
 
 def test_check_submission_max_ram(session_scope_module):
@@ -547,7 +547,7 @@ def test_compute_contributivity(session_scope_module):
     )
 
     # for testing blending, we need to train a submission
-    # ouputting predictions into the submission directory
+    # outputting predictions into the submission directory
     assert_submission(
         ramp_kit_dir=ramp_kit_dir,
         ramp_data_dir=ramp_data_dir,
