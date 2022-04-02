@@ -1,31 +1,30 @@
 # This is the testing environment.
-name: testenv
 channels:
   - conda-forge
 dependencies:
-  - bcrypt
-  - bokeh
+  - bcrypt=3.2.0
+  - bokeh=2.4.2
   - boto3
-  - click
+  - click=8.0.4
   - codecov
-  - email-validator
+  - email-validator=1.1.3
   - flake8
-  - Flask
-  - Flask-Login
-  - flask-mail
-  - Flask-SQLAlchemy
-  - flask-wtf
+  - Flask=2.0.3
+  - Flask-Login=0.5.0
+  - flask-mail=0.9.1
+  - Flask-SQLAlchemy=2.5.1
+  - flask-wtf=1.0.0
   - gitpython
-  - itsdangerous
+  - itsdangerous=2.1.2
   - nbconvert
   - numpy
-  - pandas
+  - pandas=1.3.5
   - pip
-  - psycopg2
-  - pyyaml
+  - psycopg2=2.9.3
+  - pyyaml=6.0
   - pytest
   - pytest-cov
-  - scikit-image
-  - sqlalchemy
+  - scikit-image=0.19.2
+  - sqlalchemy==1.4.32
   - pip:
-    - ramp-workflow
+    - ramp-workflow==0.4.0
