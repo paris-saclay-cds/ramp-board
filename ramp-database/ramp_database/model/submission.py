@@ -98,6 +98,8 @@ class Submission(Model):
     state : str
         The state of the submission. For possible states, see the
         ``submission_states`` enum in this module (top of this file).
+    queue_position : int
+        The position in the queue when the submission was sent to be trained.
     error_msg : str
         The error message of the submission.
     is_valid : bool
@@ -157,6 +159,7 @@ class Submission(Model):
 
     type = Column(submission_types, default="live")
     state = Column(String, default="new")
+    queue_position = Column(Integer, default=-1)
     # TODO: hide absolute path in error
     error_msg = Column(String, default="")
     # user can delete but we keep

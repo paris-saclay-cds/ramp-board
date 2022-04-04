@@ -423,7 +423,13 @@ def get_leaderboard(
         )
     elif leaderboard_type in ["new", "failed"]:
         if leaderboard_type == "new":
-            columns = ["team", "submission", "submitted at (UTC)", "state"]
+            columns = [
+                "team",
+                "submission",
+                "submitted at (UTC)",
+                "state",
+                "wating list",
+            ]
         else:
             columns = ["team", "submission", "submitted at (UTC)", "error"]
 
@@ -440,8 +446,13 @@ def get_leaderboard(
                         pd.Timestamp(sub.submission_timestamp),
                         (
                             sub.state_with_link
-                            if leaderboard_type == "failed"
+                            if leaderboard_type == "error"
                             else sub.state
+                        ),
+                        (
+                            "#{}".format(sub.queue_position)
+                            if sub.queue_position != -1
+                            else ""
                         ),
                     ],
                 )
