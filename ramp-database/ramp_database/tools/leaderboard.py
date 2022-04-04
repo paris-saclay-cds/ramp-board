@@ -1,5 +1,5 @@
-from distutils.version import LooseVersion
 from itertools import product
+from packaging import version
 
 import numpy as np
 import pandas as pd
@@ -17,7 +17,7 @@ from .submission import get_submission_max_ram
 from .submission import get_time
 
 
-width = -1 if LooseVersion(pd.__version__) < LooseVersion("1.0.0") else None
+width = -1 if version.Version(pd.__version__) < version.Version("1.0.0") else None
 pd.set_option("display.max_colwidth", width)
 
 
@@ -64,7 +64,7 @@ def _compute_leaderboard(
         df_time = df_time.stack().to_frame()
         df_time.index = df_time.index.set_names(["fold", "step"])
         df_time = df_time.rename(columns={0: "time"})
-        df_time = df_time.sum(axis=0, level="step").T
+        df_time = df_time.groupby(level="step").sum().T
 
         df_scores_mean = df_scores.groupby("step").mean()
         df_scores_std = df_scores.groupby("step").std()

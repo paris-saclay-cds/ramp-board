@@ -68,6 +68,66 @@ You can update an existing environment with the following::
 
       ~/ramp_deployment $ ramp setup update-conda-env --event-config events/iris_test/config.yml
 
+Event configuration
+^^^^^^^^^^^^^^^^^^^
+
+Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
+'worker' section, which should look something like::
+
+      ramp:
+          problem_name: iris
+          event_name: iris_ramp_test
+          event_title: "Iris classification challenge"
+          event_is_public: true
+      worker:
+          worker_type: conda
+          conda_env: ramp-iris
+          kit_dir: /home/ramp/ramp_deployment/ramp-kits/iris
+          data_dir: /home/ramp/ramp_deployment/ramp-data/iris/data
+          submissions_dir: /home/ramp/ramp_deployment/events/iris/submissions
+          logs_dir: /home/ramp/ramp_deployment/events/iris/logs
+          predictions_dir: /home/ramp/ramp_deployment/events/iris/predictions
+          timeout: 14400
+      dispatcher:
+          hunger_policy: sleep
+          n_workers: 2
+          n_threads: 2
+          time_between_collection: 1
+
+**Worker configuration**
+
+* ``conda_env``: the name of the conda environment to use. If not specified,
+  the base environment will be used.
+* ``kit_dir``: path to the directory of the RAMP kit.
+* ``data_dir``: path to the directory of the data.
+* ``submissions_dir``: path to the directory containing the submissions.
+* ``logs_dir``: path to the directory where the log of the submission
+  will be stored.
+* ``predictions_dir``: path to the directory where the predictions of the
+  submission will be stored.
+* ``timeout``: timeout after a given number of seconds when running the worker.
+  If not provided, a default of 7200 is used.
+
+.. _conda_dispatcher:
+
+**dispatcher configuration**
+
+* ``hunger_policy``: Policy to apply in case that there is no anymore workers
+  to be processed. One of `None`, 'sleep' or 'exit', default is `None`:
+
+    * if `None`: the dispatcher will work without interruption;
+    * if 'sleep': the dispatcher will sleep for 5 seconds before to check
+      for new submission;
+    * if 'exit': the dispatcher will stop after collecting the results of
+      the last submissions.
+
+* ``n_workers``: Maximum number of workers that can run submissions
+  simultaneously.
+* ``n_threads``: The number of threads that each worker can use.
+* ``time_between_collection``: How long, in seconds, the worker should wait
+  before re-checking if the submission is ready for collection. The default is
+  1 second.
+
 Running submissions on Amazon Web Services (AWS)
 ------------------------------------------------
 
@@ -230,20 +290,69 @@ component'. Then select:
         type: string
         value: $PASSWORD
     phases:
-      - name: build
+      - name: Build
         steps:
+          - name: install_system
+            action: ExecuteBash
+            inputs:
+              commands:
+                - |
+                  set -e
+                  echo "===== Updating package cache and git ====="
+
+                  sudo apt update
+                  sudo apt install --no-install-recommends --yes git
+
+                  echo "===== Done ====="
+
           - name: install_conda
             action: ExecuteBash
             inputs:
               commands:
                 - |
                   set -e
-                  wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+                  echo "===== Install conda and mamba ====="
+
+                  wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniconda.sh
                   bash ./miniconda.sh -b -p {{ Home }}/miniconda
                   export PATH={{ Home }}/miniconda/bin:$PATH
                   conda init
-                  conda update --yes --quiet conda
-                  conda install --quiet python==3.8 pip
+                  conda install -y --quiet python pip mamba
+
+                  echo "===== Done ====="
+
+          - name: add_conda_to_user_path
+            action: ExecuteBash
+            inputs:
+              commands:
+                - |
+                  set -e
+                  echo "===== Setup conda for user ubuntu ====="
+
+                  # Always run .bashrc for bash even when it is not interactive
+                  sed -e '/# If not running interactively,/,+5d' -i {{ Home }}/.bashrc
+                  # Run conda init to allow using conda in the bash
+                  sudo -u ubuntu bash -c 'export PATH={{ Home }}/miniconda/bin:$PATH && conda init'
+                  echo "Added conda in PATH for user ubuntu"
+
+                  echo "===== Done ====="
+
+
+          - name: install_gpu_related
+            action: ExecuteBash
+            inputs:
+              commands:
+                - |
+                  set -e
+                  echo "===== Installing Nvidia drivers for GPUs ====="
+
+                  # Install the nvidia drivers to be able to use the GPUs
+                  # Use the headless version to avoid installing unrelated
+                  # library related to display capabilities
+
+                  sudo apt install --no-install-recommends --yes nvidia-headless-440 nvidia-utils-440
+
+                  echo "===== Done ====="
 
           - name: install_challenge
             action: ExecuteBash
@@ -251,40 +360,45 @@ component'. Then select:
               commands:
                 - |
                   set -e
+                  echo "===== Installing Dependencies ====="
+
                   export PATH={{ Home }}/miniconda/bin:$PATH
+
+                  # clone the challenge files
                   git clone https://github.com/ramp-kits/{{ Challenge }}.git {{ Home }}/{{ Challenge }}
-                  # next step is important if you want to use GPUs
-                  sudo apt install --yes nvidia-driver-440
-                  sudo apt install --yes nvidia-utils-440  # you might want to use different version
-                  conda env update --name base --file {{ Home }}/{{ Challenge }}/environment.yml
+
+                  # Choose one of these options to install dependencies:
+
+                  # 1. Use the package from conda, using mamba to accelerate the
+                  # environment resolution
+                  mamba env update --name base --file {{ Home }}/{{ Challenge }}/environment.yml
+
+                  # 2. Use pip to install packages. In this case, make sure to
+                  # install all needed dependencies beforehand using apt.
                   pip install -r {{ Home }}/{{ Challenge }}/requirements.txt
                   pip install -r {{ Home }}/{{ Challenge }}/extra_libraries.txt
-                  conda install -c anaconda cudatoolkit
+
+                  echo "===== Done ====="
+
+
           - name: download_data
             action: ExecuteBash
             timeoutSeconds: 7200
             inputs:
               commands:
                 - |
+                  set -e
+                  echo "===== Downloading Private Data ====="
+
+                  cd {{ Home }}/{{ Challenge }}
                   export PATH={{ Home }}/miniconda/bin:$PATH
-                  cd {{ Home }}/{{ Challenge }}
-                  # Download private data from osf
-                  cd {{ Home }}/{{ Challenge }}
                   python download_data.py --private --username {{ OSF_username }} --password {{ OSF_password }}
+
                   # Make sure everything is owned by
                   chown -R ubuntu {{ Home }}
-                  echo "Installing done!"
-          - name: add_conda_to_path
-            action: ExecuteBash
-            inputs:
-              commands:
-                - |
-                  set -e
-                  # Always run .bashrc for bash even when it is not interactive
-                  sed -e '/# If not running interactively,/,+5d' -i {{ Home }}/.bashrc
-                  # Run conda init to allow using conda in the bash
-                  sudo -u ubuntu bash -c 'export PATH={{ Home }}/miniconda/bin:$PATH && conda init'
-                  echo "Added conda in PATH for user ubuntu"
+
+                  echo "===== Done ====="
+
       - name: test
         steps:
           - name: test_ramp_install
@@ -293,13 +407,14 @@ component'. Then select:
               commands:
                 - |
                   set -e
-                  echo "Test ramp install"
-                  echo "User: '$USER'"
+                  echo "===== Test ramp install ====="
+
                   cd {{ Home }}/{{ Challenge }}
                   sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'conda info'
                   # Run a ramp-test for the starting kit to make sure everything is running properly
-                  sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'ramp-test --submission sample --quick-test'
-                  echo "test end"
+                  sudo -u ubuntu BASH_ENV={{ Home }}/.bashrc bash -c 'ramp-test --submission starting_kit --quick-test'
+
+                  echo "====== Done ======"
 
 where you should exchange '$CHALLENGE_NAME' for the name of the challenge you
 wish to use (here we are pointing to repositories stored on the ramp-kits

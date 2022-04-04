@@ -31,12 +31,12 @@ def main():
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--event", help="The name of the event")
 @click.option(
     "--path",
-    help="path to the .csv file where to save " "the submissions and their score",
+    help="path to the .csv file where to save the submissions and their score",
 )
 def export_leaderboards(config, event, path):
     """Export all the scored submissions."""
@@ -55,7 +55,7 @@ def export_leaderboards(config, event, path):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--login", help="Login")
 @click.option("--password", help="Password")
@@ -104,7 +104,7 @@ def add_user(
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--login", help="User's login to be removed")
 def delete_user(config, login):
@@ -119,7 +119,7 @@ def delete_user(config, login):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--login", help="User's login to be approved")
 def approve_user(config, login):
@@ -134,7 +134,7 @@ def approve_user(config, login):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--login", help="User's login to be made admin")
 def make_user_admin(config, login):
@@ -149,12 +149,12 @@ def make_user_admin(config, login):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--login", help="User's login to be made admin")
 @click.option(
     "--access-level",
-    help="The access level to grant the user." "One of {'asked', 'user', 'admin'}",
+    help="The access level to grant the user.One of {'asked', 'user', 'admin'}",
     default="user",
     show_default=True,
 )
@@ -170,7 +170,7 @@ def set_user_access_level(config, login, access_level):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--event", help="Name of the event")
 @click.option("--team", help="Name of the team")
@@ -186,7 +186,7 @@ def sign_up_team(config, event, team):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--event", help="Name of the event")
 @click.option("--team", help="Name of the team")
@@ -202,7 +202,7 @@ def delete_event_team(config, event, team):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--problem", help="Name of the problem")
 @click.option("--kit-dir", help="Path to the RAMP kit")
@@ -225,7 +225,7 @@ def add_problem(config, problem, kit_dir, data_dir, force):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--problem", help="Name of the problem")
 @click.option("--event", help="Name of the event")
@@ -267,7 +267,7 @@ def add_event(
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--event", help="Name of the event")
 @click.option("--user", help="Name of the user becoming event admin")
@@ -283,7 +283,7 @@ def add_event_admin(config, event, user):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--event", help="Name of the event")
 @click.option("--team", help="Name of the team")
@@ -301,7 +301,7 @@ def add_submission(config, event, team, submission, path):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option(
     "--config-event",
@@ -374,7 +374,7 @@ def delete_event(config, config_event, dry_run, from_disk, force):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option(
     "--config-event",
@@ -419,7 +419,7 @@ def delete_predictions(config, config_event, force):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--event", help="Name of the event")
 @click.option("--state", help="The state of the submissions to display")
@@ -447,7 +447,7 @@ def get_submissions_by_state(config, event, state):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--submission-id", help="The submission ID")
 @click.option("--state", help="The state to affect to the submission")
@@ -463,7 +463,7 @@ def set_submission_state(config, submission_id, state):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--event", help="The event name")
 def update_leaderboards(config, event):
@@ -478,7 +478,7 @@ def update_leaderboards(config, event):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--event", help="The event name")
 @click.option("--user", help="The user name")
@@ -494,7 +494,7 @@ def update_user_leaderboards(config, event, user):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--event", help="The event name")
 def update_all_users_leaderboards(config, event):
@@ -509,13 +509,13 @@ def update_all_users_leaderboards(config, event):
     "--config",
     default="config.yml",
     show_default=True,
-    help="Configuration file YAML format containing the database " "information",
+    help="Configuration file YAML format containing the database information",
 )
 @click.option("--config-event", required=True, help="The event config file name.")
 @click.option(
     "--min-improvement",
     default="0.0",
-    help="The minimum score improvement " "to continue building the ensemble",
+    help="The minimum score improvement to continue building the ensemble",
 )
 def compute_contributivity(config, config_event, min_improvement):
     """Blend submissions, compute combined score and contributivities."""

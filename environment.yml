@@ -1,30 +1,31 @@
 # This is the testing environment.
-name: testenv
+channels:
+  - conda-forge
 dependencies:
-  - bcrypt
-  - bokeh
+  - bcrypt=3.2.0
+  - bokeh=2.4.2
   - boto3
-  - click
+  - click=8.0.4
+  - codecov
+  - email-validator=1.1.3
   - flake8
-  - Flask
-  - Flask-Login
-  - Flask-SQLAlchemy
+  - Flask=2.0.3
+  - werkzeug=2.0.3
+  - Flask-Login=0.5.0
+  - flask-mail=0.9.1
+  - Flask-SQLAlchemy=2.5.1
+  - flask-wtf=1.0.0
   - gitpython
-  - itsdangerous
+  - itsdangerous=2.1.2
   - nbconvert
   - numpy
-  - pandas
+  - pandas=1.3.5
   - pip
-  - pyyaml
+  - psycopg2=2.9.3
+  - pyyaml=6.0
   - pytest
   - pytest-cov
-  - scikit-image
-  - sqlalchemy
+  - scikit-image=0.19.2
+  - sqlalchemy==1.4.32
   - pip:
-    - codecov
-    - ramp-workflow
-    - psycopg2-binary
-    - Flask-Mail
-    - Flask-Wtf  # install from conda default channel when 0.14.3 is available
-    - wtforms[email]
-    - email_validator
+    - ramp-workflow==0.4.0

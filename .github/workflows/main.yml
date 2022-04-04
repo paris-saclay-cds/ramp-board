@@ -17,10 +17,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-18.04]
-        python: [3.7, 3.8, 3.9]
+        os: [ubuntu-20.04]
+        python: ["3.7", "3.8", "3.9", "3.10"]
         include:
-          - os: ubuntu-18.04
+          - os: ubuntu-20.04
             python: 3.8
             # the following has no effect with manual trigger
             # where the ramp-workflow is specified anyway
@@ -52,9 +52,10 @@ jobs:
 
       - name: Create envs
         run: |
-          conda create --yes -n testenv python=$PYTHON_VERSION
-          conda env update -n testenv -f environment.yml
-          conda env create -f ci_tools/environment_iris_kit.yml
+          conda install --yes mamba -n base -c conda-forge
+          mamba create --yes -n testenv python=$PYTHON_VERSION
+          mamba env update -n testenv -f environment.yml
+          mamba env create -f ci_tools/environment_iris_kit.yml
         env:
           PYTHON_VERSION: ${{ matrix.python }}
 
@@ -124,7 +125,7 @@ jobs:
           python-version: '3.7'
 
       - name: Install dependencies
-        run: pip install flake8 black==21.8b0
+        run: pip install flake8 black==22.3.0
 
       - name: Run flake8
         run: flake8 ramp-*

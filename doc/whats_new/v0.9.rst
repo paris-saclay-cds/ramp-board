@@ -1,17 +1,17 @@
 .. _changes_0_9:
 
-Version 0.9 (ongoing)
-=====================
+Version 0.9
+===========
+
+January 2022
 
 Changelog
 ---------
-
 
 `ramp-database`
 ...............
 
 - Add `User.update_timestamp` database field :pr:`537`
-- Allow 1-fold cross validation :pr:`552`
 
 `ramp-engine`
 .............
@@ -21,6 +21,7 @@ Changelog
 ...............
 
 
-
 `ramp-utils`
 ............
+=======
+- Convert bagged scores to float in submission.py :pr:`555`

@@ -15,10 +15,7 @@ from ramp_database.utils import session_scope
 from ramp_database.tools.user import get_user_by_name
 
 from ramp_frontend import create_app
-from ramp_frontend import mail
 from ramp_frontend.utils import body_formatter_user
-from ramp_frontend.utils import send_mail
-from ramp_frontend.testing import _fail_no_smtp_server
 
 
 @pytest.fixture(scope="module")
@@ -44,18 +41,6 @@ def client_session(database_connection):
             pass
         db, _ = setup_db(database_config["sqlalchemy"])
         Model.metadata.drop_all(db)
-
-
-@_fail_no_smtp_server
-def test_send_mail(client_session):
-    client, _ = client_session
-    with client.application.app_context():
-        with mail.record_messages() as outbox:
-            send_mail("xx@gmail.com", "subject", "body")
-            assert len(outbox) == 1
-            assert outbox[0].subject == "subject"
-            assert outbox[0].body == "body"
-            assert outbox[0].recipients == ["xx@gmail.com"]
 
 
 def test_body_formatter_user(client_session):
