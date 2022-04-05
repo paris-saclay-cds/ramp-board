@@ -8,6 +8,12 @@ Changelog
 
 TODO: specify the module before to add the desired entry.
 
+
+`ramp-database`
+...............
+
+- Allow 1-fold cross validation :pr:`552`
+
 `ramp-engine`
 ...............
 
