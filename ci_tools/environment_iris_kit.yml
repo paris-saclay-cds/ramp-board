@@ -7,7 +7,7 @@ dependencies:
   - numpy
   - scikit-learn
   - pandas
-  - click=8.0.4  # workaround for ramp-workflow#307
+  - click
   - pip
   - pip:
-    - https://github.com/paris-saclay-cds/ramp-workflow/archive/refs/heads/master.zip
+    - ramp-workflow==0.5.0
