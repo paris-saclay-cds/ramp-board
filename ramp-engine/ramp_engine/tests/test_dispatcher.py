@@ -131,7 +131,7 @@ def test_unit_test_dispatcher(session_toy, Worker, dask_scheduler):
         config=config,
         event_config=event_config,
         worker=Worker,
-        n_workers=100,
+        n_workers=3,
         hunger_policy="exit",
     )
 
@@ -148,6 +148,9 @@ def test_unit_test_dispatcher(session_toy, Worker, dask_scheduler):
     assert dispatcher._awaiting_worker_queue.qsize() == len(submissions) - 2
     submissions = get_submissions(session_toy, "iris_test", "sent_to_training")
     assert len(submissions) == 6
+    for idx, (sub_id, _, _) in enumerate(submissions):
+        submission = get_submission_by_id(session_toy, sub_id)
+        assert submission.queue_position == idx + 1
 
     # start the training
     dispatcher.launch_workers(session_toy)
@@ -156,8 +159,18 @@ def test_unit_test_dispatcher(session_toy, Worker, dask_scheduler):
         dispatcher.collect_result(session_toy)
 
     assert len(get_submissions(session_toy, "iris_test", "new")) == 2
-    assert len(get_submissions(session_toy, "iris_test", "training_error")) == 2
-    assert len(get_submissions(session_toy, "iris_test", "tested")) == 4
+    assert len(get_submissions(session_toy, "iris_test", "training_error")) == 1
+    assert len(get_submissions(session_toy, "iris_test", "tested")) == 2
+    assert len(get_submissions(session_toy, "iris_test", "sent_to_training")) == 3
+    # only 3 submissions have been trained
+    for idx, (sub_id, _, _) in zip([-1, -1, -1, 1, 2, 3], submissions):
+        submission = get_submission_by_id(session_toy, sub_id)
+        assert submission.queue_position == idx
+
+    # train the remaining submissions
+    dispatcher.launch_workers(session_toy)
+    while not dispatcher._processing_worker_queue.empty():
+        dispatcher.collect_result(session_toy)
 
     dispatcher.update_database_results(session_toy)
     assert dispatcher._processed_submission_queue.empty()
