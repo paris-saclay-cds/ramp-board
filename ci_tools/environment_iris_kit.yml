@@ -7,7 +7,7 @@ dependencies:
   - numpy
   - scikit-learn
   - pandas
-  - click=8.0.4  # workaround for ramp-workflow#307
+  - click
   - pip
   - pip:
-    - ramp-workflow
+    - ramp-workflow==0.5.0

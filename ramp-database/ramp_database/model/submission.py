@@ -1051,7 +1051,7 @@ class SubmissionOnCVFold(Model):
         """:class:`rampwf.prediction_types.Predictions`: Training
         predictions."""
         return self.submission.Predictions(
-            y_pred=self.full_train_y_pred[self.cv_fold.train_is]
+            y_pred=self.full_train_y_pred, fold_is=self.cv_fold.train_is
         )
 
     @property
@@ -1059,7 +1059,7 @@ class SubmissionOnCVFold(Model):
         """:class:`rampwf.prediction_types.Predictions`: Validation
         predictions."""
         return self.submission.Predictions(
-            y_pred=self.full_train_y_pred[self.cv_fold.test_is]
+            y_pred=self.full_train_y_pred, fold_is=self.cv_fold.test_is
         )
 
     @property
