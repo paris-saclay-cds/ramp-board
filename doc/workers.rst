@@ -551,7 +551,11 @@ Create an event config.yml (see :ref:`deploy-ramp-event`) and update the
   console, 'Instances' tab on the left, under 'availability zone'.
 * ``ami_image_name``: name you gave to the image you prepared (see
   :ref:`prepare_instance`). This can be found in the EC2 console, under
-  'Images' -> 'AMI' tab.
+  'Images' -> 'AMI' tab. Note: you don't have to put the entire image name
+  and if you indicate the generic name you chose, it will automatically take
+  the latest version of the image created running the pipeline (e.g. 
+  'challenge-iris' will point to 'challenge-iris 2022-04-19T17-19-18.405Z'
+  if it's the latest one)
 * ``ami_user_name``: user name you used to ssh into your instance.
   Commonly 'ec2-user' or 'ubuntu'.
 * ``instance_type``: found in the EC2 console, 'Instances' tab, 'Description'
