@@ -171,9 +171,7 @@ def test_get_leaderboard(session_toy_db):
     )
     assert leaderboard_failed.count("<tr>") == 1
     # check that we have a link to the log of the failed submission
-    print(leaderboard_failed)
-    assert False
-    assert "<a href=" in leaderboard_failed
+    assert re.match("<a href=/.*/error.txt", leaderboard_failed)
 
     # the remaining submission should be successful
     leaderboard_public = get_leaderboard(session_toy_db, "public", "iris_test")
