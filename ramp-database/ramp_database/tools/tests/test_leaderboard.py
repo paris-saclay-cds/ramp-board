@@ -1,3 +1,4 @@
+import re
 import shutil
 
 import pytest
