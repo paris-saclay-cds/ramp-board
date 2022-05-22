@@ -1,3 +1,4 @@
+import re
 import shutil
 
 import pytest
@@ -170,6 +171,8 @@ def test_get_leaderboard(session_toy_db):
         session_toy_db, "failed", "iris_test", "test_user"
     )
     assert leaderboard_failed.count("<tr>") == 1
+    # check that we have a link to the log of the failed submission
+    assert re.match(r".*<a href=/.*/error.txt>.*", leaderboard_failed, flags=re.DOTALL)
 
     # the remaining submission should be successful
     leaderboard_public = get_leaderboard(session_toy_db, "public", "iris_test")
