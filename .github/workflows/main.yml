@@ -53,6 +53,7 @@ jobs:
       - name: Create envs
         run: |
           conda install --yes mamba -n base -c conda-forge
+          rm -f /usr/share/miniconda/pkgs/cache/*.json # workaround for mamba-org/mamba#488
           mamba create --yes -n testenv python=$PYTHON_VERSION
           mamba env update -n testenv -f environment.yml
           mamba env create -f ci_tools/environment_iris_kit.yml
