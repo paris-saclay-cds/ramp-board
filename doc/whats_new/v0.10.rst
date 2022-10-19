@@ -1,13 +1,21 @@
 .. _changes_0_10:
 
-Version 0.10
-============
+Version 0.10.1
+==============
+
+*19 October 2022*
+
+`ramp-frontend`
+...............
+
+- Fix issue where the error message wasn't shown for failed submissions :pr:`576`
+
+Version 0.10.0
+==============
 *6 April 2022*
 
 Changelog
 ---------
-
-TODO: specify the module before to add the desired entry.
 
 
 `ramp-database`
