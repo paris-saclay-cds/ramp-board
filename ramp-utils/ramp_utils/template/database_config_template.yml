@@ -34,8 +34,8 @@ flask:
     # This the name of the server. By default, the name is 'localhost'
     # domain_name : 'ramp.studio'
     # privacy_policy_page: (path or HTML contents of the privacy policy page. Default: None)
-    # login_instructions: (path or HTML contents of custom instuctions to add to the login page. Default: None)
-    # sign_up_instructions: (path or HTML contents of custom instuctions to add to the login page. Default: None)
+    # login_instructions: (path or HTML contents of custom instructions to add to the login page. Default: None)
+    # sign_up_instructions: (path or HTML contents of custom instructions to add to the login page. Default: None)
     # sign_up_ask_social_media: (whether add a form field to ask for social media accounts on the sign up page. Default: False)
 sqlalchemy:
     drivername: postgresql
