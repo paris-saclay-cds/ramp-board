@@ -49,10 +49,10 @@ jobs:
           auto-activate-base: false
           python-version: ${{ matrix.python }}
 
-      - name: Use libmamba solver with conda
-        run: |
-          conda install -n base conda-libmamba-solver
-          conda config --set solver libmamba
+            #- name: Use libmamba solver with conda
+            #  run: |
+            #    conda install -n base conda-libmamba-solver
+            #    conda config --set solver libmamba
       - name: Create test env
         run: |
           conda create --yes -n testenv python=$PYTHON_VERSION
