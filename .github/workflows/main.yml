@@ -49,12 +49,16 @@ jobs:
           auto-activate-base: false
           python-version: ${{ matrix.python }}
 
-      - name: Create envs
+      - name: Install mamba
         run: |
           conda install --yes mamba -n base -c conda-forge
           rm -f /usr/share/miniconda/pkgs/cache/*.json # workaround for mamba-org/mamba#488
+      - name: Create test env
+        run: |
           mamba create --yes -n testenv python=$PYTHON_VERSION
           mamba env update -n testenv -f environment.yml
+      - name: Create iris_kit env
+        run: |
           mamba env create -f ci_tools/environment_iris_kit.yml
         env:
           PYTHON_VERSION: ${{ matrix.python }}
