@@ -58,11 +58,11 @@ jobs:
             #    conda config --set solver libmamba
       - name: Create test env
         run: |
-          conda create --yes -n testenv python=$PYTHON_VERSION
-          conda env update -n testenv -f environment.yml
+          mamba create --yes -n testenv python=$PYTHON_VERSION
+          mamba env update -n testenv -f environment.yml
       - name: Create iris_kit env
         run: |
-          conda env create -f ci_tools/environment_iris_kit.yml
+          mamba env create -f ci_tools/environment_iris_kit.yml
         env:
           PYTHON_VERSION: ${{ matrix.python }}
 
