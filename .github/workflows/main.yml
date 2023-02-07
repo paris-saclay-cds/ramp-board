@@ -45,11 +45,13 @@ jobs:
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          mamba-version: "*"
-          channels: conda-forge,defaults
-          channel-priority: true
-          auto-update-conda: true
-          auto-activate-base: false
+          #mamba-version: "*"
+          #channels: conda-forge,defaults
+          #channel-priority: true
+          #auto-update-conda: true
+          #auto-activate-base: false
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
           python-version: ${{ matrix.python }}
 
             #- name: Use libmamba solver with conda
