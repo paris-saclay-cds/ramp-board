@@ -47,17 +47,11 @@ jobs:
         with:
           #mamba-version: "*"
           channels: conda-forge
-          #channel-priority: true
-          #auto-update-conda: true
           #auto-activate-base: false
           miniforge-variant: Mambaforge
           miniforge-version: latest
           python-version: ${{ matrix.python }}
 
-            #- name: Use libmamba solver with conda
-            #  run: |
-            #    conda install -n base conda-libmamba-solver
-            #    conda config --set solver libmamba
       - name: Create test env
         run: |
           mamba create --yes -n testenv python=$PYTHON_VERSION
@@ -70,7 +64,7 @@ jobs:
 
       - name: Install ramp-board
         run: |
-          source activate testenv
+          mamba activate testenv
           if [ "$PYTHON_VERSION" == "3.8" ]; then
               python -m pip install "dask==2021.4.1" "distributed==2021.4.1"
           fi
@@ -87,7 +81,7 @@ jobs:
       - name: Test ramp-frontend
         run: |
           set -e
-          source activate testenv
+          mamba activate testenv
           python -m smtpd -n -c DebuggingServer 127.0.0.1:8025 &
           sleep 3 # wait for the server to start
           pytest -rvsl ramp-frontend --cov=ramp_frontend --cov-report=term-missing --cov-report=xml --cov-append
@@ -95,25 +89,25 @@ jobs:
       - name: Test ramp-engine
         run: |
           set -e
-          source activate testenv
+          mamba activate testenv
           pytest -rvsl ramp-engine/ --cov=ramp_engine --cov-report=term-missing --cov-report=xml --cov-append
 
       - name: Test ramp-database
         run: |
           set -e
-          source activate testenv
+          mamba activate testenv
           pytest -rvsl ramp-database/ --cov=ramp_database --cov-report=term-missing  --cov-report=xml --cov-append
 
       - name: Test ramp-utils
         run: |
           set -e
-          source activate testenv
+          mamba activate testenv
           pytest -rvsl ramp-utils/ --cov=ramp_utils --cov-report=term-missing --cov-report=xml --cov-append
 
       - name: Test integration
         run: |
           set -e
-          source activate testenv
+          mamba activate testenv
           bash ci_tools/actions/integration_test.sh
 
       - uses: codecov/codecov-action@v3
@@ -136,8 +130,8 @@ jobs:
       - name: Install dependencies
         run: pip install flake8==6.0.0  black==22.3.0
 
-      #- name: Run flake8
-      #  run: flake8 ramp-*
+      - name: Run flake8
+        run: flake8 ramp-*
 
       - name: Run black
         run: black --check .
