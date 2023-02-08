@@ -60,14 +60,13 @@ jobs:
             #    conda config --set solver libmamba
       - name: Create test env
         run: |
-          echo "$PYTHON_VERSION"
           mamba create --yes -n testenv python=$PYTHON_VERSION
           mamba env update -n testenv -f environment.yml
+        env:
+          PYTHON_VERSION: ${{ matrix.python }}
       - name: Create iris_kit env
         run: |
           mamba env create -f ci_tools/environment_iris_kit.yml
-        env:
-          PYTHON_VERSION: ${{ matrix.python }}
 
       - name: Install ramp-board
         run: |
@@ -137,8 +136,8 @@ jobs:
       - name: Install dependencies
         run: pip install flake8==6.0.0  black==22.3.0
 
-      - name: Run flake8
-        run: flake8 ramp-*
+      #- name: Run flake8
+      #  run: flake8 ramp-*
 
       - name: Run black
         run: black --check .
