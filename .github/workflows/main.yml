@@ -60,6 +60,7 @@ jobs:
 
       - name: Install ramp-board
         run: |
+          conda activate testenv
           if [ "$PYTHON_VERSION" == "3.8" ]; then
               python -m pip install "dask==2021.4.1" "distributed==2021.4.1"
           fi
@@ -76,6 +77,7 @@ jobs:
       - name: Test ramp-frontend
         run: |
           set -e
+          conda activate testenv
           python -m smtpd -n -c DebuggingServer 127.0.0.1:8025 &
           sleep 3 # wait for the server to start
           pytest -rvsl ramp-frontend --cov=ramp_frontend --cov-report=term-missing --cov-report=xml --cov-append
@@ -83,21 +85,25 @@ jobs:
       - name: Test ramp-engine
         run: |
           set -e
+          conda activate testenv
           pytest -rvsl ramp-engine/ --cov=ramp_engine --cov-report=term-missing --cov-report=xml --cov-append
 
       - name: Test ramp-database
         run: |
           set -e
+          conda activate testenv
           pytest -rvsl ramp-database/ --cov=ramp_database --cov-report=term-missing  --cov-report=xml --cov-append
 
       - name: Test ramp-utils
         run: |
           set -e
+          conda activate testenv
           pytest -rvsl ramp-utils/ --cov=ramp_utils --cov-report=term-missing --cov-report=xml --cov-append
 
       - name: Test integration
         run: |
           set -e
+          conda activate testenv
           bash ci_tools/actions/integration_test.sh
 
       - uses: codecov/codecov-action@v3
