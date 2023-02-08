@@ -25,7 +25,7 @@ dependencies:
   - pyyaml=6.0
   - pytest
   - pytest-cov
-  - scikit-image=0.19.2
-  - sqlalchemy==2.0.2 # 1.4.32
+  - sqlalchemy>=1.4.32
+  - scikit-image=0.19.*
   - pip:
     - ramp-workflow==0.5.0
