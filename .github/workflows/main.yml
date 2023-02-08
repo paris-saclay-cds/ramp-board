@@ -26,6 +26,12 @@ jobs:
             # where the ramp-workflow is specified anyway
             ramp_workflow_version: master
 
+    # Do not ignore bash profile files. From:
+    # https://github.com/marketplace/actions/setup-miniconda
+    defaults:
+      run:
+        shell: bash -l {0}
+
 
     services:
       postgres:
@@ -47,7 +53,6 @@ jobs:
         with:
           #mamba-version: "*"
           channels: conda-forge
-          #auto-activate-base: false
           activate-environment: testenv
           environment-file: environment.yml
           miniforge-variant: Mambaforge
