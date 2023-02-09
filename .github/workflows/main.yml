@@ -18,13 +18,19 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04]
-        python: ["3.7", "3.8", "3.9", "3.10"]
+        python: ["3.8", "3.9", "3.10"]
         include:
           - os: ubuntu-20.04
-            python: 3.8
+            python: 3.9
             # the following has no effect with manual trigger
             # where the ramp-workflow is specified anyway
             ramp_workflow_version: master
+
+    # Do not ignore bash profile files. From:
+    # https://github.com/marketplace/actions/setup-miniconda
+    defaults:
+      run:
+        shell: bash -l {0}
 
 
     services:
@@ -43,26 +49,23 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Setup conda
-        uses: s-weigand/setup-conda@v1
+        uses: conda-incubator/setup-miniconda@v2
         with:
-          update-conda: true
-          activate-conda: false
+          #mamba-version: "*"
+          channels: conda-forge
+          activate-environment: testenv
+          environment-file: environment.yml
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
           python-version: ${{ matrix.python }}
-          conda-channels: anaconda
 
-      - name: Create envs
+      - name: Create iris_kit env
         run: |
-          conda install --yes mamba -n base -c conda-forge
-          rm -f /usr/share/miniconda/pkgs/cache/*.json # workaround for mamba-org/mamba#488
-          mamba create --yes -n testenv python=$PYTHON_VERSION
-          mamba env update -n testenv -f environment.yml
           mamba env create -f ci_tools/environment_iris_kit.yml
-        env:
-          PYTHON_VERSION: ${{ matrix.python }}
 
       - name: Install ramp-board
         run: |
-          source activate testenv
+          conda activate testenv
           if [ "$PYTHON_VERSION" == "3.8" ]; then
               python -m pip install "dask==2021.4.1" "distributed==2021.4.1"
           fi
@@ -79,7 +82,7 @@ jobs:
       - name: Test ramp-frontend
         run: |
           set -e
-          source activate testenv
+          conda activate testenv
           python -m smtpd -n -c DebuggingServer 127.0.0.1:8025 &
           sleep 3 # wait for the server to start
           pytest -rvsl ramp-frontend --cov=ramp_frontend --cov-report=term-missing --cov-report=xml --cov-append
@@ -87,25 +90,25 @@ jobs:
       - name: Test ramp-engine
         run: |
           set -e
-          source activate testenv
+          conda activate testenv
           pytest -rvsl ramp-engine/ --cov=ramp_engine --cov-report=term-missing --cov-report=xml --cov-append
 
       - name: Test ramp-database
         run: |
           set -e
-          source activate testenv
+          conda activate testenv
           pytest -rvsl ramp-database/ --cov=ramp_database --cov-report=term-missing  --cov-report=xml --cov-append
 
       - name: Test ramp-utils
         run: |
           set -e
-          source activate testenv
+          conda activate testenv
           pytest -rvsl ramp-utils/ --cov=ramp_utils --cov-report=term-missing --cov-report=xml --cov-append
 
       - name: Test integration
         run: |
           set -e
-          source activate testenv
+          conda activate testenv
           bash ci_tools/actions/integration_test.sh
 
       - uses: codecov/codecov-action@v3
@@ -123,10 +126,10 @@ jobs:
       - uses: actions/setup-python@v4
         name: Install Python
         with:
-          python-version: '3.7'
+          python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install flake8 black==22.3.0
+        run: pip install flake8==6.0.0  black==22.3.0
 
       - name: Run flake8
         run: flake8 ramp-*
