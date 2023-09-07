@@ -17,7 +17,9 @@ from .submission import get_submission_max_ram
 from .submission import get_time
 
 
-width = -1 if version.Version(pd.__version__) < version.Version("1.0.0") else None
+width = (
+    -1 if version.Version(pd.__version__) < version.Version("1.0.0") else None
+)
 pd.set_option("display.max_colwidth", width)
 
 
@@ -47,7 +49,8 @@ def _compute_leaderboard(
     record_score = []
     event = session.query(Event).filter_by(name=event_name).one()
     map_score_precision = {
-        score_type.name: score_type.precision for score_type in event.score_types
+        score_type.name: score_type.precision
+        for score_type in event.score_types
     }
     for sub in submissions:
         # take only max n bag
@@ -87,7 +90,9 @@ def _compute_leaderboard(
             .to_frame()
             .T
         )
-        df_scores_bag = df_scores_bag.rename(index=map_renaming).stack().to_frame().T
+        df_scores_bag = (
+            df_scores_bag.rename(index=map_renaming).stack().to_frame().T
+        )
 
         df = pd.concat(
             [df_scores_bag, df_scores_mean, df_scores_std],
@@ -130,7 +135,9 @@ def _compute_leaderboard(
     df["submitted at (UTC)"] = df["submitted at (UTC)"].astype("datetime64[s]")
 
     # reordered the column
-    stats_order = ["bag", "mean", "std"] if leaderboard_type == "private" else ["bag"]
+    stats_order = (
+        ["bag", "mean", "std"] if leaderboard_type == "private" else ["bag"]
+    )
     dataset_order = (
         ["public", "private"] if leaderboard_type == "private" else ["public"]
     )
@@ -141,7 +148,9 @@ def _compute_leaderboard(
     ]
     score_list = [
         "{} {} {}".format(stat, dataset, score)
-        for dataset, score, stat in product(dataset_order, score_order, stats_order)
+        for dataset, score, stat in product(
+            dataset_order, score_order, stats_order
+        )
     ]
     # Only display train and validation time for the public leaderboard
     time_list = (
@@ -408,7 +417,10 @@ def get_leaderboard(
     submissions = [
         sub
         for sub in submissions
-        if (getattr(sub, submission_filter[leaderboard_type]) and sub.is_not_sandbox)
+        if (
+            getattr(sub, submission_filter[leaderboard_type])
+            and sub.is_not_sandbox
+        )
     ]
 
     if not submissions:
@@ -427,12 +439,19 @@ def get_leaderboard(
             columns = [
                 "team",
                 "submission",
+                "submission_id",
                 "submitted at (UTC)",
                 "state",
                 "waiting list",
             ]
         else:
-            columns = ["team", "submission", "submitted at (UTC)", "error"]
+            columns = [
+                "team",
+                "submission",
+                "submission_id",
+                "submitted at (UTC)",
+                "error",
+            ]
 
         # we rely on the zip function ignore the submission state if the error
         # column was not appended
@@ -444,6 +463,7 @@ def get_leaderboard(
                     [
                         sub.event_team.team.name,
                         sub.name_with_link,
+                        sub.id,
                         pd.Timestamp(sub.submission_timestamp),
                         (
                             sub.state_with_link
@@ -461,12 +481,23 @@ def get_leaderboard(
             for sub in submissions
         ]
         df = pd.DataFrame(data, columns=columns)
+        if leaderboard_type == "new":
+
+            def create_button(cell_value):
+                return f"<button onclick=\"alert(('You killed ' \
+                    + 'submission {cell_value}!'))\">{cell_value}</button>"
+
+            df["Kill Sub"] = df["submission_id"].apply(
+                lambda x: create_button(x)
+            )
     else:
         # make some extra filtering
         submissions = [sub for sub in submissions if sub.is_public_leaderboard]
         if not submissions:
             return None
-        competition_type = "public" if "public" in leaderboard_type else "private"
+        competition_type = (
+            "public" if "public" in leaderboard_type else "private"
+        )
         df = _compute_competition_leaderboard(
             session, submissions, competition_type, event_name
         )
@@ -496,14 +527,18 @@ def update_leaderboards(session, event_name, new_only=False):
     """
     event = session.query(Event).filter_by(name=event_name).one()
     if not new_only:
-        event.private_leaderboard_html = get_leaderboard(session, "private", event_name)
+        event.private_leaderboard_html = get_leaderboard(
+            session, "private", event_name
+        )
         event.public_leaderboard_html_with_links = get_leaderboard(
             session, "public", event_name
         )
         event.public_leaderboard_html_no_links = get_leaderboard(
             session, "public", event_name, with_links=False
         )
-        event.failed_leaderboard_html = get_leaderboard(session, "failed", event_name)
+        event.failed_leaderboard_html = get_leaderboard(
+            session, "failed", event_name
+        )
         event.public_competition_leaderboard_html = get_leaderboard(
             session, "public competition", event_name
         )
