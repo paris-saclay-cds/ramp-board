@@ -427,12 +427,19 @@ def get_leaderboard(
             columns = [
                 "team",
                 "submission",
+                "id",
                 "submitted at (UTC)",
                 "state",
                 "waiting list",
             ]
         else:
-            columns = ["team", "submission", "submitted at (UTC)", "error"]
+            columns = [
+                "team",
+                "submission",
+                "id",
+                "submitted at (UTC)",
+                "error",
+            ]
 
         # we rely on the zip function ignore the submission state if the error
         # column was not appended
@@ -444,6 +451,7 @@ def get_leaderboard(
                     [
                         sub.event_team.team.name,
                         sub.name_with_link,
+                        sub.id,
                         pd.Timestamp(sub.submission_timestamp),
                         (
                             sub.state_with_link
@@ -461,6 +469,13 @@ def get_leaderboard(
             for sub in submissions
         ]
         df = pd.DataFrame(data, columns=columns)
+        if leaderboard_type == "new":
+
+            def create_button(cell_value):
+                return f"<button onclick=\"alert(('You killed ' \
+                    + 'submission {cell_value}!'))\">{cell_value}</button>"
+
+            df["Stop"] = df["id"].apply(lambda x: create_button(x))
     else:
         # make some extra filtering
         submissions = [sub for sub in submissions if sub.is_public_leaderboard]
