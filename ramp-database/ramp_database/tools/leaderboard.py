@@ -439,7 +439,7 @@ def get_leaderboard(
             columns = [
                 "team",
                 "submission",
-                "submission_id",
+                "id",
                 "submitted at (UTC)",
                 "state",
                 "waiting list",
@@ -448,7 +448,7 @@ def get_leaderboard(
             columns = [
                 "team",
                 "submission",
-                "submission_id",
+                "id",
                 "submitted at (UTC)",
                 "error",
             ]
@@ -487,7 +487,7 @@ def get_leaderboard(
                 return f"<button onclick=\"alert(('You killed ' \
                     + 'submission {cell_value}!'))\">{cell_value}</button>"
 
-            df["Kill Sub"] = df["submission_id"].apply(
+            df["Stop"] = df["id"].apply(
                 lambda x: create_button(x)
             )
     else:
