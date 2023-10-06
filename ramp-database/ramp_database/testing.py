@@ -218,7 +218,7 @@ def setup_files_extension_type(session):
     submission_file_types = [
         ("code", True, 10**5),
         ("text", True, 10**5),
-        ("data", False, 10**8),
+        ("data", False, 10**9),
     ]
     for name, is_editable, max_size in submission_file_types:
         add_submission_file_type(session, name, is_editable, max_size)
