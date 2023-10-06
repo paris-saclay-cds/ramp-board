@@ -813,9 +813,14 @@ def _is_ready(config, instance_id):
 
 def _training_finished(config, instance_id, submission_name):
     """
-    Return True if a submission has finished training
+    Return True if a submission has finished training (if the screen no longer
+    exists on the ec2 instance and if the bagged_scores.csv file was saved)
     """
-    return not _has_screen(config, instance_id, submission_name)
+    has_screen = _has_screen(config, instance_id, submission_name)
+    # this can only work if the training was successful
+    has_score_file = _has_error_or_score_file(
+        config, instance_id, submission_name)
+    return not has_screen and has_score_file
 
 
 def _training_successful(config, instance_id, submission_name, actual_nb_folds=None):
@@ -858,6 +863,25 @@ def _has_screen(config, instance_id, screen_name):
     cmd = cmd.format(screen_name)
     nb = int(_run(config, instance_id, cmd, return_output=True))
     return nb > 0
+
+
+def _has_error_or_score_file(config, instance_id, screen_name):
+    """
+    Return True if a 'bagged_scores.csv' file exists (submission terminated
+    with a success) or if log file (submisssion terminated with error) exists
+    but the directory with fold_0 does not exist on the ec2
+    instance
+    """
+    submission_path = os.path.join(
+        config['remote_ramp_kit_folder'],
+        'submissions', screen_name, 'training_output')
+    cmd = ("bash -c '"
+           f"if [ -f {submission_path}/bagged_scores.csv ] || "
+           f"[ -f {submission_path}/fold_*/error.txt ]; "
+           "then echo 1; else echo 0; fi'")
+    is_log_or_score = _run(config, instance_id, cmd, return_output=True)
+
+    return int(is_log_or_score)
 
 
 def _tag_instance_by_submission(config, instance_id, submission_name):

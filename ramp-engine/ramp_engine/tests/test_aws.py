@@ -332,6 +332,49 @@ def test_restart_on_sudden_instance_termination(
     assert "Adding the submission back to the queue" in caplog.text
 
 
+@mock.patch('ramp_engine.aws.api.is_spot_terminated')
+@mock.patch('ramp_engine.aws.api.launch_train')
+@mock.patch('ramp_engine.aws.api._has_screen')
+@mock.patch('ramp_engine.aws.api._has_error_or_score_file')
+def test_not_finished_until_bagged_or_log_saved(has_score_file, has_screen,
+                                                launch_train,
+                                                spot_terminated,
+                                                caplog):
+    """ checks if the submission is considered finished correctly only if the
+        submission has finished correctly and the bagged_scores.csv file is
+        saved or it had some errors which appear in the log file """
+    class DummyInstance:
+        id = 1
+    launch_train.return_value = 0
+    has_screen.return_value = True
+    has_score_file.return_value = False
+
+    # setup the AWS worker
+    event_config = read_config(ramp_aws_config_template())['worker']
+
+    worker = AWSWorker(event_config, submission='starting_kit_local')
+    worker.config = event_config
+    worker.submission = 'dummy submissions'
+    worker.instance = DummyInstance
+
+    # set the submission did not yet finish training
+    spot_terminated.return_value = False
+
+    worker.launch_submission()
+    assert worker.status == 'running'
+    assert caplog.text == ''
+
+    # set screen is no longer there
+    has_screen.return_value = False
+    assert worker.status == 'running'
+    assert caplog.text == ''
+
+    # set that the score file was saved
+    has_score_file.return_value = True
+    assert worker.status == 'finished'
+    assert caplog.text == ''
+
+
 def test_aws_worker():
     if not os.path.isfile(os.path.join(HERE, "config.yml")):
         pytest.skip("Only for local tests for now")
