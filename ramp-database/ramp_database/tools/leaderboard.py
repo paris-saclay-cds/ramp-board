@@ -46,6 +46,7 @@ def _compute_leaderboard(
     """
     record_score = []
     event = session.query(Event).filter_by(name=event_name).one()
+    score_kind = event.leaderboard_score_kind
     map_score_precision = {
         score_type.name: score_type.precision for score_type in event.score_types
     }
@@ -130,7 +131,14 @@ def _compute_leaderboard(
     df["submitted at (UTC)"] = df["submitted at (UTC)"].astype("datetime64[s]")
 
     # reordered the column
-    stats_order = ["bag", "mean", "std"] if leaderboard_type == "private" else ["bag"]
+    if score_kind == "bag":
+        stats_order = (
+            ["bag", "mean", "std"] if leaderboard_type == "private" else ["bag"]
+        )
+    else:
+        stats_order = (
+            ["mean", "std", "bag"] if leaderboard_type == "private" else ["mean"]
+        )
     dataset_order = (
         ["public", "private"] if leaderboard_type == "private" else ["public"]
     )
@@ -166,7 +174,7 @@ def _compute_leaderboard(
         df = df.drop(columns=contrib_columns)
 
     df = df.sort_values(
-        "bag {} {}".format(leaderboard_type, event.official_score_name),
+        "{} {} {}".format(score_kind, leaderboard_type, event.official_score_name),
         ascending=event.get_official_score_type(session).is_lower_the_better,
     )
 
@@ -202,6 +210,7 @@ def _compute_competition_leaderboard(
     event = session.query(Event).filter_by(name=event_name).one()
     score_type = event.get_official_score_type(session)
     score_name = event.official_score_name
+    score_kind = event.leaderboard_score_kind
 
     private_leaderboard = _compute_leaderboard(
         session, submissions, "private", event_name, with_links=False
@@ -215,15 +224,15 @@ def _compute_competition_leaderboard(
 
     col_selected_private = (
         ["team", "submission"]
-        + ["bag private " + score_name, "bag public " + score_name]
+        + [f"{score_kind} private " + score_name, f"{score_kind} public " + score_name]
         + time_list
         + ["submitted at (UTC)"]
     )
     leaderboard_df = private_leaderboard[col_selected_private]
     leaderboard_df = leaderboard_df.rename(
         columns={
-            "bag private " + score_name: "private " + score_name,
-            "bag public " + score_name: "public " + score_name,
+            f"{score_kind} private " + score_name: "private " + score_name,
+            f"{score_kind} public " + score_name: "public " + score_name,
         }
     )
 

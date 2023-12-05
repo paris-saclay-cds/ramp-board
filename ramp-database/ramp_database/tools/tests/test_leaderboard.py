@@ -149,6 +149,65 @@ def test_get_leaderboard_only_new_submissions(
         )
 
 
+def test_get_leaderboard_non_bagged_scores(session_toy_db, monkeypatch):
+    """Check that we can use non-bagged scores in the leaderboard
+
+    by setting leaderboard_score_kind = "mean" in problem.py
+    """
+    from ramp_database.tools.leaderboard import Event
+
+    # mock setting `leaderboard_score_kind = "mean"` in problem.py
+    monkeypatch.setattr(Event, "leaderboard_score_kind", property(lambda self: "mean"))
+
+    # run the dispatcher to process a submission
+    config = read_config(database_config_template())
+    event_config = read_config(ramp_config_template())
+    dispatcher = Dispatcher(config, event_config, n_workers=-1, hunger_policy="exit")
+    dispatcher.launch()
+    session_toy_db.commit()
+
+    res = get_leaderboard(session_toy_db, "private", "iris_test")
+    assert (
+        (
+            """<th>submission</th>
+      <th>mean public acc</th>
+      <th>std public acc</th>
+      <th>bag public acc</th>"""
+        )
+        in res
+    )
+
+    res = get_leaderboard(session_toy_db, "public", "iris_test")
+    assert (
+        (
+            """<th>submission</th>
+      <th>acc</th>
+      <th>error</th>"""
+        )
+        in res
+    )
+    res = get_leaderboard(session_toy_db, "public competition", "iris_test")
+    assert (
+        (
+            """<th>rank</th>
+      <th>team</th>
+      <th>submission</th>
+      <th>acc</th>"""
+        )
+        in res
+    )
+
+    res = get_leaderboard(session_toy_db, "private competition", "iris_test")
+    assert (
+        (
+            """<th>team</th>
+      <th>submission</th>
+      <th>acc</th>"""
+        )
+        in res
+    )
+
+
 def test_get_leaderboard(session_toy_db):
     """this test assumes that all the submissions in the database are 'new'"""
     leaderboard_new = get_leaderboard(session_toy_db, "new", "iris_test")
