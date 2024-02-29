@@ -183,7 +183,7 @@ def setup_ramp_kit_ramp_data(
         shutil.rmtree(problem_kit_path, ignore_errors=True)
 
     ramp_kit_url = (
-        f"https://github.com/ramp-kits/{problem_name}" f"/archive/refs/heads/master.zip"
+        f"https://github.com/ramp-kits/{problem_name}/archive/refs/heads/master.zip"
     )
     _fetch_github_repo(ramp_kit_url, problem_kit_path)
 
@@ -196,7 +196,7 @@ def setup_ramp_kit_ramp_data(
             )
         shutil.rmtree(problem_data_path, ignore_errors=True)
     ramp_kit_url = (
-        f"https://github.com/ramp-data/{problem_name}" f"/archive/refs/heads/master.zip"
+        f"https://github.com/ramp-data/{problem_name}/archive/refs/heads/master.zip"
     )
     _fetch_github_repo(ramp_kit_url, problem_data_path)
 
