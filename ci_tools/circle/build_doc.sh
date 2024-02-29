@@ -4,8 +4,8 @@ set -e
 
 # Install dependencies with miforge
 curl -L -O https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh
-bash Miniforge3-$(uname)-$(uname -m).sh -b -p $MINIFORGE_PATH
-export PATH="$MINIFORGE_PATH/bin:$PATH"
+bash Miniforge3-$(uname)-$(uname -m).sh -b -p /home/circleci/project/miniforge/
+export PATH="/home/circleci/project/miniforge/bin:$PATH"
 
 # create the environment
 conda create --yes -n testenv python=3.8
