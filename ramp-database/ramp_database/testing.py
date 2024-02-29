@@ -7,8 +7,9 @@ import logging
 import os
 import shutil
 import subprocess
-
-from git import Repo
+import requests
+from io import BytesIO
+from zipfile import ZipFile
 
 from ramp_utils import read_config
 from ramp_utils import generate_ramp_config
@@ -123,6 +124,28 @@ def _delete_line_from_file(f_name, line_to_delete):
         f.truncate()
 
 
+def _fetch_github_repo(url, output_dir):
+    """Fetch a zip of the github repo"""
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise ValueError(
+            f"Failed to download the archive. HTTP status code:"
+            f"{response.status_code}"
+        )
+
+    with ZipFile(BytesIO(response.content)) as fh:
+        for member in fh.namelist():
+            # Skip directories
+            if member.endswith("/"):
+                continue
+            # there is an extra root folder f"{problem-name}-master" in the zip
+            # we want to remove when extracing
+            target_path = Path(output_dir) / "/".join(member.split("/")[1:])
+            target_path.parent.mkdir(exist_ok=True, parents=True)
+            with fh.open(member) as source, open(target_path, "wb") as target:
+                shutil.copyfileobj(source, target)
+
+
 def setup_ramp_kit_ramp_data(
     ramp_config,
     problem_name,
@@ -158,11 +181,11 @@ def setup_ramp_kit_ramp_data(
                 'it, you need to set "force=True".'
             )
         shutil.rmtree(problem_kit_path, ignore_errors=True)
-    ramp_kit_url = "https://github.com/ramp-kits/{}.git".format(problem_name)
-    kwargs = {}
-    if depth is not None:
-        kwargs["depth"] = depth
-    Repo.clone_from(ramp_kit_url, problem_kit_path, **kwargs)
+
+    ramp_kit_url = (
+        f"https://github.com/ramp-kits/{problem_name}" f"/archive/refs/heads/master.zip"
+    )
+    _fetch_github_repo(ramp_kit_url, problem_kit_path)
 
     problem_data_path = ramp_config["ramp_data_dir"]
     if os.path.exists(problem_data_path):
@@ -172,8 +195,10 @@ def setup_ramp_kit_ramp_data(
                 'it, you need to set "force=True".'
             )
         shutil.rmtree(problem_data_path, ignore_errors=True)
-    ramp_data_url = "https://github.com/ramp-data/{}.git".format(problem_name)
-    Repo.clone_from(ramp_data_url, problem_data_path, **kwargs)
+    ramp_kit_url = (
+        f"https://github.com/ramp-data/{problem_name}" f"/archive/refs/heads/master.zip"
+    )
+    _fetch_github_repo(ramp_kit_url, problem_data_path)
 
     current_directory = os.getcwd()
     os.chdir(problem_data_path)
