@@ -11,7 +11,7 @@ export PATH="/home/circleci/project/miniforge/bin:$PATH"
 conda create --yes -n testenv python=3.8
 conda env update -n testenv -f environment.yml
 source activate testenv
-conda install --yes sphinx=3.5.4 jinja2=3.0.3 sphinx_rtd_theme numpydoc pygraphviz
+conda install --yes sphinx=3.5.4 jinja2=3.0.3 sphinx_rtd_theme numpydoc==1.2.1 pygraphviz
 pip install eralchemy sphinx-click
 
 # Build and install scikit-learn in dev mode
