@@ -245,27 +245,27 @@ def test_user_event_status(client_session):
 NOW = datetime.datetime.now()
 testtimestamps = [
     (
-        NOW.replace(year=NOW.year + 1),
-        NOW.replace(year=NOW.year + 2),
-        NOW.replace(year=NOW.year + 3),
+        NOW.replace(year=NOW.year + 1, day=min(NOW.day - 2, 1)),
+        NOW.replace(year=NOW.year + 2, day=min(NOW.day - 2, 1)),
+        NOW.replace(year=NOW.year + 3, day=min(NOW.day - 2, 1)),
         b"event-close",
     ),
     (
-        NOW.replace(year=NOW.year - 1),
-        NOW.replace(year=NOW.year + 1),
-        NOW.replace(year=NOW.year + 2),
+        NOW.replace(year=NOW.year - 1, day=min(NOW.day - 2, 1)),
+        NOW.replace(year=NOW.year + 1, day=min(NOW.day - 2, 1)),
+        NOW.replace(year=NOW.year + 2, day=min(NOW.day - 2, 1)),
         b"event-comp",
     ),
     (
-        NOW.replace(year=NOW.year - 2),
-        NOW.replace(year=NOW.year - 1),
-        NOW.replace(year=NOW.year + 1),
+        NOW.replace(year=NOW.year - 2, day=min(NOW.day - 2, 1)),
+        NOW.replace(year=NOW.year - 1, day=min(NOW.day - 2, 1)),
+        NOW.replace(year=NOW.year + 1, day=min(NOW.day - 2, 1)),
         b"event-collab",
     ),
     (
-        NOW.replace(year=NOW.year - 3),
-        NOW.replace(year=NOW.year - 2),
-        NOW.replace(year=NOW.year - 1),
+        NOW.replace(year=NOW.year - 3, day=min(NOW.day - 2, 1)),
+        NOW.replace(year=NOW.year - 2, day=min(NOW.day - 2, 1)),
+        NOW.replace(year=NOW.year - 1, day=min(NOW.day - 2, 1)),
         b"event-close",
     ),
 ]
