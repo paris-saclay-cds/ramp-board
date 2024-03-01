@@ -10,4 +10,5 @@ Changelog
 `ramp-database`
 ...............
 
+- AWS runner: better detection of training errors :pr:`591`
 - Switch to fetching starting kit repos via HTTP rather than using git clone to avoid being blocked by Github :pr:`592`.
