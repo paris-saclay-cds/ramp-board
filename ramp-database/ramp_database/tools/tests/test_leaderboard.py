@@ -56,8 +56,10 @@ def session_toy_function(database_connection):
         Model.metadata.drop_all(db)
 
 
-def test_get_leaderboard(session_toy_db):
+def test_get_leaderboard(session_toy_function):
     """this test assumes that all the submissions in the database are 'new'"""
+    session_toy_db = session_toy_function
+
     leaderboard_new = get_leaderboard(session_toy_db, "new", "iris_test")
     assert leaderboard_new.count("<tr>") == 6
     leaderboard_new = get_leaderboard(session_toy_db, "new", "iris_test", "test_user")
