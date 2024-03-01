@@ -11,3 +11,4 @@ Changelog
 ...............
 
 - Switch to fetching starting kit repos via HTTP rather than using git clone to avoid being blocked by Github :pr:`592`.
+- Allow using mean CV score as main score in the leaderboard :pr:`590`
