@@ -1,0 +1,13 @@
+.. _changes_0_10:
+
+Version 0.11
+============
+
+Changelog
+---------
+
+
+`ramp-database`
+...............
+
+- Switch to fetching starting kit repos via HTTP rather than using git clone to avoid being blocked by Github :pr:`592`.
