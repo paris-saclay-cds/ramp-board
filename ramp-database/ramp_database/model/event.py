@@ -226,6 +226,14 @@ class Event(Model):
         return self.problem.workflow
 
     @property
+    def leaderboard_score_kind(self):
+        """Whether the main leaderboard score should be bagged or not
+
+        Valid values are "bag" or "mean" (of the CV folds)
+        """
+        return getattr(self.problem.module, "leaderboard_score_kind", "bag")
+
+    @property
     def official_score_type(self):
         """:class:`ramp_database.model.EventScoreType`: The score type for the
         current event."""
