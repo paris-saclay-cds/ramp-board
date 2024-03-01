@@ -9,7 +9,7 @@ repos:
     rev: 22.3.0
     hooks:
     -   id: black
--   repo: https://gitlab.com/pycqa/flake8
+-   repo: https://github.com/pycqa/flake8
     rev: 3.7.8
     hooks:
     -   id: flake8
@@ -19,4 +19,4 @@ repos:
     hooks:
     -   id: mypy
         types: [file, python]
-        additional_dependencies: [types-PyYAML, types-click, types-itsdangerous, types-Flask, types-Werkzeug]
+        additional_dependencies: [types-PyYAML, types-click, types-itsdangerous, types-Flask, types-Werkzeug, types-requests]

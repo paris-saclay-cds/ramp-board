@@ -257,6 +257,7 @@ def test_get_leaderboard(session_toy_db):
     assert (
         """<th>team</th>
       <th>submission</th>
+      <th>id</th>
       <th>submitted at (UTC)</th>
       <th>error</th>"""
         in leaderboard_failed
