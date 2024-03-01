@@ -19,4 +19,4 @@ repos:
     hooks:
     -   id: mypy
         types: [file, python]
-        additional_dependencies: [types-PyYAML, types-click, types-itsdangerous, types-Flask, types-Werkzeug]
+        additional_dependencies: [types-PyYAML, types-click, types-itsdangerous, types-Flask, types-Werkzeug, types-requests]
