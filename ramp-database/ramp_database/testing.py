@@ -195,10 +195,10 @@ def setup_ramp_kit_ramp_data(
                 'it, you need to set "force=True".'
             )
         shutil.rmtree(problem_data_path, ignore_errors=True)
-    ramp_kit_url = (
+    ramp_data_url = (
         f"https://github.com/ramp-data/{problem_name}/archive/refs/heads/master.zip"
     )
-    _fetch_github_repo(ramp_kit_url, problem_data_path)
+    _fetch_github_repo(ramp_data_url, problem_data_path)
 
     current_directory = os.getcwd()
     os.chdir(problem_data_path)
