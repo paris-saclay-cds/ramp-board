@@ -834,6 +834,11 @@ def _training_successful(config, instance_id, submission_name, actual_nb_folds=N
 
     cmd = "find {}|egrep 'fold.*/y_pred_test.npz'|wc -l".format(folder)
     nb_test_files = int(_run(config, instance_id, cmd, return_output=True))
+
+    cmd = f"find {folder}|egrep 'fold.*/error.txt'|wc -l"
+    n_error = int(_run(config, instance_id, cmd, return_output=True))
+    if n_error > 0:
+        return False
     if actual_nb_folds is not None:
         return nb_folds == nb_train_files == nb_test_files == actual_nb_folds
     else:
