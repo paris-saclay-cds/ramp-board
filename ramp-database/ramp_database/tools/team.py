@@ -4,6 +4,7 @@ import os
 from ..model import EventTeam
 
 from .submission import add_submission
+from .submission import DuplicateSubmissionError
 
 from ._query import select_event_by_name
 from ._query import select_event_team_by_name
@@ -65,13 +66,19 @@ def sign_up_team(session, event_name, team_name):
         event.problem.path_ramp_kit, "submissions", event.ramp_sandbox_name
     )
     submission_name = event.ramp_sandbox_name
-    submission = add_submission(
-        session,
-        event_name,
-        team_name,
-        submission_name,
-        path_sandbox_submission,
-    )
+    try:
+        submission = add_submission(
+            session,
+            event_name,
+            team_name,
+            submission_name,
+            path_sandbox_submission,
+        )
+    except DuplicateSubmissionError:
+        logger.info(
+            "Sanbox submission already exists. "
+            "This probably due to concurrent approval, skipping."
+        )
     logger.info("Copying the submission files into the deployment folder")
     logger.info("Adding {}".format(submission))
     event_team.approved = True
