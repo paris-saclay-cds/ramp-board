@@ -65,13 +65,13 @@ def sign_up_team(session, event_name, team_name):
     path_sandbox_submission = os.path.join(
         event.problem.path_ramp_kit, "submissions", event.ramp_sandbox_name
     )
-    submission_name = event.ramp_sandbox_name
+    sandbox_name = event.ramp_sandbox_name
     try:
-        submission = add_submission(
+        sanbox = add_submission(
             session,
             event_name,
             team_name,
-            submission_name,
+            sandbox_name,
             path_sandbox_submission,
         )
     except DuplicateSubmissionError:
@@ -80,7 +80,7 @@ def sign_up_team(session, event_name, team_name):
             "This probably due to concurrent approval, skipping."
         )
     logger.info("Copying the submission files into the deployment folder")
-    logger.info("Adding {}".format(submission))
+    logger.info("Adding {}".format(sanbox))
     event_team.approved = True
     session.commit()
 
